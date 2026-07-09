@@ -1,0 +1,16 @@
+{
+  "name": "api",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.110.2",
+    "hono": "^4.12.28",
+    "zod": "^4.4.3"
+  }
+}
