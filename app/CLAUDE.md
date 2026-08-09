@@ -40,4 +40,6 @@ AI 消息组件约束: 用户气泡必须与 Primary Button 同源；AssistantMe
 
 本地环境约束: Vite 默认读取 app/.env.local/.env；业务 API 请求只允许经 src/shared/api/client.ts 使用 VITE_API_BASE_URL，默认指向 http://localhost:10001。AI 对话仅由 AgentPanel/chatTransport.ts 使用 VITE_CHAT_BASE_URL，默认指向 http://localhost:10002，并在请求期从 Supabase Auth 读取 access token；不传 userId，不接入 Supabase 业务数据。浏览器只接收 VITE_ 前缀的公开配置，api/chat 服务端密钥不得写入 app。
 
+底部导航例外: Design System 与回收站的选中态表达“当前位置”而不是“可执行按钮”；两者继续复用 SidebarButton 的结构与尺寸，但选中时只使用 primary 前景色，禁止背景、边框、阴影和按压位移。此例外优先于上文通用 SidebarButton 选中材质规则。
+
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md

@@ -9,7 +9,7 @@ workspace.css: 账户/外观、订阅、纯白 APP/笔记画布、确定性中�
 ai-message.css: AgentPanel 与 Design System 共用的 AI 消息视觉层，承载 Primary 同源用户气泡、无卡片 assistant 正文、每字冷蓝光晕、Formation ThinkingIndicator/低频状态文字与纯白工具调用气泡
 auth.css: 登录/注册 Dialog 专用样式，承载共享内凹 Input/PasswordInput 的认证尺寸、自动填充、模式切换与协议提示
 design-system.css: 冻结 V1 组件质感与 ThinkingMark 固定 SVG/局部变换原点/1840ms Formation Motion，以确定性纯白/中性灰蓝表面、统一 smooth corner、细实体边缘、有效中性接触/短投射阴影、顶部内高光、固定原位 hover 和 1px press 收拢组成克制触感 Button；Danger 保留实心红色功能面，非 Danger loading 统一切换为独立冷灰蓝状态面与 3.4s 低频窄光带 Shimmer；Skeleton 使用固定灰阶底色、单组 3.6s sRGB 宽光带与静态 reduced-motion 降级，并覆盖极轻内容 reveal、Dialog 层级及程序化聚焦规则
-sidebar-button.css: SidebarButton 专用视觉层，APP/账户导航只保留与默认 Button 等高的 default/icon 尺寸和同源 smooth corner，hover 固定原位，选中态与 prominent 态直接使用纯白表面、确定性边框、中性实体厚度和 1px press 压感
+sidebar-button.css: SidebarButton 专用视觉层，APP/账户导航只保留与默认 Button 等高的 default/icon 尺寸和同源 smooth corner，hover 固定原位；通用选中态与 prominent 态使用纯白实体厚度，侧栏底部 Design System/回收站的当前位置是无背景、无边框、无阴影、无位移的前景色例外
 segmented-control.css: SegmentedControl 专用视觉层，以默认 Button 总高度、统一 smooth corner、确定性中性灰轨道与纯白选中片段组成平整控制面，不使用内凹阴影、外投影或位移
 toast.css: 全局 Toast 专用视觉层，以固定右下视口、状态色图标仓、全变体纯白表面、统一 smooth-corner 关闭按钮与克制入场动效表达 info/success/warning/error；error 使用白底红色标识，不铺浅红底，并在窄屏收束到安全边距
 user-menu.css: UserMenu 专用视觉层，以身份卡片、统一 smooth-corner 分组动作与确定性白/中性灰蓝底危险动作组成接近主流 AI 产品的账户弹层，并与通用 Select 样式职责分离

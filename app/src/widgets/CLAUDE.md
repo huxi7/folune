@@ -14,7 +14,7 @@ LandingSections.tsx: Landing 扩展模块，包含 CountUp 行为指标、问题
 LandingFooter.tsx: Landing 无 BlueprintFrame 的全宽深蓝 Fat Footer，品牌锁定只显示 SuperNote 主名称并移除 Write first 副标题，上层用无位移 hover 的独立分栏网格承载品牌/导航/元信息，下层以大块留白呈现与分栏线同色的 1.5px 描边、3% 偏白浅蓝填充、400 字重和负字距的大尺寸 SuperNote SVG 幽灵字
 LandingMotion/: Landing 克制反馈模块，只提供 CountUp 与一次性 reveal；磁吸、指针聚光与装饰点阵已移除，当前页面只保留有信息价值的计数与 3–4px 入场反馈
 NotebookPreview.tsx: Landing 的真实工作台预览，以工具轨、单栏文件 tree、文档纸面和 Agent 归档面板呈现核心体验
-AppSidebar.tsx: /app 常驻文件导航 Panel；承载真实树搜索、新建、展开、原地 rename、HTML5 拖拽与右键“移至回收站”，软删除使用现有 destructive 菜单语义并把可等待命令交给 Dashboard
+AppSidebar.tsx: /app 常驻文件导航 Panel；承载真实树搜索、新建、展开、原地 rename、HTML5 拖拽与右键“移至回收站”，底部 Design System/回收站以无容器前景色标识当前位置，软删除使用现有 destructive 菜单语义并把可等待命令交给 Dashboard
 MemoTreeBranch.tsx: 无限递归树渲染器；Folder/FolderOpen 单图标承担开合，同层共享固定图标槽；双击/F2 进入 Enter/blur 提交、Escape 取消的原地 input，folder 行按上 24% before/下 24% after/中 52% inside 分区，memo 只分前后，排序落点使用 8px 圆点+2px 横线，拖拽源保留在原位并弱化到 40%，after 落点位于完整子树之后
 MemoNodeDialog.tsx: 文件树命名弹窗，以设计系统 Dialog/Input/Button 承载新建文件夹，负责非空校验、提交锁与 API 错误展示，不使用浏览器 prompt 或直接访问 API
 memoLibrary.ts: 后端文件树的纯视图模型工具，复用 shared/store/memoTree 算法提供首个 memo、祖先/路径、全文搜索及 before/after/inside/root-end 防环计划；folder inside 固定计算第一个子节点 sort_order
