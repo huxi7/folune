@@ -1,0 +1,68 @@
+/**
+ * [INPUT]: 依赖 index.css 的 Button 高度、smooth corner、表面、文字、focus 与 motion 语义 token
+ * [OUTPUT]: 对外提供无内凹阴影、无凸起位移、确定性中性灰轨道与纯白选中片段的 SegmentedControl
+ * [POS]: app/src/styles 的互斥选择原子样式，只塑造 SegmentedControl，不复制 Button 或 Select 材质
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+@layer components {
+  .ds-segmented-control {
+    display: inline-grid;
+    height: var(--button-height-default);
+    grid-auto-columns: minmax(0, 1fr);
+    grid-auto-flow: column;
+    align-items: stretch;
+    gap: 0.125rem;
+    border: 1px solid var(--border);
+    border-radius: var(--button-radius);
+    background: var(--surface-neutral);
+    padding: 0.1875rem;
+  }
+
+  .ds-segmented-control-option {
+    display: inline-flex;
+    min-width: 4.5rem;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    border: 0;
+    border-radius: calc(var(--button-radius) - 0.1875rem);
+    background: transparent;
+    padding-inline: 0.65rem;
+    color: var(--muted-foreground);
+    font-size: 0.75rem;
+    font-weight: 650;
+    line-height: 1;
+    box-shadow: none;
+    transform: none;
+    transition:
+      background var(--motion-fast) var(--ease-standard),
+      color var(--motion-fast) var(--ease-standard);
+  }
+
+  .ds-segmented-control-option:hover:not(:disabled) {
+    color: var(--foreground);
+  }
+
+  .ds-segmented-control-option[data-active="true"] {
+    background: var(--card);
+    color: var(--card-foreground);
+  }
+
+  .ds-segmented-control-option:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--ring) 58%, transparent);
+    outline-offset: 1px;
+  }
+
+  .ds-segmented-control-option:disabled {
+    opacity: 0.42;
+  }
+}
+
+@supports (corner-shape: squircle) {
+  @layer components {
+    .ds-segmented-control,
+    .ds-segmented-control-option {
+      corner-shape: squircle;
+    }
+  }
+}

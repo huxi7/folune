@@ -1,0 +1,335 @@
+/**
+ * [INPUT]: 依赖 index.css 的 V1 语义颜色/圆角/阴影/动效 token 与 design-system.css 的真实组件类
+ * [OUTPUT]: 对外提供包含 Button 完整 variants/尺寸/loading/disabled 状态、统一 Skeleton 与既定 Active Formation ThinkingMark 在内的 V1 生产组件同构卡片矩阵
+ * [POS]: app/src/styles 的开发陈列专用视觉层，只作用于 .ds-workspace-page 且不定义第二套主题
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+@layer components {
+  .ds-workspace-page {
+    background: var(--background);
+  }
+
+  .ds-workspace-inner {
+    container-name: design-system;
+    container-type: inline-size;
+    max-width: 88rem;
+    padding-bottom: calc(var(--spacing) * 18);
+  }
+
+  .design-system-header {
+    display: grid;
+    gap: calc(var(--spacing) * 5);
+    align-items: end;
+    padding-block: calc(var(--spacing) * 7);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .design-system-kicker {
+    color: var(--muted-foreground);
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .design-system-title {
+    margin-top: calc(var(--spacing) * 2);
+    color: var(--foreground);
+    font-family: var(--font-mono);
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 540;
+    letter-spacing: 0.01em;
+    line-height: 1;
+  }
+
+  .design-system-intro {
+    max-width: 42rem;
+    color: var(--muted-foreground);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    line-height: 1.7;
+  }
+
+  .design-system-intro code {
+    color: var(--foreground);
+    font-family: inherit;
+  }
+
+  .ds-thinking-mark-preview {
+    display: grid;
+    justify-items: center;
+    gap: calc(var(--spacing) * 4);
+    color: var(--primary);
+  }
+
+  .ds-thinking-mark-preview > p {
+    color: var(--muted-foreground);
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+  }
+
+  .ds-thinking-mark-preview > div {
+    display: flex;
+    align-items: end;
+    gap: calc(var(--spacing) * 6);
+  }
+
+  .ds-thinking-mark-preview > div > span {
+    display: grid;
+    justify-items: center;
+    gap: calc(var(--spacing) * 2);
+  }
+
+  .ds-thinking-mark-preview code {
+    color: var(--muted-foreground);
+    font-family: var(--font-mono);
+    font-size: 0.5625rem;
+  }
+
+  .design-system-matrix {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: calc(var(--spacing) * 4);
+    align-items: start;
+    padding-top: calc(var(--spacing) * 8);
+  }
+
+  .ds-gallery-card {
+    display: flex;
+    min-width: 0;
+    min-height: 24rem;
+    flex-direction: column;
+    gap: calc(var(--spacing) * 4);
+    padding: calc(var(--spacing) * 4.5);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-surface);
+    background: var(--surface);
+    box-shadow: var(--shadow-xs);
+  }
+
+  .ds-gallery-card-header {
+    display: grid;
+    gap: calc(var(--spacing) * 2);
+  }
+
+  .ds-gallery-card-header h3 {
+    color: var(--foreground);
+    font-family: var(--font-mono);
+    font-size: 0.9375rem;
+    font-weight: 650;
+  }
+
+  .ds-gallery-card-header p {
+    color: var(--muted-foreground);
+    font-size: 0.75rem;
+    line-height: 1.55;
+  }
+
+  .design-system-preview {
+    display: grid;
+    min-width: 0;
+    flex: 1;
+    place-items: center;
+    min-height: 14rem;
+    padding: calc(var(--spacing) * 4);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-control);
+    background: var(--background);
+  }
+
+  .ds-gallery-card[data-component="AssistantMessage"] .design-system-preview {
+    border-color: transparent;
+    background: transparent;
+  }
+
+  .ds-preview-actions,
+  .ds-brand-preview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: calc(var(--spacing) * 3);
+    align-items: center;
+    justify-content: center;
+  }
+
+  .ds-button-preview {
+    display: grid;
+    width: 100%;
+    gap: calc(var(--spacing) * 4);
+    place-items: center;
+  }
+
+  .ds-button-preview-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: calc(var(--spacing) * 3);
+  }
+
+  .ds-button-preview > p {
+    color: var(--muted-foreground);
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    letter-spacing: 0.03em;
+  }
+
+  .ds-skeleton-preview {
+    display: grid;
+    width: min(100%, 22rem);
+    grid-template-columns: 3rem minmax(0, 1fr);
+    align-items: start;
+    gap: calc(var(--spacing) * 3);
+    padding: calc(var(--spacing) * 3);
+  }
+
+  .ds-skeleton-preview-avatar { width: 3rem; }
+  .ds-skeleton-preview > div { display: grid; gap: calc(var(--spacing) * 2.5); padding-top: 0.2rem; }
+  .ds-skeleton-preview-title { width: 62%; height: 0.85rem; }
+  .ds-skeleton-preview-line { width: 94%; height: 0.65rem; }
+  .ds-skeleton-preview-line-short { width: 72%; }
+
+  .ds-user-message-preview,
+  .ds-ai-message-preview,
+  .ds-tool-call-preview,
+  .ds-thinking-preview {
+    width: min(100%, 24rem);
+  }
+
+  .ds-user-message-preview {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .ds-ai-message-preview {
+    display: grid;
+    gap: calc(var(--spacing) * 5);
+    align-items: start;
+  }
+
+  .ds-ai-message-preview > .ds-button {
+    justify-self: start;
+  }
+
+  .ds-thinking-preview {
+    color: var(--muted-foreground);
+    font-size: 0.6875rem;
+  }
+
+  .ds-thinking-preview > p {
+    margin: 0;
+  }
+
+  .ds-preview-form {
+    display: grid;
+    width: min(100%, 22rem);
+    gap: calc(var(--spacing) * 3);
+  }
+
+  .ds-preview-form label {
+    display: grid;
+    gap: calc(var(--spacing) * 1.5);
+  }
+
+  .ds-preview-form label > span {
+    color: var(--muted-foreground);
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    text-transform: uppercase;
+  }
+
+  .ds-sidebar-button-preview {
+    display: grid;
+    width: min(100%, 15rem);
+    gap: calc(var(--spacing) * 1.5);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-surface);
+    background: var(--sidebar);
+    padding: calc(var(--spacing) * 2);
+  }
+
+  .ds-preview-card {
+    width: min(100%, 20rem);
+    padding: calc(var(--spacing) * 4);
+  }
+
+  .ds-preview-card p {
+    color: inherit;
+    font-size: 0.75rem;
+    font-weight: 650;
+  }
+
+  .ds-preview-card > span {
+    display: block;
+    margin-top: calc(var(--spacing) * 2);
+    color: var(--muted-foreground);
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+  }
+
+  .ds-dialog-preview-copy {
+    display: grid;
+    place-items: center;
+  }
+
+  .ds-brand-preview {
+    flex-direction: column;
+    gap: calc(var(--spacing) * 5);
+  }
+
+  .ds-user-menu-preview {
+    width: min(100%, 20rem);
+  }
+
+  .ds-user-menu-preview > div {
+    width: 100%;
+  }
+
+  @container design-system (min-width: 34rem) {
+    .design-system-header {
+      grid-template-columns: minmax(0, 1fr) minmax(18rem, 1.1fr);
+    }
+
+    .design-system-matrix {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @container design-system (min-width: 52rem) {
+    .design-system-matrix {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  @container design-system (min-width: 72rem) {
+    .design-system-matrix {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 35rem) {
+    .ds-workspace-inner {
+      padding-inline: calc(var(--spacing) * 4);
+    }
+
+    .design-system-header {
+      padding-block: calc(var(--spacing) * 6);
+    }
+
+    .ds-gallery-card {
+      min-height: 0;
+      padding: calc(var(--spacing) * 4);
+    }
+
+    .design-system-preview {
+      min-height: 12rem;
+      padding: calc(var(--spacing) * 3);
+    }
+  }
+
+  @supports (corner-shape: squircle) {
+    .ds-gallery-card,
+    .design-system-preview {
+      corner-shape: squircle;
+    }
+  }
+}

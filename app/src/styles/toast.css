@@ -1,0 +1,159 @@
+/**
+ * [INPUT]: 依赖 index.css 的 popover、status、border、shadow、统一 smooth-corner 按钮与 motion 语义 token
+ * [OUTPUT]: 对外提供全局 Toast 视口、info/success/warning/error 变体、全变体纯净白色表面、统一平滑圆角关闭按钮与响应式入场反馈
+ * [POS]: app/src/styles 的瞬时反馈视觉层，由 ToastProvider 跨路由挂载并保持业务页面零布局侵入
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+@layer components {
+  .ds-toast-viewport {
+    position: fixed;
+    right: 1rem;
+    bottom: 1rem;
+    z-index: 1200;
+    display: flex;
+    width: min(22rem, calc(100vw - 2rem));
+    flex-direction: column;
+    gap: 0.55rem;
+    pointer-events: none;
+  }
+
+  .ds-toast {
+    --toast-color: var(--info);
+    --toast-soft: var(--info-soft);
+    position: relative;
+    display: grid;
+    width: 100%;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 0.7rem;
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--toast-color) 26%, var(--border));
+    border-radius: var(--radius-overlay);
+    background: var(--popover);
+    padding: 0.8rem;
+    color: var(--popover-foreground);
+    box-shadow: var(--shadow-lg), var(--ds-shadow-inset-highlight);
+    pointer-events: auto;
+    animation: ds-toast-enter var(--motion-normal) var(--ease-standard) both;
+  }
+
+  .ds-toast::before {
+    content: "";
+    position: absolute;
+    inset-block: 0.55rem;
+    left: 0;
+    width: 0.18rem;
+    border-radius: 0 999px 999px 0;
+    background: var(--toast-color);
+  }
+
+  .ds-toast[data-variant="success"] {
+    --toast-color: var(--success);
+    --toast-soft: var(--success-soft);
+  }
+
+  .ds-toast[data-variant="warning"] {
+    --toast-color: var(--warning);
+    --toast-soft: var(--warning-soft);
+  }
+
+  .ds-toast[data-variant="error"] {
+    --toast-color: var(--destructive);
+    --toast-soft: var(--popover);
+  }
+
+  .ds-toast-icon {
+    display: inline-flex;
+    width: 1.85rem;
+    height: 1.85rem;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid color-mix(in srgb, var(--toast-color) 24%, var(--border));
+    border-radius: calc(var(--radius-control) - 0.125rem);
+    background: var(--toast-soft);
+    color: var(--toast-color);
+  }
+
+  .ds-toast-copy {
+    min-width: 0;
+    padding-top: 0.08rem;
+  }
+
+  .ds-toast-copy strong {
+    display: block;
+    color: var(--foreground);
+    font-size: 0.75rem;
+    font-weight: 680;
+    line-height: 1.4;
+  }
+
+  .ds-toast-copy p {
+    margin-top: 0.2rem;
+    color: var(--muted-foreground);
+    font-size: 0.6875rem;
+    line-height: 1.5;
+  }
+
+  .ds-toast-dismiss {
+    display: inline-flex;
+    width: 1.65rem;
+    height: 1.65rem;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid transparent;
+    border-radius: var(--button-radius);
+    color: var(--muted-foreground);
+    transition:
+      background var(--motion-fast) var(--ease-standard),
+      border-color var(--motion-fast) var(--ease-standard),
+      color var(--motion-fast) var(--ease-standard);
+  }
+
+  .ds-toast-dismiss:hover {
+    border-color: var(--border);
+    background: var(--surface-neutral);
+    color: var(--foreground);
+  }
+
+  .ds-toast-dismiss:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--ring) 44%, transparent);
+    outline-offset: 1px;
+  }
+
+  @keyframes ds-toast-enter {
+    from {
+      opacity: 0;
+      transform: translateY(0.45rem) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+}
+
+@supports (corner-shape: squircle) {
+  @layer components {
+    .ds-toast-dismiss {
+      corner-shape: squircle;
+    }
+  }
+}
+
+@media (max-width: 639px) {
+  @layer components {
+    .ds-toast-viewport {
+      right: 0.75rem;
+      bottom: 0.75rem;
+      width: calc(100vw - 1.5rem);
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @layer components {
+    .ds-toast {
+      animation: none;
+    }
+  }
+}

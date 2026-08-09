@@ -1,0 +1,122 @@
+/**
+ * [INPUT]: 依赖 index.css 的纯色弱边缘 Secondary Button 材质、统一默认高度、smooth corner、有效接触/投射阴影、focus 与 motion 语义 token
+ * [OUTPUT]: 对外提供 default/icon 等高且使用统一平滑圆角、hover 固定原位的 SidebarButton，选中态与显著态使用纯白表面和确定性边框的克制实体厚度反馈
+ * [POS]: app/src/styles 的侧栏导航原子样式，消除 APP 与账户模态框的尺寸/材质分叉并保留安静的未选中层级
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+@layer components {
+  .ds-sidebar-button {
+    display: inline-flex;
+    width: 100%;
+    height: var(--button-height-default);
+    min-width: 0;
+    min-height: var(--button-height-default);
+    align-items: center;
+    gap: 0.5rem;
+    border: 1px solid transparent;
+    border-radius: var(--button-radius);
+    background: transparent;
+    color: var(--muted-foreground);
+    font-size: 0.75rem;
+    font-weight: 650;
+    line-height: 1;
+    text-align: left;
+    box-shadow: none;
+    transform: translateY(0);
+    transition:
+      background var(--motion-fast) var(--ease-standard),
+      border-color var(--motion-fast) var(--ease-standard),
+      box-shadow var(--motion-fast) var(--ease-standard),
+      color var(--motion-fast) var(--ease-standard),
+      transform var(--motion-fast) var(--ease-standard);
+  }
+
+  .ds-sidebar-button:where(:hover:not(:disabled)) {
+    border-color: var(--border);
+    background: var(--secondary);
+    color: var(--card-foreground);
+    box-shadow: none;
+  }
+
+  .ds-sidebar-button[data-active="true"],
+  .ds-sidebar-button[data-tone="prominent"] {
+    border-color: var(--border);
+    background: var(--card);
+    color: var(--card-foreground);
+    box-shadow: var(--button-shadow-rest);
+  }
+
+  .ds-sidebar-button:active:not(:disabled) {
+    border-color: var(--border-strong);
+    background: var(--border);
+    color: var(--card-foreground);
+    box-shadow: var(--button-shadow-pressed);
+    transform: translateY(0.0625rem);
+  }
+
+  .ds-sidebar-button:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--ring) 66%, transparent);
+    outline-offset: 3px;
+  }
+
+  .ds-sidebar-button:disabled {
+    pointer-events: none;
+    opacity: 0.48;
+    transform: none;
+  }
+
+  .ds-sidebar-button[data-size="default"] {
+    padding: 0.65rem 0.75rem;
+  }
+
+  .ds-sidebar-button[data-size="icon"] {
+    width: var(--button-height-default);
+    height: var(--button-height-default);
+    flex-shrink: 0;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .ds-sidebar-button-leading,
+  .ds-sidebar-button-trailing {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .ds-sidebar-button-leading {
+    color: currentColor;
+  }
+
+  .ds-sidebar-button-label {
+    min-width: 0;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .ds-sidebar-button-trailing {
+    color: var(--muted-foreground);
+    font-size: 0.625rem;
+    font-weight: 560;
+  }
+
+  .ds-sidebar-button[data-size="icon"] .ds-sidebar-button-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+}
+
+@supports (corner-shape: squircle) {
+  @layer components {
+    .ds-sidebar-button {
+      corner-shape: squircle;
+    }
+  }
+}

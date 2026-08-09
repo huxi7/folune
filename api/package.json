@@ -1,15 +1,20 @@
 {
-  "name": "api",
+  "name": "@supernote/api",
   "type": "module",
   "private": true,
+  "scripts": {
+    "dev": "bun --watch --clear-screen=false src/index.ts",
+    "start": "bun src/index.ts",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit --allowJs false"
+  },
   "devDependencies": {
-    "@types/bun": "latest"
+    "bun-types": "latest"
   },
   "peerDependencies": {
     "typescript": "^5"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.110.2",
     "hono": "^4.12.28",
     "zod": "^4.4.3"
   }

@@ -1,0 +1,22 @@
+# [INPUT]: 依赖仓库根 Docker build context 与 api/chat 基础依赖层所需清单
+# [OUTPUT]: 排除全部密钥、缓存、前端及两个后端的运行时代码，缩小镜像构建上下文
+# [POS]: 仓库根 Docker 上下文边界，仅让 api/chat manifest、锁文件与 Dockerfile 参与基础层构建
+# [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+
+.git
+.gitignore
+.DS_Store
+.playwright-cli
+.env
+.env.*
+!.env.example
+
+app
+api/.env*
+api/src
+api/supabase
+chat/.env*
+chat/src
+chat/.mastra
+**/node_modules
+**/dist

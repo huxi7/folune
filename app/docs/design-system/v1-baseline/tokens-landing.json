@@ -1,0 +1,46 @@
+{
+  "capturedAt": "2026-07-31T20:19:36+08:00",
+  "mode": "v1 landing light canvas",
+  "source": "getComputedStyle(.landing-blueprint)",
+  "tokens": {
+    "--background": "#ffffff",
+    "--foreground": "#0f172a",
+    "--card": "#ffffff",
+    "--popover": "#ffffff",
+    "--primary": "#2563eb",
+    "--primary-foreground": "#f8fafc",
+    "--secondary": "#f7f9fc",
+    "--muted": "#f7f9fc",
+    "--muted-foreground": "#64748b",
+    "--accent": "#dbeafe",
+    "--border": "#e5eaf1",
+    "--input": "#e5eaf1",
+    "--ring": "#2563eb",
+    "--sidebar": "#f7f9fc",
+    "--blueprint-background": "#ffffff",
+    "--blueprint-surface": "#ffffff",
+    "--blueprint-primary": "#2563eb",
+    "--blueprint-border": "#e5eaf1",
+    "--blueprint-footer": "#071a3f"
+  },
+  "derivedComponents": {
+    "buttonPrimary": {
+      "borderRadius": "10px",
+      "borderColor": "oklch(0.471671 0.176611 263.519)",
+      "boxShadow": "oklch(0.207678 0.0398189 265.767 / 0.08) 0px 1px 2px 0px, oklch(0.999994 0.0000497986 none / 0.86) 0px 1px 0px 0px inset"
+    },
+    "card": {
+      "backgroundColor": "rgb(255, 255, 255)",
+      "borderRadius": "12px"
+    },
+    "dialog": {
+      "backgroundColor": "rgb(255, 255, 255)",
+      "borderRadius": "16px",
+      "boxShadow": "rgba(27, 31, 55, 0.38) 0px 38px 90px -38px, rgba(27, 31, 55, 0.08) 0px 8px 22px 0px"
+    },
+    "inputFocus": {
+      "borderColor": "rgb(37, 99, 235)",
+      "borderRadius": "12px"
+    }
+  }
+}

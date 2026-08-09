@@ -1,0 +1,13 @@
+# [INPUT]: 依赖 Git 工作区与本地开发生成物约定
+# [OUTPUT]: 忽略根环境密钥、依赖、构建缓存与系统文件
+# [POS]: 仓库根忽略规则，确保 .env.local 与真实密钥不进入版本控制
+# [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+
+.env
+.env.local
+.env.*.local
+
+**/node_modules/
+**/dist/
+
+.DS_Store

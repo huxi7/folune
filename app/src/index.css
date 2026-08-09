@@ -1,0 +1,410 @@
+/**
+ * [INPUT]: 依赖 Kumo Tailwind 样式源、Tailwind v4，并导入 AI 消息与 Design System 等职责样式模块消费本文件语义 token
+ * [OUTPUT]: 对外提供 Kumo 基础件样式、冻结的 V1 Classic Blueprint、Landing Light Canvas、自然现代主色、状态/图表/统一 smooth corner/阴影/动效、独立于 Primary 的 Button loading 表面、不会因 OKLCH 插值偏红的确定性白色/中性灰蓝表面与 Skeleton shimmer 语义 token、Tailwind 映射及样式模块入口
+ * [POS]: app/src 的主题入口，被 main.tsx 引入并约束 Kumo 与本地设计系统共享同一全局视觉来源
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+@source "../node_modules/@cloudflare/kumo/dist/**/*.{js,jsx,ts,tsx}";
+@import "@cloudflare/kumo/styles";
+@import "tailwindcss";
+@import "./styles/workspace.css";
+@import "./styles/auth.css";
+@import "./styles/design-system.css";
+@import "./styles/ai-message.css";
+@import "./styles/sidebar-button.css";
+@import "./styles/segmented-control.css";
+@import "./styles/toast.css";
+@import "./styles/user-menu.css";
+@import "./styles/codemirror.css";
+@import "./styles/design-system-workspace.css";
+@import "./styles/landing.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --animate-blueprint-rise: blueprint-rise 440ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-blueprint-preview: blueprint-preview 520ms 40ms cubic-bezier(0.22, 1, 0.36, 1) both;
+
+  @keyframes blueprint-rise {
+    from {
+      opacity: 0;
+      filter: blur(0.04rem);
+      transform: translateY(0.25rem);
+    }
+    to {
+      opacity: 1;
+      filter: blur(0);
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes blueprint-preview {
+    from {
+      opacity: 0;
+      filter: blur(0.04rem);
+      transform: translateY(0.25rem);
+    }
+    to {
+      opacity: 1;
+      filter: blur(0);
+      transform: translateY(0);
+    }
+  }
+}
+
+:root {
+  --blueprint-background: #ffffff;
+  --blueprint-foreground: #0f172a;
+  --blueprint-surface: #ffffff;
+  --blueprint-surface-muted: #f7f9fc;
+  --blueprint-primary: #2563eb;
+  --blueprint-primary-strong: #1d4ed8;
+  --blueprint-primary-foreground: #f8fafc;
+  --blueprint-accent: #dbeafe;
+  --blueprint-muted-foreground: #64748b;
+  --blueprint-border: #e5eaf1;
+  --blueprint-guide: #e3e5e8;
+  --blueprint-wash: #f7faff;
+  --blueprint-deep: #172554;
+  --blueprint-footer: #071a3f;
+  --blueprint-footer-surface: #0a224f;
+  --blueprint-footer-foreground: #f7faff;
+  --blueprint-footer-muted: #aab7cc;
+  --blueprint-footer-border: #223a63;
+  --blueprint-footer-accent: #93b2f5;
+  --blueprint-success: #0f766e;
+  --blueprint-page-max: 68rem;
+  --blueprint-header-height: 2.9rem;
+  --blueprint-announcement-height: 1.95rem;
+  --blueprint-rail-inset: 8px;
+  --blueprint-outer-rail-divisor: 5;
+  --blueprint-divider-height: 14px;
+  --blueprint-pin-size: 10px;
+  --blueprint-section-space: clamp(4rem, 7vw, 6.5rem);
+
+  --background: #ffffff;
+  --foreground: #172033;
+  --card: #ffffff;
+  --card-foreground: #172033;
+  --popover: #ffffff;
+  --popover-foreground: #172033;
+  --primary: #3567d6;
+  --primary-foreground: #f8fafc;
+  --secondary: #eef2f7;
+  --secondary-foreground: #27364c;
+  --muted: #f4f6fa;
+  --muted-foreground: #69758a;
+  --accent: #e8eefb;
+  --accent-foreground: #2c53a3;
+  --destructive: oklch(0.61 0.18 27);
+  --destructive-foreground: #ffffff;
+  --border: #e2e7ef;
+  --input: #d8e0eb;
+  --ring: #3567d6;
+  --chart-1: #3567d6;
+  --chart-2: #2f7f91;
+  --chart-3: #4d91d7;
+  --chart-4: #7867c7;
+  --chart-5: #5568a9;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #344158;
+  --sidebar-primary: #3567d6;
+  --sidebar-primary-foreground: #f8fafc;
+  --sidebar-accent: #e9eef8;
+  --sidebar-accent-foreground: #294d98;
+  --sidebar-border: #e2e7ef;
+  --sidebar-ring: #3567d6;
+  --font-sans: 'Avenir Next', Avenir, Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-serif: 'Iowan Old Style', 'Palatino Linotype', 'Noto Serif SC', 'Songti SC', serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, Monaco, Consolas, monospace;
+  --font-display: 'Iowan Old Style', 'Palatino Linotype', 'Noto Serif SC', 'Songti SC', serif;
+  --radius: 0.875rem;
+  --shadow-x: 0px;
+  --shadow-y: 2px;
+  --shadow-blur: 12px;
+  --shadow-spread: 0px;
+  --shadow-opacity: 0.07;
+  --shadow-color: #172033;
+  --shadow-2xs: 0 1px 2px hsl(230 35% 16% / 0.035);
+  --shadow-xs: 0 2px 6px hsl(230 35% 16% / 0.045);
+  --shadow-sm: 0 6px 18px -12px hsl(230 35% 16% / 0.16), 0 1px 3px hsl(230 35% 16% / 0.05);
+  --shadow: 0 10px 28px -18px hsl(230 35% 16% / 0.2), 0 1px 3px hsl(230 35% 16% / 0.05);
+  --shadow-md: 0 16px 36px -22px hsl(230 35% 16% / 0.23), 0 2px 6px hsl(230 35% 16% / 0.05);
+  --shadow-lg: 0 22px 50px -28px hsl(230 35% 16% / 0.28), 0 3px 10px hsl(230 35% 16% / 0.05);
+  --shadow-xl: 0 30px 70px -34px hsl(230 35% 16% / 0.32), 0 4px 14px hsl(230 35% 16% / 0.06);
+  --shadow-2xl: 0 38px 90px -38px hsl(230 35% 16% / 0.38), 0 8px 22px hsl(230 35% 16% / 0.08);
+  --tracking-normal: -0.012em;
+  --spacing: 0.25rem;
+
+  --layout-page-max: 68rem;
+  --layout-page-gutter: clamp(1rem, 3vw, 2rem);
+  --layout-hero-y: clamp(4.5rem, 9vw, 8rem);
+  --layout-section-bottom: clamp(5rem, 10vw, 9rem);
+  --motion-fast: 140ms;
+  --motion-normal: 260ms;
+  --motion-slow: 700ms;
+  --ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
+  --ds-radius-smooth: calc(var(--radius) + 0.125rem);
+  --ds-radius-soft: var(--radius);
+  --ds-shadow-raised: 0 8px 20px -16px color-mix(in srgb, var(--foreground) 28%, transparent), 0 1px 2px color-mix(in srgb, var(--foreground) 6%, transparent);
+  --ds-shadow-pressed: inset 0 1px 3px color-mix(in srgb, var(--foreground) 12%, transparent);
+  --ds-shadow-inset-highlight: inset 0 1px 0 color-mix(in srgb, var(--background) 86%, transparent);
+  --ds-shadow-inset-lowlight: inset 0 -1px 0 color-mix(in srgb, var(--foreground) 5%, transparent);
+  --button-specular: #ffffff;
+  --button-depth: #0f172a;
+  --button-radius: calc(var(--radius-control) + 0.1875rem);
+  --button-height-default: 2.35rem;
+  --button-shadow-rest:
+    0 0.13rem 0.22rem -0.07rem color-mix(in srgb, var(--button-depth) 28%, transparent),
+    0 0.42rem 0.82rem -0.52rem color-mix(in srgb, var(--button-depth) 24%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--button-specular) 48%, transparent);
+  --button-shadow-pressed:
+    0 0.06rem 0.11rem -0.04rem color-mix(in srgb, var(--button-depth) 22%, transparent),
+    inset 0 0.1rem 0.18rem color-mix(in srgb, var(--button-depth) 13%, transparent);
+  --button-shadow-disabled:
+    0 0.1rem 0.2rem -0.08rem color-mix(in srgb, var(--button-depth) 14%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--button-specular) 30%, transparent);
+  --button-danger-hover-background: #b84b55;
+  --button-danger-active-background: #a33f49;
+  --button-loading-background: #edf1f6;
+  --button-loading-border: #d3dae5;
+  --button-loading-foreground: #657186;
+  --button-loading-shimmer: #ffffff;
+  --surface-neutral: #f4f6f8;
+  --surface-accent-subtle: #f4f7fc;
+  --skeleton-base: #edf0f4;
+  --skeleton-highlight: #f8fafc;
+
+  --surface: var(--card);
+  --surface-subtle: var(--muted);
+  --border-strong: #c2ccd9;
+  --primary-hover: #2f5ec7;
+  --primary-active: #294fac;
+  --primary-soft: var(--accent);
+  --primary-soft-foreground: var(--accent-foreground);
+  --disabled: #e8ecf2;
+  --disabled-foreground: #8490a2;
+  --overlay: rgb(23 32 51 / 38%);
+  --success: #0f766e;
+  --success-soft: #e3f3f0;
+  --success-foreground: #0c625c;
+  --warning: #9a6a2f;
+  --warning-soft: #f5ebdd;
+  --warning-foreground: #795124;
+  --destructive-soft: #f9e8ea;
+  --info: var(--primary);
+  --info-soft: var(--accent);
+  --info-foreground: var(--accent-foreground);
+  --footer: var(--blueprint-footer);
+  --radius-control: 0.625rem;
+  --radius-surface: 0.875rem;
+  --radius-overlay: 1rem;
+
+  --blueprint-border-strong: #cbd3df;
+  --blueprint-primary-hover: #1d4ed8;
+  --blueprint-primary-active: #1e40af;
+  --blueprint-disabled: #edf1f6;
+  --blueprint-disabled-foreground: #8490a2;
+  --blueprint-overlay: rgb(15 23 42 / 38%);
+  --blueprint-success-soft: #e3f3f0;
+  --blueprint-success-foreground: #0c625c;
+  --blueprint-destructive: #b34b56;
+  --blueprint-destructive-soft: #f8e7e9;
+  --blueprint-destructive-foreground: #8c3842;
+}
+
+:root.dark {
+  --background: oklch(0.18 0.03 258);
+  --foreground: oklch(0.93 0.015 92);
+  --card: oklch(0.215 0.032 258);
+  --card-foreground: oklch(0.93 0.015 92);
+  --popover: oklch(0.23 0.034 258);
+  --popover-foreground: oklch(0.93 0.015 92);
+  --primary: oklch(0.7 0.15 258);
+  --primary-foreground: oklch(0.18 0.03 258);
+  --secondary: oklch(0.25 0.032 258);
+  --secondary-foreground: oklch(0.93 0.015 92);
+  --muted: oklch(0.24 0.028 258);
+  --muted-foreground: oklch(0.7 0.03 92);
+  --accent: oklch(0.29 0.06 258);
+  --accent-foreground: oklch(0.79 0.12 258);
+  --destructive: oklch(0.55 0.16 26);
+  --destructive-foreground: oklch(0.98 0.008 92);
+  --border: oklch(0.32 0.035 258);
+  --input: oklch(0.34 0.038 258);
+  --ring: oklch(0.7 0.15 258);
+  --chart-1: oklch(0.7 0.15 258);
+  --chart-2: oklch(0.71 0.09 207);
+  --chart-3: oklch(0.79 0.13 82);
+  --chart-4: oklch(0.71 0.13 28);
+  --chart-5: oklch(0.7 0.11 320);
+  --sidebar: oklch(0.195 0.032 258);
+  --sidebar-foreground: oklch(0.82 0.025 92);
+  --sidebar-primary: oklch(0.7 0.15 258);
+  --sidebar-primary-foreground: oklch(0.18 0.03 258);
+  --sidebar-accent: oklch(0.28 0.055 258);
+  --sidebar-accent-foreground: oklch(0.93 0.015 92);
+  --sidebar-border: oklch(0.31 0.034 258);
+  --sidebar-ring: oklch(0.7 0.15 258);
+  --shadow-x: 0px;
+  --shadow-y: 4px;
+  --shadow-blur: 15px;
+  --shadow-spread: 0px;
+  --shadow-opacity: 0.18;
+  --shadow-color: #070b18;
+  --shadow-2xs: 0px 2px 8px 0px hsl(0 0% 0% / 0.10);
+  --shadow-xs: 0px 2px 8px 0px hsl(0 0% 0% / 0.10);
+  --shadow-sm: 0px 4px 12px -4px hsl(0 0% 0% / 0.18), 0px 1px 2px hsl(0 0% 0% / 0.12);
+  --shadow: 0px 4px 12px -4px hsl(0 0% 0% / 0.18), 0px 1px 2px hsl(0 0% 0% / 0.12);
+  --shadow-md: 0px 8px 20px -8px hsl(0 0% 0% / 0.22), 0px 2px 4px hsl(0 0% 0% / 0.12);
+  --shadow-lg: 0px 12px 28px -12px hsl(0 0% 0% / 0.24);
+  --shadow-xl: 0px 18px 36px -16px hsl(0 0% 0% / 0.26);
+  --shadow-2xl: 0px 24px 48px -20px hsl(0 0% 0% / 0.30);
+  --primary-hover: oklch(0.74 0.15 258);
+  --primary-active: oklch(0.65 0.15 258);
+  --button-danger-hover-background: #c95d67;
+  --button-danger-active-background: #b54e58;
+  --button-loading-background: oklch(0.27 0.028 258);
+  --button-loading-border: oklch(0.35 0.034 258);
+  --button-loading-foreground: oklch(0.74 0.026 92);
+  --button-loading-shimmer: oklch(0.93 0.015 92);
+  --surface-neutral: #29303d;
+  --surface-accent-subtle: #30394b;
+  --skeleton-base: #343b49;
+  --skeleton-highlight: #485264;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-surface: var(--surface);
+  --color-surface-subtle: var(--surface-subtle);
+  --color-border-strong: var(--border-strong);
+  --color-disabled: var(--disabled);
+  --color-disabled-foreground: var(--disabled-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --font-serif: var(--font-serif);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --shadow-2xs: var(--shadow-2xs);
+  --shadow-xs: var(--shadow-xs);
+  --shadow-sm: var(--shadow-sm);
+  --shadow: var(--shadow);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+  --shadow-xl: var(--shadow-xl);
+  --shadow-2xl: var(--shadow-2xl);
+
+  --tracking-tighter: var(--tracking-normal);
+  --tracking-tight: var(--tracking-normal);
+  --tracking-normal: var(--tracking-normal);
+  --tracking-wide: var(--tracking-normal);
+  --tracking-wider: var(--tracking-normal);
+  --tracking-widest: var(--tracking-normal);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    @apply bg-background;
+    color-scheme: light;
+    scroll-behavior: smooth;
+    scrollbar-gutter: stable;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
+  body {
+    @apply min-h-screen bg-background font-sans text-foreground antialiased;
+    letter-spacing: var(--tracking-normal);
+    overflow-x: hidden;
+    text-rendering: optimizeLegibility;
+  }
+
+  button,
+  input,
+  textarea {
+    font: inherit;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+
+  ::selection {
+    background: color-mix(in srgb, var(--primary) 28%, transparent);
+    color: var(--foreground);
+  }
+
+  * {
+    scrollbar-color: color-mix(in srgb, var(--muted-foreground) 34%, transparent) transparent;
+    scrollbar-width: thin;
+  }
+
+  #root {
+    min-height: 100vh;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

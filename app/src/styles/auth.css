@@ -1,0 +1,102 @@
+/**
+ * [INPUT]: 依赖 index.css 的语义颜色、间距、阴影与动效 token，依赖 AuthDialog 暴露的 auth-* 结构类
+ * [OUTPUT]: 对外提供登录/注册表单、共享内凹输入框的认证尺寸、模式切换与协议提示样式
+ * [POS]: app/src/styles 的认证界面样式，只服务 AuthDialog 并由 index.css 统一导入
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+@layer components {
+  .auth-credentials-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 1.25rem;
+  }
+
+  .auth-provider-button.ds-button,
+  .auth-submit-button.ds-button {
+    min-height: 3rem;
+    justify-content: center;
+  }
+
+  .auth-divider {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--muted-foreground);
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  .auth-divider span {
+    height: 1px;
+    background: var(--border);
+  }
+
+  .auth-input.ds-input {
+    min-height: 3rem;
+    padding-inline: 1rem;
+    font-weight: 600;
+  }
+
+  .auth-input.ds-input::placeholder {
+    opacity: 1;
+    font-weight: 600;
+  }
+
+  .auth-input.ds-input:focus-visible {
+    box-shadow: 0 0 0 0.18rem color-mix(in srgb, var(--ring) 18%, transparent), var(--ds-shadow-pressed);
+  }
+
+  .auth-input.ds-input:-webkit-autofill,
+  .auth-input.ds-input:-webkit-autofill:hover,
+  .auth-input.ds-input:-webkit-autofill:focus {
+    background: transparent;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: var(--foreground);
+    caret-color: var(--foreground);
+  }
+
+  .auth-mode-switch,
+  .auth-terms-copy {
+    color: var(--muted-foreground);
+    text-align: center;
+  }
+
+  .auth-mode-switch {
+    font-size: 0.875rem;
+  }
+
+  .auth-mode-switch button {
+    margin-left: 0.5rem;
+    color: var(--primary);
+    font-weight: 700;
+  }
+
+  .auth-terms-copy {
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    line-height: 1.7;
+  }
+
+  .auth-terms-copy button {
+    margin-inline: 0.25rem;
+    color: var(--foreground);
+    text-decoration: underline;
+    text-decoration-color: color-mix(in srgb, var(--foreground) 38%, transparent);
+    text-underline-offset: 0.18rem;
+  }
+
+  .auth-mode-switch button:hover,
+  .auth-terms-copy button:hover {
+    color: var(--primary);
+  }
+
+  .auth-mode-switch button:focus-visible,
+  .auth-terms-copy button:focus-visible {
+    border-radius: 0.2rem;
+    outline: 2px solid color-mix(in srgb, var(--ring) 45%, transparent);
+    outline-offset: 0.15rem;
+  }
+}

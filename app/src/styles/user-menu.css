@@ -1,0 +1,124 @@
+/**
+ * [INPUT]: 依赖 index.css 的账户、popover、统一 smooth-corner 按钮、边框、阴影、动效与 V1 语义 token，复用 design-system.css 的 UserAvatar 表面
+ * [OUTPUT]: 对外提供身份卡片式 UserMenu 弹层、统一平滑圆角且不偏红的中性/冷蓝分组动作、无红色填充的危险动作与键盘焦点视觉
+ * [POS]: app/src/styles 的账户菜单专用视觉层，与通用 Select 分离并被 UserMenu 独占
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+@layer components {
+  .ds-user-menu-shell {
+    position: relative;
+    min-width: 0;
+  }
+
+  .ds-user-menu-popover {
+    position: absolute;
+    bottom: calc(100% + 0.5rem);
+    left: 0;
+    z-index: 40;
+    width: min(19rem, calc(100vw - 1rem));
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--ds-radius-smooth);
+    background: var(--popover);
+    padding: 0.4rem;
+    color: var(--popover-foreground);
+    box-shadow: var(--shadow-xl), var(--ds-shadow-inset-highlight);
+    transform-origin: center bottom;
+    animation: ds-menu-in var(--motion-fast) var(--ease-standard);
+  }
+
+  .ds-user-menu-identity {
+    display: grid;
+    width: 100%;
+    min-height: 4.4rem;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.7rem;
+    border-radius: var(--button-radius);
+    padding: 0.65rem;
+    color: var(--foreground);
+    text-align: left;
+    transition: background var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard);
+  }
+
+  .ds-user-menu-identity:hover,
+  .ds-user-menu-identity:focus-visible,
+  .ds-user-menu-item:hover,
+  .ds-user-menu-item:focus-visible {
+    outline: none;
+    background: var(--surface-accent-subtle);
+    color: var(--accent-foreground);
+  }
+
+  .ds-user-menu-identity-avatar {
+    width: 2.65rem;
+    height: 2.65rem;
+    border-radius: 999px;
+    font-size: 0.8125rem;
+  }
+
+  .ds-user-menu-identity-copy {
+    min-width: 0;
+  }
+
+  .ds-user-menu-identity-copy strong,
+  .ds-user-menu-identity-copy small {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .ds-user-menu-identity-copy strong {
+    color: inherit;
+    font-size: 0.8125rem;
+    font-weight: 680;
+  }
+
+  .ds-user-menu-identity-copy small {
+    margin-top: 0.25rem;
+    color: var(--muted-foreground);
+    font-size: 0.6875rem;
+  }
+
+  .ds-user-menu-divider {
+    height: 1px;
+    margin: 0.35rem 0.25rem;
+    background: var(--border);
+  }
+
+  .ds-user-menu-item {
+    display: flex;
+    width: 100%;
+    min-height: 2.5rem;
+    align-items: center;
+    gap: 0.65rem;
+    border-radius: var(--button-radius);
+    padding: 0.55rem 0.65rem;
+    color: var(--foreground);
+    font-size: 0.75rem;
+    font-weight: 560;
+    text-align: left;
+    transition: background var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard);
+  }
+
+  .ds-user-menu-item[data-tone="danger"] {
+    color: var(--destructive);
+  }
+
+  .ds-user-menu-item[data-tone="danger"]:hover,
+  .ds-user-menu-item[data-tone="danger"]:focus-visible {
+    background: var(--surface-neutral);
+    color: var(--destructive);
+  }
+}
+
+@supports (corner-shape: squircle) {
+  @layer components {
+    .ds-user-menu-popover,
+    .ds-user-menu-identity,
+    .ds-user-menu-item {
+      corner-shape: squircle;
+    }
+  }
+}

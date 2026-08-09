@@ -1,24 +1,39 @@
 # api/
-> L1 | 父级: ../CLAUDE.md
+> L2 | 父级: ../CLAUDE.md
 
-业务接口服务模块，负责承载产品业务 API、数据访问与 Supabase 集成边界。
+业务接口服务模块，负责承载产品业务 API、业务权限与基于用户 JWT/RLS 的 Supabase REST/PostgREST/Storage 数据访问边界。
 
-技术栈: Bun + Hono + TypeScript + zod + Supabase client。
+技术栈: Bun + Hono + TypeScript + zod + Web fetch API + Supabase Storage。
 
 成员清单
-src/router/: 路由装配层，预留业务接口聚合边界
-src/api/: API 入口层，预留资源级 HTTP 处理边界
-src/dto/: 数据传输对象层，预留请求与响应契约边界
-src/model/: 业务模型层，预留领域实体与值对象边界
-src/service/: 应用服务层，预留业务用例编排边界
-src/repository/: 数据仓储层，预留 Supabase 数据访问边界
-src/middleware/: 中间件层，预留请求横切能力边界
-src/common/: 通用层，预留共享类型、常量、错误语义边界
-src/config/: 配置层，预留环境变量与服务配置边界
-src/lib/: 基础库适配层，预留外部 SDK 与基础设施封装边界
-package.json: Bun 包元数据与业务接口服务依赖清单
-bun.lock: Bun 锁定依赖版本
-tsconfig.json: TypeScript 编辑器与编译约束
+src/index.ts: Bun 进程入口，固定执行启动序列并用 6MiB 请求体上限在 multipart 解析前拦截异常上传
+src/app.ts: Hono 组装根，注册请求日志、CORS、X-Request-Id 跨域暴露、错误处理与 router
+src/router/: HTTP 路由层，提供 /health、/profile 及 JWT 保护的 active memo 与 trash 生命周期资源接口
+src/dto/: DTO 层，定义 Auth/profile/memo/Trash/PostgREST-RPC 响应与严格 HTTP body/param 的 zod schema/infer 类型
+src/model/: 领域模型层，定义 AuthUser、Profile、MemoNode/MemoContent/MemoTreeNode、健康状态与响应信封类型
+src/service/: 业务服务层，负责 JWT 认证、profile/头像生命周期、active memo 规则及 Trash 可见根/稳定错误/恢复 subtree 编排
+src/repository/: 数据访问层，携带已验证用户 JWT 通过 Supabase REST 提供 profiles、active memo CRUD、Trash 查询与原子 RPC
+src/middleware/: HTTP 横切层，提供请求 ID、开发态彩色 ASCII 请求卡片、生产态 JSON 日志与统一错误处理
+src/common/: 通用层，提供 HttpError 与统一响应 helper
+src/config/: 配置层，集中校验 API 环境变量
+src/lib/: 基础设施层，提供 Supabase Auth/PostgREST/Storage HTTP 适配器与启动横幅
+supabase/: 数据库契约层，保存 profiles、无限层级 memo_nodes/memos、deleted_at+deleted_root_id 删除批次、递归原子 RPC、级联约束及 owner-only RLS SQL 契约
+test/: Bun 内置 API 回归测试，使用内存 Supabase HTTP/RPC mock 验证认证、profile/头像、active memo 与完整 Trash 生命周期
+.env.example: 无真实凭据的本地环境变量模板，使用 Supabase Publishable key、后端端口 10001、前端 CORS 来源端口 10000
 .gitignore: api 模块忽略规则
+package.json: Bun scripts（含 typecheck/test）与 hono、zod 运行依赖清单
+bun.lock: Bun 锁定依赖版本
+tsconfig.json: TypeScript 严格类型检查约束，覆盖 src 与 test
+
+分层禁令
+router/: 禁止业务判断，禁止直接访问 Supabase REST
+dto/: 禁止 import Hono
+model/: 禁止 import Hono、zod
+service/: 禁止依赖 Hono Context，业务权限只允许在此层判断；content_mdx 必须逐字原样写入，摘要/字数只能从副本派生且不得回写正文；token 仅作请求期下传，禁止记录、返回或持久化
+repository/: 禁止写业务权限，只允许携带已验证用户 JWT 通过 lib/supabase-rest.ts 访问数据
+middleware/: 禁止打印 JWT、完整 Authorization header、查询串或完整 Publishable key；进入终端的外部字符串必须净化控制字符
+config/: Publishable key 只从 api 环境变量读取；禁止 service_role、secret key、硬编码凭据或向响应暴露
+lib/: Supabase 访问只允许 Auth/PostgREST/Storage HTTP API，禁止数据库连接串、驱动、ORM 与 service role
+supabase/: SQL 必须与远端实际 schema、RLS、policy、grants 保持一致
 
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md

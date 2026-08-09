@@ -1,0 +1,85 @@
+# [INPUT]: 依赖 api/chat 两个 Dockerfile、各自源码与被 Git 忽略的服务端环境文件
+# [OUTPUT]: 提供固定命名 api-dev/chat-dev、独立健康探针、依赖卷与共享 bridge 网络；chat 直启 Mastra CLI 以接收容器停止信号
+# [POS]: 仓库根开发编排入口；app 留在本机 Bun/Vite，api 与 chat 由同一 Compose 生命周期管理
+# [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+
+services:
+  api:
+    container_name: api-dev
+    build:
+      context: .
+      dockerfile: deploy/docker/api.Dockerfile
+    command: sh -lc "bun install --frozen-lockfile && bun run dev"
+    init: true
+    restart: unless-stopped
+    environment:
+      NODE_ENV: "${NODE_ENV:-development}"
+      PORT: "10001"
+      SYSTEM_NAME: "${SYSTEM_NAME:-SuperNote API}"
+      SUPABASE_URL: "${SUPABASE_URL:-}"
+      SUPABASE_PUBLISHABLE_KEY: "${SUPABASE_PUBLISHABLE_KEY:-}"
+      CORS_ORIGINS: "${CORS_ORIGINS:-http://localhost:10000,http://127.0.0.1:10000}"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "bun",
+          "-e",
+          "fetch('http://localhost:10001/health', { headers: { 'X-SuperNote-Probe': 'docker-health' } }).then((response) => { if (!response.ok) process.exit(1); }).catch(() => process.exit(1));",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    ports:
+      - "${API_PORT:-10001}:10001"
+    volumes:
+      - ./api:/workspace/api
+      - api_node_modules:/workspace/api/node_modules
+    networks:
+      - supernote-dev
+    stop_grace_period: 10s
+
+  chat:
+    container_name: chat-dev
+    build:
+      context: .
+      dockerfile: deploy/docker/chat.Dockerfile
+    command: sh -lc "bun install --frozen-lockfile && exec bun ./node_modules/mastra/dist/index.js dev"
+    init: true
+    restart: unless-stopped
+    env_file:
+      - ./chat/.env
+    environment:
+      NODE_ENV: "${NODE_ENV:-development}"
+      PORT: "10002"
+      SYSTEM_NAME: "${CHAT_SYSTEM_NAME:-SuperNote Chat}"
+      ALLOWED_ORIGINS: "${ALLOWED_ORIGINS:-http://localhost:10000,http://127.0.0.1:10000}"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "bun",
+          "-e",
+          "fetch('http://localhost:10002/health', { headers: { 'X-SuperNote-Probe': 'docker-health' } }).then((response) => { if (!response.ok) process.exit(1); }).catch(() => process.exit(1));",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 20s
+    ports:
+      - "${CHAT_PORT:-10002}:10002"
+    volumes:
+      - ./chat:/workspace/chat
+      - chat_node_modules:/workspace/chat/node_modules
+    networks:
+      - supernote-dev
+    stop_grace_period: 15s
+
+volumes:
+  api_node_modules:
+  chat_node_modules:
+
+networks:
+  supernote-dev:
+    driver: bridge

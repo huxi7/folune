@@ -1,0 +1,36 @@
+<!doctype html>
+<!--
+  [INPUT]: 依赖 src/main.tsx 的浏览器端 React 入口、ThemeProvider 存储键、prefers-color-scheme 与 Vite MODE 替换，内联 SuperNote 折角笔记页 favicon
+  [OUTPUT]: 对外提供 V1 Classic Blueprint 默认画布、App 首屏同步解析 system/light/dark、Landing 预绘浅色画布、品牌 favicon 和 root 挂载点
+  [POS]: app 根 HTML 入口，被 Vite dev/build 消费
+  [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+-->
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      (() => {
+        const root = document.documentElement;
+        try {
+          const storedTheme = window.localStorage.getItem("supernote-theme");
+          const theme = ["system", "light", "dark"].includes(storedTheme ?? "")
+            ? storedTheme
+            : "system";
+          const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+          const useDark = theme === "dark" || (theme === "system" && prefersDark);
+          const isLandingRoute = window.location.pathname === "/";
+          root.classList.toggle("dark", useDark && !isLandingRoute);
+        } catch {
+          root.classList.remove("dark");
+        }
+      })();
+    </script>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='8' y='6' width='44' height='50' rx='12' fill='%234d5fa7'/%3E%3Cpath d='M40 6h12v12z' fill='%23ebe6ff'/%3E%3Crect x='20' y='27' width='21' height='4' rx='2' fill='%23fffaf0'/%3E%3Crect x='20' y='36' width='15' height='4' rx='2' fill='%23fffaf0'/%3E%3Crect x='48' y='31' width='8' height='19' rx='3' fill='%23e5b85d'/%3E%3C/svg%3E" />
+    <title>SuperNote — Write first</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

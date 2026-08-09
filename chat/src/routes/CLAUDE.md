@@ -2,9 +2,7 @@
 > L2 | 父级: ../../CLAUDE.md
 
 成员清单
-.gitkeep: 保留 AI 路由层空目录
-CLAUDE.md: 记录 AI 路由层职责与文档协议
-
-职责: Hono 路由层，预留 AI 能力 HTTP 入口边界；当前不包含业务实现。
+chat.ts: 注册 POST /v1/chat，校验 AI SDK v6 UIMessage、锁定服务端上下文与预算并返回 SSE Response
+CLAUDE.md: 记录 HTTP 路由的成员、协议边界与 GEB 回环协议
 
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md

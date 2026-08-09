@@ -2,9 +2,7 @@
 > L2 | 父级: ../CLAUDE.md
 
 成员清单
-.gitkeep: 保留 Mastra agents 空目录
-CLAUDE.md: 记录智能代理目录职责与文档协议
-
-职责: 智能代理定义边界，预留 Mastra Agent 语义位置；当前不包含业务实现。
+memo-agent.ts: 首个纯聊天 Agent，组合外置提示词、白名单模型与服务端输出 token 上限
+CLAUDE.md: 记录 Agent 子域的成员、能力边界与 GEB 回环协议
 
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md

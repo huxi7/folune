@@ -1,0 +1,224 @@
+/**
+ * [INPUT]: 依赖 shared/api/memo 的 MemoTreeNode 领域契约
+ * [OUTPUT]: 对外提供 findNode/findSiblings/insertNode/removeNode/replaceNode/updateNode/moveNodeInTree/isDescendant/sortNodes 与稀疏排序计算
+ * [POS]: app/src/shared/store 的纯树算法内核，不访问网络或 React；Store 与拖拽视图共享同一套父子、防环和 sort_order 规则
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+
+import type { MemoTreeNode } from "../api/memo";
+
+export const SORT_ORDER_GAP = 1000;
+
+const numericSortOrder = (node: MemoTreeNode): number => {
+  const value = Number(node.sort_order);
+  return Number.isFinite(value) ? value : Number.POSITIVE_INFINITY;
+};
+
+export function sortNodes(nodes: readonly MemoTreeNode[]): MemoTreeNode[] {
+  return nodes
+    .map((node) => ({
+      ...node,
+      children: sortNodes(node.children),
+    }))
+    .sort((left, right) => {
+      const orderDelta = numericSortOrder(left) - numericSortOrder(right);
+      return orderDelta === 0 ? left.id.localeCompare(right.id) : orderDelta;
+    });
+}
+
+export function findNode(
+  nodes: readonly MemoTreeNode[],
+  nodeId: string,
+): MemoTreeNode | null {
+  const pending = [...nodes];
+
+  while (pending.length > 0) {
+    const node = pending.shift();
+
+    if (node === undefined) {
+      continue;
+    }
+
+    if (node.id === nodeId) {
+      return node;
+    }
+
+    pending.unshift(...node.children);
+  }
+
+  return null;
+}
+
+export function findSiblings(
+  nodes: readonly MemoTreeNode[],
+  parentId: string | null,
+): readonly MemoTreeNode[] | null {
+  if (parentId === null) {
+    return nodes;
+  }
+
+  const parent = findNode(nodes, parentId);
+  return parent?.node_type === "folder" ? parent.children : null;
+}
+
+export function appendSortOrder(
+  siblings: readonly MemoTreeNode[],
+): string {
+  const maximum = siblings.reduce(
+    (current, node) => Math.max(current, numericSortOrder(node)),
+    0,
+  );
+
+  return String((Number.isFinite(maximum) ? maximum : 0) + SORT_ORDER_GAP);
+}
+
+export function prependSortOrder(
+  siblings: readonly MemoTreeNode[],
+): string {
+  const first = sortNodes(siblings)[0];
+
+  if (first === undefined) {
+    return String(SORT_ORDER_GAP);
+  }
+
+  const firstOrder = numericSortOrder(first);
+  const halved = firstOrder / 2;
+  return String(halved < firstOrder ? halved : firstOrder - SORT_ORDER_GAP);
+}
+
+export function betweenSortOrders(
+  previous: MemoTreeNode | undefined,
+  next: MemoTreeNode | undefined,
+): string {
+  if (previous !== undefined && next !== undefined) {
+    return String((numericSortOrder(previous) + numericSortOrder(next)) / 2);
+  }
+
+  if (previous !== undefined) {
+    return String(numericSortOrder(previous) + SORT_ORDER_GAP);
+  }
+
+  if (next !== undefined) {
+    return prependSortOrder([next]);
+  }
+
+  return String(SORT_ORDER_GAP);
+}
+
+export function updateNode(
+  nodes: readonly MemoTreeNode[],
+  targetId: string,
+  updater: (node: MemoTreeNode) => MemoTreeNode,
+): MemoTreeNode[] {
+  return nodes.map((node) => {
+    if (node.id === targetId) {
+      return updater(node);
+    }
+
+    if (node.children.length === 0) {
+      return node;
+    }
+
+    return {
+      ...node,
+      children: updateNode(node.children, targetId, updater),
+    };
+  });
+}
+
+export function insertNode(
+  nodes: readonly MemoTreeNode[],
+  node: MemoTreeNode,
+  parentId: string | null,
+  sortOrder?: string,
+): MemoTreeNode[] {
+  const siblings = findSiblings(nodes, parentId);
+
+  if (siblings === null) {
+    return [...nodes];
+  }
+
+  const insertedNode: MemoTreeNode = {
+    ...node,
+    parent_id: parentId,
+    sort_order: sortOrder ?? appendSortOrder(siblings),
+  };
+
+  if (parentId === null) {
+    return sortNodes([...nodes, insertedNode]);
+  }
+
+  return updateNode(nodes, parentId, (parent) => ({
+    ...parent,
+    children: sortNodes([...parent.children, insertedNode]),
+  }));
+}
+
+export function removeNode(
+  nodes: readonly MemoTreeNode[],
+  nodeId: string,
+): MemoTreeNode[] {
+  const nextNodes: MemoTreeNode[] = [];
+
+  for (const node of nodes) {
+    if (node.id === nodeId) {
+      continue;
+    }
+
+    nextNodes.push(
+      node.children.length === 0
+        ? node
+        : { ...node, children: removeNode(node.children, nodeId) },
+    );
+  }
+
+  return nextNodes;
+}
+
+export function replaceNode(
+  nodes: readonly MemoTreeNode[],
+  targetId: string,
+  nextNode: MemoTreeNode,
+  preserveChildren = false,
+): MemoTreeNode[] {
+  return updateNode(nodes, targetId, (currentNode) => ({
+    ...nextNode,
+    children: preserveChildren ? currentNode.children : nextNode.children,
+  }));
+}
+
+export function isDescendant(
+  nodes: readonly MemoTreeNode[],
+  ancestorId: string,
+  candidateId: string,
+): boolean {
+  const ancestor = findNode(nodes, ancestorId);
+
+  if (ancestor === null) {
+    return false;
+  }
+
+  return findNode(ancestor.children, candidateId) !== null;
+}
+
+export function moveNodeInTree(
+  nodes: readonly MemoTreeNode[],
+  nodeId: string,
+  parentId: string | null,
+  sortOrder?: string,
+): MemoTreeNode[] {
+  const node = findNode(nodes, nodeId);
+  const parent = parentId === null ? null : findNode(nodes, parentId);
+
+  if (
+    node === null ||
+    nodeId === parentId ||
+    (parentId !== null && parent?.node_type !== "folder") ||
+    (parentId !== null && isDescendant(nodes, nodeId, parentId))
+  ) {
+    return [...nodes];
+  }
+
+  const withoutNode = removeNode(nodes, nodeId);
+  return insertNode(withoutNode, node, parentId, sortOrder);
+}

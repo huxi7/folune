@@ -1,0 +1,217 @@
+/**
+ * [INPUT]: 依赖 CodeMirror 6 生成的 cm-* DOM 类与 index.css 根级语义 token
+ * [OUTPUT]: 对外提供 CodeMirror light/dark 基础适配、source 等宽源码视图，以及使用确定性中性表面的 live 标题源码态/预览态与强调/链接/列表/任务/引用/代码/表格显示协议
+ * [POS]: app/src/styles 的第三方编辑器级联边界；只消费语义 Token，把 Live Decoration 映射为无标题下划线的 Obsidian 式视觉效果并维持原始 Markdown 空白保真
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+.supernote-md-editor,
+.supernote-md-editor .cm-editor {
+  height: 100%;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+}
+
+.supernote-md-editor .cm-editor.cm-focused {
+  outline: none;
+}
+
+.supernote-md-editor .cm-editor .cm-scroller {
+  background: var(--background);
+  color: var(--foreground);
+  padding: clamp(1.5rem, 5vw, 3.5rem);
+  font-family: var(--font-mono);
+}
+
+.supernote-md-editor .cm-editor .cm-content {
+  min-height: 100%;
+  max-width: 48rem;
+  margin-inline: auto;
+  caret-color: var(--primary);
+}
+
+.supernote-md-editor .cm-editor .cm-cursor,
+.supernote-md-editor .cm-editor .cm-dropCursor {
+  border-left-color: var(--primary);
+}
+
+.supernote-md-editor .cm-editor .cm-placeholder {
+  color: var(--muted-foreground);
+}
+
+.supernote-md-editor .cm-editor .cm-selectionBackground,
+.supernote-md-editor .cm-editor.cm-focused .cm-selectionBackground {
+  background: var(--primary-soft);
+}
+
+.note-editor-canvas .supernote-md-editor,
+.note-editor-canvas .supernote-md-editor .cm-editor,
+.note-editor-canvas .supernote-md-editor .cm-scroller {
+  background: transparent;
+}
+
+.note-editor-canvas .supernote-md-editor .cm-scroller {
+  padding: 0;
+}
+
+.note-editor-canvas .supernote-md-editor .cm-content {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  line-height: 1.9;
+  white-space: pre-wrap;
+}
+
+.note-editor-canvas .supernote-md-editor .cm-line {
+  padding-inline: 0;
+  white-space: pre-wrap;
+}
+
+.note-editor-canvas .supernote-md-editor .cm-editor[data-editing-mode="source"] .cm-content {
+  font-family: var(--font-mono);
+}
+
+.note-editor-canvas .supernote-md-editor .cm-editor[data-editing-mode="live"] .cm-content {
+  font-family: var(--font-sans);
+}
+
+.supernote-md-editor .cm-live-heading {
+  padding-block: 0.18em 0.04em;
+  color: var(--foreground);
+  font-weight: 720;
+  letter-spacing: -0.025em;
+  text-decoration: none !important;
+}
+
+.supernote-md-editor .cm-live-heading * {
+  text-decoration: none !important;
+}
+
+.supernote-md-editor .cm-live-heading-marker {
+  color: var(--muted-foreground) !important;
+  font-family: var(--font-mono);
+  font-size: 0.52em;
+  font-weight: 620 !important;
+  letter-spacing: 0;
+  text-decoration: none !important;
+  vertical-align: 0.14em;
+}
+
+.supernote-md-editor .cm-live-heading-1 { font-size: 1.8rem; line-height: 1.35; }
+.supernote-md-editor .cm-live-heading-2 { font-size: 1.5rem; line-height: 1.4; }
+.supernote-md-editor .cm-live-heading-3 { font-size: 1.25rem; line-height: 1.5; }
+.supernote-md-editor .cm-live-heading-4 { font-size: 1.08rem; line-height: 1.55; }
+.supernote-md-editor .cm-live-heading-5 { font-size: 0.96rem; line-height: 1.65; }
+.supernote-md-editor .cm-live-heading-6 { font-size: 0.875rem; line-height: 1.7; }
+
+.supernote-md-editor .cm-live-strong { font-weight: 720; }
+.supernote-md-editor .cm-live-emphasis { font-style: italic; }
+.supernote-md-editor .cm-live-strikethrough { text-decoration: line-through; text-decoration-thickness: 1px; }
+.supernote-md-editor .cm-live-link { color: var(--primary); text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--primary) 40%, transparent); text-underline-offset: 0.16em; }
+
+.supernote-md-editor .cm-live-inline-code {
+  border: 1px solid var(--border);
+  border-radius: 0.3rem;
+  background: var(--surface-neutral);
+  padding: 0.08rem 0.28rem;
+  color: var(--foreground);
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+}
+
+.supernote-md-editor .cm-live-blockquote {
+  border-left: 2px solid color-mix(in srgb, var(--primary) 44%, var(--border));
+  padding-left: 0.9rem;
+  color: var(--muted-foreground);
+}
+
+.supernote-md-editor .cm-live-list-line { padding-left: 0.2rem; }
+
+.supernote-md-editor .cm-live-list-marker {
+  display: inline-flex;
+  min-width: 1.15rem;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+  font-family: var(--font-mono);
+}
+
+.supernote-md-editor .cm-live-task-marker {
+  display: inline-flex;
+  width: 0.95rem;
+  height: 0.95rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid color-mix(in srgb, var(--border) 88%, var(--foreground));
+  border-radius: 0.24rem;
+  background: var(--background);
+  color: var(--primary-foreground);
+  font-size: 0.65rem;
+  font-weight: 800;
+  line-height: 1;
+  vertical-align: -0.08rem;
+}
+
+.supernote-md-editor .cm-live-task-marker-checked {
+  border-color: var(--primary);
+  background: var(--primary);
+}
+
+.supernote-md-editor .cm-live-horizontal-rule {
+  display: inline-block;
+  width: 100%;
+  border-top: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.supernote-md-editor .cm-live-code-line {
+  background: var(--surface-neutral);
+  padding-inline: 0.85rem;
+  color: var(--foreground);
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  line-height: 1.65;
+}
+
+.supernote-md-editor .cm-live-syntax-only-line {
+  height: 0;
+  min-height: 0;
+  overflow: hidden;
+  line-height: 0;
+}
+
+.supernote-md-editor .cm-live-table-widget-line { width: 100%; }
+
+.supernote-md-editor .cm-live-table {
+  display: inline-grid;
+  width: 100%;
+  min-width: 22rem;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 0.55rem;
+  background: var(--background);
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  vertical-align: top;
+}
+
+.supernote-md-editor .cm-live-table-row {
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+}
+
+.supernote-md-editor .cm-live-table-row + .cm-live-table-row { border-top: 1px solid var(--border); }
+
+.supernote-md-editor .cm-live-table-cell {
+  min-width: 0;
+  padding: 0.45rem 0.6rem;
+  overflow-wrap: anywhere;
+}
+
+.supernote-md-editor .cm-live-table-cell + .cm-live-table-cell { border-left: 1px solid var(--border); }
+.supernote-md-editor .cm-live-table-header-cell { background: var(--surface-neutral); font-weight: 680; }

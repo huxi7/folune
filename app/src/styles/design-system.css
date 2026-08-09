@@ -1,0 +1,782 @@
+/**
+ * [INPUT]: 依赖 index.css 的语义颜色、Button 边缘/接触阴影/顶部高光/按压收拢/loading 独立状态 token 与 Tailwind v4 layer
+ * [OUTPUT]: 对外提供 ThinkingMark 固定 SVG 容器/Formation 聚合 Motion、确定性中性灰且不偏红的单组宽光带 Skeleton、以白色表面和有效内外层次塑形且 hover 固定原位的触感 Button、保留实心红色的 Danger、独立冷灰蓝表面与低频 Shimmer 的 loading 状态，以及冻结的 V1 组件质感与 Dialog 层级
+ * [POS]: app/src/styles 的组件视觉层，被 index.css 统一导入
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+@layer components {
+  .ds-skeleton-group {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+  }
+
+  .ds-skeleton-group::after {
+    content: "";
+    position: absolute;
+    inset-block: -18%;
+    left: -72%;
+    z-index: 2;
+    width: 64%;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      color-mix(in srgb, var(--skeleton-highlight) 18%, transparent) 18%,
+      color-mix(in srgb, var(--skeleton-highlight) 72%, transparent) 50%,
+      color-mix(in srgb, var(--skeleton-highlight) 18%, transparent) 82%,
+      transparent 100%
+    );
+    filter: blur(0.18rem);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(0);
+  }
+
+  .ds-skeleton-group[data-visible="true"]::after {
+    animation: ds-skeleton-shimmer 3.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
+
+  .ds-skeleton {
+    display: block;
+    min-width: 0;
+    overflow: hidden;
+    background: var(--skeleton-base);
+    opacity: 1;
+    transition: opacity 160ms var(--ease-standard);
+  }
+
+  .ds-skeleton-group[data-visible="false"] .ds-skeleton {
+    opacity: 0;
+  }
+
+  .ds-skeleton-rect {
+    border-radius: var(--button-radius);
+  }
+
+  .ds-skeleton-text {
+    height: 0.72em;
+    border-radius: 999px;
+  }
+
+  .ds-skeleton-circle {
+    aspect-ratio: 1;
+    border-radius: 999px;
+  }
+
+  .ds-thinking-mark {
+    display: block;
+    flex: none;
+    overflow: visible;
+    color: inherit;
+  }
+
+  .ds-thinking-mark,
+  .ds-thinking-mark [data-part] {
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  .ds-thinking-mark[data-active="true"][data-variant="formation"] [data-part="core"] {
+    animation: ds-thinking-core 1.84s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
+
+  .ds-thinking-mark[data-active="true"][data-variant="formation"] [data-part^="node-"] {
+    --thinking-node-x: 0;
+    --thinking-node-y: 0;
+    animation: ds-thinking-node 1.84s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    animation-fill-mode: both;
+  }
+
+  .ds-thinking-mark[data-active="true"][data-variant="formation"] [data-part="node-a"] {
+    --thinking-node-x: -0.55px;
+    --thinking-node-y: -0.45px;
+  }
+
+  .ds-thinking-mark[data-active="true"][data-variant="formation"] [data-part="node-b"] {
+    --thinking-node-x: -0.62px;
+    --thinking-node-y: 0.32px;
+    animation-delay: 250ms;
+  }
+
+  .ds-thinking-mark[data-active="true"][data-variant="formation"] [data-part="node-c"] {
+    --thinking-node-x: 0.42px;
+    --thinking-node-y: -0.52px;
+    animation-delay: 500ms;
+  }
+
+  .ds-thinking-mark[data-active="true"][data-variant="formation"] [data-part="node-d"] {
+    --thinking-node-x: 0.62px;
+    --thinking-node-y: 0.02px;
+    animation-delay: 125ms;
+  }
+
+  .ds-thinking-mark[data-active="true"][data-variant="formation"] [data-part="node-e"] {
+    --thinking-node-x: 0.3px;
+    --thinking-node-y: 0.58px;
+    animation-delay: 375ms;
+  }
+
+  .ds-thinking-mark[data-active="true"][data-variant="formation"] [data-part^="connector-"] {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 0.76;
+    animation: ds-thinking-connector 1.84s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    animation-fill-mode: both;
+  }
+
+  .ds-thinking-mark[data-active="true"][data-variant="formation"] [data-part="connector-a"] {
+    animation-delay: 90ms;
+  }
+
+  .ds-thinking-mark[data-active="true"][data-variant="formation"] [data-part="connector-b"] {
+    animation-delay: 340ms;
+  }
+
+  .ds-thinking-mark[data-active="true"][data-variant="formation"] [data-part="connector-c"] {
+    animation-delay: 590ms;
+  }
+
+  .ds-thinking-mark[data-active="true"][data-variant="formation"] [data-part="connector-d"] {
+    animation-delay: 215ms;
+  }
+
+  .ds-thinking-mark[data-active="true"][data-variant="formation"] [data-part="connector-e"] {
+    animation-delay: 465ms;
+  }
+
+  .ds-button {
+    --button-border-rest: transparent;
+    --button-border-hover: transparent;
+    --button-border-active: transparent;
+    --button-surface-rest: transparent;
+    --button-surface-hover: transparent;
+    --button-surface-active: transparent;
+    --button-foreground-rest: var(--foreground);
+    --button-elevation-rest: var(--button-shadow-rest);
+    --button-elevation-pressed: var(--button-shadow-pressed);
+    --button-elevation-disabled: var(--button-shadow-disabled);
+    --button-shimmer-color: var(--button-specular);
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--button-border-rest);
+    border-radius: var(--button-radius);
+    background: var(--button-surface-rest);
+    color: var(--button-foreground-rest);
+    font-size: 0.75rem;
+    font-weight: 650;
+    letter-spacing: 0.006em;
+    line-height: 1;
+    white-space: nowrap;
+    box-shadow: var(--button-elevation-rest);
+    transform: translateY(0);
+    transition:
+      transform var(--motion-fast) var(--ease-standard),
+      box-shadow var(--motion-fast) var(--ease-standard),
+      background var(--motion-fast) var(--ease-standard),
+      border-color var(--motion-fast) var(--ease-standard),
+      color var(--motion-fast) var(--ease-standard),
+      filter var(--motion-fast) var(--ease-standard),
+      opacity var(--motion-fast) var(--ease-standard);
+  }
+
+  .ds-button-content {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: calc(var(--spacing) * 2);
+  }
+
+  .ds-button:not(:disabled):hover {
+    border-color: var(--button-border-hover);
+    background: var(--button-surface-hover);
+    box-shadow: var(--button-elevation-rest);
+  }
+
+  .ds-button:not(:disabled):active {
+    border-color: var(--button-border-active);
+    background: var(--button-surface-active);
+    box-shadow: var(--button-elevation-pressed);
+    transform: translateY(0.0625rem);
+    transition-duration: 70ms;
+  }
+
+  .ds-button:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--ring) 66%, transparent);
+    outline-offset: 3px;
+  }
+
+  .ds-button:disabled {
+    cursor: not-allowed;
+  }
+
+  .ds-button:disabled:not(.ds-button-loading) {
+    box-shadow: var(--button-elevation-disabled);
+    filter: saturate(0.52);
+    opacity: 0.58;
+    transform: none;
+  }
+
+  .ds-button.ds-button-loading {
+    cursor: wait;
+    opacity: 1;
+    transform: none;
+  }
+
+  .ds-button.ds-button-loading:not(.ds-button-danger) {
+    border-color: var(--button-loading-border);
+    background: var(--button-loading-background);
+    color: var(--button-loading-foreground);
+    box-shadow:
+      0 0.12rem 0.22rem -0.08rem color-mix(in srgb, var(--button-depth) 15%, transparent),
+      0 0.38rem 0.72rem -0.52rem color-mix(in srgb, var(--button-depth) 16%, transparent),
+      inset 0 1px 0 color-mix(in srgb, var(--button-loading-shimmer) 64%, transparent);
+  }
+
+  .ds-button-loading::after {
+    content: "";
+    position: absolute;
+    top: -55%;
+    bottom: -55%;
+    left: -48%;
+    z-index: 0;
+    width: 34%;
+    background: linear-gradient(
+      102deg,
+      transparent 0%,
+      color-mix(in srgb, var(--button-shimmer-color) 8%, transparent) 24%,
+      color-mix(in srgb, var(--button-shimmer-color) 62%, transparent) 50%,
+      color-mix(in srgb, var(--button-shimmer-color) 8%, transparent) 76%,
+      transparent 100%
+    );
+    filter: blur(0.08rem);
+    opacity: 0;
+    pointer-events: none;
+    transform: skewX(-14deg) translateX(-280%);
+    animation: ds-button-shimmer 3.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
+
+  .ds-button-loading:not(.ds-button-danger)::after {
+    --button-shimmer-color: var(--button-loading-shimmer);
+  }
+
+  .ds-button-spinner {
+    width: 0.875rem;
+    height: 0.875rem;
+    flex-shrink: 0;
+    border: 0.1rem solid currentColor;
+    border-right-color: transparent;
+    border-radius: 999px;
+    opacity: 0.78;
+    animation: ds-button-spin 840ms linear infinite;
+  }
+
+  .ds-button-size-default {
+    height: var(--button-height-default);
+    min-height: var(--button-height-default);
+    padding: 0 1rem;
+  }
+
+  .ds-button-size-square {
+    width: var(--button-height-default);
+    height: var(--button-height-default);
+    padding: 0;
+  }
+
+  .ds-button-primary {
+    --button-border-rest: color-mix(in srgb, var(--primary) 82%, var(--button-depth));
+    --button-border-hover: color-mix(in srgb, var(--primary-hover) 82%, var(--button-depth));
+    --button-border-active: color-mix(in srgb, var(--primary-active) 82%, var(--button-depth));
+    --button-surface-rest: var(--primary);
+    --button-surface-hover: var(--primary-hover);
+    --button-surface-active: var(--primary-active);
+    --button-foreground-rest: var(--primary-foreground);
+  }
+
+  .ds-button-secondary {
+    --button-border-rest: color-mix(in srgb, var(--border) 62%, transparent);
+    --button-border-hover: color-mix(in srgb, var(--border) 84%, transparent);
+    --button-border-active: var(--border-strong);
+    --button-surface-rest: var(--card);
+    --button-surface-hover: var(--secondary);
+    --button-surface-active: var(--border);
+    --button-foreground-rest: var(--card-foreground);
+    --button-shimmer-color: var(--foreground);
+  }
+
+  .ds-button-ghost {
+    --button-surface-hover: var(--muted);
+    --button-surface-active: var(--border);
+    --button-foreground-rest: var(--muted-foreground);
+    --button-elevation-rest: none;
+    --button-elevation-pressed: none;
+    --button-elevation-disabled: none;
+    --button-shimmer-color: var(--foreground);
+  }
+
+  .ds-button-ghost:not(:disabled):hover {
+    color: var(--foreground);
+  }
+
+  .ds-button-danger {
+    --button-border-rest: color-mix(in srgb, var(--destructive) 80%, var(--button-depth));
+    --button-border-hover: color-mix(in srgb, var(--button-danger-hover-background) 80%, var(--button-depth));
+    --button-border-active: color-mix(in srgb, var(--button-danger-active-background) 80%, var(--button-depth));
+    --button-surface-rest: var(--destructive);
+    --button-surface-hover: var(--button-danger-hover-background);
+    --button-surface-active: var(--button-danger-active-background);
+    --button-foreground-rest: var(--destructive-foreground);
+  }
+
+  .ds-input {
+    min-height: 2.25rem;
+    border-radius: calc(var(--ds-radius-soft) - 0.125rem);
+    border-width: 1px;
+    border-color: var(--input);
+    background: var(--card);
+    padding-inline: calc(var(--spacing) * 3);
+    font-size: 0.875rem;
+    color: var(--foreground);
+    box-shadow: var(--ds-shadow-pressed), inset 0 -1px 0 color-mix(in srgb, var(--background) 84%, transparent);
+    transition: border-color var(--motion-fast) var(--ease-standard), box-shadow var(--motion-fast) var(--ease-standard), background var(--motion-fast) var(--ease-standard);
+  }
+
+  .ds-input::placeholder {
+    color: var(--muted-foreground);
+  }
+
+  .ds-input:focus-visible {
+    outline: none;
+    border-color: var(--ring);
+    box-shadow: 0 0 0 0.18rem color-mix(in srgb, var(--ring) 18%, transparent), var(--ds-shadow-pressed);
+  }
+
+  .ds-input:disabled {
+    cursor: not-allowed;
+    opacity: 0.58;
+    background: var(--surface-neutral);
+    box-shadow: none;
+  }
+
+  .ds-password-input {
+    position: relative;
+    width: 100%;
+  }
+
+  .ds-password-input .ds-password-input-control {
+    width: 100%;
+    padding-right: 3rem;
+  }
+
+  .ds-password-toggle {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    display: inline-flex;
+    width: 2.75rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--button-radius);
+    color: var(--muted-foreground);
+    transition: color var(--motion-fast) var(--ease-standard), background var(--motion-fast) var(--ease-standard);
+  }
+
+  .ds-password-toggle:not(:disabled):hover {
+    background: var(--surface-neutral);
+    color: var(--primary);
+  }
+
+  .ds-password-toggle:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--ring) 45%, transparent);
+    outline-offset: -0.25rem;
+  }
+
+  .ds-password-toggle:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+
+  .ds-card {
+    border-radius: var(--ds-radius-smooth);
+    border-width: 1px;
+    box-shadow: var(--shadow-sm), var(--ds-shadow-inset-highlight);
+    transition: border-color var(--motion-normal) var(--ease-standard), background var(--motion-normal) var(--ease-standard), box-shadow var(--motion-normal) var(--ease-standard);
+  }
+
+  .ds-card-default {
+    border-color: var(--border);
+    background: var(--card);
+    color: var(--card-foreground);
+  }
+
+  .ds-card-accent {
+    border-color: color-mix(in srgb, var(--primary) 28%, var(--border));
+    background: var(--card);
+    color: var(--accent-foreground);
+  }
+
+  .ds-brand-mark {
+    position: relative;
+    width: 1.8rem;
+    height: 1.8rem;
+    flex-shrink: 0;
+  }
+
+  .ds-brand-note {
+    position: absolute;
+    inset: 0.05rem 0.22rem 0.14rem 0.05rem;
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--primary) 72%, var(--foreground));
+    border-radius: 0.46rem;
+    background: linear-gradient(145deg, color-mix(in srgb, var(--primary) 88%, var(--chart-5)), var(--primary));
+    box-shadow: var(--shadow-sm), inset 0 1px 0 color-mix(in srgb, var(--primary-foreground) 30%, transparent);
+  }
+
+  .ds-brand-note::after {
+    content: "";
+    position: absolute;
+    top: -1px;
+    right: -1px;
+    width: 0.66rem;
+    height: 0.66rem;
+    background: var(--accent);
+    clip-path: polygon(0 0, 100% 100%, 0 100%);
+  }
+
+  .ds-brand-line {
+    position: absolute;
+    left: 0.34rem;
+    height: 0.1rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--primary-foreground) 82%, transparent);
+  }
+
+  .ds-brand-line-long {
+    bottom: 0.58rem;
+    width: 0.72rem;
+  }
+
+  .ds-brand-line-short {
+    bottom: 0.36rem;
+    width: 0.5rem;
+  }
+
+  .ds-brand-tab {
+    position: absolute;
+    right: 0;
+    bottom: 0.14rem;
+    width: 0.4rem;
+    height: 0.78rem;
+    border: 1px solid color-mix(in srgb, var(--chart-3) 72%, var(--foreground));
+    border-radius: 0.15rem 0.22rem 0.22rem 0.15rem;
+    background: var(--chart-3);
+    box-shadow: var(--shadow-xs);
+  }
+
+  .ds-dialog-panel {
+    border-radius: var(--ds-radius-smooth);
+    border: 1px solid var(--border);
+    background: var(--popover);
+    color: var(--popover-foreground);
+    box-shadow: var(--shadow-2xl), var(--ds-shadow-inset-highlight);
+    animation: ds-panel-in var(--motion-normal) var(--ease-standard);
+  }
+
+  .ds-dialog-panel:focus {
+    outline: none;
+  }
+
+  .ds-dialog-overlay {
+    z-index: 80;
+    background: color-mix(in srgb, var(--shadow-color) 38%, transparent);
+    animation: ds-overlay-in var(--motion-normal) var(--ease-standard);
+  }
+
+  .ds-select-shell {
+    position: relative;
+    width: 100%;
+  }
+
+  .ds-select-trigger {
+    display: flex;
+    min-height: 2.75rem;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    gap: calc(var(--spacing) * 3);
+    border-radius: var(--button-radius);
+    border: 1px solid var(--border);
+    background: var(--card);
+    padding: 0.65rem 0.75rem;
+    color: var(--foreground);
+    box-shadow: var(--shadow-xs), var(--ds-shadow-inset-highlight);
+    transition: box-shadow var(--motion-fast) var(--ease-standard), border-color var(--motion-fast) var(--ease-standard);
+  }
+
+  .ds-select-trigger:hover,
+  .ds-select-trigger[data-open="true"] {
+    border-color: color-mix(in srgb, var(--ring) 42%, var(--border));
+    box-shadow: var(--shadow-xs), var(--ds-shadow-inset-highlight);
+  }
+
+  .ds-select-trigger:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 0.18rem color-mix(in srgb, var(--ring) 18%, transparent), var(--ds-shadow-raised), var(--ds-shadow-inset-highlight);
+  }
+
+  .ds-select-menu {
+    position: absolute;
+    left: 0;
+    z-index: 40;
+    width: 100%;
+    overflow: hidden;
+    border-radius: var(--ds-radius-smooth);
+    border: 1px solid var(--border);
+    background: var(--popover);
+    padding: calc(var(--spacing) * 1.5);
+    color: var(--popover-foreground);
+    box-shadow: var(--shadow-xl), var(--ds-shadow-inset-highlight);
+    transform-origin: center top;
+    animation: ds-menu-in var(--motion-fast) var(--ease-standard);
+  }
+
+  .ds-select-menu-top {
+    bottom: calc(100% + var(--spacing) * 2);
+    transform-origin: center bottom;
+  }
+
+  .ds-select-menu-bottom {
+    top: calc(100% + var(--spacing) * 2);
+  }
+
+  .ds-select-option {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    gap: calc(var(--spacing) * 2.5);
+    border-radius: var(--button-radius);
+    padding: 0.6rem 0.65rem;
+    text-align: left;
+    color: var(--foreground);
+    min-height: 2.25rem;
+    transition: background var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard), box-shadow var(--motion-fast) var(--ease-standard);
+  }
+
+  .ds-select-option[data-active="true"] {
+    background: var(--surface-accent-subtle);
+    color: var(--accent-foreground);
+    box-shadow: var(--ds-shadow-inset-highlight), var(--ds-shadow-inset-lowlight);
+  }
+
+  .ds-select-option[data-tone="danger"] {
+    color: var(--destructive);
+  }
+
+  .ds-select-option[data-tone="danger"][data-active="true"] {
+    background: var(--muted);
+    color: var(--destructive);
+  }
+
+  .ds-user-button {
+    display: flex;
+    min-height: 3rem;
+    width: 100%;
+    align-items: center;
+    gap: calc(var(--spacing) * 2.5);
+    border-radius: var(--button-radius);
+    border: 1px solid var(--sidebar-border);
+    background: var(--sidebar);
+    padding: 0.55rem 0.65rem;
+    color: var(--sidebar-foreground);
+    box-shadow: var(--shadow-xs), var(--ds-shadow-inset-highlight);
+    transition: box-shadow var(--motion-fast) var(--ease-standard), border-color var(--motion-fast) var(--ease-standard), background var(--motion-fast) var(--ease-standard);
+  }
+
+  .ds-user-button:hover,
+  .ds-user-button[data-open="true"] {
+    border-color: color-mix(in srgb, var(--sidebar-ring) 42%, var(--sidebar-border));
+    box-shadow: var(--shadow-xs), var(--ds-shadow-inset-highlight);
+  }
+
+  .ds-user-button:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 0.18rem color-mix(in srgb, var(--sidebar-ring) 18%, transparent), var(--ds-shadow-raised), var(--ds-shadow-inset-highlight);
+  }
+
+  .ds-user-avatar {
+    display: flex;
+    width: 2rem;
+    height: 2rem;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    object-fit: cover;
+    border-radius: var(--ds-radius-soft);
+    border: 1px solid color-mix(in srgb, var(--primary) 34%, var(--border));
+    background: linear-gradient(180deg, color-mix(in srgb, var(--primary) 84%, var(--background)), var(--primary));
+    color: var(--primary-foreground);
+    font-size: 0.75rem;
+    font-weight: 700;
+    box-shadow: var(--ds-shadow-raised), var(--ds-shadow-inset-highlight);
+  }
+
+  @supports (corner-shape: squircle) {
+    .ds-button,
+    .ds-input,
+    .ds-password-toggle,
+    .ds-card,
+    .ds-brand-mark,
+    .design-system-tile,
+    .design-system-preview,
+    .ds-dialog-panel,
+    .ds-select-trigger,
+    .ds-select-menu,
+    .ds-select-option,
+    .ds-user-button,
+    .ds-user-avatar {
+      corner-shape: squircle;
+    }
+  }
+
+  @keyframes ds-panel-in {
+    from {
+      opacity: 0;
+      transform: translateY(0.35rem) scale(0.985);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes ds-thinking-node {
+    0%, 100% {
+      opacity: 0.54;
+      transform: translate3d(var(--thinking-node-x), var(--thinking-node-y), 0) scale(0.84);
+    }
+    30%, 68% {
+      opacity: 1;
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+    84% {
+      opacity: 0.78;
+      transform: translate3d(0, 0, 0) scale(0.94);
+    }
+  }
+
+  @keyframes ds-thinking-connector {
+    0%, 100% {
+      opacity: 0.16;
+      stroke-dashoffset: 0.76;
+    }
+    34%, 70% {
+      opacity: 0.76;
+      stroke-dashoffset: 0;
+    }
+    86% {
+      opacity: 0.4;
+      stroke-dashoffset: 0.34;
+    }
+  }
+
+  @keyframes ds-thinking-core {
+    0%, 100% {
+      opacity: 0.86;
+      transform: scale(0.97);
+    }
+    38%, 72% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    86% {
+      opacity: 0.94;
+      transform: scale(0.985);
+    }
+  }
+
+  @keyframes ds-button-spin {
+    to { transform: rotate(360deg); }
+  }
+
+  @keyframes ds-button-shimmer {
+    0%, 38% {
+      opacity: 0;
+      transform: skewX(-14deg) translateX(-280%);
+    }
+    44% { opacity: 0.14; }
+    53% { opacity: 0.82; }
+    65% { opacity: 0.28; }
+    73%, 100% {
+      opacity: 0;
+      transform: skewX(-14deg) translateX(520%);
+    }
+  }
+
+  @keyframes ds-skeleton-shimmer {
+    0%, 16% {
+      opacity: 0;
+      transform: translateX(0);
+    }
+    25% { opacity: 0.52; }
+    74% { opacity: 0.52; }
+    84%, 100% {
+      opacity: 0;
+      transform: translateX(285%);
+    }
+  }
+
+  @keyframes ds-content-reveal {
+    from { opacity: 0.76; }
+    to { opacity: 1; }
+  }
+
+  .loading-content-reveal {
+    animation: ds-content-reveal 180ms var(--ease-standard) both;
+  }
+
+  @keyframes ds-overlay-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes ds-menu-in {
+    from {
+      opacity: 0;
+      transform: translateY(-0.2rem) scale(0.985);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @layer components {
+    .ds-skeleton-group::after,
+    .ds-button-loading::after,
+    .ds-button-spinner,
+    .loading-content-reveal {
+      animation: none !important;
+    }
+
+    .ds-skeleton {
+      transition: none;
+    }
+
+    .ds-thinking-mark[data-active="true"][data-variant="formation"] [data-part] {
+      animation: none !important;
+      opacity: 1;
+      stroke-dasharray: none;
+      stroke-dashoffset: 0;
+      transform: none;
+    }
+  }
+}
