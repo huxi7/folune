@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖 AI SDK UIMessage 文本/工具 part、庆祝工具显示名、互斥 AssistantActivity、design-system AI 消息组件与安全 MarkdownReadingView
- * [OUTPUT]: 对外提供用户气泡，以及含中文“庆祝”工具名且 Thinking/Tool/Streaming 不叠加的 assistant 消息渲染
+ * [INPUT]: 依赖 AI SDK UIMessage 文本/工具 part、客户端工具中文显示名、互斥 AssistantActivity、design-system AI 消息组件与安全 MarkdownReadingView
+ * [OUTPUT]: 对外提供用户气泡，以及含中文工具名且 Thinking/Tool/Streaming 不叠加的 assistant 消息渲染
  * [POS]: AgentPanel 的消息适配层，把 SDK part、工具协议名与活动态映射为同一套生产设计系统组件
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -15,6 +15,7 @@ import {
 } from "../../shared/design-system/components";
 import { MarkdownReadingView } from "../MarkdownReadingView";
 import type { AssistantActivity } from "./activityState";
+import { getAgentClientToolDisplayName } from "./clientTools";
 
 type ChatMessageProps = {
   activity: AssistantActivity;
@@ -66,7 +67,7 @@ export function ChatMessage({
               errorText={part.state === "output-error" ? part.errorText : undefined}
               input={part.input}
               key={part.toolCallId}
-              name={toolName === "celebration" ? "庆祝" : toolName}
+              name={getAgentClientToolDisplayName(toolName)}
               output={part.state === "output-available" ? part.output : undefined}
               state={part.state}
             />

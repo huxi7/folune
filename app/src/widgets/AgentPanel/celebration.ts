@@ -1,15 +1,20 @@
 /**
- * [INPUT]: 依赖 canvas-confetti 的独立 Canvas/Web Worker 粒子渲染与 index.css 的庆祝色板语义 token
- * [OUTPUT]: 对外提供 playCelebration，在全屏非交互画布播放约 2.8 秒礼花并返回可交给 Agent 的完成结果
- * [POS]: AgentPanel 的浏览器工具执行器；只负责庆祝视觉生命周期，不承载 AI SDK 消息状态
+ * [INPUT]: 依赖 canvas-confetti 托管的唯一全屏 Canvas、可用时的内部渲染 Worker 与 index.css 的庆祝色板语义 token
+ * [OUTPUT]: 对外提供 createCelebrationPlan、createCelebrationBursts、playCelebration 与 cancelCelebration，把用户要求的次数编排为从底边集中升起、短间隔连续扩散的三源礼花并支持即时停止
+ * [POS]: AgentPanel 的独立视觉工具执行器；不经过 memoTool Worker，只负责次数归一、窄锥对称构图、无停顿点射与可取消串行生命周期
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
 import type confetti from "canvas-confetti";
 
-const CELEBRATION_DURATION_MS = 2_800;
-const EMISSION_DURATION_MS = 2_150;
-const BURST_INTERVAL_MS = 90;
+const CELEBRATION_MAX_DURATION_MS = 3_000;
+const MAX_RELEASE_WINDOW_MS = 400;
+const MAX_WAVE_GAP_MS = 32;
+const MAX_RENDERED_WAVES = 32;
+const PARTICLE_BUDGET = 720;
+const EDGE_START_VELOCITY = 62;
+const CENTER_START_VELOCITY = 68;
+const CELEBRATION_DECAY = 0.92;
 const CELEBRATION_COLOR_TOKENS = [
   "--celebration-confetti-1",
   "--celebration-confetti-2",
@@ -22,10 +27,99 @@ export type CelebrationResult = {
   durationMs: number;
   particleCount: number;
   reducedMotion: boolean;
+  renderedWaves: number;
+  requestedCount: number;
   success: true;
 };
 
-let activeCelebration: Promise<CelebrationResult> | null = null;
+export type CelebrationPlan = {
+  particlesPerWave: number;
+  renderedWaves: number;
+  requestedCount: number;
+  waveGapMs: number;
+};
+
+export type CelebrationBurst = {
+  angle: number;
+  drift: number;
+  origin: { x: number; y: number };
+  particleCount: number;
+  scalar: number;
+  spread: number;
+  startVelocity: number;
+};
+
+let celebrationQueue: Promise<void> = Promise.resolve();
+let celebrationGeneration = 0;
+let activeCelebrationCancel: (() => void) | null = null;
+
+const createCelebrationAbortError = () => {
+  const error = new Error("庆祝已停止。");
+  error.name = "AbortError";
+  return error;
+};
+
+export function createCelebrationPlan(count: unknown): CelebrationPlan {
+  const requestedCount = typeof count === "number"
+    && Number.isSafeInteger(count)
+    && count > 0
+    ? count
+    : 1;
+  const renderedWaves = Math.min(requestedCount, MAX_RENDERED_WAVES);
+  const waveGapMs = renderedWaves === 1
+    ? 0
+    : Math.min(
+        MAX_WAVE_GAP_MS,
+        MAX_RELEASE_WINDOW_MS / (renderedWaves - 1),
+      );
+
+  return {
+    particlesPerWave: Math.max(
+      10,
+      Math.min(180, Math.floor(PARTICLE_BUDGET / renderedWaves)),
+    ),
+    renderedWaves,
+    requestedCount,
+    waveGapMs,
+  };
+}
+
+export function createCelebrationBursts(
+  particlesPerWave: number,
+): [CelebrationBurst, CelebrationBurst, CelebrationBurst] {
+  const edgeParticles = Math.max(1, Math.floor(particlesPerWave * 0.28));
+  const centerParticles = particlesPerWave - edgeParticles * 2;
+
+  return [
+    {
+      angle: 66,
+      drift: 0.025,
+      origin: { x: 0.02, y: 1.04 },
+      particleCount: edgeParticles,
+      scalar: 0.9,
+      spread: 38,
+      startVelocity: EDGE_START_VELOCITY,
+    },
+    {
+      angle: 90,
+      drift: 0,
+      origin: { x: 0.5, y: 1.04 },
+      particleCount: centerParticles,
+      scalar: 0.96,
+      spread: 52,
+      startVelocity: CENTER_START_VELOCITY,
+    },
+    {
+      angle: 114,
+      drift: -0.025,
+      origin: { x: 0.98, y: 1.04 },
+      particleCount: edgeParticles,
+      scalar: 0.9,
+      spread: 38,
+      startVelocity: EDGE_START_VELOCITY,
+    },
+  ];
+}
 
 function getCelebrationColors() {
   const styles = getComputedStyle(document.documentElement);
@@ -40,12 +134,19 @@ function getCelebrationColors() {
   return colors;
 }
 
-async function runCelebration(): Promise<CelebrationResult> {
+async function runCelebration(
+  count: unknown,
+  generation: number,
+): Promise<CelebrationResult> {
+  const plan = createCelebrationPlan(count);
+
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
     return {
       durationMs: 0,
       particleCount: 0,
       reducedMotion: true,
+      renderedWaves: 0,
+      requestedCount: plan.requestedCount,
       success: true,
     };
   }
@@ -54,127 +155,113 @@ async function runCelebration(): Promise<CelebrationResult> {
     import("canvas-confetti"),
     Promise.resolve(getCelebrationColors()),
   ]);
-  const canvas = document.createElement("canvas");
-  canvas.dataset.supernoteCelebration = "true";
-  canvas.setAttribute("aria-hidden", "true");
-  Object.assign(canvas.style, {
-    height: "100%",
-    inset: "0",
-    pointerEvents: "none",
-    position: "fixed",
-    width: "100%",
-    zIndex: "2147483646",
-  });
-  document.body.append(canvas);
+  if (generation !== celebrationGeneration) {
+    throw createCelebrationAbortError();
+  }
 
-  const fire = confetti.create(canvas, {
-    disableForReducedMotion: true,
-    resize: true,
-    useWorker: true,
-  });
   const startedAt = performance.now();
-  let animationFrame = 0;
-  let lastBurstAt = Number.NEGATIVE_INFINITY;
   let particleCount = 0;
 
-  const launch = (options: confetti.Options) => {
-    particleCount += options.particleCount ?? 0;
-    void fire({
-      colors,
-      disableForReducedMotion: true,
-      shapes: ["square", "circle", "star"],
-      zIndex: 2_147_483_646,
-      ...options,
-    });
-  };
-
-  launch({
-    origin: { x: 0.5, y: 0.72 },
-    particleCount: 72,
-    scalar: 0.92,
-    spread: 104,
-    startVelocity: 48,
-    ticks: 112,
-  });
-
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
+    const scheduledWaves: number[] = [];
     let finished = false;
-    const finish = () => {
+    let cancel: () => void = () => undefined;
+
+    const finish = (error?: unknown) => {
       if (finished) {
         return;
       }
 
       finished = true;
-      cancelAnimationFrame(animationFrame);
-      fire.reset();
-      canvas.remove();
+      scheduledWaves.forEach(window.clearTimeout);
+      window.clearTimeout(watchdog);
+      if (activeCelebrationCancel === cancel) {
+        activeCelebrationCancel = null;
+      }
+
+      if (error !== undefined) {
+        confetti.reset();
+        reject(error);
+        return;
+      }
+
       resolve({
         durationMs: Math.round(performance.now() - startedAt),
         particleCount,
         reducedMotion: false,
+        renderedWaves: plan.renderedWaves,
+        requestedCount: plan.requestedCount,
         success: true,
       });
     };
-    window.setTimeout(finish, CELEBRATION_DURATION_MS);
+    const watchdog = window.setTimeout(() => {
+      confetti.reset();
+      finish();
+    }, CELEBRATION_MAX_DURATION_MS);
+    cancel = () => finish(createCelebrationAbortError());
+    activeCelebrationCancel = cancel;
 
-    const frame = (now: number) => {
-      const elapsed = now - startedAt;
+    try {
+      const [leftBurst, centerBurst, rightBurst] =
+        createCelebrationBursts(plan.particlesPerWave);
+      for (let waveIndex = 0; waveIndex < plan.renderedWaves; waveIndex += 1) {
+        scheduledWaves.push(window.setTimeout(() => {
+          if (finished) {
+            return;
+          }
 
-      if (elapsed >= EMISSION_DURATION_MS) {
-        return;
+          try {
+            const common: confetti.Options = {
+              colors,
+              decay: CELEBRATION_DECAY,
+              disableForReducedMotion: true,
+              gravity: 1.02,
+              shapes: ["square", "circle", "star"],
+              ticks: 140,
+              zIndex: 2_147_483_646,
+            };
+            confetti({ ...common, ...leftBurst });
+            confetti({ ...common, ...rightBurst });
+            const animation = confetti({ ...common, ...centerBurst });
+            particleCount += plan.particlesPerWave;
+
+            if (waveIndex === plan.renderedWaves - 1) {
+              Promise.resolve(animation).then(
+                () => finish(),
+                (error) => finish(error),
+              );
+            }
+          } catch (error) {
+            finish(error);
+          }
+        }, Math.round(waveIndex * plan.waveGapMs)));
       }
-
-      if (now - lastBurstAt >= BURST_INTERVAL_MS) {
-        lastBurstAt = now;
-        launch({
-          angle: 58,
-          origin: { x: 0.02, y: 0.76 },
-          particleCount: 6,
-          scalar: 0.82,
-          spread: 58,
-          startVelocity: 43,
-          ticks: 104,
-        });
-        launch({
-          angle: 122,
-          origin: { x: 0.98, y: 0.76 },
-          particleCount: 6,
-          scalar: 0.82,
-          spread: 58,
-          startVelocity: 43,
-          ticks: 104,
-        });
-
-        if (Math.floor(elapsed / BURST_INTERVAL_MS) % 4 === 0) {
-          launch({
-            origin: { x: 0.2 + Math.random() * 0.6, y: 0.42 + Math.random() * 0.24 },
-            particleCount: 10,
-            scalar: 0.72,
-            spread: 92,
-            startVelocity: 26,
-            ticks: 86,
-          });
-        }
-      }
-
-      animationFrame = requestAnimationFrame(frame);
-    };
-
-    animationFrame = requestAnimationFrame(frame);
+    } catch (error) {
+      finish(error);
+    }
   });
 }
 
-export function playCelebration() {
-  if (activeCelebration) {
-    return activeCelebration;
-  }
-
-  const celebration = runCelebration().finally(() => {
-    if (activeCelebration === celebration) {
-      activeCelebration = null;
+export function playCelebration(count: unknown = 1) {
+  const generation = celebrationGeneration;
+  const celebration = celebrationQueue.catch(() => undefined).then(() => {
+    if (generation !== celebrationGeneration) {
+      throw createCelebrationAbortError();
     }
+
+    return runCelebration(count, generation);
   });
-  activeCelebration = celebration;
+  celebrationQueue = celebration.then(
+    () => undefined,
+    () => undefined,
+  );
 
   return celebration;
+}
+
+export function cancelCelebration() {
+  celebrationGeneration += 1;
+  const cancel = activeCelebrationCancel;
+  celebrationQueue = Promise.resolve();
+  cancel?.();
 }

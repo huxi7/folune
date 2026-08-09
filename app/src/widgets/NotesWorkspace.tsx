@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖真实 MemoTreeNode、Dashboard 整树状态、统一 Skeleton、DocumentView/EditingMode、useMemoAutosave、共享状态 MarkdownEditor、保留软换行的安全 MarkdownReadingView、ThemeProvider 与全局 Toast
- * [OUTPUT]: 对外提供笔记纸/阅读态与 NotesWorkspaceHandle，可在删除前等待草稿落库并暂停卸载保存
+ * [OUTPUT]: 对外提供笔记纸/阅读态与 NotesWorkspaceHandle，可在删除前等待草稿落库、为 Agent 写操作建立保存边界并把 Agent 正文替换送入同一自动保存状态机
  * [POS]: app/src/widgets 的备忘录详情与编辑会话边界；Dashboard 只能经显式 handle 跨越自动保存边界，不能依赖 blur
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -56,7 +56,9 @@ type NotesWorkspaceProps = {
 };
 
 export type NotesWorkspaceHandle = {
+  flushCurrentDraft: () => Promise<void>;
   prepareForDelete: () => Promise<void>;
+  replaceContentFromAgent: (content: string) => Promise<void>;
   resumeAfterDeleteFailure: () => void;
 };
 
@@ -127,14 +129,21 @@ export const NotesWorkspace = forwardRef<
   });
 
   useImperativeHandle(ref, () => ({
+    async flushCurrentDraft() {
+      await flush({ throwOnFailure: true });
+    },
     async prepareForDelete() {
       await flush({ throwOnFailure: true });
       pause();
     },
+    async replaceContentFromAgent(nextContent) {
+      updateContent(nextContent);
+      await flush({ throwOnFailure: true });
+    },
     resumeAfterDeleteFailure() {
       resume();
     },
-  }), [flush, pause, resume]);
+  }), [flush, pause, resume, updateContent]);
 
   useLayoutEffect(() => {
     const titleEditor = titleEditorRef.current;

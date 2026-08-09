@@ -30,7 +30,7 @@ MarkdownReadingView.tsx: react-markdown + remark-gfm + 可选 remark-breaks + re
 MarkdownReadingView.test.tsx: 阅读换行、安全与文件边界测试，覆盖备忘录单换行/空行分段、GFM 表格/任务/删除线/引用/代码、脚本/HTML/危险链接剔除及 title 到 .md 文件名归一化
 MarkdownViewMenu.tsx: 中央 Toolbar 的高频 editing/reading 切换与 More 菜单；支持外部点击、Escape、方向键/Home/End、焦点恢复，并仅复制/导出当前原始 content_mdx，title 只用于文件名
 markdownViewTypes.ts: DocumentView editing/reading 与 EditingMode live/source 的共享状态协议，阅读状态不占用编辑模式槽位
-NotesWorkspace.tsx: /app 中央悬浮笔记纸，以 imperative handle 暴露删除前 required flush/pause 与失败恢复边界；正常编辑仍由 title/MarkdownEditor 和唯一 Store 草稿驱动
+NotesWorkspace.tsx: /app 中央悬浮笔记纸，以 imperative handle 暴露 Agent 写前 required flush、Agent 正文替换进入同一自动保存状态机、删除前 flush/pause 与失败恢复边界；正常编辑仍由 title/MarkdownEditor 和唯一 Store 草稿驱动
 useMemoAutosave.ts: 单 memo 编辑会话状态机；除既有静默/上限/重试保存外，提供可等待且失败抛错的 required flush，并可暂停旧会话以阻止软删除后卸载保存
 useMemoAutosave.test.ts: 覆盖插入/删除/等长替换字符计数，以及三次有界指数退避成功与最终失败规则
 TrashWorkspace.tsx: /app 回收站控制器，读取真实顶层删除根并编排重试、恢复、永久删除和当前用户原子清空，结果统一进入根级 Toast
@@ -40,7 +40,7 @@ AccountDialog.tsx: UserMenu 身份卡片与设置项共同打开的唯一设置�
 AccountProfilePanel.tsx: AccountDialog 的账户资料栏，以后端单一非空 username 初始化草稿，Profile 后台刷新按字段合并：未修改字段接受服务端新值，正在编辑字段保留本地草稿；停止输入 800ms 后串行 PATCH 用户名/简介且不锁定输入，不保留显式保存按钮，头像选择后即时上传最大 5MB 的 JPEG/PNG/WebP，成功、校验与失败状态进入全局 Toast，服务端 Profile 结果回传 Dashboard
 AccountSettingsPanel.tsx: AccountDialog 的外观栏，在“主题”同一行消费 Design System SegmentedControl 提供系统/白天/黑夜偏好；system 实时跟随设备并仍只解析到同一套 light/dark token
 SubscriptionWorkspace.tsx: /app 订阅入口工作区，以纯白画布、三档可选方案、权益清单与选中回执展示 5/20/100 美金订阅
-AgentPanel/: /app 可收起右侧聊天模块，以 AI SDK useChat + UIMessage parts 管理消息/SSE/停止与互斥 Activity，以 Kumo 承载输入命令，并消费 design-system 的用户气泡、无卡片 StreamingText、Formation ThinkingIndicator 与工具气泡；通过 Supabase Bearer token 对接 chat /v1/chat
+AgentPanel/: /app 可收起右侧聊天模块，以 AI SDK useChat + UIMessage parts 管理消息/SSE/停止与互斥 Activity；停止命令同时收束 SSE 与活动庆祝 Canvas；用 Mastra Client 镜像工具显式回灌结果，庆祝直达独立全屏执行器，备忘录读写才由专用 Worker 处理 Store 快照后执行现有乐观 Store/API/FLIP 链路；通过 Supabase Bearer token 对接 chat /v1/chat
 
 职责: 业务组合组件层，承载 Landing 工程骨架、后端驱动的递归文件树、可收起且可调宽的三 Panel 工作台、统一认证、同源账户模态框与各业务工作区；业务组件禁止裸写 fetch 或直连 Supabase 业务数据，唯一例外是 AgentPanel 的 AI SDK transport 在发送时读取 Auth token 并访问独立 chat 服务。
 

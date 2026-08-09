@@ -22,15 +22,15 @@ AI 是备忘录的智能档案管理员。
 ## 技术栈
 全栈 TypeScript，顶层由三个 L1 业务模块组成。
 
-- app: 用户端，Bun + Vite + React + React Router + Zustand + Vercel AI SDK + canvas-confetti + Kumo UI + Tailwind CSS v4 + 本地 design system + Supabase Auth SDK
-- chat: AI 能力服务，Bun + TypeScript + Mastra + Vercel AI SDK + zod，当前 Agent 可调用由 app 执行的“庆祝”浏览器工具
+- app: 用户端，Bun + Vite + React + React Router + Zustand + Vercel AI SDK + Mastra Client + 备忘录规划 Web Worker + canvas-confetti 独立全屏渲染 + Kumo UI + Tailwind CSS v4 + 本地 design system + Supabase Auth SDK
+- chat: AI 能力服务，Bun + TypeScript + Mastra + Vercel AI SDK + zod，当前 Agent 可在请求期调用由 app 执行的庆祝与备忘录客户端工具
 - api: 业务接口服务，Bun + Hono + TypeScript + zod + Supabase REST/PostgREST/Storage HTTP API
 
 ## 模块地图
 | 模块 | 职责 | 文档 |
 | --- | --- | --- |
-| app | 用户端，承载备忘录记录、浏览、文件 tree 交互及可执行明确浏览器工具的 SSE Agent 面板等前端体验边界 | [app/CLAUDE.md](app/CLAUDE.md) |
-| chat | AI 能力服务，当前承载 Supabase JWT 保护的 Agent、SSE 接口与“庆祝”浏览器工具契约，不含记忆 | [chat/CLAUDE.md](chat/CLAUDE.md) |
+| app | 用户端，承载备忘录记录、浏览、文件 tree 交互及 SSE Agent 客户端工具体验；庆祝直达视觉执行器，备忘录工具由 Worker 规划后复用真人乐观 Store 链路 | [app/CLAUDE.md](app/CLAUDE.md) |
+| chat | AI 能力服务，承载 Supabase JWT 保护的 Agent、SSE 接口与请求期注入的无 execute 客户端工具契约，不含记忆或业务库写入 | [chat/CLAUDE.md](chat/CLAUDE.md) |
 | api | 业务接口服务，承载用户、备忘录、文件夹、订阅与数据持久化边界 | [api/CLAUDE.md](api/CLAUDE.md) |
 | deploy | 本地部署基础设施，提供 api/chat 的 Bun 开发镜像、固定容器命名与密钥分离契约 | [deploy/CLAUDE.md](deploy/CLAUDE.md) |
 | scripts | 本地开发运维入口，统一启动、停止与查看 api-dev/chat-dev 双服务 Docker 日志 | [scripts/CLAUDE.md](scripts/CLAUDE.md) |

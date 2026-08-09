@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 authMiddleware、Mastra 请求上下文、@mastra/ai-sdk 流桥与 AI SDK SSE Response
+ * [INPUT]: 依赖 authMiddleware、Mastra 请求上下文、无 execute 客户端工具契约、@mastra/ai-sdk 流桥与 AI SDK SSE Response
  * [OUTPUT]: 对外提供受 Supabase JWT 保护的 POST /v1/chat 注册路由
  * [POS]: routes 层 Agent HTTP 边界，校验含浏览器工具 part 的 UIMessage 请求并锁定服务端 userId、步数与输出预算
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -14,7 +14,14 @@ import { createUIMessageStreamResponse, type UIMessage } from "ai";
 import { z } from "zod";
 
 import { env } from "@/config/env";
+import { celebrationTool } from "@/mastra/tools/celebration";
+import { memoClientTools } from "@/mastra/tools/memo";
 import { authMiddleware } from "@/middleware/auth";
+
+const clientTools = {
+  celebration: celebrationTool,
+  ...memoClientTools,
+};
 
 const uiMessageSchema = z
   .object({
@@ -69,6 +76,7 @@ export const chatRoute = registerApiRoute("/v1/chat", {
       version: "v6",
       params: {
         ...params,
+        clientTools,
         requestContext,
         maxSteps: env.MAX_STEPS,
         modelSettings: {

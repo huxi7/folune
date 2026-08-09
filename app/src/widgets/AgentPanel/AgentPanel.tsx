@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 @ai-sdk/react useChat、AI SDK 浏览器工具续写判定、庆祝执行器、Kumo Button/Input、design-system Activity、memoChatTransport、Store 与 ChatMessage
- * [OUTPUT]: 对外提供 Thinking/Tool/Streaming 严格互斥、可执行庆祝工具并回传结果、可停止且含鉴权错误提示的 AgentPanel
- * [POS]: /app 右侧 AI 工作区；useChat 与 UIMessage parts 驱动活动语义和浏览器工具回环，Store 只控制外壳开关
+ * [INPUT]: 依赖 @ai-sdk/react useChat、AI SDK 浏览器工具续写判定、@mastra/client-js 工具注册表、可取消庆祝执行器、Dashboard 草稿/删除协调边界、Kumo Button/Input、design-system Activity、memoChatTransport、Store 与 ChatMessage
+ * [OUTPUT]: 对外提供 Thinking/Tool/Streaming 严格互斥、可经 Worker 执行 memo/node 客户端工具并以非等待方式显式回灌结果、可同时停止 AI 流与活动礼花且含鉴权错误提示的 AgentPanel
+ * [POS]: /app 右侧 AI 工作区；useChat 驱动完整 agent loop，停止命令收束 SSE 与庆祝 Canvas，Worker 规划后复用真人操作同款乐观 Store/API 链路
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -18,6 +18,7 @@ import {
   type FormEvent,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -29,10 +30,24 @@ import {
   ThinkingMark,
 } from "../../shared/design-system/components";
 import { deriveAssistantActivity } from "./activityState";
-import { playCelebration } from "./celebration";
+import { cancelCelebration } from "./celebration";
 import { ChatMessage } from "./ChatMessage";
 import { getChatErrorCode } from "./chatFetch";
 import { memoChatTransport } from "./chatTransport";
+import {
+  createAgentClientTools,
+  executeAgentClientTool,
+  isAgentClientToolName,
+  normalizeToolInput,
+} from "./clientTools";
+import type { MemoTreeNode } from "../../shared/api/memo";
+
+type AgentPanelProps = {
+  accessToken: string;
+  onDeleteNode: (nodeId: string) => Promise<void>;
+  onEditMemo: (nodeId: string, contentMdx: string) => Promise<MemoTreeNode>;
+  onPrepareMutation: () => Promise<void>;
+};
 
 function getErrorCopy(error: Error | undefined) {
   const code = getChatErrorCode(error);
@@ -71,12 +86,26 @@ function getErrorCopy(error: Error | undefined) {
   };
 }
 
-export function AgentPanel() {
+export function AgentPanel({
+  accessToken,
+  onDeleteNode,
+  onEditMemo,
+  onPrepareMutation,
+}: AgentPanelProps) {
   const closePanel = useAgentPanelStore((state) => state.close);
   const [inputValue, setInputValue] = useState("");
   const messageListRef = useRef<HTMLDivElement>(null);
+  const clientTools = useMemo(
+    () => createAgentClientTools({
+      accessToken,
+      deleteNode: onDeleteNode,
+      editMemo: onEditMemo,
+      prepareMutation: onPrepareMutation,
+    }),
+    [accessToken, onDeleteNode, onEditMemo, onPrepareMutation],
+  );
   const {
-    addToolOutput,
+    addToolResult,
     clearError,
     error,
     messages,
@@ -87,24 +116,37 @@ export function AgentPanel() {
     transport: memoChatTransport,
     sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
     onToolCall: async ({ toolCall }) => {
-      if (toolCall.dynamic || toolCall.toolName !== "celebration") {
+      if (!isAgentClientToolName(clientTools, toolCall.toolName)) {
+        // AI SDK 会把工具结果排进当前 stream 后面的串行任务；这里等待会与
+        // 正在阻塞 onToolCall 的 stream 互相等待，导致工具已执行但 loop 卡死。
+        void addToolResult({
+          errorText: `浏览器没有注册客户端工具 ${toolCall.toolName}。`,
+          state: "output-error",
+          tool: toolCall.toolName,
+          toolCallId: toolCall.toolCallId,
+        });
         return;
       }
 
       try {
-        const output = await playCelebration();
-        void addToolOutput({
+        const input = normalizeToolInput(toolCall.input);
+        const output = await executeAgentClientTool(
+          clientTools,
+          toolCall.toolName,
+          input,
+        );
+        void addToolResult({
           output,
-          tool: "celebration",
+          tool: toolCall.toolName,
           toolCallId: toolCall.toolCallId,
         });
       } catch (toolError) {
-        void addToolOutput({
+        void addToolResult({
           errorText: toolError instanceof Error
             ? toolError.message
-            : "庆祝动画播放失败。",
+            : "客户端工具执行失败。",
           state: "output-error",
-          tool: "celebration",
+          tool: toolCall.toolName,
           toolCallId: toolCall.toolCallId,
         });
       }
@@ -137,6 +179,10 @@ export function AgentPanel() {
   const handleTypingProgress = useCallback(() => {
     scrollToLatest("auto");
   }, [scrollToLatest]);
+  const handleStop = useCallback(() => {
+    cancelCelebration();
+    void stop();
+  }, [stop]);
 
   useEffect(() => {
     scrollToLatest(streaming ? "auto" : "smooth");
@@ -251,7 +297,7 @@ export function AgentPanel() {
             <Button
               aria-label="停止生成"
               icon={StopIcon}
-              onClick={stop}
+              onClick={handleStop}
               size="base"
               type="button"
               variant="secondary"

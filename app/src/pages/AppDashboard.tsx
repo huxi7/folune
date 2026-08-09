@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 React Router Profile/token loader、Zustand memo tree/AgentPanel Store、统一 Skeleton 延迟策略、Markdown 视图状态/Toolbar 命令、NotesWorkspace、AccountDialog 与可调宽 AgentPanel
- * [OUTPUT]: 对外提供三 Panel、active tree/路由、显式草稿 flush 后软删导航、回收站恢复合并与账户/视图编排
- * [POS]: app/src/pages 的 /app 编排层；跨编辑器、Store、路由与 Trash 的删除生命周期只在此建立一次等待边界
+ * [OUTPUT]: 对外提供三 Panel、active tree/路由、显式草稿 flush 后软删导航、Agent 正文/删除协调、回收站恢复合并与账户/视图编排
+ * [POS]: app/src/pages 的 /app 编排层；跨编辑器、Agent 工具、Store、路由与 Trash 的草稿及删除生命周期只在此建立一次等待边界
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -462,9 +462,9 @@ export function AppDashboard() {
     }
   }
 
-  async function handleSoftDeleteNode(nodeId: string) {
+  async function handleSoftDeleteNode(nodeId: string): Promise<boolean> {
     if (treeMutating) {
-      return;
+      return false;
     }
 
     const treeBeforeDelete = useMemoTreeStore.getState().nodes;
@@ -476,7 +476,7 @@ export function AppDashboard() {
 
     if (impact === null) {
       toast({ title: "要删除的项目不存在", variant: "error" });
-      return;
+      return false;
     }
 
     let autosavePaused = false;
@@ -525,6 +525,7 @@ export function AppDashboard() {
       }
 
       toast({ title: "已移至回收站", variant: "success" });
+      return true;
     } catch (error) {
       if (autosavePaused) {
         notesWorkspaceRef.current?.resumeAfterDeleteFailure();
@@ -535,9 +536,53 @@ export function AppDashboard() {
         title: "移至回收站失败",
         variant: "error",
       });
+      return false;
     } finally {
       setTreeMutating(false);
     }
+  }
+
+  async function handleAgentEditMemo(
+    nodeId: string,
+    contentMdx: string,
+  ): Promise<MemoTreeNode> {
+    const current = findNode(useMemoTreeStore.getState().nodes, nodeId);
+
+    if (!isMemo(current) || current.memo === null) {
+      throw new Error("要编辑的备忘录不存在。");
+    }
+
+    if (selectedMemo?.id === nodeId) {
+      const workspace = notesWorkspaceRef.current;
+
+      if (workspace === null) {
+        throw new Error("当前编辑会话尚未准备好，请稍后重试。");
+      }
+
+      await workspace.replaceContentFromAgent(contentMdx);
+    } else {
+      const previousContent = current.memo.content_mdx;
+      updateMemoContentLocal(nodeId, contentMdx);
+
+      try {
+        await saveMemoDraft(accessToken, nodeId, { content_mdx: contentMdx });
+      } catch (error) {
+        const latest = findNode(useMemoTreeStore.getState().nodes, nodeId);
+
+        if (latest?.memo?.content_mdx === contentMdx) {
+          updateMemoContentLocal(nodeId, previousContent);
+        }
+        throw error;
+      }
+    }
+
+    const updated = findNode(useMemoTreeStore.getState().nodes, nodeId);
+
+    if (!isMemo(updated)) {
+      throw new Error("正文写入后无法读取备忘录。");
+    }
+
+    return updated;
   }
 
   async function handleRestoreTrashNode(nodeId: string) {
@@ -636,7 +681,9 @@ export function AppDashboard() {
           onOpenSettings={() => handleOpenAccountDialog("appearance")}
           onOpenSubscription={() => setActiveView("subscription")}
           onRenameNode={handleRenameNode}
-          onSoftDeleteNode={handleSoftDeleteNode}
+          onSoftDeleteNode={async (nodeId) => {
+            await handleSoftDeleteNode(nodeId);
+          }}
           onRequestCreateFolder={(parentId) => setMemoDialog({ parentId })}
           onSelectMemo={handleSelectMemo}
           onSelectView={setActiveView}
@@ -747,7 +794,18 @@ export function AppDashboard() {
           side="left"
           size={agentWidth}
         />
-        <AgentPanel />
+        <AgentPanel
+          accessToken={accessToken}
+          onDeleteNode={async (nodeId) => {
+            if (!await handleSoftDeleteNode(nodeId)) {
+              throw new Error("节点未能移入回收站。");
+            }
+          }}
+          onEditMemo={handleAgentEditMemo}
+          onPrepareMutation={async () => {
+            await notesWorkspaceRef.current?.flushCurrentDraft();
+          }}
+        />
       </div>
 
       {accountDialog ? (
