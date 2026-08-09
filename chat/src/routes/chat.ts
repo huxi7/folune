@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 authMiddleware、Mastra 请求上下文、@mastra/ai-sdk 流桥与 AI SDK SSE Response
  * [OUTPUT]: 对外提供受 Supabase JWT 保护的 POST /v1/chat 注册路由
- * [POS]: routes 层纯聊天 HTTP 边界，校验 UIMessage 请求并锁定服务端 userId、步数与输出预算
+ * [POS]: routes 层 Agent HTTP 边界，校验含浏览器工具 part 的 UIMessage 请求并锁定服务端 userId、步数与输出预算
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 

@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 @ai-sdk/react useChat、Kumo Button/Input、design-system ThinkingMark/ThinkingIndicator、Activity 判定、memoChatTransport、Store 与 ChatMessage
- * [OUTPUT]: 对外提供 Thinking/Tool/Streaming 严格互斥、可停止、含空态与鉴权错误提示的 AgentPanel
- * [POS]: /app 右侧 AI 工作区；useChat 与 UIMessage parts 驱动唯一活动语义，Store 只控制外壳开关
+ * [INPUT]: 依赖 @ai-sdk/react useChat、AI SDK 浏览器工具续写判定、庆祝执行器、Kumo Button/Input、design-system Activity、memoChatTransport、Store 与 ChatMessage
+ * [OUTPUT]: 对外提供 Thinking/Tool/Streaming 严格互斥、可执行庆祝工具并回传结果、可停止且含鉴权错误提示的 AgentPanel
+ * [POS]: /app 右侧 AI 工作区；useChat 与 UIMessage parts 驱动活动语义和浏览器工具回环，Store 只控制外壳开关
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -21,6 +21,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { lastAssistantMessageIsCompleteWithToolCalls } from "ai";
 
 import { useAgentPanelStore } from "../../shared/store/agentPanelStore";
 import {
@@ -28,6 +29,7 @@ import {
   ThinkingMark,
 } from "../../shared/design-system/components";
 import { deriveAssistantActivity } from "./activityState";
+import { playCelebration } from "./celebration";
 import { ChatMessage } from "./ChatMessage";
 import { getChatErrorCode } from "./chatFetch";
 import { memoChatTransport } from "./chatTransport";
@@ -74,13 +76,40 @@ export function AgentPanel() {
   const [inputValue, setInputValue] = useState("");
   const messageListRef = useRef<HTMLDivElement>(null);
   const {
+    addToolOutput,
     clearError,
     error,
     messages,
     sendMessage,
     status,
     stop,
-  } = useChat({ transport: memoChatTransport });
+  } = useChat({
+    transport: memoChatTransport,
+    sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
+    onToolCall: async ({ toolCall }) => {
+      if (toolCall.dynamic || toolCall.toolName !== "celebration") {
+        return;
+      }
+
+      try {
+        const output = await playCelebration();
+        void addToolOutput({
+          output,
+          tool: "celebration",
+          toolCallId: toolCall.toolCallId,
+        });
+      } catch (toolError) {
+        void addToolOutput({
+          errorText: toolError instanceof Error
+            ? toolError.message
+            : "庆祝动画播放失败。",
+          state: "output-error",
+          tool: "celebration",
+          toolCallId: toolCall.toolCallId,
+        });
+      }
+    },
+  });
   const submitting = status === "submitted";
   const streaming = status === "streaming";
   const busy = submitting || streaming;

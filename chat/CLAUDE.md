@@ -1,14 +1,14 @@
 # chat/
 > L1 | 父级: ../CLAUDE.md
 
-独立 AI 能力服务，以一个固定使用 DeepSeek V4 Flash、无工具、无记忆的中文备忘录 Agent 建立聊天地基，并通过 Supabase JWT 保护的 AI SDK v6 SSE 协议对外服务。
+独立 AI 能力服务，以一个固定使用 DeepSeek V4 Flash、拥有“庆祝”浏览器工具且无记忆的中文备忘录 Agent 建立聊天地基，并通过 Supabase JWT 保护的 AI SDK v6 SSE 协议对外服务。
 
 技术栈: Bun + TypeScript + Mastra + @mastra/ai-sdk + Vercel AI SDK + zod。
 
 成员清单
 src/config/: 服务端环境与模型白名单边界，API key 只从进程环境读取
 src/lib/: 不接触凭据的运行时辅助能力，当前负责一次性 ASCII 启动 Banner
-src/mastra/: Mastra 组合根、Agent 定义与独立提示词资产
+src/mastra/: Mastra 组合根、Agent 定义、独立提示词资产与浏览器工具契约
 src/middleware/: Supabase JWT 远端验证、可信 RequestContext 身份注入与安全请求日志
 src/routes/: POST /v1/chat 的 UIMessage 校验和 SSE 响应桥接
 package.json: 独立 Bun 工程脚本及锁定的 Mastra/AI SDK 兼容依赖
