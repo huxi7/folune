@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 CodeMirror 6 生成的 cm-* DOM 类与 index.css 根级语义 token
- * [OUTPUT]: 对外提供 CodeMirror light/dark 基础适配、source 等宽源码视图，以及使用确定性中性表面的 live 标题源码态/预览态与强调/链接/列表/任务/引用/代码/表格显示协议
- * [POS]: app/src/styles 的第三方编辑器级联边界；只消费语义 Token，把 Live Decoration 映射为无标题下划线的 Obsidian 式视觉效果并维持原始 Markdown 空白保真
+ * [OUTPUT]: 对外提供 CodeMirror light/dark 基础适配、14px source/15px live 正文，以及严格低于文件名标题的 live 标题层级与强调/链接/列表/任务/引用/代码/表格显示协议
+ * [POS]: app/src/styles 的第三方编辑器级联边界；只消费语义 Token，把 Live Decoration 映射为克制写作层级并维持原始 Markdown 空白保真
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 .supernote-md-editor,
@@ -61,8 +61,8 @@
   padding: 0;
   color: var(--foreground);
   font-family: var(--font-sans);
-  font-size: 0.875rem;
-  line-height: 1.9;
+  font-size: 0.9375rem;
+  line-height: 1.82;
   white-space: pre-wrap;
 }
 
@@ -73,6 +73,8 @@
 
 .note-editor-canvas .supernote-md-editor .cm-editor[data-editing-mode="source"] .cm-content {
   font-family: var(--font-mono);
+  font-size: 0.875rem;
+  line-height: 1.85;
 }
 
 .note-editor-canvas .supernote-md-editor .cm-editor[data-editing-mode="live"] .cm-content {
@@ -80,10 +82,10 @@
 }
 
 .supernote-md-editor .cm-live-heading {
-  padding-block: 0.18em 0.04em;
+  padding-block: 0.22em 0.04em;
   color: var(--foreground);
-  font-weight: 720;
-  letter-spacing: -0.025em;
+  font-weight: 680;
+  letter-spacing: -0.02em;
   text-decoration: none !important;
 }
 
@@ -101,11 +103,11 @@
   vertical-align: 0.14em;
 }
 
-.supernote-md-editor .cm-live-heading-1 { font-size: 1.8rem; line-height: 1.35; }
-.supernote-md-editor .cm-live-heading-2 { font-size: 1.5rem; line-height: 1.4; }
-.supernote-md-editor .cm-live-heading-3 { font-size: 1.25rem; line-height: 1.5; }
-.supernote-md-editor .cm-live-heading-4 { font-size: 1.08rem; line-height: 1.55; }
-.supernote-md-editor .cm-live-heading-5 { font-size: 0.96rem; line-height: 1.65; }
+.supernote-md-editor .cm-live-heading-1 { font-size: 1.5rem; line-height: 1.4; }
+.supernote-md-editor .cm-live-heading-2 { font-size: 1.25rem; line-height: 1.45; }
+.supernote-md-editor .cm-live-heading-3 { font-size: 1.1rem; line-height: 1.55; }
+.supernote-md-editor .cm-live-heading-4 { font-size: 1rem; line-height: 1.6; }
+.supernote-md-editor .cm-live-heading-5 { font-size: 0.9375rem; line-height: 1.68; }
 .supernote-md-editor .cm-live-heading-6 { font-size: 0.875rem; line-height: 1.7; }
 
 .supernote-md-editor .cm-live-strong { font-weight: 720; }

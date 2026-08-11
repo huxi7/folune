@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 index.css 的全局语义 token 与 Tailwind v4 layer
- * [OUTPUT]: 对外提供设置/订阅/回收站、确定性中性灰业务 Skeleton、纯白笔记纸、中性 Markdown、三 Panel、聊天与文件树交互布局
- * [POS]: app/src/styles 的产品工作区布局层；回收站复用 ui-page 与语义 token，不建立第二套表面或颜色系统
+ * [OUTPUT]: 对外提供设置/订阅/回收站、确定性中性灰业务 Skeleton、单层连续笔记画布、中性 Markdown、三 Panel、聊天与文件树交互布局
+ * [POS]: app/src/styles 的产品工作区布局层；中央 Panel 只保留外层工作区边界与受控写作列，不在 Panel 内重复制造纸卡
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 @layer components {
@@ -117,24 +117,24 @@
   .subscription-footer > div { display: flex; align-items: center; gap: 0.45rem; color: var(--foreground); }
   .subscription-footer svg { color: var(--primary); }
 
-  .notes-workspace { height: 100%; min-height: 0; overflow-y: auto; background: var(--background); padding: clamp(0.75rem, 2vw, 1.5rem); }
+  .notes-workspace { height: 100%; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; background: var(--card); }
   .notes-workspace-loading { pointer-events: none; }
-  .notes-workspace-state { display: flex; height: 100%; min-height: 16rem; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem; padding: 2rem; background: var(--background); color: var(--muted-foreground); text-align: center; }
-  .notes-workspace-state strong { color: var(--foreground); font-family: var(--font-display); font-size: 1.15rem; font-weight: 500; }
+  .notes-workspace-state { display: flex; height: 100%; min-height: 16rem; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem; padding: 2rem; background: var(--card); color: var(--muted-foreground); text-align: center; }
+  .notes-workspace-state strong { color: var(--foreground); font-family: var(--font-sans); font-size: 0.875rem; font-weight: 650; }
   .notes-workspace-state span { max-width: 30rem; font-size: 0.75rem; line-height: 1.65; }
-  .note-editor-canvas { display: grid; width: min(100%, 52rem); min-height: 100%; grid-template-rows: auto minmax(22rem, 1fr); align-content: start; margin-inline: auto; border: 1px solid color-mix(in srgb, var(--border) 84%, transparent); border-radius: var(--ds-radius-smooth); background: var(--card); padding: clamp(2.5rem, 7vh, 5rem) clamp(1.5rem, 5vw, 4rem); box-shadow: var(--shadow-sm), var(--ds-shadow-inset-highlight); }
+  .note-editor-canvas { display: grid; width: min(100%, 52rem); min-height: 100%; grid-template-rows: auto minmax(24rem, 1fr); align-content: start; margin-inline: auto; border: 0; border-radius: 0; background: transparent; padding: clamp(2.75rem, 7vh, 4.5rem) clamp(1.5rem, 8cqw, 4rem) clamp(4rem, 10vh, 7rem); box-shadow: none; }
   .note-editor-skeleton { overflow: hidden; }
-  .note-skeleton-title { width: min(68%, 28rem); height: clamp(2.25rem, 4vw, 3.2rem); margin-bottom: 1rem; }
-  .note-skeleton-body { display: grid; align-content: start; gap: 0.9rem; padding-top: 0.35rem; }
-  .note-skeleton-line { width: 72%; height: 0.72rem; }
+  .note-skeleton-title { width: min(58%, 22rem); height: 1.75rem; margin-bottom: 1.25rem; }
+  .note-skeleton-body { display: grid; align-content: start; gap: 0.82rem; }
+  .note-skeleton-line { width: 72%; height: 0.68rem; }
   .note-skeleton-line-wide { width: 92%; }
   .note-skeleton-line-medium { width: 58%; }
   .note-skeleton-line-short { width: 42%; margin-bottom: 0.9rem; }
-  .note-editor-title { width: 100%; margin: 0 0 0.8rem; border: 0; background: transparent; padding: 0; color: var(--foreground); font-family: var(--font-sans); font-size: clamp(2rem, 4vw, 3rem); font-weight: 700; letter-spacing: -0.045em; line-height: 1.12; outline: none; white-space: pre-wrap; overflow-wrap: anywhere; }
-  .note-editor-title:empty::before { content: attr(data-placeholder); color: color-mix(in srgb, var(--muted-foreground) 68%, transparent); pointer-events: none; }
-  .note-editor-content { min-width: 0; min-height: 22rem; }
+  .note-editor-title { width: 100%; margin: 0 0 1.15rem; border: 0; background: transparent; padding: 0; color: var(--foreground); caret-color: var(--primary); font-family: var(--font-sans); font-size: clamp(1.5rem, 4cqw, 1.875rem); font-weight: 680; letter-spacing: -0.032em; line-height: 1.22; outline: none; text-wrap: pretty; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .note-editor-title:empty::before { content: attr(data-placeholder); color: color-mix(in srgb, var(--muted-foreground) 56%, transparent); pointer-events: none; }
+  .note-editor-content { min-width: 0; min-height: 24rem; }
   .note-editor-canvas .supernote-md-editor { height: 100%; min-height: 0; }
-  .markdown-reading-view { min-width: 0; color: var(--foreground); font-size: 0.875rem; line-height: 1.9; overflow-wrap: anywhere; }
+  .markdown-reading-view { min-width: 0; color: var(--foreground); font-size: 0.9375rem; line-height: 1.82; overflow-wrap: anywhere; }
   .markdown-reading-view > :first-child { margin-top: 0; }
   .markdown-reading-view > :last-child { margin-bottom: 0; }
   .markdown-reading-view h1,
@@ -142,12 +142,12 @@
   .markdown-reading-view h3,
   .markdown-reading-view h4,
   .markdown-reading-view h5,
-  .markdown-reading-view h6 { margin: 1.5em 0 0.55em; color: var(--foreground); font-weight: 720; letter-spacing: -0.025em; line-height: 1.3; }
-  .markdown-reading-view h1 { font-size: 1.8rem; }
-  .markdown-reading-view h2 { font-size: 1.5rem; }
-  .markdown-reading-view h3 { font-size: 1.25rem; }
-  .markdown-reading-view h4 { font-size: 1.08rem; }
-  .markdown-reading-view h5 { font-size: 0.96rem; }
+  .markdown-reading-view h6 { margin: 1.6em 0 0.5em; color: var(--foreground); font-weight: 680; letter-spacing: -0.02em; line-height: 1.35; }
+  .markdown-reading-view h1 { font-size: 1.5rem; }
+  .markdown-reading-view h2 { font-size: 1.25rem; }
+  .markdown-reading-view h3 { font-size: 1.1rem; }
+  .markdown-reading-view h4 { font-size: 1rem; }
+  .markdown-reading-view h5 { font-size: 0.9375rem; }
   .markdown-reading-view h6 { font-size: 0.875rem; }
   .markdown-reading-view h1 a,
   .markdown-reading-view h2 a,
@@ -300,7 +300,7 @@
   .app-sidebar .ds-user-button:hover,
   .app-sidebar .ds-user-button[data-open="true"] { border-color: transparent; background: var(--sidebar-accent); box-shadow: none; transform: none; }
   .app-sidebar .ds-user-avatar { width: 1.75rem; height: 1.75rem; border-radius: 999px; box-shadow: none; }
-  .app-main-panel { display: flex; flex-direction: column; }
+  .app-main-panel { display: flex; container-name: note-panel; container-type: inline-size; flex-direction: column; }
   .app-main-toolbar { display: flex; height: 2.8rem; flex-shrink: 0; align-items: center; justify-content: space-between; gap: 0.75rem; border-bottom: 1px solid color-mix(in srgb, var(--border) 76%, transparent); padding-inline: 0.8rem; background: var(--card); }
   .app-main-toolbar-copy { min-width: 0; flex: 1; }
   .note-view-actions { display: flex; flex-shrink: 0; align-items: center; gap: 0.2rem; }
@@ -351,8 +351,7 @@
     .toolbar-icon-button,
     .app-sidebar-shell,
     .app-main-panel,
-    .app-agent-shell,
-    .note-editor-canvas {
+    .app-agent-shell {
       corner-shape: squircle;
     }
   }
@@ -387,7 +386,7 @@
     .trash-item { grid-template-columns: 2rem minmax(0, 1fr); align-items: start; }
     .trash-item-meta { min-width: 0; grid-column: 2; align-items: flex-start; }
     .trash-item-actions { flex-wrap: wrap; }
-    .note-editor-canvas { padding: 1.75rem 1.25rem; }
+    .note-editor-canvas { padding: 2rem 1.25rem 4rem; }
   }
 }
 

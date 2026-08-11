@@ -61,7 +61,7 @@ export const designSystemSamples: DesignSystemSample[] = [
   {
     id: "ToolCallBubble",
     name: "ToolCallBubble",
-    summary: "把工具名称、调用状态与可检查载荷从 AI 正文中分离出来。",
+    summary: "只用相关图标、工具名称、执行流光与灰阶结果符号表达工具状态，不暴露调用载荷。",
   },
   {
     id: "SidebarButton",

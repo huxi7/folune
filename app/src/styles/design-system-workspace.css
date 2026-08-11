@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 index.css 的 V1 语义颜色/圆角/阴影/动效 token 与 design-system.css 的真实组件类
- * [OUTPUT]: 对外提供包含 Button 完整 variants/尺寸/loading/disabled 状态、统一 Skeleton 与既定 Active Formation ThinkingMark 在内的 V1 生产组件同构卡片矩阵
+ * [OUTPUT]: 对外提供包含 Button 完整 variants/尺寸/loading/disabled 状态、统一 Skeleton、既定 Active Formation ThinkingMark 与工具执行中/完成态在内的 V1 生产组件同构卡片矩阵
  * [POS]: app/src/styles 的开发陈列专用视觉层，只作用于 .ds-workspace-page 且不定义第二套主题
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -190,8 +190,15 @@
 
   .ds-user-message-preview,
   .ds-ai-message-preview,
-  .ds-tool-call-preview,
   .ds-thinking-preview {
+    width: min(100%, 24rem);
+  }
+
+  .ds-tool-call-preview {
+    display: flex;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: calc(var(--spacing) * 3);
     width: min(100%, 24rem);
   }
 

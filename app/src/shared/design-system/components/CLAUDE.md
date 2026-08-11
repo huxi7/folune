@@ -18,7 +18,8 @@ ThinkingStatusText.tsx: ThinkingIndicator 的低频中性状态文字，以 2800
 ThinkingIndicator.tsx: Animated Formation ThinkingMark 与 ThinkingStatusText 的无卡片行内组合件，等待正文时 active，首 token 后 160ms 淡出，活动工具出现时由调用方立即卸载
 ThinkingMark.tsx: SuperNote AI 品牌符号，默认使用圆角核心、五条不对称折线连接与五个非等径外围节点表达信息聚合；固定 24×24 viewBox/currentColor/独立 data-part，并以 1840ms 非顺时针错峰 Formation Motion 提供 active 态，同时归档 Radiation/Formation/Fold 三个静态候选
 UserMessageBubble.tsx: 用户消息气泡，直接复用 Primary Button 的主题色、前景色、smooth corner 与厚度阴影
-ToolCallBubble.tsx: 工具调用专用气泡，分离展示工具名、AI SDK 调用状态和可展开载荷；活动态使用静态沙漏语义，不叠加旋转 spinner
+ToolCallBubble.tsx: 工具调用专用状态控件，只展示工具图标、名称与灰阶结果符号，完全隐藏调用载荷；宽度随工具名自适应，复用 Secondary Button 材质且活动态只增加低频 shimmer
+ToolCallBubble.test.tsx: 工具消息最小 DOM 契约测试，锁定无 details/pre 载荷、执行态 shimmer 与完成态右侧结果槽
 BrandMark.tsx: SuperNote 品牌标识组件，只提供 iconOnly 纯图标与“图标 + SuperNote 标题”两种稳定锁定；所有界面删除副标题形态
 Toast.tsx: 全局瞬时反馈组件，以根级 ToastProvider、稳定 toast/dismissToast 命令、四条可见上限和卸载时清理的定时器统一 info、success、warning、error；业务层只提交消息，不拥有浮层生命周期
 Select.tsx: 本地 Select 原子组件，提供受控/非受控值、上下布局、点击外部关闭、Esc/Tab/方向键/Home/End/Enter 键盘交互与自定义触发器能力；当前产品界面不消费，因此不进入开发态生产组件陈列

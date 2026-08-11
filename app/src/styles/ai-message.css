@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 index.css 的 primary/foreground/surface/spacing/button 阴影与 motion 语义 token
- * [OUTPUT]: 提供用户主色气泡、零卡片 AI 正文、逐字冷蓝光晕、Formation ThinkingIndicator/动态文字与纯白工具气泡样式
+ * [OUTPUT]: 提供用户主色气泡、零卡片 AI 正文、逐字冷蓝光晕、Formation ThinkingIndicator/动态文字与 Secondary 同源极简工具状态样式
  * [POS]: app/src/styles 的 AI 消息视觉层，被 AgentPanel 与 DEV Design System 共用且不定义第二套主题
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -166,96 +166,77 @@
   }
 
   .ds-assistant-tools {
-    display: grid;
+    display: flex;
+    align-items: flex-start;
+    flex-direction: column;
     gap: calc(var(--spacing) * 2);
     margin-top: calc(var(--spacing) * 2.5);
   }
 
   .ds-tool-call-bubble {
-    width: min(100%, 24rem);
+    position: relative;
+    isolation: isolate;
+    display: inline-flex;
+    width: fit-content;
+    max-width: 100%;
+    height: var(--button-height-default);
+    min-height: var(--button-height-default);
     overflow: hidden;
-    border: 1px solid color-mix(in srgb, var(--primary) 18%, var(--border));
-    border-radius: var(--radius-control);
-    background: var(--card);
-    color: var(--foreground);
-    box-shadow: var(--shadow-xs);
-  }
-
-  .ds-tool-call-bubble[data-state="output-error"],
-  .ds-tool-call-bubble[data-state="output-denied"] {
-    border-color: color-mix(in srgb, var(--destructive) 28%, var(--border));
-  }
-
-  .ds-tool-call-header {
-    display: flex;
-    min-height: calc(var(--spacing) * 10);
     align-items: center;
-    gap: calc(var(--spacing) * 2);
-    padding: calc(var(--spacing) * 2) calc(var(--spacing) * 2.5);
+    gap: calc(var(--spacing) * 1.75);
+    border: 1px solid var(--button-border-rest);
+    border-radius: var(--button-radius);
+    background: var(--button-surface-rest);
+    padding: 0 calc(var(--spacing) * 2.5);
+    color: var(--button-foreground-rest);
+    box-shadow: var(--button-shadow-rest);
   }
 
   .ds-tool-call-icon {
+    position: relative;
+    z-index: 1;
     display: inline-flex;
-    width: calc(var(--spacing) * 6);
-    height: calc(var(--spacing) * 6);
     flex-shrink: 0;
     align-items: center;
     justify-content: center;
-    border-radius: calc(var(--radius-control) - 0.2rem);
-    background: var(--card);
-    color: var(--primary);
-    box-shadow: var(--shadow-2xs);
+    color: var(--muted-foreground);
   }
 
-  .ds-tool-call-header > strong {
+  .ds-tool-call-name {
+    position: relative;
+    z-index: 1;
     min-width: 0;
-    flex: 1;
     overflow: hidden;
-    font-family: var(--font-mono);
-    font-size: 0.6875rem;
+    font-size: 0.75rem;
+    font-weight: 650;
+    letter-spacing: 0.006em;
+    line-height: 1;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
-  .ds-tool-call-state {
+  .ds-tool-call-result {
+    position: relative;
+    z-index: 1;
     display: inline-flex;
+    width: calc(var(--spacing) * 5);
+    height: calc(var(--spacing) * 5);
     flex-shrink: 0;
     align-items: center;
-    gap: calc(var(--spacing) * 1.25);
+    justify-content: center;
+    border: 1px solid color-mix(in srgb, var(--border) 62%, transparent);
+    border-radius: calc(var(--radius-control) - 0.2rem);
+    background: var(--card);
     color: var(--muted-foreground);
-    font-size: 0.625rem;
-  }
-
-  .ds-tool-call-state > svg {
-    color: var(--primary);
-  }
-
-  .ds-tool-call-details {
-    border-top: 1px solid color-mix(in srgb, var(--border) 78%, transparent);
-    padding: calc(var(--spacing) * 2) calc(var(--spacing) * 2.5);
-  }
-
-  .ds-tool-call-details summary {
-    cursor: pointer;
-    color: var(--muted-foreground);
-    font-size: 0.625rem;
-  }
-
-  .ds-tool-call-details pre {
-    max-height: 10rem;
-    margin-top: calc(var(--spacing) * 2);
-    overflow: auto;
-    white-space: pre-wrap;
-    color: var(--foreground);
-    font-family: var(--font-mono);
-    font-size: 0.625rem;
-    line-height: 1.55;
+    box-shadow:
+      var(--shadow-2xs),
+      inset 0 1px 0 color-mix(in srgb, var(--button-specular) 42%, transparent);
   }
 
   @supports (corner-shape: squircle) {
     .ds-user-message-bubble,
     .ds-tool-call-bubble,
-    .ds-tool-call-icon {
+    .ds-tool-call-result {
       corner-shape: squircle;
     }
   }
@@ -287,7 +268,8 @@
 @media (prefers-reduced-motion: reduce) {
   @layer components {
     .ds-streaming-text-glow,
-    .ds-streaming-text[data-streaming="true"] {
+    .ds-streaming-text[data-streaming="true"],
+    .ds-tool-call-bubble.ds-button-loading::after {
       animation: none;
     }
 

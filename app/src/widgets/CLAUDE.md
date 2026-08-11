@@ -30,7 +30,7 @@ MarkdownReadingView.tsx: react-markdown + remark-gfm + 可选 remark-breaks + re
 MarkdownReadingView.test.tsx: 阅读换行、安全与文件边界测试，覆盖备忘录单换行/空行分段、GFM 表格/任务/删除线/引用/代码、脚本/HTML/危险链接剔除及 title 到 .md 文件名归一化
 MarkdownViewMenu.tsx: 中央 Toolbar 的高频 editing/reading 切换与 More 菜单；支持外部点击、Escape、方向键/Home/End、焦点恢复，并仅复制/导出当前原始 content_mdx，title 只用于文件名
 markdownViewTypes.ts: DocumentView editing/reading 与 EditingMode live/source 的共享状态协议，阅读状态不占用编辑模式槽位
-NotesWorkspace.tsx: /app 中央悬浮笔记纸，以 imperative handle 暴露 Agent 写前 required flush、Agent 正文替换进入同一自动保存状态机、删除前 flush/pause 与失败恢复边界；正常编辑仍由 title/MarkdownEditor 和唯一 Store 草稿驱动
+NotesWorkspace.tsx: /app 中央连续写作画布，以宽度受控的单一内容列承载独立文件名标题和 Markdown 正文，不在 Panel 内重复制造纸卡；imperative handle 暴露 Agent 写前 required flush、Agent 正文替换进入同一自动保存状态机、删除前 flush/pause 与失败恢复边界，正常编辑仍由 title/MarkdownEditor 和唯一 Store 草稿驱动
 useMemoAutosave.ts: 单 memo 编辑会话状态机；除既有静默/上限/重试保存外，提供可等待且失败抛错的 required flush，并可暂停旧会话以阻止软删除后卸载保存
 useMemoAutosave.test.ts: 覆盖插入/删除/等长替换字符计数，以及三次有界指数退避成功与最终失败规则
 TrashWorkspace.tsx: /app 回收站控制器，读取真实顶层删除根并编排重试、恢复、永久删除和当前用户原子清空，结果统一进入根级 Toast

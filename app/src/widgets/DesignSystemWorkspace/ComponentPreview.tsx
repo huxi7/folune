@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 React memo/useEffect/useState、Phosphor 图标、通用组件、Skeleton、ThinkingMark 与互斥 AI 消息组件家族
- * [OUTPUT]: 对外提供含完整 Button variants/尺寸/loading/disabled 真实状态在内的通用组件、单光带结构 Skeleton、既定 Active Formation ThinkingMark 真实尺寸及用户/AI/Thinking/Tool 消息组件交互示例 ComponentPreview
+ * [OUTPUT]: 对外提供含完整 Button variants/尺寸/loading/disabled 真实状态在内的通用组件、单光带结构 Skeleton、既定 Active Formation ThinkingMark 真实尺寸及用户/AI/Thinking/极简 Tool 状态组件交互示例 ComponentPreview
  * [POS]: app/src/widgets/DesignSystemWorkspace 的卡片预览层，只展示真实 API 而不堆叠规范说明
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -11,6 +11,7 @@ import {
   MoonStarsIcon,
   NotePencilIcon,
   SunIcon,
+  TreeStructureIcon,
 } from "@phosphor-icons/react";
 import { memo, useEffect, useState } from "react";
 
@@ -155,9 +156,13 @@ function ToolCallBubblePreview() {
   return (
     <div className="ds-tool-call-preview">
       <ToolCallBubble
-        input={{ memoId: "memo_product_roadmap" }}
-        name="readMemo"
-        output={{ status: "ready" }}
+        icon={TreeStructureIcon}
+        name="编辑文件树"
+        state="input-available"
+      />
+      <ToolCallBubble
+        icon={NotePencilIcon}
+        name="编辑备忘录"
         state="output-available"
       />
     </div>

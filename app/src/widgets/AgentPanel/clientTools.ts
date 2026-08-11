@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 @mastra/client-js createTool、memoTool Worker 单步计划、现有 MemoTree Store 乐观命令、独立庆祝执行器与 Dashboard 草稿/删除协调回调
- * [OUTPUT]: 对外提供同 chat id/schema 且带 execute 的浏览器工具注册表、忠实传递庆祝 count、字符串入参归一化与显式工具执行入口
+ * [OUTPUT]: 对外提供同 chat id/schema 且带 execute 的浏览器工具注册表、工具协议名类型、忠实传递庆祝 count、字符串入参归一化与显式工具执行入口
  * [POS]: AgentPanel 客户端工具执行总线；庆祝直达视觉执行器，只有备忘录工具进入 Worker 规划后再复用真人操作同款 Store/API/FLIP 链路
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -237,19 +237,6 @@ export function createAgentClientTools(runtime: MemoClientToolRuntime) {
 
 export type AgentClientTools = ReturnType<typeof createAgentClientTools>;
 export type AgentClientToolName = keyof AgentClientTools;
-
-export const agentClientToolNames: Record<AgentClientToolName, string> = {
-  celebration: "庆祝",
-  edit_memo: "编辑备忘录",
-  edit_node: "编辑文件树",
-  read_memo: "读取备忘录",
-  read_tree: "读取文件树",
-};
-
-export const getAgentClientToolDisplayName = (name: string): string =>
-  Object.prototype.hasOwnProperty.call(agentClientToolNames, name)
-    ? agentClientToolNames[name as AgentClientToolName]
-    : name;
 
 export function normalizeToolInput(input: unknown): Record<string, unknown> {
   const normalized = typeof input === "string"
