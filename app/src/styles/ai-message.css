@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 index.css 的 primary/foreground/surface/spacing/button 零偏移环绕阴影与 motion 语义 token
- * [OUTPUT]: 提供用户主色气泡、零卡片最终正文、可折叠处理过程、逐字冷蓝光晕、Formation ThinkingIndicator 与可展开轻量详情的工具状态样式
+ * [OUTPUT]: 提供用户主色气泡、零卡片最终正文、可折叠处理过程、逐词模糊落定/细光标、Formation ThinkingIndicator 与可展开轻量详情的工具状态样式
  * [POS]: app/src/styles 的 AI 消息视觉层，被 AgentPanel 与 DEV Design System 共用；过程和正文只用自然留白过渡，不创建第二套主题或固定分隔线
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -39,34 +39,6 @@
     line-height: 1.78;
   }
 
-  .ds-streaming-text[data-streaming="true"] {
-    text-shadow: 0 0 0.7rem color-mix(in srgb, var(--primary) 12%, transparent);
-    animation: ds-streaming-enter 160ms var(--ease-standard) both;
-  }
-
-  .ds-streaming-text-glow {
-    position: absolute;
-    z-index: -1;
-    top: 8%;
-    left: 7%;
-    width: 72%;
-    height: 84%;
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--primary) 7%, transparent);
-    filter: blur(0.8rem);
-    pointer-events: none;
-    animation: ds-ai-glow-tick 150ms var(--ease-standard) both;
-  }
-
-  .ds-streaming-text-glow[data-direction="left"] {
-    transform-origin: 42% 56%;
-  }
-
-  .ds-streaming-text-glow[data-direction="right"] {
-    transform-origin: 58% 44%;
-    animation-name: ds-ai-glow-tick-reverse;
-  }
-
   .ds-streaming-text-content {
     min-width: 0;
   }
@@ -75,6 +47,24 @@
     display: inline;
     margin: 0;
     white-space: pre-wrap;
+  }
+
+  .ds-streaming-text-token {
+    display: inline;
+    animation: ds-streaming-token-in 420ms cubic-bezier(0.22, 0.61, 0.25, 1) both;
+  }
+
+  .ds-streaming-text-cursor {
+    display: inline-block;
+    width: 0.1rem;
+    height: 0.9em;
+    margin-left: 0.125rem;
+    border-radius: 999px;
+    background: currentColor;
+    opacity: 0.82;
+    pointer-events: none;
+    transform: translateY(0.1em);
+    animation: ds-streaming-cursor-in 150ms var(--ease-standard) both;
   }
 
   .ds-assistant-message .markdown-reading-view {
@@ -363,40 +353,36 @@
     }
   }
 
-  @keyframes ds-ai-glow-tick {
-    from { opacity: 0.2; transform: translate3d(-0.12rem, 0.05rem, 0) scale(0.985); }
-    55% { opacity: 0.82; }
-    to { opacity: 0; transform: translate3d(0.08rem, -0.04rem, 0) scale(1.012); }
-  }
-
-  @keyframes ds-ai-glow-tick-reverse {
-    from { opacity: 0.2; transform: translate3d(0.12rem, -0.04rem, 0) scale(0.985); }
-    55% { opacity: 0.82; }
-    to { opacity: 0; transform: translate3d(-0.08rem, 0.05rem, 0) scale(1.012); }
-  }
-
-  @keyframes ds-streaming-enter {
+  @keyframes ds-streaming-token-in {
     from {
-      opacity: 0;
-      transform: translateY(0.125rem);
+      opacity: 0.08;
+      filter: blur(0.32rem);
+      transform: translateY(0.04em);
     }
     to {
       opacity: 1;
+      filter: blur(0);
       transform: translateY(0);
     }
+  }
+
+  @keyframes ds-streaming-cursor-in {
+    from { opacity: 0; }
+    to { opacity: 0.82; }
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   @layer components {
-    .ds-streaming-text-glow,
-    .ds-streaming-text[data-streaming="true"],
+    .ds-streaming-text-token,
+    .ds-streaming-text-cursor,
     .ds-tool-call-bubble.ds-button-loading::after {
       animation: none;
     }
 
-    .ds-streaming-text-glow {
-      display: none;
+    .ds-streaming-text-token {
+      filter: none;
+      transform: none;
     }
 
     .ds-thinking-status-text > span {

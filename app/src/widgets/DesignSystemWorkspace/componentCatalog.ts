@@ -52,7 +52,7 @@ export const designSystemSamples: DesignSystemSample[] = [
   {
     id: "AssistantMessage",
     name: "AssistantMessage",
-    summary: "无卡片容器的 AI 正文；首 token 后由正文增长独立表达 streaming，不叠加 activity。",
+    summary: "无卡片容器的 AI 正文；首 token 后按词从模糊中落定，并用细光标表达真实 streaming。",
   },
   {
     id: "ThinkingMark",

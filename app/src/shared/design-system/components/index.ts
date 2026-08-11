@@ -36,6 +36,7 @@ export type {
 export type { SegmentedControlOption } from "./SegmentedControl";
 export type { SidebarButtonSize, SidebarButtonTone } from "./SidebarButton";
 export type { SkeletonShape } from "./Skeleton";
+export type { StreamingTextRenderState } from "./StreamingText";
 export type { ToastInput, ToastVariant } from "./Toast";
 export type { ThinkingMarkProps, ThinkingMarkVariant } from "./ThinkingMark";
 export type { ThinkingIndicatorProps } from "./ThinkingIndicator";

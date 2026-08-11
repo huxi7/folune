@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 Bun test、react-dom/server 与 MarkdownReadingView 的软换行及安全渲染边界
- * [OUTPUT]: 覆盖备忘录单换行、GFM 展示，以及 HTML/脚本/危险链接不会进入输出
- * [POS]: app/src/widgets 的 Markdown 阅读回归测试；验证阅读排版与禁止执行型内容两条边界同时成立
+ * [INPUT]: 依赖 Bun test、react-dom/server 与 MarkdownReadingView 的软换行、安全渲染及词级装饰边界
+ * [OUTPUT]: 覆盖备忘录单换行、GFM、安全过滤，以及流式词动画/光标不破坏 Markdown 语义
+ * [POS]: app/src/widgets 的 Markdown 阅读回归测试；同时锁定阅读安全与 Agent 流式表现边界
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -61,6 +61,39 @@ alert("文本，不执行")
     expect(html).not.toContain("<script");
     expect(html).not.toContain("onerror");
     expect(html).not.toContain("javascript:");
+  });
+
+  test("decorates every streamed word while preserving Markdown", () => {
+    const html = renderToStaticMarkup(
+      <MarkdownReadingView
+        content="先确认 **目标**"
+        streamingText={{
+          animateWords: true,
+          showCursor: true,
+        }}
+      />,
+    );
+
+    expect(html).toContain(">先</span><span class=\"ds-streaming-text-token\">确认 </span>");
+    expect(html).toContain("<strong><span class=\"ds-streaming-text-token\">目标</span>");
+    expect(html).toContain("ds-streaming-text-cursor");
+    expect(html.match(/ds-streaming-text-token/g)).toHaveLength(3);
+  });
+
+  test("keeps one tail cursor when the streamed Markdown ends in code", () => {
+    const html = renderToStaticMarkup(
+      <MarkdownReadingView
+        content={"```ts\nconst ready = true;\n```"}
+        streamingText={{
+          animateWords: true,
+          showCursor: true,
+        }}
+      />,
+    );
+
+    expect(html).toContain("<pre><code class=\"language-ts\"");
+    expect(html.match(/ds-streaming-text-cursor/g)).toHaveLength(1);
+    expect(html.match(/ds-streaming-text-token/g)?.length).toBeGreaterThan(1);
   });
 
   test("uses the current title only as a safe md filename", () => {

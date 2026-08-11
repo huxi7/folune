@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖 AI SDK UIMessage 有序文本/reasoning/工具 parts、过程/正文分区、工具人话展示、可折叠过程容器与 design-system AI 消息组件
- * [OUTPUT]: 对外提供无冗余身份标题的用户气泡，以及真实顺序穿插过程文字/工具、完成后可折叠过程且最终正文始终独立的 assistant 回复
+ * [INPUT]: 依赖 AI SDK UIMessage 有序文本/reasoning/工具 parts、过程/正文分区、工具人话展示、可折叠过程容器与按词流式的 design-system AI 消息组件
+ * [OUTPUT]: 对外提供无冗余身份标题的用户气泡，以及真实顺序穿插过程文字/工具、完成后可折叠过程且最终正文按词模糊落定的 assistant 回复
  * [POS]: AgentPanel 消息适配层，把 SDK 原始 part 流转换为 SuperNote 轻量 Agent 回复，不改变工具执行或持久化语义
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -109,7 +109,12 @@ export function ChatMessage({
             })}
           </AgentProcessDisclosure>
         ) : undefined}
-        renderContent={(content) => <MarkdownReadingView content={content} />}
+        renderContent={(content, streamingText) => (
+          <MarkdownReadingView
+            content={content}
+            streamingText={streamingText}
+          />
+        )}
         streaming={activity === "streaming"}
       />
     </article>

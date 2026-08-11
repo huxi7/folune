@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 React 状态/计时器、目标文本、真实流状态与可选渲染器
- * [OUTPUT]: 对外提供逐字符追赶 SSE 文本与每字轻微光晕的 StreamingText，流结束立即补齐正文
- * [POS]: design-system AI 消息家族的动态文字内核，不拥有消息容器、Markdown 规则或工具状态
+ * [INPUT]: 依赖 React 状态/计时器、Unicode 分词、目标文本、真实流状态与可选渲染器
+ * [OUTPUT]: 对外提供按词追赶 SSE、词尾模糊落定与细光标状态的 StreamingText，网络结束后继续平滑排空积压词
+ * [POS]: design-system AI 消息家族的动态文字内核，统一节奏但把纯文本/Markdown 的稳定词节点交给各自渲染器
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -12,17 +12,36 @@ import {
   useState,
 } from "react";
 
+import { splitStreamingTextUnits } from "./streamingTextSegments";
+
+export type StreamingTextRenderState = {
+  animateWords: boolean;
+  showCursor: boolean;
+};
+
 type StreamingTextProps = {
   onProgress?: () => void;
-  renderText?: (text: string) => ReactNode;
+  renderText?: (text: string, state: StreamingTextRenderState) => ReactNode;
   streaming?: boolean;
   text: string;
 };
 
-const CHARACTER_DELAY_MS = 18;
+const WORD_DELAY_MS = 55;
+const MIN_WORD_DELAY_MS = 18;
+const WORD_RESOLVE_MS = 420;
+
+function wordDelay(remaining: number) {
+  return Math.max(
+    MIN_WORD_DELAY_MS,
+    WORD_DELAY_MS - Math.max(0, remaining - 4) * 2,
+  );
+}
 
 function usePrefersReducedMotion() {
-  const [reduced, setReduced] = useState(false);
+  const [reduced, setReduced] = useState(
+    () => typeof window !== "undefined"
+      && window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+  );
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -36,8 +55,23 @@ function usePrefersReducedMotion() {
   return reduced;
 }
 
-function defaultRenderText(text: string) {
-  return <p className="ds-streaming-text-plain">{text}</p>;
+function defaultRenderText(text: string, state: StreamingTextRenderState) {
+  const units = splitStreamingTextUnits(text);
+
+  return (
+    <p className="ds-streaming-text-plain">
+      {state.animateWords
+        ? units.map((unit, index) => (
+            <span className="ds-streaming-text-token" key={index}>
+              {unit}
+            </span>
+          ))
+        : text}
+      {state.showCursor ? (
+        <span aria-hidden="true" className="ds-streaming-text-cursor" />
+      ) : null}
+    </p>
+  );
 }
 
 export function StreamingText({
@@ -47,34 +81,58 @@ export function StreamingText({
   text,
 }: StreamingTextProps) {
   const reducedMotion = usePrefersReducedMotion();
-  const characters = useMemo(() => Array.from(text), [text]);
+  const units = useMemo(() => splitStreamingTextUnits(text), [text]);
   const [visibleCount, setVisibleCount] = useState(
-    () => streaming ? 0 : characters.length,
+    () => streaming ? 0 : units.length,
   );
+  const [settled, setSettled] = useState(!streaming);
 
   useEffect(() => {
-    if (reducedMotion || !streaming) {
-      setVisibleCount(characters.length);
+    if (reducedMotion) {
+      setVisibleCount(units.length);
+      setSettled(true);
       return;
     }
 
-    if (visibleCount > characters.length) {
-      setVisibleCount(characters.length);
+    if (streaming) {
+      setSettled(false);
+    }
+
+    if (visibleCount > units.length) {
+      setVisibleCount(units.length);
       return;
     }
 
-    if (visibleCount >= characters.length) {
+    if (visibleCount < units.length) {
+      setSettled(false);
+      const remaining = units.length - visibleCount;
+      const timer = window.setTimeout(() => {
+        setVisibleCount((count) => Math.min(count + 1, units.length));
+      }, wordDelay(remaining));
+
+      return () => window.clearTimeout(timer);
+    }
+
+    if (streaming || settled) {
       return;
     }
 
     const timer = window.setTimeout(() => {
-      setVisibleCount((count) => Math.min(count + 1, characters.length));
-    }, CHARACTER_DELAY_MS);
+      setSettled(true);
+    }, WORD_RESOLVE_MS);
 
     return () => window.clearTimeout(timer);
-  }, [characters.length, reducedMotion, streaming, visibleCount]);
+  }, [reducedMotion, settled, streaming, units.length, visibleCount]);
 
-  const visibleText = characters.slice(0, visibleCount).join("");
+  const renderedCount = reducedMotion
+    ? units.length
+    : Math.min(visibleCount, units.length);
+  const visibleText = units.slice(0, renderedCount).join("");
+  const visuallyStreaming = streaming || !settled;
+  const renderState: StreamingTextRenderState = {
+    animateWords: visuallyStreaming && !reducedMotion && visibleText.length > 0,
+    showCursor: visuallyStreaming && visibleText.length > 0,
+  };
 
   useEffect(() => {
     onProgress?.();
@@ -83,18 +141,10 @@ export function StreamingText({
   return (
     <div
       className="ds-streaming-text"
-      data-streaming={streaming || undefined}
+      data-streaming={visuallyStreaming || undefined}
     >
-      {streaming && visibleCount > 0 ? (
-        <span
-          aria-hidden="true"
-          className="ds-streaming-text-glow"
-          data-direction={visibleCount % 2 === 0 ? "right" : "left"}
-          key={`glow-${visibleCount}`}
-        />
-      ) : null}
       <div className="ds-streaming-text-content">
-        {renderText(visibleText)}
+        {renderText(visibleText, renderState)}
       </div>
     </div>
   );

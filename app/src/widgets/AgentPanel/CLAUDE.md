@@ -4,7 +4,7 @@
 成员清单
 AgentPanel.tsx: 右侧聊天面板，Header 以共享 48px 高度、32px 标识/关闭容器与 16px ThinkingMark 建立空间节奏；Kumo InputArea 与圆形动作位组成 48px 起步、最多 6 行后内部滚动的单一 Composer 气泡，普通 Enter 发送、Shift+Enter 换行，submitted/streaming 期间保留可编辑草稿并立即显示停止动作；使用 AI SDK useChat 与 deriveAssistantActivity 收敛 submitted/streaming/part 状态，以 onToolCall 把工具交给 clientTools 执行、显式但不等待 addToolResult 回灌真实结果并在完整工具结果后自动续写；等待 addToolResult 会与 AI SDK 当前 stream 的串行任务互锁，禁止改回 await；停止按钮必须同时中止 AI 流与活动庆祝 Canvas，尚无 assistant message 时独立展示正式 ThinkingIndicator
 AgentProcessDisclosure.tsx: 单条 assistant 回复的处理过程显隐边界，入口固定在所有过程文字与工具之前；生成期以 ThinkingMark + 真实状态强制展开，完成后保留“思考过程”顶部入口供手动收起/展开，容器永不包裹最终正文
-ChatMessage.tsx: AI SDK UIMessage 适配层；用户文本直接进入 Primary 同源气泡且不重复显示“你”，assistant 不显示身份标题，按 messagePresentation 分区后把过程文字/reasoning/工具原位穿插进 AgentProcessDisclosure，并把最终正文留在独立 StreamingText 槽位
+ChatMessage.tsx: AI SDK UIMessage 适配层；用户文本直接进入 Primary 同源气泡且不重复显示“你”，assistant 不显示身份标题，按 messagePresentation 分区后把过程文字/reasoning/工具原位穿插进 AgentProcessDisclosure，并把最终 Markdown 正文留在按词模糊落定/细光标的独立 StreamingText 槽位；网络结束只结束输入，不得强制全文补齐
 ChatMessage.test.tsx: 完整回复 DOM 契约测试，锁定过程文字与工具的真实顺序、折叠入口位于最终正文之前、敏感 ID 不进入界面、普通回复零过程区及双方无可见身份标题
 composerBehavior.ts: Composer 的纯交互判定，统一非空闲/空白提交保护，并把普通 Enter 与 Shift/修饰键/IME 组合输入严格分流
 composerBehavior.test.ts: Composer 键盘与提交契约测试，覆盖普通 Enter、Shift 换行、中文组合输入、Safari 229 兼容、修饰键和空白内容
