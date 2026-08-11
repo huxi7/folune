@@ -4,7 +4,7 @@
 成员清单
 .gitkeep: 保留本地组件目录
 CLAUDE.md: 记录本地组件目录职责与文档协议
-Button.tsx: 本地 Button 组件，封装 primary、弱边缘 secondary、ghost、实心红色 danger、square 与正交 loading 状态；以统一 smooth corner、干净纯色表面、细实体边缘、有效接触/短投射阴影、顶部内高光、固定原位 hover 和 1px press 收拢形成克制触感，不使用静态渐变或底部偏色暗线；非 Danger loading 自动切换为独立冷灰蓝状态面，继续联动原生 disabled/aria-busy，并以 spinner 配合 3.4s 低频窄 shimmer
+Button.tsx: 本地 Button 组件，封装 primary、弱边缘 secondary、ghost、实心红色 danger、square 与正交 loading 状态；以统一 smooth corner、干净纯色平面、细实体边缘、零偏移环绕柔影、固定原位 hover 和 1px press 收拢形成现代克制层级，不使用静态渐变、顶部内高光或底部偏色暗线；非 Danger loading 自动切换为独立冷灰蓝状态面，继续联动原生 disabled/aria-busy，并以 spinner 配合 3.4s 低频窄 shimmer
 Skeleton.tsx: 统一低对比占位加载原语，提供 rect/text/circle 形状、单组宽光带 SkeletonGroup 与 180ms 延迟出现/360ms 最短可见时长的 useDelayedSkeleton；业务只按真实内容结构组合，不自建动画或计时器
 SidebarButton.tsx: 本地侧栏导航原子组件，以 active、default/icon 等高尺寸、default/prominent 层级和 leading/label/trailing 槽位统一 APP 与账户模态框导航；默认高度和平滑圆角与 Button 一致，hover 固定原位，选中态和 prominent 态直接复用弱边缘的 Secondary Button 材质
 SegmentedControl.tsx: 本地紧凑互斥选择原子组件，以受控值、原生 button、radiogroup/radio、单一 Tab 停靠点与方向键/Home/End 切换统一少量稳定选项；视觉只消费平整语义表面，不复刻 Button 的立体位移
@@ -17,7 +17,7 @@ StreamingText.tsx: 首个真实 text part 后逐字符追赶 SSE 目标文本，
 ThinkingStatusText.tsx: ThinkingIndicator 的低频中性状态文字，以 2800ms 固定宽度交叉淡化轮换“思考/整理思路/组织回答”，不虚构搜索、文件或工具行为
 ThinkingIndicator.tsx: Animated Formation ThinkingMark 与 ThinkingStatusText 的无卡片行内组合件，等待正文时 active，首 token 后 160ms 淡出，活动工具出现时由调用方立即卸载
 ThinkingMark.tsx: SuperNote AI 品牌符号，默认使用圆角核心、五条不对称折线连接与五个非等径外围节点表达信息聚合；固定 24×24 viewBox/currentColor/独立 data-part，并以 1840ms 非顺时针错峰 Formation Motion 提供 active 态，同时归档 Radiation/Formation/Fold 三个静态候选
-UserMessageBubble.tsx: 用户消息气泡，直接复用 Primary Button 的主题色、前景色、smooth corner 与厚度阴影
+UserMessageBubble.tsx: 用户消息气泡，直接复用 Primary Button 的主题色、前景色、smooth corner 与均匀环绕柔影
 ToolCallBubble.tsx: 工具调用专用状态控件，只展示工具图标、名称与灰阶结果符号，完全隐藏调用载荷；宽度随工具名自适应，复用 Secondary Button 材质且活动态只增加低频 shimmer
 ToolCallBubble.test.tsx: 工具消息最小 DOM 契约测试，锁定无 details/pre 载荷、执行态 shimmer 与完成态右侧结果槽
 BrandMark.tsx: SuperNote 品牌标识组件，只提供 iconOnly 纯图标与“图标 + SuperNote 标题”两种稳定锁定；所有界面删除副标题形态

@@ -22,7 +22,7 @@ memoLibrary.test.ts: Bun 拖拽视图回归测试，覆盖无限嵌套查找、�
 useMemoTreeExpansion.ts: 文件树展开偏好的设备级持久化边界；仅在整树 ready 后按用户读取带版本 localStorage 快照，保留明确的全折叠状态，并随 folder 增删清理失效 id、默认展开新 folder
 useMemoTreeExpansion.test.ts: 覆盖展开快照缺失与明确全折叠的区分、损坏/旧版本容错，以及删除清理和新 folder 自动展开规则
 PanelResizeHandle.tsx: 左右分栏拖拽手柄，支持 Pointer 拖拽、方向键调整、双击复位与 separator ARIA
-DesignSystemWorkspace/: 开发态 V1 Design System 参考工作区，以单一同构卡片矩阵陈列含 Skeleton 与完整 Button variants/尺寸/loading/disabled 状态在内的十个通用组件家族、既定 ThinkingMark 与完整 AI 消息模块；通过 lazy import 只在 import.meta.env.DEV 下暴露
+DesignSystemWorkspace/: 开发态 V1 Design System 参考工作区，以单一同构卡片矩阵陈列含 Skeleton 与不重复 Button variants/loading/disabled 状态在内的十个通用组件家族、既定 ThinkingMark 与完整 AI 消息模块；通过 lazy import 只在 import.meta.env.DEV 下暴露
 MarkdownEditor.tsx: Markdown 存储协议与 CodeMirror 显示协议之间的唯一 adapter；GFM language 常驻，live/source 只通过 Compartment 重配显示扩展以共享 EditorState/选区/撤销历史，零宽空行标记和纯文本粘贴继续保证 content_mdx 无损往返
 MarkdownEditor.test.ts: 以 content_mdx 恒等 round-trip 验证普通文本、2/5+ 连续空行、首尾/连续空格、强调段、空白行与 CRLF，约束零宽标记、HTML 空标签和 nbsp 永不离开 adapter
 MarkdownLivePreview.ts: CodeMirror 6 原生 Live Preview 引擎，以 syntaxTree/visibleRanges 只扫描可见 block；活动标题保留弱化且无下划线的源码标记，非活动标题隐藏标记和分隔空白，活动/多选区与不安全语法回退完整源码，隐藏范围同步提供 atomicRanges，IME 合成期只映射旧装饰并在结束后刷新

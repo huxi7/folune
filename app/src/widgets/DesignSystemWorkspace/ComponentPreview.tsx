@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 React memo/useEffect/useState、Phosphor 图标、通用组件、Skeleton、ThinkingMark 与互斥 AI 消息组件家族
- * [OUTPUT]: 对外提供含完整 Button variants/尺寸/loading/disabled 真实状态在内的通用组件、单光带结构 Skeleton、既定 Active Formation ThinkingMark 真实尺寸及用户/AI/Thinking/极简 Tool 状态组件交互示例 ComponentPreview
+ * [OUTPUT]: 对外提供含不重复 Button variants/loading/disabled 真实状态在内的通用组件、单光带结构 Skeleton、既定 Active Formation ThinkingMark 真实尺寸及用户/AI/Thinking/极简 Tool 状态组件交互示例 ComponentPreview
  * [POS]: app/src/widgets/DesignSystemWorkspace 的卡片预览层，只展示真实 API 而不堆叠规范说明
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -58,15 +58,9 @@ function ButtonPreview() {
         <Button variant="ghost">Ghost</Button>
         <Button variant="danger">Danger</Button>
       </div>
-      <div aria-label="Button states and sizes" className="ds-button-preview-row">
+      <div aria-label="Button states" className="ds-button-preview-row">
         <Button loading variant="primary">Saving</Button>
         <Button disabled variant="secondary">Disabled</Button>
-        <Button
-          aria-label="新建备忘录"
-          icon={NotePencilIcon}
-          size="square"
-          variant="primary"
-        />
       </div>
       <p>Hover · Press · Tab focus</p>
     </div>

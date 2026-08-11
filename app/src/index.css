@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Kumo Tailwind 样式源、Tailwind v4，并导入 AI 消息与 Design System 等职责样式模块消费本文件语义 token
- * [OUTPUT]: 对外提供 Kumo 基础件样式、冻结的 V1 Classic Blueprint、Landing Light Canvas、自然现代主色、状态/图表/庆祝色板/统一 smooth corner/阴影/动效、独立于 Primary 的 Button loading 表面、不会因 OKLCH 插值偏红的确定性白色/中性灰蓝表面与 Skeleton shimmer 语义 token、Tailwind 映射及样式模块入口
+ * [OUTPUT]: 对外提供 Kumo 基础件样式、冻结的 V1 Classic Blueprint、Landing Light Canvas、自然现代主色、状态/图表/庆祝色板/统一 smooth corner/阴影/动效、零偏移环绕 Button 阴影与独立于 Primary 的 loading 表面、不会因 OKLCH 插值偏红的确定性白色/中性灰蓝表面与 Skeleton shimmer 语义 token、Tailwind 映射及样式模块入口
  * [POS]: app/src 的主题入口，被 main.tsx 引入并约束 Kumo 与本地设计系统共享同一全局视觉来源
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -160,15 +160,17 @@
   --button-radius: calc(var(--radius-control) + 0.1875rem);
   --button-height-default: 2.35rem;
   --button-shadow-rest:
-    0 0.13rem 0.22rem -0.07rem color-mix(in srgb, var(--button-depth) 28%, transparent),
-    0 0.42rem 0.82rem -0.52rem color-mix(in srgb, var(--button-depth) 24%, transparent),
-    inset 0 1px 0 color-mix(in srgb, var(--button-specular) 48%, transparent);
+    0 0 0.42rem -0.16rem color-mix(in srgb, var(--button-depth) 18%, transparent);
+  --button-shadow-subtle-rest:
+    0 0 0.28rem -0.14rem color-mix(in srgb, var(--button-depth) 10%, transparent);
   --button-shadow-pressed:
-    0 0.06rem 0.11rem -0.04rem color-mix(in srgb, var(--button-depth) 22%, transparent),
-    inset 0 0.1rem 0.18rem color-mix(in srgb, var(--button-depth) 13%, transparent);
+    0 0 0.22rem -0.1rem color-mix(in srgb, var(--button-depth) 14%, transparent);
+  --button-shadow-subtle-pressed:
+    0 0 0.16rem -0.08rem color-mix(in srgb, var(--button-depth) 8%, transparent);
   --button-shadow-disabled:
-    0 0.1rem 0.2rem -0.08rem color-mix(in srgb, var(--button-depth) 14%, transparent),
-    inset 0 1px 0 color-mix(in srgb, var(--button-specular) 30%, transparent);
+    0 0 0.18rem -0.09rem color-mix(in srgb, var(--button-depth) 8%, transparent);
+  --button-shadow-subtle-disabled:
+    0 0 0.12rem -0.06rem color-mix(in srgb, var(--button-depth) 6%, transparent);
   --button-danger-hover-background: #b84b55;
   --button-danger-active-background: #a33f49;
   --button-loading-background: #edf1f6;

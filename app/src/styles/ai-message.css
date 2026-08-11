@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 index.css 的 primary/foreground/surface/spacing/button 阴影与 motion 语义 token
+ * [INPUT]: 依赖 index.css 的 primary/foreground/surface/spacing/button 零偏移环绕阴影与 motion 语义 token
  * [OUTPUT]: 提供用户主色气泡、零卡片 AI 正文、逐字冷蓝光晕、Formation ThinkingIndicator/动态文字与 Secondary 同源极简工具状态样式
  * [POS]: app/src/styles 的 AI 消息视觉层，被 AgentPanel 与 DEV Design System 共用且不定义第二套主题
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -189,7 +189,7 @@
     background: var(--button-surface-rest);
     padding: 0 calc(var(--spacing) * 2.5);
     color: var(--button-foreground-rest);
-    box-shadow: var(--button-shadow-rest);
+    box-shadow: var(--button-shadow-subtle-rest);
   }
 
   .ds-tool-call-icon {
@@ -228,9 +228,7 @@
     border-radius: calc(var(--radius-control) - 0.2rem);
     background: var(--card);
     color: var(--muted-foreground);
-    box-shadow:
-      var(--shadow-2xs),
-      inset 0 1px 0 color-mix(in srgb, var(--button-specular) 42%, transparent);
+    box-shadow: var(--button-shadow-subtle-disabled);
   }
 
   @supports (corner-shape: squircle) {

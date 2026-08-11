@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖 index.css 的语义颜色、Button 边缘/接触阴影/顶部高光/按压收拢/loading 独立状态 token 与 Tailwind v4 layer
- * [OUTPUT]: 对外提供 ThinkingMark 固定 SVG 容器/Formation 聚合 Motion、确定性中性灰且不偏红的单组宽光带 Skeleton、以白色表面和有效内外层次塑形且 hover 固定原位的触感 Button、保留实心红色的 Danger、独立冷灰蓝表面与低频 Shimmer 的 loading 状态，以及冻结的 V1 组件质感与 Dialog 层级
+ * [INPUT]: 依赖 index.css 的语义颜色、Button 细边缘/零偏移环绕阴影/按压收拢/loading 独立状态 token 与 Tailwind v4 layer
+ * [OUTPUT]: 对外提供 ThinkingMark 固定 SVG 容器/Formation 聚合 Motion、确定性中性灰且不偏红的单组宽光带 Skeleton、以纯色平面和均匀环绕柔影塑形且 hover 固定原位的 Button、保留实心红色的 Danger、独立冷灰蓝表面与低频 Shimmer 的 loading 状态，以及冻结的 V1 组件质感与 Dialog 层级
  * [POS]: app/src/styles 的组件视觉层，被 index.css 统一导入
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -154,6 +154,7 @@
     --button-elevation-rest: var(--button-shadow-rest);
     --button-elevation-pressed: var(--button-shadow-pressed);
     --button-elevation-disabled: var(--button-shadow-disabled);
+    --button-elevation-loading: var(--button-shadow-subtle-rest);
     --button-shimmer-color: var(--button-specular);
     position: relative;
     isolation: isolate;
@@ -232,10 +233,7 @@
     border-color: var(--button-loading-border);
     background: var(--button-loading-background);
     color: var(--button-loading-foreground);
-    box-shadow:
-      0 0.12rem 0.22rem -0.08rem color-mix(in srgb, var(--button-depth) 15%, transparent),
-      0 0.38rem 0.72rem -0.52rem color-mix(in srgb, var(--button-depth) 16%, transparent),
-      inset 0 1px 0 color-mix(in srgb, var(--button-loading-shimmer) 64%, transparent);
+    box-shadow: var(--button-elevation-loading);
   }
 
   .ds-button-loading::after {
@@ -299,13 +297,16 @@
   }
 
   .ds-button-secondary {
-    --button-border-rest: color-mix(in srgb, var(--border) 62%, transparent);
-    --button-border-hover: color-mix(in srgb, var(--border) 84%, transparent);
-    --button-border-active: var(--border-strong);
+    --button-border-rest: color-mix(in srgb, var(--border) 40%, transparent);
+    --button-border-hover: color-mix(in srgb, var(--border) 60%, transparent);
+    --button-border-active: color-mix(in srgb, var(--border-strong) 72%, transparent);
     --button-surface-rest: var(--card);
     --button-surface-hover: var(--secondary);
     --button-surface-active: var(--border);
     --button-foreground-rest: var(--card-foreground);
+    --button-elevation-rest: var(--button-shadow-subtle-rest);
+    --button-elevation-pressed: var(--button-shadow-subtle-pressed);
+    --button-elevation-disabled: var(--button-shadow-subtle-disabled);
     --button-shimmer-color: var(--foreground);
   }
 
