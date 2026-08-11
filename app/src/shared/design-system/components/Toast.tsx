@@ -1,9 +1,13 @@
 /**
- * [INPUT]: 依赖 React Context、稳定回调/定时器清理与 Phosphor 状态图标，依赖 toast.css 的全局视口和变体样式
- * [OUTPUT]: 对外提供 ToastProvider、useToast、ToastVariant 与 ToastInput，统一调度 info/success/warning/error 全局反馈
- * [POS]: app/src/shared/design-system/components 的全局瞬时反馈边界，由 main.tsx 在路由外装配，业务组件只提交消息而不拥有弹层生命周期
+ * [INPUT]: 依赖 Kumo Toast Provider/Manager/Parts 的可访问队列、自动关闭、悬停暂停、焦点与滑动生命周期，依赖 Phosphor 轻量状态图标及 toast.css 的 Apple-like SuperNote 材质
+ * [OUTPUT]: 对外提供稳定的 ToastProvider、useToast、ToastVariant 与 ToastInput，把既有 info/success/warning/error 业务协议适配到 Kumo Toast
+ * [POS]: app/src/shared/design-system/components 的全局瞬时反馈边界；Kumo 只拥有交互机制，SuperNote 本地 API 与样式继续隔离业务和第三方实现
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
+import {
+  Toast as KumoToast,
+  useKumoToastManager,
+} from "@cloudflare/kumo/components/toast";
 import {
   CheckCircleIcon,
   InfoIcon,
@@ -15,10 +19,8 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
   useRef,
-  useState,
   type ReactNode,
 } from "react";
 
@@ -31,18 +33,16 @@ export type ToastInput = {
   variant?: ToastVariant;
 };
 
-type ToastRecord = Required<Pick<ToastInput, "duration" | "title" | "variant">> &
-  Pick<ToastInput, "description"> & {
-    id: number;
-  };
-
 type ToastContextValue = {
   dismissToast: (id: number) => void;
   toast: (input: ToastInput) => number;
 };
 
+type KumoManagedToast = ReturnType<typeof useKumoToastManager>["toasts"][number];
+
 const DEFAULT_TOAST_DURATION = 4200;
 const MAX_VISIBLE_TOASTS = 4;
+const TOAST_ID_PREFIX = "supernote-toast-";
 const ToastContext = createContext<ToastContextValue | null>(null);
 
 const variantIcons = {
@@ -52,74 +52,81 @@ const variantIcons = {
   warning: WarningCircleIcon,
 } as const;
 
-function ToastItem({
-  description,
-  duration,
-  id,
-  onDismiss,
-  title,
-  variant,
-}: ToastRecord & { onDismiss: (id: number) => void }) {
+function getToastId(id: number) {
+  return `${TOAST_ID_PREFIX}${id}`;
+}
+
+function getToastVariant(variant: unknown): ToastVariant {
+  return variant === "success" ||
+    variant === "warning" ||
+    variant === "error"
+    ? variant
+    : "info";
+}
+
+function ToastItem({ toast }: { toast: KumoManagedToast }) {
+  const variant = getToastVariant(toast.variant);
   const IconComponent = variantIcons[variant];
 
-  useEffect(() => {
-    const timerId = window.setTimeout(() => onDismiss(id), duration);
-
-    return () => window.clearTimeout(timerId);
-  }, [duration, id, onDismiss]);
-
   return (
-    <div
-      aria-atomic="true"
+    <KumoToast.Root
       className="ds-toast"
       data-variant={variant}
-      role={variant === "error" || variant === "warning" ? "alert" : "status"}
+      swipeDirection={["down", "right"]}
+      toast={toast}
     >
-      <span aria-hidden="true" className="ds-toast-icon">
-        <IconComponent size={18} weight="fill" />
-      </span>
-      <div className="ds-toast-copy">
-        <strong>{title}</strong>
-        {description ? <p>{description}</p> : null}
-      </div>
-      <button
-        aria-label="关闭提示"
-        className="ds-toast-dismiss"
-        onClick={() => onDismiss(id)}
-        type="button"
-      >
-        <XIcon aria-hidden="true" size={14} weight="bold" />
-      </button>
-    </div>
+      <span aria-hidden="true" className="ds-toast-material" />
+      <KumoToast.Content className="ds-toast-content">
+        <span aria-hidden="true" className="ds-toast-icon">
+          <IconComponent size={20} weight="regular" />
+        </span>
+        <div className="ds-toast-copy">
+          <KumoToast.Title className="ds-toast-title">
+            {toast.title}
+          </KumoToast.Title>
+          {toast.description ? (
+            <KumoToast.Description className="ds-toast-description">
+              {toast.description}
+            </KumoToast.Description>
+          ) : null}
+        </div>
+        <KumoToast.Close aria-label="关闭提示" className="ds-toast-dismiss">
+          <XIcon aria-hidden="true" size={12} weight="bold" />
+        </KumoToast.Close>
+      </KumoToast.Content>
+    </KumoToast.Root>
   );
 }
 
-export function ToastProvider({ children }: { children: ReactNode }) {
+function ToastRuntime({ children }: { children: ReactNode }) {
   const nextToastId = useRef(0);
-  const [toasts, setToasts] = useState<ToastRecord[]>([]);
+  const toastManager = useKumoToastManager();
+  const toastManagerRef = useRef(toastManager);
+  toastManagerRef.current = toastManager;
 
-  const dismissToast = useCallback((id: number) => {
-    setToasts((currentToasts) =>
-      currentToasts.filter((currentToast) => currentToast.id !== id),
-    );
-  }, []);
+  const dismissToast = useCallback(
+    (id: number) => toastManagerRef.current.close(getToastId(id)),
+    [],
+  );
 
-  const toast = useCallback((input: ToastInput) => {
-    const id = ++nextToastId.current;
-    const nextToast: ToastRecord = {
-      description: input.description,
-      duration: input.duration ?? DEFAULT_TOAST_DURATION,
-      id,
-      title: input.title,
-      variant: input.variant ?? "info",
-    };
+  const toast = useCallback(
+    (input: ToastInput) => {
+      const id = ++nextToastId.current;
+      const variant = input.variant ?? "info";
 
-    setToasts((currentToasts) =>
-      [...currentToasts, nextToast].slice(-MAX_VISIBLE_TOASTS),
-    );
+      toastManagerRef.current.add({
+        description: input.description,
+        id: getToastId(id),
+        priority: variant === "error" || variant === "warning" ? "high" : "low",
+        timeout: input.duration ?? DEFAULT_TOAST_DURATION,
+        title: input.title,
+        variant,
+      });
 
-    return id;
-  }, []);
+      return id;
+    },
+    [],
+  );
 
   const contextValue = useMemo(
     () => ({ dismissToast, toast }),
@@ -129,16 +136,28 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={contextValue}>
       {children}
-      <div aria-label="全局通知" className="ds-toast-viewport">
-        {toasts.map((currentToast) => (
-          <ToastItem
-            {...currentToast}
-            key={currentToast.id}
-            onDismiss={dismissToast}
-          />
-        ))}
-      </div>
+      <KumoToast.Portal>
+        <KumoToast.Viewport
+          aria-label="全局通知"
+          className="ds-toast-viewport"
+        >
+          {toastManager.toasts.map((currentToast) => (
+            <ToastItem key={currentToast.id} toast={currentToast} />
+          ))}
+        </KumoToast.Viewport>
+      </KumoToast.Portal>
     </ToastContext.Provider>
+  );
+}
+
+export function ToastProvider({ children }: { children: ReactNode }) {
+  return (
+    <KumoToast.Provider
+      limit={MAX_VISIBLE_TOASTS}
+      timeout={DEFAULT_TOAST_DURATION}
+    >
+      <ToastRuntime>{children}</ToastRuntime>
+    </KumoToast.Provider>
   );
 }
 
