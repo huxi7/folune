@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 index.css 的 4px 空间基线、32/40/48px 控件与 Panel Header 语义 token、全局颜色 token 及 Tailwind v4 layer
- * [OUTPUT]: 对外提供设置/订阅/回收站、确定性中性灰业务 Skeleton、单层连续笔记画布、中性 Markdown，以及统一 48px Header、32px Header 控件、16px 图标与 40px 默认命令的三 Panel 布局
+ * [OUTPUT]: 对外提供设置/订阅/回收站、确定性中性灰业务 Skeleton、单层连续笔记画布、中性 Markdown，以及统一 48px Header、32px Header 控件、16px 图标、40px 默认命令与 48px 自增高 Agent Composer 的三 Panel 布局
  * [POS]: app/src/styles 的产品工作区布局层；中央 Panel 只保留外层工作区边界与受控写作列，不在 Panel 内重复制造纸卡
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -205,7 +205,7 @@
   .workspace-route-agent-body { justify-content: center; }
   .workspace-route-agent-line { width: 88%; height: 0.65rem; margin-inline: auto; }
   .workspace-route-agent-line-short { width: 64%; margin-top: 0.65rem; }
-  .workspace-route-agent-composer { width: 100%; height: var(--control-height-default); margin-top: auto; }
+  .workspace-route-agent-composer { width: 100%; height: var(--control-height-large); margin-top: auto; }
   .app-sidebar-shell,
   .app-main-panel,
   .app-agent-shell { position: relative; min-width: 0; min-height: 0; overflow: hidden; border: 1px solid color-mix(in srgb, var(--border) 88%, transparent); border-radius: var(--ds-radius-smooth); background: var(--card); box-shadow: var(--shadow-xs), var(--ds-shadow-inset-highlight); }
@@ -337,10 +337,14 @@
   .agent-error-state > svg { flex-shrink: 0; margin-top: 0.08rem; }
   .agent-error-state strong { display: block; color: var(--foreground); font-size: 0.6875rem; line-height: 1.4; }
   .agent-error-state p { margin-top: 0.15rem; color: var(--muted-foreground); font-size: 0.625rem; line-height: 1.55; }
-  .agent-composer { display: flex; flex-shrink: 0; align-items: center; gap: 0.45rem; margin-top: 0.65rem; border-top: 1px solid var(--border); padding-top: 0.7rem; }
-  .agent-chat-input { min-width: 0; min-height: var(--control-height-default) !important; flex: 1; }
-  .agent-composer-button { min-height: var(--control-height-default) !important; }
-  .agent-composer-button-square { width: var(--control-height-default) !important; min-width: var(--control-height-default) !important; }
+  .agent-composer { display: grid; min-height: var(--control-height-large); flex-shrink: 0; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: var(--space-1); margin-top: var(--space-3); border: 1px solid color-mix(in srgb, var(--border) 92%, transparent); border-radius: var(--ds-radius-smooth); background: var(--card); padding: var(--space-1); box-shadow: var(--button-shadow-subtle-rest), var(--ds-shadow-inset-highlight); transition: border-color var(--motion-fast) var(--ease-standard), box-shadow var(--motion-fast) var(--ease-standard); }
+  .agent-composer:hover { border-color: color-mix(in srgb, var(--border-strong) 70%, var(--border)); }
+  .agent-composer:focus-within { border-color: color-mix(in srgb, var(--primary) 52%, var(--border)); box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary) 16%, transparent), var(--button-shadow-subtle-rest), var(--ds-shadow-inset-highlight); }
+  .agent-chat-input { width: 100%; min-width: 0; min-height: var(--control-height-default) !important; max-width: 100%; border: 0 !important; border-radius: calc(var(--ds-radius-smooth) - var(--space-1)) !important; background: transparent !important; padding-inline: var(--space-2) !important; color: var(--foreground) !important; line-height: 1.5; box-shadow: none !important; outline: none !important; }
+  .agent-chat-input:focus { box-shadow: none !important; outline: none !important; }
+  .agent-chat-input::placeholder { color: var(--muted-foreground); opacity: 1; }
+  .agent-composer-action { width: calc(var(--space-8) + var(--space-1)) !important; min-width: calc(var(--space-8) + var(--space-1)) !important; height: calc(var(--space-8) + var(--space-1)) !important; min-height: calc(var(--space-8) + var(--space-1)) !important; flex-shrink: 0; align-self: end; }
+  .agent-composer-action > svg { width: var(--icon-size-control); height: var(--icon-size-control); }
   .panel-resize-handle { position: absolute; top: 0; bottom: 0; z-index: 40; width: 6px; cursor: col-resize; touch-action: none; }
   .panel-resize-handle::after { content: ""; position: absolute; top: 0.75rem; bottom: 0.75rem; left: 50%; width: 2px; border-radius: 999px; background: var(--ring); opacity: 0; transform: translateX(-50%); transition: opacity var(--motion-fast) var(--ease-standard); }
   .panel-resize-handle:hover::after,
@@ -354,6 +358,7 @@
   @layer components {
     .memo-context-menu button,
     .toolbar-icon-button,
+    .agent-composer,
     .app-sidebar-shell,
     .app-main-panel,
     .app-agent-shell {

@@ -2,10 +2,12 @@
 > L2 | 父级: ../CLAUDE.md
 
 成员清单
-AgentPanel.tsx: 右侧聊天面板，Header 以共享 48px 高度、32px 标识/关闭容器与 16px ThinkingMark 建立空间节奏，Kumo Composer 统一为 40px；使用 AI SDK useChat 与 deriveAssistantActivity 收敛 submitted/streaming/part 状态，以 onToolCall 把工具交给 clientTools 执行、显式但不等待 addToolResult 回灌真实结果并在完整工具结果后自动续写；等待 addToolResult 会与 AI SDK 当前 stream 的串行任务互锁，禁止改回 await；停止按钮必须同时中止 AI 流与活动庆祝 Canvas，尚无 assistant message 时独立展示正式 ThinkingIndicator
+AgentPanel.tsx: 右侧聊天面板，Header 以共享 48px 高度、32px 标识/关闭容器与 16px ThinkingMark 建立空间节奏；Kumo InputArea 与圆形动作位组成 48px 起步、最多 6 行后内部滚动的单一 Composer 气泡，普通 Enter 发送、Shift+Enter 换行，submitted/streaming 期间保留可编辑草稿并立即显示停止动作；使用 AI SDK useChat 与 deriveAssistantActivity 收敛 submitted/streaming/part 状态，以 onToolCall 把工具交给 clientTools 执行、显式但不等待 addToolResult 回灌真实结果并在完整工具结果后自动续写；等待 addToolResult 会与 AI SDK 当前 stream 的串行任务互锁，禁止改回 await；停止按钮必须同时中止 AI 流与活动庆祝 Canvas，尚无 assistant message 时独立展示正式 ThinkingIndicator
 AgentProcessDisclosure.tsx: 单条 assistant 回复的处理过程显隐边界，入口固定在所有过程文字与工具之前；生成期以 ThinkingMark + 真实状态强制展开，完成后保留“思考过程”顶部入口供手动收起/展开，容器永不包裹最终正文
 ChatMessage.tsx: AI SDK UIMessage 适配层；用户文本直接进入 Primary 同源气泡且不重复显示“你”，assistant 不显示身份标题，按 messagePresentation 分区后把过程文字/reasoning/工具原位穿插进 AgentProcessDisclosure，并把最终正文留在独立 StreamingText 槽位
 ChatMessage.test.tsx: 完整回复 DOM 契约测试，锁定过程文字与工具的真实顺序、折叠入口位于最终正文之前、敏感 ID 不进入界面、普通回复零过程区及双方无可见身份标题
+composerBehavior.ts: Composer 的纯交互判定，统一非空闲/空白提交保护，并把普通 Enter 与 Shift/修饰键/IME 组合输入严格分流
+composerBehavior.test.ts: Composer 键盘与提交契约测试，覆盖普通 Enter、Shift 换行、中文组合输入、Safari 229 兼容、修饰键和空白内容
 celebration.ts: 独立于 memoTool Worker 的“庆祝”视觉执行器，忠实保留用户 count；1–32 次渲染等量逻辑波次，更大次数压缩为 32 波性能有界批处理；复用 canvas-confetti 托管的唯一全屏 Canvas 与可用时的内部渲染 Worker，左/中/右三源从网页底边下方少量起步，以 EDGE_START_VELOCITY/CENTER_START_VELOCITY 控制初始射程、以 CELEBRATION_DECAY 收短后续最远端，再以窄锥角先集中上升再自然扩散；count:10 采用 32ms 间隔、约 288ms 完成的无停顿点射，超大次数的释放窗口封顶 400ms；动画可由 cancelCelebration 即时复位，亦会自然完成或由 3 秒看门狗兜底
 celebration.test.ts: 庆祝次数与构图回归测试，锁定三源位于底边下方、中心固定/左右镜像、略放宽的窄锥轨迹、单次高密度礼花、count:10 以 32ms 连续点射、超大次数释放窗口有界及无效协议输入降级
 clientTools.ts: AgentPanel 客户端工具总线，以 @mastra/client-js 镜像 chat 工具 id/schema；庆祝直达独立视觉执行器，只有备忘录工具进入 Worker 计划后再走真人操作同款乐观 Store/API 链路，并统一输出协议名类型、入参归一化与执行入口

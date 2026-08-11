@@ -1,21 +1,22 @@
 /**
- * [INPUT]: 依赖 @ai-sdk/react useChat、AI SDK 浏览器工具续写判定、@mastra/client-js 工具注册表、可取消庆祝执行器、Dashboard 草稿/删除协调边界、Kumo Button/Input、design-system Activity、memoChatTransport、Store 与 ChatMessage
- * [OUTPUT]: 对外提供按 UIMessage parts 渲染有序过程/工具/最终正文、遵循共享 48/32/16 Header 与 40px Composer 节奏、可经 Worker 执行客户端工具并停止 AI 流/活动礼花的 AgentPanel
+ * [INPUT]: 依赖 @ai-sdk/react useChat、AI SDK 浏览器工具续写判定、@mastra/client-js 工具注册表、可取消庆祝执行器、Dashboard 草稿/删除协调边界、Kumo Button/InputArea、Composer 键盘判定、design-system Activity、memoChatTransport、Store 与 ChatMessage
+ * [OUTPUT]: 对外提供按 UIMessage parts 渲染有序过程/工具/最终正文、遵循共享 48/32/16 Header 与 48px 自增高 Composer 节奏、可经 Worker 执行客户端工具并停止 AI 流/活动礼花的 AgentPanel
  * [POS]: /app 右侧 AI 工作区；useChat 驱动完整 agent loop，停止命令收束 SSE 与庆祝 Canvas，Worker 规划后复用真人操作同款乐观 Store/API 链路
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
 import { useChat } from "@ai-sdk/react";
 import { Button } from "@cloudflare/kumo/components/button";
-import { Input } from "@cloudflare/kumo/components/input";
+import { InputArea } from "@cloudflare/kumo/components/input";
 import {
-  PaperPlaneRightIcon,
+  ArrowUpIcon,
   StopIcon,
   WarningCircleIcon,
   XIcon,
 } from "@phosphor-icons/react";
 import {
   type FormEvent,
+  type KeyboardEvent,
   useCallback,
   useEffect,
   useMemo,
@@ -34,6 +35,10 @@ import { cancelCelebration } from "./celebration";
 import { ChatMessage } from "./ChatMessage";
 import { getChatErrorCode } from "./chatFetch";
 import { memoChatTransport } from "./chatTransport";
+import {
+  canSubmitComposer,
+  isComposerSubmitKey,
+} from "./composerBehavior";
 import {
   createAgentClientTools,
   executeAgentClientTool,
@@ -94,6 +99,7 @@ export function AgentPanel({
 }: AgentPanelProps) {
   const closePanel = useAgentPanelStore((state) => state.close);
   const [inputValue, setInputValue] = useState("");
+  const composerRef = useRef<HTMLTextAreaElement>(null);
   const messageListRef = useRef<HTMLDivElement>(null);
   const clientTools = useMemo(
     () => createAgentClientTools({
@@ -182,7 +188,32 @@ export function AgentPanel({
   const handleStop = useCallback(() => {
     cancelCelebration();
     void stop();
+    composerRef.current?.focus({ preventScroll: true });
   }, [stop]);
+
+  const handleComposerKeyDown = useCallback((
+    event: KeyboardEvent<HTMLTextAreaElement>,
+  ) => {
+    if (!isComposerSubmitKey({
+      altKey: event.altKey,
+      ctrlKey: event.ctrlKey,
+      isComposing: event.nativeEvent.isComposing,
+      key: event.key,
+      keyCode: event.nativeEvent.keyCode,
+      metaKey: event.metaKey,
+      shiftKey: event.shiftKey,
+    })) {
+      return;
+    }
+
+    event.preventDefault();
+
+    if (!canSubmitComposer(inputValue, busy)) {
+      return;
+    }
+
+    event.currentTarget.form?.requestSubmit();
+  }, [busy, inputValue]);
 
   useEffect(() => {
     scrollToLatest(streaming ? "auto" : "smooth");
@@ -192,12 +223,22 @@ export function AgentPanel({
     event.preventDefault();
 
     const text = inputValue.trim();
-    if (!text || busy) {
+    if (!canSubmitComposer(inputValue, busy)) {
       return;
     }
 
     clearError();
     setInputValue("");
+    requestAnimationFrame(() => {
+      const composer = composerRef.current;
+
+      if (!composer) {
+        return;
+      }
+
+      composer.scrollTop = 0;
+      composer.focus({ preventScroll: true });
+    });
 
     try {
       await sendMessage({ text });
@@ -285,34 +326,38 @@ export function AgentPanel({
         ) : null}
 
         <form className="agent-composer" onSubmit={handleSubmit}>
-          <Input
-            aria-label="向备忘录助手发送消息"
+          <InputArea
+            aria-label="输入消息"
+            autoResize
             className="agent-chat-input"
-            disabled={busy}
-            onChange={(event) => setInputValue(event.target.value)}
-            placeholder="和备忘录助手聊聊…"
+            enterKeyHint="send"
+            maxRows={6}
+            minRows={1}
+            onKeyDown={handleComposerKeyDown}
+            onValueChange={setInputValue}
+            placeholder="输入消息…"
+            ref={composerRef}
             size="base"
             value={inputValue}
           />
-          {streaming ? (
+          {busy ? (
             <Button
               aria-label="停止生成"
-              className="agent-composer-button"
+              className="agent-composer-action"
               icon={StopIcon}
               onClick={handleStop}
+              shape="circle"
               size="base"
               type="button"
-              variant="secondary"
-            >
-              停止
-            </Button>
+              variant="primary"
+            />
           ) : (
             <Button
               aria-label="发送消息"
-              className="agent-composer-button agent-composer-button-square"
-              disabled={!inputValue.trim() || submitting}
-              icon={PaperPlaneRightIcon}
-              shape="square"
+              className="agent-composer-action"
+              disabled={!canSubmitComposer(inputValue, busy)}
+              icon={ArrowUpIcon}
+              shape="circle"
               size="base"
               type="submit"
               variant="primary"
