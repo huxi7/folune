@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖 React memo/useEffect/useState、Phosphor 图标、通用组件、Skeleton、ThinkingMark 与按词模糊落定的互斥 AI 消息组件家族
- * [OUTPUT]: 对外提供 4px 空间标尺、32/40/48px 控件层级与真实 48/32/16 Header 样板，以及不重复 Button variants/loading/disabled、Skeleton、ThinkingMark 和可重播按词 AI 消息示例
+ * [INPUT]: 依赖 React memo/useEffect/useState、Phosphor 图标、通用组件、MarkdownReadingView、Skeleton、ThinkingMark 与仅尾词模糊落定的互斥 AI 消息组件家族
+ * [OUTPUT]: 对外提供 4px 空间标尺、32/40/48px 控件层级与真实 48/32/16 Header 样板，以及不重复 Button variants/loading/disabled、Skeleton、ThinkingMark 和可重播跨段落 AI 消息示例
  * [POS]: app/src/widgets/DesignSystemWorkspace 的基础与组件预览层，空间样板只读取生产 token，组件样板只展示真实 API
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -35,6 +35,7 @@ import {
   useToast,
   type SegmentedControlOption,
 } from "../../shared/design-system/components";
+import { MarkdownReadingView } from "../MarkdownReadingView";
 import type { DesignSystemSampleId } from "./componentCatalog";
 
 type ComponentPreviewProps = {
@@ -166,8 +167,14 @@ function AssistantMessagePreview() {
   return (
     <div className="ds-ai-message-preview">
       <AssistantMessage
-        content="当然。先确认目标，再拆分优先级，最后为每一步补上明确的完成标准。"
+        content={"当然。先确认目标，再拆分优先级。\n\n然后为每一步补上明确的完成标准，旧段落保持稳定。"}
         key={run}
+        renderContent={(content, streamingText) => (
+          <MarkdownReadingView
+            content={content}
+            streamingText={streamingText}
+          />
+        )}
         streaming={streaming}
       />
       <Button onClick={replay} variant="ghost">

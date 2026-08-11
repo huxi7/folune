@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 React 状态/计时器、Unicode 分词、目标文本、真实流状态与可选渲染器
- * [OUTPUT]: 对外提供按词追赶 SSE、词尾模糊落定与细光标状态的 StreamingText，网络结束后继续平滑排空积压词
+ * [OUTPUT]: 对外提供按词追赶 SSE、仅最新尾词模糊落定与静态细光标的 StreamingText，网络结束后继续平滑排空积压词
  * [POS]: design-system AI 消息家族的动态文字内核，统一节奏但把纯文本/Markdown 的稳定词节点交给各自渲染器
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -15,7 +15,7 @@ import {
 import { splitStreamingTextUnits } from "./streamingTextSegments";
 
 export type StreamingTextRenderState = {
-  animateWords: boolean;
+  animateLatestWord: boolean;
   showCursor: boolean;
 };
 
@@ -60,9 +60,13 @@ function defaultRenderText(text: string, state: StreamingTextRenderState) {
 
   return (
     <p className="ds-streaming-text-plain">
-      {state.animateWords
+      {state.animateLatestWord
         ? units.map((unit, index) => (
-            <span className="ds-streaming-text-token" key={index}>
+            <span
+              className="ds-streaming-text-token"
+              data-entering={index === units.length - 1 || undefined}
+              key={index}
+            >
               {unit}
             </span>
           ))
@@ -130,7 +134,8 @@ export function StreamingText({
   const visibleText = units.slice(0, renderedCount).join("");
   const visuallyStreaming = streaming || !settled;
   const renderState: StreamingTextRenderState = {
-    animateWords: visuallyStreaming && !reducedMotion && visibleText.length > 0,
+    animateLatestWord:
+      visuallyStreaming && !reducedMotion && visibleText.length > 0,
     showCursor: visuallyStreaming && visibleText.length > 0,
   };
 

@@ -26,8 +26,8 @@ DesignSystemWorkspace/: 开发态 V1 Design System 参考工作区，首张基�
 MarkdownEditor.tsx: Markdown 存储协议与 CodeMirror 显示协议之间的唯一 adapter；GFM language 常驻，live/source 只通过 Compartment 重配显示扩展以共享 EditorState/选区/撤销历史，零宽空行标记和纯文本粘贴继续保证 content_mdx 无损往返
 MarkdownEditor.test.ts: 以 content_mdx 恒等 round-trip 验证普通文本、2/5+ 连续空行、首尾/连续空格、强调段、空白行与 CRLF，约束零宽标记、HTML 空标签和 nbsp 永不离开 adapter
 MarkdownLivePreview.ts: CodeMirror 6 原生 Live Preview 引擎，以 syntaxTree/visibleRanges 只扫描可见 block；活动标题保留弱化且无下划线的源码标记，非活动标题隐藏标记和分隔空白，活动/多选区与不安全语法回退完整源码，隐藏范围同步提供 atomicRanges，IME 合成期只映射旧装饰并在结束后刷新
-MarkdownReadingView.tsx: react-markdown + remark-gfm + 可选 remark-breaks + rehype-sanitize 的共享只读正文边界；备忘录阅读态保留单换行，AI 消息维持标准 CommonMark，并以模块级稳定渲染器 + Context 递归保持每个流式词的动画节点，SSE 分块更新不得重挂载旧词，只在最后一个可见词后放置细光标，固定 skipHtml 并禁止原始 HTML、JSX/JavaScript 执行
-MarkdownReadingView.test.tsx: 阅读换行、安全、流式词节点与文件边界测试，覆盖备忘录单换行/空行分段、GFM 表格/任务/删除线/引用/代码、脚本/HTML/危险链接剔除、Markdown 词级装饰及 title 到 .md 文件名归一化
+MarkdownReadingView.tsx: react-markdown + remark-gfm + 可选 remark-breaks + rehype-sanitize 的共享只读正文边界；备忘录阅读态保留单换行，AI 消息维持标准 CommonMark，并以模块级稳定渲染器 + Context 递归保持每个流式词节点；SSE 分块更新不得重挂载旧词，段落重组时也只有最新尾词可进入动效，只在最后一个可见词后放置静态细光标，固定 skipHtml 并禁止原始 HTML、JSX/JavaScript 执行
+MarkdownReadingView.test.tsx: 阅读换行、安全、流式词节点与文件边界测试，覆盖备忘录单换行/空行分段、GFM 表格/任务/删除线/引用/代码、脚本/HTML/危险链接剔除、Markdown 仅尾词动效、旧段落不重闪及 title 到 .md 文件名归一化
 MarkdownViewMenu.tsx: 中央 Toolbar 的高频 editing/reading 切换与 More 菜单；支持外部点击、Escape、方向键/Home/End、焦点恢复，并仅复制/导出当前原始 content_mdx，title 只用于文件名
 markdownViewTypes.ts: DocumentView editing/reading 与 EditingMode live/source 的共享状态协议，阅读状态不占用编辑模式槽位
 NotesWorkspace.tsx: /app 中央连续写作画布，以宽度受控的单一内容列承载独立文件名标题和 Markdown 正文，不在 Panel 内重复制造纸卡；imperative handle 暴露 Agent 写前 required flush、Agent 正文替换进入同一自动保存状态机、删除前 flush/pause 与失败恢复边界，正常编辑仍由 title/MarkdownEditor 和唯一 Store 草稿驱动

@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 React 节点克隆、react-markdown、remark-gfm/remark-breaks/rehype-sanitize、Unicode 分词与可选词级流状态
- * [OUTPUT]: 对外提供安全 MarkdownReadingView，并以模块级稳定渲染器与 Context 在 SSE 更新间保留词节点、只在正文末尾放置流式光标
+ * [OUTPUT]: 对外提供安全 MarkdownReadingView，并以模块级稳定渲染器与 Context 在 SSE 更新间保留词节点、只让最新尾词进入动效且在正文末尾放置静态光标
  * [POS]: app/src/widgets 的共享只读 Markdown 渲染边界；备忘录维持阅读语义，Agent 回复额外透传 design-system 词级流式表现
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -48,9 +48,15 @@ function decorateTextNodes(
       return { cursorPlaced: false, hasText: false, node };
     }
 
-    const content = state.animateWords
+    const content = state.animateLatestWord
       ? units.map((unit, index) => (
-          <span className="ds-streaming-text-token" key={index}>
+          <span
+            className="ds-streaming-text-token"
+            data-entering={
+              (allowCursor && index === units.length - 1) || undefined
+            }
+            key={index}
+          >
             {unit}
           </span>
         ))
@@ -212,7 +218,7 @@ export function MarkdownReadingView({
 }: MarkdownReadingViewProps) {
   const streamingActive = Boolean(
     streamingText
-    && (streamingText.animateWords || streamingText.showCursor),
+    && (streamingText.animateLatestWord || streamingText.showCursor),
   );
 
   const markdown = (
