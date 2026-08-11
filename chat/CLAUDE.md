@@ -1,7 +1,7 @@
 # chat/
 > L1 | 父级: ../CLAUDE.md
 
-独立 AI 能力服务，以一个固定使用 DeepSeek V4 Flash、无静态工具且无记忆的中文 Agent 建立聊天地基；庆祝与 read_tree/edit_node/read_memo/edit_memo 契约只在每次请求的 clientTools 注入，并通过 Supabase JWT 保护的 AI SDK v6 SSE 协议对外服务。
+独立 AI 能力服务，以一个固定使用 DeepSeek V4 Flash、协作优先、无静态工具且无记忆的中文 Agent 建立聊天地基；普通问答与创作直接完成，原文收纳和生成式编辑按用户意图分流，庆祝与 read_tree/edit_node/read_memo/edit_memo 契约只在每次请求的 clientTools 注入，并通过 Supabase JWT 保护的 AI SDK v6 SSE 协议对外服务。
 
 技术栈: Bun + TypeScript + Mastra + @mastra/ai-sdk + Vercel AI SDK + zod。
 
