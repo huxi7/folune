@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 index.css 的 primary/foreground/surface/spacing/button 零偏移环绕阴影与 motion 语义 token
- * [OUTPUT]: 提供用户主色气泡、零卡片 AI 正文、逐字冷蓝光晕、Formation ThinkingIndicator/动态文字与 Secondary 同源极简工具状态样式
- * [POS]: app/src/styles 的 AI 消息视觉层，被 AgentPanel 与 DEV Design System 共用且不定义第二套主题
+ * [OUTPUT]: 提供用户主色气泡、零卡片最终正文、可折叠处理过程、逐字冷蓝光晕、Formation ThinkingIndicator 与可展开轻量详情的工具状态样式
+ * [POS]: app/src/styles 的 AI 消息视觉层，被 AgentPanel 与 DEV Design System 共用；过程和正文只用自然留白过渡，不创建第二套主题或固定分隔线
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -28,13 +28,6 @@
     width: 100%;
     min-width: 0;
     color: var(--foreground);
-  }
-
-  .ds-assistant-message-author {
-    margin: 0 0 calc(var(--spacing) * 1.5);
-    color: var(--muted-foreground);
-    font-size: 0.625rem;
-    line-height: 1.35;
   }
 
   .ds-streaming-text {
@@ -125,6 +118,82 @@
     display: inline;
   }
 
+  .agent-process-disclosure {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .agent-process-content {
+    display: flex;
+    min-width: 0;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: calc(var(--spacing) * 2.5);
+    margin-top: calc(var(--spacing) * 2.5);
+    color: var(--muted-foreground);
+  }
+
+  .agent-process-text {
+    width: 100%;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    font-size: 0.71875rem;
+    line-height: 1.72;
+  }
+
+  .agent-process-text .markdown-reading-view > :last-child {
+    margin-bottom: 0;
+  }
+
+  .agent-process-status,
+  .agent-process-toggle {
+    display: inline-flex;
+    width: fit-content;
+    min-height: calc(var(--spacing) * 6);
+    align-items: center;
+    gap: calc(var(--spacing) * 1.25);
+    border: 0;
+    border-radius: var(--radius-control);
+    background: transparent;
+    padding: 0 calc(var(--spacing) * 1.25);
+    color: var(--muted-foreground);
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.65625rem;
+    font-weight: 600;
+    line-height: 1;
+  }
+
+  .agent-process-status {
+    padding-inline: calc(var(--spacing) * 1.25);
+  }
+
+  .agent-process-toggle {
+    transition: color 140ms var(--ease-standard), background 140ms var(--ease-standard);
+  }
+
+  .agent-process-toggle:hover {
+    background: color-mix(in srgb, var(--muted) 68%, transparent);
+    color: var(--foreground);
+  }
+
+  .agent-process-toggle:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--ring) 62%, transparent);
+    outline-offset: 2px;
+  }
+
+  .agent-process-toggle > svg:last-child {
+    transition: transform 160ms var(--ease-standard);
+  }
+
+  .agent-process-disclosure[data-expanded="true"] .agent-process-toggle > svg:last-child {
+    transform: rotate(90deg);
+  }
+
+  .agent-process-disclosure + .ds-streaming-text {
+    margin-top: calc(var(--spacing) * 4);
+  }
+
   .ds-thinking-indicator {
     display: inline-flex;
     width: fit-content;
@@ -173,6 +242,11 @@
     margin-top: calc(var(--spacing) * 2.5);
   }
 
+  .ds-tool-call-disclosure {
+    width: fit-content;
+    max-width: 100%;
+  }
+
   .ds-tool-call-bubble {
     position: relative;
     isolation: isolate;
@@ -190,6 +264,23 @@
     padding: 0 calc(var(--spacing) * 2.5);
     color: var(--button-foreground-rest);
     box-shadow: var(--button-shadow-subtle-rest);
+    cursor: default;
+    font: inherit;
+    text-align: left;
+  }
+
+  .ds-tool-call-bubble[data-expandable="true"] {
+    cursor: pointer;
+  }
+
+  .ds-tool-call-bubble[data-expandable="true"]:hover {
+    border-color: var(--button-border-hover);
+    background: var(--button-surface-hover);
+  }
+
+  .ds-tool-call-bubble:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--ring) 62%, transparent);
+    outline-offset: 2px;
   }
 
   .ds-tool-call-icon {
@@ -229,6 +320,39 @@
     background: var(--card);
     color: var(--muted-foreground);
     box-shadow: var(--button-shadow-subtle-disabled);
+  }
+
+  .ds-tool-call-details {
+    display: grid;
+    max-width: min(100%, 20rem);
+    gap: calc(var(--spacing) * 1.25);
+    margin: calc(var(--spacing) * 1.75) 0 0;
+    padding: 0 calc(var(--spacing) * 2.5);
+    color: var(--muted-foreground);
+    font-size: 0.65625rem;
+    line-height: 1.55;
+  }
+
+  .ds-tool-call-details > div {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: max-content minmax(0, 1fr);
+    gap: calc(var(--spacing) * 2);
+  }
+
+  .ds-tool-call-details dt,
+  .ds-tool-call-details dd {
+    margin: 0;
+  }
+
+  .ds-tool-call-details dt {
+    color: color-mix(in srgb, var(--muted-foreground) 74%, transparent);
+  }
+
+  .ds-tool-call-details dd {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    color: var(--foreground);
   }
 
   @supports (corner-shape: squircle) {
@@ -278,6 +402,10 @@
     .ds-thinking-status-text > span {
       transform: none;
       transition: opacity 210ms var(--ease-standard) !important;
+    }
+
+    .agent-process-toggle > svg:last-child {
+      transition: none;
     }
   }
 }

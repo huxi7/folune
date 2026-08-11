@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 MemoTreeBranch、统一 Skeleton、memoLibrary 拖拽计划、按用户持久化展开偏好的 useMemoTreeExpansion、后端 Profile、设计系统 Button/SidebarButton/UserMenu 与上层 Store 命令
- * [OUTPUT]: 对外提供真实文件树、搜索/重命名/拖拽、扁平底部当前位置导航，以及复用 destructive 语义的节点“移至回收站”右键命令
+ * [OUTPUT]: 对外提供遵循 48/32/16 Header 尺寸节奏的根级新建命令、真实文件树、搜索/重命名/拖拽、扁平底部当前位置导航，以及复用 destructive 语义的节点“移至回收站”右键命令
  * [POS]: app/src/widgets 的常驻文件导航 Panel；只收集用户意图，软删草稿边界、Store 事务与路由切换由 Dashboard 编排
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */

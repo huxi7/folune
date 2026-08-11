@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 React.memo、ComponentPreview 与 componentCatalog 的名称/职责元数据
- * [OUTPUT]: 对外提供标题、简述与真实预览组成的 ComponentTile，并让预览层按组件身份保持语义边界
- * [POS]: app/src/widgets/DesignSystemWorkspace 的组件陈列单元，被卡片矩阵逐项渲染
+ * [OUTPUT]: 对外提供标题、简述与真实预览组成的 ComponentTile，并让基础规范与组件预览按身份保持语义边界
+ * [POS]: app/src/widgets/DesignSystemWorkspace 的同构陈列单元，被空间基础与组件卡片矩阵共同复用
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { memo } from "react";

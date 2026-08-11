@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 index.css 的 V1 语义颜色/圆角/阴影/动效 token 与 design-system.css 的真实组件类
- * [OUTPUT]: 对外提供包含不重复 Button variants/loading/disabled 状态、统一 Skeleton、既定 Active Formation ThinkingMark 与工具执行中/完成态在内的 V1 生产组件同构卡片矩阵
- * [POS]: app/src/styles 的开发陈列专用视觉层，只作用于 .ds-workspace-page 且不定义第二套主题
+ * [INPUT]: 依赖 index.css 的 4px 空间基线、32/40/48px 尺寸阶梯、V1 语义颜色/圆角/阴影/动效 token 与 design-system.css 的真实组件类
+ * [OUTPUT]: 对外提供空间标尺、48/32/16 Panel Header 样板，以及不重复 Button variants/loading/disabled、Skeleton、ThinkingMark 与工具状态的生产组件卡片矩阵
+ * [POS]: app/src/styles 的开发陈列专用视觉层，只把生产 token 可视化并作用于 .ds-workspace-page，不定义第二套尺寸或主题
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 @layer components {
@@ -135,6 +135,181 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-control);
     background: var(--background);
+  }
+
+  .ds-gallery-card[data-component="SpatialRhythm"] {
+    min-height: 0;
+    grid-column: 1 / -1;
+  }
+
+  .ds-gallery-card[data-component="SpatialRhythm"] .design-system-preview {
+    min-height: 0;
+  }
+
+  .ds-spatial-rhythm-preview {
+    display: grid;
+    width: 100%;
+    gap: var(--space-6);
+  }
+
+  .ds-space-scale,
+  .ds-size-system {
+    display: grid;
+    align-content: start;
+    gap: var(--space-3);
+    min-width: 0;
+  }
+
+  .ds-spatial-section-heading {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding-bottom: var(--space-2);
+    border-bottom: 1px solid var(--border);
+    font-family: var(--font-mono);
+  }
+
+  .ds-spatial-section-heading p {
+    color: var(--foreground);
+    font-size: 0.6875rem;
+    font-weight: 650;
+    text-transform: uppercase;
+  }
+
+  .ds-spatial-section-heading span {
+    color: var(--muted-foreground);
+    font-size: 0.625rem;
+  }
+
+  .ds-space-scale ul {
+    display: grid;
+    gap: var(--space-2);
+  }
+
+  .ds-space-scale li {
+    display: grid;
+    grid-template-columns: 4.5rem minmax(0, 1fr) 2.5rem;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: var(--space-6);
+  }
+
+  .ds-space-scale code,
+  .ds-space-scale small,
+  .ds-control-size-row code {
+    color: var(--muted-foreground);
+    font-family: var(--font-mono);
+    font-size: 0.5625rem;
+  }
+
+  .ds-space-scale small {
+    text-align: right;
+  }
+
+  .ds-space-measure {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+  }
+
+  .ds-space-measure::before,
+  .ds-space-measure::after {
+    width: 1px;
+    height: var(--space-3);
+    flex: 0 0 1px;
+    background: var(--border-strong);
+    content: "";
+  }
+
+  .ds-space-measure i {
+    height: var(--space-2);
+    background: color-mix(in srgb, var(--primary) 72%, var(--background));
+  }
+
+  .ds-space-scale li[data-space="1"] .ds-space-measure i { width: var(--space-1); }
+  .ds-space-scale li[data-space="2"] .ds-space-measure i { width: var(--space-2); }
+  .ds-space-scale li[data-space="3"] .ds-space-measure i { width: var(--space-3); }
+  .ds-space-scale li[data-space="4"] .ds-space-measure i { width: var(--space-4); }
+  .ds-space-scale li[data-space="6"] .ds-space-measure i { width: var(--space-6); }
+  .ds-space-scale li[data-space="8"] .ds-space-measure i { width: var(--space-8); }
+
+  .ds-panel-header-specimen {
+    display: flex;
+    height: var(--panel-header-height);
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--panel-header-gap);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-control);
+    background: var(--card);
+    padding-inline: var(--panel-header-padding-inline);
+  }
+
+  .ds-panel-header-specimen-copy {
+    display: grid;
+    min-width: 0;
+    gap: 1px;
+  }
+
+  .ds-panel-header-specimen-copy strong {
+    color: var(--foreground);
+    font-size: 0.75rem;
+    font-weight: 650;
+  }
+
+  .ds-panel-header-specimen-copy span {
+    color: var(--muted-foreground);
+    font-family: var(--font-mono);
+    font-size: 0.5625rem;
+  }
+
+  .ds-panel-header-specimen-control {
+    display: inline-flex;
+    width: var(--control-height-compact);
+    height: var(--control-height-compact);
+    flex: 0 0 var(--control-height-compact);
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+    border-radius: var(--button-radius);
+    color: var(--primary);
+  }
+
+  .ds-control-size-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: var(--space-4);
+  }
+
+  .ds-control-size-row > span {
+    display: grid;
+    grid-template-columns: auto auto;
+    align-items: center;
+    gap: var(--space-1) var(--space-2);
+    color: var(--muted-foreground);
+    font-size: 0.625rem;
+  }
+
+  .ds-control-size-row i {
+    display: block;
+    grid-column: 1 / -1;
+    aspect-ratio: 1;
+    border: 1px solid color-mix(in srgb, var(--primary) 34%, var(--border));
+    border-radius: var(--button-radius);
+    background: var(--surface-accent-subtle);
+  }
+
+  .ds-control-size-row [data-control-size="compact"] i { width: var(--control-height-compact); }
+  .ds-control-size-row [data-control-size="default"] i { width: var(--control-height-default); }
+  .ds-control-size-row [data-control-size="header"] i { width: var(--control-height-large); }
+
+  .ds-spatial-rule {
+    max-width: 34rem;
+    color: var(--muted-foreground);
+    font-size: 0.6875rem;
+    line-height: 1.6;
   }
 
   .ds-gallery-card[data-component="AssistantMessage"] .design-system-preview {
@@ -298,6 +473,12 @@
 
     .design-system-matrix {
       grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @container design-system (min-width: 44rem) {
+    .ds-spatial-rhythm-preview {
+      grid-template-columns: minmax(16rem, 0.8fr) minmax(22rem, 1.2fr);
     }
   }
 

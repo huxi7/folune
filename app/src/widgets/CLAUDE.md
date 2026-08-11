@@ -14,7 +14,7 @@ LandingSections.tsx: Landing 扩展模块，包含 CountUp 行为指标、问题
 LandingFooter.tsx: Landing 无 BlueprintFrame 的全宽深蓝 Fat Footer，品牌锁定只显示 SuperNote 主名称并移除 Write first 副标题，上层用无位移 hover 的独立分栏网格承载品牌/导航/元信息，下层以大块留白呈现与分栏线同色的 1.5px 描边、3% 偏白浅蓝填充、400 字重和负字距的大尺寸 SuperNote SVG 幽灵字
 LandingMotion/: Landing 克制反馈模块，只提供 CountUp 与一次性 reveal；磁吸、指针聚光与装饰点阵已移除，当前页面只保留有信息价值的计数与 3–4px 入场反馈
 NotebookPreview.tsx: Landing 的真实工作台预览，以工具轨、单栏文件 tree、文档纸面和 Agent 归档面板呈现核心体验
-AppSidebar.tsx: /app 常驻文件导航 Panel；承载真实树搜索、新建、展开、原地 rename、HTML5 拖拽与右键“移至回收站”，底部 Design System/回收站以无容器前景色标识当前位置，软删除使用现有 destructive 菜单语义并把可等待命令交给 Dashboard
+AppSidebar.tsx: /app 常驻文件导航 Panel；以共享 48px Header、32px Primary 方形按钮和 16px 图标承载根级新建命令，并负责真实树搜索、新建、展开、原地 rename、HTML5 拖拽与右键“移至回收站”，底部 Design System/回收站以无容器前景色标识当前位置，软删除使用现有 destructive 菜单语义并把可等待命令交给 Dashboard
 MemoTreeBranch.tsx: 无限递归树渲染器；Folder/FolderOpen 单图标承担开合，同层共享固定图标槽；双击/F2 进入 Enter/blur 提交、Escape 取消的原地 input，folder 行按上 24% before/下 24% after/中 52% inside 分区，memo 只分前后，排序落点使用 8px 圆点+2px 横线，拖拽源保留在原位并弱化到 40%，after 落点位于完整子树之后
 MemoNodeDialog.tsx: 文件树命名弹窗，以设计系统 Dialog/Input/Button 承载新建文件夹，负责非空校验、提交锁与 API 错误展示，不使用浏览器 prompt 或直接访问 API
 memoLibrary.ts: 后端文件树的纯视图模型工具，复用 shared/store/memoTree 算法提供首个 memo、祖先/路径、全文搜索及 before/after/inside/root-end 防环计划；folder inside 固定计算第一个子节点 sort_order
@@ -22,7 +22,7 @@ memoLibrary.test.ts: Bun 拖拽视图回归测试，覆盖无限嵌套查找、�
 useMemoTreeExpansion.ts: 文件树展开偏好的设备级持久化边界；仅在整树 ready 后按用户读取带版本 localStorage 快照，保留明确的全折叠状态，并随 folder 增删清理失效 id、默认展开新 folder
 useMemoTreeExpansion.test.ts: 覆盖展开快照缺失与明确全折叠的区分、损坏/旧版本容错，以及删除清理和新 folder 自动展开规则
 PanelResizeHandle.tsx: 左右分栏拖拽手柄，支持 Pointer 拖拽、方向键调整、双击复位与 separator ARIA
-DesignSystemWorkspace/: 开发态 V1 Design System 参考工作区，以单一同构卡片矩阵陈列含 Skeleton 与不重复 Button variants/loading/disabled 状态在内的十个通用组件家族、既定 ThinkingMark 与完整 AI 消息模块；通过 lazy import 只在 import.meta.env.DEV 下暴露
+DesignSystemWorkspace/: 开发态 V1 Design System 参考工作区，首张基础卡呈现生产使用的 4px 空间标尺、32/40/48px 界面尺寸与 48/32/16 Header 样板，后续同构卡片陈列 Skeleton、不重复 Button variants/loading/disabled、ThinkingMark 与完整 AI 消息模块；通过 lazy import 只在 import.meta.env.DEV 下暴露
 MarkdownEditor.tsx: Markdown 存储协议与 CodeMirror 显示协议之间的唯一 adapter；GFM language 常驻，live/source 只通过 Compartment 重配显示扩展以共享 EditorState/选区/撤销历史，零宽空行标记和纯文本粘贴继续保证 content_mdx 无损往返
 MarkdownEditor.test.ts: 以 content_mdx 恒等 round-trip 验证普通文本、2/5+ 连续空行、首尾/连续空格、强调段、空白行与 CRLF，约束零宽标记、HTML 空标签和 nbsp 永不离开 adapter
 MarkdownLivePreview.ts: CodeMirror 6 原生 Live Preview 引擎，以 syntaxTree/visibleRanges 只扫描可见 block；活动标题保留弱化且无下划线的源码标记，非活动标题隐藏标记和分隔空白，活动/多选区与不安全语法回退完整源码，隐藏范围同步提供 atomicRanges，IME 合成期只映射旧装饰并在结束后刷新
@@ -40,7 +40,7 @@ AccountDialog.tsx: UserMenu 身份卡片与设置项共同打开的唯一设置�
 AccountProfilePanel.tsx: AccountDialog 的账户资料栏，以后端单一非空 username 初始化草稿，Profile 后台刷新按字段合并：未修改字段接受服务端新值，正在编辑字段保留本地草稿；停止输入 800ms 后串行 PATCH 用户名/简介且不锁定输入，不保留显式保存按钮，头像选择后即时上传最大 5MB 的 JPEG/PNG/WebP，成功、校验与失败状态进入全局 Toast，服务端 Profile 结果回传 Dashboard
 AccountSettingsPanel.tsx: AccountDialog 的外观栏，在“主题”同一行消费 Design System SegmentedControl 提供系统/白天/黑夜偏好；system 实时跟随设备并仍只解析到同一套 light/dark token
 SubscriptionWorkspace.tsx: /app 订阅入口工作区，以纯白画布、三档可选方案、权益清单与选中回执展示 5/20/100 美金订阅
-AgentPanel/: /app 可收起右侧聊天模块，以 AI SDK useChat + UIMessage parts 管理消息/SSE/停止与互斥 Activity；停止命令同时收束 SSE 与活动庆祝 Canvas；用 Mastra Client 镜像工具显式回灌结果，庆祝直达独立全屏执行器，备忘录读写才由专用 Worker 处理 Store 快照后执行现有乐观 Store/API/FLIP 链路；通过 Supabase Bearer token 对接 chat /v1/chat
+AgentPanel/: /app 可收起右侧聊天模块，以共享 48/32/16 Header 与 40px Kumo Composer 保持三 Panel 密度一致；AI SDK useChat + UIMessage parts 管理消息/SSE/停止，并按真实 part 顺序组合可折叠处理过程、原位工具调用与独立最终正文；停止命令同时收束 SSE 与活动庆祝 Canvas；用 Mastra Client 镜像工具显式回灌结果，庆祝直达独立全屏执行器，备忘录读写才由专用 Worker 处理 Store 快照后执行现有乐观 Store/API/FLIP 链路；通过 Supabase Bearer token 对接 chat /v1/chat
 
 职责: 业务组合组件层，承载 Landing 工程骨架、后端驱动的递归文件树、可收起且可调宽的三 Panel 工作台、统一认证、同源账户模态框与各业务工作区；业务组件禁止裸写 fetch 或直连 Supabase 业务数据，唯一例外是 AgentPanel 的 AI SDK transport 在发送时读取 Auth token 并访问独立 chat 服务。
 

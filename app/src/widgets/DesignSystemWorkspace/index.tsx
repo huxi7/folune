@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖真实组件 catalog 与 ComponentTile 统一陈列单元
- * [OUTPUT]: 对外提供以同构卡片矩阵呈现全部生产组件的 DEV-only V1 Design System
+ * [INPUT]: 依赖空间基础/真实组件 catalog 与 ComponentTile 统一陈列单元
+ * [OUTPUT]: 对外提供先呈现生产空间节奏、再陈列全部生产组件的 DEV-only V1 Design System
  * [POS]: app/src/widgets/DesignSystemWorkspace 的入口，被 AppDashboard 在开发环境懒加载并保持最小展示边界
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -17,12 +17,12 @@ export function DesignSystemWorkspace() {
             <h1 className="design-system-title">Design System</h1>
           </div>
           <p className="design-system-intro">
-            只陈列生产界面正在使用的 <code>shared/design-system</code> 组件。
-            AI 消息的用户气泡、无卡片流式正文、ThinkingMark 与工具调用均在此归档。
+            先定义生产界面共享的空间与尺寸节奏，再陈列正在使用的
+            <code> shared/design-system</code> 组件。这里没有仅供展示的第二套视觉值。
           </p>
         </header>
 
-        <section aria-label="V1 组件目录" className="design-system-matrix">
+        <section aria-label="V1 基础与组件目录" className="design-system-matrix">
           {designSystemSamples.map((sample) => (
             <ComponentTile key={sample.id} sample={sample} />
           ))}

@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 @ai-sdk/react useChat、AI SDK 浏览器工具续写判定、@mastra/client-js 工具注册表、可取消庆祝执行器、Dashboard 草稿/删除协调边界、Kumo Button/Input、design-system Activity、memoChatTransport、Store 与 ChatMessage
- * [OUTPUT]: 对外提供 Thinking/Tool/Streaming 严格互斥、可经 Worker 执行 memo/node 客户端工具并以非等待方式显式回灌结果、可同时停止 AI 流与活动礼花且含鉴权错误提示的 AgentPanel
+ * [OUTPUT]: 对外提供按 UIMessage parts 渲染有序过程/工具/最终正文、遵循共享 48/32/16 Header 与 40px Composer 节奏、可经 Worker 执行客户端工具并停止 AI 流/活动礼花的 AgentPanel
  * [POS]: /app 右侧 AI 工作区；useChat 驱动完整 agent loop，停止命令收束 SSE 与庆祝 Canvas，Worker 规划后复用真人操作同款乐观 Store/API 链路
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -211,7 +211,7 @@ export function AgentPanel({
       <header className="agent-panel-header">
         <div className="flex min-w-0 flex-1 items-center gap-2">
           <div className="agent-panel-mark">
-            <ThinkingMark aria-hidden="true" size={15} />
+            <ThinkingMark aria-hidden="true" size={16} />
           </div>
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold text-foreground">
@@ -224,6 +224,7 @@ export function AgentPanel({
         </div>
         <Button
           aria-label="关闭备忘录助手"
+          className="agent-panel-close"
           icon={XIcon}
           onClick={closePanel}
           shape="square"
@@ -296,6 +297,7 @@ export function AgentPanel({
           {streaming ? (
             <Button
               aria-label="停止生成"
+              className="agent-composer-button"
               icon={StopIcon}
               onClick={handleStop}
               size="base"
@@ -307,6 +309,7 @@ export function AgentPanel({
           ) : (
             <Button
               aria-label="发送消息"
+              className="agent-composer-button agent-composer-button-square"
               disabled={!inputValue.trim() || submitting}
               icon={PaperPlaneRightIcon}
               shape="square"

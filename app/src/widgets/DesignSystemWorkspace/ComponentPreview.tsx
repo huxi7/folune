@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 React memo/useEffect/useState、Phosphor 图标、通用组件、Skeleton、ThinkingMark 与互斥 AI 消息组件家族
- * [OUTPUT]: 对外提供含不重复 Button variants/loading/disabled 真实状态在内的通用组件、单光带结构 Skeleton、既定 Active Formation ThinkingMark 真实尺寸及用户/AI/Thinking/极简 Tool 状态组件交互示例 ComponentPreview
- * [POS]: app/src/widgets/DesignSystemWorkspace 的卡片预览层，只展示真实 API 而不堆叠规范说明
+ * [OUTPUT]: 对外提供 4px 空间标尺、32/40/48px 控件层级与真实 48/32/16 Header 样板，以及不重复 Button variants/loading/disabled、Skeleton、ThinkingMark 和 AI 消息交互示例
+ * [POS]: app/src/widgets/DesignSystemWorkspace 的基础与组件预览层，空间样板只读取生产 token，组件样板只展示真实 API
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import {
@@ -48,6 +48,61 @@ const segmentedControlPreviewOptions: SegmentedControlOption<PreviewTheme>[] = [
   { icon: SunIcon, label: "白天", value: "light" },
   { icon: MoonStarsIcon, label: "黑夜", value: "dark" },
 ];
+
+const spatialSteps = [
+  { step: "1", token: "space-1", value: "4px" },
+  { step: "2", token: "space-2", value: "8px" },
+  { step: "3", token: "space-3", value: "12px" },
+  { step: "4", token: "space-4", value: "16px" },
+  { step: "6", token: "space-6", value: "24px" },
+  { step: "8", token: "space-8", value: "32px" },
+] as const;
+
+function SpatialRhythmPreview() {
+  return (
+    <div className="ds-spatial-rhythm-preview">
+      <section aria-label="4px 空间标尺" className="ds-space-scale">
+        <div className="ds-spatial-section-heading">
+          <p>Spacing scale</p>
+          <span>4px baseline</span>
+        </div>
+        <ul>
+          {spatialSteps.map(({ step, token, value }) => (
+            <li data-space={step} key={token}>
+              <code>{token}</code>
+              <span aria-hidden="true" className="ds-space-measure">
+                <i />
+              </span>
+              <small>{value}</small>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section aria-label="界面尺寸阶梯" className="ds-size-system">
+        <div className="ds-spatial-section-heading">
+          <p>Interface sizes</p>
+          <span>32 / 40 / 48</span>
+        </div>
+        <div aria-label="48px Panel Header 内含 32px 控件和 16px 图标" className="ds-panel-header-specimen" role="img">
+          <div className="ds-panel-header-specimen-copy">
+            <strong>Panel Header</strong>
+            <span>48px · 12px inline</span>
+          </div>
+          <span className="ds-panel-header-specimen-control">
+            <NotePencilIcon aria-hidden="true" size={16} weight="bold" />
+          </span>
+        </div>
+        <div className="ds-control-size-row">
+          <span data-control-size="compact"><i />Compact <code>32</code></span>
+          <span data-control-size="default"><i />Default <code>40</code></span>
+          <span data-control-size="header"><i />Header <code>48</code></span>
+        </div>
+        <p className="ds-spatial-rule">Header 上下各保留 8px；相邻图标命令保持 4px 间隙。文件树 30px 是唯一高密度例外。</p>
+      </section>
+    </div>
+  );
+}
 
 function ButtonPreview() {
   return (
@@ -290,6 +345,7 @@ export const ComponentPreview = memo(function ComponentPreview({
   sampleId,
 }: ComponentPreviewProps) {
   switch (sampleId) {
+    case "SpatialRhythm": return <SpatialRhythmPreview />;
     case "Button": return <ButtonPreview />;
     case "Skeleton": return <SkeletonPreview />;
     case "UserMessageBubble": return <UserMessageBubblePreview />;

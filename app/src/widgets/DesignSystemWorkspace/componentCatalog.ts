@@ -1,10 +1,11 @@
 /**
- * [INPUT]: 不依赖运行时状态，只登记现有共享界面、Skeleton、ThinkingMark 与 AI 消息组件的名称、职责和展示顺序
+ * [INPUT]: 不依赖运行时状态，只登记空间基础、现有共享界面、Skeleton、ThinkingMark 与 AI 消息组件的名称、职责和展示顺序
  * [OUTPUT]: 对外提供 designSystemSamples、DesignSystemSample 与 DesignSystemSampleId
  * [POS]: app/src/widgets/DesignSystemWorkspace 的精简陈列目录，被 ComponentTile 与 ComponentPreview 消费
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 export type DesignSystemSampleId =
+  | "SpatialRhythm"
   | "Button"
   | "Skeleton"
   | "UserMessageBubble"
@@ -28,6 +29,11 @@ export type DesignSystemSample = {
 };
 
 export const designSystemSamples: DesignSystemSample[] = [
+  {
+    id: "SpatialRhythm",
+    name: "Spatial Rhythm",
+    summary: "以 4px 为基线，使用 32px 紧凑命令、40px 默认控件与 48px Panel Header 建立可复用的空间节奏。",
+  },
   {
     id: "Button",
     name: "Button",

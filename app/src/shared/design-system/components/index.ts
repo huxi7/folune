@@ -40,4 +40,4 @@ export type { ToastInput, ToastVariant } from "./Toast";
 export type { ThinkingMarkProps, ThinkingMarkVariant } from "./ThinkingMark";
 export type { ThinkingIndicatorProps } from "./ThinkingIndicator";
 export type { ThinkingStatusTextProps } from "./ThinkingStatusText";
-export type { ToolCallState } from "./ToolCallBubble";
+export type { ToolCallDetail, ToolCallState } from "./ToolCallBubble";

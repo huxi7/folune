@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Kumo Tailwind 样式源、Tailwind v4，并导入 AI 消息与 Design System 等职责样式模块消费本文件语义 token
- * [OUTPUT]: 对外提供 Kumo 基础件样式、冻结的 V1 Classic Blueprint、Landing Light Canvas、自然现代主色、状态/图表/庆祝色板/统一 smooth corner/阴影/动效、零偏移环绕 Button 阴影与独立于 Primary 的 loading 表面、不会因 OKLCH 插值偏红的确定性白色/中性灰蓝表面与 Skeleton shimmer 语义 token、Tailwind 映射及样式模块入口
+ * [OUTPUT]: 对外提供 Kumo 基础件样式、冻结的 V1 Classic Blueprint、Landing Light Canvas、4px 空间基线、32/40/48px 控件与 Panel Header 尺寸阶梯、自然现代主色、状态/图表/庆祝色板/统一 smooth corner/阴影/动效、零偏移环绕 Button 阴影与独立于 Primary 的 loading 表面、不会因 OKLCH 插值偏红的确定性白色/中性灰蓝表面与 Skeleton shimmer 语义 token、Tailwind 映射及样式模块入口
  * [POS]: app/src 的主题入口，被 main.tsx 引入并约束 Kumo 与本地设计系统共享同一全局视觉来源
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -141,6 +141,23 @@
   --tracking-normal: -0.012em;
   --spacing: 0.25rem;
 
+  --space-1: calc(var(--spacing) * 1);
+  --space-2: calc(var(--spacing) * 2);
+  --space-3: calc(var(--spacing) * 3);
+  --space-4: calc(var(--spacing) * 4);
+  --space-6: calc(var(--spacing) * 6);
+  --space-8: calc(var(--spacing) * 8);
+  --space-10: calc(var(--spacing) * 10);
+  --space-12: calc(var(--spacing) * 12);
+  --icon-size-control: var(--space-4);
+  --control-height-compact: var(--space-8);
+  --control-height-default: var(--space-10);
+  --control-height-large: var(--space-12);
+  --panel-header-height: var(--space-12);
+  --panel-header-padding-inline: var(--space-3);
+  --panel-header-gap: var(--space-2);
+  --control-cluster-gap: var(--space-1);
+
   --layout-page-max: 68rem;
   --layout-page-gutter: clamp(1rem, 3vw, 2rem);
   --layout-hero-y: clamp(4.5rem, 9vw, 8rem);
@@ -158,7 +175,7 @@
   --button-specular: #ffffff;
   --button-depth: #0f172a;
   --button-radius: calc(var(--radius-control) + 0.1875rem);
-  --button-height-default: 2.35rem;
+  --button-height-default: var(--control-height-default);
   --button-shadow-rest:
     0 0 0.42rem -0.16rem color-mix(in srgb, var(--button-depth) 18%, transparent);
   --button-shadow-subtle-rest:

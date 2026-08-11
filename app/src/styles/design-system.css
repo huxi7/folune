@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 index.css 的语义颜色、Button 细边缘/零偏移环绕阴影/按压收拢/loading 独立状态 token 与 Tailwind v4 layer
- * [OUTPUT]: 对外提供 ThinkingMark 固定 SVG 容器/Formation 聚合 Motion、确定性中性灰且不偏红的单组宽光带 Skeleton、以纯色平面和均匀环绕柔影塑形且 hover 固定原位的 Button、保留实心红色的 Danger、独立冷灰蓝表面与低频 Shimmer 的 loading 状态，以及冻结的 V1 组件质感与 Dialog 层级
+ * [OUTPUT]: 对外提供 ThinkingMark 固定 SVG 容器/Formation 聚合 Motion、确定性中性灰且不偏红的单组宽光带 Skeleton、遵循 40px 默认控件高度且以纯色平面和均匀环绕柔影塑形的 Button/Input/Select、保留实心红色的 Danger、独立冷灰蓝表面与低频 Shimmer 的 loading 状态，以及冻结的 V1 组件质感与 Dialog 层级
  * [POS]: app/src/styles 的组件视觉层，被 index.css 统一导入
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -335,7 +335,7 @@
   }
 
   .ds-input {
-    min-height: 2.25rem;
+    min-height: var(--control-height-default);
     border-radius: calc(var(--ds-radius-soft) - 0.125rem);
     border-width: 1px;
     border-color: var(--input);
@@ -506,7 +506,7 @@
 
   .ds-select-trigger {
     display: flex;
-    min-height: 2.75rem;
+    min-height: var(--control-height-default);
     width: 100%;
     align-items: center;
     justify-content: space-between;
