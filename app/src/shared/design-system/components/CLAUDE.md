@@ -13,9 +13,9 @@ PasswordInput.tsx: Input 家族的隐私输入组合件，复用 Input 内凹表
 Card.tsx: 本地 Card 组件，仅保留产品实际使用的 default、accent 两种 V1 语义表面与短阴影
 Dialog.tsx: 本地 Dialog 组件，封装 default/compact 密度、default/account 宽度、default/embedded 标题模式、受控弹窗、中性遮罩、标题描述关联、Esc 关闭、完整表单焦点循环、滚动锁定与关闭后焦点恢复；embedded 模式允许 AccountDialog 在同一弹窗语义内拥有横竖分隔标题骨架
 AssistantMessage.tsx: AI 消息正文根，不绘制“助手”等可见身份标题，以零卡片表面依次组合可选过程槽、独立 StreamingText 最终正文与兼容 children 工具区；向纯文本/Markdown 渲染器透传统一词级动效状态，不拥有过程分区或折叠状态
-StreamingText.tsx: 首个真实 text part 后以 18–55ms 自适应节奏按 Unicode 词边界追赶 SSE 目标文本；仅最新尾词以 420ms 从轻微模糊中落定，历史词永不重播动画，单根细光标保持静态；SDK 离开 streaming 后继续排空积压词并等待末词完成，reduced-motion 下跳过追赶/模糊
+StreamingText.tsx: 首个真实 text part 后严格复用原案例 55ms 节奏按 Unicode 词边界追赶 SSE 目标文本；记录每词出现时间，让最近 420ms 内的最多 8 个尾词按各自负 animation-delay 形成错峰模糊拖尾，Markdown 重组后从当前进度续播而非重闪，单根细光标保持静态；SDK 离开 streaming 后继续排空积压词并等待末词完成，reduced-motion 下跳过追赶/模糊
 streamingTextSegments.ts: 语言无关的流式分词纯函数，以 Intl.Segmenter 同时支持英文单词和中文语义词组，并把标点、空白及 Markdown 标记完整归入相邻显示单元
-streamingTextSegments.test.ts: 流式分词回归测试，锁定英文标点/空白归组、中文不会整句一次出现，以及 Markdown 源文本字符保真
+streamingTextSegments.test.ts: 流式分词与时间进度回归测试，锁定英文标点/空白归组、中文不会整句一次出现、Markdown 源文本字符保真，以及 DOM 重组后通过负 animation-delay 从当前模糊进度续播
 ThinkingStatusText.tsx: ThinkingIndicator 的低频中性状态文字，以 2800ms 固定宽度交叉淡化轮换“思考/整理思路/组织回答”，不虚构搜索、文件或工具行为
 ThinkingIndicator.tsx: Animated Formation ThinkingMark 与 ThinkingStatusText 的无卡片行内组合件，等待正文时 active，首 token 后 160ms 淡出，活动工具出现时由调用方立即卸载
 ThinkingMark.tsx: SuperNote AI 品牌符号，默认使用圆角核心、五条不对称折线连接与五个非等径外围节点表达信息聚合；固定 24×24 viewBox/currentColor/独立 data-part，并以 1840ms 非顺时针错峰 Formation Motion 提供 active 态，同时归档 Radiation/Formation/Fold 三个静态候选

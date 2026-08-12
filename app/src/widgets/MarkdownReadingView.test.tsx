@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun test、react-dom/server 与 MarkdownReadingView 的软换行、安全渲染及词级装饰边界
- * [OUTPUT]: 覆盖备忘录单换行、GFM、安全过滤，以及仅尾词动画/光标不破坏 Markdown 语义或重闪旧段落
+ * [OUTPUT]: 覆盖备忘录单换行、GFM、安全过滤，以及多词模糊拖尾/光标不破坏 Markdown 语义或重闪旧段落
  * [POS]: app/src/widgets 的 Markdown 阅读回归测试；同时锁定阅读安全与 Agent 流式表现边界
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -68,33 +68,43 @@ alert("文本，不执行")
       <MarkdownReadingView
         content="先确认 **目标**"
         streamingText={{
-          animateLatestWord: true,
+          resolvingWordStyles: [
+            { animationDelay: "-20ms" },
+            { animationDelay: "-75ms" },
+          ],
           showCursor: true,
         }}
       />,
     );
 
-    expect(html).toContain(">先</span><span class=\"ds-streaming-text-token\">确认 </span>");
-    expect(html).toContain("<strong><span class=\"ds-streaming-text-token\" data-entering=\"true\">目标</span>");
+    expect(html).toContain(">先</span><span class=\"ds-streaming-text-token\" data-resolving=\"true\" style=\"animation-delay:-75ms\">确认 </span>");
+    expect(html).toContain("data-resolving=\"true\" style=\"animation-delay:-20ms\">目标</span>");
     expect(html).toContain("ds-streaming-text-cursor");
     expect(html.match(/ds-streaming-text-token/g)).toHaveLength(3);
-    expect(html.match(/data-entering=\"true\"/g)).toHaveLength(1);
+    expect(html.match(/data-resolving=\"true\"/g)).toHaveLength(2);
   });
 
-  test("animates only the latest word when streamed Markdown adds a paragraph", () => {
+  test("continues the resolving tail across a paragraph without replaying old words", () => {
     const html = renderToStaticMarkup(
       <MarkdownReadingView
         content={"第一段已经稳定。\n\n第二段刚刚出现。"}
         streamingText={{
-          animateLatestWord: true,
+          resolvingWordStyles: [
+            { animationDelay: "-15ms" },
+            { animationDelay: "-70ms" },
+            { animationDelay: "-125ms" },
+            { animationDelay: "-180ms" },
+            { animationDelay: "-235ms" },
+          ],
           showCursor: true,
         }}
       />,
     );
 
     expect(html).toContain("<p><span class=\"ds-streaming-text-token\">第</span>");
-    expect(html.match(/data-entering=\"true\"/g)).toHaveLength(1);
-    expect(html).toContain("data-entering=\"true\">出现。</span>");
+    expect(html).toContain("data-resolving=\"true\" style=\"animation-delay:-235ms\">稳定。</span>");
+    expect(html.match(/data-resolving=\"true\"/g)).toHaveLength(5);
+    expect(html).toContain("data-resolving=\"true\" style=\"animation-delay:-15ms\">出现。</span>");
   });
 
   test("keeps one tail cursor when the streamed Markdown ends in code", () => {
@@ -102,7 +112,7 @@ alert("文本，不执行")
       <MarkdownReadingView
         content={"```ts\nconst ready = true;\n```"}
         streamingText={{
-          animateLatestWord: true,
+          resolvingWordStyles: [{ animationDelay: "-20ms" }],
           showCursor: true,
         }}
       />,

@@ -1,12 +1,13 @@
 /**
- * [INPUT]: 依赖 Bun test 与 splitStreamingTextUnits 的 Unicode 分词结果
- * [OUTPUT]: 验证英文、中文及 Markdown 标记在按词流式显示时不丢失原文
- * [POS]: design-system AI 流式文字的纯逻辑回归测试，锁定跨语言节奏与字符保真边界
+ * [INPUT]: 依赖 Bun test、splitStreamingTextUnits 的 Unicode 分词结果与 StreamingText 的时间进度样式
+ * [OUTPUT]: 验证英文、中文及 Markdown 标记不丢失，并锁定 DOM 重组后以负延迟续播模糊进度
+ * [POS]: design-system AI 流式文字的纯逻辑回归测试，锁定跨语言节奏、字符保真与无重闪时间边界
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
 import { describe, expect, test } from "bun:test";
 
+import { resolvingWordStyle } from "./StreamingText";
 import { splitStreamingTextUnits } from "./streamingTextSegments";
 
 describe("splitStreamingTextUnits", () => {
@@ -33,5 +34,12 @@ describe("splitStreamingTextUnits", () => {
 
     expect(units).toEqual(["**hello** ", "world"]);
     expect(units.join("")).toBe(source);
+  });
+});
+
+describe("resolvingWordStyle", () => {
+  test("resumes remounted words from their elapsed blur progress", () => {
+    expect(resolvingWordStyle(0)).toEqual({ animationDelay: "0ms" });
+    expect(resolvingWordStyle(165)).toEqual({ animationDelay: "-165ms" });
   });
 });
