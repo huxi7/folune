@@ -1,18 +1,11 @@
 /**
  * [INPUT]: 依赖 React Router Profile/token loader、Zustand memo tree/AgentPanel Store、统一 Skeleton 延迟策略、Markdown 视图状态/Toolbar 命令、NotesWorkspace、AccountDialog 与可调宽 AgentPanel
- * [OUTPUT]: 对外提供三 Panel、active tree/路由、显式草稿 flush 后软删导航、Agent 正文/删除协调、回收站恢复合并与账户/视图编排
- * [POS]: app/src/pages 的 /app 编排层；跨编辑器、Agent 工具、Store、路由与 Trash 的草稿及删除生命周期只在此建立一次等待边界
+ * [OUTPUT]: 对外提供三 Panel、可连续点击且即时进入编辑器的乐观新建路由、active tree、显式草稿 flush 后软删导航、Agent 正文/删除协调、回收站恢复合并与账户/视图编排
+ * [POS]: app/src/pages 的 /app 编排层；跨临时/真实备忘录身份、编辑器、Agent 工具、Store、路由与 Trash 的草稿及删除生命周期只在此建立一次等待边界
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
-import {
-  lazy,
-  Suspense,
-  useEffect,
-  useRef,
-  useState,
-  type CSSProperties,
-} from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { ChatCircleDotsIcon } from "@phosphor-icons/react";
 import {
   useLoaderData,
@@ -30,7 +23,6 @@ import {
 import {
   findNode,
   findSiblings,
-  prependSortOrder,
 } from "../shared/store/memoTree";
 import { useAgentPanelStore } from "../shared/store/agentPanelStore";
 import { useMemoTreeStore } from "../shared/store/memoTreeStore";
@@ -63,6 +55,28 @@ import {
   getMemoDeletionImpact,
   getPostDeletionDestination,
 } from "./memoDeletion";
+import { useOptimisticMemoCreation } from "./useOptimisticMemoCreation";
+import type {
+  AccountDialogState,
+  MemoDialogState,
+  TreeStatus,
+  ViewTitleDraft,
+  WorkspaceLoaderData,
+} from "./appDashboardTypes";
+import {
+  AGENT_MAX_WIDTH,
+  AGENT_MIN_WIDTH,
+  AGENT_WIDTH_KEY,
+  DEFAULT_AGENT_WIDTH,
+  DEFAULT_SIDEBAR_WIDTH,
+  MAIN_MIN_WIDTH,
+  SIDEBAR_MAX_WIDTH,
+  SIDEBAR_MIN_WIDTH,
+  SIDEBAR_WIDTH_KEY,
+  WORKSPACE_CHROME_WIDTH,
+  type WorkspaceStyle,
+  usePersistedPanelWidth,
+} from "./workspaceLayout";
 
 const DesignSystemWorkspace = import.meta.env.DEV
   ? lazy(() =>
@@ -72,70 +86,8 @@ const DesignSystemWorkspace = import.meta.env.DEV
     )
   : null;
 
-const SIDEBAR_WIDTH_KEY = "supernote-sidebar-width";
-const AGENT_WIDTH_KEY = "supernote-agent-width";
 const LAST_MEMO_KEY_PREFIX = "supernote:last-memo:";
-const DEFAULT_SIDEBAR_WIDTH = 248;
-const DEFAULT_AGENT_WIDTH = 320;
-const SIDEBAR_MIN_WIDTH = 208;
-const SIDEBAR_MAX_WIDTH = 360;
-const AGENT_MIN_WIDTH = 264;
-const AGENT_MAX_WIDTH = 440;
-const MAIN_MIN_WIDTH = 420;
-const WORKSPACE_CHROME_WIDTH = 32;
 const DEFAULT_MEMO_TITLE = "未命名备忘录";
-
-type WorkspaceLoaderData = {
-  accessToken: string;
-  profile: Profile;
-};
-
-type WorkspaceStyle = CSSProperties & {
-  "--workspace-agent-track": string;
-  "--workspace-sidebar-track": string;
-};
-
-type AccountDialogState = AccountSection | null;
-
-type MemoDialogState = {
-  parentId: string | null;
-} | null;
-
-type ViewTitleDraft = {
-  memoId: string;
-  title: string;
-} | null;
-
-type TreeStatus = "error" | "loading" | "ready";
-
-function readStoredWidth(key: string, fallback: number, min: number, max: number) {
-  const storedValue = window.localStorage.getItem(key);
-
-  if (storedValue === null) {
-    return fallback;
-  }
-
-  const storedWidth = Number(storedValue);
-  return Number.isFinite(storedWidth)
-    ? Math.min(max, Math.max(min, storedWidth))
-    : fallback;
-}
-
-function usePersistedPanelWidth(
-  key: string,
-  fallback: number,
-  min: number,
-  max: number,
-) {
-  const [width, setWidth] = useState(() =>
-    readStoredWidth(key, fallback, min, max));
-
-  useEffect(() => {
-    window.localStorage.setItem(key, String(Math.round(width)));
-  }, [key, width]);
-
-  return [width, setWidth] as const;
-}
 
 const lastMemoStorageKey = (userId: string): string =>
   `${LAST_MEMO_KEY_PREFIX}${userId}`;
@@ -160,8 +112,15 @@ export function AppDashboard() {
   const renameNode = useMemoTreeStore((state) => state.renameNode);
   const softDeleteNode = useMemoTreeStore((state) => state.softDeleteNode);
   const restoreNode = useMemoTreeStore((state) => state.restoreNode);
+  const getMemoClientKey = useMemoTreeStore(
+    (state) => state.getMemoClientKey,
+  );
+  const resolveMemoId = useMemoTreeStore((state) => state.resolveMemoId);
   const updateMemoContentLocal = useMemoTreeStore(
     (state) => state.updateMemoContentLocal,
+  );
+  const updateMemoTitleLocal = useMemoTreeStore(
+    (state) => state.updateMemoTitleLocal,
   );
   const saveMemoDraft = useMemoTreeStore((state) => state.saveMemoDraft);
   const resetMemoTree = useMemoTreeStore((state) => state.reset);
@@ -194,7 +153,7 @@ export function AppDashboard() {
   );
   const selectedMemo = routeMemoId === null
     ? null
-    : findNode(memoTree, routeMemoId);
+    : findNode(memoTree, resolveMemoId(routeMemoId));
   const sidebarMaxWidth = Math.max(
     SIDEBAR_MIN_WIDTH,
     Math.min(
@@ -288,8 +247,10 @@ export function AppDashboard() {
     const storageKey = lastMemoStorageKey(profile.id);
 
     if (routeMemoId !== null) {
-      if (isMemo(findNode(memoTree, routeMemoId))) {
-        window.localStorage.setItem(storageKey, routeMemoId);
+      const resolvedRouteMemoId = resolveMemoId(routeMemoId);
+
+      if (isMemo(findNode(memoTree, resolvedRouteMemoId))) {
+        window.localStorage.setItem(storageKey, resolvedRouteMemoId);
       } else {
         navigate("/app", { replace: true });
       }
@@ -339,6 +300,7 @@ export function AppDashboard() {
     navigate,
     profile.id,
     routeMemoId,
+    resolveMemoId,
     toast,
     treeStatus,
   ]);
@@ -404,36 +366,15 @@ export function AppDashboard() {
     navigate("/", { replace: true });
   }
 
-  async function handleCreateMemo(parentId: string | null) {
-    if (treeMutating) {
-      return;
-    }
-
-    setTreeMutating(true);
-
-    try {
-      const siblings = findSiblings(
-        useMemoTreeStore.getState().nodes,
-        parentId,
-      ) ?? [];
-      const created = await createMemo(accessToken, {
-        content_mdx: "",
-        parent_id: parentId,
-        sort_order: prependSortOrder(siblings),
-        title: DEFAULT_MEMO_TITLE,
-      });
-      handleSelectMemo(created.id);
-      toast({ title: "备忘录已创建", variant: "success" });
-    } catch (error) {
-      toast({
-        description: error instanceof Error ? error.message : undefined,
-        title: "新建备忘录失败",
-        variant: "error",
-      });
-    } finally {
-      setTreeMutating(false);
-    }
-  }
+  const handleCreateMemo = useOptimisticMemoCreation({
+    accessToken,
+    lastMemoStorageKey: lastMemoStorageKey(profile.id),
+    navigate,
+    onSelectMemo: handleSelectMemo,
+    onTitleDraftReset: () => setViewTitleDraft(null),
+    routeMemoId,
+    toast,
+  });
 
   async function handleMoveNode(nodeId: string, input: MemoMovePlan) {
     try {
@@ -599,7 +540,9 @@ export function AppDashboard() {
     }: MemoDraftSnapshot,
     options?: MemoSaveOptions,
   ) {
-    if (!isMemo(findNode(useMemoTreeStore.getState().nodes, memoId))) {
+    const resolvedMemoId = resolveMemoId(memoId);
+
+    if (!isMemo(findNode(useMemoTreeStore.getState().nodes, resolvedMemoId))) {
       throw new Error("当前没有可保存的备忘录。");
     }
 
@@ -612,7 +555,10 @@ export function AppDashboard() {
       },
       options,
     );
-    const current = findNode(useMemoTreeStore.getState().nodes, memoId);
+    const current = findNode(
+      useMemoTreeStore.getState().nodes,
+      resolveMemoId(memoId),
+    );
 
     if (!isMemo(current)) {
       throw new Error("保存后的备忘录不存在。");
@@ -690,7 +636,9 @@ export function AppDashboard() {
           onSignOut={handleSignOut}
           profile={profile}
           revealContent={revealInitialTreeContent}
-          selectedMemoId={routeMemoId}
+          selectedMemoId={routeMemoId === null
+            ? null
+            : resolveMemoId(routeMemoId)}
           skeletonVisible={treeSkeletonVisible}
           treeStatus={renderedTreeStatus}
         />
@@ -743,7 +691,12 @@ export function AppDashboard() {
               documentView={documentView}
               editingMode={editingMode}
               emptyTree={treeStatus === "ready" && memoTree.length === 0}
-              key={routeMemoId ?? "empty"}
+              key={routeMemoId === null
+                ? "empty"
+                : getMemoClientKey(resolveMemoId(routeMemoId))}
+              memoClientKey={routeMemoId === null
+                ? "empty"
+                : getMemoClientKey(resolveMemoId(routeMemoId))}
               memo={isMemo(selectedMemo) ? selectedMemo : null}
               onContentChange={(content) => {
                 if (routeMemoId !== null) {
@@ -755,6 +708,7 @@ export function AppDashboard() {
                 if (!isMemo(selectedMemo)) {
                   return;
                 }
+                updateMemoTitleLocal(selectedMemo.id, nextTitle);
                 setViewTitleDraft((currentDraft) =>
                   currentDraft?.memoId === selectedMemo.id &&
                     currentDraft.title === nextTitle

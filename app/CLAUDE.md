@@ -28,7 +28,7 @@ tsconfig.json: TypeScript 编辑器与编译约束
 
 空间与尺寸约束: APP 以 4px 为唯一空间基线，并在 `src/index.css` 集中维护 32/40/48px 尺寸阶梯。三处 Panel Header 统一为 48px 高、12px 水平内边距；Header 图标命令、Sidebar 新建、中央阅读/更多/助手开关、Agent 标识与关闭入口统一为 32px 容器和 16px 图标，因此上下自然各保留 8px 呼吸区，相邻命令间距统一为 4px。Button、Input、Select 与 SidebarButton 的默认控制高度统一为 40px；Agent Composer 作为复合输入表面从 48px 起步，内部动作位为 36px，InputArea 最多增长到 6 行后只滚动正文。30px 文件树行是高密度浏览的唯一例外。首屏 Skeleton 必须使用相同尺寸 token，禁止加载跳变；DEV Design System 必须直接呈现这套空间标尺与 Header 样板，且不得复制另一套展示专用值。
 
-备忘录状态约束: `src/shared/store/memoTreeStore.ts` 是 active 文件树与正文草稿的唯一客户端状态源。GET 整树只允许在进入 Dashboard、登录用户变化或显式刷新时发生；创建、重命名、移动、软删除与恢复都必须乐观更新或合并局部响应，失败精确回滚，严禁写成功后刷新整棵树。Trash 只保存回收站列表视图状态，不得复制 active tree。删除当前 Memo 或其祖先前必须等待 `useMemoAutosave` required flush，失败保留路由、编辑会话和 subtree；删除成功后暂停旧会话、清理受影响 last-memo 并导航到下一 Memo 或 `/app`。中央连续画布、Markdown、reading/live/source、安全渲染与空白保真继续遵循既有单一存储协议；自动保存仍使用既有调度/重试参数且所有保存携带显式 memoId。
+备忘录状态约束: `src/shared/store/memoTreeStore.ts` 是 active 文件树与正文草稿的唯一客户端状态源。GET 整树只允许在进入 Dashboard、登录用户变化或显式刷新时发生；人工创建必须同步插入临时 Memo、立即进入编辑器且不锁定后续创建，多个提交独立并发，临时/真实 ID 替换不得重挂载编辑器或覆盖等待期间的标题/正文，失败只精确撤销对应节点。重命名、移动、软删除与恢复同样必须乐观更新或合并局部响应，严禁写成功后刷新整棵树。Trash 只保存回收站列表视图状态，不得复制 active tree。删除当前 Memo 或其祖先前必须等待 `useMemoAutosave` required flush，失败保留路由、编辑会话和 subtree；删除成功后暂停旧会话、清理受影响 last-memo 并导航到下一 Memo 或 `/app`。中央连续画布、Markdown、reading/live/source、安全渲染与空白保真继续遵循既有单一存储协议；自动保存仍使用既有调度/重试参数且所有保存携带显式 memoId。
 
 备忘录画布约束: 中央 Main Panel 自身就是唯一编辑表面，内部不得再绘制纸卡边框、圆角、阴影或独立底色；文件名标题与正文共享居中的 52rem 上限写作列，标题和水平留白必须依据可拖拽 Main Panel 自身宽度响应，而不是依据浏览器视口，标题保持 24–30px、正文保持 15px，reading/live 的正文 H1 必须严格小于文件名标题。标题、正文与 reading/live/source 切换不得通过重挂载破坏 CodeMirror 选区、撤销历史或自动保存会话。
 

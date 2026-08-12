@@ -57,7 +57,7 @@ type AppSidebarProps = {
   activeView: SidebarView;
   memoTree: MemoTreeNode[];
   mutating: boolean;
-  onCreateMemo: (parentId: string | null) => Promise<void>;
+  onCreateMemo: (parentId: string | null) => void;
   onMoveNode: (nodeId: string, input: MemoMovePlan) => Promise<boolean>;
   onOpenDesignSystem: () => void;
   onOpenProfile: () => void;
