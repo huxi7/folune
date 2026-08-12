@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 @ai-sdk/react useChat、AI SDK 浏览器工具续写判定、@mastra/client-js 工具注册表、可取消庆祝执行器、Dashboard 草稿/删除协调边界、Kumo Button/InputArea、Composer 键盘判定、design-system Activity、memoChatTransport、Store 与 ChatMessage
- * [OUTPUT]: 对外提供按 UIMessage parts 渲染有序过程/工具/最终正文、遵循共享 48/32/16 Header 与 48px 自增高 Composer 节奏、可经 Worker 执行客户端工具并停止 AI 流/活动礼花的 AgentPanel
+ * [OUTPUT]: 对外提供由稳定实时 assistant 槽位渲染的有序过程/工具/最终正文、遵循共享 48/32/16 Header 与 48px 自增高 Composer 节奏、可经 Worker 执行客户端工具并停止 AI 流/活动礼花的 AgentPanel
  * [POS]: /app 右侧 AI 工作区；useChat 驱动完整 agent loop，停止命令收束 SSE 与庆祝 Canvas，Worker 规划后复用真人操作同款乐观 Store/API 链路
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -27,12 +27,11 @@ import { lastAssistantMessageIsCompleteWithToolCalls } from "ai";
 
 import { useAgentPanelStore } from "../../shared/store/agentPanelStore";
 import {
-  ThinkingIndicator,
   ThinkingMark,
 } from "../../shared/design-system/components";
 import { deriveAssistantActivity } from "./activityState";
 import { cancelCelebration } from "./celebration";
-import { ChatMessage } from "./ChatMessage";
+import { ChatMessage, LiveAssistantTurn } from "./ChatMessage";
 import { getChatErrorCode } from "./chatFetch";
 import { memoChatTransport } from "./chatTransport";
 import {
@@ -166,8 +165,12 @@ export function AgentPanel({
     status,
     lastMessage?.role === "assistant" ? lastMessage : undefined,
   );
-  const pendingWithoutAssistant = activity === "thinking"
-    && lastMessage?.role !== "assistant";
+  const liveAssistantIndex = lastMessage?.role === "assistant"
+    ? messages.length - 1
+    : -1;
+  const liveAssistantMessage = liveAssistantIndex >= 0
+    ? messages[liveAssistantIndex]
+    : undefined;
   const errorCopy = getErrorCopy(error);
 
   const scrollToLatest = useCallback((behavior: ScrollBehavior) => {
@@ -293,24 +296,23 @@ export function AgentPanel({
             </div>
           ) : (
             messages.map((message, index) => (
-              <ChatMessage
-                key={message.id}
-                message={message}
-                onProgress={handleTypingProgress}
-                activity={
-                  index === messages.length - 1 && message.role === "assistant"
-                    ? activity
-                    : "none"
-                }
-              />
+              index === liveAssistantIndex ? null : (
+                <ChatMessage
+                  key={message.id}
+                  message={message}
+                  onProgress={handleTypingProgress}
+                  activity="none"
+                />
+              )
             ))
           )}
 
-          {pendingWithoutAssistant || activity === "streaming" ? (
-            <ThinkingIndicator
-              active={pendingWithoutAssistant}
-              className="agent-standalone-thinking"
-              label="备忘录助手正在思考"
+          {busy || liveAssistantMessage ? (
+            <LiveAssistantTurn
+              activity={activity}
+              key="live-assistant"
+              message={liveAssistantMessage}
+              onProgress={handleTypingProgress}
             />
           ) : null}
         </div>

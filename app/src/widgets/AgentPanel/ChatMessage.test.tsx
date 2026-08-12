@@ -9,7 +9,7 @@ import { describe, expect, test } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
 import type { UIMessage } from "ai";
 
-import { ChatMessage } from "./ChatMessage";
+import { ChatMessage, LiveAssistantTurn } from "./ChatMessage";
 
 function assistant(parts: UIMessage["parts"]): UIMessage {
   return { id: "assistant-1", parts, role: "assistant" };
@@ -80,6 +80,22 @@ describe("ChatMessage", () => {
     expect(html).toContain("直接回复。");
     expect(html).not.toContain("agent-process-disclosure");
     expect(html).not.toContain("处理过程");
+  });
+
+  test("请求期和空 SSE assistant 占位复用同一等待结构", () => {
+    const submittedHtml = renderToStaticMarkup(
+      <LiveAssistantTurn activity="thinking" />,
+    );
+    const emptyAssistantHtml = renderToStaticMarkup(
+      <LiveAssistantTurn
+        activity="thinking"
+        message={assistant([])}
+      />,
+    );
+
+    expect(submittedHtml).toBe(emptyAssistantHtml);
+    expect(submittedHtml).toContain("ds-thinking-indicator");
+    expect(submittedHtml).not.toContain("agent-process-disclosure");
   });
 
   test("用户与助手回复都不重复显示身份标题", () => {
