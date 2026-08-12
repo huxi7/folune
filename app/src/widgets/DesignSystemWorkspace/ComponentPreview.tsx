@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖 React memo/useEffect/useState、Phosphor 图标、通用组件、MarkdownReadingView、Skeleton、ThinkingMark 与多词错峰模糊拖尾的互斥 AI 消息组件家族
- * [OUTPUT]: 对外提供 4px 空间标尺、32/40/48px 控件层级与真实 48/32/16 Header 样板，以及不重复 Button variants/loading/disabled、Skeleton、ThinkingMark 和可重播跨段落多词拖尾 AI 消息示例
+ * [INPUT]: 依赖 React memo/useEffect/useState、Phosphor 图标、通用组件、MarkdownReadingView、Skeleton、ThinkingMark 与五词错峰模糊拖尾的互斥 AI 消息组件家族
+ * [OUTPUT]: 对外提供 4px 空间标尺、32/40/48px 控件层级与真实 48/32/16 Header 样板，以及不重复 Button variants/loading/disabled、Skeleton、ThinkingMark 和按真实内容增长可重播的跨段落五词拖尾 AI 消息示例
  * [POS]: app/src/widgets/DesignSystemWorkspace 的基础与组件预览层，空间样板只读取生产 token，组件样板只展示真实 API
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -149,14 +149,43 @@ function UserMessageBubblePreview() {
   );
 }
 
+const assistantPreviewChunks = [
+  "当然。",
+  "先确认",
+  "目标，",
+  "再拆分",
+  "优先级。\n\n",
+  "然后",
+  "为每一步",
+  "补上",
+  "明确的",
+  "完成标准，",
+  "旧段落",
+  "保持稳定。",
+] as const;
+
 function AssistantMessagePreview() {
   const [run, setRun] = useState(0);
+  const [content, setContent] = useState<string>(assistantPreviewChunks[0]);
   const [streaming, setStreaming] = useState(true);
 
   useEffect(() => {
+    setContent(assistantPreviewChunks[0]);
     setStreaming(true);
-    const timer = window.setTimeout(() => setStreaming(false), 1_900);
-    return () => window.clearTimeout(timer);
+    const timers = assistantPreviewChunks.slice(1).map((_, index) => (
+      window.setTimeout(() => {
+        setContent(assistantPreviewChunks.slice(0, index + 2).join(""));
+      }, (index + 1) * 110)
+    ));
+    const settleTimer = window.setTimeout(
+      () => setStreaming(false),
+      assistantPreviewChunks.length * 110,
+    );
+
+    return () => {
+      timers.forEach((timer) => window.clearTimeout(timer));
+      window.clearTimeout(settleTimer);
+    };
   }, [run]);
 
   const replay = () => {
@@ -167,7 +196,7 @@ function AssistantMessagePreview() {
   return (
     <div className="ds-ai-message-preview">
       <AssistantMessage
-        content={"当然。先确认目标，再拆分优先级。\n\n然后为每一步补上明确的完成标准，旧段落保持稳定。"}
+        content={content}
         key={run}
         renderContent={(content, streamingText) => (
           <MarkdownReadingView

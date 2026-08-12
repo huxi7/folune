@@ -1,17 +1,35 @@
 /**
  * [INPUT]: 依赖 Bun test、react-dom/server 与 MarkdownReadingView 的软换行、安全渲染及词级装饰边界
- * [OUTPUT]: 覆盖备忘录单换行、GFM、安全过滤，以及多词模糊拖尾/光标不破坏 Markdown 语义或重闪旧段落
- * [POS]: app/src/widgets 的 Markdown 阅读回归测试；同时锁定阅读安全与 Agent 流式表现边界
+ * [OUTPUT]: 覆盖备忘录单换行、GFM、安全过滤，以及常数尾部动画节点不破坏 Markdown 语义或结束态结构
+ * [POS]: app/src/widgets 的 Markdown 阅读回归测试；同时锁定阅读安全、Agent 直出表现与结束无抖动边界
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
 import { describe, expect, test } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
 
+import { StreamingText } from "../shared/design-system/components";
 import { MarkdownReadingView } from "./MarkdownReadingView";
 import { markdownExportFilename } from "./MarkdownViewMenu";
 
 describe("Markdown reading and file boundaries", () => {
+  test("renders every arrived SSE unit without a frontend reveal queue", () => {
+    const content = Array.from(
+      { length: 1_000 },
+      (_, index) => `词${index}，`,
+    ).join("");
+    const html = renderToStaticMarkup(
+      <StreamingText
+        renderText={(arrivedText) => <p>{arrivedText}</p>}
+        streaming
+        text={content}
+      />,
+    );
+
+    expect(html).toContain("词0，");
+    expect(html).toContain("词999，");
+  });
+
   test("preserves every single newline in note reading mode", () => {
     const html = renderToStaticMarkup(
       <MarkdownReadingView
@@ -63,7 +81,7 @@ alert("文本，不执行")
     expect(html).not.toContain("javascript:");
   });
 
-  test("decorates every streamed word while preserving Markdown", () => {
+  test("decorates only the resolving tail while preserving Markdown", () => {
     const html = renderToStaticMarkup(
       <MarkdownReadingView
         content="先确认 **目标**"
@@ -72,19 +90,17 @@ alert("文本，不执行")
             { animationDelay: "-20ms" },
             { animationDelay: "-75ms" },
           ],
-          showCursor: true,
         }}
       />,
     );
 
-    expect(html).toContain(">先</span><span class=\"ds-streaming-text-token\" data-resolving=\"true\" style=\"animation-delay:-75ms\">确认 </span>");
+    expect(html).toContain("<p>先<span class=\"ds-streaming-text-token\" data-resolving=\"true\" style=\"animation-delay:-75ms\">确认 </span>");
     expect(html).toContain("data-resolving=\"true\" style=\"animation-delay:-20ms\">目标</span>");
-    expect(html).toContain("ds-streaming-text-cursor");
-    expect(html.match(/ds-streaming-text-token/g)).toHaveLength(3);
+    expect(html.match(/ds-streaming-text-token/g)).toHaveLength(2);
     expect(html.match(/data-resolving=\"true\"/g)).toHaveLength(2);
   });
 
-  test("continues the resolving tail across a paragraph without replaying old words", () => {
+  test("keeps old paragraphs native and decorates only the final block tail", () => {
     const html = renderToStaticMarkup(
       <MarkdownReadingView
         content={"第一段已经稳定。\n\n第二段刚刚出现。"}
@@ -96,31 +112,41 @@ alert("文本，不执行")
             { animationDelay: "-180ms" },
             { animationDelay: "-235ms" },
           ],
-          showCursor: true,
         }}
       />,
     );
 
-    expect(html).toContain("<p><span class=\"ds-streaming-text-token\">第</span>");
-    expect(html).toContain("data-resolving=\"true\" style=\"animation-delay:-235ms\">稳定。</span>");
-    expect(html.match(/data-resolving=\"true\"/g)).toHaveLength(5);
+    expect(html).toContain("<p>第一段已经稳定。</p>");
+    expect(html.match(/data-resolving=\"true\"/g)?.length).toBeLessThanOrEqual(5);
     expect(html).toContain("data-resolving=\"true\" style=\"animation-delay:-15ms\">出现。</span>");
   });
 
-  test("keeps one tail cursor when the streamed Markdown ends in code", () => {
+  test("keeps the resolving tail when streamed Markdown ends in code", () => {
     const html = renderToStaticMarkup(
       <MarkdownReadingView
         content={"```ts\nconst ready = true;\n```"}
         streamingText={{
           resolvingWordStyles: [{ animationDelay: "-20ms" }],
-          showCursor: true,
         }}
       />,
     );
 
     expect(html).toContain("<pre><code class=\"language-ts\"");
-    expect(html.match(/ds-streaming-text-cursor/g)).toHaveLength(1);
     expect(html.match(/ds-streaming-text-token/g)?.length).toBeGreaterThan(1);
+  });
+
+  test("returns settled Markdown to native text without animation nodes", () => {
+    const html = renderToStaticMarkup(
+      <MarkdownReadingView
+        content="结束后不重排。"
+        streamingText={{
+          resolvingWordStyles: [],
+        }}
+      />,
+    );
+
+    expect(html).not.toContain("ds-streaming-text-token");
+    expect(html).not.toContain("data-resolving");
   });
 
   test("uses the current title only as a safe md filename", () => {

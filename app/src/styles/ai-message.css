@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 index.css 的 primary/foreground/surface/spacing/button 零偏移环绕阴影与 motion 语义 token
- * [OUTPUT]: 提供用户主色气泡、零卡片最终正文、多词错峰模糊拖尾/静态细光标、可折叠处理过程、Formation ThinkingIndicator 与可展开轻量详情的工具状态样式
+ * [OUTPUT]: 提供用户主色气泡、零卡片最终正文、五词错峰模糊拖尾、可折叠处理过程、Formation ThinkingIndicator 与可展开轻量详情的工具状态样式
  * [POS]: app/src/styles 的 AI 消息视觉层，被 AgentPanel 与 DEV Design System 共用；过程和正文只用自然留白过渡，不创建第二套主题或固定分隔线
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -56,18 +56,6 @@
   .ds-streaming-text-token[data-resolving="true"] {
     animation: ds-streaming-token-in 420ms cubic-bezier(0.22, 0.61, 0.25, 1) both;
     will-change: filter, opacity, transform;
-  }
-
-  .ds-streaming-text-cursor {
-    display: inline-block;
-    width: 0.1rem;
-    height: 0.9em;
-    margin-left: 0.125rem;
-    border-radius: 999px;
-    background: currentColor;
-    opacity: 0.82;
-    pointer-events: none;
-    transform: translateY(0.1em);
   }
 
   .ds-assistant-message .markdown-reading-view {
@@ -374,7 +362,6 @@
 @media (prefers-reduced-motion: reduce) {
   @layer components {
     .ds-streaming-text-token,
-    .ds-streaming-text-cursor,
     .ds-tool-call-bubble.ds-button-loading::after {
       animation: none;
     }

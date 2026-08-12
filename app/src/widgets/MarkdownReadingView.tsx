@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 React 节点克隆、react-markdown、remark-gfm/remark-breaks/rehype-sanitize、Unicode 分词与可选词级流状态
- * [OUTPUT]: 对外提供安全 MarkdownReadingView，并以模块级稳定渲染器与 Context 在 SSE 更新间保留词节点、让多个尾词按连续进度模糊落定且在正文末尾放置静态光标
+ * [OUTPUT]: 对外提供安全 MarkdownReadingView；流式态只在最后可见块的末尾创建最多五个动画 span，历史正文保持原生文本节点
  * [POS]: app/src/widgets 的共享只读 Markdown 渲染边界；备忘录维持阅读语义，Agent 回复额外透传 design-system 词级流式表现
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -31,7 +31,6 @@ const standardRemarkPlugins = [remarkGfm];
 const softBreakRemarkPlugins = [remarkGfm, remarkBreaks];
 
 type WrappedNode = {
-  cursorPlaced: boolean;
   hasText: boolean;
   node: ReactNode;
   resolvingWords: number;
@@ -40,16 +39,22 @@ type WrappedNode = {
 function decorateTextNodes(
   node: ReactNode,
   state: StreamingTextRenderState,
-  allowCursor: boolean,
   resolvingOffset = 0,
-  allowResolving = allowCursor,
+  allowResolving = true,
 ): WrappedNode {
+  if (!allowResolving) {
+    return {
+      hasText: typeof node === "string" && node.length > 0,
+      node,
+      resolvingWords: 0,
+    };
+  }
+
   if (typeof node === "string") {
     const units = splitStreamingTextUnits(node);
 
     if (units.length === 0) {
       return {
-        cursorPlaced: false,
         hasText: false,
         node,
         resolvingWords: 0,
@@ -63,46 +68,36 @@ function decorateTextNodes(
         )
       : 0;
     const resolvingStart = units.length - resolvingWords;
-    const content = state.resolvingWordStyles.length > 0
-      ? units.map((unit, index) => (
-          <span
-            className="ds-streaming-text-token"
-            data-resolving={index >= resolvingStart || undefined}
-            key={index}
-            style={
-              index >= resolvingStart
-                ? state.resolvingWordStyles[
-                    resolvingOffset + units.length - index - 1
-                  ]
-                : undefined
-            }
-          >
-            {unit}
-          </span>
-        ))
-      : node;
-    const showCursor = allowCursor && state.showCursor;
+    const content = resolvingWords > 0
+      ? [
+          units.slice(0, resolvingStart).join(""),
+          ...units.slice(resolvingStart).map((unit, index) => {
+            const unitIndex = resolvingStart + index;
 
+            return (
+              <span
+                className="ds-streaming-text-token"
+                data-resolving="true"
+                key={unitIndex}
+                style={state.resolvingWordStyles[
+                  resolvingOffset + units.length - unitIndex - 1
+                ]}
+              >
+                {unit}
+              </span>
+            );
+          }),
+        ]
+      : node;
     return {
-      cursorPlaced: showCursor,
       hasText: true,
-      node: showCursor
-        ? [
-            content,
-            <span
-              aria-hidden="true"
-              className="ds-streaming-text-cursor"
-              key="streaming-cursor"
-            />,
-          ]
-        : content,
+      node: content,
       resolvingWords,
     };
   }
 
   if (Array.isArray(node)) {
     const next = [...node];
-    let cursorPlaced = false;
     let hasText = false;
     let resolvingWords = 0;
 
@@ -110,33 +105,21 @@ function decorateTextNodes(
       const result = decorateTextNodes(
         next[index],
         state,
-        allowCursor && !cursorPlaced,
         resolvingOffset + resolvingWords,
-        allowResolving && resolvingWords < state.resolvingWordStyles.length,
+        resolvingWords < state.resolvingWordStyles.length,
       );
       next[index] = result.node;
-      cursorPlaced ||= result.cursorPlaced;
       hasText ||= result.hasText;
       resolvingWords += result.resolvingWords;
     }
 
-    return { cursorPlaced, hasText, node: next, resolvingWords };
+    return { hasText, node: next, resolvingWords };
   }
 
   if (isValidElement<{ children?: ReactNode; className?: string }>(node)) {
     if (node.props.className === "ds-streaming-text-token") {
       return {
-        cursorPlaced: false,
         hasText: true,
-        node,
-        resolvingWords: 0,
-      };
-    }
-
-    if (node.props.className === "ds-streaming-text-cursor") {
-      return {
-        cursorPlaced: true,
-        hasText: false,
         node,
         resolvingWords: 0,
       };
@@ -145,13 +128,11 @@ function decorateTextNodes(
     const result = decorateTextNodes(
       node.props.children,
       state,
-      allowCursor,
       resolvingOffset,
       allowResolving,
     );
-    if (!result.hasText && !result.cursorPlaced) {
+    if (!result.hasText) {
       return {
-        cursorPlaced: false,
         hasText: false,
         node,
         resolvingWords: 0,
@@ -159,7 +140,6 @@ function decorateTextNodes(
     }
 
     return {
-      cursorPlaced: result.cursorPlaced,
       hasText: result.hasText,
       node: cloneElement(
         node as ReactElement<{ children?: ReactNode }>,
@@ -171,7 +151,6 @@ function decorateTextNodes(
   }
 
   return {
-    cursorPlaced: false,
     hasText: false,
     node,
     resolvingWords: 0,
@@ -186,27 +165,13 @@ type PositionedNode = {
   };
 };
 
-function isFinalVisibleNode(node: PositionedNode | undefined, content: string) {
+function isFinalVisibleNode(node: PositionedNode | undefined, finalOffset: number) {
   const endOffset = node?.position?.end?.offset;
-  return typeof endOffset === "number"
-    && content.slice(endOffset).trim().length === 0;
-}
-
-function resolvingOffsetAfterNode(
-  node: PositionedNode | undefined,
-  content: string,
-) {
-  const endOffset = node?.position?.end?.offset;
-
-  if (typeof endOffset !== "number") {
-    return Number.POSITIVE_INFINITY;
-  }
-
-  return splitStreamingTextUnits(content.slice(endOffset)).length;
+  return typeof endOffset === "number" && endOffset === finalOffset;
 }
 
 type StreamingMarkdownContextValue = {
-  content: string;
+  finalOffset: number;
   state: StreamingTextRenderState;
 };
 
@@ -222,17 +187,19 @@ function useStreamingChildren(
     return children;
   }
 
-  const finalNode = isFinalVisibleNode(node, context.content);
-  const resolvingOffset = finalNode
-    ? 0
-    : resolvingOffsetAfterNode(node, context.content);
+  if (context.state.resolvingWordStyles.length === 0) {
+    return children;
+  }
+
+  if (!isFinalVisibleNode(node, context.finalOffset)) {
+    return children;
+  }
 
   return decorateTextNodes(
     children,
     context.state,
-    context.state.showCursor && finalNode,
-    resolvingOffset,
-    resolvingOffset < context.state.resolvingWordStyles.length,
+    0,
+    true,
   ).node;
 }
 
@@ -280,15 +247,9 @@ export function MarkdownReadingView({
   preserveSoftBreaks = false,
   streamingText,
 }: MarkdownReadingViewProps) {
-  const streamingActive = Boolean(
-    streamingText
-    && (streamingText.resolvingWordStyles.length > 0
-      || streamingText.showCursor),
-  );
-
   const markdown = (
     <ReactMarkdown
-      components={streamingActive ? streamingMarkdownComponents : undefined}
+      components={streamingMarkdownComponents}
       rehypePlugins={[rehypeSanitize]}
       remarkPlugins={preserveSoftBreaks
         ? softBreakRemarkPlugins
@@ -301,13 +262,13 @@ export function MarkdownReadingView({
 
   return (
     <div className="markdown-reading-view">
-      {streamingActive && streamingText ? (
-        <StreamingMarkdownContext
-          value={{ content, state: streamingText }}
-        >
-          {markdown}
-        </StreamingMarkdownContext>
-      ) : markdown}
+      <StreamingMarkdownContext
+        value={streamingText
+          ? { finalOffset: content.trimEnd().length, state: streamingText }
+          : null}
+      >
+        {markdown}
+      </StreamingMarkdownContext>
     </div>
   );
 }
