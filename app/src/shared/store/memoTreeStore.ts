@@ -1,12 +1,13 @@
 /**
- * [INPUT]: 依赖 Zustand、shared/api/memo 的显式 token 命令与 memoTree 纯树算法
- * [OUTPUT]: 对外提供 active tree 单一状态、可立即导航的备忘录创建事务、临时/真实 ID 解析、串行写队列、CRUD、软删快照回滚、恢复 subtree 合并与草稿并发保护
- * [POS]: app/src/shared/store 的 active 备忘录单一数据源；创建先暴露稳定客户端身份再后台提交，删除先移除、恢复只合并响应，任何写成功都禁止整树 refetch
+ * [INPUT]: 依赖 Zustand、shared/api/memo/ai、memoTree 领域算法与 Worker plan 转换后的 AI Command 投影/事实对账纯函数
+ * [OUTPUT]: 对外提供 active tree、真人乐观 CRUD、AI tool_call 投影/回滚、command 幂等对账与草稿并发保护
+ * [POS]: app/src/shared/store 的 active 备忘录单一数据源；Worker 不复制状态，api command output 才是 AI 写事实
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
 import { create } from "zustand";
 
+import type { AiCommand, AiRun } from "../api/ai";
 import {
   createMemo as createMemoRequest,
   createMemoFolder,
@@ -24,6 +25,8 @@ import {
   type UpdateMemoInput,
 } from "../api/memo";
 import {
+  appendSortOrder,
+  betweenSortOrders,
   findNode,
   findSiblings,
   insertNode,
@@ -34,6 +37,12 @@ import {
   sortNodes,
   updateNode,
 } from "./memoTree";
+import { reconcileAiRunTree } from "./aiRunTree";
+import { reconcileAiCommandTree } from "./aiCommandTree";
+import {
+  type AiCommandProjection,
+  rollbackAiCommandProjection,
+} from "./aiCommandProjection";
 
 export type MemoTreeState = {
   nodes: MemoTreeNode[];
@@ -78,6 +87,14 @@ export type MemoTreeState = {
     content: string,
     options?: MemoWriteOptions,
   ): Promise<MemoTreeNode>;
+  reconcileAiRun(run: AiRun): void;
+  reconcileAiCommand(command: AiCommand): void;
+  projectAiToolCall(
+    toolCallId: string,
+    operation: AiCommand["operation"],
+    input: Readonly<Record<string, unknown>>,
+  ): void;
+  rollbackAiToolCall(toolCallId: string): void;
   reset(): void;
 };
 
@@ -95,6 +112,8 @@ const pendingMemoCreations = new Map<string, Promise<MemoTreeNode>>();
 const failedMemoCreations = new Map<string, unknown>();
 const resolvedMemoIds = new Map<string, string>();
 const memoClientKeys = new Map<string, string>();
+const reconciledAiCommandStates = new Map<string, AiCommand["status"]>();
+const aiProjections = new Map<string, AiCommandProjection>();
 
 const nextVersion = (versions: Map<string, number>, nodeId: string): number => {
   const version = (versions.get(nodeId) ?? 0) + 1;
@@ -177,6 +196,7 @@ const optimisticNode = (
     metadata: {},
     node_type: nodeType,
     parent_id: input.parent_id,
+    revision: 1,
     sort_order: sortOrder ?? "0",
     title: input.title,
     updated_at: now,
@@ -643,6 +663,7 @@ export const useMemoTreeStore = create<MemoTreeState>()((set, get) => ({
               ? updated.memo ?? currentNode.memo
               : currentNode.memo,
             updated_at: updated.updated_at,
+            revision: updated.revision,
           })),
         };
       });
@@ -660,6 +681,106 @@ export const useMemoTreeStore = create<MemoTreeState>()((set, get) => ({
     );
   },
 
+  reconcileAiRun(run) {
+    set((state) => ({ nodes: reconcileAiRunTree(state.nodes, run) }));
+  },
+
+  reconcileAiCommand(command) {
+    if (reconciledAiCommandStates.get(command.id) === command.status) return;
+    reconciledAiCommandStates.set(command.id, command.status);
+    const toolCallId = command.tool_call_id;
+    const projection = toolCallId === null ? undefined : aiProjections.get(toolCallId);
+    if (toolCallId !== null) aiProjections.delete(toolCallId);
+    set((state) => {
+      const withoutProjection = projection === undefined
+        ? state.nodes
+        : command.status === "succeeded"
+          ? projection.optimisticId === null
+            ? state.nodes
+            : removeNode(state.nodes, projection.optimisticId)
+          : rollbackAiCommandProjection(state.nodes, projection);
+      return { nodes: reconcileAiCommandTree(withoutProjection, command) };
+    });
+  },
+
+  projectAiToolCall(toolCallId, operation, input) {
+    if (aiProjections.has(toolCallId)) return;
+    const currentNodes = get().nodes;
+    const nodeId = typeof input.node_id === "string" ? input.node_id : null;
+    const before = nodeId === null ? null : findNode(currentNodes, nodeId);
+
+    if (operation === "create_node") {
+      const nodeType = input.node_type === "folder" ? "folder" : "memo";
+      const parentId = typeof input.parent_id === "string" ? input.parent_id : null;
+      const optimistic = optimisticNode(currentNodes, nodeType, {
+        title: typeof input.title === "string" ? input.title : "新笔记",
+        parent_id: parentId,
+        ...(nodeType === "memo" && typeof input.content_mdx === "string"
+          ? { content_mdx: input.content_mdx }
+          : {}),
+      });
+      aiProjections.set(toolCallId, {
+        before: null,
+        operation,
+        optimisticId: optimistic.id,
+        projected: {},
+      });
+      set({ nodes: insertNode(currentNodes, optimistic, parentId) });
+      return;
+    }
+
+    if (before === null) return;
+    if (operation === "rename_node" && typeof input.title === "string") {
+      aiProjections.set(toolCallId, { before, operation, optimisticId: null, projected: { title: input.title } });
+      set({ nodes: updateNode(currentNodes, before.id, (node) => ({ ...node, title: input.title as string })) });
+      return;
+    }
+    if (operation === "edit_memo" && typeof input.content_mdx === "string" && before.memo !== null) {
+      aiProjections.set(toolCallId, { before, operation, optimisticId: null, projected: { content_mdx: input.content_mdx } });
+      set({ nodes: updateNode(currentNodes, before.id, (node) => node.memo === null ? node : ({ ...node, memo: { ...node.memo, content_mdx: input.content_mdx as string } })) });
+      return;
+    }
+    if (operation === "trash_node") {
+      aiProjections.set(toolCallId, { before, operation, optimisticId: null, projected: {} });
+      set({ nodes: removeNode(currentNodes, before.id) });
+      return;
+    }
+
+    let parentId = before.parent_id;
+    let sortOrder = before.sort_order;
+    if (operation === "move_node") {
+      parentId = typeof input.parent_id === "string" ? input.parent_id : null;
+      const siblings = findSiblings(currentNodes, parentId)?.filter((node) => node.id !== before.id) ?? [];
+      sortOrder = typeof input.planned_sort_order === "string"
+        ? input.planned_sort_order
+        : appendSortOrder(siblings);
+    } else if (operation === "reorder_node" && typeof input.reference_node_id === "string") {
+      const siblings = findSiblings(currentNodes, before.parent_id)?.filter((node) => node.id !== before.id) ?? [];
+      const referenceIndex = siblings.findIndex((node) => node.id === input.reference_node_id);
+      if (referenceIndex < 0) return;
+      const insertionIndex = input.placement === "before" ? referenceIndex : referenceIndex + 1;
+      sortOrder = typeof input.planned_sort_order === "string"
+        ? input.planned_sort_order
+        : betweenSortOrders(
+            siblings[insertionIndex - 1],
+            siblings[insertionIndex],
+          );
+    } else {
+      return;
+    }
+    aiProjections.set(toolCallId, { before, operation, optimisticId: null, projected: { parent_id: parentId, sort_order: sortOrder } });
+    set({ nodes: moveNodeInTree(currentNodes, before.id, parentId, sortOrder) });
+  },
+
+  rollbackAiToolCall(toolCallId) {
+    const projection = aiProjections.get(toolCallId);
+    if (projection === undefined) return;
+    aiProjections.delete(toolCallId);
+    set((state) => ({
+      nodes: rollbackAiCommandProjection(state.nodes, projection),
+    }));
+  },
+
   reset() {
     treeGeneration += 1;
     moveVersions.clear();
@@ -670,6 +791,8 @@ export const useMemoTreeStore = create<MemoTreeState>()((set, get) => ({
     failedMemoCreations.clear();
     resolvedMemoIds.clear();
     memoClientKeys.clear();
+    reconciledAiCommandStates.clear();
+    aiProjections.clear();
     set({ nodes: [] });
   },
 }));

@@ -23,7 +23,7 @@ describe("agent tool presentation", () => {
       icon: FolderOpenIcon,
       name: "查看现有内容",
     });
-    expect(agentClientToolPresentation.edit_node.icon).toBe(TreeStructureIcon);
+    expect(agentClientToolPresentation.move_node.icon).toBe(TreeStructureIcon);
   });
 
   it("用结果中的标题具体命名读取与更新动作", () => {
@@ -48,21 +48,32 @@ describe("agent tool presentation", () => {
 
   it("根据节点操作生成创建、移动与回收站名称", () => {
     expect(getAgentToolPresentation("edit_node", {
-      input: { node_type: "memo", op: "create", title: "读书" },
+      input: { op: "delete", node_id: "173b31e2-15ab-4eaf-8f14-2208d7d16b13" },
+      state: "approval-requested",
+    }).name).toBe("移入回收站");
+
+    expect(getAgentToolPresentation("create_node", {
+      input: { node_type: "memo", title: "读书" },
       state: "input-available",
     })).toMatchObject({
       details: [
         { label: "目标", value: "「读书」" },
-        { label: "类型", value: "备忘录" },
       ],
-      name: "创建「读书」",
+      name: "创建笔记「读书」",
     });
 
-    expect(getAgentToolPresentation("edit_node", {
-      input: { node_id: "173b31e2-15ab-4eaf-8f14-2208d7d16b13", op: "delete" },
-      output: { message: "已将「旧笔记」移入回收站。", op: "delete" },
+    expect(getAgentToolPresentation("trash_node", {
+      input: { node_id: "173b31e2-15ab-4eaf-8f14-2208d7d16b13" },
+      output: { after_state: { node: { title: "旧笔记" } } },
       state: "output-available",
-    }).name).toBe("将「旧笔记」移入回收站");
+    }).name).toBe("移入回收站「旧笔记」");
+  });
+
+  it("namespaced 服务端工具仍使用同一人话展示", () => {
+    expect(getAgentToolPresentation("memo.rename_node", {
+      input: { title: "路线图" },
+      state: "input-available",
+    }).name).toBe("重命名笔记「路线图」");
   });
 
   it("失败详情过滤协议字段，未知工具不显示协议名", () => {

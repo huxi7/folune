@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖 Bun test 与 useMemoAutosave 导出的纯字符计数、失败重试工具
- * [OUTPUT]: 对外提供等长替换计数、32 字阈值基础和 400/800/1600ms 有界退避回归测试
+ * [INPUT]: 依赖 Bun test 与 useMemoAutosave 导出的纯字符计数、服务端初值接纳判定、失败重试工具
+ * [OUTPUT]: 对外提供迟到服务端正文防覆盖、等长替换计数、32 字阈值基础和 400/800/1600ms 有界退避回归测试
  * [POS]: app/src/widgets 的自动保存状态机纯逻辑测试边界，避免依赖 React DOM 即可锁定高频输入与弱网重试参数
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -11,9 +11,29 @@ import {
   AUTOSAVE_CHAR_THRESHOLD,
   countChangedCharacters,
   saveWithRetry,
+  shouldAdoptInitialMemo,
 } from "./useMemoAutosave";
 
 describe("memo autosave", () => {
+  test("加载期只让无本地草稿的会话接纳迟到服务端正文", () => {
+    expect(shouldAdoptInitialMemo({
+      initialContent: "服务端正文",
+      initialTitle: "服务端标题",
+      lastSavedContent: "",
+      lastSavedTitle: "",
+      latestContent: "",
+      latestTitle: "",
+    })).toBe(true);
+    expect(shouldAdoptInitialMemo({
+      initialContent: "服务端正文",
+      initialTitle: "服务端标题",
+      lastSavedContent: "",
+      lastSavedTitle: "",
+      latestContent: "本地草稿",
+      latestTitle: "",
+    })).toBe(false);
+  });
+
   test("counts insertion, deletion, and equal-length replacement", () => {
     expect(countChangedCharacters("abc", "abcdef")).toBe(3);
     expect(countChangedCharacters("abcdef", "ab")).toBe(4);

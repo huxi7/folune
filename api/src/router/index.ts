@@ -7,6 +7,14 @@
 
 import { Hono } from "hono";
 
+import {
+  aiCommandRouter,
+  aiContextRouter,
+  aiRunRouter,
+  aiSettingsRouter,
+  aiThreadRouter,
+} from "./ai.router.ts";
+
 import { healthRouter } from "./health.router.ts";
 import {
   memoFolderRouter,
@@ -26,3 +34,8 @@ router.route("/memo-folders", memoFolderRouter);
 router.route("/memos", memoRouter);
 router.route("/memo-nodes", memoNodeRouter);
 router.route("/memo-trash", memoTrashRouter);
+router.route("/ai-threads", aiThreadRouter);
+router.route("/ai-context", aiContextRouter);
+router.route("/ai-runs", aiRunRouter);
+router.route("/ai-settings", aiSettingsRouter);
+router.route("/ai-commands", aiCommandRouter);

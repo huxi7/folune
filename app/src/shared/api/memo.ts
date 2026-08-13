@@ -35,6 +35,7 @@ export type MemoTreeNode = {
   icon: string | null;
   color: string | null;
   metadata: Record<string, unknown>;
+  revision: number;
   deleted_at: string | null;
   deleted_root_id: string | null;
   created_at: string;

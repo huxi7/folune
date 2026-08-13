@@ -48,6 +48,7 @@ const node = (
   icon: null,
   color: null,
   metadata: {},
+  revision: 1,
   deleted_at: null,
   deleted_root_id: null,
   created_at: NOW,

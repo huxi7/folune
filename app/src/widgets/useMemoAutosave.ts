@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 React state/effect/ref、真实 MemoTreeNode、Store 正文本地更新命令与显式 memoId 的后台保存命令
- * [OUTPUT]: 对外提供 useMemoAutosave、可等待强制 flush、删除期 pause/resume、草稿类型、调度参数与可测试重试器
+ * [OUTPUT]: 对外提供 useMemoAutosave、加载期无本地草稿的服务端初值接纳、可等待强制 flush、删除期 pause/resume、已提交标题接纳、草稿类型、调度参数与可测试重试器
  * [POS]: app/src/widgets 的编辑会话协调边界；删除前可证明保存完成并暂停卸载 flush，普通输入仍沿用单一自动保存状态机
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -63,6 +63,7 @@ type AutosaveSession = {
 };
 
 type UseMemoAutosaveResult = {
+  acceptCommittedTitle: (title: string) => void;
   content: string;
   flush: (options?: MemoFlushOptions) => Promise<void>;
   pause: () => void;
@@ -82,6 +83,21 @@ export const countChangedCharacters = (
   previousValue: string,
   nextValue: string,
 ): number => Math.abs(nextValue.length - previousValue.length) || 1;
+
+export const shouldAdoptInitialMemo = (input: {
+  initialContent: string;
+  initialTitle: string;
+  lastSavedContent: string;
+  lastSavedTitle: string;
+  latestContent: string;
+  latestTitle: string;
+}): boolean =>
+  input.latestContent === input.lastSavedContent
+  && input.latestTitle === input.lastSavedTitle
+  && (
+    input.initialContent !== input.lastSavedContent
+    || input.initialTitle !== input.lastSavedTitle
+  );
 
 export async function saveWithRetry<T>(
   operation: () => Promise<T>,
@@ -371,6 +387,33 @@ export function useMemoAutosave({
   }, [flushSession, memoId]);
 
   useEffect(() => {
+    const session = sessionRef.current;
+
+    if (
+      session.memoId !== memoId
+      || session.disposed
+      || !shouldAdoptInitialMemo({
+        initialContent,
+        initialTitle,
+        lastSavedContent: session.lastSavedContent,
+        lastSavedTitle: session.lastSavedTitle,
+        latestContent: session.latestContent,
+        latestTitle: session.latestTitle,
+      })
+    ) {
+      return;
+    }
+
+    session.lastSavedContent = initialContent;
+    session.latestContent = initialContent;
+    session.lastSavedTitle = initialTitle;
+    session.latestTitle = initialTitle;
+    session.failedDraftKey = null;
+    setContent(initialContent);
+    setTitle(initialTitle);
+  }, [initialContent, initialTitle, memoId]);
+
+  useEffect(() => {
     const flushForPageExit = () => {
       void flush({ keepalive: true });
     };
@@ -426,7 +469,16 @@ export function useMemoAutosave({
     }
   }, []);
 
+  const acceptCommittedTitle = useCallback((nextTitle: string) => {
+    const session = sessionRef.current;
+    session.lastSavedTitle = nextTitle;
+    session.latestTitle = nextTitle;
+    session.failedDraftKey = null;
+    setTitle(nextTitle);
+  }, []);
+
   return {
+    acceptCommittedTitle,
     content,
     flush,
     pause,

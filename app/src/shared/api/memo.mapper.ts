@@ -31,6 +31,7 @@ export const mapMemoNodeDto = (node: MemoNodeDto): MemoNode => ({
   metadata: node.metadata,
   node_type: node.node_type,
   parent_id: node.parent_id,
+  revision: node.revision,
   sort_order: String(node.sort_order),
   title: node.title,
   updated_at: node.updated_at,

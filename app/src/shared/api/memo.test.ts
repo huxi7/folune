@@ -42,6 +42,7 @@ describe("memo API DTO mapping", () => {
       id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
       user_id: "11111111-1111-4111-8111-111111111111",
       parent_id: null,
+      revision: 4,
       node_type: "folder",
       title: "恢复文件夹",
       sort_order: 500.25,

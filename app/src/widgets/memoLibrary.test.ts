@@ -59,6 +59,7 @@ function node(
     metadata: {},
     node_type: nodeType,
     parent_id: parentId,
+    revision: 1,
     sort_order: String(sortOrder),
     title,
     updated_at: TIMESTAMP,

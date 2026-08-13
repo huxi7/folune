@@ -1,12 +1,11 @@
 /**
- * [INPUT]: 依赖 React Router Profile/token loader、Zustand memo tree/AgentPanel Store、统一 Skeleton 延迟策略、Markdown 视图状态/Toolbar 命令、NotesWorkspace、AccountDialog 与可调宽 AgentPanel
- * [OUTPUT]: 对外提供三 Panel、可连续点击且即时进入编辑器的乐观新建路由、active tree、显式草稿 flush 后软删导航、Agent 正文/删除协调、回收站恢复合并与账户/视图编排
- * [POS]: app/src/pages 的 /app 编排层；跨临时/真实备忘录身份、编辑器、Agent 工具、Store、路由与 Trash 的草稿及删除生命周期只在此建立一次等待边界
+ * [INPUT]: 依赖 React Router Profile/token、Zustand memo/AgentPanel Store、AI Run API/chat organize、统一 Skeleton、NotesWorkspace、AccountDialog 与可调宽 AgentPanel
+ * [OUTPUT]: 对外提供三 Panel、乐观备忘录路由、草稿 flush 后删除/AI 对话/AI 整理、Run 确认/撤销局部树归并与账户/视图编排
+ * [POS]: app/src/pages 的 /app 编排层；编辑器、服务端 AI 命令投影、Run、Store、路由与 Trash 的跨域生命周期只在此建立一次等待边界
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
-import { ChatCircleDotsIcon } from "@phosphor-icons/react";
 import {
   useLoaderData,
   useMatch,
@@ -15,11 +14,7 @@ import {
 
 import type { MemoTreeNode } from "../shared/api/memo";
 import { getProfile, type Profile } from "../shared/api/profile";
-import {
-  Button,
-  useDelayedSkeleton,
-  useToast,
-} from "../shared/design-system/components";
+import { useDelayedSkeleton, useToast } from "../shared/design-system/components";
 import {
   findNode,
   findSiblings,
@@ -33,11 +28,11 @@ import {
 } from "../widgets/AccountDialog";
 import { AgentPanel } from "../widgets/AgentPanel";
 import { AppSidebar, type SidebarView } from "../widgets/AppSidebar";
+import { AppMainToolbar } from "../widgets/AppMainToolbar";
 import { MemoNodeDialog } from "../widgets/MemoNodeDialog";
 import {
   type MemoMovePlan,
 } from "../widgets/memoLibrary";
-import { MarkdownViewMenu } from "../widgets/MarkdownViewMenu";
 import type {
   DocumentView,
   EditingMode,
@@ -56,6 +51,7 @@ import {
   getPostDeletionDestination,
 } from "./memoDeletion";
 import { useOptimisticMemoCreation } from "./useOptimisticMemoCreation";
+import { useMemoOrganize } from "./useMemoOrganize";
 import type {
   AccountDialogState,
   MemoDialogState,
@@ -103,6 +99,7 @@ export function AppDashboard() {
   const routeMemoId = noteMatch?.params.noteId ?? null;
   const { toast } = useToast();
   const agentPanelOpen = useAgentPanelStore((state) => state.isOpen);
+  const hydrateAgentPanel = useAgentPanelStore((state) => state.hydrate);
   const toggleAgentPanel = useAgentPanelStore((state) => state.toggle);
   const memoTree = useMemoTreeStore((state) => state.nodes);
   const fetchTree = useMemoTreeStore((state) => state.fetchTree);
@@ -183,6 +180,18 @@ export function AppDashboard() {
   const renderedTreeStatus: TreeStatus = treePlaceholderActive
     ? "loading"
     : treeStatus;
+  const memoOrganize = useMemoOrganize({
+    accessToken,
+    active: activeView === "note",
+    currentMemo: isMemo(selectedMemo) ? selectedMemo : null,
+    onCommittedTitle: () => setViewTitleDraft(null),
+    userId: profile.id,
+    workspaceRef: notesWorkspaceRef,
+  });
+
+  useEffect(() => {
+    hydrateAgentPanel(profile.id);
+  }, [hydrateAgentPanel, profile.id]);
 
   useEffect(() => {
     if (treePlaceholderActive) {
@@ -483,49 +492,6 @@ export function AppDashboard() {
     }
   }
 
-  async function handleAgentEditMemo(
-    nodeId: string,
-    contentMdx: string,
-  ): Promise<MemoTreeNode> {
-    const current = findNode(useMemoTreeStore.getState().nodes, nodeId);
-
-    if (!isMemo(current) || current.memo === null) {
-      throw new Error("要编辑的备忘录不存在。");
-    }
-
-    if (selectedMemo?.id === nodeId) {
-      const workspace = notesWorkspaceRef.current;
-
-      if (workspace === null) {
-        throw new Error("当前编辑会话尚未准备好，请稍后重试。");
-      }
-
-      await workspace.replaceContentFromAgent(contentMdx);
-    } else {
-      const previousContent = current.memo.content_mdx;
-      updateMemoContentLocal(nodeId, contentMdx);
-
-      try {
-        await saveMemoDraft(accessToken, nodeId, { content_mdx: contentMdx });
-      } catch (error) {
-        const latest = findNode(useMemoTreeStore.getState().nodes, nodeId);
-
-        if (latest?.memo?.content_mdx === contentMdx) {
-          updateMemoContentLocal(nodeId, previousContent);
-        }
-        throw error;
-      }
-    }
-
-    const updated = findNode(useMemoTreeStore.getState().nodes, nodeId);
-
-    if (!isMemo(updated)) {
-      throw new Error("正文写入后无法读取备忘录。");
-    }
-
-    return updated;
-  }
-
   async function handleRestoreTrashNode(nodeId: string) {
     await restoreNode(accessToken, nodeId);
   }
@@ -655,35 +621,19 @@ export function AppDashboard() {
       </div>
 
       <section className="app-main-panel">
-        <header className="app-main-toolbar">
-          <div className="app-main-toolbar-copy flex min-w-0 items-center gap-2">
-            <span aria-hidden="true" className="text-xs text-border">/</span>
-            <span className="truncate text-xs font-medium text-muted-foreground">
-              {toolbarTitle}
-            </span>
-          </div>
-          <div className="note-view-actions">
-            {activeView === "note" && isMemo(selectedMemo) ? (
-              <MarkdownViewMenu
-                content={selectedMemo.memo?.content_mdx ?? ""}
-                documentView={documentView}
-                editingMode={editingMode}
-                onDocumentViewChange={setDocumentView}
-                onEditingModeChange={setEditingMode}
-                title={currentMemoTitle}
-              />
-            ) : null}
-            <Button
-              aria-expanded={agentPanelOpen}
-              aria-label={agentPanelOpen ? "关闭备忘录助手" : "打开备忘录助手"}
-              className="note-view-icon-button"
-              icon={ChatCircleDotsIcon}
-              onClick={toggleAgentPanel}
-              size="square"
-              variant={agentPanelOpen ? "secondary" : "ghost"}
-            />
-          </div>
-        </header>
+        <AppMainToolbar
+          agentPanelOpen={agentPanelOpen}
+          currentMemo={activeView === "note" && isMemo(selectedMemo) ? selectedMemo : null}
+          currentMemoTitle={currentMemoTitle}
+          documentView={documentView}
+          editingMode={editingMode}
+          onDocumentViewChange={setDocumentView}
+          onEditingModeChange={setEditingMode}
+          onOrganize={memoOrganize.organize}
+          onToggleAgent={toggleAgentPanel}
+          organizing={memoOrganize.organizing}
+          toolbarTitle={toolbarTitle}
+        />
 
         <div className="app-main-content">
           <div className="h-full" hidden={activeView !== "note"}>
@@ -750,15 +700,18 @@ export function AppDashboard() {
         />
         <AgentPanel
           accessToken={accessToken}
-          onDeleteNode={async (nodeId) => {
-            if (!await handleSoftDeleteNode(nodeId)) {
-              throw new Error("节点未能移入回收站。");
-            }
-          }}
-          onEditMemo={handleAgentEditMemo}
+          currentMemo={isMemo(selectedMemo) ? selectedMemo : null}
+          memoTree={memoTree}
+          onApplyOrganize={memoOrganize.apply}
           onPrepareMutation={async () => {
             await notesWorkspaceRef.current?.flushCurrentDraft();
           }}
+          onRejectOrganize={memoOrganize.reject}
+          onSelectedThreadChange={memoOrganize.setThreadId}
+          onUndoOrganize={memoOrganize.undo}
+          organizeBusy={memoOrganize.organizing}
+          organizeRun={memoOrganize.run}
+          userId={profile.id}
         />
       </div>
 

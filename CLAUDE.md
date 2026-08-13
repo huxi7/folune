@@ -4,7 +4,7 @@ SuperNote 是面向需要长期积累备忘录的用户的 AI Native 备忘录�
 ## 本质
 SuperNote 的本质不是普通文本收纳，而是把“随手写”转化为“自动有序沉淀”。
 
-用户只负责记录；系统负责在保存时理解主题、归入合适文件夹，并持续维护清晰的文件 tree。
+用户只负责记录；V2 在消息级冻结当前笔记与 @引用，以独立审批 Agent、账号权限模式、revision 和可撤销命令台账安全维护文件 tree，不在每次 autosave 时自动运行模型。
 
 ## 商业模式
 订阅制。
@@ -22,16 +22,16 @@ AI 是用户的备忘录协作伙伴与智能档案管理员。
 ## 技术栈
 全栈 TypeScript，顶层由三个 L1 业务模块组成。
 
-- app: 用户端，Bun + Vite + React + React Router + Zustand + Vercel AI SDK + Mastra Client + 备忘录规划 Web Worker + canvas-confetti 独立全屏渲染 + Kumo UI + Tailwind CSS v4 + 本地 design system + Supabase Auth SDK
-- chat: AI 能力服务，Bun + TypeScript + Mastra + Vercel AI SDK + zod，当前 Agent 可在请求期调用由 app 执行的庆祝与备忘录客户端工具
+- app: 用户端，Bun + Vite + React + React Router + Zustand + Vercel AI SDK + Mastra Client + canvas-confetti 独立全屏渲染 + Kumo UI + Tailwind CSS v4 + 本地 design system + Supabase Auth SDK
+- chat: AI 能力服务，Bun + TypeScript + Mastra + Vercel AI SDK + zod，主 Agent 与无工具/无记忆审批 Agent 分离，模型只看到四个胖工具
 - api: 业务接口服务，Bun + Hono + TypeScript + zod + Supabase REST/PostgREST/Storage HTTP API
 
 ## 模块地图
 | 模块 | 职责 | 文档 |
 | --- | --- | --- |
-| app | 用户端，承载备忘录记录、浏览、文件 tree 交互及 SSE Agent 客户端工具体验；庆祝直达视觉执行器，备忘录工具由 Worker 规划后复用真人乐观 Store 链路 | [app/CLAUDE.md](app/CLAUDE.md) |
-| chat | AI 能力服务，承载 Supabase JWT 保护的 Agent、SSE 接口与请求期注入的无 execute 客户端工具契约，不含记忆或业务库写入 | [chat/CLAUDE.md](chat/CLAUDE.md) |
-| api | 业务接口服务，承载用户、备忘录、文件夹、订阅与数据持久化边界 | [api/CLAUDE.md](api/CLAUDE.md) |
+| app | 用户端，以唯一 @Prompt Bar 统一当前 memo 默认来源、手动/置顶引用，并承载后端确认式权限切换、审批卡、Worker 纯规划、命令乐观投影/对账与撤销 | [app/CLAUDE.md](app/CLAUDE.md) |
+| chat | AI 能力服务，冻结消息上下文，协调独立审批 Agent 与 Mastra 原生 approval，只向模型暴露 read_tree/read_memo/edit_memo/edit_node | [chat/CLAUDE.md](chat/CLAUDE.md) |
+| api | 业务接口服务，承载用户、备忘录、AI 会话/上下文/权限设置/通用命令/整理 Run 与唯一持久化边界 | [api/CLAUDE.md](api/CLAUDE.md) |
 | deploy | 本地部署基础设施，提供 api/chat 的 Bun 开发镜像、固定容器命名与密钥分离契约 | [deploy/CLAUDE.md](deploy/CLAUDE.md) |
 | scripts | 本地开发运维入口，统一启动、停止与查看 api-dev/chat-dev 双服务 Docker 日志 | [scripts/CLAUDE.md](scripts/CLAUDE.md) |
 
@@ -41,4 +41,5 @@ AI 是用户的备忘录协作伙伴与智能档案管理员。
 | .dockerignore | 收窄 api/chat 开发镜像的仓库根构建上下文，排除源码、缓存、密钥与无关模块 |
 | .env.example | app/api/chat 无密钥变量总览与根 Compose 可选覆盖模板；服务默认使用各自本地环境文件 |
 | .gitignore | 根级本地环境、构建缓存与系统文件忽略规则 |
-| docker-compose.dev.yml | 编排 api-dev/chat-dev 双服务、独立健康探针、依赖卷与共享网络；chat 直启 Mastra CLI 以保证容器停止时释放开发锁 |
+| docker-compose.dev.yml | 从各模块私有 `.env` 注入凭据并编排 api-dev/chat-dev 双服务、独立健康探针、依赖卷与共享网络；chat 直启 Mastra CLI 以保证容器停止时释放开发锁 |
+| AI_NATIVE_V1_PRD.md | AI Native V1 的产品目标、锁定边界、实施阶段、测试计划与持续完成状态 |

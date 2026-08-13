@@ -39,6 +39,7 @@ const node = (
   metadata: {},
   node_type: type,
   parent_id: null,
+  revision: 1,
   sort_order: "1000",
   title: id,
   updated_at: TIME,

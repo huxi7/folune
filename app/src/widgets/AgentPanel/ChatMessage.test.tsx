@@ -7,15 +7,15 @@
 
 import { describe, expect, test } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
-import type { UIMessage } from "ai";
+import type { SuperNoteUIMessage } from "../../shared/api/ai";
 
 import { ChatMessage, LiveAssistantTurn } from "./ChatMessage";
 
-function assistant(parts: UIMessage["parts"]): UIMessage {
+function assistant(parts: SuperNoteUIMessage["parts"]): SuperNoteUIMessage {
   return { id: "assistant-1", parts, role: "assistant" };
 }
 
-function user(text: string): UIMessage {
+function user(text: string): SuperNoteUIMessage {
   return {
     id: "user-1",
     parts: [{ text, type: "text" }],
@@ -28,6 +28,8 @@ describe("ChatMessage", () => {
     const html = renderToStaticMarkup(
       <ChatMessage
         activity="none"
+        onApproval={() => undefined}
+        onUndo={async () => undefined}
         message={assistant([
           { text: "先查看现有内容。", type: "text" },
           {
@@ -73,6 +75,8 @@ describe("ChatMessage", () => {
     const html = renderToStaticMarkup(
       <ChatMessage
         activity="none"
+        onApproval={() => undefined}
+        onUndo={async () => undefined}
         message={assistant([{ text: "直接回复。", type: "text" }])}
       />,
     );
@@ -100,11 +104,13 @@ describe("ChatMessage", () => {
 
   test("用户与助手回复都不重复显示身份标题", () => {
     const userHtml = renderToStaticMarkup(
-      <ChatMessage activity="none" message={user("你好")} />,
+      <ChatMessage activity="none" message={user("你好")} onApproval={() => undefined} onUndo={async () => undefined} />,
     );
     const assistantHtml = renderToStaticMarkup(
       <ChatMessage
         activity="none"
+        onApproval={() => undefined}
+        onUndo={async () => undefined}
         message={assistant([{ text: "你好。", type: "text" }])}
       />,
     );
@@ -113,5 +119,37 @@ describe("ChatMessage", () => {
     expect(userHtml).not.toContain(">你<");
     expect(assistantHtml).not.toContain("ds-assistant-message-author");
     expect(assistantHtml).not.toContain(">备忘录助手<");
+  });
+
+  test("用户轮次与 AI 回复都显示冻结来源和 revision", () => {
+    const sources = {
+      primary: { memo_id: "memo-1", title: "产品规划", revision: 7 },
+      references: [{ memo_id: "memo-2", title: "用户访谈", revision: 3 }],
+    };
+    const userHtml = renderToStaticMarkup(
+      <ChatMessage
+        activity="none"
+        message={{ ...user("对比一下"), metadata: { context_snapshot: sources } }}
+        onApproval={() => undefined}
+        onUndo={async () => undefined}
+      />,
+    );
+    const assistantHtml = renderToStaticMarkup(
+      <ChatMessage
+        activity="none"
+        message={assistant([{ text: "结论。", type: "text" }])}
+        onApproval={() => undefined}
+        onUndo={async () => undefined}
+        sources={sources}
+      />,
+    );
+
+    expect(userHtml).toContain("产品规划");
+    expect(userHtml).toContain("用户访谈");
+    expect(userHtml).toContain("v7");
+    expect(assistantHtml).toContain("来源");
+    expect(assistantHtml).toContain("@用户访谈");
+    expect(assistantHtml).toContain("v3");
+    expect(assistantHtml).not.toContain("memo-2");
   });
 });

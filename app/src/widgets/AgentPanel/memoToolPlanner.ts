@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖客户端工具 zod schema、MemoTreeNode 快照与 shared/store/memoTree 纯树算法
- * [OUTPUT]: 对外提供 Worker 可调用的 planMemoTool，把读请求投影为结果、把单步写意图收敛为现有 Store 命令计划
- * [POS]: AgentPanel 工具的纯规划内核；只计算和校验，不访问网络、Zustand、React 或 DOM
+ * [OUTPUT]: 对外提供 planMemoTool，把四个胖工具请求转换为读结果或单步、带 revision 的 Store/API 命令计划
+ * [POS]: AgentPanel Worker 的纯规划内核；只读取结构化克隆快照，不访问 React、Store、DOM、网络或数据库
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -51,18 +51,27 @@ export type MemoToolPlan =
       kind: "rename_node";
       op: "rename";
       nodeId: string;
+      expectedRevision: number;
       title: string;
     }
   | {
       kind: "move_node";
       op: "move" | "reorder";
       nodeId: string;
+      expectedRevision: number;
       input: { parent_id: string | null; sort_order: string };
+      reference?: { node_id: string; placement: "before" | "after" };
     }
-  | { kind: "delete_node"; op: "delete"; nodeId: string }
+  | {
+      kind: "delete_node";
+      op: "delete";
+      nodeId: string;
+      expectedRevision: number;
+    }
   | {
       kind: "edit_memo";
       nodeId: string;
+      expectedRevision: number;
       contentMdx: string;
     };
 
@@ -77,6 +86,15 @@ const requireNode = (
   }
 
   return node;
+};
+
+const requireExpectedRevision = (
+  node: MemoTreeNode,
+  expectedRevision: number,
+): void => {
+  if (node.revision !== expectedRevision) {
+    throw new Error("节点版本已变化，请重新读取后再操作。");
+  }
 };
 
 const validateParent = (
@@ -109,6 +127,7 @@ const flattenTree = (
         node_type: node.node_type,
         parent_id: node.parent_id,
         path: pathParts.join(" / "),
+        revision: node.revision,
         sort_order: node.sort_order,
         title: node.title,
       },
@@ -138,6 +157,7 @@ const memoOutput = (node: MemoTreeNode): MemoOutput => {
     content_mdx: node.memo.content_mdx,
     id: node.id,
     parent_id: node.parent_id,
+    revision: node.revision,
     title: node.title,
     updated_at: node.memo.updated_at,
   };
@@ -213,6 +233,7 @@ const planMove = (
     },
     kind: "move_node",
     nodeId: node.id,
+    expectedRevision: input.expected_revision!,
     op: "move",
   };
 };
@@ -256,7 +277,12 @@ const planReorder = (
     },
     kind: "move_node",
     nodeId: node.id,
+    expectedRevision: input.expected_revision!,
     op: "reorder",
+    reference: {
+      node_id: reference.id,
+      placement: input.placement!,
+    },
   };
 };
 
@@ -271,11 +297,13 @@ const planEditNode = (
   }
 
   const node = requireNode(nodes, parsed.node_id!);
+  requireExpectedRevision(node, parsed.expected_revision!);
 
   if (parsed.op === "rename") {
     return {
       kind: "rename_node",
       nodeId: node.id,
+      expectedRevision: parsed.expected_revision!,
       op: "rename",
       title: parsed.title!,
     };
@@ -289,7 +317,12 @@ const planEditNode = (
     return planReorder(parsed, nodes);
   }
 
-  return { kind: "delete_node", nodeId: node.id, op: "delete" };
+  return {
+    expectedRevision: parsed.expected_revision!,
+    kind: "delete_node",
+    nodeId: node.id,
+    op: "delete",
+  };
 };
 
 const planEditMemo = (
@@ -297,10 +330,13 @@ const planEditMemo = (
   nodes: readonly MemoTreeNode[],
 ): MemoToolPlan => {
   const parsed = editMemoInputSchema.parse(input);
-  memoOutput(requireNode(nodes, parsed.node_id));
+  const node = requireNode(nodes, parsed.node_id);
+  memoOutput(node);
+  requireExpectedRevision(node, parsed.expected_revision);
 
   return {
     contentMdx: parsed.content_mdx,
+    expectedRevision: parsed.expected_revision,
     kind: "edit_memo",
     nodeId: parsed.node_id,
   };
@@ -325,4 +361,3 @@ export function planMemoTool(
 
   return planEditMemo(input, nodes);
 }
-

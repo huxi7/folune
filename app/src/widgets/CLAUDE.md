@@ -15,6 +15,7 @@ LandingFooter.tsx: Landing 无 BlueprintFrame 的全宽深蓝 Fat Footer，品�
 LandingMotion/: Landing 克制反馈模块，只提供 CountUp 与一次性 reveal；磁吸、指针聚光与装饰点阵已移除，当前页面只保留有信息价值的计数与 3–4px 入场反馈
 NotebookPreview.tsx: Landing 的真实工作台预览，以工具轨、单栏文件 tree、文档纸面和 Agent 归档面板呈现核心体验
 AppSidebar.tsx: /app 常驻文件导航 Panel；以共享 48px Header、32px Primary 方形按钮和 16px 图标承载不等待 Promise 的根级新建意图，并负责真实树搜索、展开、原地 rename、HTML5 拖拽与右键“移至回收站”，底部 Design System/回收站以无容器前景色标识当前位置，持久化与软删除边界交给 Dashboard
+AppMainToolbar.tsx: 中央 48px Header，集中呈现当前路径标题、Mod+Enter AI 整理、阅读/编辑/更多命令与 AgentPanel 开关，使 Dashboard 保持编排职责且不超过文件上限
 MemoTreeBranch.tsx: 无限递归树渲染器；Folder/FolderOpen 单图标承担开合，同层共享固定图标槽；双击/F2 进入 Enter/blur 提交、Escape 取消的原地 input，folder 行按上 24% before/下 24% after/中 52% inside 分区，memo 只分前后，排序落点使用 8px 圆点+2px 横线，拖拽源保留在原位并弱化到 40%，after 落点位于完整子树之后
 MemoNodeDialog.tsx: 文件树命名弹窗，以设计系统 Dialog/Input/Button 承载新建文件夹，负责非空校验、提交锁与 API 错误展示，不使用浏览器 prompt 或直接访问 API
 memoLibrary.ts: 后端文件树的纯视图模型工具，复用 shared/store/memoTree 算法提供首个 memo、祖先/路径、全文搜索及 before/after/inside/root-end 防环计划；folder inside 固定计算第一个子节点 sort_order
@@ -30,9 +31,9 @@ MarkdownReadingView.tsx: react-markdown + remark-gfm + 可选 remark-breaks + re
 MarkdownReadingView.test.tsx: 阅读换行、安全、常数尾部动画节点与文件边界测试，覆盖备忘录单换行/空行分段、GFM 表格/任务/删除线/引用/代码、脚本/HTML/危险链接剔除、Markdown 五词错峰拖尾、历史正文不装饰、结束回归原生文本，以及 title 到 .md 文件名归一化
 MarkdownViewMenu.tsx: 中央 Toolbar 的高频 editing/reading 切换与 More 菜单；支持外部点击、Escape、方向键/Home/End、焦点恢复，并仅复制/导出当前原始 content_mdx，title 只用于文件名
 markdownViewTypes.ts: DocumentView editing/reading 与 EditingMode live/source 的共享状态协议，阅读状态不占用编辑模式槽位
-NotesWorkspace.tsx: /app 中央连续写作画布，以跨临时/真实后端 ID 不变的 memoClientKey 保持编辑器会话，以宽度受控的单一内容列承载文件名标题和 Markdown 正文；imperative handle 暴露 Agent 写前 required flush、正文替换、删除前 flush/pause 与失败恢复边界，正常编辑仍由 title/MarkdownEditor 和唯一 Store 草稿驱动
-useMemoAutosave.ts: 单 memo 编辑会话状态机；除既有静默/上限/重试保存外，提供可等待且失败抛错的 required flush，并可暂停旧会话以阻止软删除后卸载保存
-useMemoAutosave.test.ts: 覆盖插入/删除/等长替换字符计数，以及三次有界指数退避成功与最终失败规则
+NotesWorkspace.tsx: /app 中央连续写作画布，以跨临时/真实后端 ID 不变的 memoClientKey 保持编辑器会话；imperative handle 暴露 Agent/整理写前 required flush、正文替换、删除前 pause 和已提交 AI 标题接纳边界
+useMemoAutosave.ts: 单 memo 编辑会话状态机；支持 required flush、删除期 pause/resume、AI 标题接纳，并只在没有本地草稿时采纳同一 memo 的迟到服务端初值，避免刷新空白或覆盖输入
+useMemoAutosave.test.ts: 覆盖迟到服务端正文接纳门禁、插入/删除/等长替换字符计数及三次有界指数退避
 TrashWorkspace.tsx: /app 回收站控制器，读取真实顶层删除根并编排重试、恢复、永久删除和当前用户原子清空，结果统一进入根级 Toast
 TrashWorkspaceView.tsx: 无网络纯视图，复用 ui-page、Button/Dialog/Skeleton 与语义 token，区分 Folder/Memo 并覆盖 loading/empty/error/list/危险确认/提交锁
 TrashWorkspace.test.tsx: 回收站纯视图回归测试，覆盖状态页、Folder 根不展开、永久删除/清空确认文案与防重复提交

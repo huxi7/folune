@@ -51,6 +51,7 @@ const makeNode = (
   metadata: {},
   node_type: type,
   parent_id: parentId,
+  revision: 1,
   sort_order: sortOrder,
   title: id,
   updated_at: TIME,

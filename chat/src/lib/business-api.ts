@@ -1,0 +1,311 @@
+/**
+ * [INPUT]: 依赖 config/env 的 BUSINESS_API_BASE_URL、调用方当前 Bearer JWT、Web fetch 与 zod
+ * [OUTPUT]: 对外提供 thread 验证、消息同步、统一 @来源冻结 context、memo 读取、账号权限、通用命令与 Run 状态机的 authenticated Business API client
+ * [POS]: lib 层 chat→api 唯一业务边界，每次请求临时转发用户 JWT，统一解析信封且绝不记录或持久化凭据
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+
+import type { UIMessage } from "ai";
+import { z } from "zod";
+
+import { env } from "@/config/env";
+import {
+  organizePlanSchema,
+  type OrganizePlan,
+} from "@/lib/organize-contracts";
+
+const apiEnvelopeSchema = z.object({
+  code: z.string(),
+  message: z.string(),
+  data: z.unknown(),
+});
+
+const resolvedMemoSchema = z.object({
+  memo_id: z.uuid(),
+  title: z.string(),
+  content_mdx: z.string(),
+  path: z.string(),
+  revision: z.number().int().positive(),
+  updated_at: z.string(),
+  truncated: z.boolean(),
+});
+
+export const resolvedContextSchema = z.object({
+  primary: resolvedMemoSchema.nullable(),
+  references: z.array(resolvedMemoSchema),
+  missing_reference_ids: z.array(z.uuid()),
+});
+
+const threadSchema = z.object({
+  id: z.uuid(),
+  title: z.string(),
+}).passthrough();
+
+export const aiPermissionModeSchema = z.enum([
+  "ask",
+  "auto_approve",
+  "full_access",
+]);
+
+const aiSettingsSchema = z.object({
+  user_id: z.uuid(),
+  permission_mode: aiPermissionModeSchema,
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
+export const aiCommandSchema = z.object({
+  id: z.uuid(),
+  thread_id: z.uuid().nullable(),
+  tool_call_id: z.string().nullable(),
+  operation: z.enum([
+    "create_node",
+    "rename_node",
+    "move_node",
+    "reorder_node",
+    "trash_node",
+    "edit_memo",
+  ]),
+  target_node_id: z.uuid().nullable(),
+  expected_revision: z.number().int().positive().nullable(),
+  idempotency_key: z.string(),
+  input: z.record(z.string(), z.unknown()),
+  before_state: z.record(z.string(), z.unknown()).nullable(),
+  after_state: z.record(z.string(), z.unknown()).nullable(),
+  undo_result: z.record(z.string(), z.unknown()).nullable(),
+  status: z.enum([
+    "pending_approval",
+    "approved",
+    "executing",
+    "succeeded",
+    "rejected",
+    "failed",
+    "stale",
+    "undone",
+  ]),
+  approval_source: z.enum(["manual", "approval_agent", "full_access"]).nullable(),
+  risk: z.enum(["low", "medium", "high"]).nullable(),
+  approval_reason: z.string().nullable(),
+  error_code: z.string().nullable(),
+  applied_at: z.string().nullable(),
+  undone_at: z.string().nullable(),
+}).passthrough();
+
+export const aiRunSchema = z.object({
+  id: z.uuid(),
+  thread_id: z.uuid().nullable(),
+  memo_id: z.uuid(),
+  source_revision: z.number().int().positive(),
+  status: z.enum([
+    "planning",
+    "awaiting_confirmation",
+    "applying",
+    "succeeded",
+    "rejected",
+    "failed",
+    "stale",
+    "undone",
+  ]),
+  idempotency_key: z.string(),
+  plan: organizePlanSchema.nullable(),
+  result: z.record(z.string(), z.unknown()).nullable(),
+  error_code: z.string().nullable(),
+}).passthrough();
+
+const memoNodeSchema: z.ZodType<MemoTreeNode> = z.lazy(() =>
+  z.object({
+    id: z.uuid(),
+    parent_id: z.uuid().nullable(),
+    node_type: z.enum(["folder", "memo"]),
+    title: z.string(),
+    sort_order: z.number(),
+    revision: z.number().int().positive(),
+    deleted_at: z.string().nullable(),
+    updated_at: z.string(),
+    children: z.array(memoNodeSchema),
+    memo: z.object({
+      content_mdx: z.string(),
+      updated_at: z.string(),
+    }).passthrough().nullable(),
+  }).passthrough(),
+);
+
+const memoTreeSchema = z.array(memoNodeSchema);
+
+export type ResolvedContext = z.infer<typeof resolvedContextSchema>;
+export type AiPermissionMode = z.infer<typeof aiPermissionModeSchema>;
+export type AiSettings = z.infer<typeof aiSettingsSchema>;
+export type AiCommand = z.infer<typeof aiCommandSchema>;
+export type AiRun = z.infer<typeof aiRunSchema>;
+export type MemoTreeNode = {
+  id: string;
+  parent_id: string | null;
+  node_type: "folder" | "memo";
+  title: string;
+  sort_order: number;
+  revision: number;
+  deleted_at: string | null;
+  updated_at: string;
+  children: MemoTreeNode[];
+  memo: ({ content_mdx: string; updated_at: string } & Record<string, unknown>) | null;
+} & Record<string, unknown>;
+
+export class BusinessApiError extends Error {
+  readonly status: number;
+  readonly code: string;
+
+  constructor(status: number, code: string, message: string) {
+    super(message);
+    this.name = "BusinessApiError";
+    this.status = status;
+    this.code = code;
+  }
+}
+
+const request = async <T>(
+  path: string,
+  accessToken: string,
+  schema: z.ZodType<T>,
+  init: RequestInit = {},
+): Promise<T> => {
+  const headers = new Headers(init.headers);
+  headers.set("Authorization", `Bearer ${accessToken}`);
+  if (init.body !== undefined) headers.set("Content-Type", "application/json");
+
+  let response: Response;
+  try {
+    response = await fetch(`${env.BUSINESS_API_BASE_URL}${path}`, {
+      ...init,
+      headers,
+    });
+  } catch {
+    throw new BusinessApiError(
+      502,
+      "BUSINESS_API_UNAVAILABLE",
+      "Business API is unavailable",
+    );
+  }
+
+  const payload = apiEnvelopeSchema.safeParse(
+    await response.json().catch(() => null),
+  );
+  if (!payload.success) {
+    throw new BusinessApiError(
+      502,
+      "BUSINESS_API_INVALID_RESPONSE",
+      "Business API returned an invalid response",
+    );
+  }
+  if (!response.ok || payload.data.code !== "ok") {
+    throw new BusinessApiError(response.status, payload.data.code, payload.data.message);
+  }
+  const parsed = schema.safeParse(payload.data.data);
+  if (!parsed.success) {
+    throw new BusinessApiError(
+      502,
+      "BUSINESS_API_INVALID_RESPONSE",
+      "Business API returned invalid resource data",
+    );
+  }
+  return parsed.data;
+};
+
+const syncMessageSchema = z.array(z.object({ id: z.string() }).passthrough());
+
+export const businessApi = {
+  getThread(threadId: string, accessToken: string) {
+    return request(`/ai-threads/${threadId}`, accessToken, threadSchema);
+  },
+
+  syncMessages(
+    threadId: string,
+    messages: readonly UIMessage[],
+    accessToken: string,
+  ) {
+    return request(
+      `/ai-threads/${threadId}/messages`,
+      accessToken,
+      syncMessageSchema,
+      { method: "PUT", body: JSON.stringify(messages) },
+    );
+  },
+
+  resolveContext(
+    threadId: string,
+    activeMemoId: string | null,
+    referenceMemoIds: readonly string[],
+    expectedRevisions: Readonly<Record<string, number>>,
+    accessToken: string,
+  ) {
+    return request("/ai-context/resolve", accessToken, resolvedContextSchema, {
+      method: "POST",
+      body: JSON.stringify({
+        thread_id: threadId,
+        active_memo_id: activeMemoId,
+        reference_memo_ids: referenceMemoIds,
+        expected_revisions: expectedRevisions,
+        include_thread_references: false,
+      }),
+    });
+  },
+
+  getSettings(accessToken: string) {
+    return request("/ai-settings", accessToken, aiSettingsSchema);
+  },
+
+  getMemoTree(accessToken: string) {
+    return request("/memo-tree", accessToken, memoTreeSchema);
+  },
+
+  getMemo(nodeId: string, accessToken: string) {
+    return request(`/memos/${encodeURIComponent(nodeId)}`, accessToken, memoNodeSchema);
+  },
+
+  createCommand(
+    input: Readonly<Record<string, unknown>>,
+    accessToken: string,
+  ) {
+    return request("/ai-commands", accessToken, aiCommandSchema, {
+      method: "POST",
+      body: JSON.stringify(input),
+    });
+  },
+
+  createRun(
+    input: { memo_id: string; thread_id: string | null; idempotency_key: string },
+    accessToken: string,
+  ) {
+    return request("/ai-runs", accessToken, aiRunSchema, {
+      method: "POST",
+      body: JSON.stringify(input),
+    });
+  },
+
+  recordRunPlan(
+    runId: string,
+    plan: OrganizePlan,
+    requiresConfirmation: boolean,
+    accessToken: string,
+  ) {
+    return request(`/ai-runs/${runId}/plan`, accessToken, aiRunSchema, {
+      method: "PATCH",
+      body: JSON.stringify({
+        plan,
+        requires_confirmation: requiresConfirmation,
+      }),
+    });
+  },
+
+  applyRun(runId: string, accessToken: string) {
+    return request(`/ai-runs/${runId}/apply`, accessToken, aiRunSchema, {
+      method: "POST",
+    });
+  },
+
+  failRun(runId: string, errorCode: string, accessToken: string) {
+    return request(`/ai-runs/${runId}/fail`, accessToken, aiRunSchema, {
+      method: "POST",
+      body: JSON.stringify({ error_code: errorCode }),
+    });
+  },
+};

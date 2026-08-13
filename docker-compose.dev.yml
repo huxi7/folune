@@ -12,12 +12,12 @@ services:
     command: sh -lc "bun install --frozen-lockfile && bun run dev"
     init: true
     restart: unless-stopped
+    env_file:
+      - ./api/.env
     environment:
       NODE_ENV: "${NODE_ENV:-development}"
       PORT: "10001"
       SYSTEM_NAME: "${SYSTEM_NAME:-SuperNote API}"
-      SUPABASE_URL: "${SUPABASE_URL:-}"
-      SUPABASE_PUBLISHABLE_KEY: "${SUPABASE_PUBLISHABLE_KEY:-}"
       CORS_ORIGINS: "${CORS_ORIGINS:-http://localhost:10000,http://127.0.0.1:10000}"
     healthcheck:
       test:
@@ -55,6 +55,11 @@ services:
       PORT: "10002"
       SYSTEM_NAME: "${CHAT_SYSTEM_NAME:-SuperNote Chat}"
       ALLOWED_ORIGINS: "${ALLOWED_ORIGINS:-http://localhost:10000,http://127.0.0.1:10000}"
+      BUSINESS_API_BASE_URL: "${BUSINESS_API_BASE_URL:-http://api:10001}"
+      ORGANIZE_AUTO_APPLY_CONFIDENCE: "${ORGANIZE_AUTO_APPLY_CONFIDENCE:-0.85}"
+    depends_on:
+      api:
+        condition: service_healthy
     healthcheck:
       test:
         [

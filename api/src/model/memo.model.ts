@@ -17,6 +17,7 @@ export interface MemoNode {
   icon: string | null;
   color: string | null;
   metadata: Readonly<Record<string, unknown>>;
+  revision: number;
   deleted_at: string | null;
   deleted_root_id: string | null;
   created_at: string;

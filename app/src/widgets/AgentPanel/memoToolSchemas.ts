@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 zod 的对象 schema、字段描述与条件校验能力
- * [OUTPUT]: 对外提供 app 端 read_tree/edit_node/read_memo/edit_memo 镜像 schema、输入类型与工具输出类型
- * [POS]: AgentPanel 客户端工具协议层，与 chat 无 execute 声明保持同 id/同字段，但不跨包导入服务端代码
+ * [OUTPUT]: 对外提供 read_tree/edit_node/read_memo/edit_memo 客户端工具 schema、输入类型与 Worker 输出类型
+ * [POS]: AgentPanel 胖工具协议源；与 chat 端模型工具保持同构，并把 revision 门禁带入纯 Worker plan
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -18,6 +18,12 @@ export const editNodeInputSchema = z
       .uuid()
       .optional()
       .describe("rename、move、reorder、delete 操作的目标节点 UUID"),
+    expected_revision: z
+      .number()
+      .int()
+      .positive()
+      .optional()
+      .describe("非 create 操作从 read_tree 原样取得的目标节点 revision"),
     node_type: z
       .enum(["folder", "memo"])
       .optional()
@@ -73,6 +79,7 @@ export const editNodeInputSchema = z
     }
 
     requireField("node_id", `${input.op} 必须提供 node_id`);
+    requireField("expected_revision", `${input.op} 必须提供 expected_revision`);
 
     if (input.op === "rename") {
       requireField("title", "rename 必须提供 title");
@@ -112,6 +119,11 @@ export const readMemoInputSchema = z
 export const editMemoInputSchema = z
   .object({
     node_id: z.uuid().describe("要编辑的 memo 节点 UUID"),
+    expected_revision: z
+      .number()
+      .int()
+      .positive()
+      .describe("从 read_memo 原样取得的目标备忘录 revision"),
     content_mdx: z.string().describe("替换后的完整 Markdown 正文"),
   })
   .strict();
@@ -122,6 +134,7 @@ export const treeNodeOutputSchema = z.object({
   title: z.string().describe("节点标题"),
   parent_id: z.uuid().nullable().describe("父文件夹 UUID；null 表示根目录"),
   sort_order: z.string().describe("同级稀疏排序值"),
+  revision: z.number().int().positive().describe("节点当前版本"),
   depth: z.number().int().nonnegative().describe("节点在树中的深度，根节点为 0"),
   path: z.string().describe("从根目录到该节点的可读路径"),
 });
@@ -154,6 +167,7 @@ export const memoOutputSchema = z.object({
   parent_id: z.uuid().nullable().describe("父文件夹 UUID；null 表示根目录"),
   content_mdx: z.string().describe("完整 Markdown 正文"),
   updated_at: z.string().describe("服务端最近更新时间"),
+  revision: z.number().int().positive().describe("备忘录当前版本"),
 });
 
 export const editMemoOutputSchema = memoOutputSchema.extend({
@@ -166,4 +180,3 @@ export type ReadMemoInput = z.infer<typeof readMemoInputSchema>;
 export type EditMemoInput = z.infer<typeof editMemoInputSchema>;
 export type MemoOutput = z.infer<typeof memoOutputSchema>;
 export type ReadTreeOutput = z.infer<typeof readTreeOutputSchema>;
-

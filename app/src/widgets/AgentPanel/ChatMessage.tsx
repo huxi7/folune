@@ -1,12 +1,17 @@
 /**
- * [INPUT]: 依赖 AI SDK UIMessage 有序文本/reasoning/工具 parts、过程/正文分区、工具人话展示、可折叠过程容器与按词流式的 design-system AI 消息组件
- * [OUTPUT]: 对外提供无冗余身份标题的用户气泡、历史 assistant 回复，以及跨 submitted/空 SSE message/首个内容保持同一 ThinkingIndicator 实例的 LiveAssistantTurn
- * [POS]: AgentPanel 消息适配层，把 SDK 原始 part 流转换为 SuperNote 轻量 Agent 回复；实时槽位不改变工具执行或持久化语义，且不因空 assistant 占位重置等待动效
+ * [INPUT]: 依赖 SuperNoteUIMessage 冻结上下文、AI SDK 有序文本/reasoning/工具 parts、ApprovalCard、过程分区与 design-system AI 消息组件
+ * [OUTPUT]: 对外提供带真实引用/revision 的用户消息、来源/工具/审批/差异/撤销的 assistant 回复及稳定 LiveAssistantTurn
+ * [POS]: AgentPanel 消息语义适配层，把原始 SDK parts 转成可信执行界面，不暴露 UUID、凭据或工具原始 JSON
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
-import { getToolName, isToolUIPart, type UIMessage } from "ai";
+import { getToolName, isToolUIPart } from "ai";
 
+import type {
+  AiCommand,
+  AiMessageContextSnapshot,
+  SuperNoteUIMessage,
+} from "../../shared/api/ai";
 import {
   AssistantMessage,
   ThinkingIndicator,
@@ -15,30 +20,58 @@ import {
 } from "../../shared/design-system/components";
 import { MarkdownReadingView } from "../MarkdownReadingView";
 import { AgentProcessDisclosure } from "./AgentProcessDisclosure";
+import { ApprovalCard } from "./ApprovalCard";
 import type { AssistantActivity } from "./activityState";
 import { deriveAgentMessagePresentation } from "./messagePresentation";
 import { getAgentToolPresentation } from "./toolPresentation";
 
 type ChatMessageProps = {
   activity: AssistantActivity;
-  message: UIMessage;
+  message: SuperNoteUIMessage;
+  onApproval: (id: string, approved: boolean) => void;
   onProgress?: () => void;
+  sources?: AiMessageContextSnapshot;
+  onUndo: (command: AiCommand) => Promise<void>;
 };
 
 type AssistantMessageContentProps = {
   activity: AssistantActivity;
   finalText: string;
   onProgress?: () => void;
-  processParts: UIMessage["parts"];
+  processParts: SuperNoteUIMessage["parts"];
+  onApproval: ChatMessageProps["onApproval"];
+  onUndo: ChatMessageProps["onUndo"];
 };
 
 type LiveAssistantTurnProps = {
   activity: AssistantActivity;
-  message?: UIMessage;
+  message?: SuperNoteUIMessage;
+  onApproval?: ChatMessageProps["onApproval"];
   onProgress?: () => void;
+  sources?: AiMessageContextSnapshot;
+  onUndo?: ChatMessageProps["onUndo"];
 };
 
-function getMessageText(message: UIMessage) {
+function MessageSources({ sources }: { sources?: AiMessageContextSnapshot }) {
+  if (sources === undefined
+    || (sources.primary === null && sources.references.length === 0)) {
+    return null;
+  }
+
+  return (
+    <div className="agent-assistant-sources">
+      <strong>来源</strong>
+      {sources.primary ? (
+        <span>{sources.primary.title}<small>v{sources.primary.revision}</small></span>
+      ) : null}
+      {sources.references.map((memo) => (
+        <span key={memo.memo_id}>@{memo.title}<small>v{memo.revision}</small></span>
+      ))}
+    </div>
+  );
+}
+
+function getMessageText(message: SuperNoteUIMessage) {
   return message.parts
     .filter((part) => part.type === "text")
     .map((part) => part.text)
@@ -48,7 +81,9 @@ function getMessageText(message: UIMessage) {
 function AssistantMessageContent({
   activity,
   finalText,
+  onApproval = () => undefined,
   onProgress,
+  onUndo = async () => undefined,
   processParts,
 }: AssistantMessageContentProps) {
   const responseActive = activity !== "none";
@@ -84,14 +119,10 @@ function AssistantMessageContent({
             const presentation = getAgentToolPresentation(toolName, part);
 
             return (
-              <ToolCallBubble
-                details={presentation.details}
-                icon={presentation.icon}
-                key={part.toolCallId}
-                live={responseActive}
-                name={presentation.name}
-                state={part.state}
-              />
+              <div className="agent-tool-stack" key={part.toolCallId}>
+                <ToolCallBubble details={presentation.details} icon={presentation.icon} live={responseActive} name={presentation.name} state={part.state} />
+                <ApprovalCard onApproval={onApproval} onUndo={onUndo} part={part} />
+              </div>
             );
           })}
         </AgentProcessDisclosure>
@@ -107,7 +138,7 @@ function AssistantMessageContent({
   );
 }
 
-function getAssistantPresentation(message: UIMessage) {
+function getAssistantPresentation(message: SuperNoteUIMessage) {
   const presentation = deriveAgentMessagePresentation(message);
 
   return presentation.finalText || presentation.processParts.length > 0
@@ -118,7 +149,10 @@ function getAssistantPresentation(message: UIMessage) {
 export function ChatMessage({
   activity,
   message,
+  onApproval,
   onProgress,
+  sources,
+  onUndo,
 }: ChatMessageProps) {
   if (message.role === "user") {
     const text = getMessageText(message);
@@ -129,6 +163,11 @@ export function ChatMessage({
 
     return (
       <article className="agent-chat-turn agent-user-message-layout">
+        {(() => {
+          const snapshot = message.metadata?.context_snapshot ?? message.metadata?.context_display;
+          if (!snapshot || (snapshot.primary === null && snapshot.references.length === 0)) return null;
+          return <div className="agent-message-context">{snapshot.primary ? <span><strong>当前</strong>{snapshot.primary.title}<small>v{snapshot.primary.revision}</small></span> : null}{snapshot.references.map((memo) => <span key={memo.memo_id}>@{memo.title}<small>v{memo.revision}</small></span>)}</div>;
+        })()}
         <UserMessageBubble>
           <p>{text}</p>
         </UserMessageBubble>
@@ -148,10 +187,13 @@ export function ChatMessage({
 
   return (
     <article className="agent-chat-turn">
+      <MessageSources sources={sources} />
       <AssistantMessageContent
         activity={activity}
         finalText={presentation.finalText}
+        onApproval={onApproval}
         onProgress={onProgress}
+        onUndo={onUndo}
         processParts={presentation.processParts}
       />
     </article>
@@ -161,17 +203,23 @@ export function ChatMessage({
 export function LiveAssistantTurn({
   activity,
   message,
+  onApproval = () => undefined,
   onProgress,
+  sources,
+  onUndo = async () => undefined,
 }: LiveAssistantTurnProps) {
   const presentation = message ? getAssistantPresentation(message) : undefined;
 
   return (
     <article className="agent-chat-turn">
+      <MessageSources sources={sources} />
       {presentation ? (
         <AssistantMessageContent
           activity={activity}
           finalText={presentation.finalText}
+          onApproval={onApproval}
           onProgress={onProgress}
+          onUndo={onUndo}
           processParts={presentation.processParts}
         />
       ) : (

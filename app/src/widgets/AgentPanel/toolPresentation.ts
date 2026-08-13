@@ -19,8 +19,6 @@ import type {
   ToolCallDetail,
   ToolCallState,
 } from "../../shared/design-system/components";
-import type { AgentClientToolName } from "./clientTools";
-
 type ToolPartLike = {
   errorText?: string;
   input?: unknown;
@@ -35,14 +33,19 @@ export type AgentToolPresentation = {
 };
 
 export const agentClientToolPresentation: Record<
-  AgentClientToolName,
+  "celebration" | "create_node" | "edit_memo" | "edit_node" | "move_node" | "read_memo" | "read_tree" | "rename_node" | "reorder_node" | "trash_node",
   Pick<AgentToolPresentation, "icon" | "name">
 > = {
   celebration: { icon: ConfettiIcon, name: "庆祝一下" },
+  create_node: { icon: TreeStructureIcon, name: "创建笔记" },
   edit_memo: { icon: NotePencilIcon, name: "更新备忘录" },
-  edit_node: { icon: TreeStructureIcon, name: "整理笔记" },
+  edit_node: { icon: TreeStructureIcon, name: "修改笔记库" },
+  move_node: { icon: TreeStructureIcon, name: "移动笔记" },
   read_memo: { icon: FileTextIcon, name: "查看备忘录" },
   read_tree: { icon: FolderOpenIcon, name: "查看现有内容" },
+  rename_node: { icon: NotePencilIcon, name: "重命名笔记" },
+  reorder_node: { icon: TreeStructureIcon, name: "调整顺序" },
+  trash_node: { icon: TreeStructureIcon, name: "移入回收站" },
 };
 
 const PRIVATE_DETAIL_PATTERN = /(?:\b[0-9a-f]{8}-[0-9a-f-]{27,}\b|bearer|token|uuid|content_mdx|node_id|parent_id|toolcall|\{[\s\S]*\})/i;
@@ -77,12 +80,6 @@ function readField(value: unknown, key: string) {
 
 function readTitle(value: unknown) {
   return safeText(asRecord(value)?.title, MAX_TITLE_LENGTH);
-}
-
-function quotedTitle(value: unknown) {
-  const message = safeText(value, MAX_DETAIL_LENGTH);
-  const match = message?.match(/「([^」]+)」/);
-  return safeText(match?.[1], MAX_TITLE_LENGTH);
 }
 
 function resultDetails(
@@ -123,58 +120,14 @@ function withTarget(
   return target ? [{ label: "目标", value: target }, ...details] : details;
 }
 
-function editNodePresentation(part: ToolPartLike): AgentToolPresentation {
-  const input = asRecord(part.input);
-  const output = asRecord(part.output);
-  const op = readField(output, "op") ?? readField(input, "op");
-  const message = readField(output, "message");
-  const title = readTitle(output)
-    ?? readTitle(input)
-    ?? quotedTitle(output?.message);
-  const target = title ? `「${title}」` : undefined;
-  const name = (() => {
-    if (op === "create") return title ? `创建「${title}」` : "创建内容";
-    if (op === "rename") return title ? `重命名为「${title}」` : "重命名";
-    if (op === "move") return title ? `移动「${title}」` : "调整位置";
-    if (op === "reorder") return title ? `调整「${title}」的顺序` : "调整顺序";
-    if (op === "delete") return title ? `将「${title}」移入回收站` : "移入回收站";
-    return agentClientToolPresentation.edit_node.name;
-  })();
-  const details = withTarget(
-    target,
-    resultDetails(part, message ?? "更改已保存。"),
-  );
-  const nodeType = readField(input, "node_type");
-
-  if (op === "create" && nodeType) {
-    details.splice(target ? 1 : 0, 0, {
-      label: "类型",
-      value: nodeType === "folder" ? "文件夹" : "备忘录",
-    });
-  }
-
-  if (op === "reorder") {
-    const placement = readField(input, "placement");
-
-    if (placement) {
-      details.splice(target ? 1 : 0, 0, {
-        label: "位置",
-        value: placement === "before" ? "参照内容之前" : "参照内容之后",
-      });
-    }
-  }
-
-  return {
-    details,
-    icon: agentClientToolPresentation.edit_node.icon,
-    name,
-  };
-}
+export const normalizeAgentToolName = (toolName: string): string =>
+  toolName.split(/[.:/]/u).at(-1) ?? toolName;
 
 export function getAgentToolPresentation(
   toolName: string,
   part: ToolPartLike,
 ): AgentToolPresentation {
+  toolName = normalizeAgentToolName(toolName);
   if (toolName === "celebration") {
     const reason = readField(part.input, "reason");
     return {
@@ -221,7 +174,33 @@ export function getAgentToolPresentation(
   }
 
   if (toolName === "edit_node") {
-    return editNodePresentation(part);
+    const input = asRecord(part.input);
+    const output = asRecord(part.output);
+    const op = readField(input, "op");
+    const title = readTitle(input) ?? readTitle(asRecord(output?.after_state)?.node);
+    const operation = op === "create" ? "创建笔记"
+      : op === "rename" ? "重命名笔记"
+      : op === "move" ? "移动笔记"
+      : op === "reorder" ? "调整顺序"
+      : op === "delete" ? "移入回收站"
+      : "修改笔记库";
+    return {
+      details: withTarget(title ? `「${title}」` : undefined, resultDetails(part, "命令已安全执行。")),
+      icon: agentClientToolPresentation.edit_node.icon,
+      name: title ? `${operation}「${title}」` : operation,
+    };
+  }
+
+  if (["create_node", "rename_node", "move_node", "reorder_node", "trash_node"].includes(toolName)) {
+    const input = asRecord(part.input);
+    const output = asRecord(part.output);
+    const title = readTitle(input) ?? readTitle(asRecord(output?.after_state)?.node);
+    const base = agentClientToolPresentation[toolName as keyof typeof agentClientToolPresentation];
+    return {
+      details: withTarget(title ? `「${title}」` : undefined, resultDetails(part, "命令已安全执行。")),
+      icon: base.icon,
+      name: title ? `${base.name}「${title}」` : base.name,
+    };
   }
 
   return {

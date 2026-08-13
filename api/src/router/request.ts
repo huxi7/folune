@@ -74,3 +74,8 @@ export const parseRouteParams = <T>(
   schema: ZodType<T>,
   params: unknown,
 ): T => parseWithSchema(schema, params, "Invalid route parameters");
+
+export const parseQueryParams = <T>(
+  schema: ZodType<T>,
+  query: unknown,
+): T => parseWithSchema(schema, query, "Invalid query parameters");

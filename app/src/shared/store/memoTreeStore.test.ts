@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun mock/test、可控 memo API Promise、MemoTreeNode fixture 与 memoTreeStore
- * [OUTPUT]: 验证可并发创建、临时/真实 ID 无感替换、提交期草稿续写/保存、精确回滚、移动即时更新/失败回滚、合并草稿保存与旧响应不覆盖继续输入
+ * [OUTPUT]: 验证可并发创建、临时/真实 ID 替换、草稿保存、精确回滚、移动即时更新，以及 AI 工具调用投影/失败回滚/命令对账
  * [POS]: app/src/shared/store 的乐观事务回归测试，专门保护 UI 不等待接口、连续创建互不阻塞与并发编辑不丢字三条核心不变量
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -48,6 +48,7 @@ const makeNode = (
   metadata: {},
   node_type: type,
   parent_id: parentId,
+  revision: 1,
   sort_order: sortOrder,
   title: id,
   updated_at: TIME,
@@ -479,5 +480,100 @@ describe("memoTreeStore optimistic transactions", () => {
       useMemoTreeStore.getState().nodes[0]?.children[0]?.children[0]?.id,
     ).toBe("child");
     expect(getTreeCallCount).toBe(0);
+  });
+
+  test("projects one AI rename once and rolls it back on tool failure", () => {
+    useMemoTreeStore.setState({
+      nodes: [{ ...makeNode("memo", "memo", null, "1000"), title: "旧标题" }],
+    });
+    const store = useMemoTreeStore.getState();
+    store.projectAiToolCall("tool-rename", "rename_node", {
+      node_id: "memo",
+      expected_revision: 1,
+      title: "AI 新标题",
+    });
+    store.projectAiToolCall("tool-rename", "rename_node", {
+      node_id: "memo",
+      expected_revision: 1,
+      title: "重复投影",
+    });
+    expect(useMemoTreeStore.getState().nodes[0]?.title).toBe("AI 新标题");
+    store.rollbackAiToolCall("tool-rename");
+    expect(useMemoTreeStore.getState().nodes[0]?.title).toBe("旧标题");
+  });
+
+  test("replaces optimistic AI create with the authoritative command node", () => {
+    useMemoTreeStore.setState({ nodes: [] });
+    const store = useMemoTreeStore.getState();
+    store.projectAiToolCall("tool-create", "create_node", {
+      node_type: "memo",
+      parent_id: null,
+      title: "AI 新笔记",
+      content_mdx: "新正文",
+    });
+    expect(useMemoTreeStore.getState().nodes[0]?.id).toStartWith("optimistic-memo-");
+    const serverNode = {
+      ...makeNode("server-memo", "memo", null, "1000", "新正文"),
+      title: "AI 新笔记",
+    };
+    store.reconcileAiCommand({
+      id: "command-create",
+      thread_id: null,
+      tool_call_id: "tool-create",
+      operation: "create_node",
+      target_node_id: "server-memo",
+      expected_revision: null,
+      idempotency_key: "create-once",
+      input: {},
+      before_state: null,
+      after_state: { node: serverNode, content: serverNode.memo },
+      undo_result: null,
+      status: "succeeded",
+      approval_source: "approval_agent",
+      risk: "low",
+      approval_reason: "明确",
+      error_code: null,
+      updated_at: TIME,
+      applied_at: TIME,
+      undone_at: null,
+    });
+    expect(useMemoTreeStore.getState().nodes.map((item) => item.id)).toEqual(["server-memo"]);
+  });
+
+  test("rolls back an optimistic AI rename when command result is stale", () => {
+    useMemoTreeStore.setState({
+      nodes: [{ ...makeNode("memo-stale", "memo", null, "1000"), title: "旧标题" }],
+    });
+    const store = useMemoTreeStore.getState();
+    store.projectAiToolCall("tool-stale", "rename_node", {
+      node_id: "memo-stale",
+      expected_revision: 1,
+      title: "模型标题",
+    });
+    expect(useMemoTreeStore.getState().nodes[0]?.title).toBe("模型标题");
+
+    store.reconcileAiCommand({
+      id: "command-stale",
+      thread_id: null,
+      tool_call_id: "tool-stale",
+      operation: "rename_node",
+      target_node_id: "memo-stale",
+      expected_revision: 1,
+      idempotency_key: "stale-once",
+      input: {},
+      before_state: null,
+      after_state: null,
+      undo_result: null,
+      status: "stale",
+      approval_source: "approval_agent",
+      risk: "low",
+      approval_reason: "明确",
+      error_code: "AI_REVISION_CONFLICT",
+      updated_at: TIME,
+      applied_at: null,
+      undone_at: null,
+    });
+
+    expect(useMemoTreeStore.getState().nodes[0]?.title).toBe("旧标题");
   });
 });

@@ -21,6 +21,7 @@ export const memoNodeRowSchema = z.object({
   icon: z.string().nullable(),
   color: z.string().nullable(),
   metadata: metadataSchema,
+  revision: z.number().int().positive(),
   deleted_at: z.string().nullable(),
   deleted_root_id: z.uuid().nullable(),
   created_at: z.string(),

@@ -8,17 +8,17 @@
 成员清单
 src/index.ts: Bun 进程入口，固定执行启动序列并用 6MiB 请求体上限在 multipart 解析前拦截异常上传
 src/app.ts: Hono 组装根，注册请求日志、CORS、X-Request-Id 跨域暴露、错误处理与 router
-src/router/: HTTP 路由层，提供 /health、/profile 及 JWT 保护的 active memo 与 trash 生命周期资源接口
-src/dto/: DTO 层，定义 Auth/profile/memo/Trash/PostgREST-RPC 响应与严格 HTTP body/param 的 zod schema/infer 类型
-src/model/: 领域模型层，定义 AuthUser、Profile、MemoNode/MemoContent/MemoTreeNode、健康状态与响应信封类型
-src/service/: 业务服务层，负责 JWT 认证、profile/头像生命周期、active memo 规则及 Trash 可见根/稳定错误/恢复 subtree 编排
-src/repository/: 数据访问层，携带已验证用户 JWT 通过 Supabase REST 提供 profiles、active memo CRUD、Trash 查询与原子 RPC
+src/router/: HTTP 路由层，提供 /health、/profile、active memo/trash 与 AI threads/context/settings/commands/runs 的 JWT 资源接口
+src/dto/: DTO 层，定义 Auth/profile/memo/AI/PostgREST-RPC 响应与严格 HTTP body/query/param 的 zod schema/infer 类型
+src/model/: 领域模型层，定义 AuthUser、Profile、Memo tree、AI 会话/上下文/权限/Command/Run、健康状态与响应信封类型
+src/service/: 业务服务层，负责 JWT 认证、profile/头像、active memo/Trash 及 AI 会话/冻结上下文/权限/Command/Run 编排
+src/repository/: 数据访问层，携带已验证用户 JWT 通过 Supabase REST 提供 profiles、memo、AI 持久化与受控原子 RPC
 src/middleware/: HTTP 横切层，提供请求 ID、开发态彩色 ASCII 请求卡片、生产态 JSON 日志与统一错误处理
 src/common/: 通用层，提供 HttpError 与统一响应 helper
 src/config/: 配置层，集中校验 API 环境变量
 src/lib/: 基础设施层，提供 Supabase Auth/PostgREST/Storage HTTP 适配器与启动横幅
-supabase/: 数据库契约层，保存 profiles、无限层级 memo_nodes/memos、deleted_at+deleted_root_id 删除批次、递归原子 RPC、级联约束及 owner-only RLS SQL 契约
-test/: Bun 内置 API 回归测试，使用内存 Supabase HTTP/RPC mock 验证认证、profile/头像、active memo 与完整 Trash 生命周期
+supabase/: 数据库契约层，保存 profiles、带 revision 的 memo tree、AI 会话/设置/Command/Run、删除批次与可撤销原子 RPC、级联约束及 owner-only RLS SQL 契约
+test/: Bun 内置 API 回归测试，使用内存 Supabase HTTP/RPC mock 验证认证、profile/头像、memo/Trash 及 AI 会话/权限/Command/Run 生命周期
 .env.example: 无真实凭据的本地环境变量模板，使用 Supabase Publishable key、后端端口 10001、前端 CORS 来源端口 10000
 .gitignore: api 模块忽略规则
 package.json: Bun scripts（含 typecheck/test）与 hono、zod 运行依赖清单

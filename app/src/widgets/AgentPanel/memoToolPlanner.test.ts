@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 Bun test、MemoTreeNode fixture 与 Worker 纯规划内核
- * [OUTPUT]: 验证整树投影、create/move/reorder 单步计划、跨目录约束与 memo 正文读取
- * [POS]: AgentPanel Worker 规划回归测试，不启动 Worker/网络即可锁定 Store 快照到真人操作命令的映射
+ * [OUTPUT]: 验证整树读取、五种 edit_node op、edit_memo、revision 和非法移动约束
+ * [POS]: AgentPanel Worker Planner 回归测试，锁定胖工具到内部原子命令计划的完整语义
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -46,6 +46,7 @@ const makeNode = (
   metadata: {},
   node_type: nodeType,
   parent_id: parentId,
+  revision: 1,
   sort_order: sortOrder,
   title,
   updated_at: TIME,
@@ -96,6 +97,7 @@ describe("memo tool Worker planner", () => {
   test("computes append order for move and sparse order for reorder", () => {
     const movePlan = planMemoTool("edit_node", {
       node_id: MEMO_A_ID,
+      expected_revision: 1,
       op: "move",
       parent_id: null,
     }, tree);
@@ -108,6 +110,7 @@ describe("memo tool Worker planner", () => {
 
     const reorderPlan = planMemoTool("edit_node", {
       node_id: MEMO_B_ID,
+      expected_revision: 1,
       op: "reorder",
       placement: "before",
       reference_node_id: MEMO_A_ID,
@@ -120,6 +123,49 @@ describe("memo tool Worker planner", () => {
     });
   });
 
+  test("plans rename and soft delete with frozen revisions", () => {
+    expect(planMemoTool("edit_node", {
+      expected_revision: 1,
+      node_id: MEMO_A_ID,
+      op: "rename",
+      title: "影响力读书笔记",
+    }, tree)).toMatchObject({
+      expectedRevision: 1,
+      kind: "rename_node",
+      nodeId: MEMO_A_ID,
+      op: "rename",
+      title: "影响力读书笔记",
+    });
+    expect(planMemoTool("edit_node", {
+      expected_revision: 1,
+      node_id: MEMO_A_ID,
+      op: "delete",
+    }, tree)).toEqual({
+      expectedRevision: 1,
+      kind: "delete_node",
+      nodeId: MEMO_A_ID,
+      op: "delete",
+    });
+  });
+
+  test("plans memo edits and rejects a stale Worker snapshot", () => {
+    expect(planMemoTool("edit_memo", {
+      content_mdx: "更新后的正文",
+      expected_revision: 1,
+      node_id: MEMO_A_ID,
+    }, tree)).toMatchObject({
+      contentMdx: "更新后的正文",
+      expectedRevision: 1,
+      kind: "edit_memo",
+      nodeId: MEMO_A_ID,
+    });
+    expect(() => planMemoTool("edit_node", {
+      expected_revision: 2,
+      node_id: MEMO_A_ID,
+      op: "delete",
+    }, tree)).toThrow("节点版本已变化");
+  });
+
   test("reads memo content and rejects cross-folder reorder", () => {
     const readPlan = planMemoTool("read_memo", { node_id: MEMO_A_ID }, tree);
     expect(readPlan).toMatchObject({
@@ -129,10 +175,10 @@ describe("memo tool Worker planner", () => {
 
     expect(() => planMemoTool("edit_node", {
       node_id: MEMO_A_ID,
+      expected_revision: 1,
       op: "reorder",
       placement: "before",
       reference_node_id: FOLDER_ID,
     }, tree)).toThrow("reorder 只能在同一父目录内执行");
   });
 });
-

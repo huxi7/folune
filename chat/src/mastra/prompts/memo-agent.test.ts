@@ -20,7 +20,9 @@ describe("memo agent system prompt", () => {
     expect(memoAgentPrompt).toContain("创作任务");
     expect(memoAgentPrompt).toContain("原文模式");
     expect(memoAgentPrompt).toContain("协作模式");
-    expect(memoAgentPrompt).toContain("目标清楚就直接使用工具执行");
+    expect(memoAgentPrompt).toContain("目标清楚就直接使用 edit_node 或 edit_memo");
+    expect(memoAgentPrompt).toContain("你不能代替审批");
+    expect(memoAgentPrompt).toContain("最新 revision");
     expect(memoAgentPrompt).toContain("相对时间和具体行动");
   });
 

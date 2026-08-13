@@ -237,6 +237,21 @@ export function AppSidebar({
     }
   }, [layoutKey, selectedMemoId]);
 
+  useEffect(() => {
+    if (selectedMemoId === null || treeRef.current === null) {
+      return;
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      const row = treeRef.current?.querySelector<HTMLElement>(
+        `[data-memo-tree-row-id="${CSS.escape(selectedMemoId)}"]`,
+      );
+      row?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [layoutKey, selectedMemoId]);
+
   useLayoutEffect(() => {
     if (treeRef.current === null) {
       return;

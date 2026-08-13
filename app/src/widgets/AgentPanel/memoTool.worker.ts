@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 接收主线程发来的工具 command、已归一化 input 与 Zustand active tree 结构化克隆快照
- * [OUTPUT]: 向主线程返回纯读结果或可交给现有乐观 Store 命令执行的单步计划
- * [POS]: AgentPanel 的专用 Web Worker 入口，把 AI 工具规划移出 UI 线程；不持有 token、不访问 API/DOM/Zustand
+ * [INPUT]: 接收主线程发来的工具 command、已校验 input 与 Zustand active tree 结构化克隆快照
+ * [OUTPUT]: 向主线程返回纯读结果或可交给现有乐观 Store/API Command 的类型化单步计划
+ * [POS]: AgentPanel 专用 Web Worker 入口，把胖工具规划移出 UI 线程；不持有 token、不访问 API/DOM/Zustand
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 

@@ -1,6 +1,6 @@
 -- [INPUT]: 依赖 public.profiles、Supabase auth.uid()、authenticated/service_role 角色与 pgcrypto 的 gen_random_uuid()
--- [OUTPUT]: 建立 public.memo_nodes/public.memos、删除批次、递归回收站 RPC、级联树外键、约束索引、owner-only RLS 与显式 grants
--- [POS]: api/supabase 的备忘录树数据库契约，以邻接表承载 active/回收站两态，正文软删除期间始终留在独立 memos 表
+-- [OUTPUT]: 建立 public.memo_nodes/public.memos、统一 revision、删除批次、递归回收站 RPC、级联树外键、约束索引、owner-only RLS 与显式 grants
+-- [POS]: api/supabase 的备忘录树数据库契约，以邻接表承载 active/回收站两态，以节点 revision 保护 AI 读取与写入的一致性
 -- [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 
 create table public.memo_nodes (
@@ -12,11 +12,14 @@ create table public.memo_nodes (
     check (node_type in ('folder', 'memo')),
   title text not null
     constraint memo_nodes_title_check
-    check (length(btrim(title)) > 0),
+    check (length(btrim(title)) between 1 and 500),
   sort_order numeric(20, 8) not null default 1000,
   icon text,
   color text,
   metadata jsonb not null default '{}'::jsonb,
+  revision bigint not null default 1
+    constraint memo_nodes_revision_check
+    check (revision > 0),
   deleted_at timestamptz,
   deleted_root_id uuid,
   created_at timestamptz not null default now(),
@@ -86,6 +89,48 @@ set search_path = ''
 as $$
 begin
   new.updated_at = now();
+  return new;
+end;
+$$;
+
+create or replace function public.bump_memo_node_revision()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if new.title is distinct from old.title
+    or new.parent_id is distinct from old.parent_id
+    or new.sort_order is distinct from old.sort_order
+    or new.deleted_at is distinct from old.deleted_at
+    or current_setting('supernote.memo_content_revision', true) = 'on'
+  then
+    new.revision = old.revision + 1;
+  else
+    new.revision = old.revision;
+  end if;
+
+  return new;
+end;
+$$;
+
+create or replace function public.bump_memo_revision_from_content()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if new.content_mdx is distinct from old.content_mdx then
+    perform set_config('supernote.memo_content_revision', 'on', true);
+
+    update public.memo_nodes
+    set revision = revision + 1
+    where user_id = new.user_id
+      and id = new.node_id;
+
+    perform set_config('supernote.memo_content_revision', 'off', true);
+  end if;
+
   return new;
 end;
 $$;
@@ -450,6 +495,11 @@ before update on public.memo_nodes
 for each row
 execute function public.set_current_timestamp_updated_at();
 
+create trigger memo_nodes_bump_revision
+before update on public.memo_nodes
+for each row
+execute function public.bump_memo_node_revision();
+
 create trigger memo_nodes_validate_tree
 before insert or update of user_id, parent_id, node_type
 on public.memo_nodes
@@ -466,6 +516,11 @@ before insert or update of user_id, node_id
 on public.memos
 for each row
 execute function public.validate_memo_content_node();
+
+create trigger memos_bump_node_revision
+after update of content_mdx on public.memos
+for each row
+execute function public.bump_memo_revision_from_content();
 
 alter table public.memo_nodes enable row level security;
 alter table public.memos enable row level security;
@@ -527,6 +582,12 @@ revoke all privileges on table public.memos
 from public, anon, authenticated, service_role;
 
 revoke all on function public.set_current_timestamp_updated_at()
+from public, anon, authenticated, service_role;
+
+revoke all on function public.bump_memo_node_revision()
+from public, anon, authenticated, service_role;
+
+revoke all on function public.bump_memo_revision_from_content()
 from public, anon, authenticated, service_role;
 
 revoke all on function public.validate_memo_node_tree()
