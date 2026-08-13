@@ -13,6 +13,7 @@ import {
 } from "@/lib/approval-coordinator";
 import {
   approvalDecisionKey,
+  createMemoClientTools,
   memoClientTools,
   resolveMemoWriteToolName,
   WRITE_MEMO_TOOL_NAMES,
@@ -27,6 +28,14 @@ describe("memo server tool contracts", () => {
       "read_tree",
     ]);
     expect([...WRITE_MEMO_TOOL_NAMES].sort()).toEqual(["edit_memo", "edit_node"]);
+  });
+
+  test("leaves per-request approval to the chat coordinator", () => {
+    const tools = createMemoClientTools();
+    expect(tools.read_tree.requireApproval).toBeFalse();
+    expect(tools.read_memo.requireApproval).toBeFalse();
+    expect(tools.edit_node.requireApproval).toBeFalse();
+    expect(tools.edit_memo.requireApproval).toBeFalse();
   });
 
   test("creates a stable approval cache key independent of object key order", () => {

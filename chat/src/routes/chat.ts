@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 authMiddleware、Business API、冻结 memo context、独立审批协调器、四个客户端 memo 工具、Mastra 流桥与 AI SDK UI stream 生命周期
- * [OUTPUT]: 对外提供消息级上下文冻结、三档写审批、胖工具流转与完整 parts 持久化的 POST /v1/chat
- * [POS]: routes 层 AI Native V2 HTTP 协调边界；先完成审批，再让浏览器 Worker 规划，最终安全仍由 api command 决定
+ * [OUTPUT]: 对外提供消息级上下文冻结、三档写审批、同轮 assistant 续写、胖工具流转与完整 parts 持久化的 POST /v1/chat
+ * [POS]: routes 层 AI Native V2 HTTP 协调边界；审批/工具续跑复用同一回复 ID，先完成审批再让浏览器 Worker 规划，最终安全仍由 api command 决定
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -25,20 +25,21 @@ import {
 import { businessApi, BusinessApiError } from "@/lib/business-api";
 import { MemoAgentContext } from "@/lib/memo-agent-context";
 import { celebrationTool } from "@/mastra/tools/celebration";
-import { memoClientTools, resolveMemoWriteToolName } from "@/mastra/tools/memo";
+import { createMemoClientTools, resolveMemoWriteToolName } from "@/mastra/tools/memo";
 import { authMiddleware } from "@/middleware/auth";
 import {
   attachCurrentContextSnapshot,
+  markResponseError,
   markResponseStatus,
+  prepareResponseMessages,
   persistWithOneRetry,
+  responseMessageId,
   responseStartChunk,
 } from "@/routes/chat-persistence";
-import { readFrozenTurnContext } from "@/routes/frozen-turn-context";
-
-const clientTools = {
-  celebration: celebrationTool,
-  ...memoClientTools,
-};
+import {
+  isAssistantContinuation,
+  readFrozenTurnContext,
+} from "@/routes/frozen-turn-context";
 
 type ApprovalTarget = {
   target_title: string | null;
@@ -162,6 +163,8 @@ export const chatRoute = registerApiRoute("/v1/chat", {
     }
 
     const { thread_id: threadId } = parsed.data;
+    const assistantContinuation = parsed.data.trigger !== "regenerate-message"
+      && isAssistantContinuation(parsed.data.messages);
     const frozenTurnContext = readFrozenTurnContext(
       parsed.data.messages,
       parsed.data.active_memo_id,
@@ -169,7 +172,10 @@ export const chatRoute = registerApiRoute("/v1/chat", {
     let resolvedContext;
     let permissionMode: "ask" | "auto_approve" | "full_access";
     let inputMessages: UIMessage[] = [];
-    const assistantMessageId = `msg_${crypto.randomUUID()}`;
+    const assistantMessageId = responseMessageId(
+      parsed.data.messages as UIMessage[],
+      () => `msg_${crypto.randomUUID()}`,
+    );
 
     try {
       const [, settings, contextResult] = await Promise.all([
@@ -179,7 +185,7 @@ export const chatRoute = registerApiRoute("/v1/chat", {
           threadId,
           frozenTurnContext.active_memo_id,
           frozenTurnContext.reference_memo_ids,
-          frozenTurnContext.revisions,
+          assistantContinuation ? {} : frozenTurnContext.revisions,
           accessToken,
         ),
       ]);
@@ -189,15 +195,11 @@ export const chatRoute = registerApiRoute("/v1/chat", {
         parsed.data.messages as UIMessage[],
         resolvedContext,
       );
-      await businessApi.syncMessages(threadId, [
-        ...inputMessages,
-        {
-          id: assistantMessageId,
-          role: "assistant",
-          parts: [],
-          status: "in_progress",
-        } as UIMessage,
-      ], accessToken);
+      inputMessages = prepareResponseMessages(
+        inputMessages,
+        assistantMessageId,
+      );
+      await businessApi.syncMessages(threadId, inputMessages, accessToken);
     } catch (error) {
       const failure = businessApiFailure(error);
       return context.json(failure.body, failure.status);
@@ -220,6 +222,34 @@ export const chatRoute = registerApiRoute("/v1/chat", {
         .flatMap((part) => part.type === "text" ? [part.text] : [])
         .join("\n") ?? "",
     };
+    const requireWriteApproval = async (
+      writeToolName: "edit_node" | "edit_memo",
+      args: Readonly<Record<string, unknown>>,
+    ): Promise<boolean> => {
+      if (permissionMode === "ask") return true;
+      if (permissionMode === "full_access") return false;
+
+      let target: ApprovalTarget | null = null;
+      try {
+        target = describeApprovalTarget(
+          await businessApi.getMemoTree(accessToken),
+          args,
+        );
+      } catch {
+        // 审批上下文缺失时由审批 Agent fail-closed 转人工，不影响 ask/full_access。
+      }
+      const decision = target === null
+        ? undefined
+        : await evaluateWriteApproval(writeToolName, args, {
+            ...approvalTurn,
+            target,
+          });
+      return shouldRequireManualApproval(permissionMode, decision);
+    };
+    const clientTools = {
+      celebration: celebrationTool,
+      ...createMemoClientTools(),
+    };
     let mastraStream;
     try {
       mastraStream = await handleChatStream<UIMessage>({
@@ -230,29 +260,6 @@ export const chatRoute = registerApiRoute("/v1/chat", {
         params: {
           ...params,
           clientTools,
-          requireToolApproval: async ({ toolName, args }) => {
-            const writeToolName = resolveMemoWriteToolName(toolName);
-            if (writeToolName === null) return false;
-            if (permissionMode === "ask") return true;
-            if (permissionMode === "full_access") return false;
-
-            let target: ApprovalTarget | null = null;
-            try {
-              target = describeApprovalTarget(
-                await businessApi.getMemoTree(accessToken),
-                args,
-              );
-            } catch {
-              // 审批上下文缺失时由审批 Agent fail-closed 转人工，不影响 ask/full_access。
-            }
-            const decision = target === null
-              ? undefined
-              : await evaluateWriteApproval(writeToolName, args, {
-                  ...approvalTurn,
-                  target,
-                });
-            return shouldRequireManualApproval(permissionMode, decision);
-          },
           requestContext,
           abortSignal: context.req.raw.signal,
           maxSteps: env.MAX_STEPS,
@@ -263,15 +270,11 @@ export const chatRoute = registerApiRoute("/v1/chat", {
       });
     } catch {
       await persistWithOneRetry(() =>
-        businessApi.syncMessages(threadId, [
-          ...inputMessages,
-          {
-            id: assistantMessageId,
-            role: "assistant",
-            parts: [],
-            status: "error",
-          } as UIMessage,
-        ], accessToken),
+        businessApi.syncMessages(
+          threadId,
+          markResponseError(inputMessages, assistantMessageId),
+          accessToken,
+        ),
       );
       return context.json(
         {
@@ -287,9 +290,34 @@ export const chatRoute = registerApiRoute("/v1/chat", {
     const stream = createUIMessageStream<UIMessage>({
       originalMessages: inputMessages,
       generateId: () => assistantMessageId,
-      execute: ({ writer }) => {
+      execute: async ({ writer }) => {
         writer.write(responseStartChunk(assistantMessageId));
-        writer.merge(mastraStream);
+        const pendingTools = new Map<string, { toolName: string; input: Record<string, unknown> }>();
+        for await (const chunk of mastraStream) {
+          writer.write(chunk);
+          if (chunk.type === "tool-input-available") {
+            pendingTools.set(chunk.toolCallId, {
+              toolName: chunk.toolName,
+              input: chunk.input !== null && typeof chunk.input === "object" && !Array.isArray(chunk.input)
+                ? chunk.input as Record<string, unknown>
+                : {},
+            });
+          }
+        }
+        for (const [toolCallId, pending] of pendingTools) {
+          const writeToolName = resolveMemoWriteToolName(pending.toolName);
+          if (writeToolName === null) continue;
+          if (await requireWriteApproval(
+            writeToolName as "edit_node" | "edit_memo",
+            pending.input,
+          )) {
+            writer.write({
+              type: "tool-approval-request",
+              approvalId: `supernote::${toolCallId}`,
+              toolCallId,
+            });
+          }
+        }
       },
       onFinish: async ({ messages, responseMessage, isAborted }) => {
         await persistWithOneRetry(() =>

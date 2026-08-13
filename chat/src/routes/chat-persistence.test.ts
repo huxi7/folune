@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 Bun test、chat-persistence 纯策略与最小 UIMessage/context fixtures
- * [OUTPUT]: 覆盖仅最后用户消息快照、assistant abort 状态及持久化最多重试一次
- * [POS]: routes 测试边界，锁定聊天落库生命周期而不启动 Mastra、模型或真实 Business API
+ * [OUTPUT]: 覆盖仅最后用户消息快照、同轮 assistant 续写、abort 状态及持久化最多重试一次
+ * [POS]: routes 测试边界，锁定工具/审批续跑不拆分回复的聊天落库生命周期，不启动 Mastra、模型或真实 Business API
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -10,8 +10,11 @@ import type { UIMessage } from "ai";
 
 import {
   attachCurrentContextSnapshot,
+  markResponseError,
   markResponseStatus,
+  prepareResponseMessages,
   persistWithOneRetry,
+  responseMessageId,
   responseStartChunk,
 } from "./chat-persistence";
 
@@ -78,10 +81,43 @@ describe("chat persistence", () => {
     ]);
   });
 
+  test("续写启动失败只标记既有 assistant，不追加空白副本", () => {
+    const continued = [
+      ...messages,
+      { id: "assistant-stable", role: "assistant" as const, parts: [{ type: "step-start" as const }] },
+    ];
+    const result = markResponseError(continued, "assistant-stable");
+    expect(result).toHaveLength(continued.length);
+    expect(result.at(-1)?.status).toBe("error");
+    expect(result.at(-1)?.parts).toEqual([{ type: "step-start" }]);
+  });
+
   test("向浏览器显式发送服务端稳定 assistant ID", () => {
     expect(responseStartChunk("msg_stable")).toEqual({
       type: "start",
       messageId: "msg_stable",
+    });
+  });
+
+  test("工具与审批续写复用最后 assistant，不追加重复思考消息", () => {
+    const assistant = {
+      id: "assistant-stable",
+      role: "assistant" as const,
+      parts: [{ type: "step-start" as const }],
+      status: "complete" as const,
+    };
+    const continued = [...messages, assistant];
+
+    expect(responseMessageId(continued, () => "new-id")).toBe("assistant-stable");
+    expect(prepareResponseMessages(continued, "assistant-stable")).toEqual([
+      ...messages,
+      { ...assistant, status: "in_progress" },
+    ]);
+    expect(prepareResponseMessages(messages, "new-id").at(-1)).toEqual({
+      id: "new-id",
+      role: "assistant",
+      parts: [],
+      status: "in_progress",
     });
   });
 

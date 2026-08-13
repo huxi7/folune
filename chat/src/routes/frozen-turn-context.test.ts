@@ -7,7 +7,10 @@
 
 import { describe, expect, test } from "bun:test";
 
-import { readFrozenTurnContext } from "./frozen-turn-context";
+import {
+  isAssistantContinuation,
+  readFrozenTurnContext,
+} from "./frozen-turn-context";
 
 const SENT_MEMO = "11111111-1111-4111-8111-111111111111";
 const SENT_REFERENCE = "22222222-2222-4222-8222-222222222222";
@@ -61,5 +64,10 @@ describe("readFrozenTurnContext", () => {
       reference_memo_ids: [],
       revisions: {},
     });
+  });
+
+  test("只有以 assistant 结尾的工具结果请求属于同轮续写", () => {
+    expect(isAssistantContinuation([{ role: "user" }])).toBe(false);
+    expect(isAssistantContinuation([{ role: "user" }, { role: "assistant" }])).toBe(true);
   });
 });

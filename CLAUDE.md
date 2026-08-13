@@ -29,8 +29,8 @@ AI 是用户的备忘录协作伙伴与智能档案管理员。
 ## 模块地图
 | 模块 | 职责 | 文档 |
 | --- | --- | --- |
-| app | 用户端，以唯一 @Prompt Bar 统一当前 memo 默认来源、手动/置顶引用，并承载后端确认式权限切换、审批卡、Worker 纯规划、命令乐观投影/对账与撤销 | [app/CLAUDE.md](app/CLAUDE.md) |
-| chat | AI 能力服务，冻结消息上下文，协调独立审批 Agent 与 Mastra 原生 approval，只向模型暴露 read_tree/read_memo/edit_memo/edit_node | [chat/CLAUDE.md](chat/CLAUDE.md) |
+| app | 用户端，以唯一 @Prompt Bar 统一当前 memo 默认来源、手动/置顶引用，并承载后端确认式权限切换、阻塞审批弹窗、Worker 纯规划、命令乐观投影与回复末尾单一整轮撤销 | [app/CLAUDE.md](app/CLAUDE.md) |
+| chat | AI 能力服务，冻结消息上下文，协调独立审批 Agent 与 Mastra 原生 approval，同轮工具/审批续写复用 assistant，只向模型暴露 read_tree/read_memo/edit_memo/edit_node | [chat/CLAUDE.md](chat/CLAUDE.md) |
 | api | 业务接口服务，承载用户、备忘录、AI 会话/上下文/权限设置/通用命令/整理 Run 与唯一持久化边界 | [api/CLAUDE.md](api/CLAUDE.md) |
 | deploy | 本地部署基础设施，提供 api/chat 的 Bun 开发镜像、固定容器命名与密钥分离契约 | [deploy/CLAUDE.md](deploy/CLAUDE.md) |
 | scripts | 本地开发运维入口，统一启动、停止与查看 api-dev/chat-dev 双服务 Docker 日志 | [scripts/CLAUDE.md](scripts/CLAUDE.md) |

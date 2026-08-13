@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 Bun test、React 静态渲染、AI SDK UIMessage 与 ChatMessage
- * [OUTPUT]: 验证处理过程真实顺序、折叠边界、最终正文独立及普通回复无空过程入口
- * [POS]: AgentPanel 完整回复 DOM 契约测试，连接 part 分区、工具人话展示与 AssistantMessage 槽位
+ * [OUTPUT]: 验证单一过程区、人工审批弹窗、自动执行轻量撤销、最终正文独立及普通回复无空过程入口
+ * [POS]: AgentPanel 完整回复 DOM 契约测试，连接 part 分区、阻塞裁决、工具人话展示与回复动作槽位
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -151,5 +151,38 @@ describe("ChatMessage", () => {
     expect(assistantHtml).toContain("@用户访谈");
     expect(assistantHtml).toContain("v3");
     expect(assistantHtml).not.toContain("memo-2");
+  });
+
+  test("只有当前待批工具打开模态框，同轮多条命令只显示一个整轮撤销", () => {
+    const approvalPart = {
+      approval: { id: "approval-1" },
+      input: { content_mdx: "新版", expected_revision: 1, node_id: "173b31e2-15ab-4eaf-8f14-2208d7d16b13" },
+      state: "approval-requested" as const,
+      toolCallId: "tool-approval",
+      toolName: "edit_memo",
+      type: "dynamic-tool" as const,
+    };
+    const approvalHtml = renderToStaticMarkup(
+      <ChatMessage activity="none" approvalId="approval-1" message={assistant([approvalPart])} onApproval={() => undefined} onUndo={async () => undefined} />,
+    );
+    expect(approvalHtml).toContain('role="dialog"');
+    expect(approvalHtml).toContain("允许这次修改？");
+    expect(approvalHtml).toContain("允许一次");
+
+    const command = {
+      id: "command-1",
+      operation: "edit_memo" as const,
+      status: "succeeded" as const,
+    };
+    const successHtml = renderToStaticMarkup(
+      <ChatMessage activity="none" message={assistant([
+        { ...approvalPart, approval: { approved: true, id: "approval-1" }, output: command, state: "output-available" },
+        { ...approvalPart, approval: { approved: true, id: "approval-2" }, output: { ...command, id: "command-2" }, state: "output-available", toolCallId: "tool-approval-2" },
+      ])} onApproval={() => undefined} onUndo={async () => undefined} />,
+    );
+    expect(successHtml).not.toContain('role="dialog"');
+    expect(successHtml).not.toContain("已安全执行");
+    expect(successHtml).toContain('aria-label="回复操作"');
+    expect(successHtml.match(/撤销本次操作/g)).toHaveLength(1);
   });
 });

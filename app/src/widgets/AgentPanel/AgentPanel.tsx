@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 useAiThreads、类型化 useChat/原生审批、统一 Composer sources、Worker 胖工具链、权限/History/Organize 视图与 Dashboard 草稿协调边界
- * [OUTPUT]: 对外提供当前笔记默认 @、冻结上下文、键盘 @搜索、审批/拒绝、Worker 规划、乐观命令/撤销对账、会话恢复及停止 SSE/礼花的 AI Native 右侧工作区
- * [POS]: /app 右侧 AI Native V2 组合根；批准后的 memo 工具才进入 Worker，api command 是唯一写事实源，Store 只做幂等投影与回滚
+ * [OUTPUT]: 对外提供当前笔记默认 @、冻结上下文、键盘 @搜索、阻塞审批弹窗、流完成后工具执行、乐观命令/整轮逆序撤销对账、会话恢复及停止 SSE/礼花的 AI Native 右侧工作区
+ * [POS]: /app 右侧 AI Native V2 组合根；工具参数流结束且批准后才进入 Worker，api command 是唯一写事实源，Store 只做幂等投影与回滚
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -29,7 +29,6 @@ import {
 } from "react";
 import {
   getToolName,
-  lastAssistantMessageIsCompleteWithApprovalResponses,
   lastAssistantMessageIsCompleteWithToolCalls,
   isToolUIPart,
 } from "ai";
@@ -72,6 +71,10 @@ import {
 } from "./clientTools";
 import { executeMemoToolPlan } from "./memoToolExecution";
 import { requestMemoToolPlan } from "./memoToolWorkerClient";
+import {
+  coalesceAssistantMessages,
+  reverseCommandsForUndo,
+} from "./messagePresentation";
 import { OrganizeReviewCard } from "./OrganizeReviewCard";
 import {
   getMentionResults,
@@ -203,50 +206,54 @@ function AgentConversation({
     id: thread.id,
     messages: initialMessages,
     transport,
-    sendAutomaticallyWhen: (options) =>
-      lastAssistantMessageIsCompleteWithToolCalls(options)
-      || lastAssistantMessageIsCompleteWithApprovalResponses(options),
-    onFinish: () => void onThreadUpdated(),
-    onToolCall: async ({ toolCall }) => {
-      if (!isAgentClientToolName(clientTools, toolCall.toolName)) {
-        // 未注册工具由服务端或其他运行时处理。
-        return;
-      }
-      try {
-        const normalizedInput = normalizeToolInput(toolCall.input);
-        let execution = memoToolExecutions.current.get(toolCall.toolCallId);
-        if (execution === undefined) {
-          execution = isMemoClientToolName(toolCall.toolName)
-            ? requestMemoToolPlan(
-                toolCall.toolName,
-                parseAgentClientToolInput(
-                  clientTools,
-                  toolCall.toolName,
-                  normalizedInput,
-                ),
-                toolCall.toolCallId,
-              ).then((plan) => executeMemoToolPlan({
-                accessToken,
-                manuallyApproved: manuallyApprovedToolCalls.current.has(toolCall.toolCallId),
-                plan,
-                threadId: thread.id,
-                toolCallId: toolCall.toolCallId,
-              }))
-            : executeAgentClientTool(clientTools, toolCall.toolName, normalizedInput);
-          memoToolExecutions.current.set(toolCall.toolCallId, execution);
-        }
-        const output = await execution;
-        void addToolResult({ output, tool: toolCall.toolName, toolCallId: toolCall.toolCallId });
-      } catch (toolError) {
-        void addToolResult({
-          errorText: toolError instanceof Error ? toolError.message : "客户端工具执行失败。",
-          state: "output-error",
-          tool: toolCall.toolName,
-          toolCallId: toolCall.toolCallId,
-        });
-      }
+    sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
+    onFinish: ({ message }) => {
+      void executePendingClientTools(message).finally(onThreadUpdated);
     },
   });
+
+  async function executePendingClientTools(message: SuperNoteUIMessage) {
+    const pending = message.parts.filter(isToolUIPart).filter((part) =>
+      part.state === "input-available"
+      && isAgentClientToolName(clientTools, getToolName(part))
+    );
+    await Promise.all(pending.map(executeClientToolPart));
+  }
+
+  async function executeClientToolPart(part: Extract<SuperNoteUIMessage["parts"][number], { toolCallId: string }>) {
+    if (!isToolUIPart(part)) return;
+    const toolName = getToolName(part);
+    if (!isAgentClientToolName(clientTools, toolName)) return;
+    try {
+      const normalizedInput = normalizeToolInput(part.input);
+      let execution = memoToolExecutions.current.get(part.toolCallId);
+      if (execution === undefined) {
+        execution = isMemoClientToolName(toolName)
+          ? requestMemoToolPlan(
+              toolName,
+              parseAgentClientToolInput(clientTools, toolName, normalizedInput),
+              part.toolCallId,
+            ).then((plan) => executeMemoToolPlan({
+              accessToken,
+              manuallyApproved: manuallyApprovedToolCalls.current.has(part.toolCallId),
+              plan,
+              threadId: thread.id,
+              toolCallId: part.toolCallId,
+            }))
+          : executeAgentClientTool(clientTools, toolName, normalizedInput);
+        memoToolExecutions.current.set(part.toolCallId, execution);
+      }
+      const output = await execution;
+      await addToolResult({ output, tool: toolName, toolCallId: part.toolCallId });
+    } catch (toolError) {
+      await addToolResult({
+        errorText: toolError instanceof Error ? toolError.message : "客户端工具执行失败。",
+        state: "output-error",
+        tool: toolName,
+        toolCallId: part.toolCallId,
+      });
+    }
+  }
   const busy = status === "submitted" || status === "streaming";
   const lastMessage = messages.at(-1);
   const activity = deriveAssistantActivity(
@@ -255,6 +262,19 @@ function AgentConversation({
   );
   const liveAssistantIndex = lastMessage?.role === "assistant" ? messages.length - 1 : -1;
   const liveAssistantMessage = liveAssistantIndex >= 0 ? messages[liveAssistantIndex] : undefined;
+  const pendingApprovalId = lastMessage?.role === "assistant"
+    ? [...lastMessage.parts].reverse()
+      .find((part) => isToolUIPart(part) && part.state === "approval-requested")
+      ?.approval.id
+    : undefined;
+  const displayMessages = useMemo(
+    () => coalesceAssistantMessages(messages),
+    [messages],
+  );
+  const displayLastMessage = displayMessages.at(-1);
+  const displayLiveAssistantIndex = displayLastMessage?.role === "assistant"
+    ? displayMessages.length - 1
+    : -1;
   const errorCopy = getErrorCopy(error);
 
   useEffect(() => {
@@ -290,8 +310,18 @@ function AgentConversation({
       manuallyApprovedToolCalls.current.delete(toolCallId);
       rollbackAiToolCall(toolCallId);
     }
-    void addToolApprovalResponse({ id, approved });
+    void Promise.resolve(addToolApprovalResponse({ id, approved })).then(() => {
+      if (approved && approvalPart !== undefined && isToolUIPart(approvalPart)) {
+        return executeClientToolPart(approvalPart);
+      }
+    });
   }, [addToolApprovalResponse, messages, rollbackAiToolCall]);
+
+  const undoAssistantTurn = useCallback(async (commands: readonly AiCommand[]) => {
+    for (const command of reverseCommandsForUndo(commands)) {
+      reconcileAiCommand(await undoAiCommand(accessToken, command.id));
+    }
+  }, [accessToken, reconcileAiCommand]);
 
   useEffect(() => onBusyChange(busy), [busy, onBusyChange]);
 
@@ -404,17 +434,17 @@ function AgentConversation({
   return (
     <div className="agent-panel-body">
       <div aria-busy={busy} aria-live="polite" className="agent-message-list" ref={messageListRef} role="log">
-        {messages.length === 0 ? (
+        {displayMessages.length === 0 ? (
           <div className="agent-empty-state">
             <div className="agent-empty-mark"><ThinkingMark aria-hidden="true" size={20} /></div>
             <strong>想从哪条备忘录开始？</strong>
             <p>你可以让我梳理思路、润色文字，或直接聊聊刚记下的内容。</p>
           </div>
-        ) : messages.map((message, index) => index === liveAssistantIndex ? null : (
-          <ChatMessage activity="none" key={message.id} message={message} onApproval={respondToApproval} onProgress={() => scrollToLatest("auto")} onUndo={async (command) => reconcileAiCommand(await undoAiCommand(accessToken, command.id))} sources={turnSources(messages, index)} />
+        ) : displayMessages.map((message, index) => index === displayLiveAssistantIndex ? null : (
+          <ChatMessage activity="none" approvalId={pendingApprovalId} key={message.id} message={message} onApproval={respondToApproval} onProgress={() => scrollToLatest("auto")} onUndo={undoAssistantTurn} sources={turnSources(displayMessages, index)} />
         ))}
         {busy || liveAssistantMessage ? (
-          <LiveAssistantTurn activity={activity} key="live-assistant" message={liveAssistantMessage} onApproval={respondToApproval} onProgress={() => scrollToLatest("auto")} onUndo={async (command) => reconcileAiCommand(await undoAiCommand(accessToken, command.id))} sources={turnSources(messages, liveAssistantIndex >= 0 ? liveAssistantIndex : messages.length)} />
+          <LiveAssistantTurn activity={activity} approvalId={pendingApprovalId} key="live-assistant" message={displayLiveAssistantIndex >= 0 ? displayMessages[displayLiveAssistantIndex] : undefined} onApproval={respondToApproval} onProgress={() => scrollToLatest("auto")} onUndo={undoAssistantTurn} sources={turnSources(displayMessages, displayLiveAssistantIndex >= 0 ? displayLiveAssistantIndex : displayMessages.length)} />
         ) : null}
       </div>
       {error ? (

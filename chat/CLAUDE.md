@@ -1,7 +1,7 @@
 # chat/
 > L1 | 父级: ../CLAUDE.md
 
-独立 AI 能力服务，以固定 DeepSeek V4 Flash 的对话 Agent、无工具/无记忆审批 Agent 和整理 Planner 提供笔记协作；chat 不持有业务库，通过当前用户 JWT 获取冻结 context、同步 UIMessage，并只向模型暴露 read_tree/read_memo/edit_memo/edit_node。审批先于浏览器 Worker，细分 Command 仍由 api 状态机执行。
+独立 AI 能力服务，以固定 DeepSeek V4 Flash 的对话 Agent、无工具/无记忆审批 Agent 和整理 Planner 提供笔记协作；chat 不持有业务库，通过当前用户 JWT 获取冻结 context、同步 UIMessage，并只向模型暴露 read_tree/read_memo/edit_memo/edit_node。初次生成与审批/工具续写复用同一 assistant，审批先于浏览器 Worker，细分 Command 仍由 api 状态机执行。
 
 技术栈: Bun + TypeScript + Mastra + @mastra/ai-sdk + Vercel AI SDK + zod。
 

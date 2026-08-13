@@ -2,13 +2,13 @@
 > L2 | 父级: ../CLAUDE.md
 
 成员清单
-AgentPanel.tsx: AI Native V2 组合根；Prompt Bar 只消费统一 Composer sources，把当前 memo 默认 @、手动 @、置顶 refs 的 ID+revision 冻结到用户消息 metadata，approval 续写仍走同一版本门禁
+AgentPanel.tsx: AI Native V2 组合根；Prompt Bar 冻结统一 sources，客户端工具只在本轮流完成或人工批准后执行，tool result 续写复用同一 assistant，同轮 commands 逆序撤销并继续走版本门禁
 composerSources.ts: Prompt Bar 唯一上下文领域层；当前 memo 只是带 current 来源标记的默认 @，与手动/置顶来源去重归并、限五篇并生成同一冻结 metadata
 composerSources.test.ts: 覆盖当前 memo 默认 @、删除抑制、切换更新、手动/置顶去重、发送冻结及发送后草稿来源收束
 MentionMenu.tsx: Prompt Bar @命令菜单视图与搜索纯函数，支持空 @候选、标题/正文/路径搜索、已选排除及 revision 展示
 MentionMenu.test.ts: 覆盖空 @候选、搜索排除和 revision 输出
 PermissionModeControl.tsx: Header 账号全局每次询问/智能审批实验/完全访问切换；只显示 API 已确认模式，加载/保存失败保持旧值并经全局 Toast 明示
-ApprovalCard.tsx: 渲染 Mastra approval-requested 的批准/拒绝，以及 command 目标/旧值/新值/风险/状态和成功撤销入口，不显示原始 JSON/UUID
+ApprovalCard.tsx: 仅在 Chat 协调器产生 approval-requested 时打开阻塞式 Dialog，显示目标差异与风险并批准/拒绝；自动执行结果不渲染审计大卡
 OrganizeReviewCard.tsx: 当前 memo 对应 Run 的状态纯视图，展示 plan、awaiting confirmation、succeeded/stale/failed/rejected/undone；切换 memo 后旧 Run 不跨上下文展示，并只通过 runId 命令触发确认、取消或撤销
 ThreadHistory.tsx: Panel 内最近/已归档会话视图，提供切换、重命名、归档、恢复与普通永久删除确认，不建立第四栏
 organizeClient.ts: 浏览器到 Chat `/v1/organize` 的最小 authenticated client，复用 AI Run mapper，确认/apply/undo 仍经 shared/api/ai 进入 Business API
@@ -16,8 +16,8 @@ threadSelection.ts: 按用户 localStorage key 选择合法历史 thread，失�
 threadSelection.test.ts: 覆盖用户偏好隔离、合法恢复和失效 ID 回退
 useAiThreads.ts: 会话控制器，服务端持有 Thread/Message/Reference 真相；负责首次空会话、列表/detail/messages 加载、选择偏好与 CRUD，并在删除当前会话后选择最近项或创建空白项
 AgentProcessDisclosure.tsx: 单条 assistant 回复的处理过程显隐边界，入口固定在所有过程文字与工具之前；生成期以 ThinkingMark + 真实状态强制展开，完成后保留“思考过程”顶部入口供手动收起/展开，容器永不包裹最终正文
-ChatMessage.tsx: SuperNoteUIMessage 适配层；用户消息显示本轮冻结引用/revision，assistant 把过程/Tool Chips/Approval+Diff/Undo 与最终正文分区，来源和执行状态不暴露原始协议载荷
-ChatMessage.test.tsx: 完整回复 DOM 契约测试，锁定请求期/空 SSE assistant 占位、过程/工具顺序、最终正文边界、双方冻结来源/revision、敏感 ID 屏蔽及零重复身份标题
+ChatMessage.tsx: SuperNoteUIMessage 适配层；用户消息显示冻结引用/revision，assistant 保持单一过程区，人工审批以 Dialog 阻塞，同轮成功命令只在最终回复末尾提供一个整轮撤销
+ChatMessage.test.tsx: 完整回复 DOM 契约测试，锁定单一过程区、审批 Dialog、自动成功零大卡、单一整轮撤销、最终正文边界、冻结来源与敏感 ID 屏蔽
 composerBehavior.ts: Composer 的纯交互判定，统一非空闲/空白提交保护，并把普通 Enter 与 Shift/修饰键/IME 组合输入严格分流
 composerBehavior.test.ts: Composer 键盘与提交契约测试，覆盖普通 Enter、Shift 换行、中文组合输入、Safari 229 兼容、修饰键和空白内容
 celebration.ts: 独立于 memoTool Worker 的“庆祝”视觉执行器，忠实保留用户 count；1–32 次渲染等量逻辑波次，更大次数压缩为 32 波性能有界批处理；复用 canvas-confetti 托管的唯一全屏 Canvas 与可用时的内部渲染 Worker，左/中/右三源从网页底边下方少量起步，以 EDGE_START_VELOCITY/CENTER_START_VELOCITY 控制初始射程、以 CELEBRATION_DECAY 收短后续最远端，再以窄锥角先集中上升再自然扩散；count:10 采用 32ms 间隔、约 288ms 完成的无停顿点射，超大次数的释放窗口封顶 400ms；动画可由 cancelCelebration 即时复位，亦会自然完成或由 3 秒看门狗兜底
@@ -31,8 +31,8 @@ memoToolPlanner.ts: 四个胖工具的纯规划内核，基于 Store 快照验�
 memoToolPlanner.test.ts: 覆盖整树/read_memo、create/rename/move/reorder/delete 五种 op、edit_memo、stale 与非法移动
 memoToolSchemas.ts: 客户端四工具的 zod 契约，与 chat 模型工具保持同构并冻结 expected_revision
 memoToolExecution.ts: 主线程可信协调器，把 Worker plan 映射到现有 ai_commands，管理乐观投影/提交/对账/失败回滚
-messagePresentation.ts: UIMessage 有序 part 的纯展示分区，以最后一次工具调用为边界保留过程序列，并把工具后的正文稳定留在折叠区之外；无工具普通文本直接成为最终回复
-messagePresentation.test.ts: 回复分区纯函数测试，覆盖多轮过程/工具穿插、reasoning 归属和普通回复零过程区
+messagePresentation.ts: UIMessage 有序 part 的纯展示分区，兼容归并历史连续 assistant 分片，以最后一次工具调用为边界保留过程、按 toolCallId 去重，并把同轮成功 commands 提取为回复末尾单一入口所需的反向撤销序列
+messagePresentation.test.ts: 回复分区纯函数测试，覆盖历史连续 assistant 归并、过程/工具穿插、重复 toolCall 去重、成功 commands 整轮反向撤销、reasoning 归属和普通回复零过程区
 toolPresentation.ts: 工具 Message UI 的唯一展示适配器，先归一化 namespaced 工具名，再基于真实操作、标题和状态生成人话动作及安全详情
 toolPresentation.test.ts: 工具展示契约测试，锁定具体动作命名、namespaced 归一、安全详情与未知协议名不外露
 activityState.ts: AI Activity 纯判定边界，以 status 和 assistant 最后一个 text/reasoning/step-start/tool part 导出 none/thinking/streaming/tool，工具 output 后只有 SDK 仍 streaming 才回到 thinking
