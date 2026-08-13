@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 useAiThreads、类型化 useChat/原生审批、统一 Composer sources、Worker 胖工具链、权限/History/Organize 视图与 Dashboard 草稿协调边界
+ * [INPUT]: 依赖 useAiThreads、类型化 useChat/原生审批、统一 Composer sources、Worker 胖工具链、WorkspaceChrome 关闭命令、权限/History/Organize 视图与 Dashboard 草稿协调边界
  * [OUTPUT]: 对外提供当前笔记默认 @、冻结上下文、键盘 @搜索、阻塞审批弹窗、流完成后工具执行、乐观命令/整轮逆序撤销对账、会话恢复及停止 SSE/礼花的 AI Native 右侧工作区
  * [POS]: /app 右侧 AI Native V2 组合根；工具参数流结束且批准后才进入 Worker，api command 是唯一写事实源，Store 只做幂等投影与回滚
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -42,7 +42,7 @@ import {
 } from "../../shared/api/ai";
 import type { MemoTreeNode } from "../../shared/api/memo";
 import { ThinkingMark } from "../../shared/design-system/components";
-import { useAgentPanelStore } from "../../shared/store/agentPanelStore";
+import { useWorkspaceChromeStore } from "../../shared/store/workspaceChromeStore";
 import { useMemoTreeStore } from "../../shared/store/memoTreeStore";
 import { deriveAssistantActivity } from "./activityState";
 import { cancelCelebration } from "./celebration";
@@ -467,7 +467,7 @@ function AgentConversation({
 }
 
 export function AgentPanel(props: AgentPanelProps) {
-  const closePanel = useAgentPanelStore((state) => state.close);
+  const closePanel = useWorkspaceChromeStore((state) => state.closeAssistant);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [chatBusy, setChatBusy] = useState(false);
   const threads = useAiThreads({ accessToken: props.accessToken, userId: props.userId });

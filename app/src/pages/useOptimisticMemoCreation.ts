@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖 React Router navigate、用户/access token、memoTreeStore 的同步乐观创建事务、稀疏排序算法、删除后目的地纯函数与全局 Toast
- * [OUTPUT]: 对外提供 useOptimisticMemoCreation；一次点击同步插入并进入临时备忘录，独立跟踪并发提交，成功原位换成真实路由，失败只回退对应当前项
+ * [INPUT]: 依赖 React Router navigate、用户/access token、memoTreeStore 同步乐观创建、稀疏排序、纸张聚焦回调、删除后目的地与 Toast
+ * [OUTPUT]: 对外提供 useOptimisticMemoCreation；一次点击同步进入并聚焦临时纸张，独立跟踪并发提交，成功原位换真实路由，失败只回退对应项
  * [POS]: app/src/pages 的创建路由协调器；把临时/真实 ID、last-memo 与乱序响应边界从 AppDashboard 拆出，Store 仍独占树事务
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -19,6 +19,7 @@ type UseOptimisticMemoCreationInput = {
   accessToken: string;
   lastMemoStorageKey: string;
   navigate: NavigateFunction;
+  onCreatedMemo: (memoClientKey: string) => void;
   onSelectMemo: (memoId: string) => void;
   onTitleDraftReset: () => void;
   routeMemoId: string | null;
@@ -29,6 +30,7 @@ export function useOptimisticMemoCreation({
   accessToken,
   lastMemoStorageKey,
   navigate,
+  onCreatedMemo,
   onSelectMemo,
   onTitleDraftReset,
   routeMemoId,
@@ -51,6 +53,7 @@ export function useOptimisticMemoCreation({
       window.localStorage.setItem(lastMemoStorageKey, optimisticId);
       currentRouteMemoIdRef.current = optimisticId;
       onSelectMemo(optimisticId);
+      onCreatedMemo(optimisticId);
 
       void committed
         .then((created) => {
@@ -106,6 +109,7 @@ export function useOptimisticMemoCreation({
     accessToken,
     lastMemoStorageKey,
     navigate,
+    onCreatedMemo,
     onSelectMemo,
     onTitleDraftReset,
     toast,

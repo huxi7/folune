@@ -42,8 +42,8 @@ Keep V1 Classic Blueprint as the only visual baseline: a clear, restrained note-
 - Keep account editing quiet: debounce username/bio saves by 800ms, acknowledge completion through Toast, and do not reserve a footer for a primary Save button.
 - Keep tree navigation and rename intent separate: a row click only navigates or toggles once, while rename requires the context menu or focused-node F2 shortcut; double-click never enters edit mode.
 - Keep page titles compact and interface-first; no marketing-scale typography inside the product shell.
-- Keep the product shell as three always-visible, independently rounded Panels over one quiet desktop surface; panel widths remain resizable, but sidebar/Agent collapse and close states are deliberately absent.
-- Present the selected memo as one centered writing column on the main Panel's continuous surface; the Panel already owns the boundary, so the document must not repeat it with an inner paper card.
+- Keep Paper as the only first-glance subject over a neutral canvas; Library and AI are independently persisted, resizable floating tools that remain closed for new users and preserve user choices across memo creation.
+- Give Paper one restrained physical boundary and a stable inner editor session; Canvas/Panel Motion may change available space but must never remount CodeMirror or reset autosave state.
 - Keep the public Landing light and untextured; dark mode remains an explicit App preference only.
 - Use display typography only for editorial headlines; product controls remain compact sans-serif or mono where a token/path is shown.
 - Treat loading as an orthogonal interaction state, not a new color variant; keep semantic tokens centralized in `index.css`.
@@ -53,6 +53,7 @@ Keep V1 Classic Blueprint as the only visual baseline: a clear, restrained note-
 - Do not add a generic status pill or badge family; use Button loading for in-flight actions, Toast for operation results, and contextual text or structure for durable information.
 - Treat CodeMirror as a third-party cascade boundary; its adapter consumes only the same light/dark V1 tokens.
 - Treat memo editing as one quiet canvas: an independent plain-text title sits directly above the Store-controlled Markdown body, with no card, field chrome, divider, metadata strip or in-canvas save action.
+- Route organize outcomes by meaning: succeeded/undone reveal and locate the Library target with a temporary connection plus persistent receipt, awaiting confirmation reveals AI, and stale/failed remain Toast/local feedback only.
 - Keep root memo creation in the sidebar header as the shared Primary Button with a dedicated note-writing icon; place Design System and Trash outside the file tree as matching full-width navigation rows without an extra group label.
 - Treat folder expansion as a per-user device preference: restore a versioned localStorage snapshot only after the memo tree is ready, preserve an explicitly all-collapsed tree, auto-open new folders and discard deleted folder ids without adding backend schema.
 - Keep memo saving invisible and session-scoped: update editor/Store immediately, flush by character/idle/max-wait thresholds and lifecycle boundaries, retry quietly, and only surface the final failure while preserving the local draft byte-for-byte.
@@ -108,5 +109,6 @@ Keep V1 Classic Blueprint as the only visual baseline: a clear, restrained note-
 - 2026-08-10: Rebuilt the central memo surface as a single continuous editor instead of a Panel-inside-paper-card composition: removed the inner border/radius/shadow, centered a stable 52rem writing column, made title size and horizontal gutters respond to the resizable Panel rather than the viewport, reduced the filename title from 32–48px to 24–30px, raised body text to 15px, and kept all body headings subordinate to the filename in editing and reading modes.
 - 2026-08-09: Removed the false button affordance from the selected Design System and Trash utility rows: both now keep a transparent, borderless, shadowless, motionless surface and communicate the current workspace only through the primary foreground color plus `aria-current`.
 - 2026-08-12: Completed root memo optimistic creation: each click now enters an editable temporary memo immediately without locking the next click; concurrent requests reconcile their own temporary IDs independently, preserve draft title/content through the real-ID swap, route autosave to the committed ID, and roll back only the failed item.
+- 2026-08-13: Superseded the fixed three-Panel shell with Paper First: added MotionConfig/LayoutGroup/AnimatePresence, a neutral Canvas with one stable Paper, per-user Library/AI chrome state, desktop safety regions, tablet/mobile overlay drawers, new-paper focus, organize outcome routing, tree locate/highlight, SVG archive connection and a persistent undo receipt. Full app validation passed 141 tests, typecheck and production build; authenticated checks covered 1440×900, 1280×800, 1024×768 and 390×844 with no horizontal overflow, working Escape dismissal and preserved Library state after new memo creation.
 
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md

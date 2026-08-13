@@ -22,14 +22,14 @@ AI 是用户的备忘录协作伙伴与智能档案管理员。
 ## 技术栈
 全栈 TypeScript，顶层由三个 L1 业务模块组成。
 
-- app: 用户端，Bun + Vite + React + React Router + Zustand + Vercel AI SDK + Mastra Client + canvas-confetti 独立全屏渲染 + Kumo UI + Tailwind CSS v4 + 本地 design system + Supabase Auth SDK
+- app: 用户端，Bun + Vite + React + React Router + Zustand + Motion for React + Vercel AI SDK + Mastra Client + canvas-confetti 独立全屏渲染 + Kumo UI + Tailwind CSS v4 + 本地 design system + Supabase Auth SDK
 - chat: AI 能力服务，Bun + TypeScript + Mastra + Vercel AI SDK + zod，主 Agent 与无工具/无记忆审批 Agent 分离，模型只看到四个胖工具
 - api: 业务接口服务，Bun + Hono + TypeScript + zod + Supabase REST/PostgREST/Storage HTTP API
 
 ## 模块地图
 | 模块 | 职责 | 文档 |
 | --- | --- | --- |
-| app | 用户端，以唯一 @Prompt Bar 统一当前 memo 默认来源、手动/置顶引用，并承载后端确认式权限切换、阻塞审批弹窗、Worker 纯规划、命令乐观投影与回复末尾单一整轮撤销 | [app/CLAUDE.md](app/CLAUDE.md) |
+| app | 用户端，以 Paper First 舞台承载唯一写作主体与按需文件库/AI 思考空间，并以唯一 @Prompt Bar 统一上下文、后端确认权限、Worker 纯规划、命令投影与整轮撤销 | [app/CLAUDE.md](app/CLAUDE.md) |
 | chat | AI 能力服务，冻结消息上下文，协调独立审批 Agent 与 Mastra 原生 approval，同轮工具/审批续写复用 assistant，只向模型暴露 read_tree/read_memo/edit_memo/edit_node | [chat/CLAUDE.md](chat/CLAUDE.md) |
 | api | 业务接口服务，承载用户、备忘录、AI 会话/上下文/权限设置/通用命令/整理 Run 与唯一持久化边界 | [api/CLAUDE.md](api/CLAUDE.md) |
 | deploy | 本地部署基础设施，提供 api/chat 的 Bun 开发镜像、固定容器命名与密钥分离契约 | [deploy/CLAUDE.md](deploy/CLAUDE.md) |

@@ -3,7 +3,7 @@
 
 用户端模块，负责承载浏览器内的 SuperNote 产品体验边界。
 
-技术栈: Bun + Vite + React 19 + React Router + Zustand + Vercel AI SDK/useChat + @mastra/client-js + canvas-confetti + Kumo UI + Tailwind CSS v4 + 本地 design system + Supabase Auth SDK + system/light/dark 全局主题偏好 + Phosphor Icons + CodeMirror 6/Lezer Markdown GFM + react-markdown/remark-gfm/remark-breaks/rehype-sanitize + TypeScript。
+技术栈: Bun + Vite + React 19 + React Router + Zustand + Motion for React (`motion/react`) + Vercel AI SDK/useChat + @mastra/client-js + canvas-confetti + Kumo UI + Tailwind CSS v4 + 本地 design system + Supabase Auth SDK + system/light/dark 全局主题偏好 + Phosphor Icons + CodeMirror 6/Lezer Markdown GFM + react-markdown/remark-gfm/remark-breaks/rehype-sanitize + TypeScript。
 
 成员清单
 index.html: Vite HTML 宿主页面，声明 V1 Classic Blueprint 默认画布、同步解析 App 的 system/light/dark 与 Landing 浅色画布 pre-paint bootstrap、提供 root 挂载点并内联折角笔记页 favicon
@@ -11,13 +11,13 @@ index.html: Vite HTML 宿主页面，声明 V1 Classic Blueprint 默认画布、
 AUTH_SETUP.md: Supabase 邮箱确认模板、URL allow list、自定义 SMTP 限制与 Google OAuth 后台配置说明
 UI_REFINEMENT.md: UI-only 工作台账，记录 V1 Classic Blueprint 基线、约束、验收进度与决策
 vite.config.ts: Vite 配置，从 app/.env.local 加载浏览器环境，将开发服务器严格固定到 10000，连接 React/Tailwind 插件，并用 Rolldown 按 React 封装、Markdown、View、State、Language、Features 拆分 CodeMirror chunk
-src/main.tsx: React 挂载入口，在 ThemeProvider 内、RouterProvider 外装配全局 ToastProvider 并加载全局样式
-src/index.css: Kumo/Tailwind v4 入口与唯一色值源，冻结 V1 Classic Blueprint、自然现代主色、统一 smooth corner/阴影/动效、确定性白/中性灰蓝表面及 light/dark Skeleton 语义 token，并导入 AI 消息与同构 DEV Design System 等职责样式模块
-src/styles/: UI 样式实现层，以 landing.css 隔离营销页、workspace.css 隔离三 Panel/真实结构 Skeleton 布局、design-system.css 统一固定灰阶宽光带与 reveal、ai-message.css 统一 SSE 消息家族、design-system-workspace.css 统一 DEV 组件卡片矩阵、CodeMirror CSS 隔离 source/live 显示协议，其余样式按认证、Toast 与账户菜单分责；跨样式颜色插值统一使用 sRGB，避免低饱和 OKLCH 混合产生粉红表面
-src/app/: 应用装配层，承载 OAuth 回调、Profile/access token 登录守卫、仅用于 /app 首次准入的三 Panel Skeleton fallback 及共享 Dashboard 生命周期的 /app 与 /app/notes/:noteId 路由
-src/pages/: 页面层，承载 Landing、OAuth Callback 与三 Panel Dashboard，并编排删除/AI 发送/整理前草稿 flush、Run apply/undo 局部归并及路由收束
-src/widgets/: 业务组合组件层，承载 Landing、文件导航、账户/订阅、memo 连续写作画布与回收站；AgentPanel 以唯一 @Prompt Bar 管理统一来源、持久化 Thread、后端确认权限、阻塞审批 Dialog、AI SDK SSE、命令过程与回复末尾单一整轮撤销
-src/shared/: 前端共享层，承载 memo/AI 唯一业务 API 中枢、Zustand active tree 与 Run 局部归并、按用户 Panel 偏好、design system、纯 Supabase Auth 服务与全局主题状态；前端禁止直连业务表或 Storage
+src/main.tsx: React 挂载入口，以 MotionConfig reducedMotion=user 包围 ThemeProvider/ToastProvider/RouterProvider 并加载全局样式
+src/index.css: Kumo/Tailwind v4 入口与唯一色值源，冻结 V1 Classic Blueprint、Paper First 中性画布/纯净纸张、统一 smooth corner/阴影/动效及 light/dark Skeleton 语义 token，并导入职责样式模块
+src/styles/: UI 样式实现层，以 landing.css 隔离营销页、workspace.css 隔离 Paper Stage/浮动工具/整理连线与业务布局、design-system.css 统一组件材质、ai-message.css 统一 SSE 消息家族、CodeMirror CSS 隔离 source/live 显示协议；跨样式颜色插值统一使用 sRGB
+src/app/: 应用装配层，承载 OAuth 回调、Profile/access token 登录守卫、仅含唯一 Paper 的 /app 首次准入 Skeleton 及共享 Dashboard 生命周期路由
+src/pages/: 页面层，承载 Landing、OAuth Callback 与 Paper First Dashboard，编排删除/AI 发送/整理前 flush、Run apply/undo、左右工具唤醒与路由收束
+src/widgets/: 业务组合组件层，承载 Landing、PaperWorkspaceShell、按需文件库、AI 思考空间、memo 编辑会话、账户/订阅与回收站
+src/shared/: 前端共享层，承载 memo/AI API、Zustand active tree/Run 局部归并、按用户 WorkspaceChromeState、design system、纯 Supabase Auth 与主题状态；前端禁止直连业务表或 Storage
 docs/: UI 验收证据目录，仅保存仍可复核的 V1 Design System 语义说明与 computed Token 快照；历史截图已作废，视觉判断必须重新读取当前运行界面
 package.json: Bun 包元数据、Vite dev/build/typecheck 与 Bun test scripts 及用户端依赖清单
 bun.lock: Bun 锁定依赖版本
@@ -30,11 +30,13 @@ tsconfig.json: TypeScript 编辑器与编译约束
 
 备忘录状态约束: `src/shared/store/memoTreeStore.ts` 是 active 文件树与正文草稿的唯一客户端状态源。GET 整树只允许在进入 Dashboard、登录用户变化或显式刷新时发生；人工创建必须同步插入临时 Memo、立即进入编辑器且不锁定后续创建，多个提交独立并发，临时/真实 ID 替换不得重挂载编辑器或覆盖等待期间的标题/正文，失败只精确撤销对应节点。重命名、移动、软删除与恢复同样必须乐观更新或合并局部响应，严禁写成功后刷新整棵树。Trash 只保存回收站列表视图状态，不得复制 active tree。删除当前 Memo 或其祖先前必须等待 `useMemoAutosave` required flush，失败保留路由、编辑会话和 subtree；删除成功后暂停旧会话、清理受影响 last-memo 并导航到下一 Memo 或 `/app`。中央连续画布、Markdown、reading/live/source、安全渲染与空白保真继续遵循既有单一存储协议；自动保存仍使用既有调度/重试参数且所有保存携带显式 memoId。
 
-备忘录画布约束: 中央 Main Panel 自身就是唯一编辑表面，内部不得再绘制纸卡边框、圆角、阴影或独立底色；文件名标题与正文共享居中的 52rem 上限写作列，标题和水平留白必须依据可拖拽 Main Panel 自身宽度响应，而不是依据浏览器视口，标题保持 24–30px、正文保持 15px，reading/live 的正文 H1 必须严格小于文件名标题。标题、正文与 reading/live/source 切换不得通过重挂载破坏 CodeMirror 选区、撤销历史或自动保存会话。
+备忘录画布约束: APP 使用纯中性灰 Workspace Canvas 衬托唯一常驻 Paper；Light Paper 纯白、Dark Paper 为同一明暗轴上的深纸面，允许极弱边缘、克制圆角与多层柔影，但禁止纹理、点阵、渐变光斑及白板交互。Paper 宽度上限 51rem、最小高度 `calc(100vh - 5rem)`，内部写作列上限 45rem；路径/整理/阅读命令位于 Paper 顶部，文件库/AI 开关位于 Canvas。切换 memo 只替换 Paper 内部内容；标题、正文、Panel 动画与 reading/live/source 切换不得破坏 CodeMirror 选区、撤销历史或自动保存会话。
+
+工作台外壳约束: WorkspaceChromeState 按用户保存 libraryOpen/assistantOpen，新用户首次双关闭，旧 Agent 偏好只迁移助手；新建和切换 memo 不改变开关。>=1200px 单侧工具为带视口间距的浮层并为 Paper 预留安全区；双侧仅在 >=1400px 同时预留，避免压缩 Paper，低于该宽度时互斥覆盖；768–1199px 与移动端同样使用覆盖抽屉，Escape/遮罩关闭。整理 succeeded/undone 只打开文件库并定位/高亮目标与显示纸下回执，awaiting_confirmation 只打开 AI，stale/failed 不强迫打开任何工具。Motion 只解释空间关系与状态转换，统一从 motion/react 引入，reduced-motion 取消位移与路径绘制。
 
 状态反馈约束: 不提供通用状态胶囊；进行中状态由对应 Button loading 表达，操作结果由 Toast 反馈，页面长期信息使用上下文内的普通文字、图标或结构层级，不额外制造状态徽章。
 
-Skeleton 加载约束: Skeleton 只允许来自 shared/design-system；首次无旧内容且真实结构明确时才使用，业务层必须按最终尺寸组合，不得自建灰块、shimmer 或计时器。统一采用低对比表面、3.6s 单组宽光带、180ms 延迟出现与 360ms 最短可见时长，reduced-motion 下保持静态。已有内容刷新必须保留内容，按钮操作只用局部 loading；页面级 Skeleton 仅用于 /app 首次 Profile 准入，memo tree 成功后侧栏与连续写作画布各自自然恢复。
+Skeleton 加载约束: Skeleton 只允许来自 shared/design-system；首次无旧内容且真实结构明确时才使用，业务层必须按最终尺寸组合，不得自建灰块、shimmer 或计时器。统一采用低对比表面、3.6s 单组宽光带、180ms 延迟出现与 360ms 最短可见时长，reduced-motion 下保持静态。已有内容刷新必须保留内容；页面级 Skeleton 仅用于 /app 首次 Profile 准入且第一眼只呈现 Paper，memo tree 在文件库打开后自然恢复。
 
 AI 消息组件约束: 用户气泡必须与 Primary Button 同源；消息角色只由气泡材质、对齐和上下文表达，用户与助手回复上方禁止重复显示“你”“备忘录助手”等身份标题。AssistantMessage 最终正文严禁 border、background、radius、shadow 等任何卡片表面；流式正文必须把 SSE 已到达文本立即完整交给视图，不得用逐词计时队列限制模型吐字速度；英文按词、中文按语义词组仅为末尾最多 5 个单元提供轻微模糊拖尾，禁止添加尾部光标或第二种持续注意力动效，reduced-motion 下停止模糊动效。AI SDK `UIMessage.parts` 是回复显示顺序的唯一真相源：初次生成与工具/审批续写必须复用同一 assistant ID；同一 toolCallId 只展示一次。最后一次工具调用之前的 text、全部 reasoning 与工具 part 按原序组成单一处理过程，最后一次工具后的 text 是独立最终正文。过程入口固定在全部过程文字和工具之上，普通无 reasoning/工具回复不制造空过程区。处理过程视觉必须弱于最终正文，不展示耗时、步骤数、工具数，不添加厚重卡片或时间轴。写工具不得在 input-available 到达时提前执行，只能在流结束且没有 approval-requested 后交给 Worker；人工审批必须以焦点受控 Dialog 阻塞，批准后续写，拒绝/关闭停止，不得在后台重复尝试。智能审批或完全访问自动通过时不显示审批/审计大卡；同轮成功命令只在整条 AI 回复末尾提供一个“撤销本次操作”，并按执行逆序逐条撤销。ToolCallBubble 只展示净化的人话详情，禁止 UUID、Token、原始 JSON 或完整正文。Prompt Bar 固化当前 memo、最多五篇置顶/@引用及 revision；Worker 只基于唯一 Store 快照规划，主线程乐观投影并提交 api Command，拒绝/error/stale 精确回滚。Worker 不访问 React/DOM/Zustand/API/数据库，也不是安全裁决者。
 

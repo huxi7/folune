@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 React Router Profile/token、Zustand memo/AgentPanel Store、AI Run API/chat organize、统一 Skeleton、NotesWorkspace、AccountDialog 与可调宽 AgentPanel
- * [OUTPUT]: 对外提供三 Panel、乐观备忘录路由、草稿 flush 后删除/AI 对话/AI 整理、Run 确认/撤销局部树归并与账户/视图编排
- * [POS]: app/src/pages 的 /app 编排层；编辑器、服务端 AI 命令投影、Run、Store、路由与 Trash 的跨域生命周期只在此建立一次等待边界
+ * [INPUT]: 依赖 React Router Profile/token、memo/WorkspaceChrome Store、AI Run、Skeleton、PaperWorkspaceShell、NotesWorkspace、AccountDialog 与可调宽浮层
+ * [OUTPUT]: 对外提供 Paper First 舞台、乐观备忘录路由、草稿 flush 后删除/AI 对话/整理分流、归档定位/撤销回执与账户/视图编排
+ * [POS]: app/src/pages 的 /app 编排层；编辑器、Run、Store、浮动工具、路由与 Trash 的跨域生命周期只在此建立一次等待边界
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -15,12 +15,9 @@ import {
 import type { MemoTreeNode } from "../shared/api/memo";
 import { getProfile, type Profile } from "../shared/api/profile";
 import { useDelayedSkeleton, useToast } from "../shared/design-system/components";
-import {
-  findNode,
-  findSiblings,
-} from "../shared/store/memoTree";
-import { useAgentPanelStore } from "../shared/store/agentPanelStore";
+import { findNode } from "../shared/store/memoTree";
 import { useMemoTreeStore } from "../shared/store/memoTreeStore";
+import { useWorkspaceChromeStore } from "../shared/store/workspaceChromeStore";
 import { signOutAuthenticatedUser } from "../shared/supabase/auth";
 import {
   AccountDialog,
@@ -31,6 +28,7 @@ import { AppSidebar, type SidebarView } from "../widgets/AppSidebar";
 import { AppMainToolbar } from "../widgets/AppMainToolbar";
 import { MemoNodeDialog } from "../widgets/MemoNodeDialog";
 import {
+  getMemoFolderPath,
   type MemoMovePlan,
 } from "../widgets/memoLibrary";
 import type {
@@ -44,6 +42,10 @@ import {
   type NotesWorkspaceHandle,
 } from "../widgets/NotesWorkspace";
 import { PanelResizeHandle } from "../widgets/PanelResizeHandle";
+import {
+  PaperWorkspaceShell,
+  type WorkspaceOrganizePresentation,
+} from "../widgets/PaperWorkspaceShell";
 import { SubscriptionWorkspace } from "../widgets/SubscriptionWorkspace";
 import { TrashWorkspace } from "../widgets/TrashWorkspace";
 import {
@@ -65,11 +67,9 @@ import {
   AGENT_WIDTH_KEY,
   DEFAULT_AGENT_WIDTH,
   DEFAULT_SIDEBAR_WIDTH,
-  MAIN_MIN_WIDTH,
   SIDEBAR_MAX_WIDTH,
   SIDEBAR_MIN_WIDTH,
   SIDEBAR_WIDTH_KEY,
-  WORKSPACE_CHROME_WIDTH,
   type WorkspaceStyle,
   usePersistedPanelWidth,
 } from "./workspaceLayout";
@@ -98,9 +98,13 @@ export function AppDashboard() {
   const noteMatch = useMatch("/app/notes/:noteId");
   const routeMemoId = noteMatch?.params.noteId ?? null;
   const { toast } = useToast();
-  const agentPanelOpen = useAgentPanelStore((state) => state.isOpen);
-  const hydrateAgentPanel = useAgentPanelStore((state) => state.hydrate);
-  const toggleAgentPanel = useAgentPanelStore((state) => state.toggle);
+  const assistantOpen = useWorkspaceChromeStore((state) => state.assistantOpen);
+  const libraryOpen = useWorkspaceChromeStore((state) => state.libraryOpen);
+  const closeAssistant = useWorkspaceChromeStore((state) => state.closeAssistant);
+  const closeLibrary = useWorkspaceChromeStore((state) => state.closeLibrary);
+  const hydrateWorkspaceChrome = useWorkspaceChromeStore((state) => state.hydrate);
+  const toggleAssistant = useWorkspaceChromeStore((state) => state.toggleAssistant);
+  const toggleLibrary = useWorkspaceChromeStore((state) => state.toggleLibrary);
   const memoTree = useMemoTreeStore((state) => state.nodes);
   const fetchTree = useMemoTreeStore((state) => state.fetchTree);
   const createFolder = useMemoTreeStore((state) => state.createFolder);
@@ -132,6 +136,7 @@ export function AppDashboard() {
   const [memoDialog, setMemoDialog] = useState<MemoDialogState>(null);
   const [treeMutating, setTreeMutating] = useState(false);
   const [trashRevision, setTrashRevision] = useState(0);
+  const [focusMemoClientKey, setFocusMemoClientKey] = useState<string | null>(null);
   const notesWorkspaceRef = useRef<NotesWorkspaceHandle>(null);
   const initialTreeHandledRef = useRef<string | null>(null);
   const treePlaceholderWasActiveRef = useRef(false);
@@ -151,26 +156,6 @@ export function AppDashboard() {
   const selectedMemo = routeMemoId === null
     ? null
     : findNode(memoTree, resolveMemoId(routeMemoId));
-  const sidebarMaxWidth = Math.max(
-    SIDEBAR_MIN_WIDTH,
-    Math.min(
-      SIDEBAR_MAX_WIDTH,
-      window.innerWidth -
-        (agentPanelOpen ? agentWidth : 0) -
-        MAIN_MIN_WIDTH -
-        WORKSPACE_CHROME_WIDTH,
-    ),
-  );
-  const agentMaxWidth = Math.max(
-    AGENT_MIN_WIDTH,
-    Math.min(
-      AGENT_MAX_WIDTH,
-      window.innerWidth -
-        sidebarWidth -
-        MAIN_MIN_WIDTH -
-        WORKSPACE_CHROME_WIDTH,
-    ),
-  );
   const workspaceStyle: WorkspaceStyle = {
     "--workspace-agent-track": `${agentWidth}px`,
     "--workspace-sidebar-track": `${sidebarWidth}px`,
@@ -190,8 +175,8 @@ export function AppDashboard() {
   });
 
   useEffect(() => {
-    hydrateAgentPanel(profile.id);
-  }, [hydrateAgentPanel, profile.id]);
+    hydrateWorkspaceChrome(profile.id);
+  }, [hydrateWorkspaceChrome, profile.id]);
 
   useEffect(() => {
     if (treePlaceholderActive) {
@@ -289,6 +274,7 @@ export function AppDashboard() {
       })
         .then((created) => {
           window.localStorage.setItem(storageKey, created.id);
+          setFocusMemoClientKey(getMemoClientKey(created.id));
           navigate(`/app/notes/${encodeURIComponent(created.id)}`, {
             replace: true,
           });
@@ -360,6 +346,7 @@ export function AppDashboard() {
   }, [accessToken, accountDialogOpen, toast]);
 
   function handleSelectMemo(memoId: string) {
+    setFocusMemoClientKey(null);
     setActiveView("note");
     navigate(`/app/notes/${encodeURIComponent(memoId)}`);
   }
@@ -379,6 +366,7 @@ export function AppDashboard() {
     accessToken,
     lastMemoStorageKey: lastMemoStorageKey(profile.id),
     navigate,
+    onCreatedMemo: setFocusMemoClientKey,
     onSelectMemo: handleSelectMemo,
     onTitleDraftReset: () => setViewTitleDraft(null),
     routeMemoId,
@@ -563,29 +551,58 @@ export function AppDashboard() {
     ? viewTitleDraft.title
     : selectedMemo?.title ?? "备忘录";
   const toolbarTitle = activeView === "note"
-    ? currentMemoTitle
+    ? isMemo(selectedMemo)
+      ? `${getMemoFolderPath(memoTree, selectedMemo.id)} / ${currentMemoTitle}`
+      : currentMemoTitle
     : {
         "design-system": "Design System",
         subscription: "订阅",
         trash: "回收站",
       }[activeView];
+  const organizePresentation: WorkspaceOrganizePresentation | null = (() => {
+    const run = memoOrganize.presentationRun;
+    if (
+      run === null ||
+      run.result === null ||
+      (run.status !== "succeeded" && run.status !== "undone")
+    ) {
+      return null;
+    }
+
+    const resultMemo = run.status === "undone"
+      ? run.result.undo?.memo
+      : run.result.memo;
+    if (resultMemo === undefined || resultMemo.id !== selectedMemo?.id) {
+      return null;
+    }
+
+    return {
+      memoId: resultMemo.id,
+      path: run.status === "undone"
+        ? getMemoFolderPath(memoTree, resultMemo.id)
+        : run.result.target_path,
+      runId: run.id,
+      status: run.status,
+      targetFolderId: resultMemo.parent_id,
+    };
+  })();
   const memoDialogDescription = memoDialog === null
     ? ""
     : memoDialog.parentId === null
       ? "在根目录中创建文件夹。"
       : `在「${findNode(memoTree, memoDialog.parentId)?.title ?? "当前文件夹"}」中创建子文件夹。`;
 
-  return (
-    <div
-      className="app-workspace"
-      data-agent-open={agentPanelOpen}
-      style={workspaceStyle}
-    >
-      <div className="app-sidebar-shell">
+  const library = (
+    <>
         <AppSidebar
           activeView={activeView}
           memoTree={memoTree}
           mutating={treeMutating}
+          organizeTarget={organizePresentation === null ? null : {
+            folderId: organizePresentation.targetFolderId,
+            memoId: organizePresentation.memoId,
+            runId: organizePresentation.runId,
+          }}
           onCreateMemo={handleCreateMemo}
           onMoveNode={handleMoveNode}
           onOpenDesignSystem={() => setActiveView("design-system")}
@@ -611,18 +628,19 @@ export function AppDashboard() {
         <PanelResizeHandle
           ariaLabel="调整文件侧边栏宽度"
           direction={1}
-          max={sidebarMaxWidth}
+          max={SIDEBAR_MAX_WIDTH}
           min={SIDEBAR_MIN_WIDTH}
           onReset={() => setSidebarWidth(DEFAULT_SIDEBAR_WIDTH)}
           onResize={setSidebarWidth}
           side="right"
           size={sidebarWidth}
         />
-      </div>
+    </>
+  );
 
-      <section className="app-main-panel">
+  const paper = (
+    <>
         <AppMainToolbar
-          agentPanelOpen={agentPanelOpen}
           currentMemo={activeView === "note" && isMemo(selectedMemo) ? selectedMemo : null}
           currentMemoTitle={currentMemoTitle}
           documentView={documentView}
@@ -630,7 +648,6 @@ export function AppDashboard() {
           onDocumentViewChange={setDocumentView}
           onEditingModeChange={setEditingMode}
           onOrganize={memoOrganize.organize}
-          onToggleAgent={toggleAgentPanel}
           organizing={memoOrganize.organizing}
           toolbarTitle={toolbarTitle}
         />
@@ -638,6 +655,8 @@ export function AppDashboard() {
         <div className="app-main-content">
           <div className="h-full" hidden={activeView !== "note"}>
             <NotesWorkspace
+              autoFocus={routeMemoId !== null &&
+                focusMemoClientKey === getMemoClientKey(resolveMemoId(routeMemoId))}
               documentView={documentView}
               editingMode={editingMode}
               emptyTree={treeStatus === "ready" && memoTree.length === 0}
@@ -685,13 +704,15 @@ export function AppDashboard() {
             </Suspense>
           ) : null}
         </div>
-      </section>
+    </>
+  );
 
-      <div className="app-agent-shell" hidden={!agentPanelOpen}>
+  const assistant = (
+    <>
         <PanelResizeHandle
           ariaLabel="调整聊天区域宽度"
           direction={-1}
-          max={agentMaxWidth}
+          max={AGENT_MAX_WIDTH}
           min={AGENT_MIN_WIDTH}
           onReset={() => setAgentWidth(DEFAULT_AGENT_WIDTH)}
           onResize={setAgentWidth}
@@ -713,7 +734,31 @@ export function AppDashboard() {
           organizeRun={memoOrganize.run}
           userId={profile.id}
         />
-      </div>
+    </>
+  );
+
+  return (
+    <>
+      <PaperWorkspaceShell
+        assistant={assistant}
+        assistantOpen={assistantOpen}
+        library={library}
+        libraryOpen={libraryOpen}
+        onCloseAssistant={closeAssistant}
+        onCloseLibrary={closeLibrary}
+        onDismissOrganize={memoOrganize.dismissPresentation}
+        onToggleAssistant={toggleAssistant}
+        onToggleLibrary={toggleLibrary}
+        onUndoOrganize={memoOrganize.undo}
+        organizeBusy={memoOrganize.organizing}
+        organizing={memoOrganize.organizing}
+        paper={paper}
+        paperIdentity={activeView === "note" && routeMemoId !== null
+          ? getMemoClientKey(resolveMemoId(routeMemoId))
+          : activeView}
+        presentation={organizePresentation}
+        style={workspaceStyle}
+      />
 
       {accountDialog ? (
         <AccountDialog
@@ -745,6 +790,6 @@ export function AppDashboard() {
           open
         />
       ) : null}
-    </div>
+    </>
   );
 }

@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 AI Run api/chat organize、当前 memo、NotesWorkspace flush/标题接纳、Memo Store 局部归并、AgentPanel open 与 Toast
+ * [INPUT]: 依赖 AI Run api/chat organize、当前 memo、NotesWorkspace flush/标题接纳、Memo Store 局部归并、WorkspaceChrome 分流与 Toast
  * [OUTPUT]: 对外提供当前/最近 Organize Run、整理中状态、触发/确认/拒绝/撤销命令及 ⌘/Ctrl+Enter 快捷键
- * [POS]: pages 层 AI 整理生命周期 Hook；把 Dashboard 的跨编辑器/Run/Store/Panel 编排收束为单一职责，并按用户恢复最近 Run 卡片
+ * [POS]: pages 层 AI 整理生命周期 Hook；成功/撤销只唤醒文件库、待确认只唤醒 AI，stale/失败不强迫打开工具
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -16,11 +16,12 @@ import {
 } from "../shared/api/ai";
 import type { MemoTreeNode } from "../shared/api/memo";
 import { useToast } from "../shared/design-system/components";
-import { useAgentPanelStore } from "../shared/store/agentPanelStore";
 import { findNode } from "../shared/store/memoTree";
 import { useMemoTreeStore } from "../shared/store/memoTreeStore";
+import { useWorkspaceChromeStore } from "../shared/store/workspaceChromeStore";
 import { organizeMemo } from "../widgets/AgentPanel/organizeClient";
 import type { NotesWorkspaceHandle } from "../widgets/NotesWorkspace";
+import { getOrganizeWakeTarget } from "./organizePresentation";
 
 const LAST_RUN_KEY_PREFIX = "supernote:last-organize-run:";
 const lastRunStorageKey = (userId: string): string =>
@@ -47,9 +48,11 @@ export function useMemoOrganize({
   workspaceRef,
 }: UseMemoOrganizeInput) {
   const { toast } = useToast();
-  const openAgentPanel = useAgentPanelStore((state) => state.open);
+  const openAssistant = useWorkspaceChromeStore((state) => state.openAssistant);
+  const openLibrary = useWorkspaceChromeStore((state) => state.openLibrary);
   const reconcileAiRun = useMemoTreeStore((state) => state.reconcileAiRun);
   const [run, setRun] = useState<AiRun | null>(null);
+  const [presentationRun, setPresentationRun] = useState<AiRun | null>(null);
   const [organizing, setOrganizing] = useState(false);
   const [threadId, setThreadId] = useState<string | null>(null);
 
@@ -71,20 +74,37 @@ export function useMemoOrganize({
   const mergeRun = useCallback((nextRun: AiRun) => {
     setRun(nextRun);
     window.localStorage.setItem(lastRunStorageKey(userId), nextRun.id);
-    if (nextRun.status !== "succeeded" && nextRun.status !== "undone") return;
-    reconcileAiRun(nextRun);
-    const resultMemo = nextRun.status === "undone"
-      ? nextRun.result?.undo?.memo
-      : nextRun.result?.memo;
-    if (resultMemo !== undefined && resultMemo.id === currentMemo?.id) {
-      workspaceRef.current?.acceptOrganizedTitle(resultMemo.title);
-      onCommittedTitle();
+    const wakeTarget = getOrganizeWakeTarget(nextRun.status);
+    if (wakeTarget === "assistant") {
+      setPresentationRun(null);
+      openAssistant();
+      return;
     }
-    openAgentPanel();
-  }, [currentMemo?.id, onCommittedTitle, openAgentPanel, reconcileAiRun, userId, workspaceRef]);
+
+    if (wakeTarget === "library") {
+      reconcileAiRun(nextRun);
+      const resultMemo = nextRun.status === "undone"
+        ? nextRun.result?.undo?.memo
+        : nextRun.result?.memo;
+      if (resultMemo !== undefined && resultMemo.id === currentMemo?.id) {
+        workspaceRef.current?.acceptOrganizedTitle(resultMemo.title);
+        onCommittedTitle();
+      }
+      setPresentationRun(nextRun);
+      openLibrary();
+      return;
+    }
+
+    setPresentationRun(null);
+  }, [currentMemo?.id, onCommittedTitle, openAssistant, openLibrary, reconcileAiRun, userId, workspaceRef]);
+
+  useEffect(() => {
+    setPresentationRun(null);
+  }, [currentMemo?.id]);
 
   const organize = useCallback(async () => {
     if (!isMemo(currentMemo) || organizing) return;
+    setPresentationRun(null);
     setOrganizing(true);
     try {
       if (workspaceRef.current === null) {
@@ -96,22 +116,21 @@ export function useMemoOrganize({
         toast({ title: "空白备忘录无需整理", variant: "info" });
         return;
       }
-      openAgentPanel();
       const nextRun = await organizeMemo({
         idempotencyKey: crypto.randomUUID(),
         memoId: latest.id,
         threadId,
       });
       mergeRun(nextRun);
-      if (nextRun.status === "succeeded") toast({ title: "AI 整理完成", variant: "success" });
       if (nextRun.status === "awaiting_confirmation") toast({ title: "整理方案需要确认", variant: "info" });
       if (nextRun.status === "stale") toast({ title: "笔记已变化，请重新整理", variant: "warning" });
+      if (nextRun.status === "failed") toast({ title: "AI 整理失败，笔记未修改", variant: "error" });
     } catch (error) {
       toast({ description: error instanceof Error ? error.message : undefined, title: "AI 整理失败，笔记未修改", variant: "error" });
     } finally {
       setOrganizing(false);
     }
-  }, [currentMemo, mergeRun, openAgentPanel, organizing, threadId, toast, workspaceRef]);
+  }, [currentMemo, mergeRun, organizing, threadId, toast, workspaceRef]);
 
   const runCommand = useCallback(async (
     command: "apply" | "reject" | "undo",
@@ -125,13 +144,12 @@ export function useMemoOrganize({
           ? await rejectAiRun(accessToken, run.id)
           : await undoAiRun(accessToken, run.id);
       mergeRun(nextRun);
-      if (command === "apply" && nextRun.status === "succeeded") {
-        toast({ title: "AI 整理完成", variant: "success" });
-      }
       if (command === "apply" && nextRun.status === "stale") {
         toast({ title: "笔记已变化，请重新整理", variant: "warning" });
       }
-      if (command === "undo") toast({ title: "已撤销 AI 整理", variant: "success" });
+      if (command === "apply" && nextRun.status === "failed") {
+        toast({ title: "整理方案执行失败，笔记未修改", variant: "error" });
+      }
     } catch (error) {
       toast({
         description: error instanceof Error ? error.message : undefined,
@@ -156,8 +174,10 @@ export function useMemoOrganize({
 
   return {
     apply: () => runCommand("apply"),
+    dismissPresentation: () => setPresentationRun(null),
     organize,
     organizing,
+    presentationRun,
     reject: () => runCommand("reject"),
     run,
     setThreadId,

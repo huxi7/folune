@@ -2,8 +2,10 @@
 > L2 | 父级: ../CLAUDE.md
 
 成员清单
-agentPanelStore.ts: AgentPanel 薄 UI 状态，按用户恢复可见性，并缓存后端已确认审批模式及 loading/saving/error；禁止复制 AI SDK 消息或文件树
-agentPanelStore.test.ts: 锁定 Panel 刷新恢复、用户级偏好 key 隔离，以及审批保存失败保留原值、成功后才更新模式
+agentPanelStore.ts: AgentPanel 权限薄状态，只缓存后端已确认审批模式及 loading/saving/error；可见性统一归 WorkspaceChromeState，禁止复制 AI SDK 消息或文件树
+agentPanelStore.test.ts: 锁定审批保存失败保留原值、成功后才更新模式
+workspaceChromeStore.ts: Paper First 外壳唯一 UI 状态，按用户持久化 libraryOpen/assistantOpen，新用户双关闭，兼容旧 Agent 开关迁移，并在覆盖式视口保证左右工具互斥
+workspaceChromeStore.test.ts: 覆盖按用户 key、首次双关闭、版本化恢复、损坏容错与旧 AI 偏好迁移
 aiRunTree.ts: AI 整理结果的无副作用局部树归并器，移动/改名目标 memo、插入工作流新目录，并在 undo 时恢复原位和删除可安全移除的空目录
 aiRunTree.test.ts: 覆盖 apply/undo 局部归并、正文与 children 保真和工作流创建目录回收
 aiCommandTree.ts: 通用 AI Command 无副作用对账器，把 succeeded/undone 的 server node/content/软删除事实局部归并 active tree，stale/failed 不改变真相

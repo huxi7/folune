@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖真实 MemoTreeNode、跨临时/真实 ID 保持不变的 memoClientKey、Dashboard 整树状态、统一 Skeleton、DocumentView/EditingMode、useMemoAutosave、共享状态 MarkdownEditor、保留软换行的安全 MarkdownReadingView、ThemeProvider 与全局 Toast
- * [OUTPUT]: 对外提供临时节点提交期间不重挂载的单层连续写作/阅读画布与 NotesWorkspaceHandle，可等待草稿落库、接纳 AI 原子整理标题并把 Agent 正文替换送入同一自动保存状态机
- * [POS]: app/src/widgets 的备忘录详情与编辑会话边界；客户端身份隔离后端 ID 置换，文件名标题和 Markdown 正文共享宽度受控的单列画布，Dashboard 只能经显式 handle 跨越自动保存边界
+ * [INPUT]: 依赖真实 MemoTreeNode、跨临时/真实 ID 保持不变的 memoClientKey、新建聚焦意图、Dashboard 整树状态、DocumentView/EditingMode、useMemoAutosave、MarkdownEditor/ReadingView、ThemeProvider 与 Toast
+ * [OUTPUT]: 对外提供临时节点提交期间不重挂载的纸张内写作/阅读列与 NotesWorkspaceHandle，可聚焦新纸标题、等待草稿落库、接纳 AI 标题并把 Agent 正文替换送入同一自动保存状态机
+ * [POS]: app/src/widgets 的备忘录编辑会话边界；Paper 外壳不拥有编辑状态，客户端身份隔离后端 ID 置换，Dashboard 只能经显式 handle 跨越自动保存边界
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -39,6 +39,7 @@ export type { MemoDraftSnapshot, MemoSaveOptions } from "./useMemoAutosave";
 const MAX_TITLE_LENGTH = 500;
 
 type NotesWorkspaceProps = {
+  autoFocus: boolean;
   documentView: DocumentView;
   editingMode: EditingMode;
   emptyTree: boolean;
@@ -89,6 +90,7 @@ export const NotesWorkspace = forwardRef<
   NotesWorkspaceHandle,
   NotesWorkspaceProps
 >(function NotesWorkspace({
+  autoFocus,
   documentView,
   editingMode,
   emptyTree,
@@ -159,6 +161,31 @@ export const NotesWorkspace = forwardRef<
       titleEditor.textContent = title;
     }
   }, [memo?.id, title]);
+
+  useEffect(() => {
+    if (!autoFocus || documentView !== "editing" || memo === null) {
+      return;
+    }
+
+    const frameId = window.requestAnimationFrame(() => {
+      const titleEditor = titleEditorRef.current;
+      if (titleEditor === null) {
+        editorRef.current?.focus();
+        return;
+      }
+
+      titleEditor.focus();
+      const selection = window.getSelection();
+      if (selection !== null && titleEditor.textContent === "未命名备忘录") {
+        const range = document.createRange();
+        range.selectNodeContents(titleEditor);
+        selection.removeAllRanges();
+        selection.addRange(range);
+      }
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, [autoFocus, documentView, memoClientKey]);
 
   useEffect(() => {
     onTitleChangeRef.current(title);

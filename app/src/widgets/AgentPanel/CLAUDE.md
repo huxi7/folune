@@ -2,7 +2,7 @@
 > L2 | 父级: ../CLAUDE.md
 
 成员清单
-AgentPanel.tsx: AI Native V2 组合根；Prompt Bar 冻结统一 sources，客户端工具只在本轮流完成或人工批准后执行，tool result 续写复用同一 assistant，同轮 commands 逆序撤销并继续走版本门禁
+AgentPanel.tsx: AI Native V2 组合根；Prompt Bar 冻结统一 sources，客户端工具只在本轮流完成或人工批准后执行，tool result 续写复用同一 assistant，同轮 commands 逆序撤销并继续走版本门禁；只通过 WorkspaceChrome 命令关闭浮层，不自持可见性
 composerSources.ts: Prompt Bar 唯一上下文领域层；当前 memo 只是带 current 来源标记的默认 @，与手动/置顶来源去重归并、限五篇并生成同一冻结 metadata
 composerSources.test.ts: 覆盖当前 memo 默认 @、删除抑制、切换更新、手动/置顶去重、发送冻结及发送后草稿来源收束
 MentionMenu.tsx: Prompt Bar @命令菜单视图与搜索纯函数，支持空 @候选、标题/正文/路径搜索、已选排除及 revision 展示

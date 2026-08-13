@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Kumo Tailwind 样式源、Tailwind v4，并导入 AI 消息与 Design System 等职责样式模块消费本文件语义 token
- * [OUTPUT]: 对外提供 Kumo 基础件样式、冻结的 V1 Classic Blueprint、Landing Light Canvas、4px 空间基线、32/40/48px 控件与 Panel Header 尺寸阶梯、自然现代主色、状态/图表/庆祝色板/统一 smooth corner/阴影/动效、零偏移环绕 Button 阴影与独立于 Primary 的 loading 表面、不会因 OKLCH 插值偏红的确定性白色/中性灰蓝表面与 Skeleton shimmer 语义 token、Tailwind 映射及样式模块入口
+ * [OUTPUT]: 对外提供 Kumo 基础样式、V1 Classic Blueprint、Landing Light、Paper First 中性 Canvas/纯净 Paper、4px 空间与 32/40/48px 控件、自然主色、统一材质/动效、确定性中性表面与 Skeleton token、Tailwind 映射及样式模块入口
  * [POS]: app/src 的主题入口，被 main.tsx 引入并约束 Kumo 与本地设计系统共享同一全局视觉来源
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -84,6 +84,14 @@
 
   --background: #ffffff;
   --foreground: #172033;
+  --workspace-canvas: #f1f2f4;
+  --paper-surface: #ffffff;
+  --paper-foreground: #172033;
+  --paper-edge: #e3e5e8;
+  --paper-shadow:
+    0 1px 2px hsl(230 35% 16% / 0.045),
+    0 14px 32px -22px hsl(230 35% 16% / 0.22),
+    0 30px 70px -46px hsl(230 35% 16% / 0.28);
   --card: #ffffff;
   --card-foreground: #172033;
   --popover: #ffffff;
@@ -240,6 +248,14 @@
 :root.dark {
   --background: oklch(0.18 0.03 258);
   --foreground: oklch(0.93 0.015 92);
+  --workspace-canvas: #171a20;
+  --paper-surface: #22262e;
+  --paper-foreground: #edf0f4;
+  --paper-edge: #343a46;
+  --paper-shadow:
+    0 1px 2px rgb(0 0 0 / 18%),
+    0 18px 38px -22px rgb(0 0 0 / 48%),
+    0 36px 80px -42px rgb(0 0 0 / 62%);
   --card: oklch(0.215 0.032 258);
   --card-foreground: oklch(0.93 0.015 92);
   --popover: oklch(0.23 0.034 258);

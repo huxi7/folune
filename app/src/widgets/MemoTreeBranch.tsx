@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖后端 MemoTreeNode、memoLibrary 统一落点、紧凑 SidebarButton 与上层文件夹展开/拖拽/原地重命名命令
- * [OUTPUT]: 对外提供无限递归树渲染、folder 24/52/24 三段落点、memo 前后落点、圆点横线/inside/拖拽源弱化状态和双击/F2 原地输入框
- * [POS]: app/src/widgets 的纯树交互渲染器；只表达可见层级与 HTML5 DnD 几何，并把完整节点身份交给预览生成器，不拥有树数据或调用 API
+ * [INPUT]: 依赖后端 MemoTreeNode、memoLibrary 落点、紧凑 SidebarButton、整理高亮目标与上层展开/拖拽/原地重命名命令
+ * [OUTPUT]: 对外提供递归树、folder/memo 落点、拖拽状态、原地重命名及本次归档目录/笔记语义标记
+ * [POS]: app/src/widgets 的纯树交互渲染器；只表达可见层级、HTML5 DnD 几何与归档结果，不拥有树数据或调用 API
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -32,6 +32,8 @@ type MemoTreeBranchProps = {
   draggedNodeId: string | null;
   dropTarget: MemoDropTarget | null;
   expandedFolders: ReadonlySet<string>;
+  highlightedFolderId: string | null;
+  highlightedMemoId: string | null;
   mutating: boolean;
   nodes: readonly MemoTreeNode[];
   notesActive: boolean;
@@ -202,6 +204,8 @@ export function MemoTreeBranch(props: MemoTreeBranchProps) {
     draggedNodeId,
     dropTarget,
     expandedFolders,
+    highlightedFolderId,
+    highlightedMemoId,
     mutating,
     nodes,
     notesActive,
@@ -303,6 +307,13 @@ export function MemoTreeBranch(props: MemoTreeBranchProps) {
                 }
                 data-drag-source={draggedNodeId === node.id}
                 data-memo-tree-row-id={node.id}
+                data-organize-target={
+                  node.id === highlightedFolderId
+                    ? "folder"
+                    : node.id === highlightedMemoId
+                      ? "memo"
+                      : undefined
+                }
                 draggable={!mutating}
                 label={node.title}
                 leading={icon}
