@@ -21,6 +21,7 @@ supabase/: 数据库契约层，保存 profiles、无限层级 memo_nodes/memos�
 test/: Bun 内置 API 回归测试，使用内存 Supabase HTTP/RPC mock 验证认证、profile/头像、active memo 与完整 Trash 生命周期
 .env.example: 无真实凭据的本地环境变量模板，使用 Supabase Publishable key、后端端口 10001、前端 CORS 来源端口 10000
 .gitignore: api 模块忽略规则
+Dockerfile: Cloud Run 生产镜像入口，在 api 子目录构建上下文内冻结安装运行依赖并复制源码，运行时接受平台 PORT 注入
 package.json: Bun scripts（含 typecheck/test）与 hono、zod 运行依赖清单
 bun.lock: Bun 锁定依赖版本
 tsconfig.json: TypeScript 严格类型检查约束，覆盖 src 与 test
