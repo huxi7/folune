@@ -45,7 +45,7 @@
   }
 
   .auth-input.ds-input:focus-visible {
-    box-shadow: 0 0 0 0.18rem color-mix(in srgb, var(--ring) 18%, transparent), var(--ds-shadow-pressed);
+    box-shadow: 0 0 0 0.18rem color-mix(in srgb, var(--ring) 18%, transparent);
   }
 
   .auth-input.ds-input:-webkit-autofill,
@@ -95,7 +95,7 @@
 
   .auth-mode-switch button:focus-visible,
   .auth-terms-copy button:focus-visible {
-    border-radius: 0.2rem;
+    border-radius: var(--radius-control);
     outline: 2px solid color-mix(in srgb, var(--ring) 45%, transparent);
     outline-offset: 0.15rem;
   }

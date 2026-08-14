@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖 index.css 的语义颜色、Button 细边缘/零偏移环绕阴影/按压收拢/loading 独立状态 token 与 Tailwind v4 layer
- * [OUTPUT]: 对外提供 ThinkingMark 固定 SVG 容器/Formation 聚合 Motion、确定性中性灰且不偏红的单组宽光带 Skeleton、遵循 40px 默认控件高度且以纯色平面和均匀环绕柔影塑形的 Button/Input/Select、保留实心红色的 Danger、独立冷灰蓝表面与低频 Shimmer 的 loading 状态，以及冻结的 V1 组件质感与 Dialog 层级
+ * [INPUT]: 依赖 index.css 的 Quiet Editorial 语义 Color/Type/Spacing/Radius/Elevation/Motion 与 Tailwind v4 layer
+ * [OUTPUT]: 对外提供平面 Button/Input/Select/Card、纯色 BrandMark、克制 Dialog 层级、Danger 唯一红色功能面、Skeleton/Thinking/loading 信息态
  * [POS]: app/src/styles 的组件视觉层，被 index.css 统一导入
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -151,11 +151,7 @@
     --button-surface-hover: transparent;
     --button-surface-active: transparent;
     --button-foreground-rest: var(--foreground);
-    --button-elevation-rest: var(--button-shadow-rest);
-    --button-elevation-pressed: var(--button-shadow-pressed);
-    --button-elevation-disabled: var(--button-shadow-disabled);
-    --button-elevation-loading: var(--button-shadow-subtle-rest);
-    --button-shimmer-color: var(--button-specular);
+    --button-shimmer-color: var(--primary-foreground);
     position: relative;
     isolation: isolate;
     overflow: hidden;
@@ -172,11 +168,10 @@
     letter-spacing: 0.006em;
     line-height: 1;
     white-space: nowrap;
-    box-shadow: var(--button-elevation-rest);
+    box-shadow: none;
     transform: translateY(0);
     transition:
       transform var(--motion-fast) var(--ease-standard),
-      box-shadow var(--motion-fast) var(--ease-standard),
       background var(--motion-fast) var(--ease-standard),
       border-color var(--motion-fast) var(--ease-standard),
       color var(--motion-fast) var(--ease-standard),
@@ -196,13 +191,13 @@
   .ds-button:not(:disabled):hover {
     border-color: var(--button-border-hover);
     background: var(--button-surface-hover);
-    box-shadow: var(--button-elevation-rest);
+    box-shadow: none;
   }
 
   .ds-button:not(:disabled):active {
     border-color: var(--button-border-active);
     background: var(--button-surface-active);
-    box-shadow: var(--button-elevation-pressed);
+    box-shadow: none;
     transform: translateY(0.0625rem);
     transition-duration: 70ms;
   }
@@ -217,7 +212,7 @@
   }
 
   .ds-button:disabled:not(.ds-button-loading) {
-    box-shadow: var(--button-elevation-disabled);
+    box-shadow: none;
     filter: saturate(0.52);
     opacity: 0.58;
     transform: none;
@@ -233,7 +228,7 @@
     border-color: var(--button-loading-border);
     background: var(--button-loading-background);
     color: var(--button-loading-foreground);
-    box-shadow: var(--button-elevation-loading);
+    box-shadow: none;
   }
 
   .ds-button-loading::after {
@@ -304,9 +299,6 @@
     --button-surface-hover: var(--secondary);
     --button-surface-active: var(--border);
     --button-foreground-rest: var(--card-foreground);
-    --button-elevation-rest: var(--button-shadow-subtle-rest);
-    --button-elevation-pressed: var(--button-shadow-subtle-pressed);
-    --button-elevation-disabled: var(--button-shadow-subtle-disabled);
     --button-shimmer-color: var(--foreground);
   }
 
@@ -314,9 +306,6 @@
     --button-surface-hover: var(--muted);
     --button-surface-active: var(--border);
     --button-foreground-rest: var(--muted-foreground);
-    --button-elevation-rest: none;
-    --button-elevation-pressed: none;
-    --button-elevation-disabled: none;
     --button-shimmer-color: var(--foreground);
   }
 
@@ -336,14 +325,14 @@
 
   .ds-input {
     min-height: var(--control-height-default);
-    border-radius: calc(var(--ds-radius-soft) - 0.125rem);
+    border-radius: var(--radius-control);
     border-width: 1px;
     border-color: var(--input);
     background: var(--card);
     padding-inline: calc(var(--spacing) * 3);
     font-size: 0.875rem;
     color: var(--foreground);
-    box-shadow: var(--ds-shadow-pressed), inset 0 -1px 0 color-mix(in srgb, var(--background) 84%, transparent);
+    box-shadow: none;
     transition: border-color var(--motion-fast) var(--ease-standard), box-shadow var(--motion-fast) var(--ease-standard), background var(--motion-fast) var(--ease-standard);
   }
 
@@ -354,7 +343,7 @@
   .ds-input:focus-visible {
     outline: none;
     border-color: var(--ring);
-    box-shadow: 0 0 0 0.18rem color-mix(in srgb, var(--ring) 18%, transparent), var(--ds-shadow-pressed);
+    box-shadow: 0 0 0 0.18rem color-mix(in srgb, var(--ring) 18%, transparent);
   }
 
   .ds-input:disabled {
@@ -362,6 +351,14 @@
     opacity: 0.58;
     background: var(--surface-neutral);
     box-shadow: none;
+  }
+
+  .ds-input[aria-invalid="true"] {
+    border-color: var(--destructive);
+  }
+
+  .ds-input[aria-invalid="true"]:focus-visible {
+    box-shadow: 0 0 0 0.18rem color-mix(in srgb, var(--destructive) 16%, transparent);
   }
 
   .ds-password-input {
@@ -404,9 +401,9 @@
   }
 
   .ds-card {
-    border-radius: var(--ds-radius-smooth);
+    border-radius: var(--radius-panel);
     border-width: 1px;
-    box-shadow: var(--shadow-sm), var(--ds-shadow-inset-highlight);
+    box-shadow: none;
     transition: border-color var(--motion-normal) var(--ease-standard), background var(--motion-normal) var(--ease-standard), box-shadow var(--motion-normal) var(--ease-standard);
   }
 
@@ -433,10 +430,10 @@
     position: absolute;
     inset: 0.05rem 0.22rem 0.14rem 0.05rem;
     overflow: hidden;
-    border: 1px solid color-mix(in srgb, var(--primary) 72%, var(--foreground));
-    border-radius: 0.46rem;
-    background: linear-gradient(145deg, color-mix(in srgb, var(--primary) 88%, var(--chart-5)), var(--primary));
-    box-shadow: var(--shadow-sm), inset 0 1px 0 color-mix(in srgb, var(--primary-foreground) 30%, transparent);
+    border: 1px solid var(--primary);
+    border-radius: var(--radius-control);
+    background: var(--primary);
+    box-shadow: none;
   }
 
   .ds-brand-note::after {
@@ -474,18 +471,18 @@
     bottom: 0.14rem;
     width: 0.4rem;
     height: 0.78rem;
-    border: 1px solid color-mix(in srgb, var(--chart-3) 72%, var(--foreground));
+    border: 1px solid var(--primary);
     border-radius: 0.15rem 0.22rem 0.22rem 0.15rem;
-    background: var(--chart-3);
-    box-shadow: var(--shadow-xs);
+    background: var(--primary);
+    box-shadow: none;
   }
 
   .ds-dialog-panel {
-    border-radius: var(--ds-radius-smooth);
+    border-radius: var(--radius-dialog);
     border: 1px solid var(--border);
     background: var(--popover);
     color: var(--popover-foreground);
-    box-shadow: var(--shadow-2xl), var(--ds-shadow-inset-highlight);
+    box-shadow: var(--shadow-lg);
     animation: ds-panel-in var(--motion-normal) var(--ease-standard);
   }
 
@@ -516,19 +513,19 @@
     background: var(--card);
     padding: 0.65rem 0.75rem;
     color: var(--foreground);
-    box-shadow: var(--shadow-xs), var(--ds-shadow-inset-highlight);
+    box-shadow: none;
     transition: box-shadow var(--motion-fast) var(--ease-standard), border-color var(--motion-fast) var(--ease-standard);
   }
 
   .ds-select-trigger:hover,
   .ds-select-trigger[data-open="true"] {
     border-color: color-mix(in srgb, var(--ring) 42%, var(--border));
-    box-shadow: var(--shadow-xs), var(--ds-shadow-inset-highlight);
+    box-shadow: none;
   }
 
   .ds-select-trigger:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 0.18rem color-mix(in srgb, var(--ring) 18%, transparent), var(--ds-shadow-raised), var(--ds-shadow-inset-highlight);
+    box-shadow: 0 0 0 0.18rem color-mix(in srgb, var(--ring) 18%, transparent);
   }
 
   .ds-select-menu {
@@ -537,12 +534,12 @@
     z-index: 40;
     width: 100%;
     overflow: hidden;
-    border-radius: var(--ds-radius-smooth);
+    border-radius: var(--radius-menu);
     border: 1px solid var(--border);
     background: var(--popover);
     padding: calc(var(--spacing) * 1.5);
     color: var(--popover-foreground);
-    box-shadow: var(--shadow-xl), var(--ds-shadow-inset-highlight);
+    box-shadow: var(--shadow-sm);
     transform-origin: center top;
     animation: ds-menu-in var(--motion-fast) var(--ease-standard);
   }
@@ -572,7 +569,7 @@
   .ds-select-option[data-active="true"] {
     background: var(--surface-accent-subtle);
     color: var(--accent-foreground);
-    box-shadow: var(--ds-shadow-inset-highlight), var(--ds-shadow-inset-lowlight);
+    box-shadow: none;
   }
 
   .ds-select-option[data-tone="danger"] {
@@ -595,19 +592,19 @@
     background: var(--sidebar);
     padding: 0.55rem 0.65rem;
     color: var(--sidebar-foreground);
-    box-shadow: var(--shadow-xs), var(--ds-shadow-inset-highlight);
+    box-shadow: none;
     transition: box-shadow var(--motion-fast) var(--ease-standard), border-color var(--motion-fast) var(--ease-standard), background var(--motion-fast) var(--ease-standard);
   }
 
   .ds-user-button:hover,
   .ds-user-button[data-open="true"] {
     border-color: color-mix(in srgb, var(--sidebar-ring) 42%, var(--sidebar-border));
-    box-shadow: var(--shadow-xs), var(--ds-shadow-inset-highlight);
+    box-shadow: none;
   }
 
   .ds-user-button:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 0.18rem color-mix(in srgb, var(--sidebar-ring) 18%, transparent), var(--ds-shadow-raised), var(--ds-shadow-inset-highlight);
+    box-shadow: 0 0 0 0.18rem color-mix(in srgb, var(--sidebar-ring) 18%, transparent);
   }
 
   .ds-user-avatar {
@@ -621,11 +618,11 @@
     object-fit: cover;
     border-radius: var(--ds-radius-soft);
     border: 1px solid color-mix(in srgb, var(--primary) 34%, var(--border));
-    background: linear-gradient(180deg, color-mix(in srgb, var(--primary) 84%, var(--background)), var(--primary));
+    background: var(--primary);
     color: var(--primary-foreground);
     font-size: 0.75rem;
     font-weight: 700;
-    box-shadow: var(--ds-shadow-raised), var(--ds-shadow-inset-highlight);
+    box-shadow: none;
   }
 
   @supports (corner-shape: squircle) {

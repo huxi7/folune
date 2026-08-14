@@ -291,7 +291,9 @@ export const NotesWorkspace = forwardRef<
           />
         </div>
         {documentView === "reading" ? (
-          <MarkdownReadingView content={content} preserveSoftBreaks />
+          <div className="note-reading-surface">
+            <MarkdownReadingView content={content} preserveSoftBreaks />
+          </div>
         ) : null}
       </article>
     </main>

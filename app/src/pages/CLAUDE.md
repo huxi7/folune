@@ -12,8 +12,8 @@ memoDeletion.ts: 删除导航纯算法，判定当前编辑 Memo 是否落在待
 memoDeletion.test.ts: 覆盖删除当前 Memo/祖先影响判定及有/无下一 Memo 的路由选择
 useOptimisticMemoCreation.ts: 人工新建路由协调器；同步进入临时备忘录并独立跟踪每个并发提交，乱序成功只替换自己的 ID，失败只撤销对应节点并在仍处当前页时回退
 useMemoOrganize.ts: AI 整理生命周期协调器；发送前 required flush，按用户恢复最近 Run，编排 plan/apply/reject/undo，并把成功或撤销结果局部归并到 Memo Store、把 stale 诚实反馈给用户
-useMemoOrganize.test.ts: 锁定 succeeded/undone 唤醒文件库、awaiting_confirmation 唤醒 AI、stale/failed/过程态不强迫打开工具
-organizePresentation.ts: 整理 Run 到 Workspace 工具唤醒目标的无副作用策略，隔离 Hook 与测试依赖
+useMemoOrganize.test.ts: 锁定 succeeded/undone 唤醒文件库与成功/撤销目标快照、awaiting_confirmation 唤醒 AI、stale/failed/过程态不强迫打开工具
+organizePresentation.ts: 整理 Run 到 Workspace 工具唤醒及归档展示快照的无副作用策略；成功使用服务端目标路径，撤销使用当前树恢复路径
 workspaceLayout.ts: Paper First 浮层几何与宽度持久化边界，集中维护文件库/AI 尺寸约束、CSS 变量类型和 localStorage 校验
 workspaceMotion.ts: 工作台唯一 Motion 配置，冻结 panelSpring、paperSpring 与 fadeTransition，供 Paper/Panel/连线/回执统一消费
 

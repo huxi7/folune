@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 index.css 的 4px 空间基线、32/40/48px 尺寸阶梯、V1 语义颜色/圆角/阴影/动效 token 与 design-system.css 的真实组件类
- * [OUTPUT]: 对外提供空间标尺、48/32/16 Panel Header 样板，以及不重复 Button variants/loading/disabled、Skeleton、ThinkingMark 与工具状态的生产组件卡片矩阵
- * [POS]: app/src/styles 的开发陈列专用视觉层，只把生产 token 可视化并作用于 .ds-workspace-page，不定义第二套尺寸或主题
+ * [INPUT]: 依赖 index.css 的 Quiet Editorial Foundations 与 Design System/Signature Components 真实类
+ * [OUTPUT]: 对外提供真实主题切换、五层展示页、全状态检查轨、完整 Editorial 样板及 Paper Surface/Edge Dock/Archive Cord 生产同源预览
+ * [POS]: app/src/styles 的开发陈列专用视觉层，只可视化生产 token，不定义第二套颜色、曲率、阴影或 Motion
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 @layer components {
@@ -35,15 +35,17 @@
   .design-system-title {
     margin-top: calc(var(--spacing) * 2);
     color: var(--foreground);
-    font-family: var(--font-mono);
-    font-size: clamp(2rem, 5vw, 3rem);
-    font-weight: 540;
-    letter-spacing: 0.01em;
-    line-height: 1;
+    font-family: var(--font-serif);
+    font-size: var(--type-display);
+    font-weight: 500;
+    letter-spacing: -0.035em;
+    line-height: 0.96;
   }
 
   .design-system-intro {
+    display: grid;
     max-width: 42rem;
+    gap: var(--space-3);
     color: var(--muted-foreground);
     font-family: var(--font-mono);
     font-size: 0.75rem;
@@ -54,6 +56,14 @@
     color: var(--foreground);
     font-family: inherit;
   }
+
+  .design-system-intro small {
+    color: var(--muted-foreground);
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+  }
+
+  .design-system-intro .ds-segmented-control { justify-self: start; }
 
   .ds-thinking-mark-preview {
     display: grid;
@@ -91,20 +101,25 @@
     grid-template-columns: minmax(0, 1fr);
     gap: calc(var(--spacing) * 4);
     align-items: start;
-    padding-top: calc(var(--spacing) * 8);
+    padding-top: var(--space-4);
   }
+
+  .design-system-section { padding-top: var(--space-16); }
+  .design-system-section-header { display: flex; align-items: baseline; gap: var(--space-3); border-bottom: 1px solid var(--border); padding-bottom: var(--space-3); }
+  .design-system-section-header span { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--type-caption); }
+  .design-system-section-header h2 { color: var(--foreground); font-family: var(--font-serif); font-size: 1.5rem; font-weight: 500; letter-spacing: -0.02em; }
 
   .ds-gallery-card {
     display: flex;
     min-width: 0;
-    min-height: 24rem;
+    min-height: 20rem;
     flex-direction: column;
     gap: calc(var(--spacing) * 4);
     padding: calc(var(--spacing) * 4.5);
     border: 1px solid var(--border);
-    border-radius: var(--radius-surface);
+    border-radius: var(--radius-panel);
     background: var(--surface);
-    box-shadow: var(--shadow-xs);
+    box-shadow: none;
   }
 
   .ds-gallery-card-header {
@@ -137,10 +152,71 @@
     background: var(--background);
   }
 
+  .ds-state-rail {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1) var(--space-3);
+    border-top: 1px solid var(--border);
+    padding-top: var(--space-3);
+    color: var(--muted-foreground);
+    font-family: var(--font-mono);
+    font-size: 0.5625rem;
+    line-height: 1.5;
+  }
+
+  .ds-state-rail span::after { content: " /"; color: var(--border-strong); }
+  .ds-state-rail span:last-child::after { content: ""; }
+
   .ds-gallery-card[data-component="SpatialRhythm"] {
     min-height: 0;
     grid-column: 1 / -1;
   }
+
+  .ds-gallery-card[data-component="Color"],
+  .ds-gallery-card[data-component="Typography"],
+  .ds-gallery-card[data-component="RadiusElevationMotion"],
+  .ds-gallery-card[data-component="PaperSurface"],
+  .ds-gallery-card[data-component="ArchiveCord"] { grid-column: 1 / -1; min-height: 0; }
+
+  .ds-color-preview { display: grid; width: 100%; grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr)); gap: var(--space-3); }
+  .ds-color-preview > span { display: grid; min-width: 0; gap: var(--space-1); }
+  .ds-color-preview i { display: block; height: var(--space-12); border: 1px solid var(--border); border-radius: var(--radius-control); }
+  .ds-color-preview [data-color="workspace-canvas"] i { background: var(--workspace-canvas); }
+  .ds-color-preview [data-color="paper-surface"] i { background: var(--paper-surface); }
+  .ds-color-preview [data-color="foreground"] i { background: var(--foreground); }
+  .ds-color-preview [data-color="muted-foreground"] i { background: var(--muted-foreground); }
+  .ds-color-preview [data-color="border"] i { background: var(--border); }
+  .ds-color-preview [data-color="primary"] i { background: var(--primary); }
+  .ds-color-preview [data-color="destructive"] i { background: var(--destructive); }
+  .ds-color-preview small { color: var(--foreground); font-size: var(--type-caption); }
+  .ds-color-preview code { overflow: hidden; color: var(--muted-foreground); font-family: var(--font-mono); font-size: 0.5625rem; text-overflow: ellipsis; white-space: nowrap; }
+
+  .ds-type-preview { display: grid; width: 100%; gap: var(--space-3); }
+  .ds-type-preview [data-type="display"] { font-family: var(--font-serif); font-size: clamp(2rem, 5vw, 3.5rem); line-height: 1; }
+  .ds-type-preview [data-type="title"] { font-family: var(--font-serif); font-size: var(--type-title); }
+  .ds-type-preview [data-type="body"] { max-width: 42rem; font-size: var(--type-body); line-height: 1.75; }
+  .ds-type-preview [data-type="ui"] { font-size: var(--type-ui); font-weight: 600; }
+  .ds-type-preview [data-type="caption"] { color: var(--muted-foreground); font-size: var(--type-caption); letter-spacing: 0.06em; }
+  .ds-type-preview code { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--type-mono); }
+
+  .ds-foundation-material-preview { display: grid; width: 100%; gap: var(--space-6); }
+  .ds-radius-preview, .ds-elevation-preview, .ds-motion-preview { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; }
+  .ds-radius-preview span { display: grid; width: var(--space-16); height: var(--space-16); place-items: center; border: 1px solid var(--border); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--type-caption); }
+  .ds-radius-preview [data-radius="control"] { border-radius: var(--radius-control); }
+  .ds-radius-preview [data-radius="menu"] { border-radius: var(--radius-menu); }
+  .ds-radius-preview [data-radius="panel"] { border-radius: var(--radius-panel); }
+  .ds-radius-preview [data-radius="dialog"] { border-radius: var(--radius-dialog); }
+  .ds-elevation-preview span { display: grid; width: 8rem; height: 5rem; place-items: center; border: 1px solid var(--border); border-radius: var(--radius-panel); background: var(--paper-surface); color: var(--muted-foreground); font-size: var(--type-caption); }
+  .ds-elevation-preview [data-elevation="paper"] { box-shadow: var(--paper-shadow); }
+  .ds-elevation-preview [data-elevation="panel"] { box-shadow: var(--shadow-lg); }
+  .ds-elevation-preview [data-elevation="popover"] { box-shadow: var(--shadow-sm); }
+  .ds-motion-preview > span { display: grid; gap: var(--space-1); }
+  .ds-motion-preview i { display: block; width: 5rem; height: 0.2rem; border-radius: 999px; background: var(--primary); transform-origin: left; animation: ds-motion-specimen var(--motion-quiet) var(--ease-standard) infinite alternate; }
+  .ds-motion-preview small { color: var(--muted-foreground); font-family: var(--font-mono); font-size: 0.5625rem; }
+  .ds-motion-preview [data-motion="fast"] { animation-duration: var(--motion-fast); }
+  .ds-motion-preview [data-motion="normal"] { animation-duration: var(--motion-normal); }
+  .ds-motion-preview [data-motion="spatial"] { animation-duration: var(--motion-spatial); }
+  .ds-motion-preview [data-motion="quiet"] { animation-duration: var(--motion-quiet); }
 
   .ds-gallery-card[data-component="SpatialRhythm"] .design-system-preview {
     min-height: 0;
@@ -312,7 +388,7 @@
     line-height: 1.6;
   }
 
-  .ds-gallery-card[data-component="AssistantMessage"] .design-system-preview {
+  .ds-gallery-card[data-component="Messages"] .design-system-preview {
     border-color: transparent;
     background: transparent;
   }
@@ -392,6 +468,22 @@
     justify-self: start;
   }
 
+  .ds-markdown-editor-preview {
+    width: 100%;
+    height: 14rem;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-control);
+    background: var(--paper-surface);
+  }
+
+  .ds-markdown-editor-preview .cm-editor .cm-scroller { padding: var(--space-6); }
+
+  .ds-editorial-reading-preview {
+    width: min(100%, 34rem);
+    color: var(--foreground);
+  }
+
   .ds-thinking-preview {
     color: var(--muted-foreground);
     font-size: 0.6875rem;
@@ -406,6 +498,24 @@
     width: min(100%, 22rem);
     gap: calc(var(--spacing) * 3);
   }
+
+  .ds-select-preview { width: min(100%, 22rem); }
+
+  .ds-paper-surface-preview { width: min(100%, 42rem); padding: var(--space-6); background: var(--workspace-canvas); }
+  .ds-paper-surface-preview .paper-surface { width: 100%; min-height: 18rem; }
+  .ds-paper-surface-preview .paper-content-transition > header { display: flex; height: var(--panel-header-height); align-items: center; justify-content: space-between; padding-inline: var(--space-4); color: var(--muted-foreground); font-size: var(--type-caption); }
+  .ds-paper-surface-preview article { padding: var(--space-8); }
+  .ds-paper-surface-preview h4 { font-family: var(--font-serif); font-size: var(--type-title); font-weight: 500; }
+  .ds-paper-surface-preview article p { margin-top: var(--space-4); color: var(--muted-foreground); line-height: 1.7; }
+
+  .ds-edge-dock-preview { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: var(--space-4); padding-block: var(--space-8); }
+  .ds-edge-dock-preview .edge-dock { position: static; }
+
+  .ds-archive-cord-preview { position: relative; display: flex; width: 100%; min-height: 13rem; align-items: center; justify-content: space-between; gap: 8rem; padding: var(--space-8); }
+  .ds-archive-cord-preview .paper-archive-port { top: 50%; transform: translateY(-50%); }
+  .ds-archive-cord-paper { position: relative; display: grid; width: 12rem; height: 8rem; place-items: center; border: 1px solid var(--paper-edge); border-radius: var(--radius-paper); background: var(--paper-surface); box-shadow: var(--paper-shadow); }
+  .ds-archive-cord-paper strong { font-family: var(--font-serif); font-size: 1.25rem; font-weight: 500; }
+  .ds-archive-cord-target { display: flex; min-width: 11rem; align-items: center; justify-content: space-between; gap: var(--space-4); border-radius: var(--radius-control); background: var(--secondary); padding: var(--space-3); color: var(--foreground); font-size: var(--type-ui); }
 
   .ds-preview-form label {
     display: grid;
@@ -519,5 +629,15 @@
     .design-system-preview {
       corner-shape: squircle;
     }
+  }
+
+  @keyframes ds-motion-specimen {
+    to { transform: scaleX(0.25); opacity: 0.45; }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @layer components {
+    .ds-motion-preview i { animation: none; }
   }
 }

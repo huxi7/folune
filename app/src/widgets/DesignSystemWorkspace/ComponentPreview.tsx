@@ -1,12 +1,13 @@
 /**
- * [INPUT]: 依赖 React memo/useEffect/useState、Phosphor 图标、通用组件、MarkdownReadingView、Skeleton、ThinkingMark 与五词错峰模糊拖尾的互斥 AI 消息组件家族
- * [OUTPUT]: 对外提供 4px 空间标尺、32/40/48px 控件层级与真实 48/32/16 Header 样板，以及不重复 Button variants/loading/disabled、Skeleton、ThinkingMark 和按真实内容增长可重播的跨段落五词拖尾 AI 消息示例
- * [POS]: app/src/widgets/DesignSystemWorkspace 的基础与组件预览层，空间样板只读取生产 token，组件样板只展示真实 API
+ * [INPUT]: 依赖 React、生产 Design System、真实 MarkdownEditor/MarkdownReadingView 与 PaperSurface/EdgeDock/ArchiveCord Signature Components
+ * [OUTPUT]: 对外提供 Foundations、Primitives、完整 Editorial 与 AI & Organize 的生产同源状态样板
+ * [POS]: app/src/widgets/DesignSystemWorkspace 的预览层；所有样板只读取生产 Token/API，不建立展示专用视觉系统
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import {
   DesktopIcon,
   FileTextIcon,
+  FoldersIcon,
   GearSixIcon,
   MoonStarsIcon,
   NotePencilIcon,
@@ -24,6 +25,7 @@ import {
   Input,
   PasswordInput,
   SegmentedControl,
+  Select,
   SidebarButton,
   Skeleton,
   SkeletonGroup,
@@ -35,7 +37,16 @@ import {
   useToast,
   type SegmentedControlOption,
 } from "../../shared/design-system/components";
+import {
+  ArchiveCordStage,
+  ArchivePort,
+  ArchiveTargetPort,
+} from "../ArchiveCord";
+import { EdgeDock } from "../EdgeDock";
+import { MarkdownEditor } from "../MarkdownEditor";
 import { MarkdownReadingView } from "../MarkdownReadingView";
+import { PaperSurface } from "../PaperSurface";
+import { useTheme } from "../../shared/theme/ThemeProvider";
 import type { DesignSystemSampleId } from "./componentCatalog";
 
 type ComponentPreviewProps = {
@@ -58,6 +69,64 @@ const spatialSteps = [
   { step: "6", token: "space-6", value: "24px" },
   { step: "8", token: "space-8", value: "32px" },
 ] as const;
+
+function ColorPreview() {
+  return (
+    <div className="ds-color-preview">
+      {[
+        ["Canvas", "workspace-canvas"],
+        ["Paper", "paper-surface"],
+        ["Ink", "foreground"],
+        ["Muted", "muted-foreground"],
+        ["Hairline", "border"],
+        ["Ink Blue", "primary"],
+        ["Danger", "destructive"],
+      ].map(([label, token]) => (
+        <span data-color={token} key={token}>
+          <i />
+          <small>{label}</small>
+          <code>--{token}</code>
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function TypographyPreview() {
+  return (
+    <div className="ds-type-preview">
+      <p data-type="display">Quiet Editorial Instrument</p>
+      <p data-type="title">A durable note surface</p>
+      <p data-type="body">正文保持清楚、自然，Editorial 字体只进入 Paper 标题与阅读层。</p>
+      <p data-type="ui">Interface command · 文件库</p>
+      <p data-type="caption">CAPTION / FOLIO / METADATA</p>
+      <code>const archive = "durable";</code>
+    </div>
+  );
+}
+
+function RadiusElevationMotionPreview() {
+  return (
+    <div className="ds-foundation-material-preview">
+      <div className="ds-radius-preview">
+        <span data-radius="control">8</span>
+        <span data-radius="menu">12</span>
+        <span data-radius="panel">14</span>
+        <span data-radius="dialog">16</span>
+      </div>
+      <div className="ds-elevation-preview">
+        <span data-elevation="paper">Paper</span>
+        <span data-elevation="panel">Panel</span>
+        <span data-elevation="popover">Popover</span>
+      </div>
+      <div className="ds-motion-preview">
+        {([["Fast", "160"], ["Normal", "260"], ["Spatial", "320"], ["Quiet", "600"]] as const).map(([label, value]) => (
+          <span key={label}><i data-motion={label.toLowerCase()} /><small>{label} · {value}ms</small></span>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function SpatialRhythmPreview() {
   return (
@@ -139,16 +208,6 @@ function SkeletonPreview() {
   );
 }
 
-function UserMessageBubblePreview() {
-  return (
-    <div className="ds-user-message-preview">
-      <UserMessageBubble>
-        <p>帮我把今天的产品想法整理成三个行动项。</p>
-      </UserMessageBubble>
-    </div>
-  );
-}
-
 const assistantPreviewChunks = [
   "当然。",
   "先确认",
@@ -195,6 +254,9 @@ function AssistantMessagePreview() {
 
   return (
     <div className="ds-ai-message-preview">
+      <UserMessageBubble>
+        <p>帮我把今天的产品想法整理成三个行动项。</p>
+      </UserMessageBubble>
       <AssistantMessage
         content={content}
         key={run}
@@ -209,6 +271,47 @@ function AssistantMessagePreview() {
       <Button onClick={replay} variant="ghost">
         重播流式动效
       </Button>
+    </div>
+  );
+}
+
+function MarkdownPreview() {
+  const { resolvedTheme } = useTheme();
+  const [value, setValue] = useState("## Working principle\n\nWrite first. Let structure appear later.");
+
+  return (
+    <div className="ds-markdown-editor-preview">
+      <MarkdownEditor
+        editingMode="live"
+        onBlur={() => undefined}
+        onChange={setValue}
+        theme={resolvedTheme}
+        value={value}
+      />
+    </div>
+  );
+}
+
+function ReadingPreview() {
+  return (
+    <div className="ds-editorial-reading-preview note-reading-surface">
+      <MarkdownReadingView content={"## Durable notes\n\n结构可以晚一点出现，重要的是先让想法安全落在纸上。"} />
+    </div>
+  );
+}
+
+function QuotePreview() {
+  return (
+    <div className="ds-editorial-reading-preview">
+      <MarkdownReadingView content={"> A quiet tool protects thought before it organizes it."} />
+    </div>
+  );
+}
+
+function CodePreview() {
+  return (
+    <div className="ds-editorial-reading-preview">
+      <MarkdownReadingView content={'Use `content_mdx` as the source of truth.\n\n```ts\nconst archive = "durable";\n```'} />
     </div>
   );
 }
@@ -312,7 +415,75 @@ function InputPreview() {
           visible={passwordVisible}
         />
       </label>
+      <label>
+        <span>Error</span>
+        <Input aria-invalid="true" defaultValue="invalid@" />
+      </label>
+      <label>
+        <span>Disabled</span>
+        <Input disabled value="Unavailable" readOnly />
+      </label>
     </div>
+  );
+}
+
+function SelectPreview() {
+  return (
+    <div className="ds-select-preview">
+      <Select
+        ariaLabel="选择归档策略"
+        defaultValue="reuse"
+        options={[
+          { label: "优先复用已有目录", value: "reuse" },
+          { label: "必要时创建新目录", value: "create" },
+        ]}
+      />
+    </div>
+  );
+}
+
+function PaperSurfacePreview() {
+  return (
+    <div className="ds-paper-surface-preview">
+      <PaperSurface
+        archiveActive={false}
+        archiveDrawKey="design-system-paper"
+        archiveSourceId="design-system-paper"
+        archiveTargetNodeId={null}
+        organizing={false}
+        paperIdentity="design-system-paper"
+        reducedMotion={false}
+      >
+        <header><span>Product / Principles</span><small>Folio 01</small></header>
+        <article><h4>Write first.</h4><p>Structure can appear after the idea is safe.</p></article>
+      </PaperSurface>
+    </div>
+  );
+}
+
+function EdgeDockPreview() {
+  return (
+    <div className="ds-edge-dock-preview">
+      <EdgeDock expanded={false} icon={<FoldersIcon size={16} />} label="文件库" mode="canvas" onClick={() => undefined} side="left" />
+      <EdgeDock expanded icon={<ThinkingMark aria-hidden="true" size={16} />} label="AI" mode="panel" onClick={() => undefined} side="right" />
+    </div>
+  );
+}
+
+function ArchiveCordPreview() {
+  return (
+    <ArchiveCordStage active refreshKey="design-system-archive-cord">
+      <div className="ds-archive-cord-preview">
+        <div className="ds-archive-cord-paper">
+          <ArchivePort active drawKey="design-system" reducedMotion={false} sourceId="design-system-cord" targetNodeId="design-system-target" />
+          <strong>Paper</strong>
+        </div>
+        <div className="ds-archive-cord-target">
+          <span>Product thinking</span>
+          <ArchiveTargetPort active nodeId="design-system-target" />
+        </div>
+      </div>
+    </ArchiveCordStage>
   );
 }
 
@@ -386,21 +557,31 @@ export const ComponentPreview = memo(function ComponentPreview({
   sampleId,
 }: ComponentPreviewProps) {
   switch (sampleId) {
+    case "Color": return <ColorPreview />;
+    case "Typography": return <TypographyPreview />;
     case "SpatialRhythm": return <SpatialRhythmPreview />;
+    case "RadiusElevationMotion": return <RadiusElevationMotionPreview />;
     case "Button": return <ButtonPreview />;
     case "Skeleton": return <SkeletonPreview />;
-    case "UserMessageBubble": return <UserMessageBubblePreview />;
-    case "AssistantMessage": return <AssistantMessagePreview />;
+    case "Messages": return <AssistantMessagePreview />;
     case "ThinkingMark": return <ThinkingMarkPreview />;
     case "ThinkingIndicator": return <ThinkingIndicatorPreview />;
     case "ToolCallBubble": return <ToolCallBubblePreview />;
     case "SidebarButton": return <SidebarButtonPreview />;
     case "SegmentedControl": return <SegmentedControlPreview />;
     case "Input": return <InputPreview />;
+    case "Select": return <SelectPreview />;
     case "Card": return <CardPreview />;
     case "Dialog": return <DialogPreview />;
     case "Toast": return <ToastPreview />;
     case "BrandMark": return <BrandMarkPreview />;
     case "UserMenu": return <UserMenuPreview />;
+    case "PaperSurface": return <PaperSurfacePreview />;
+    case "Markdown": return <MarkdownPreview />;
+    case "Reading": return <ReadingPreview />;
+    case "Quote": return <QuotePreview />;
+    case "Code": return <CodePreview />;
+    case "EdgeDock": return <EdgeDockPreview />;
+    case "ArchiveCord": return <ArchiveCordPreview />;
   }
 });

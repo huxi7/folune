@@ -3,7 +3,7 @@
 
 用户端模块，负责承载浏览器内的 SuperNote 产品体验边界。
 
-技术栈: Bun + Vite + React 19 + React Router + Zustand + Motion for React (`motion/react`) + Vercel AI SDK/useChat + @mastra/client-js + canvas-confetti + Kumo UI + Tailwind CSS v4 + 本地 design system + Supabase Auth SDK + system/light/dark 全局主题偏好 + Phosphor Icons + CodeMirror 6/Lezer Markdown GFM + react-markdown/remark-gfm/remark-breaks/rehype-sanitize + TypeScript。
+技术栈: Bun + Vite + React 19 + React Router + Zustand + Motion for React (`motion/react`) + react-archer 5.1 + Vercel AI SDK/useChat + @mastra/client-js + canvas-confetti + Kumo UI + Tailwind CSS v4 + 本地 design system + Supabase Auth SDK + system/light/dark 全局主题偏好 + Phosphor Icons + CodeMirror 6/Lezer Markdown GFM + react-markdown/remark-gfm/remark-breaks/rehype-sanitize + TypeScript。
 
 成员清单
 index.html: Vite HTML 宿主页面，声明 V1 Classic Blueprint 默认画布、同步解析 App 的 system/light/dark 与 Landing 浅色画布 pre-paint bootstrap、提供 root 挂载点并内联折角笔记页 favicon
@@ -12,13 +12,13 @@ AUTH_SETUP.md: Supabase 邮箱确认模板、URL allow list、自定义 SMTP 限
 UI_REFINEMENT.md: UI-only 工作台账，记录 V1 Classic Blueprint 基线、约束、验收进度与决策
 vite.config.ts: Vite 配置，从 app/.env.local 加载浏览器环境，将开发服务器严格固定到 10000，连接 React/Tailwind 插件，并用 Rolldown 按 React 封装、Markdown、View、State、Language、Features 拆分 CodeMirror chunk
 src/main.tsx: React 挂载入口，以 MotionConfig reducedMotion=user 包围 ThemeProvider/ToastProvider/RouterProvider 并加载全局样式
-src/index.css: Kumo/Tailwind v4 入口与唯一色值源，冻结 V1 Classic Blueprint、Paper First 中性画布/纯净纸张、统一 smooth corner/阴影/动效及 light/dark Skeleton 语义 token，并导入职责样式模块
+src/index.css: Kumo/Tailwind v4 入口与唯一语义 Token 源，冻结 Quiet Editorial Color/Type/Spacing/Radius/Elevation/Motion、Paper First 中性画布/纯净纸张及 light/dark 同轴语义，并导入职责样式模块
 src/styles/: UI 样式实现层，以 landing.css 隔离营销页、workspace.css 隔离 Paper Stage/浮动工具/整理连线与业务布局、design-system.css 统一组件材质、ai-message.css 统一 SSE 消息家族、CodeMirror CSS 隔离 source/live 显示协议；跨样式颜色插值统一使用 sRGB
 src/app/: 应用装配层，承载 OAuth 回调、Profile/access token 登录守卫、仅含唯一 Paper 的 /app 首次准入 Skeleton 及共享 Dashboard 生命周期路由
 src/pages/: 页面层，承载 Landing、OAuth Callback 与 Paper First Dashboard，编排删除/AI 发送/整理前 flush、Run apply/undo、左右工具唤醒与路由收束
 src/widgets/: 业务组合组件层，承载 Landing、PaperWorkspaceShell、按需文件库、AI 思考空间、memo 编辑会话、账户/订阅与回收站
 src/shared/: 前端共享层，承载 memo/AI API、Zustand active tree/Run 局部归并、按用户 WorkspaceChromeState、design system、纯 Supabase Auth 与主题状态；前端禁止直连业务表或 Storage
-docs/: UI 验收证据目录，仅保存仍可复核的 V1 Design System 语义说明与 computed Token 快照；历史截图已作废，视觉判断必须重新读取当前运行界面
+docs/: UI 验收证据目录，保存 Design System 语义说明、computed Token 快照与 Paper First V1.1 当前前后对比/验收截图
 package.json: Bun 包元数据、Vite dev/build/typecheck 与 Bun test scripts 及用户端依赖清单
 bun.lock: Bun 锁定依赖版本
 tsconfig.json: TypeScript 编辑器与编译约束
@@ -42,9 +42,11 @@ AI 消息组件约束: 用户气泡必须与 Primary Button 同源；消息角�
 
 设计系统约束: 通用界面继续复用本地 design system；AI 对话面板明确使用 Kumo Button/Input 与本地 AI 消息家族，不得用原生元素另造基础控件。页面视觉必须围绕 src/index.css 暴露的 V1 语义 token 与 4px 空间/尺寸阶梯展开，Kumo 只作为基础件实现而不引入第二套产品视觉。V1 Classic Blueprint 是唯一开发/生产视觉基线；主题颜色仍只保留 light/dark 明暗轴，system 只是跟随设备的偏好入口，不产生第三套 token，也不再维护第二套预设、版本选择器或版本持久化。外观设置把“主题”与系统/白天/黑夜放在同一行并使用共享 SegmentedControl；轨道与选中片段保持平整，禁止增加内凹阴影、外投影、Select 或二级弹层。Button 使用现代硅谷包豪斯平面材质：自然现代蓝、统一 smooth corner、干净纯色背景、细实体边缘与零偏移均匀环绕柔影共同表达克制层级；禁止静态背景渐变、顶部内高光和底部偏色暗线，白色按钮必须保持纯白。hover 必须固定原位并维持静止深度，只保留颜色或边框反馈；press 位移限制为向下 1px 并同步收拢环绕柔影。loading shimmer 必须清晰可见但保持窄光带与低频节奏，disabled 继续保留可辨轮廓，禁止爆闪、强发光、厚重投影与塑料质感。Secondary Button 只显示用于界定实体轮廓的低对比弱边缘，以纯净 card 表面和比 Primary 更弱的零偏移环绕柔影塑形，不得退化为强 outline。SidebarButton 的通用默认高度与平滑圆角必须与 Button 一致；文件树行只覆盖布局密度，不另建材质，选中态和 prominent 态仍只允许复用 Secondary Button 材质。BrandMark 全站只允许“图标”与“图标 + SuperNote 标题”两种形态，不提供副标题。Landing 固定使用 Light Canvas，不提供 Landing Dark、颜色编辑、Token Override 或主题生成器。Landing 保持纯白无纹理底材，不使用纸张噪点或 Hero 点阵，避免额外纹理影响信息密度。Landing Header 顶边必须贴住视口，Header 与公告的背景横向铺满浏览器，同时共享正文 1088px 主轨坐标；只有同时满足 1200px+、支持 hover 与精细指针的桌面环境才在视口两侧显示辅助外轨，其位置取“视口边缘到主轨”距离的 1/5，横线穿过 10px 遮罩节点继续延伸到视口边缘；触屏设备与窄屏默认隐藏外轨并收束到主轨。Header 下节点在初始位置覆盖公告上节点形成共享交点，公告只压缩到 Header 约 2/3 高并随页面滚走，Header RailLayer 保持粘性。Landing 动效只允许 3–4px 一次性 reveal、Button 1px press 压感、2px CTA 箭头、loading 低频 shimmer 与 FAQ 展开等信息型反馈；禁止磁吸、卡片上浮、指针聚光、点阵漂移、循环浮动/脉冲及非交互区域的蓝色 hover 填充。全部浅色骨架导轨、Divider 与节点描边必须共用同一中性淡灰 token；节点内部以画布色遮罩导轨，严禁导轨穿模，Divider 不得用独立色块遮断纯白底材；正文横线止于主节点内侧尖端，全宽 Header/公告横线延伸至视口。正文继续使用 section sibling 14px Divider；末端预页脚只保留大产品图标、`立即使用 SuperNote` 标题与小号 `开始` 按钮，使用极淡蓝白渐变底材且不附加 eyebrow/副描述，正文左右竖轨在末端不设 Divider/节点，必须无割裂地直达深蓝 Footer。Footer 是无 BlueprintFrame 的独立全宽两段式画布，上层分栏导航、下层空旷品牌舞台；舞台使用大尺寸 SVG SuperNote 幽灵字，1.5px 描边必须与上层分栏线共用同一颜色变量，内部仅用 Footer 深蓝混入 3% 偏白前景色，保持静态、低对比但轮廓清晰。节点不得归属 section 伪元素，工程骨架不得参与 reveal 位移动画。
 
-Kumo Toast 约束: 全局瞬时反馈必须经本地 Toast API 适配 Kumo Toast Provider/Manager/Parts；Kumo 负责队列、自动关闭、悬停暂停、焦点与滑动生命周期，表现层遵循 Kumo 同源 Root/独立材质层/Content 结构并以 SuperNote Token 塑造 Apple-like 中性半透明浮层。Toast 本体必须使用 smooth corner，状态只通过轻量图标传达，禁止旧式彩色竖线、图标盒、状态边框与彩色填充；业务层不得直接依赖 Kumo 协议。
+Kumo Toast 约束: 全局瞬时反馈必须经本地 Toast API 适配 Kumo Toast Provider/Manager/Parts；Kumo 负责队列、自动关闭、悬停暂停、焦点与滑动生命周期，表现层只使用 SuperNote 的不透明中性 Popover、12px 曲率与克制浮层阴影。状态只通过轻量图标传达，禁止玻璃、旧式彩色竖线、图标盒、状态边框与彩色填充；业务层不得直接依赖 Kumo 协议。
 
 纯白画布约束: Light APP 与 DEV Design System 的页面、卡片和预览底材必须保持纯白；轨道、Skeleton 与禁用态只能消费 index.css 中确定性的中性灰蓝 token，禁止以 muted/destructive 混色生成基础背景，也禁止用低饱和 OKLCH 插值制造可能偏红的表面、边缘或阴影。跨样式颜色插值统一使用 sRGB。Danger Button 是唯一允许保留实心 destructive 红色功能面的组件；错误 Toast、Agent 错误区、菜单危险项等其他入口只通过红色文字、图标和细边界表达，不允许红色或浅红色填充。非 Danger Button 的 loading 状态不得复用 Primary 填色，统一消费独立状态面与低频 Shimmer；dark 主题仍遵循其独立暗色语义画布。
+
+Paper First V1.1 / Quiet Editorial 覆盖约束: 本节覆盖上文遗留的 V1 Classic Blueprint App 材质描述；Landing Blueprint 保持独立。APP/DEV Design System 只消费 `src/index.css` 的 Canvas/Paper/Ink/Muted/Hairline/Ink Blue/Danger 语义轴，Button/Input/SidebarButton 默认无实体阴影或内高光，Paper 是唯一明显但克制的非对称多层阴影。Paper 固定 51rem/816px 上限与 8px 曲率，标题/Markdown 标题/引用/阅读态使用 Editorial 字体。关闭状态的 Library/AI 是 42×36px Edge Dock，并通过同一 Motion `layoutId` 变形成 Panel Header 收起控制；打开后 Canvas Dock 必须消失。整理 succeeded/undone 由 react-archer 5.1 把 Paper Archive Port 持久连接到真实目录/备忘录 Target Port，直到关闭回执、切换笔记、新整理或撤销；resize、Panel resize、树滚动/展开必须刷新几何，小屏覆盖模式只保留高亮和回执。唯一动效时间轴为 Fast 160ms、Normal 260ms、Spatial 320ms、Quiet 600ms，reduced-motion 直接呈现静态结果。
 
 本地环境约束: Vite 默认读取 app/.env.local/.env；Thread/Message/Reference/Run 等业务请求只允许经 src/shared/api/client.ts 使用 VITE_API_BASE_URL，默认指向 http://localhost:10001。AI 对话和整理规划由 AgentPanel transport/client 使用 VITE_CHAT_BASE_URL，默认指向 http://localhost:10002，并在请求期从 Supabase Auth 读取 access token；不传 userId，不直连 Supabase 业务数据。浏览器只接收 VITE_ 前缀的公开配置，api/chat 服务端密钥不得写入 app。
 

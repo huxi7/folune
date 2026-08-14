@@ -23,7 +23,12 @@ memoLibrary.test.ts: Bun 拖拽视图回归测试，覆盖无限嵌套查找、�
 useMemoTreeExpansion.ts: 文件树展开偏好的设备级持久化边界；仅在整树 ready 后按用户读取带版本 localStorage 快照，保留明确的全折叠状态，并随 folder 增删清理失效 id、默认展开新 folder
 useMemoTreeExpansion.test.ts: 覆盖展开快照缺失与明确全折叠的区分、损坏/旧版本容错，以及删除清理和新 folder 自动展开规则
 PanelResizeHandle.tsx: 左右分栏拖拽手柄，支持 Pointer 拖拽、方向键调整、双击复位与 separator ARIA
-DesignSystemWorkspace/: 开发态 V1 Design System 参考工作区，首张基础卡呈现生产使用的 4px 空间标尺、32/40/48px 界面尺寸与 48/32/16 Header 样板，后续同构卡片陈列 Skeleton、不重复 Button variants/loading/disabled、ThinkingMark 与完整 AI 消息模块；通过 lazy import 只在 import.meta.env.DEV 下暴露
+ArchiveCord.tsx: react-archer 5.1 几何适配层；提供稳定隔离源 ID、Paper/树 DOM 锚点、一次绘制后静止曲线，以及 resize/scroll/目录 Mutation 的刷新闭环
+archiveCordPolicy.ts: Archive Cord 目标解析与宽屏可见性纯策略，优先目录、根级回退 memo，并在覆盖模式禁止假连线
+archiveCordPolicy.test.ts: 覆盖成功/撤销目标、根级回退、文件库关闭与小屏覆盖门禁
+EdgeDock.tsx: 42×36px 文件库/AI 边缘胶囊，以左右稳定 layoutId 在 Canvas 与 Panel Header 间共享变形
+PaperSurface.tsx: 816px Paper Signature 边界，拥有非对称 Paper 阴影、Archive Port 与只替换内容不重挂载编辑会话的内部过渡
+DesignSystemWorkspace/: 开发态 Quiet Editorial Design System 工作区，按 Foundations/Primitives/Navigation & Overlays/Editorial/AI & Organize 五层直接陈列生产 Token、完整 Markdown/Reading/Quote/Code 与三种 Signature Components；通过 lazy import 只在 import.meta.env.DEV 下暴露
 MarkdownEditor.tsx: Markdown 存储协议与 CodeMirror 显示协议之间的唯一 adapter；GFM language 常驻，live/source 只通过 Compartment 重配显示扩展以共享 EditorState/选区/撤销历史，零宽空行标记和纯文本粘贴继续保证 content_mdx 无损往返
 MarkdownEditor.test.ts: 以 content_mdx 恒等 round-trip 验证普通文本、2/5+ 连续空行、首尾/连续空格、强调段、空白行与 CRLF，约束零宽标记、HTML 空标签和 nbsp 永不离开 adapter
 MarkdownLivePreview.ts: CodeMirror 6 原生 Live Preview 引擎，以 syntaxTree/visibleRanges 只扫描可见 block；活动标题保留弱化且无下划线的源码标记，非活动标题隐藏标记和分隔空白，活动/多选区与不安全语法回退完整源码，隐藏范围同步提供 atomicRanges，IME 合成期只映射旧装饰并在结束后刷新
@@ -32,7 +37,7 @@ MarkdownReadingView.test.tsx: 阅读换行、安全、常数尾部动画节点�
 MarkdownViewMenu.tsx: 中央 Toolbar 的高频 editing/reading 切换与 More 菜单；支持外部点击、Escape、方向键/Home/End、焦点恢复，并仅复制/导出当前原始 content_mdx，title 只用于文件名
 markdownViewTypes.ts: DocumentView editing/reading 与 EditingMode live/source 的共享状态协议，阅读状态不占用编辑模式槽位
 NotesWorkspace.tsx: /app Paper 内部写作列，以跨临时/真实后端 ID 不变的 memoClientKey 保持编辑器会话；新建时聚焦并选中默认标题，imperative handle 暴露 Agent/整理 required flush、正文替换、删除 pause 与已提交 AI 标题接纳边界
-PaperWorkspaceShell.tsx: Paper First 四层空间壳；以 Motion LayoutGroup/AnimatePresence 编排 Canvas 控制、按需文件库、唯一 Paper 与 AI 思考空间，1200px+ 单侧建立安全区、1400px+ 才允许双侧同时预留，较小视口互斥覆盖并提供遮罩/Escape；整理成功测量 Paper 锚点与树目标绘制短暂 SVG 连线，在 Paper 下方保留显式撤销回执
+PaperWorkspaceShell.tsx: Paper First 四层空间壳；以 Motion LayoutGroup/AnimatePresence 编排 Edge Dock、按需文件库、唯一 Paper 与 AI 思考空间，1200px+ 单侧建立安全区、1400px+ 才允许双侧同时预留，较小视口互斥覆盖并提供画布空白/遮罩/Escape 关闭；成功/撤销时持久连接 Paper 与真实树目标并在 Paper 下方保留显式撤销回执
 useMemoAutosave.ts: 单 memo 编辑会话状态机；支持 required flush、删除期 pause/resume、AI 标题接纳，并只在没有本地草稿时采纳同一 memo 的迟到服务端初值，避免刷新空白或覆盖输入
 useMemoAutosave.test.ts: 覆盖迟到服务端正文接纳门禁、插入/删除/等长替换字符计数及三次有界指数退避
 TrashWorkspace.tsx: /app 回收站控制器，读取真实顶层删除根并编排重试、恢复、永久删除和当前用户原子清空，结果统一进入根级 Toast

@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 motion/react、工作台统一动效配置、Design System Button、左右工具插槽、稳定 paperIdentity 与整理结果定位信息
- * [OUTPUT]: 对外提供四层 Paper First 舞台、响应式浮层/遮罩/Escape、纸张安全区布局、归档连线和持久撤销回执
- * [POS]: app/src/widgets 的工作台空间壳；只协调可见空间和动作解释，编辑器、文件树与 AI 会话仍由各自稳定组件拥有
+ * [INPUT]: 依赖 motion/react、EdgeDock/PaperSurface/ArchiveCord Signature 组件、左右工具插槽、稳定 paperIdentity 与整理结果定位信息
+ * [OUTPUT]: 对外提供四层 Paper First 舞台、全尺寸 Escape/Canvas 空白关闭、响应式遮罩、共享 Panel 变形、持久归档连线和撤销回执
+ * [POS]: app/src/widgets 的工作台空间壳；只协调可见空间和动作解释，编辑器、文件树、Run 与 AI 会话仍由各自稳定组件拥有
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -18,10 +18,10 @@ import {
 } from "motion/react";
 import {
   useEffect,
-  useLayoutEffect,
   useRef,
   useState,
   type CSSProperties,
+  type MouseEvent,
   type ReactNode,
 } from "react";
 
@@ -31,14 +31,14 @@ import {
   panelSpring,
   paperSpring,
 } from "../pages/workspaceMotion";
-
-export type WorkspaceOrganizePresentation = {
-  memoId: string;
-  path: string;
-  runId: string;
-  status: "succeeded" | "undone";
-  targetFolderId: string | null;
-};
+import { ArchiveCordStage } from "./ArchiveCord";
+import { EdgeDock } from "./EdgeDock";
+import { PaperSurface } from "./PaperSurface";
+import {
+  resolveArchiveTargetNodeId,
+  shouldShowArchiveCord,
+  type WorkspaceOrganizePresentation,
+} from "./archiveCordPolicy";
 
 type PaperWorkspaceShellProps = {
   assistant: ReactNode;
@@ -59,15 +59,8 @@ type PaperWorkspaceShellProps = {
   style: CSSProperties;
 };
 
-type ConnectionPath = {
-  d: string;
-  height: number;
-  width: number;
-};
-
 const PANEL_BREAKPOINT = 1200;
 const DUAL_PANEL_SAFE_BREAKPOINT = 1400;
-const CONNECTION_VISIBLE_MS = 1900;
 
 export function PaperWorkspaceShell({
   assistant,
@@ -88,10 +81,7 @@ export function PaperWorkspaceShell({
   style,
 }: PaperWorkspaceShellProps) {
   const reduceMotion = useReducedMotion();
-  const workspaceRef = useRef<HTMLDivElement>(null);
-  const paperRef = useRef<HTMLElement>(null);
   const paperScrollRef = useRef<HTMLDivElement>(null);
-  const [connectionPath, setConnectionPath] = useState<ConnectionPath | null>(null);
   const shouldOverlayPanels = () => window.innerWidth < PANEL_BREAKPOINT || (
     libraryOpen && assistantOpen && window.innerWidth < DUAL_PANEL_SAFE_BREAKPOINT
   );
@@ -122,7 +112,7 @@ export function PaperWorkspaceShell({
   }, [paperIdentity, reduceMotion]);
 
   useEffect(() => {
-    if (!overlayPanels || !anyPanelOpen) {
+    if (!anyPanelOpen) {
       return;
     }
 
@@ -140,68 +130,7 @@ export function PaperWorkspaceShell({
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [anyPanelOpen, assistantOpen, onCloseAssistant, onCloseLibrary, overlayPanels]);
-
-  useLayoutEffect(() => {
-    if (
-      presentation === null ||
-      !libraryOpen ||
-      workspaceRef.current === null ||
-      paperRef.current === null
-    ) {
-      setConnectionPath(null);
-      return;
-    }
-
-    let frameId = 0;
-    let settleTimer = 0;
-    let hideTimer = 0;
-    const targetNodeId = presentation.targetFolderId ?? presentation.memoId;
-
-    const measure = () => {
-      const workspace = workspaceRef.current;
-      const paperElement = paperRef.current;
-      const target = document.querySelector<HTMLElement>(
-        `[data-memo-tree-row-id="${CSS.escape(targetNodeId)}"]`,
-      );
-
-      if (workspace === null || paperElement === null || target === null) {
-        return;
-      }
-
-      const workspaceRect = workspace.getBoundingClientRect();
-      const paperRect = paperElement.getBoundingClientRect();
-      const targetRect = target.getBoundingClientRect();
-      const startX = paperRect.left - workspaceRect.left + 2;
-      const startY = paperRect.top - workspaceRect.top + 86;
-      const endX = targetRect.right - workspaceRect.left + 6;
-      const endY = targetRect.top - workspaceRect.top + targetRect.height / 2;
-      const bend = Math.max(42, Math.abs(startX - endX) * 0.42);
-
-      setConnectionPath({
-        d: `M ${startX} ${startY} C ${startX - bend} ${startY}, ${endX + bend} ${endY}, ${endX} ${endY}`,
-        height: workspaceRect.height,
-        width: workspaceRect.width,
-      });
-    };
-
-    frameId = window.requestAnimationFrame(() => {
-      measure();
-      settleTimer = window.setTimeout(measure, reduceMotion ? 0 : 360);
-    });
-    hideTimer = window.setTimeout(
-      () => setConnectionPath(null),
-      reduceMotion ? 700 : CONNECTION_VISIBLE_MS,
-    );
-    window.addEventListener("resize", measure);
-
-    return () => {
-      window.cancelAnimationFrame(frameId);
-      window.clearTimeout(settleTimer);
-      window.clearTimeout(hideTimer);
-      window.removeEventListener("resize", measure);
-    };
-  }, [libraryOpen, presentation, reduceMotion]);
+  }, [anyPanelOpen, assistantOpen, onCloseAssistant, onCloseLibrary]);
 
   const closeOverlay = () => {
     if (assistantOpen) {
@@ -212,50 +141,108 @@ export function PaperWorkspaceShell({
     }
   };
 
+  const handleCanvasPointerDown = (event: MouseEvent<HTMLDivElement>) => {
+    if (!anyPanelOpen || !(event.target instanceof Element)) {
+      return;
+    }
+
+    if (event.target.closest([
+      ".paper-surface",
+      ".workspace-floating-panel",
+      ".workspace-canvas-control",
+      ".organize-paper-receipt",
+      ".memo-context-menu",
+      ".ds-dialog-panel",
+      ".ds-toast",
+    ].join(",")) !== null) {
+      return;
+    }
+
+    closeOverlay();
+  };
+
+  const archiveTargetNodeId = resolveArchiveTargetNodeId(presentation);
+  const archiveCordVisible = shouldShowArchiveCord({
+    libraryOpen,
+    overlayPanels,
+    presentation,
+  });
+  const archiveRefreshKey = [
+    presentation?.runId ?? "none",
+    presentation?.status ?? "none",
+    archiveTargetNodeId ?? "none",
+    libraryOpen ? "library" : "closed",
+  ].join(":");
+
   return (
-    <div
-      className="app-workspace"
-      data-assistant-open={assistantOpen}
-      data-library-open={libraryOpen}
-      data-overlay-panels={overlayPanels}
-      ref={workspaceRef}
-      style={style}
+    <ArchiveCordStage
+      active={archiveCordVisible}
+      refreshKey={archiveRefreshKey}
     >
+      <div
+        className="app-workspace"
+        data-assistant-open={assistantOpen}
+        data-library-open={libraryOpen}
+        data-overlay-panels={overlayPanels}
+        onMouseDown={handleCanvasPointerDown}
+        style={style}
+      >
       <LayoutGroup id="paper-first-workspace">
-        <motion.div className="workspace-canvas-control workspace-library-control" layout transition={paperSpring}>
-          <Button
-            aria-expanded={libraryOpen}
-            aria-label={libraryOpen ? "关闭文件库" : "打开文件库"}
-            icon={FoldersIcon}
+        {!libraryOpen ? (
+          <motion.div
+            className="workspace-canvas-control workspace-library-control"
+            layout
+            transition={paperSpring}
+          >
+          <EdgeDock
+            expanded={false}
+            icon={<FoldersIcon size={16} weight="regular" />}
+            label="文件库"
+            mode="canvas"
             onClick={onToggleLibrary}
-            size="square"
-            title={libraryOpen ? "关闭文件库" : "打开文件库"}
-            variant={libraryOpen ? "secondary" : "ghost"}
+            side="left"
           />
-        </motion.div>
-        <motion.div className="workspace-canvas-control workspace-assistant-control" layout transition={paperSpring}>
-          <Button
-            aria-expanded={assistantOpen}
-            aria-label={assistantOpen ? "关闭 AI 思考空间" : "打开 AI 思考空间"}
-            icon={ChatCircleDotsIcon}
+          </motion.div>
+        ) : null}
+        {!assistantOpen ? (
+          <motion.div
+            className="workspace-canvas-control workspace-assistant-control"
+            layout
+            transition={paperSpring}
+          >
+          <EdgeDock
+            expanded={false}
+            icon={<ChatCircleDotsIcon size={16} weight="regular" />}
+            label="AI"
+            mode="canvas"
             onClick={onToggleAssistant}
-            size="square"
-            title={assistantOpen ? "关闭 AI 思考空间" : "打开 AI 思考空间"}
-            variant={assistantOpen ? "secondary" : "ghost"}
+            side="right"
           />
-        </motion.div>
+          </motion.div>
+        ) : null}
 
         <AnimatePresence initial={false}>
           {libraryOpen ? (
             <motion.div
-              animate={{ opacity: 1, x: 0 }}
+              animate={{ opacity: 1, scaleX: 1 }}
               className="app-sidebar-shell workspace-floating-panel"
-              exit={{ opacity: 0, x: reduceMotion ? 0 : -24 }}
-              initial={{ opacity: 0, x: reduceMotion ? 0 : -24 }}
+              exit={{ opacity: 0, scaleX: reduceMotion ? 1 : 0.96 }}
+              initial={{ opacity: 0, scaleX: reduceMotion ? 1 : 0.96 }}
               key="workspace-library"
+              style={{ originX: 0 }}
               transition={reduceMotion ? fadeTransition : panelSpring}
             >
-              {library}
+              <div className="workspace-panel-content workspace-panel-content-library">
+                <EdgeDock
+                  expanded
+                  icon={<FoldersIcon size={16} weight="regular" />}
+                  label="文件库"
+                  mode="panel"
+                  onClick={onCloseLibrary}
+                  side="left"
+                />
+                {library}
+              </div>
             </motion.div>
           ) : null}
         </AnimatePresence>
@@ -266,26 +253,17 @@ export function PaperWorkspaceShell({
             layout="position"
             transition={paperSpring}
           >
-            <motion.section
-              className="app-main-panel paper-surface"
-              data-organizing={organizing}
-              layout="position"
-              ref={paperRef}
-              transition={paperSpring}
+            <PaperSurface
+              archiveActive={archiveCordVisible}
+              archiveDrawKey={`${presentation?.runId ?? "none"}-${presentation?.status ?? "none"}`}
+              archiveSourceId="workspace"
+              archiveTargetNodeId={archiveTargetNodeId}
+              organizing={organizing}
+              paperIdentity={paperIdentity}
+              reducedMotion={Boolean(reduceMotion)}
             >
-              <AnimatePresence initial={false} mode="wait">
-                <motion.div
-                  animate={{ opacity: 1 }}
-                  className="paper-content-transition"
-                  exit={{ opacity: 0 }}
-                  initial={{ opacity: 0.35 }}
-                  key={paperIdentity}
-                  transition={fadeTransition}
-                >
-                  {paper}
-                </motion.div>
-              </AnimatePresence>
-            </motion.section>
+              {paper}
+            </PaperSurface>
 
             <AnimatePresence initial={false}>
               {presentation ? (
@@ -328,14 +306,25 @@ export function PaperWorkspaceShell({
         <AnimatePresence initial={false}>
           {assistantOpen ? (
             <motion.div
-              animate={{ opacity: 1, x: 0 }}
+              animate={{ opacity: 1, scaleX: 1 }}
               className="app-agent-shell workspace-floating-panel"
-              exit={{ opacity: 0, x: reduceMotion ? 0 : 24 }}
-              initial={{ opacity: 0, x: reduceMotion ? 0 : 24 }}
+              exit={{ opacity: 0, scaleX: reduceMotion ? 1 : 0.96 }}
+              initial={{ opacity: 0, scaleX: reduceMotion ? 1 : 0.96 }}
               key="workspace-assistant"
+              style={{ originX: 1 }}
               transition={reduceMotion ? fadeTransition : panelSpring}
             >
-              {assistant}
+              <div className="workspace-panel-content workspace-panel-content-assistant">
+                <EdgeDock
+                  expanded
+                  icon={<ChatCircleDotsIcon size={16} weight="regular" />}
+                  label="AI"
+                  mode="panel"
+                  onClick={onCloseAssistant}
+                  side="right"
+                />
+                {assistant}
+              </div>
             </motion.div>
           ) : null}
         </AnimatePresence>
@@ -356,28 +345,7 @@ export function PaperWorkspaceShell({
         ) : null}
       </AnimatePresence>
 
-      <AnimatePresence initial={false}>
-        {connectionPath ? (
-          <motion.svg
-            animate={{ opacity: 1 }}
-            aria-hidden="true"
-            className="organize-connection-layer"
-            exit={{ opacity: 0 }}
-            height={connectionPath.height}
-            initial={{ opacity: 0 }}
-            key={`${presentation?.runId ?? "none"}:${presentation?.status ?? "none"}`}
-            viewBox={`0 0 ${connectionPath.width} ${connectionPath.height}`}
-            width={connectionPath.width}
-          >
-            <motion.path
-              animate={{ pathLength: 1 }}
-              d={connectionPath.d}
-              initial={{ pathLength: reduceMotion ? 1 : 0 }}
-              transition={reduceMotion ? fadeTransition : { duration: 0.48, ease: [0.22, 1, 0.36, 1] }}
-            />
-          </motion.svg>
-        ) : null}
-      </AnimatePresence>
-    </div>
+      </div>
+    </ArchiveCordStage>
   );
 }

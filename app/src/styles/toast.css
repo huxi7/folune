@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 Kumo Toast Parts 暴露的堆叠/展开/滑动 data state 与 CSS 变量，且只消费 index.css 的 popover、status、border、shadow、smooth-corner 与 motion 语义 token
- * [OUTPUT]: 对外提供 Apple-like Kumo Toast 视觉：中性半透明材质、平滑圆角、克制状态符号、紧凑排版、弹性堆叠与 reduced-motion 降级
- * [POS]: app/src/styles 的瞬时反馈视觉层；删除旧式彩色竖线/图标盒/状态边框，Kumo 负责交互，SuperNote 只定义产品材质
+ * [INPUT]: 依赖 Kumo Toast Parts 的堆叠/滑动状态与 index.css 的中性 Popover、Radius、Elevation、Motion token
+ * [OUTPUT]: 对外提供不玻璃化、不使用彩色状态容器的轻量 Toast、克制状态符号与 reduced-motion 降级
+ * [POS]: app/src/styles 的瞬时反馈视觉层；Kumo 负责交互，SuperNote 只定义安静纸面材质
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 @layer components {
@@ -34,13 +34,10 @@
     height: var(--toast-height-current);
     overflow: hidden;
     border: 1px solid color-mix(in srgb, var(--foreground) 9%, transparent);
-    border-radius: var(--ds-radius-smooth);
-    background: transparent;
+    border-radius: var(--radius-menu);
+    background: var(--popover);
     color: var(--popover-foreground);
-    box-shadow:
-      0 1.5rem 3.5rem -1.75rem color-mix(in srgb, var(--foreground) 30%, transparent),
-      0 0.25rem 0.9rem -0.45rem color-mix(in srgb, var(--foreground) 18%, transparent),
-      var(--ds-shadow-inset-highlight);
+    box-shadow: var(--shadow-lg);
     pointer-events: auto;
     transform:
       translateX(var(--toast-swipe-movement-x))
@@ -72,9 +69,7 @@
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    background: color-mix(in srgb, var(--popover) 91%, transparent);
-    backdrop-filter: blur(1.4rem) saturate(145%);
-    -webkit-backdrop-filter: blur(1.4rem) saturate(145%);
+    background: var(--popover);
   }
 
   .ds-toast[data-expanded] {

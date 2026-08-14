@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 CodeMirror 6 生成的 cm-* DOM 类与 index.css 根级语义 token
- * [OUTPUT]: 对外提供 CodeMirror light/dark 基础适配、14px source/15px live 正文，以及严格低于文件名标题的 live 标题层级与强调/链接/列表/任务/引用/代码/表格显示协议
- * [POS]: app/src/styles 的第三方编辑器级联边界；只消费语义 Token，把 Live Decoration 映射为克制写作层级并维持原始 Markdown 空白保真
+ * [OUTPUT]: 对外提供 CodeMirror light/dark 基础适配、14px source/15px live 正文、Editorial 标题/引用及强调/链接/列表/任务/代码/表格显示协议
+ * [POS]: app/src/styles 的第三方编辑器级联边界；只消费语义 Token，阻断默认语法竞争色，把 Live Decoration 映射为克制写作层级并维持原始 Markdown 空白保真
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 .supernote-md-editor,
@@ -66,6 +66,10 @@
   white-space: pre-wrap;
 }
 
+.note-editor-canvas .supernote-md-editor .cm-content * {
+  color: inherit;
+}
+
 .note-editor-canvas .supernote-md-editor .cm-line {
   padding-inline: 0;
   white-space: pre-wrap;
@@ -84,7 +88,8 @@
 .supernote-md-editor .cm-live-heading {
   padding-block: 0.22em 0.04em;
   color: var(--foreground);
-  font-weight: 680;
+  font-family: var(--font-serif);
+  font-weight: 500;
   letter-spacing: -0.02em;
   text-decoration: none !important;
 }
@@ -117,7 +122,7 @@
 
 .supernote-md-editor .cm-live-inline-code {
   border: 1px solid var(--border);
-  border-radius: 0.3rem;
+  border-radius: var(--radius-control);
   background: var(--surface-neutral);
   padding: 0.08rem 0.28rem;
   color: var(--foreground);
@@ -129,6 +134,7 @@
   border-left: 2px solid color-mix(in srgb, var(--primary) 44%, var(--border));
   padding-left: 0.9rem;
   color: var(--muted-foreground);
+  font-family: var(--font-serif);
 }
 
 .supernote-md-editor .cm-live-list-line { padding-left: 0.2rem; }
@@ -149,7 +155,7 @@
   align-items: center;
   justify-content: center;
   border: 1px solid color-mix(in srgb, var(--border) 88%, var(--foreground));
-  border-radius: 0.24rem;
+  border-radius: var(--radius-control);
   background: var(--background);
   color: var(--primary-foreground);
   font-size: 0.65rem;
@@ -194,7 +200,7 @@
   min-width: 22rem;
   overflow: hidden;
   border: 1px solid var(--border);
-  border-radius: 0.55rem;
+  border-radius: var(--radius-control);
   background: var(--background);
   font-family: var(--font-sans);
   font-size: 0.78rem;

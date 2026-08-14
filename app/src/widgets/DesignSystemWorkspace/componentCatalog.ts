@@ -1,112 +1,85 @@
 /**
- * [INPUT]: 不依赖运行时状态，只登记空间基础、现有共享界面、Skeleton、ThinkingMark 与 AI 消息组件的名称、职责和展示顺序
- * [OUTPUT]: 对外提供 designSystemSamples、DesignSystemSample 与 DesignSystemSampleId
- * [POS]: app/src/widgets/DesignSystemWorkspace 的精简陈列目录，被 ComponentTile 与 ComponentPreview 消费
+ * [INPUT]: 不依赖运行时状态，只登记 Quiet Editorial 五层信息架构与生产同源组件/Signature Pattern 样板
+ * [OUTPUT]: 对外提供 designSystemSections、designSystemSamples、DesignSystemSample/Id/Category
+ * [POS]: app/src/widgets/DesignSystemWorkspace 的唯一陈列目录，被入口、ComponentTile 与 ComponentPreview 共同消费
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
+
 export type DesignSystemSampleId =
+  | "Color"
+  | "Typography"
   | "SpatialRhythm"
+  | "RadiusElevationMotion"
   | "Button"
   | "Skeleton"
-  | "UserMessageBubble"
-  | "AssistantMessage"
-  | "ThinkingMark"
-  | "ThinkingIndicator"
-  | "ToolCallBubble"
-  | "SidebarButton"
   | "SegmentedControl"
   | "Input"
+  | "Select"
   | "Card"
+  | "SidebarButton"
   | "Dialog"
   | "Toast"
   | "BrandMark"
-  | "UserMenu";
+  | "UserMenu"
+  | "PaperSurface"
+  | "Markdown"
+  | "Reading"
+  | "Quote"
+  | "Code"
+  | "Messages"
+  | "ThinkingMark"
+  | "ThinkingIndicator"
+  | "ToolCallBubble"
+  | "EdgeDock"
+  | "ArchiveCord";
+
+export type DesignSystemCategory =
+  | "Foundations"
+  | "Primitives"
+  | "Navigation & Overlays"
+  | "Editorial"
+  | "AI & Organize";
 
 export type DesignSystemSample = {
+  category: DesignSystemCategory;
   id: DesignSystemSampleId;
   name: string;
   summary: string;
 };
 
+export const designSystemSections: DesignSystemCategory[] = [
+  "Foundations",
+  "Primitives",
+  "Navigation & Overlays",
+  "Editorial",
+  "AI & Organize",
+];
+
 export const designSystemSamples: DesignSystemSample[] = [
-  {
-    id: "SpatialRhythm",
-    name: "Spatial Rhythm",
-    summary: "以 4px 为基线，使用 32px 紧凑命令、40px 默认控件与 48px Panel Header 建立可复用的空间节奏。",
-  },
-  {
-    id: "Button",
-    name: "Button",
-    summary: "Primary、Secondary、Ghost 与实心红色 Danger 表达命令层级；Saving 使用独立状态面与低频 Shimmer。",
-  },
-  {
-    id: "Skeleton",
-    name: "Skeleton",
-    summary: "只在首次无内容时模拟真实结构，以单一宽光带和延迟显示避免闪屏。",
-  },
-  {
-    id: "UserMessageBubble",
-    name: "UserMessageBubble",
-    summary: "以 Primary Button 同源主题表面承载用户消息，统一发送动作与对话视觉。",
-  },
-  {
-    id: "AssistantMessage",
-    name: "AssistantMessage",
-    summary: "无卡片容器的 AI 正文；SSE 文本同速直出，最近五个尾词跨段落错峰模糊落定且结束不重排。",
-  },
-  {
-    id: "ThinkingMark",
-    name: "ThinkingMark",
-    summary: "SuperNote AI 的既定 Formation 符号；以 14、16、20px 真实尺寸展示正式聚合动效。",
-  },
-  {
-    id: "ThinkingIndicator",
-    name: "ThinkingIndicator",
-    summary: "Animated ThinkingMark 与低频真实状态文字，只在等待正文 token 时存在。",
-  },
-  {
-    id: "ToolCallBubble",
-    name: "ToolCallBubble",
-    summary: "只用相关图标、工具名称、执行流光与灰阶结果符号表达工具状态，不暴露调用载荷。",
-  },
-  {
-    id: "SidebarButton",
-    name: "SidebarButton",
-    summary: "承载侧栏导航，以统一高度、平滑圆角和次要按钮材质表达选中状态。",
-  },
-  {
-    id: "SegmentedControl",
-    name: "SegmentedControl",
-    summary: "在少量稳定选项之间完成紧凑、直接的互斥切换。",
-  },
-  {
-    id: "Input",
-    name: "Input",
-    summary: "承载文本与密码输入，提供一致的聚焦、禁用和校验入口。",
-  },
-  {
-    id: "Card",
-    name: "Card",
-    summary: "仅在内容需要与主画布明确分层时使用。",
-  },
-  {
-    id: "Dialog",
-    name: "Dialog",
-    summary: "暂停当前任务，让用户集中处理一个明确操作。",
-  },
-  {
-    id: "Toast",
-    name: "Toast",
-    summary: "在操作完成后提供短暂、非阻塞的全局反馈。",
-  },
-  {
-    id: "BrandMark",
-    name: "BrandMark",
-    summary: "只保留品牌图标与“图标 + SuperNote”两种锁定形式。",
-  },
-  {
-    id: "UserMenu",
-    name: "UserMenu",
-    summary: "集中承载账户信息与资料、订阅、设置和退出入口。",
-  },
+  { category: "Foundations", id: "Color", name: "Color", summary: "Canvas、Paper、Ink、Muted、Hairline、Brand Ink Blue 与 Danger 的唯一语义颜色轴。" },
+  { category: "Foundations", id: "Typography", name: "Typography", summary: "Display、Title、Body、UI、Caption、Mono 六级体系；Editorial 只进入 Paper 阅读层。" },
+  { category: "Foundations", id: "SpatialRhythm", name: "Spacing", summary: "4px 基线与 4/8/12/16/24/32/48/64/96 主节奏，32/40/48px 固定界面尺寸。" },
+  { category: "Foundations", id: "RadiusElevationMotion", name: "Radius · Elevation · Motion", summary: "8/12/14/16px 曲率、Paper 唯一明显阴影与 160/260/320/600ms 时间层级。" },
+  { category: "Primitives", id: "Button", name: "Button", summary: "Ink Blue Primary、Paper Secondary、Ghost 与唯一实心红色 Danger；press 只下压 1px。" },
+  { category: "Primitives", id: "Input", name: "Input", summary: "纯 Paper、Hairline 和清晰 focus ring；无 inset shadow。" },
+  { category: "Primitives", id: "Select", name: "Select", summary: "键盘可达选择器，菜单使用 12px 曲率和克制浮层层级。" },
+  { category: "Primitives", id: "SegmentedControl", name: "Segmented Control", summary: "平整轨道，选中项只依靠 Paper 与文字对比。" },
+  { category: "Primitives", id: "Skeleton", name: "Skeleton", summary: "首次无内容时模拟真实结构，以单一宽光带和延迟显示避免闪屏。" },
+  { category: "Primitives", id: "Card", name: "Card", summary: "只在分组和层级确有意义时使用；默认不依靠阴影制造容器。" },
+  { category: "Navigation & Overlays", id: "SidebarButton", name: "Sidebar Button", summary: "active 只用轻中性底色、墨色文字与图标，不模拟悬浮按钮。" },
+  { category: "Navigation & Overlays", id: "UserMenu", name: "User Menu", summary: "集中承载账户信息与资料、订阅、设置和退出入口。" },
+  { category: "Navigation & Overlays", id: "Dialog", name: "Dialog", summary: "16px 曲率和明确层级，暂停当前任务处理一个决定。" },
+  { category: "Navigation & Overlays", id: "Toast", name: "Toast", summary: "中性、轻量、无彩色状态容器与玻璃材质。" },
+  { category: "Navigation & Overlays", id: "BrandMark", name: "Brand Mark", summary: "保留纸张几何身份，只使用纯色 Ink Blue，删除渐变和高光。" },
+  { category: "Editorial", id: "PaperSurface", name: "Paper Surface", summary: "纯白 Paper、Folio Header、写作列与 Archive Port 组成工作台唯一视觉中心。" },
+  { category: "Editorial", id: "Markdown", name: "Markdown", summary: "生产 CodeMirror Live Preview：编辑态保留原文协议，标题使用克制 Editorial 层级。" },
+  { category: "Editorial", id: "Reading", name: "Reading", summary: "Paper 阅读正文以 Editorial 字体和自然留白建立连续阅读节奏。" },
+  { category: "Editorial", id: "Quote", name: "Quote", summary: "引用以 Editorial 字体、Hairline 与 Muted 墨色表达，不另造 Card。" },
+  { category: "Editorial", id: "Code", name: "Code", summary: "行内与块级代码只使用 Mono、Hairline 与中性 Surface。" },
+  { category: "AI & Organize", id: "Messages", name: "Messages", summary: "用户气泡保留品牌关联，助手正文无 Card，过程状态弱于最终正文。" },
+  { category: "AI & Organize", id: "ThinkingMark", name: "Thinking Mark", summary: "SuperNote AI 的 Formation 符号，以 14/16/20px 真实尺寸呈现。" },
+  { category: "AI & Organize", id: "ThinkingIndicator", name: "Thinking", summary: "仅在等待正文 token 时存在的低频活动态。" },
+  { category: "AI & Organize", id: "ToolCallBubble", name: "Tool", summary: "只用工具名称、灰阶结果与低频状态反馈，不暴露载荷。" },
+  { category: "AI & Organize", id: "EdgeDock", name: "Edge Dock", summary: "42×36px 边缘胶囊在 Canvas 与 Panel Header 间共享变形。" },
+  { category: "AI & Organize", id: "ArchiveCord", name: "Archive Cord", summary: "Paper 到文件树目标的持久近黑曲线；reduced-motion 直接静态呈现。" },
 ];

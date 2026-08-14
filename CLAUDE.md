@@ -22,7 +22,7 @@ AI 是用户的备忘录协作伙伴与智能档案管理员。
 ## 技术栈
 全栈 TypeScript，顶层由三个 L1 业务模块组成。
 
-- app: 用户端，Bun + Vite + React + React Router + Zustand + Motion for React + Vercel AI SDK + Mastra Client + canvas-confetti 独立全屏渲染 + Kumo UI + Tailwind CSS v4 + 本地 design system + Supabase Auth SDK
+- app: 用户端，Bun + Vite + React + React Router + Zustand + Motion for React + react-archer 5.1 + Vercel AI SDK + Mastra Client + canvas-confetti 独立全屏渲染 + Kumo UI + Tailwind CSS v4 + 本地 design system + Supabase Auth SDK
 - chat: AI 能力服务，Bun + TypeScript + Mastra + Vercel AI SDK + zod，主 Agent 与无工具/无记忆审批 Agent 分离，模型只看到四个胖工具
 - api: 业务接口服务，Bun + Hono + TypeScript + zod + Supabase REST/PostgREST/Storage HTTP API
 

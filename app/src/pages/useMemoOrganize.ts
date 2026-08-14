@@ -21,7 +21,10 @@ import { useMemoTreeStore } from "../shared/store/memoTreeStore";
 import { useWorkspaceChromeStore } from "../shared/store/workspaceChromeStore";
 import { organizeMemo } from "../widgets/AgentPanel/organizeClient";
 import type { NotesWorkspaceHandle } from "../widgets/NotesWorkspace";
-import { getOrganizeWakeTarget } from "./organizePresentation";
+import {
+  getOrganizeWakeTarget,
+  shouldPresentOrganizeResult,
+} from "./organizePresentation";
 
 const LAST_RUN_KEY_PREFIX = "supernote:last-organize-run:";
 const lastRunStorageKey = (userId: string): string =>
@@ -81,7 +84,7 @@ export function useMemoOrganize({
       return;
     }
 
-    if (wakeTarget === "library") {
+    if (wakeTarget === "library" && shouldPresentOrganizeResult(nextRun.status)) {
       reconcileAiRun(nextRun);
       const resultMemo = nextRun.status === "undone"
         ? nextRun.result?.undo?.memo

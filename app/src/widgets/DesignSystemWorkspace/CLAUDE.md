@@ -4,11 +4,11 @@
 成员清单
 .gitkeep: 保留 Design System 工作区目录
 CLAUDE.md: 记录开发态 Design System 工作区职责与文档协议
-index.tsx: DesignSystemWorkspace 入口，以紧凑页头先呈现生产空间基础，再用同构卡片矩阵陈列全部生产组件，不制造展示专用尺寸
-componentCatalog.ts: 基础与组件目录，先登记 SpatialRhythm 空间规范，再登记通用组件、既定 ThinkingMark 及 UserMessageBubble、AssistantMessage、ThinkingIndicator、ToolCallBubble 四个 AI 消息家族
-ComponentTile.tsx: memo 化同构卡片，组合基础/组件名称、单句职责摘要与带身份的真实预览面板，使 SpatialRhythm 可全宽呈现且 AssistantMessage 保持无框边界
-ComponentPreview.tsx: memo 化生产 token/API 预览器；SpatialRhythm 直接读取 4px 空间阶梯，展示 32/40/48px 控件层级与 48px Header/32px 控件/16px 图标样板；Button 同一卡片不重复展示 primary/secondary/ghost/实心红色 danger、独立冷灰蓝 Saving loading、disabled 与 hover/press/focus，Skeleton 展示单组 sRGB 宽光带下的 circle/text 组合，ToolCallBubble 展示执行中/完成态，另提供 Card、Input、SidebarButton、SegmentedControl、14/16/20px ThinkingMark，以及以 110ms 分块模拟真实内容增长、复用生产 MarkdownReadingView 的可重播跨段落五词错峰模糊拖尾 AI 正文、用户气泡与正式 ThinkingIndicator
+index.tsx: DesignSystemWorkspace 入口，以真实 ThemeProvider/SegmentedControl 切换 system/light/dark，再按五层信息架构陈列生产 Foundations、组件和 Signature Patterns
+componentCatalog.ts: 唯一五层目录，完整登记 Color/Type/Spacing/Radius/Elevation/Motion、Primitives、Navigation & Overlays、Paper/Markdown/Reading/Quote/Code 与 Messages/Thinking/Tool/Edge Dock/Archive Cord
+ComponentTile.tsx: memo 化同构卡片，组合名称、职责、真实预览与 Default/Hover/Focus/Active/Disabled/Loading/Error/Dark/Reduced motion 统一状态检查轨
+ComponentPreview.tsx: memo 化生产 token/API 预览器；直接复用 Button/Input/Select/Dialog/Toast、真实 CodeMirror MarkdownEditor/MarkdownReadingView、AI 消息家族和 PaperSurface/EdgeDock/ArchiveCord，不建立展示专用颜色、曲率、阴影或 Motion
 
-职责: 开发态 V1 Design System 参考工作区，只在 import.meta.env.DEV 下通过 /app Sidebar 暴露；空间基础卡只可视化 index.css 的生产 token，不允许创建第二套演示值。工作区与组件卡片使用纯净画布，Danger Button 是唯一允许保留实心红色功能面的组件，其余危险/错误语义不允许红色填充；Button 卡片必须直接看见独立 Saving 状态与 Shimmer。所有生产组件共用同一卡片、标题、摘要与预览结构，AI 预览直接复用生产组件，AssistantMessage 自身严禁卡片表面。
+职责: 开发态 Quiet Editorial Instrument 参考工作区，只在 import.meta.env.DEV 下通过 /app Sidebar 暴露；全部样板只可视化 index.css 生产 Token 与组件 API。Danger Button 是唯一实心红色功能面；AI 助手正文保持无 Card；Dark 使用真实全局主题，reduced-motion 跟随系统媒体查询。
 
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md

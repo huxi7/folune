@@ -71,7 +71,7 @@
 
   .landing-blueprint .ds-card {
     border-radius: calc(var(--radius) - 0.125rem);
-    box-shadow: 0 0.55rem 1.8rem -1.5rem color-mix(in srgb, var(--foreground) 28%, transparent), var(--ds-shadow-inset-highlight);
+    box-shadow: 0 0.55rem 1.8rem -1.5rem color-mix(in srgb, var(--foreground) 28%, transparent);
   }
 
   .marketing-header {
@@ -392,7 +392,7 @@
     overflow: hidden;
     border-color: color-mix(in srgb, var(--primary) 18%, var(--border));
     background: var(--card);
-    box-shadow: 0 2rem 5rem -3rem color-mix(in srgb, var(--blueprint-deep) 38%, transparent), var(--ds-shadow-inset-highlight);
+    box-shadow: 0 2rem 5rem -3rem color-mix(in srgb, var(--blueprint-deep) 38%, transparent);
   }
 
   .notebook-window-bar {
@@ -637,7 +637,7 @@
     );
   }
   .landing-prefooter-content { position: relative; z-index: 2; display: flex; min-height: clamp(34rem, 58vw, 42rem); flex-direction: column; align-items: center; justify-content: center; padding: clamp(4.5rem, 8vw, 6.5rem) var(--layout-page-gutter); text-align: center; }
-  .landing-product-icon { display: grid; width: clamp(6.5rem, 11vw, 8.5rem); height: clamp(6.5rem, 11vw, 8.5rem); place-items: center; margin-bottom: clamp(2.1rem, 4vw, 2.8rem); border: 1px solid color-mix(in srgb, var(--primary) 22%, var(--border)); border-radius: calc(var(--radius) + 0.85rem); background: var(--card); box-shadow: 0 1.45rem 3rem -2.1rem color-mix(in srgb, var(--foreground) 25%, transparent), var(--ds-shadow-inset-highlight); }
+  .landing-product-icon { display: grid; width: clamp(6.5rem, 11vw, 8.5rem); height: clamp(6.5rem, 11vw, 8.5rem); place-items: center; margin-bottom: clamp(2.1rem, 4vw, 2.8rem); border: 1px solid color-mix(in srgb, var(--primary) 22%, var(--border)); border-radius: calc(var(--radius) + 0.85rem); background: var(--card); box-shadow: 0 1.45rem 3rem -2.1rem color-mix(in srgb, var(--foreground) 25%, transparent); }
   .landing-product-icon .ds-brand-mark { transform: scale(3.1); }
   .landing-prefooter h2 { margin-top: 0; font-size: clamp(2.25rem, 5vw, 4.5rem); font-weight: 520; letter-spacing: -0.055em; line-height: 1.02; }
   .landing-prefooter .ds-button { min-height: 2rem; margin-top: clamp(1.8rem, 3vw, 2.4rem); padding: 0.42rem 0.78rem; font-size: 0.6875rem; }

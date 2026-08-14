@@ -4,14 +4,14 @@
 
 ## North Star
 
-Keep V1 Classic Blueprint as the only visual baseline: a clear, restrained note-tool interface with cool blue-gray surfaces, compact controls, short shadows and one consistent semantic token source.
+Use Quiet Editorial Instrument as the App baseline: a warm neutral Canvas, one pure Paper, compact Ink Blue controls, editorial typography only inside writing/reading, and one semantic Token source. Landing keeps its independent Classic Blueprint contract.
 
 ## Guardrails
 
 - UI and interaction presentation only; do not change auth, memo, subscription, API, or AI data contracts.
 - Keep `app/src/index.css` as the only color-value source; responsibility-specific CSS modules may only consume semantic tokens.
 - Keep the visual token axis limited to light/dark; `system` may resolve the device preference but must not create a third token set, preset selector, version storage key or alternate visual system.
-- Keep the Design System as a simple card matrix of production families: the existing controls, the shared Skeleton primitive, plus UserMessageBubble, AssistantMessage, ThinkingIndicator and ToolCallBubble; gallery cards may frame previews, but AssistantMessage itself must remain completely unframed.
+- Keep the Design System as a five-layer production matrix: Foundations, Primitives, Navigation & Overlays, Editorial and AI & Organize; Paper Surface, Edge Dock and Archive Cord are first-class Signature Patterns, while AssistantMessage itself remains completely unframed.
 - Do not invent outline, Textarea, Badge, Token Override, theme generator or runtime contrast tools.
 - Respect reduced motion, keyboard navigation, focus visibility, mobile widths and long text.
 
@@ -26,16 +26,20 @@ Keep V1 Classic Blueprint as the only visual baseline: a clear, restrained note-
 - [x] Synchronize GEB documentation and pass TypeScript/build/static quality checks.
 - [x] Extract the complete AI message family, connect it to AgentPanel and archive every state in the Design System.
 - [x] Centralize Skeleton visuals and timing, apply exact first-load placeholders to the App route/memo regions, and preserve cached content during background Profile refresh.
+- [x] Unify Quiet Editorial Color/Type/Spacing/Radius/Elevation/Motion Foundations and apply them to every Paper First layer.
+- [x] Replace detached canvas toggles with shared-layout Edge Docks and remove Panel overlap/false canvas dismissal.
+- [x] Replace the timed SVG decoration with react-archer 5.1 persistent Archive Cord geometry, responsive gates and lifecycle tests.
+- [x] Rebuild the DEV matrix around complete Editorial and Signature Pattern specimens with real light/dark and reduced-motion contracts.
 
 ## Decisions
 
 - Prefer unframed sections and thin separators in product pages; the development-only Design System uses only simple reference cards.
 - Reserve Card for repeated objects, dialogs and genuinely framed tools.
-- Keep shadows short and local; depth must never become glow.
-- Reserve restrained depth for Button command affordance: a weak physical edge, valid neutral contact/short cast shadow and top inset highlight; keep every static background a clean solid color, forbid tinted bottom lowlights, keep hover fixed in place, and limit press travel to 1px while the shadow contracts.
+- Keep Paper as the only obvious shadow; Panel/Dialog/Popover use progressively weaker depth, while Button/Input/SidebarButton have no entity shadow or inner highlight.
+- Keep every command surface a clean solid color with Hairline structure; hover stays fixed and press travel is limited to 1px.
 - Treat SidebarButton as navigation behavior over the same Button material system: active and prominent states reuse Secondary Button tokens, while APP and account navigation share the default Button height.
 - Use one smooth-corner curve for surfaced controls; Button, SidebarButton, SegmentedControl, UserButton, Select actions and sidebar tool buttons must not invent local corner geometry.
-- Keep Secondary Button free of a strong outline; its shape comes from a pure card-colored surface, a weak neutral edge, a top highlight and short cast shadow, never from a tinted gradient or dark frame.
+- Keep Secondary Button free of a strong outline; its shape comes only from a pure Paper surface and Hairline, never from highlight, gradient, cast shadow or dark frame.
 - Refresh Profile once when AccountDialog opens, keep the cached 4:3 settings surface interactive, and merge server refreshes per untouched field; do not replace already revealed account content with a repeated Skeleton, and never let section switches trigger duplicate requests.
 - Group the settings sidebar by real information architecture: the current General group contains only Account and Appearance, with no duplicate sidebar title or placeholder groups.
 - Present Theme and its system/light/dark choices on one line through the shared SegmentedControl; keep its track flat and never hide three stable choices behind Select.
@@ -53,7 +57,7 @@ Keep V1 Classic Blueprint as the only visual baseline: a clear, restrained note-
 - Do not add a generic status pill or badge family; use Button loading for in-flight actions, Toast for operation results, and contextual text or structure for durable information.
 - Treat CodeMirror as a third-party cascade boundary; its adapter consumes only the same light/dark V1 tokens.
 - Treat memo editing as one quiet canvas: an independent plain-text title sits directly above the Store-controlled Markdown body, with no card, field chrome, divider, metadata strip or in-canvas save action.
-- Route organize outcomes by meaning: succeeded/undone reveal and locate the Library target with a temporary connection plus persistent receipt, awaiting confirmation reveals AI, and stale/failed remain Toast/local feedback only.
+- Route organize outcomes by meaning: succeeded/undone reveal and locate the Library target with a persistent Archive Cord plus receipt, awaiting confirmation reveals AI, and stale/failed remain Toast/local feedback only.
 - Keep root memo creation in the sidebar header as the shared Primary Button with a dedicated note-writing icon; place Design System and Trash outside the file tree as matching full-width navigation rows without an extra group label.
 - Treat folder expansion as a per-user device preference: restore a versioned localStorage snapshot only after the memo tree is ready, preserve an explicitly all-collapsed tree, auto-open new folders and discard deleted folder ids without adding backend schema.
 - Keep memo saving invisible and session-scoped: update editor/Store immediately, flush by character/idle/max-wait thresholds and lifecycle boundaries, retry quietly, and only surface the final failure while preserving the local draft byte-for-byte.
@@ -110,5 +114,6 @@ Keep V1 Classic Blueprint as the only visual baseline: a clear, restrained note-
 - 2026-08-09: Removed the false button affordance from the selected Design System and Trash utility rows: both now keep a transparent, borderless, shadowless, motionless surface and communicate the current workspace only through the primary foreground color plus `aria-current`.
 - 2026-08-12: Completed root memo optimistic creation: each click now enters an editable temporary memo immediately without locking the next click; concurrent requests reconcile their own temporary IDs independently, preserve draft title/content through the real-ID swap, route autosave to the committed ID, and roll back only the failed item.
 - 2026-08-13: Superseded the fixed three-Panel shell with Paper First: added MotionConfig/LayoutGroup/AnimatePresence, a neutral Canvas with one stable Paper, per-user Library/AI chrome state, desktop safety regions, tablet/mobile overlay drawers, new-paper focus, organize outcome routing, tree locate/highlight, SVG archive connection and a persistent undo receipt. Full app validation passed 141 tests, typecheck and production build; authenticated checks covered 1440×900, 1280×800, 1024×768 and 390×844 with no horizontal overflow, working Escape dismissal and preserved Library state after new memo creation.
+- 2026-08-14: Completed Paper First V1.1 and Quiet Editorial as one system. `index.css` now owns the warm neutral/Ink Blue/Danger color axis, six-level type, fixed spatial/radius/elevation/motion scales; controls are flat and Paper alone carries asymmetric depth. Library/AI use 42×36 Edge Docks with shared `layoutId` Panel controls, canvas dismissal excludes Paper/editor/menu content, and react-archer 5.1 keeps a resize/scroll/tree-aware Archive Cord until receipt close, memo switch, new organize or undo. The DEV Design System now exposes five production layers, real light/dark switching, a universal state audit rail, full Markdown/Reading/Quote/Code specimens and all three Signature Patterns. Lifecycle tests cover success/stale/undo/restored targets and small-screen gates; authenticated browser checks cover four target viewports, dark/reduced-motion and stable CodeMirror mounting.
 
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md

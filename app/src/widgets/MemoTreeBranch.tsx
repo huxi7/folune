@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖后端 MemoTreeNode、memoLibrary 落点、紧凑 SidebarButton、整理高亮目标与上层展开/拖拽/原地重命名命令
- * [OUTPUT]: 对外提供递归树、folder/memo 落点、拖拽状态、原地重命名及本次归档目录/笔记语义标记
- * [POS]: app/src/widgets 的纯树交互渲染器；只表达可见层级、HTML5 DnD 几何与归档结果，不拥有树数据或调用 API
+ * [INPUT]: 依赖后端 MemoTreeNode、memoLibrary 落点、紧凑 SidebarButton、ArchiveTargetPort 与上层展开/拖拽/原地重命名命令
+ * [OUTPUT]: 对外提供递归树、folder/memo 落点、归档目标端口、拖拽状态、原地重命名及本次归档语义标记
+ * [POS]: app/src/widgets 的纯树交互渲染器；只表达可见层级、HTML5 DnD 几何与归档锚点，不拥有树数据、连线生命周期或 API
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -21,6 +21,7 @@ import {
 
 import type { MemoTreeNode } from "../shared/api/memo";
 import { SidebarButton } from "../shared/design-system/components";
+import { ArchiveTargetPort } from "./ArchiveCord";
 import type { MemoDropTarget } from "./memoLibrary";
 
 type TreeRowStyle = CSSProperties & {
@@ -317,6 +318,12 @@ export function MemoTreeBranch(props: MemoTreeBranchProps) {
                 draggable={!mutating}
                 label={node.title}
                 leading={icon}
+                trailing={(
+                  <ArchiveTargetPort
+                    active={node.id === highlightedFolderId || node.id === highlightedMemoId}
+                    nodeId={node.id}
+                  />
+                )}
                 onClick={(event) => {
                   if (event.detail > 1) {
                     return;

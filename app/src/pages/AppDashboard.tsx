@@ -44,14 +44,15 @@ import {
 import { PanelResizeHandle } from "../widgets/PanelResizeHandle";
 import {
   PaperWorkspaceShell,
-  type WorkspaceOrganizePresentation,
 } from "../widgets/PaperWorkspaceShell";
+import type { WorkspaceOrganizePresentation } from "../widgets/archiveCordPolicy";
 import { SubscriptionWorkspace } from "../widgets/SubscriptionWorkspace";
 import { TrashWorkspace } from "../widgets/TrashWorkspace";
 import {
   getMemoDeletionImpact,
   getPostDeletionDestination,
 } from "./memoDeletion";
+import { buildWorkspaceOrganizePresentation } from "./organizePresentation";
 import { useOptimisticMemoCreation } from "./useOptimisticMemoCreation";
 import { useMemoOrganize } from "./useMemoOrganize";
 import type {
@@ -559,33 +560,12 @@ export function AppDashboard() {
         subscription: "订阅",
         trash: "回收站",
       }[activeView];
-  const organizePresentation: WorkspaceOrganizePresentation | null = (() => {
-    const run = memoOrganize.presentationRun;
-    if (
-      run === null ||
-      run.result === null ||
-      (run.status !== "succeeded" && run.status !== "undone")
-    ) {
-      return null;
-    }
-
-    const resultMemo = run.status === "undone"
-      ? run.result.undo?.memo
-      : run.result.memo;
-    if (resultMemo === undefined || resultMemo.id !== selectedMemo?.id) {
-      return null;
-    }
-
-    return {
-      memoId: resultMemo.id,
-      path: run.status === "undone"
-        ? getMemoFolderPath(memoTree, resultMemo.id)
-        : run.result.target_path,
-      runId: run.id,
-      status: run.status,
-      targetFolderId: resultMemo.parent_id,
-    };
-  })();
+  const organizePresentation: WorkspaceOrganizePresentation | null =
+    buildWorkspaceOrganizePresentation({
+      resolveMemoPath: (memoId) => getMemoFolderPath(memoTree, memoId),
+      run: memoOrganize.presentationRun,
+      selectedMemoId: selectedMemo?.id ?? null,
+    });
   const memoDialogDescription = memoDialog === null
     ? ""
     : memoDialog.parentId === null

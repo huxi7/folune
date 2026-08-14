@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖 index.css 的纯色弱边缘 Secondary Button 材质、统一默认高度、smooth corner、低对比零偏移环绕阴影、focus 与 motion 语义 token
- * [OUTPUT]: 对外提供 default/icon 等高且使用统一平滑圆角、hover 固定原位的 SidebarButton；通用选中态与显著态保留安静平面层级，底部 utility 当前位置只使用无容器的前景色强调
+ * [INPUT]: 依赖 index.css 的纯色 Secondary 材质、统一默认高度、8px 控件圆角、focus 与 motion 语义 token
+ * [OUTPUT]: 对外提供无实体阴影、hover 固定原位的 SidebarButton；选中态只以轻中性底色和墨色表达，utility 当前位置只使用前景色
  * [POS]: app/src/styles 的侧栏导航原子样式，消除 APP 与账户模态框的尺寸/材质分叉并保留安静的未选中层级
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -40,17 +40,17 @@
 
   .ds-sidebar-button[data-active="true"],
   .ds-sidebar-button[data-tone="prominent"] {
-    border-color: var(--border);
-    background: var(--card);
+    border-color: transparent;
+    background: var(--secondary);
     color: var(--card-foreground);
-    box-shadow: var(--button-shadow-subtle-rest);
+    box-shadow: none;
   }
 
   .ds-sidebar-button:active:not(:disabled) {
-    border-color: var(--border-strong);
-    background: var(--border);
+    border-color: transparent;
+    background: var(--secondary);
     color: var(--card-foreground);
-    box-shadow: var(--button-shadow-subtle-pressed);
+    box-shadow: none;
     transform: translateY(0.0625rem);
   }
 

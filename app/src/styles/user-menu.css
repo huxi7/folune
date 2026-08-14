@@ -22,7 +22,7 @@
     background: var(--popover);
     padding: 0.4rem;
     color: var(--popover-foreground);
-    box-shadow: var(--shadow-xl), var(--ds-shadow-inset-highlight);
+    box-shadow: var(--shadow-sm);
     transform-origin: center bottom;
     animation: ds-menu-in var(--motion-fast) var(--ease-standard);
   }
