@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖 index.css 的 Paper First 画布/纸张 token、4px 空间基线、32/36/48px 控件阶梯、全局颜色 token 及 Tailwind v4 layer
- * [OUTPUT]: 对外提供设置/订阅/回收站、816px Editorial Paper、Edge Dock、浮动文件库/AI、响应式安全区/抽屉/遮罩、Archive Port/Target/Cord/回执与既有业务内容布局
+ * [INPUT]: 依赖 index.css 的 Paper First 画布/纸张 token、4px 空间基线、32/36/48px 控件阶梯、统一中性 interactive-hover、全局颜色 token 及 Tailwind v4 layer
+ * [OUTPUT]: 对外提供设置/订阅/回收站、816px Editorial Paper、Edge Dock、浮动文件库/AI、统一普通菜单 hover、响应式安全区/抽屉/遮罩、Archive Port/Target/Cord/回执与既有业务内容布局
  * [POS]: app/src/styles 的产品工作区布局层；中性 Canvas 只衬托唯一 Paper，左右工具按需浮现，编辑器内容保持透明且不拥有纸张外壳
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -320,11 +320,11 @@
   .memo-context-menu { position: fixed; top: var(--memo-context-y); left: var(--memo-context-x); z-index: 90; display: grid; width: 12.25rem; gap: 0.15rem; border: 1px solid var(--border); border-radius: var(--radius-menu); background: var(--popover); padding: 0.3rem; color: var(--popover-foreground); box-shadow: var(--shadow-sm); }
   .memo-context-menu button { display: flex; width: 100%; min-height: 2rem; align-items: center; gap: 0.55rem; border-radius: var(--button-radius); padding-inline: 0.55rem; color: inherit; font-size: 0.75rem; text-align: left; transition: background var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard); }
   .memo-context-menu button:hover:not(:disabled),
-  .memo-context-menu button:focus-visible { background: var(--accent); color: var(--accent-foreground); outline: none; }
+  .memo-context-menu button:focus-visible { background: var(--interactive-hover); color: var(--interactive-hover-foreground); outline: none; }
   .memo-context-menu button:disabled { opacity: 0.45; }
   .memo-context-menu .memo-context-menu-danger { color: var(--destructive); }
   .memo-context-menu .memo-context-menu-danger:hover:not(:disabled),
-  .memo-context-menu .memo-context-menu-danger:focus-visible { background: var(--muted); color: var(--destructive); }
+  .memo-context-menu .memo-context-menu-danger:focus-visible { background: var(--interactive-hover); color: var(--destructive); }
   .memo-context-menu-label { min-width: 0; flex: 1; }
   .memo-context-menu-shortcut { margin-left: auto; color: var(--muted-foreground); font-family: var(--font-mono); font-size: 0.625rem; font-weight: 560; }
   .memo-context-menu-separator { height: 1px; margin: 0.2rem 0.35rem; background: var(--border); }
@@ -357,7 +357,7 @@
   .note-more-menu-item > span { min-width: 0; flex: 1; }
   .note-more-menu-item > svg { flex-shrink: 0; color: var(--muted-foreground); }
   .note-more-menu-item:hover,
-  .note-more-menu-item:focus-visible { background: var(--accent); color: var(--accent-foreground); outline: none; }
+  .note-more-menu-item:focus-visible { background: var(--interactive-hover); color: var(--interactive-hover-foreground); outline: none; }
   .note-more-menu-item[aria-checked="true"] { color: var(--primary); }
   .note-more-menu-item[aria-checked="true"] > svg { color: var(--primary); }
   .note-more-menu-separator { height: 1px; margin: 0.2rem 0.35rem; background: var(--border); }
@@ -373,7 +373,7 @@
   .agent-permission-trigger:disabled { opacity: 0.55; }
   .agent-permission-menu { position: absolute; top: calc(100% + var(--space-1)); right: 0; z-index: 120; display: grid; width: 16rem; gap: var(--space-1); border: 1px solid var(--border); border-radius: var(--radius-menu); background: var(--popover); padding: var(--space-1); box-shadow: var(--shadow-sm); }
   .agent-permission-menu > button { display: grid; gap: 0.15rem; border-radius: var(--button-radius); padding: var(--space-2); text-align: left; }
-  .agent-permission-menu > button:hover,
+  .agent-permission-menu > button:hover { background: var(--interactive-hover); }
   .agent-permission-menu > button[aria-checked="true"] { background: var(--accent); }
   .agent-permission-menu strong { color: var(--foreground); font-size: 0.6875rem; }
   .agent-permission-menu small { color: var(--muted-foreground); font-size: 0.625rem; line-height: 1.45; }
@@ -442,7 +442,7 @@
   .agent-mention-heading { padding: var(--space-2); color: var(--muted-foreground); font-size: 0.5625rem; font-weight: 650; letter-spacing: 0.04em; text-transform: uppercase; }
   .agent-mention-menu > p { padding: var(--space-4); color: var(--muted-foreground); font-size: 0.6875rem; text-align: center; }
   .agent-mention-menu > button { display: grid; min-width: 0; gap: 0.15rem; border-radius: var(--button-radius); padding: var(--space-2); text-align: left; }
-  .agent-mention-menu > button:hover,
+  .agent-mention-menu > button:hover { background: var(--interactive-hover); }
   .agent-mention-menu > button[aria-selected="true"] { background: var(--accent); }
   .agent-mention-menu strong,
   .agent-mention-menu span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

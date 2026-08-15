@@ -101,6 +101,8 @@
   --primary-foreground: #f8fafc;
   --secondary: #f2f1ee;
   --secondary-foreground: #3c3b37;
+  --interactive-hover: var(--secondary);
+  --interactive-hover-foreground: var(--card-foreground);
   --muted: #f6f5f2;
   --muted-foreground: #77736b;
   --accent: #eaf0f4;

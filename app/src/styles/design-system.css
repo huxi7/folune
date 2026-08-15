@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖 index.css 的 Quiet Editorial 语义 Color/Type/Spacing/Radius/Elevation/Motion 与 Tailwind v4 layer
- * [OUTPUT]: 对外提供平面 Input/Select/Card、纯色 BrandMark、克制 Dialog 层级、Skeleton/Thinking/loading 信息态；Button 由 button.css 独立维护
+ * [INPUT]: 依赖 index.css 的 Quiet Editorial 语义 Color/Type/Spacing/Radius/Elevation/Motion、统一中性 interactive-hover 与 Tailwind v4 layer
+ * [OUTPUT]: 对外提供平面 Input/Select/Card、纯色 BrandMark、克制 Dialog 层级、Skeleton/Thinking/loading 信息态；Select 临时指向状态与普通菜单共享中性 hover，Button 由 button.css 独立维护
  * [POS]: app/src/styles 的组件视觉层，被 index.css 统一导入
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -389,8 +389,8 @@
   }
 
   .ds-select-option[data-active="true"] {
-    background: var(--surface-accent-subtle);
-    color: var(--accent-foreground);
+    background: var(--interactive-hover);
+    color: var(--interactive-hover-foreground);
     box-shadow: none;
   }
 
@@ -399,7 +399,7 @@
   }
 
   .ds-select-option[data-tone="danger"][data-active="true"] {
-    background: var(--muted);
+    background: var(--interactive-hover);
     color: var(--destructive);
   }
 

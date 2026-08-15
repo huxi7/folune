@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 index.css 的纯色 Secondary 材质、32px compact 高度、10px 控件圆角、focus 与 motion 语义 token
+ * [INPUT]: 依赖 index.css 的统一中性 interactive-hover、纯色 Secondary 材质、32px compact 高度、10px 控件圆角、focus 与 motion 语义 token
  * [OUTPUT]: 对外提供无实体阴影、hover 固定原位的 SidebarButton；选中态只以轻中性底色和墨色表达，utility 当前位置只使用前景色
  * [POS]: app/src/styles 的侧栏导航原子样式，消除 APP 与账户模态框的尺寸/材质分叉并保留安静的未选中层级
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -33,8 +33,8 @@
 
   .ds-sidebar-button:where(:hover:not(:disabled)) {
     border-color: var(--border);
-    background: var(--secondary);
-    color: var(--card-foreground);
+    background: var(--interactive-hover);
+    color: var(--interactive-hover-foreground);
     box-shadow: none;
   }
 

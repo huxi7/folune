@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖 index.css 的账户、popover、统一 smooth-corner 按钮、边框、阴影、动效与 V1 语义 token，复用 design-system.css 的 UserAvatar 表面
- * [OUTPUT]: 对外提供身份卡片式 UserMenu 弹层、统一平滑圆角且不偏红的中性/冷蓝分组动作、无红色填充的危险动作与键盘焦点视觉
+ * [INPUT]: 依赖 index.css 的账户、popover、统一中性 interactive-hover、smooth-corner 按钮、边框、阴影与动效 token，复用 design-system.css 的 UserAvatar 表面
+ * [OUTPUT]: 对外提供身份卡片式 UserMenu 弹层、与文件树同源的中性分组动作 hover、无红色填充的危险动作与键盘焦点视觉
  * [POS]: app/src/styles 的账户菜单专用视觉层，与通用 Select 分离并被 UserMenu 独占
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -46,8 +46,8 @@
   .ds-user-menu-item:hover,
   .ds-user-menu-item:focus-visible {
     outline: none;
-    background: var(--surface-accent-subtle);
-    color: var(--accent-foreground);
+    background: var(--interactive-hover);
+    color: var(--interactive-hover-foreground);
   }
 
   .ds-user-menu-identity-avatar {
@@ -108,7 +108,7 @@
 
   .ds-user-menu-item[data-tone="danger"]:hover,
   .ds-user-menu-item[data-tone="danger"]:focus-visible {
-    background: var(--surface-neutral);
+    background: var(--interactive-hover);
     color: var(--destructive);
   }
 }

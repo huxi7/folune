@@ -24,9 +24,9 @@ ToolCallBubble.tsx: 工具调用专用披露控件，整颗主按钮可点击但
 ToolCallBubble.test.tsx: 工具披露最小 DOM 契约测试，锁定执行态 shimmer、完成态结果槽、可访问详情入口、无 pre/details 调试面板及停止后未完成态静止
 BrandMark.tsx: SuperNote 品牌标识组件，只提供 iconOnly 纯图标与“图标 + SuperNote 标题”两种稳定锁定；所有界面删除副标题形态
 Toast.tsx: Kumo-backed 全局瞬时反馈边界，以 Kumo Toast Provider/Manager/Parts 接管四条可见上限、自动关闭、悬停暂停、焦点、滑动与卸载清理；表现层采用 Kumo 同源 Root/独立材质层/Content 结构与 Apple-like 中性浮层，只以轻量图标传达 info/success/warning/error，业务层不感知第三方实现
-Select.tsx: 本地 Select 原子组件，提供受控/非受控值、上下布局、点击外部关闭、Esc/Tab/方向键/Home/End/Enter 键盘交互与自定义触发器能力；当前产品界面不消费，因此不进入开发态生产组件陈列
+Select.tsx: 本地 Select 原子组件，提供受控/非受控值、上下布局、点击外部关闭、Esc/Tab/方向键/Home/End/Enter 键盘交互与自定义触发器能力；指针/键盘临时指向项消费统一中性 interactive-hover，选中语义由 Check 与真实值承担；当前产品界面不消费，因此不进入开发态生产组件陈列
 UserButton.tsx: 本地用户身份原子组件，提供可复用 UserAvatar 与显示头像、姓名、邮箱、展开状态的 UserButton 触发器，不包含业务跳转
-UserMenu.tsx: 本地账户菜单组合组件，顶部身份卡片整栏可点击并直达个人资料，下方不重复个人资料项，只发出订阅、设置与退出命令；支持外部点击/Esc/方向键焦点管理
+UserMenu.tsx: 本地账户菜单组合组件，顶部身份卡片整栏可点击并直达个人资料，下方不重复个人资料项，只发出订阅、设置与退出命令；所有普通项目与文件树共享中性 interactive-hover，危险项只保留红色文字；支持外部点击/Esc/方向键焦点管理
 index.ts: 本地 design system 组件出口，统一暴露通用组件、Skeleton/延迟显示策略、ThinkingMark/ThinkingStatusText/互斥 AI 消息家族、Toast 根能力与公开类型
 
 职责: 本地组件目录；首次无旧内容的稳定结构才使用统一 Skeleton，已有内容刷新必须优先保留内容，业务组件不得复制 shimmer；AI 最终正文永远不得拥有卡片表面，用户消息复用 Primary 主题，过程与正文的语义分区由业务层决定，ToolCallBubble 只消费已净化的人话详情；所有组件只能使用 app/src/index.css 暴露的语义 token 与组件层 class，不得在组件中硬编码颜色值或引入第二套 UI 系统。

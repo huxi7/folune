@@ -29,6 +29,12 @@ SuperNote is a quiet editorial instrument that lets users write first and allows
 - Saving is the processing state of a Primary action, not a Secondary variant or a second brand color.
 - The processing surface is intentionally less saturated than Primary so an unavailable in-flight command cannot look clickable.
 
+## Interaction color semantics
+
+- Ordinary pointer and keyboard-row hover uses one neutral `interactive-hover` surface shared by the memo tree, User Menu, Select and transient workspace menus.
+- Soft Ink blue is reserved for Primary actions, selected/current states, focus indication and explicit organizing or drag feedback; merely pointing at a menu row must not turn its surface or label blue.
+- Danger menu actions retain destructive text on the same neutral hover surface instead of introducing a red or blue fill.
+
 ## Radius system
 
 - Compact `8px`: dense tree rows, small navigation targets

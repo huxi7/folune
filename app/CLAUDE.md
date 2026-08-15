@@ -45,6 +45,8 @@ AI 消息组件约束: 用户气泡必须与 Primary Button 同源；消息角�
 
 Kumo Toast 约束: 全局瞬时反馈必须经本地 Toast API 适配 Kumo Toast Provider/Manager/Parts；Kumo 负责队列、自动关闭、悬停暂停、焦点与滑动生命周期，表现层只使用 SuperNote 的不透明中性 Popover、12px 曲率与克制浮层阴影。状态只通过轻量图标传达，禁止玻璃、旧式彩色竖线、图标盒、状态边框与彩色填充；业务层不得直接依赖 Kumo 协议。
 
+交互色彩约束: 普通指针/键盘行 hover 必须消费 `src/index.css` 的中性 `interactive-hover`，文件树、SidebarButton、User Menu、Select、文件右键菜单、More Menu 与 Agent 弹出菜单不得因单纯指向而显示 Soft Ink 蓝底或蓝字。柔和墨蓝只服务 Primary、选中/当前位置、focus 与明确整理/拖放反馈；危险菜单项在同一中性 hover 表面上保留 destructive 文字，不增加红色或蓝色填充。
+
 纯白画布约束: Light APP 与 DEV Design System 的页面、卡片和预览底材必须保持纯白；轨道、Skeleton 与禁用态只能消费 index.css 中确定性的中性灰蓝 token，禁止以 muted/destructive 混色生成基础背景，也禁止用低饱和 OKLCH 插值制造可能偏红的表面、边缘或阴影。跨样式颜色插值统一使用 sRGB。Danger Button 是唯一允许保留实心 destructive 红色功能面的组件；错误 Toast、Agent 错误区、菜单危险项等其他入口只通过红色文字、图标和细边界表达，不允许红色或浅红色填充。非 Danger Button 的 loading 状态不得复用 Primary 填色，统一消费独立状态面与低频 Shimmer；dark 主题仍遵循其独立暗色语义画布。
 
 Paper First V1.1 / Quiet Editorial 覆盖约束: 本节覆盖上文遗留的 V1 Classic Blueprint App 材质描述；Landing Blueprint 保持独立。APP/DEV Design System 只消费 `src/index.css` 的 Canvas/Paper/Ink/Muted/Hairline/Soft Ink/Danger 语义轴，Button 仅允许轻微可触内外影，Paper 仍是唯一明显的非对称多层阴影。Paper 固定 51rem/816px 上限与 12px 曲率，标题/Markdown 标题/引用/阅读态使用 Editorial 字体。关闭状态的 Library/AI 是 42×36px Edge Dock，并通过同一 Motion `layoutId` 变形成 Panel Header 收起控制；打开后 Canvas Dock 必须消失。整理 succeeded/undone 由 react-archer 5.1 把 Paper Archive Port 持久连接到真实目录/备忘录 Target Port，直到关闭回执、切换笔记、新整理或撤销；resize、Panel resize、树滚动/展开必须刷新几何，小屏覆盖模式只保留高亮和回执。唯一动效时间轴为 Fast 160ms、Normal 260ms、Spatial 320ms、Quiet 600ms，reduced-motion 直接呈现静态结果。
