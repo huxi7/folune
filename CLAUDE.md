@@ -41,5 +41,5 @@ AI 是用户的备忘录协作伙伴与智能档案管理员。
 | .dockerignore | 收窄 api/chat 开发镜像的仓库根构建上下文，排除源码、缓存、密钥与无关模块 |
 | .env.example | app/api/chat 无密钥变量总览与根 Compose 可选覆盖模板；服务默认使用各自本地环境文件 |
 | .gitignore | 根级本地环境、构建缓存与系统文件忽略规则 |
-| docker-compose.dev.yml | 从各模块私有 `.env` 注入凭据并编排 api-dev/chat-dev 双服务、独立健康探针、依赖卷与共享网络；chat 直启 Mastra CLI 以保证容器停止时释放开发锁 |
+| docker-compose.dev.yml | 从各模块私有 `.env` 注入凭据并编排 api-dev/chat-dev 双服务、独立健康探针、依赖卷与共享网络；chat 启动前清理容器 PID 复用导致的陈旧 Mastra 开发锁，并直启 CLI 接收停止信号 |
 | AI_NATIVE_V1_PRD.md | AI Native V1 的产品目标、锁定边界、实施阶段、测试计划与持续完成状态 |

@@ -297,7 +297,7 @@
     align-items: center;
     justify-content: center;
     border: 1px solid color-mix(in srgb, var(--border) 62%, transparent);
-    border-radius: calc(var(--radius-control) - 0.2rem);
+    border-radius: var(--radius-inner-control);
     background: var(--card);
     color: var(--muted-foreground);
     box-shadow: none;
@@ -340,7 +340,7 @@
     .ds-user-message-bubble,
     .ds-tool-call-bubble,
     .ds-tool-call-result {
-      corner-shape: squircle;
+      corner-shape: var(--corner-shape-smooth);
     }
   }
 

@@ -61,8 +61,8 @@
   padding: 0;
   color: var(--foreground);
   font-family: var(--font-sans);
-  font-size: 0.9375rem;
-  line-height: 1.82;
+  font-size: var(--type-body);
+  line-height: var(--leading-body);
   white-space: pre-wrap;
 }
 
@@ -77,8 +77,8 @@
 
 .note-editor-canvas .supernote-md-editor .cm-editor[data-editing-mode="source"] .cm-content {
   font-family: var(--font-mono);
-  font-size: 0.875rem;
-  line-height: 1.85;
+  font-size: var(--type-input);
+  line-height: var(--leading-body);
 }
 
 .note-editor-canvas .supernote-md-editor .cm-editor[data-editing-mode="live"] .cm-content {

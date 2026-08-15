@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 index.css 的 Quiet Editorial 语义 Color/Type/Spacing/Radius/Elevation/Motion 与 Tailwind v4 layer
- * [OUTPUT]: 对外提供平面 Button/Input/Select/Card、纯色 BrandMark、克制 Dialog 层级、Danger 唯一红色功能面、Skeleton/Thinking/loading 信息态
+ * [OUTPUT]: 对外提供平面 Input/Select/Card、纯色 BrandMark、克制 Dialog 层级、Skeleton/Thinking/loading 信息态；Button 由 button.css 独立维护
  * [POS]: app/src/styles 的组件视觉层，被 index.css 统一导入
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -55,12 +55,12 @@
 
   .ds-skeleton-text {
     height: 0.72em;
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
   }
 
   .ds-skeleton-circle {
     aspect-ratio: 1;
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
   }
 
   .ds-thinking-mark {
@@ -143,186 +143,6 @@
     animation-delay: 465ms;
   }
 
-  .ds-button {
-    --button-border-rest: transparent;
-    --button-border-hover: transparent;
-    --button-border-active: transparent;
-    --button-surface-rest: transparent;
-    --button-surface-hover: transparent;
-    --button-surface-active: transparent;
-    --button-foreground-rest: var(--foreground);
-    --button-shimmer-color: var(--primary-foreground);
-    position: relative;
-    isolation: isolate;
-    overflow: hidden;
-    display: inline-flex;
-    flex-shrink: 0;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid var(--button-border-rest);
-    border-radius: var(--button-radius);
-    background: var(--button-surface-rest);
-    color: var(--button-foreground-rest);
-    font-size: 0.75rem;
-    font-weight: 650;
-    letter-spacing: 0.006em;
-    line-height: 1;
-    white-space: nowrap;
-    box-shadow: none;
-    transform: translateY(0);
-    transition:
-      transform var(--motion-fast) var(--ease-standard),
-      background var(--motion-fast) var(--ease-standard),
-      border-color var(--motion-fast) var(--ease-standard),
-      color var(--motion-fast) var(--ease-standard),
-      filter var(--motion-fast) var(--ease-standard),
-      opacity var(--motion-fast) var(--ease-standard);
-  }
-
-  .ds-button-content {
-    position: relative;
-    z-index: 1;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: calc(var(--spacing) * 2);
-  }
-
-  .ds-button:not(:disabled):hover {
-    border-color: var(--button-border-hover);
-    background: var(--button-surface-hover);
-    box-shadow: none;
-  }
-
-  .ds-button:not(:disabled):active {
-    border-color: var(--button-border-active);
-    background: var(--button-surface-active);
-    box-shadow: none;
-    transform: translateY(0.0625rem);
-    transition-duration: 70ms;
-  }
-
-  .ds-button:focus-visible {
-    outline: 2px solid color-mix(in srgb, var(--ring) 66%, transparent);
-    outline-offset: 3px;
-  }
-
-  .ds-button:disabled {
-    cursor: not-allowed;
-  }
-
-  .ds-button:disabled:not(.ds-button-loading) {
-    box-shadow: none;
-    filter: saturate(0.52);
-    opacity: 0.58;
-    transform: none;
-  }
-
-  .ds-button.ds-button-loading {
-    cursor: wait;
-    opacity: 1;
-    transform: none;
-  }
-
-  .ds-button.ds-button-loading:not(.ds-button-danger) {
-    border-color: var(--button-loading-border);
-    background: var(--button-loading-background);
-    color: var(--button-loading-foreground);
-    box-shadow: none;
-  }
-
-  .ds-button-loading::after {
-    content: "";
-    position: absolute;
-    top: -55%;
-    bottom: -55%;
-    left: -48%;
-    z-index: 0;
-    width: 34%;
-    background: linear-gradient(
-      102deg,
-      transparent 0%,
-      color-mix(in srgb, var(--button-shimmer-color) 8%, transparent) 24%,
-      color-mix(in srgb, var(--button-shimmer-color) 62%, transparent) 50%,
-      color-mix(in srgb, var(--button-shimmer-color) 8%, transparent) 76%,
-      transparent 100%
-    );
-    filter: blur(0.08rem);
-    opacity: 0;
-    pointer-events: none;
-    transform: skewX(-14deg) translateX(-280%);
-    animation: ds-button-shimmer 3.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-  }
-
-  .ds-button-loading:not(.ds-button-danger)::after {
-    --button-shimmer-color: var(--button-loading-shimmer);
-  }
-
-  .ds-button-spinner {
-    width: 0.875rem;
-    height: 0.875rem;
-    flex-shrink: 0;
-    border: 0.1rem solid currentColor;
-    border-right-color: transparent;
-    border-radius: 999px;
-    opacity: 0.78;
-    animation: ds-button-spin 840ms linear infinite;
-  }
-
-  .ds-button-size-default {
-    height: var(--button-height-default);
-    min-height: var(--button-height-default);
-    padding: 0 1rem;
-  }
-
-  .ds-button-size-square {
-    width: var(--button-height-default);
-    height: var(--button-height-default);
-    padding: 0;
-  }
-
-  .ds-button-primary {
-    --button-border-rest: color-mix(in srgb, var(--primary) 82%, var(--button-depth));
-    --button-border-hover: color-mix(in srgb, var(--primary-hover) 82%, var(--button-depth));
-    --button-border-active: color-mix(in srgb, var(--primary-active) 82%, var(--button-depth));
-    --button-surface-rest: var(--primary);
-    --button-surface-hover: var(--primary-hover);
-    --button-surface-active: var(--primary-active);
-    --button-foreground-rest: var(--primary-foreground);
-  }
-
-  .ds-button-secondary {
-    --button-border-rest: color-mix(in srgb, var(--border) 40%, transparent);
-    --button-border-hover: color-mix(in srgb, var(--border) 60%, transparent);
-    --button-border-active: color-mix(in srgb, var(--border-strong) 72%, transparent);
-    --button-surface-rest: var(--card);
-    --button-surface-hover: var(--secondary);
-    --button-surface-active: var(--border);
-    --button-foreground-rest: var(--card-foreground);
-    --button-shimmer-color: var(--foreground);
-  }
-
-  .ds-button-ghost {
-    --button-surface-hover: var(--muted);
-    --button-surface-active: var(--border);
-    --button-foreground-rest: var(--muted-foreground);
-    --button-shimmer-color: var(--foreground);
-  }
-
-  .ds-button-ghost:not(:disabled):hover {
-    color: var(--foreground);
-  }
-
-  .ds-button-danger {
-    --button-border-rest: color-mix(in srgb, var(--destructive) 80%, var(--button-depth));
-    --button-border-hover: color-mix(in srgb, var(--button-danger-hover-background) 80%, var(--button-depth));
-    --button-border-active: color-mix(in srgb, var(--button-danger-active-background) 80%, var(--button-depth));
-    --button-surface-rest: var(--destructive);
-    --button-surface-hover: var(--button-danger-hover-background);
-    --button-surface-active: var(--button-danger-active-background);
-    --button-foreground-rest: var(--destructive-foreground);
-  }
-
   .ds-input {
     min-height: var(--control-height-default);
     border-radius: var(--radius-control);
@@ -330,7 +150,9 @@
     border-color: var(--input);
     background: var(--card);
     padding-inline: calc(var(--spacing) * 3);
-    font-size: 0.875rem;
+    font-size: var(--type-input);
+    font-weight: var(--weight-input);
+    line-height: var(--leading-input);
     color: var(--foreground);
     box-shadow: none;
     transition: border-color var(--motion-fast) var(--ease-standard), box-shadow var(--motion-fast) var(--ease-standard), background var(--motion-fast) var(--ease-standard);
@@ -451,7 +273,7 @@
     position: absolute;
     left: 0.34rem;
     height: 0.1rem;
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     background: color-mix(in srgb, var(--primary-foreground) 82%, transparent);
   }
 
@@ -626,7 +448,6 @@
   }
 
   @supports (corner-shape: squircle) {
-    .ds-button,
     .ds-input,
     .ds-password-toggle,
     .ds-card,
@@ -639,7 +460,7 @@
     .ds-select-option,
     .ds-user-button,
     .ds-user-avatar {
-      corner-shape: squircle;
+      corner-shape: var(--corner-shape-smooth);
     }
   }
 
@@ -699,24 +520,6 @@
     }
   }
 
-  @keyframes ds-button-spin {
-    to { transform: rotate(360deg); }
-  }
-
-  @keyframes ds-button-shimmer {
-    0%, 38% {
-      opacity: 0;
-      transform: skewX(-14deg) translateX(-280%);
-    }
-    44% { opacity: 0.14; }
-    53% { opacity: 0.82; }
-    65% { opacity: 0.28; }
-    73%, 100% {
-      opacity: 0;
-      transform: skewX(-14deg) translateX(520%);
-    }
-  }
-
   @keyframes ds-skeleton-shimmer {
     0%, 16% {
       opacity: 0;
@@ -759,8 +562,6 @@
 @media (prefers-reduced-motion: reduce) {
   @layer components {
     .ds-skeleton-group::after,
-    .ds-button-loading::after,
-    .ds-button-spinner,
     .loading-content-reveal {
       animation: none !important;
     }

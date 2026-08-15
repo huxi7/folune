@@ -1,5 +1,5 @@
 # [INPUT]: 依赖 api/chat 两个 Dockerfile、各自源码与被 Git 忽略的服务端环境文件
-# [OUTPUT]: 提供固定命名 api-dev/chat-dev、独立健康探针、依赖卷与共享 bridge 网络；chat 直启 Mastra CLI 以接收容器停止信号
+# [OUTPUT]: 提供固定命名 api-dev/chat-dev、独立健康探针、依赖卷与共享 bridge 网络；chat 启动前清理跨容器生命周期失效的 Mastra 开发锁并直启 CLI
 # [POS]: 仓库根开发编排入口；app 留在本机 Bun/Vite，api 与 chat 由同一 Compose 生命周期管理
 # [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 
@@ -45,7 +45,7 @@ services:
     build:
       context: .
       dockerfile: deploy/docker/chat.Dockerfile
-    command: sh -lc "bun install --frozen-lockfile && exec bun ./node_modules/mastra/dist/index.js dev"
+    command: sh -lc "rm -f .mastra/dev.lock && bun install --frozen-lockfile && exec bun ./node_modules/mastra/dist/index.js dev"
     init: true
     restart: unless-stopped
     env_file:

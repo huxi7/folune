@@ -175,7 +175,7 @@
     align-items: center;
     justify-content: center;
     border: 0;
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     background: color-mix(in srgb, var(--foreground) 5%, transparent);
     color: var(--muted-foreground);
     opacity: 0.72;
@@ -202,7 +202,7 @@
     .ds-toast,
     .ds-toast-material,
     .ds-toast-dismiss {
-      corner-shape: squircle;
+      corner-shape: var(--corner-shape-smooth);
     }
   }
 }

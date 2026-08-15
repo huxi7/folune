@@ -70,37 +70,100 @@ const spatialSteps = [
   { step: "8", token: "space-8", value: "32px" },
 ] as const;
 
+const typographyRoles = [
+  { key: "display", role: "展示 Display", token: "--type-display", size: "32–56px", leading: "1.05", weight: "500", family: "Editorial", usage: "Landing / Design System 主标题", sample: "思想先被写下" },
+  { key: "title", role: "标题 Title", token: "--type-title", size: "24–30px", leading: "1.2", weight: "500", family: "Editorial", usage: "Paper 标题 / 页面标题", sample: "让内容成为主角" },
+  { key: "heading", role: "章节 Heading", token: "--type-heading", size: "18px", leading: "1.45", weight: "650", family: "Interface", usage: "分组标题 / 结构层级", sample: "第三章 · 结构与检索" },
+  { key: "body", role: "正文 Body", token: "--type-body", size: "15px", leading: "27px", weight: "450", family: "Interface", usage: "编辑器 / 说明文字", sample: "界面退后，让笔记与智能自然浮现。" },
+  { key: "ui", role: "操作 UI", token: "--type-ui", size: "14px", leading: "18px", weight: "650", family: "Interface", usage: "Button / Sidebar / Menu", sample: "保存 · 文件库 · 整理" },
+  { key: "label", role: "标签 Label", token: "--type-label", size: "12px", leading: "16px", weight: "650", family: "Interface", usage: "字段名 / 小组标题 / 高密度树节点", sample: "产品规划 · 用户访谈" },
+  { key: "caption", role: "辅助 Caption", token: "--type-caption", size: "11px", leading: "16px", weight: "560", family: "Interface", usage: "时间 / 状态 / 辅助说明", sample: "最后保存于 14:32" },
+  { key: "mono", role: "系统 Mono", token: "--type-mono", size: "11px", leading: "16px", weight: "500", family: "Mono", usage: "Token / 路径 / 技术标识", sample: "--primary · memo_2026_08" },
+] as const;
+
 function ColorPreview() {
   return (
-    <div className="ds-color-preview">
-      {[
-        ["Canvas", "workspace-canvas"],
-        ["Paper", "paper-surface"],
-        ["Ink", "foreground"],
-        ["Muted", "muted-foreground"],
-        ["Hairline", "border"],
-        ["Ink Blue", "primary"],
-        ["Danger", "destructive"],
-      ].map(([label, token]) => (
-        <span data-color={token} key={token}>
-          <i />
-          <small>{label}</small>
-          <code>--{token}</code>
-        </span>
-      ))}
+    <div className="ds-color-system-preview">
+      <div className="ds-color-system-note">
+        <strong>Soft Ink · 柔和墨蓝</strong>
+        <span>Light #395875 · Dark #91ABC4 · Saving 使用同色相的低饱和 Processing 状态</span>
+      </div>
+      <div className="ds-color-preview">
+        {[
+          ["Canvas", "workspace-canvas"],
+          ["Paper", "paper-surface"],
+          ["Ink", "foreground"],
+          ["Muted", "muted-foreground"],
+          ["Hairline", "border"],
+          ["Primary", "primary"],
+          ["Hover", "primary-hover"],
+          ["Pressed", "primary-active"],
+          ["Primary Soft", "accent"],
+          ["Saving", "processing-surface"],
+          ["Focus", "ring"],
+          ["Danger", "destructive"],
+        ].map(([label, token]) => (
+          <span data-color={token} key={token}>
+            <i />
+            <small>{label}</small>
+            <code>--{token}</code>
+          </span>
+        ))}
+      </div>
     </div>
   );
 }
 
 function TypographyPreview() {
   return (
-    <div className="ds-type-preview">
-      <p data-type="display">Quiet Editorial Instrument</p>
-      <p data-type="title">A durable note surface</p>
-      <p data-type="body">正文保持清楚、自然，Editorial 字体只进入 Paper 标题与阅读层。</p>
-      <p data-type="ui">Interface command · 文件库</p>
-      <p data-type="caption">CAPTION / FOLIO / METADATA</p>
-      <code>const archive = "durable";</code>
+    <div className="ds-type-system-preview">
+      <section aria-label="字体家族" className="ds-type-family-grid">
+        <article className="ds-type-family" data-family="interface">
+          <div><strong>Interface / 界面</strong><code>--font-sans</code></div>
+          <p>SuperNote 文件库</p>
+          <small>Avenir Next × PingFang SC · Noto Sans SC fallback</small>
+        </article>
+        <article className="ds-type-family" data-family="editorial">
+          <div><strong>Editorial / 阅读</strong><code>--font-serif</code></div>
+          <p>让内容成为主角</p>
+          <small>Iowan Old Style × Songti SC · Noto Serif SC fallback</small>
+        </article>
+        <article className="ds-type-family" data-family="mono">
+          <div><strong>Mono / 系统</strong><code>--font-mono</code></div>
+          <p>memo_2026_08</p>
+          <small>SF Mono × Cascadia Code · Menlo fallback</small>
+        </article>
+      </section>
+
+      <section aria-label="字号与行高角色" className="ds-type-scale">
+        <div className="ds-type-scale-header" role="row">
+          <span>角色 / Token</span><span>中文样本</span><span>字号 / 行高</span><span>字重</span><span>职责</span>
+        </div>
+        {typographyRoles.map((item) => (
+          <div className="ds-type-scale-row" data-type-role={item.key} key={item.key} role="row">
+            <div><strong>{item.role}</strong><code>{item.token}</code></div>
+            <p>{item.sample}</p>
+            <code>{item.size} / {item.leading}</code>
+            <code>{item.weight}</code>
+            <small>{item.family} · {item.usage}</small>
+          </div>
+        ))}
+      </section>
+
+      <section aria-label="控件字体配对" className="ds-type-control-pairing">
+        <article>
+          <div className="ds-type-pairing-heading"><strong>Button</strong><code>36px · 14/18</code></div>
+          <div className="ds-type-pairing-demo"><Button variant="primary">保存</Button><small>横向 14px · 图文 6px</small></div>
+        </article>
+        <article>
+          <div className="ds-type-pairing-heading"><strong>Input</strong><code>36px · 14/20</code></div>
+          <div className="ds-type-pairing-demo"><Input aria-label="输入示例" placeholder="输入标题" /><small>文字比 Button 更松</small></div>
+        </article>
+        <article>
+          <div className="ds-type-pairing-heading"><strong>Paper Body</strong><code>15px · 27px</code></div>
+          <div className="ds-type-pairing-demo"><p data-type="body">正文保持清楚、自然。</p><small>阅读优先，不追求紧凑</small></div>
+        </article>
+      </section>
     </div>
   );
 }
@@ -109,10 +172,11 @@ function RadiusElevationMotionPreview() {
   return (
     <div className="ds-foundation-material-preview">
       <div className="ds-radius-preview">
-        <span data-radius="control">8</span>
-        <span data-radius="menu">12</span>
-        <span data-radius="panel">14</span>
-        <span data-radius="dialog">16</span>
+        <span data-radius="compact"><strong>8</strong><small>Compact</small></span>
+        <span data-radius="control"><strong>10</strong><small>Control</small></span>
+        <span data-radius="paper"><strong>12</strong><small>Paper · Menu</small></span>
+        <span data-radius="panel"><strong>16</strong><small>Panel</small></span>
+        <span data-radius="dialog"><strong>20</strong><small>Dialog</small></span>
       </div>
       <div className="ds-elevation-preview">
         <span data-elevation="paper">Paper</span>
@@ -164,11 +228,12 @@ function SpatialRhythmPreview() {
           </span>
         </div>
         <div className="ds-control-size-row">
-          <span data-control-size="compact"><i />Compact <code>32</code></span>
-          <span data-control-size="default"><i />Default <code>40</code></span>
+          <span data-control-size="compact"><i />Tree row <code>32</code></span>
+          <span data-control-size="button"><i />Button <code>36</code></span>
+          <span data-control-size="default"><i />Input <code>36</code></span>
           <span data-control-size="header"><i />Header <code>48</code></span>
         </div>
-        <p className="ds-spatial-rule">Header 上下各保留 8px；相邻图标命令保持 4px 间隙。文件树 30px 是唯一高密度例外。</p>
+        <p className="ds-spatial-rule">文件树、SidebarButton 与 Header 命令保持 32px compact 节奏；标准 Button 使用 36px 与 14/18px 文字，树节点使用 32px 与 12/16px 文字，统一来自同一条 4px 尺寸阶梯。</p>
       </section>
     </div>
   );

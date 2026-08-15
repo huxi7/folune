@@ -56,11 +56,11 @@ export const designSystemSections: DesignSystemCategory[] = [
 ];
 
 export const designSystemSamples: DesignSystemSample[] = [
-  { category: "Foundations", id: "Color", name: "Color", summary: "Canvas、Paper、Ink、Muted、Hairline、Brand Ink Blue 与 Danger 的唯一语义颜色轴。" },
-  { category: "Foundations", id: "Typography", name: "Typography", summary: "Display、Title、Body、UI、Caption、Mono 六级体系；Editorial 只进入 Paper 阅读层。" },
-  { category: "Foundations", id: "SpatialRhythm", name: "Spacing", summary: "4px 基线与 4/8/12/16/24/32/48/64/96 主节奏，32/40/48px 固定界面尺寸。" },
-  { category: "Foundations", id: "RadiusElevationMotion", name: "Radius · Elevation · Motion", summary: "8/12/14/16px 曲率、Paper 唯一明显阴影与 160/260/320/600ms 时间层级。" },
-  { category: "Primitives", id: "Button", name: "Button", summary: "Ink Blue Primary、Paper Secondary、Ghost 与唯一实心红色 Danger；press 只下压 1px。" },
+  { category: "Foundations", id: "Color", name: "Color", summary: "Canvas、Paper、Ink、Soft Ink Primary 交互轴、Saving Processing、Focus 与 Danger 的唯一语义颜色系统。" },
+  { category: "Foundations", id: "Typography", name: "Typography", summary: "Interface、Editorial、Mono 三类字族与八级角色；36px Button 使用 14/18px，32px 文件树使用 12/16px 高密度文字。" },
+  { category: "Foundations", id: "SpatialRhythm", name: "Spacing", summary: "4px 基线与 4/8/12/16/24/32/48/64/96 主节奏，32/36/48px 固定界面尺寸。" },
+  { category: "Foundations", id: "RadiusElevationMotion", name: "Radius · Elevation · Motion", summary: "8/10/12/16/20px 配套曲率、嵌套同心原则与 160/260/320/600ms 时间层级。" },
+  { category: "Primitives", id: "Button", name: "Button", summary: "Soft Ink Primary、Paper Secondary、Ghost 与唯一实心红色 Danger；微雾内外影，press 只下压 1px。" },
   { category: "Primitives", id: "Input", name: "Input", summary: "纯 Paper、Hairline 和清晰 focus ring；无 inset shadow。" },
   { category: "Primitives", id: "Select", name: "Select", summary: "键盘可达选择器，菜单使用 12px 曲率和克制浮层层级。" },
   { category: "Primitives", id: "SegmentedControl", name: "Segmented Control", summary: "平整轨道，选中项只依靠 Paper 与文字对比。" },
@@ -68,9 +68,9 @@ export const designSystemSamples: DesignSystemSample[] = [
   { category: "Primitives", id: "Card", name: "Card", summary: "只在分组和层级确有意义时使用；默认不依靠阴影制造容器。" },
   { category: "Navigation & Overlays", id: "SidebarButton", name: "Sidebar Button", summary: "active 只用轻中性底色、墨色文字与图标，不模拟悬浮按钮。" },
   { category: "Navigation & Overlays", id: "UserMenu", name: "User Menu", summary: "集中承载账户信息与资料、订阅、设置和退出入口。" },
-  { category: "Navigation & Overlays", id: "Dialog", name: "Dialog", summary: "16px 曲率和明确层级，暂停当前任务处理一个决定。" },
+  { category: "Navigation & Overlays", id: "Dialog", name: "Dialog", summary: "20px 曲率和明确层级，暂停当前任务处理一个决定。" },
   { category: "Navigation & Overlays", id: "Toast", name: "Toast", summary: "中性、轻量、无彩色状态容器与玻璃材质。" },
-  { category: "Navigation & Overlays", id: "BrandMark", name: "Brand Mark", summary: "保留纸张几何身份，只使用纯色 Ink Blue，删除渐变和高光。" },
+  { category: "Navigation & Overlays", id: "BrandMark", name: "Brand Mark", summary: "保留纸张几何身份，只使用纯色 Soft Ink Blue，删除渐变和高光。" },
   { category: "Editorial", id: "PaperSurface", name: "Paper Surface", summary: "纯白 Paper、Folio Header、写作列与 Archive Port 组成工作台唯一视觉中心。" },
   { category: "Editorial", id: "Markdown", name: "Markdown", summary: "生产 CodeMirror Live Preview：编辑态保留原文协议，标题使用克制 Editorial 层级。" },
   { category: "Editorial", id: "Reading", name: "Reading", summary: "Paper 阅读正文以 Editorial 字体和自然留白建立连续阅读节奏。" },

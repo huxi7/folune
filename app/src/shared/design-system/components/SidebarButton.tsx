@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖 React 原生 button 属性、ReactNode 与 sidebar-button.css 复用的无明显描边 Secondary Button 材质、统一高度、hover 固定原位及 smooth-corner token
- * [OUTPUT]: 对外提供统一导航选中语义、default/icon 等高尺寸的 SidebarButton、SidebarButtonSize 与 SidebarButtonTone
+ * [INPUT]: 依赖 React 原生 button 属性、ReactNode 与 sidebar-button.css 复用的无明显描边 Secondary Button 材质、32px compact 高度、hover 固定原位及 smooth-corner token
+ * [OUTPUT]: 对外提供统一导航选中语义、default/icon 共享 32px 尺寸的 SidebarButton、SidebarButtonSize 与 SidebarButtonTone
  * [POS]: app/src/shared/design-system/components 的侧栏导航原子件，选中态与显著态直接继承 Secondary Button 质感和统一平滑圆角，被 AppSidebar、AccountDialog 与 Design System 预览复用
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */

@@ -1,0 +1,305 @@
+/**
+ * [INPUT]: 依赖 index.css 的 Soft Ink Primary、Processing、Type/Spacing/Radius/Motion 与轻量实体材质 token
+ * [OUTPUT]: 对外提供 36px 标准 Button 的 primary/secondary/ghost/danger、square、loading、disabled、focus 与 reduced-motion 视觉状态
+ * [POS]: app/src/styles 的命令按钮专用视觉层，以 14/18px 文字比例、14px 横向留白、6px 图文间距和均匀环绕光影统一全站 Button
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+@layer components {
+  .ds-button {
+    --button-border-rest: transparent;
+    --button-border-hover: transparent;
+    --button-border-active: transparent;
+    --button-surface-rest: transparent;
+    --button-surface-hover: transparent;
+    --button-surface-active: transparent;
+    --button-face-top-rest: var(--button-surface-rest);
+    --button-face-bottom-rest: var(--button-surface-rest);
+    --button-face-top-hover: var(--button-surface-hover);
+    --button-face-bottom-hover: var(--button-surface-hover);
+    --button-face-top-active: var(--button-surface-active);
+    --button-face-bottom-active: var(--button-surface-active);
+    --button-foreground-rest: var(--foreground);
+    --button-shimmer-color: var(--primary-foreground);
+    --button-inner-ring-rest: transparent;
+    --button-inner-ring-hover: transparent;
+    --button-inner-ring-active: transparent;
+    --button-inner-glow-rest: transparent;
+    --button-inner-glow-hover: transparent;
+    --button-inner-glow-active: transparent;
+    --button-mist-rest: transparent;
+    --button-mist-hover: transparent;
+    --button-mist-active: transparent;
+    --button-press-depth: transparent;
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--button-border-rest);
+    border-radius: var(--button-radius);
+    background: linear-gradient(180deg, var(--button-face-top-rest), var(--button-face-bottom-rest));
+    color: var(--button-foreground-rest);
+    font-size: var(--button-font-size);
+    font-weight: 650;
+    letter-spacing: 0.006em;
+    line-height: var(--button-line-height);
+    white-space: nowrap;
+    box-shadow: var(--button-state-shadow, none);
+    transform: translateY(0);
+    transition:
+      transform var(--motion-fast) var(--ease-standard),
+      background var(--motion-fast) var(--ease-standard),
+      border-color var(--motion-fast) var(--ease-standard),
+      box-shadow var(--motion-fast) var(--ease-standard),
+      color var(--motion-fast) var(--ease-standard),
+      filter var(--motion-fast) var(--ease-standard),
+      opacity var(--motion-fast) var(--ease-standard);
+  }
+
+  .ds-button-content {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--button-content-gap);
+  }
+
+  .ds-button:not(:disabled):hover {
+    border-color: var(--button-border-hover);
+    background: linear-gradient(180deg, var(--button-face-top-hover), var(--button-face-bottom-hover));
+    box-shadow: var(--button-state-shadow-hover, none);
+  }
+
+  .ds-button:not(:disabled):active {
+    border-color: var(--button-border-active);
+    background: linear-gradient(180deg, var(--button-face-top-active), var(--button-face-bottom-active));
+    box-shadow: var(--button-state-shadow-pressed, none);
+    transform: translateY(0.0625rem);
+    transition-duration: 70ms;
+  }
+
+  .ds-button:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--ring) 66%, transparent);
+    outline-offset: 3px;
+  }
+
+  .ds-button:disabled {
+    cursor: not-allowed;
+  }
+
+  .ds-button:disabled:not(.ds-button-loading) {
+    box-shadow: none;
+    filter: saturate(0.52);
+    opacity: 0.58;
+    transform: none;
+  }
+
+  .ds-button.ds-button-loading {
+    cursor: wait;
+    opacity: 1;
+    transform: none;
+  }
+
+  .ds-button.ds-button-loading:not(.ds-button-danger) {
+    border-color: var(--button-loading-border);
+    background: linear-gradient(180deg, var(--processing-surface-top), var(--processing-surface-bottom));
+    color: var(--button-loading-foreground);
+    box-shadow: var(--button-loading-shadow);
+  }
+
+  .ds-button-loading::after {
+    content: "";
+    position: absolute;
+    top: -32%;
+    bottom: -32%;
+    left: -52%;
+    z-index: 0;
+    width: 30%;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      color-mix(in srgb, var(--button-shimmer-color) 10%, transparent) 16%,
+      color-mix(in srgb, var(--button-shimmer-color) 32%, transparent) 36%,
+      color-mix(in srgb, var(--button-shimmer-color) 78%, transparent) 50%,
+      color-mix(in srgb, var(--button-shimmer-color) 32%, transparent) 64%,
+      color-mix(in srgb, var(--button-shimmer-color) 10%, transparent) 84%,
+      transparent 100%
+    );
+    filter: blur(0.08rem);
+    opacity: 0;
+    pointer-events: none;
+    transform: translate3d(-360%, 0, 0) skewX(-16deg);
+    animation: ds-button-shimmer 3.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
+
+  .ds-button-loading:not(.ds-button-danger)::after {
+    --button-shimmer-color: var(--button-loading-shimmer);
+  }
+
+  .ds-button-spinner {
+    width: 0.875rem;
+    height: 0.875rem;
+    flex-shrink: 0;
+    border: 0.1rem solid currentColor;
+    border-right-color: transparent;
+    border-radius: var(--radius-pill);
+    opacity: 0.78;
+    animation: ds-button-spin 840ms linear infinite;
+  }
+
+  .ds-button-size-default {
+    height: var(--button-height-default);
+    min-height: var(--button-height-default);
+    padding: 0 var(--button-padding-inline);
+  }
+
+  .ds-button-size-square {
+    width: var(--button-height-default);
+    height: var(--button-height-default);
+    padding: 0;
+  }
+
+  .ds-button-primary {
+    --button-border-rest: color-mix(in srgb, var(--primary) 82%, var(--button-depth));
+    --button-border-hover: color-mix(in srgb, var(--primary-hover) 82%, var(--button-depth));
+    --button-border-active: color-mix(in srgb, var(--primary-active) 82%, var(--button-depth));
+    --button-surface-rest: var(--primary);
+    --button-surface-hover: var(--primary-hover);
+    --button-surface-active: var(--primary-active);
+    --button-face-top-rest: color-mix(in srgb, var(--primary) 96%, white);
+    --button-face-bottom-rest: color-mix(in srgb, var(--primary) 97%, var(--button-depth));
+    --button-face-top-hover: color-mix(in srgb, var(--primary-hover) 95%, white);
+    --button-face-bottom-hover: color-mix(in srgb, var(--primary-hover) 97%, var(--button-depth));
+    --button-face-top-active: color-mix(in srgb, var(--primary-active) 98%, white);
+    --button-face-bottom-active: color-mix(in srgb, var(--primary-active) 98%, var(--button-depth));
+    --button-foreground-rest: var(--primary-foreground);
+    --button-inner-ring-rest: rgb(255 255 255 / 38%);
+    --button-inner-ring-hover: rgb(255 255 255 / 46%);
+    --button-inner-ring-active: rgb(255 255 255 / 24%);
+    --button-inner-glow-rest: rgb(255 255 255 / 11%);
+    --button-inner-glow-hover: rgb(255 255 255 / 15%);
+    --button-inner-glow-active: rgb(255 255 255 / 6%);
+    --button-mist-rest: color-mix(in srgb, var(--primary) 34%, transparent);
+    --button-mist-hover: color-mix(in srgb, var(--primary-hover) 42%, transparent);
+    --button-mist-active: color-mix(in srgb, var(--primary-active) 24%, transparent);
+    --button-press-depth: color-mix(in srgb, var(--button-depth) 18%, transparent);
+    --button-state-shadow: var(--button-shadow);
+    --button-state-shadow-hover: var(--button-shadow-hover);
+    --button-state-shadow-pressed: var(--button-shadow-pressed);
+  }
+
+  .ds-button-secondary {
+    --button-border-rest: color-mix(in srgb, var(--border-strong) 34%, var(--border));
+    --button-border-hover: color-mix(in srgb, var(--border-strong) 48%, var(--border));
+    --button-border-active: color-mix(in srgb, var(--border-strong) 62%, var(--border));
+    --button-surface-rest: var(--card);
+    --button-surface-hover: var(--secondary);
+    --button-surface-active: var(--border);
+    --button-face-top-rest: color-mix(in srgb, var(--card) 97%, white);
+    --button-face-bottom-rest: color-mix(in srgb, var(--card) 97%, var(--button-depth));
+    --button-face-top-hover: color-mix(in srgb, var(--secondary) 97%, white);
+    --button-face-bottom-hover: color-mix(in srgb, var(--secondary) 97%, var(--button-depth));
+    --button-face-top-active: color-mix(in srgb, var(--border) 98%, white);
+    --button-face-bottom-active: color-mix(in srgb, var(--border) 97%, var(--button-depth));
+    --button-foreground-rest: var(--card-foreground);
+    --button-shimmer-color: var(--foreground);
+    --button-inner-ring-rest: var(--button-secondary-inner-ring-rest);
+    --button-inner-ring-hover: var(--button-secondary-inner-ring-hover);
+    --button-inner-ring-active: var(--button-secondary-inner-ring-active);
+    --button-inner-glow-rest: var(--button-secondary-inner-glow-rest);
+    --button-inner-glow-hover: var(--button-secondary-inner-glow-hover);
+    --button-inner-glow-active: var(--button-secondary-inner-glow-active);
+    --button-mist-rest: var(--button-secondary-mist-rest);
+    --button-mist-hover: var(--button-secondary-mist-hover);
+    --button-mist-active: var(--button-secondary-mist-active);
+    --button-press-depth: var(--button-secondary-press-depth);
+    --button-state-shadow: var(--button-shadow);
+    --button-state-shadow-hover: var(--button-shadow-hover);
+    --button-state-shadow-pressed: var(--button-shadow-pressed);
+  }
+
+  .ds-button-ghost {
+    --button-surface-hover: var(--muted);
+    --button-surface-active: var(--border);
+    --button-face-top-hover: var(--muted);
+    --button-face-bottom-hover: var(--muted);
+    --button-face-top-active: var(--border);
+    --button-face-bottom-active: var(--border);
+    --button-foreground-rest: var(--muted-foreground);
+    --button-shimmer-color: var(--foreground);
+    --button-state-shadow: none;
+    --button-state-shadow-hover: none;
+    --button-state-shadow-pressed: none;
+  }
+
+  .ds-button-ghost:not(:disabled):hover {
+    color: var(--foreground);
+  }
+
+  .ds-button-danger {
+    --button-border-rest: color-mix(in srgb, var(--destructive) 80%, var(--button-depth));
+    --button-border-hover: color-mix(in srgb, var(--button-danger-hover-background) 80%, var(--button-depth));
+    --button-border-active: color-mix(in srgb, var(--button-danger-active-background) 80%, var(--button-depth));
+    --button-surface-rest: var(--destructive);
+    --button-surface-hover: var(--button-danger-hover-background);
+    --button-surface-active: var(--button-danger-active-background);
+    --button-face-top-rest: color-mix(in srgb, var(--destructive) 95%, white);
+    --button-face-bottom-rest: color-mix(in srgb, var(--destructive) 97%, var(--button-depth));
+    --button-face-top-hover: color-mix(in srgb, var(--button-danger-hover-background) 95%, white);
+    --button-face-bottom-hover: color-mix(in srgb, var(--button-danger-hover-background) 97%, var(--button-depth));
+    --button-face-top-active: color-mix(in srgb, var(--button-danger-active-background) 98%, white);
+    --button-face-bottom-active: color-mix(in srgb, var(--button-danger-active-background) 98%, var(--button-depth));
+    --button-foreground-rest: var(--destructive-foreground);
+    --button-inner-ring-rest: rgb(255 255 255 / 38%);
+    --button-inner-ring-hover: rgb(255 255 255 / 46%);
+    --button-inner-ring-active: rgb(255 255 255 / 24%);
+    --button-inner-glow-rest: rgb(255 255 255 / 11%);
+    --button-inner-glow-hover: rgb(255 255 255 / 15%);
+    --button-inner-glow-active: rgb(255 255 255 / 6%);
+    --button-mist-rest: color-mix(in srgb, var(--destructive) 30%, transparent);
+    --button-mist-hover: color-mix(in srgb, var(--button-danger-hover-background) 38%, transparent);
+    --button-mist-active: color-mix(in srgb, var(--button-danger-active-background) 22%, transparent);
+    --button-press-depth: color-mix(in srgb, var(--button-depth) 18%, transparent);
+    --button-state-shadow: var(--button-shadow);
+    --button-state-shadow-hover: var(--button-shadow-hover);
+    --button-state-shadow-pressed: var(--button-shadow-pressed);
+  }
+
+  @keyframes ds-button-spin {
+    to { transform: rotate(360deg); }
+  }
+
+  @keyframes ds-button-shimmer {
+    0%, 34% {
+      opacity: 0;
+      transform: translate3d(-360%, 0, 0) skewX(-16deg);
+    }
+    41% { opacity: 0.2; }
+    51% { opacity: 0.92; }
+    64% { opacity: 0.34; }
+    72%, 100% {
+      opacity: 0;
+      transform: translate3d(620%, 0, 0) skewX(-16deg);
+    }
+  }
+}
+
+@supports (corner-shape: squircle) {
+  @layer components {
+    .ds-button {
+      corner-shape: var(--corner-shape-smooth);
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @layer components {
+    .ds-button-loading::after,
+    .ds-button-spinner {
+      animation: none !important;
+    }
+  }
+}

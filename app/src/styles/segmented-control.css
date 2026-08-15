@@ -20,18 +20,18 @@
 
   .ds-segmented-control-option {
     display: inline-flex;
-    min-width: 4.5rem;
+    min-width: 4rem;
     align-items: center;
     justify-content: center;
     gap: 0.4rem;
     border: 0;
-    border-radius: calc(var(--button-radius) - 0.1875rem);
+    border-radius: var(--radius-inner-control);
     background: transparent;
-    padding-inline: 0.65rem;
+    padding-inline: 0.75rem;
     color: var(--muted-foreground);
-    font-size: 0.75rem;
-    font-weight: 650;
-    line-height: 1;
+    font-size: var(--type-ui);
+    font-weight: var(--weight-ui);
+    line-height: var(--leading-ui);
     box-shadow: none;
     transform: none;
     transition:
@@ -62,7 +62,7 @@
   @layer components {
     .ds-segmented-control,
     .ds-segmented-control-option {
-      corner-shape: squircle;
+      corner-shape: var(--corner-shape-smooth);
     }
   }
 }

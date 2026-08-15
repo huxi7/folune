@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 React 的 ButtonHTMLAttributes、@phosphor-icons/react 的 Icon 类型与 index.css 暴露的纯色色彩、实体边缘、零偏移环绕阴影及 1px press 触感 token
+ * [INPUT]: 依赖 React 的 ButtonHTMLAttributes、@phosphor-icons/react 的 Icon 类型与 index.css 暴露的柔和墨蓝、36px 标准高度、14px/18px 控件文字、垂直面光、均匀内外环影、Processing 状态及 1px press 触感 token
  * [OUTPUT]: 对外提供支持图标、spinner、低频窄光带、disabled 与 aria-busy 联动的 Button 组件，以及 ButtonVariant、ButtonSize 类型
- * [POS]: app/src/shared/design-system/components 的核心命令基础件，以统一平滑圆角、克制平面层级和真实按压反馈统一全站操作质感
+ * [POS]: app/src/shared/design-system/components 的核心命令基础件，以统一 10px 平滑圆角、硅谷包豪斯式轻薄实体层级和真实按压反馈统一全站操作质感
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import type { Icon } from "@phosphor-icons/react";

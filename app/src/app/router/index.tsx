@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 React lazy/Suspense、react-router-dom loader/redirect、共享 Skeleton/延迟策略、Supabase Auth token 读取与后端 Profile API
- * [OUTPUT]: 对外提供 /、OAuth 回调、受保护 /app 与 /app/notes/:noteId 路由，以及直达工作区时以唯一 Paper 为中心的延迟 Skeleton
+ * [OUTPUT]: 对外提供 /、OAuth 回调、受保护 /app 与 /app/notes/:noteId 路由、仅开发态 /color-lab，以及直达工作区时以唯一 Paper 为中心的延迟 Skeleton
  * [POS]: app/src/app/router 的路由装配文件；loader 只建立身份，首屏 Profile 等待由 Paper 壳承接，左右工具偏好在 Dashboard 获得用户后恢复
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -25,6 +25,14 @@ const AppDashboard = lazy(() =>
     default: module.AppDashboard,
   })),
 );
+
+const ColorLabPage = import.meta.env.DEV
+  ? lazy(() =>
+    import("../../pages/ColorLabPage").then((module) => ({
+      default: module.ColorLabPage,
+    })),
+  )
+  : null;
 
 function RouteSuspense({
   children,
@@ -131,6 +139,16 @@ export const router = createBrowserRouter([
       </RouteSuspense>
     ),
   },
+  ...(ColorLabPage === null
+    ? []
+    : [{
+      path: "/color-lab",
+      element: (
+        <RouteSuspense>
+          <ColorLabPage />
+        </RouteSuspense>
+      ),
+    }]),
   {
     path: "/app",
     element: (

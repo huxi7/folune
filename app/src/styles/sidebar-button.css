@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 index.css 的纯色 Secondary 材质、统一默认高度、8px 控件圆角、focus 与 motion 语义 token
+ * [INPUT]: 依赖 index.css 的纯色 Secondary 材质、32px compact 高度、10px 控件圆角、focus 与 motion 语义 token
  * [OUTPUT]: 对外提供无实体阴影、hover 固定原位的 SidebarButton；选中态只以轻中性底色和墨色表达，utility 当前位置只使用前景色
  * [POS]: app/src/styles 的侧栏导航原子样式，消除 APP 与账户模态框的尺寸/材质分叉并保留安静的未选中层级
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -8,18 +8,18 @@
   .ds-sidebar-button {
     display: inline-flex;
     width: 100%;
-    height: var(--button-height-default);
+    height: var(--control-height-compact);
     min-width: 0;
-    min-height: var(--button-height-default);
+    min-height: var(--control-height-compact);
     align-items: center;
     gap: 0.5rem;
     border: 1px solid transparent;
     border-radius: var(--button-radius);
     background: transparent;
     color: var(--muted-foreground);
-    font-size: 0.75rem;
-    font-weight: 650;
-    line-height: 1;
+    font-size: var(--type-ui);
+    font-weight: var(--weight-ui);
+    line-height: var(--leading-ui);
     text-align: left;
     box-shadow: none;
     transform: translateY(0);
@@ -76,12 +76,12 @@
   }
 
   .ds-sidebar-button[data-size="default"] {
-    padding: 0.65rem 0.75rem;
+    padding: 0 0.875rem;
   }
 
   .ds-sidebar-button[data-size="icon"] {
-    width: var(--button-height-default);
-    height: var(--button-height-default);
+    width: var(--control-height-compact);
+    height: var(--control-height-compact);
     flex-shrink: 0;
     justify-content: center;
     padding: 0;
@@ -126,7 +126,7 @@
 @supports (corner-shape: squircle) {
   @layer components {
     .ds-sidebar-button {
-      corner-shape: squircle;
+      corner-shape: var(--corner-shape-smooth);
     }
   }
 }

@@ -53,7 +53,7 @@
   .ds-user-menu-identity-avatar {
     width: 2.65rem;
     height: 2.65rem;
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     font-size: 0.8125rem;
   }
 
@@ -118,7 +118,7 @@
     .ds-user-menu-popover,
     .ds-user-menu-identity,
     .ds-user-menu-item {
-      corner-shape: squircle;
+      corner-shape: var(--corner-shape-smooth);
     }
   }
 }
