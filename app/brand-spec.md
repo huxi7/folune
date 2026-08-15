@@ -43,7 +43,15 @@ SuperNote is a quiet editorial instrument that lets users write first and allows
 - Panel `16px`: workspace panels, cards, composite inputs
 - Dialog `20px`: modal decision surfaces
 - Nested surfaces follow concentricity: inner radius equals outer radius minus the inset gap.
-- True circles and pills are reserved for avatars, status dots, tags and Edge Dock geometry.
+- True circles and pills are reserved for avatars, status dots and tags; Panel Toggle uses the shared 10px compact radius, never pill geometry.
+
+## Workspace panel controls
+
+- A closed Library or AI surface is represented by one fixed Ghost icon at the corresponding canvas edge: no resting background, border, shadow, visible label or width expansion. Its center line must remain identical to the expanded Header close control.
+- The Library Header keeps the compact BrandMark on the left and its close control at the far right; search and a 32px Primary NotePencil new-memo action share the next row.
+- AI organize is a 32px icon-only Secondary command: its surface distinguishes the capability without competing with the Primary new-memo anchor.
+- Search activation replaces the existing search slot with an input and icon-only close action. It never adds a second command row or visible Cancel label.
+- Panel entry/exit uses restrained x/opacity Tween motion. Controls do not fly across the panel through shared layout identity, and panel contents are never compressed with scaleX.
 - `border-radius` is the cross-browser baseline; supported browsers progressively receive the same squircle curve without changing component dimensions.
 
 ## Button material

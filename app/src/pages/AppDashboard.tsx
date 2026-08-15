@@ -584,6 +584,7 @@ export function AppDashboard() {
             runId: organizePresentation.runId,
           }}
           onCreateMemo={handleCreateMemo}
+          onClose={closeLibrary}
           onMoveNode={handleMoveNode}
           onOpenDesignSystem={() => setActiveView("design-system")}
           onOpenProfile={() => handleOpenAccountDialog("account")}

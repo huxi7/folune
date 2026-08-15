@@ -7,10 +7,10 @@
 import {
   DesktopIcon,
   FileTextIcon,
-  FoldersIcon,
   GearSixIcon,
   MoonStarsIcon,
   NotePencilIcon,
+  SidebarSimpleIcon,
   SunIcon,
   TreeStructureIcon,
 } from "@phosphor-icons/react";
@@ -529,7 +529,7 @@ function PaperSurfacePreview() {
 function EdgeDockPreview() {
   return (
     <div className="ds-edge-dock-preview">
-      <EdgeDock expanded={false} icon={<FoldersIcon size={16} />} label="文件库" mode="canvas" onClick={() => undefined} side="left" />
+      <EdgeDock expanded={false} icon={<SidebarSimpleIcon size={16} />} label="文件库" mode="canvas" onClick={() => undefined} side="left" />
       <EdgeDock expanded icon={<ThinkingMark aria-hidden="true" size={16} />} label="AI" mode="panel" onClick={() => undefined} side="right" />
     </div>
   );

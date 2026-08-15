@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Kumo Tailwind 样式源、Tailwind v4，并导入 AI 消息与 Design System 等生产样式模块消费本文件语义 token
- * [OUTPUT]: 对外提供 Kumo 基础样式、Landing Light、Quiet Editorial Instrument 与隔离 Color Lab 蓝色终选候选：唯一语义 Color/Type/Spacing/Radius/Elevation/Motion、Paper First Canvas/Paper/Edge Dock/Archive Cord、Tailwind 映射及样式模块入口
+ * [OUTPUT]: 对外提供 Kumo 基础样式、Landing Light、Quiet Editorial Instrument 与隔离 Color Lab 蓝色终选候选：唯一语义 Color/Type/Spacing/Radius/Elevation/Motion、Paper First Canvas/Paper/Panel Toggle/Archive Cord、Tailwind 映射及样式模块入口
  * [POS]: app/src 的主题入口，被 main.tsx 引入并约束 Kumo 与本地设计系统共享同一全局视觉来源
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */

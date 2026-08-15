@@ -80,6 +80,6 @@ export const designSystemSamples: DesignSystemSample[] = [
   { category: "AI & Organize", id: "ThinkingMark", name: "Thinking Mark", summary: "SuperNote AI 的 Formation 符号，以 14/16/20px 真实尺寸呈现。" },
   { category: "AI & Organize", id: "ThinkingIndicator", name: "Thinking", summary: "仅在等待正文 token 时存在的低频活动态。" },
   { category: "AI & Organize", id: "ToolCallBubble", name: "Tool", summary: "只用工具名称、灰阶结果与低频状态反馈，不暴露载荷。" },
-  { category: "AI & Organize", id: "EdgeDock", name: "Edge Dock", summary: "42×36px 边缘胶囊在 Canvas 与 Panel Header 间共享变形。" },
+  { category: "AI & Organize", id: "EdgeDock", name: "Panel Toggle", summary: "固定 Ghost 图标在 Canvas 打开工具，并由 Panel Header 尾端的独立命令关闭。" },
   { category: "AI & Organize", id: "ArchiveCord", name: "Archive Cord", summary: "Paper 到文件树目标的持久近黑曲线；reduced-motion 直接静态呈现。" },
 ];

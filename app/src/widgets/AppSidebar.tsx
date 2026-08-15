@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 MemoTreeBranch、Skeleton、memoLibrary 拖拽/祖先计划、持久化展开偏好、整理定位意图、Profile、Design System 与上层 Store 命令
- * [OUTPUT]: 对外提供浮动文件库、根级新建、真实文件树、搜索/重命名/拖拽、整理目标展开定位高亮、底部导航及节点回收站命令
- * [POS]: app/src/widgets 的按需文件库内容层；只收集用户意图和解释本次归档位置，业务事务与路由切换由 Dashboard 编排
+ * [INPUT]: 依赖 MemoTreeBranch、Skeleton、memoLibrary 拖拽/祖先计划、持久化展开偏好、整理定位意图、Profile、Design System 与上层 Store/文件库关闭命令
+ * [OUTPUT]: 对外提供品牌与右侧 Ghost 收起 Header、同排搜索/Primary 根级新建、真实文件树、搜索/重命名/拖拽、整理目标展开定位高亮、底部导航及节点回收站命令
+ * [POS]: app/src/widgets 的按需文件库内容层；拥有文件库内部信息层级与关闭入口，只收集业务意图，事务与路由切换由 Dashboard 编排
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -12,7 +12,9 @@ import {
   NotePencilIcon,
   PaletteIcon,
   PencilSimpleIcon,
+  SidebarSimpleIcon,
   TrashIcon,
+  XIcon,
 } from "@phosphor-icons/react";
 import {
   useEffect,
@@ -63,6 +65,7 @@ type AppSidebarProps = {
     runId: string;
   } | null;
   onCreateMemo: (parentId: string | null) => void;
+  onClose: () => void;
   onMoveNode: (nodeId: string, input: MemoMovePlan) => Promise<boolean>;
   onOpenDesignSystem: () => void;
   onOpenProfile: () => void;
@@ -192,6 +195,7 @@ export function AppSidebar({
   mutating,
   organizeTarget,
   onCreateMemo,
+  onClose,
   onMoveNode,
   onOpenDesignSystem,
   onOpenProfile,
@@ -531,54 +535,68 @@ export function AppSidebar({
       <div className="app-sidebar-header">
         <div className="app-sidebar-heading">
           <BrandMark />
-          <div className="sidebar-header-actions">
-            <Button
-              aria-label="新建备忘录"
-              className="sidebar-create-memo-button"
-              disabled={mutating || treeStatus !== "ready"}
-              icon={NotePencilIcon}
-              onClick={() => void onCreateMemo(null)}
-              size="square"
-              title="新建备忘录"
-              variant="primary"
-            />
-          </div>
+          <Button
+            aria-label="收起文件库"
+            className="sidebar-collapse-button"
+            icon={SidebarSimpleIcon}
+            onClick={onClose}
+            size="square"
+            title="收起文件库"
+            variant="ghost"
+          />
         </div>
-        <SidebarButton
-          active={searchOpen}
-          aria-label={searchOpen ? "关闭搜索" : "搜索备忘录"}
-          className="sidebar-nav-button"
-          label="搜索"
-          leading={<MagnifyingGlassIcon size={16} />}
-          onClick={() => {
-            if (searchOpen) {
-              closeSearch();
-            } else {
-              setSearchOpen(true);
-            }
-          }}
-          title={searchOpen ? "关闭搜索" : "搜索备忘录"}
-        />
-        {searchOpen ? (
-          <div className="sidebar-search-controls">
-            <Input
+        <div className="sidebar-primary-actions">
+          {searchOpen ? (
+            <div className="sidebar-search-field" role="search">
+              <MagnifyingGlassIcon
+                aria-hidden="true"
+                className="sidebar-search-field-icon"
+                size={16}
+              />
+              <Input
+                aria-label="搜索备忘录"
+                autoFocus
+                className="sidebar-search-input"
+                onChange={(event) => setSearchQuery(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Escape") {
+                    closeSearch();
+                  }
+                }}
+                placeholder="搜索标题、正文或路径"
+                value={searchQuery}
+              />
+              <button
+                aria-label="关闭搜索"
+                className="sidebar-search-close"
+                onClick={closeSearch}
+                title="关闭搜索"
+                type="button"
+              >
+                <XIcon aria-hidden="true" size={14} />
+              </button>
+            </div>
+          ) : (
+            <SidebarButton
               aria-label="搜索备忘录"
-              autoFocus
-              className="sidebar-search-input"
-              onChange={(event) => setSearchQuery(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Escape") {
-                  closeSearch();
-                }
-              }}
-              placeholder="搜索标题、正文或路径"
-              value={searchQuery}
+              className="sidebar-search-trigger"
+              label="搜索"
+              leading={<MagnifyingGlassIcon size={16} />}
+              onClick={() => setSearchOpen(true)}
+              title="搜索备忘录"
             />
-            <button className="sidebar-search-cancel" onClick={closeSearch} type="button">
-              取消
-            </button>
-          </div>
-        ) : null}
+          )}
+          <Button
+            aria-label="新建备忘录"
+            className="sidebar-create-memo-button"
+            disabled={mutating || treeStatus !== "ready"}
+            icon={NotePencilIcon}
+            onClick={() => void onCreateMemo(null)}
+            size="square"
+            title="新建备忘录"
+            variant="primary"
+          />
+        </div>
       </div>
 
       {searchOpen ? (

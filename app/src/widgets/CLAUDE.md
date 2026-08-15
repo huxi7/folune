@@ -14,8 +14,8 @@ LandingSections.tsx: Landing 扩展模块，包含 CountUp 行为指标、问题
 LandingFooter.tsx: Landing 无 BlueprintFrame 的全宽深蓝 Fat Footer，品牌锁定只显示 SuperNote 主名称并移除 Write first 副标题，上层用无位移 hover 的独立分栏网格承载品牌/导航/元信息，下层以大块留白呈现与分栏线同色的 1.5px 描边、3% 偏白浅蓝填充、400 字重和负字距的大尺寸 SuperNote SVG 幽灵字
 LandingMotion/: Landing 克制反馈模块，只提供 CountUp 与一次性 reveal；磁吸、指针聚光与装饰点阵已移除，当前页面只保留有信息价值的计数与 3–4px 入场反馈
 NotebookPreview.tsx: Landing 的真实工作台预览，以工具轨、单栏文件 tree、文档纸面和 Agent 归档面板呈现核心体验
-AppSidebar.tsx: /app 按需浮现的文件库内容；承载根级新建、真实树搜索/展开/rename/HTML5 拖拽/回收站命令，并接收本次整理目标以展开祖先、滚动定位和高亮目录/当前笔记
-AppMainToolbar.tsx: Paper 顶部 48px 文档命令条，只呈现低对比完整路径、Mod+Enter 整理与阅读/编辑/更多菜单；全局文件库/AI 开关归 Canvas Controls
+AppSidebar.tsx: /app 按需浮现的文件库内容；以紧凑 BrandMark + Header 最右 Ghost 收起、同排弹性搜索 + 32px NotePencil Primary 新建建立顶层命令层级，搜索激活只替换原槽，并承载真实树展开/rename/HTML5 拖拽/回收站命令及整理目标定位高亮
+AppMainToolbar.tsx: Paper 顶部 48px 文档命令条，只呈现低对比完整路径、32px MagicWand Secondary 图标整理与阅读/编辑/更多菜单；全局文件库/AI 开关归 Canvas Controls
 MemoTreeBranch.tsx: 无限递归树渲染器；Folder/FolderOpen 单图标承担开合，同层共享固定图标槽；双击/F2 原地重命名，folder/memo 使用固定 DnD 落点，并接收本次整理 folder/memo id 绘制短期归档高亮
 MemoNodeDialog.tsx: 文件树命名弹窗，以设计系统 Dialog/Input/Button 承载新建文件夹，负责非空校验、提交锁与 API 错误展示，不使用浏览器 prompt 或直接访问 API
 memoLibrary.ts: 后端文件树的纯视图模型工具，复用 shared/store/memoTree 算法提供首个 memo、祖先/路径、全文搜索及 before/after/inside/root-end 防环计划；folder inside 固定计算第一个子节点 sort_order
@@ -26,7 +26,7 @@ PanelResizeHandle.tsx: 左右分栏拖拽手柄，支持 Pointer 拖拽、方向
 ArchiveCord.tsx: react-archer 5.1 几何适配层；提供稳定隔离源 ID、Paper/树 DOM 锚点、一次绘制后静止曲线，以及 resize/scroll/目录 Mutation 的刷新闭环
 archiveCordPolicy.ts: Archive Cord 目标解析与宽屏可见性纯策略，优先目录、根级回退 memo，并在覆盖模式禁止假连线
 archiveCordPolicy.test.ts: 覆盖成功/撤销目标、根级回退、文件库关闭与小屏覆盖门禁
-EdgeDock.tsx: 42×36px 文件库/AI 边缘胶囊，以左右稳定 layoutId 在 Canvas 与 Panel Header 间共享变形
+EdgeDock.tsx: 文件库/AI 共用的固定 Ghost 图标开关，桌面 32px、窄屏 44px，静止无背景/描边/文字且不使用共享 layoutId；Canvas 打开与 Panel Header 关闭共享同一垂直中心线
 PaperSurface.tsx: 816px Paper Signature 边界，拥有非对称 Paper 阴影、Archive Port 与只替换内容不重挂载编辑会话的内部过渡
 DesignSystemWorkspace/: 开发态 Quiet Editorial Design System 工作区，按 Foundations/Primitives/Navigation & Overlays/Editorial/AI & Organize 五层直接陈列生产 Token、完整 Markdown/Reading/Quote/Code 与三种 Signature Components；通过 lazy import 只在 import.meta.env.DEV 下暴露
 MarkdownEditor.tsx: Markdown 存储协议与 CodeMirror 显示协议之间的唯一 adapter；GFM language 常驻，live/source 只通过 Compartment 重配显示扩展以共享 EditorState/选区/撤销历史，零宽空行标记和纯文本粘贴继续保证 content_mdx 无损往返
@@ -37,7 +37,7 @@ MarkdownReadingView.test.tsx: 阅读换行、安全、常数尾部动画节点�
 MarkdownViewMenu.tsx: 中央 Toolbar 的高频 editing/reading 切换与 More 菜单；支持外部点击、Escape、方向键/Home/End、焦点恢复，并仅复制/导出当前原始 content_mdx，title 只用于文件名
 markdownViewTypes.ts: DocumentView editing/reading 与 EditingMode live/source 的共享状态协议，阅读状态不占用编辑模式槽位
 NotesWorkspace.tsx: /app Paper 内部写作列，以跨临时/真实后端 ID 不变的 memoClientKey 保持编辑器会话；新建时聚焦并选中默认标题，imperative handle 暴露 Agent/整理 required flush、正文替换、删除 pause 与已提交 AI 标题接纳边界
-PaperWorkspaceShell.tsx: Paper First 四层空间壳；以 Motion LayoutGroup/AnimatePresence 编排 Edge Dock、按需文件库、唯一 Paper 与 AI 思考空间，1200px+ 单侧建立安全区、1400px+ 才允许双侧同时预留，较小视口互斥覆盖并提供画布空白/遮罩/Escape 关闭；成功/撤销时持久连接 Paper 与真实树目标并在 Paper 下方保留显式撤销回执
+PaperWorkspaceShell.tsx: Paper First 四层空间壳；以 AnimatePresence 编排 Ghost Panel Toggle、按需文件库、唯一 Paper 与 AI 思考空间，Panel 仅使用无弹跳 x/opacity Tween，1200px+ 单侧建立安全区、1400px+ 才允许双侧同时预留，较小视口互斥覆盖并提供画布空白/遮罩/Escape 关闭；成功/撤销时持久连接 Paper 与真实树目标并在 Paper 下方保留显式撤销回执
 useMemoAutosave.ts: 单 memo 编辑会话状态机；支持 required flush、删除期 pause/resume、AI 标题接纳，并只在没有本地草稿时采纳同一 memo 的迟到服务端初值，避免刷新空白或覆盖输入
 useMemoAutosave.test.ts: 覆盖迟到服务端正文接纳门禁、插入/删除/等长替换字符计数及三次有界指数退避
 TrashWorkspace.tsx: /app 回收站控制器，读取真实顶层删除根并编排重试、恢复、永久删除和当前用户原子清空，结果统一进入根级 Toast

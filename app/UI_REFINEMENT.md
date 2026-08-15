@@ -11,7 +11,7 @@ Use Quiet Editorial Instrument as the App baseline: a warm neutral Canvas, one p
 - UI and interaction presentation only; do not change auth, memo, subscription, API, or AI data contracts.
 - Keep `app/src/index.css` as the only color-value source; responsibility-specific CSS modules may only consume semantic tokens.
 - Keep the visual token axis limited to light/dark; `system` may resolve the device preference but must not create a third token set, preset selector, version storage key or alternate visual system.
-- Keep the Design System as a five-layer production matrix: Foundations, Primitives, Navigation & Overlays, Editorial and AI & Organize; Paper Surface, Edge Dock and Archive Cord are first-class Signature Patterns, while AssistantMessage itself remains completely unframed.
+- Keep the Design System as a five-layer production matrix: Foundations, Primitives, Navigation & Overlays, Editorial and AI & Organize; Paper Surface, Panel Toggle and Archive Cord are first-class Signature Patterns, while AssistantMessage itself remains completely unframed.
 - Do not invent outline, Textarea, Badge, Token Override, theme generator or runtime contrast tools.
 - Respect reduced motion, keyboard navigation, focus visibility, mobile widths and long text.
 
@@ -28,7 +28,7 @@ Use Quiet Editorial Instrument as the App baseline: a warm neutral Canvas, one p
 - [x] Extract the complete AI message family, connect it to AgentPanel and archive every state in the Design System.
 - [x] Centralize Skeleton visuals and timing, apply exact first-load placeholders to the App route/memo regions, and preserve cached content during background Profile refresh.
 - [x] Unify Quiet Editorial Color/Type/Spacing/Radius/Elevation/Motion Foundations and apply them to every Paper First layer.
-- [x] Replace detached canvas toggles with shared-layout Edge Docks and remove Panel overlap/false canvas dismissal.
+- [x] Replace detached canvas toggles with fixed Ghost Panel Toggles, place close commands at each Header trailing edge, and remove Panel overlap/false canvas dismissal.
 - [x] Replace the timed SVG decoration with react-archer 5.1 persistent Archive Cord geometry, responsive gates and lifecycle tests.
 - [x] Rebuild the DEV matrix around complete Editorial and Signature Pattern specimens with real light/dark and reduced-motion contracts.
 
@@ -62,7 +62,7 @@ Use Quiet Editorial Instrument as the App baseline: a warm neutral Canvas, one p
 - Treat CodeMirror as a third-party cascade boundary; its adapter consumes only the same light/dark V1 tokens.
 - Treat memo editing as one quiet canvas: an independent plain-text title sits directly above the Store-controlled Markdown body, with no card, field chrome, divider, metadata strip or in-canvas save action.
 - Route organize outcomes by meaning: succeeded/undone reveal and locate the Library target with a persistent Archive Cord plus receipt, awaiting confirmation reveals AI, and stale/failed remain Toast/local feedback only.
-- Keep root memo creation in the sidebar header as the shared Primary Button with a dedicated note-writing icon; place Design System and Trash outside the file tree as matching full-width navigation rows without an extra group label.
+- Keep root memo creation beside the elastic search slot as a 32px NotePencil Primary command; keep the compact BrandMark and trailing close command in the Header, and place Design System and Trash outside the file tree as matching full-width navigation rows without an extra group label.
 - Treat folder expansion as a per-user device preference: restore a versioned localStorage snapshot only after the memo tree is ready, preserve an explicitly all-collapsed tree, auto-open new folders and discard deleted folder ids without adding backend schema.
 - Keep memo saving invisible and session-scoped: update editor/Store immediately, flush by character/idle/max-wait thresholds and lifecycle boundaries, retry quietly, and only surface the final failure while preserving the local draft byte-for-byte.
 - Treat Markdown and WYSIWYG display as separate protocols: MarkdownEditor alone inflates database blank lines into editor-only zero-width paragraphs and deflates them before onChange; pages, Store, API and database never see the compatibility marker or HTML placeholders.
@@ -86,6 +86,8 @@ Use Quiet Editorial Instrument as the App baseline: a warm neutral Canvas, one p
 - 2026-08-15: Increased Button edge legibility again after the first inset pass remained visually weak: every surfaced state now uses a bright 1px inner ring, a lower-intensity second-pixel band and a controlled inner halo, with separate light/dark Processing values.
 - 2026-08-15: Reverted the over-strong second-pixel Button highlight after visual review: Primary, Secondary, Danger and Saving return to one restrained 1px inner ring plus a thin inner halo, while the 36px geometry, Soft Ink palette, diagonal Saving shimmer and `Saving` label remain unchanged.
 - 2026-08-15: Unified transient row feedback around one neutral `interactive-hover` token: memo-tree rows, User Menu, Select, file context actions, More Menu and Agent popup hover no longer turn Soft Ink blue; Accent remains reserved for selected/current states, focus meaning and explicit organization feedback, while Danger menu actions keep red text on the neutral hover surface.
+- 2026-08-15: Rebuilt the Library chrome after visual review: the expanded Header now keeps a compact left BrandMark and far-right Ghost close command, search and NotePencil new memo share one stable 32px row, active search replaces that slot without adding a Cancel row, and closed Library/AI controls are fixed icon-only Ghost targets. Removed the 42×36 pill, visible label expansion, shared `layoutId`, Panel `scaleX`, delayed content fade and spring rebound; Panel entry/exit now uses 220/170ms x/opacity Tween with a coordinated 240ms workspace layout transition.
+- 2026-08-15: Aligned closed Library/AI toggles to the exact 48px Panel Header center line across 32px desktop and 44px mobile targets, promoted the compact NotePencil new-memo command to Primary as the Library's sole visual anchor, and reduced AI organize to a 32px MagicWand Secondary icon with tooltip/accessible naming instead of visible text.
 - 2026-08-06: Simplified the Design System to the V1 card matrix, removed the version selector and alternate preset state, deleted alternate token/style branches, and kept only the light/dark theme axis.
 - 2026-08-07: Removed the generic status-pill component, its gallery card and all product usages; simplified memo saving to Button loading plus Toast feedback.
 - 2026-08-07: Rebuilt Button as a restrained tactile system with centralized radius/material tokens, coordinated inner/outer depth, 1px press feedback and a low-frequency loading shimmer for Save actions.

@@ -16,7 +16,7 @@ useMemoOrganize.ts: AI 整理生命周期协调器；发送前 required flush，
 useMemoOrganize.test.ts: 锁定 succeeded/undone 唤醒文件库与成功/撤销目标快照、awaiting_confirmation 唤醒 AI、stale/failed/过程态不强迫打开工具
 organizePresentation.ts: 整理 Run 到 Workspace 工具唤醒及归档展示快照的无副作用策略；成功使用服务端目标路径，撤销使用当前树恢复路径
 workspaceLayout.ts: Paper First 浮层几何与宽度持久化边界，集中维护文件库/AI 尺寸约束、CSS 变量类型和 localStorage 校验
-workspaceMotion.ts: 工作台唯一 Motion 配置，冻结 panelSpring、paperSpring 与 fadeTransition，供 Paper/Panel/连线/回执统一消费
+workspaceMotion.ts: 工作台唯一 Motion 配置，冻结 Panel 220ms 进入/170ms 退出、240ms 工作区布局与 180ms 淡入淡出 Tween，供 Paper/Panel/回执统一消费并避免弹簧回摆
 
 职责: 页面层，承载 URL 级 Landing、OAuth 回调、受保护 Dashboard 与不进入生产状态的开发态视觉决策实验边界。
 

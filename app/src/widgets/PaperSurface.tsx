@@ -8,7 +8,10 @@
 import { AnimatePresence, motion } from "motion/react";
 import type { ReactNode } from "react";
 
-import { fadeTransition, paperSpring } from "../pages/workspaceMotion";
+import {
+  fadeTransition,
+  workspaceLayoutTransition,
+} from "../pages/workspaceMotion";
 import { ArchivePort } from "./ArchiveCord";
 
 type PaperSurfaceProps = {
@@ -37,7 +40,7 @@ export function PaperSurface({
       className="app-main-panel paper-surface"
       data-organizing={organizing}
       layout="position"
-      transition={paperSpring}
+      transition={workspaceLayoutTransition}
     >
       <ArchivePort
         active={archiveActive}

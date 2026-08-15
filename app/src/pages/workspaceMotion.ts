@@ -1,24 +1,25 @@
 /**
  * [INPUT]: 依赖 motion/react 的 Transition 类型
- * [OUTPUT]: 对外提供 Paper First 工作台唯一 panelSpring、paperSpring 与 fadeTransition 动效配置
- * [POS]: app/src/pages 的工作台空间关系配置；Panel、纸张、连线和回执共享参数，颜色与压感仍由 CSS 负责
+ * [OUTPUT]: 对外提供 Panel 进入/退出、工作台布局与淡入淡出四类克制 Tween 配置
+ * [POS]: app/src/pages 的工作台空间关系配置；Panel 与 Paper 使用同轴无弹跳时间线，颜色与压感仍由 CSS 负责
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
 import type { Transition } from "motion/react";
 
-export const panelSpring: Transition = {
-  damping: 38,
-  mass: 0.9,
-  stiffness: 420,
-  type: "spring",
+export const panelEnterTransition: Transition = {
+  duration: 0.22,
+  ease: [0.22, 1, 0.36, 1],
 };
 
-export const paperSpring: Transition = {
-  damping: 34,
-  mass: 0.95,
-  stiffness: 360,
-  type: "spring",
+export const panelExitTransition: Transition = {
+  duration: 0.17,
+  ease: [0.4, 0, 1, 1],
+};
+
+export const workspaceLayoutTransition: Transition = {
+  duration: 0.24,
+  ease: [0.22, 1, 0.36, 1],
 };
 
 export const fadeTransition: Transition = {
