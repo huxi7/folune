@@ -7,7 +7,7 @@ auth.service.ts: 将 router 提取的用户 access token 转换为经 Supabase A
 health.service.ts: 提供不依赖 Hono Context 的健康状态用例
 memo.service.ts: 以内存邻接表组装 active tree 或 RPC 返回的 detached restored subtree，编排 CRUD、父类型/防环规则与正文派生统计
 memo-trash.service.ts: 回收站业务规则层，筛选已删除祖先下不可见的删除根、生成原路径/摘要，并把软删、恢复、永久删除、清空 RPC 状态映射为稳定 404/409
-ai-thread.service.ts: 编排会话 CRUD、消息完整同步、旧 context snapshot 保留、仅首次用户文本自动标题及最多五篇去重引用
+ai-thread.service.ts: 编排无归档分支的会话 CRUD、消息完整同步、旧 context snapshot 保留、仅首次用户文本自动标题及最多五篇去重引用
 ai-context.service.ts: 从服务端 memo tree/正文解析本轮冻结 primary/显式/置顶引用，先以 expected revision 拒绝审批续写期间的漂移，再生成可信路径并分配 60k 字符预算
 ai-command.service.ts: 编排默认“每次询问”的账号权限 GET/PATCH 确认式更新，以及通用命令查询、创建、人工批准/拒绝与冲突安全撤销；Postgres 状态统一映射 404/409
 ai-run.service.ts: 将 Run 创建/读取/记录方案/应用/拒绝/失败/撤销命令映射到数据库状态机，apply/undo 只接收 runId 并输出稳定 404/409

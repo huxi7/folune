@@ -1,10 +1,11 @@
 /**
  * [INPUT]: 依赖 memo tree、当前查询、已选 ID、激活索引和搜索纯函数
- * [OUTPUT]: 对外提供 @笔记搜索列表、路径/版本提示与 mouse down 选择交互
- * [POS]: Prompt Bar 的无状态命令菜单视图；键盘、IME 与选择生命周期归 AgentConversation 统一控制
+ * [OUTPUT]: 对外提供只显示文件图标与文件名的 @笔记搜索列表、搜索纯函数与 mouse down 选择交互
+ * [POS]: Prompt Bar 的无状态原生 @笔记命令菜单；结果保持内容宽度，键盘、IME 与选择生命周期归 AgentConversation 统一控制
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
+import { FileTextIcon } from "../../shared/design-system/icons";
 import type { MemoTreeNode } from "../../shared/api/memo";
 import { findNode } from "../../shared/store/memoTree";
 import { searchMemoTree } from "../memoLibrary";
@@ -52,13 +53,13 @@ type MentionMenuProps = {
 
 export function MentionMenu({ activeIndex, onSelect, results }: MentionMenuProps) {
   return (
-    <div className="agent-mention-menu" role="listbox">
-      <div className="agent-mention-heading">引用笔记</div>
+    <div aria-label="引用笔记" className="agent-mention-menu" role="listbox">
       {results.length === 0 ? (
-        <p>继续输入标题搜索笔记</p>
+        <p>没有可引用的笔记</p>
       ) : results.map((memo, index) => (
         <button
           aria-selected={index === activeIndex}
+          className="agent-mention-option"
           key={memo.id}
           onMouseDown={(event) => {
             event.preventDefault();
@@ -67,8 +68,10 @@ export function MentionMenu({ activeIndex, onSelect, results }: MentionMenuProps
           role="option"
           type="button"
         >
+          <span className="agent-mention-option-icon">
+            <FileTextIcon aria-hidden="true" size={14} />
+          </span>
           <strong>{memo.title}</strong>
-          <span>{memo.path} · v{memo.revision}</span>
         </button>
       ))}
     </div>

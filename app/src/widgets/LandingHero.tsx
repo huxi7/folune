@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖本地 Button、Phosphor 图标、NotebookPreview 与 React Router 导航
+ * [INPUT]: 依赖本地 Button、共享 Lucide 图标、NotebookPreview 与 React Router 导航
  * [OUTPUT]: 对外提供冷调工程蓝图 Hero、轻微一次性淡入、无磁吸 CTA、静态能力条与真实产品预览
  * [POS]: app/src/widgets 的 Landing 首屏，被 LandingPage 消费并定义全页 Blueprint 视觉基准
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -9,7 +9,7 @@ import {
   NotePencilIcon,
   SparkleIcon,
   TreeStructureIcon,
-} from "@phosphor-icons/react";
+} from "../shared/design-system/icons";
 import { useNavigate } from "react-router-dom";
 
 import { Button } from "../shared/design-system/components";
@@ -41,7 +41,7 @@ export function LandingHero() {
       <div className="landing-hero">
         <div className="landing-hero-copy motion-safe:animate-blueprint-rise motion-reduce:animate-none">
           <div className="landing-eyebrow">
-            <NotePencilIcon aria-hidden="true" size={15} weight="fill" />
+            <NotePencilIcon aria-hidden="true" size={15} />
             SuperNote / Intelligent notes
           </div>
           <h1 className="landing-title">
@@ -80,7 +80,6 @@ export function LandingHero() {
                   aria-hidden="true"
                   className="shrink-0 text-primary"
                   size={17}
-                  weight="bold"
                 />
                 <div>
                   <h2>{item.title}</h2>

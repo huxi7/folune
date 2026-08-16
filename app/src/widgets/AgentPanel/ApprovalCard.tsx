@@ -5,7 +5,7 @@
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
-import { ShieldWarningIcon } from "@phosphor-icons/react";
+import { ShieldWarningIcon } from "../../shared/design-system/icons";
 import { getToolName, isToolUIPart, type UIMessage } from "ai";
 
 import { Button, Dialog } from "../../shared/design-system/components";

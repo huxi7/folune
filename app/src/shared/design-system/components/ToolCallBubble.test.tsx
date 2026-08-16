@@ -1,12 +1,12 @@
 /**
- * [INPUT]: 依赖 Bun 测试运行器、React 静态渲染、Phosphor 图标与 ToolCallBubble
+ * [INPUT]: 依赖 Bun 测试运行器、React 静态渲染、共享 Lucide 图标与 ToolCallBubble
  * [OUTPUT]: 验证工具执行态、完成态、可访问折叠详情及中断后停止 shimmer
  * [POS]: design-system AI 工具披露控件的最小 DOM 契约测试，禁止原始 JSON/调试面板进入消息
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
 import { describe, expect, it } from "bun:test";
-import { NotePencilIcon, TreeStructureIcon } from "@phosphor-icons/react";
+import { NotePencilIcon, TreeStructureIcon } from "../icons";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import { ToolCallBubble } from "./ToolCallBubble";

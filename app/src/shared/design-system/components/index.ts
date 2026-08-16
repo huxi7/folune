@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖本目录通用界面组件、Skeleton 加载原语、ThinkingMark 与 Assistant/User/Tool/Thinking/Streaming AI 消息组件家族
- * [OUTPUT]: 对外统一导出当前用户端实际使用的本地 design system、统一 Skeleton/延迟策略、AI 品牌/活动组件、全局 Toast 能力及公开类型
+ * [INPUT]: 依赖本目录原生 Input/MentionInput、通用界面组件、Skeleton 加载原语、ThinkingMark 与 Assistant/User/Tool/Thinking/Streaming AI 消息组件家族
+ * [OUTPUT]: 对外统一导出当前用户端实际使用的本地 design system、原生表单件、统一 Skeleton/延迟策略、AI 品牌/活动组件、全局 Toast 能力及公开类型
  * [POS]: app/src/shared/design-system/components 的出口文件，被 pages 与 widgets 通过单一入口消费
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -10,6 +10,7 @@ export { Button } from "./Button";
 export { Card } from "./Card";
 export { Dialog } from "./Dialog";
 export { Input } from "./Input";
+export { MentionInput } from "./MentionInput";
 export { PasswordInput } from "./PasswordInput";
 export { Select } from "./Select";
 export { SegmentedControl } from "./SegmentedControl";
@@ -28,6 +29,7 @@ export type { ButtonSize, ButtonVariant } from "./Button";
 export type { CardTone } from "./Card";
 export type { DialogDensity, DialogHeaderMode, DialogWidth } from "./Dialog";
 export type { PasswordInputProps } from "./PasswordInput";
+export type { MentionInputProps, MentionInputSegment, MentionInputToken } from "./MentionInput";
 export type {
   SelectOption,
   SelectPlacement,

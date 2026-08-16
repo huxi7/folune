@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 React 状态/effect、shared/api/ai thread/message/reference API、用户 access token 与 threadSelection 偏好策略
- * [OUTPUT]: 对外提供 active/archive 列表、所选 thread/detail/messages、初始化与 CRUD/reference 命令
+ * [OUTPUT]: 对外提供统一会话列表、所选 thread/detail/messages、初始化与 CRUD/reference 命令
  * [POS]: AgentPanel 会话控制器；服务端是 thread/message 真相源，Hook 只维护当前视图缓存并在切换时重建 useChat
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -34,9 +34,9 @@ const pendingInitialThreads = new Map<string, Promise<AiThread>>();
 const ensureInitialThread = (
   accessToken: string,
   userId: string,
-  active: readonly AiThread[],
+  threads: readonly AiThread[],
 ): Promise<AiThread> => {
-  if (active[0] !== undefined) return Promise.resolve(active[0]);
+  if (threads[0] !== undefined) return Promise.resolve(threads[0]);
   const existing = pendingInitialThreads.get(userId);
   if (existing !== undefined) return existing;
   const creation = createAiThread(accessToken).finally(() => {
@@ -47,8 +47,7 @@ const ensureInitialThread = (
 };
 
 export function useAiThreads({ accessToken, userId }: UseAiThreadsInput) {
-  const [activeThreads, setActiveThreads] = useState<AiThread[]>([]);
-  const [archivedThreads, setArchivedThreads] = useState<AiThread[]>([]);
+  const [threads, setThreads] = useState<AiThread[]>([]);
   const [selectedThread, setSelectedThread] = useState<AiThreadDetail | null>(null);
   const [messages, setMessages] = useState<AiMessage[]>([]);
   const [loading, setLoading] = useState(true);
@@ -74,13 +73,9 @@ export function useAiThreads({ accessToken, userId }: UseAiThreadsInput) {
   }, [accessToken, persistSelection]);
 
   const refreshLists = useCallback(async () => {
-    const [active, archived] = await Promise.all([
-      listAiThreads(accessToken, "active"),
-      listAiThreads(accessToken, "archived"),
-    ]);
-    setActiveThreads(active);
-    setArchivedThreads(archived);
-    return { active, archived };
+    const refreshedThreads = await listAiThreads(accessToken);
+    setThreads(refreshedThreads);
+    return refreshedThreads;
   }, [accessToken]);
 
   useEffect(() => {
@@ -91,16 +86,16 @@ export function useAiThreads({ accessToken, userId }: UseAiThreadsInput) {
     setMessages([]);
 
     const initialize = async () => {
-      const { active } = await refreshLists();
+      const refreshedThreads = await refreshLists();
       if (cancelled) return;
       let threadId = chooseSelectedThreadId(
-        active,
+        refreshedThreads,
         window.localStorage.getItem(selectedThreadStorageKey(userId)),
       );
       if (threadId === null) {
-        const created = await ensureInitialThread(accessToken, userId, active);
+        const created = await ensureInitialThread(accessToken, userId, refreshedThreads);
         if (cancelled) return;
-        setActiveThreads([created]);
+        setThreads([created]);
         threadId = created.id;
       }
       await loadSelected(threadId);
@@ -126,7 +121,7 @@ export function useAiThreads({ accessToken, userId }: UseAiThreadsInput) {
 
   const createThread = useCallback(() => runMutation(async () => {
     const created = await createAiThread(accessToken);
-    setActiveThreads((current) => [created, ...current]);
+    setThreads((current) => [created, ...current]);
     await loadSelected(created.id);
   }), [accessToken, loadSelected, runMutation]);
 
@@ -142,7 +137,7 @@ export function useAiThreads({ accessToken, userId }: UseAiThreadsInput) {
   }, [accessToken, refreshLists]);
 
   const patchSelected = useCallback(async (
-    input: Partial<Pick<AiThread, "title" | "status">>,
+    input: Partial<Pick<AiThread, "title">>,
   ) => runMutation(async () => {
     const current = selectedThread;
     if (current === null) return;
@@ -153,7 +148,7 @@ export function useAiThreads({ accessToken, userId }: UseAiThreadsInput) {
 
   const patchThread = useCallback(async (
     threadId: string,
-    input: Partial<Pick<AiThread, "title" | "status">>,
+    input: Partial<Pick<AiThread, "title">>,
   ) => runMutation(async () => {
     const updated = await updateAiThread(accessToken, threadId, input);
     if (selectedIdRef.current === threadId) {
@@ -175,37 +170,15 @@ export function useAiThreads({ accessToken, userId }: UseAiThreadsInput) {
     }), [accessToken, runMutation, selectedThread]);
 
   const chooseNextOrCreate = useCallback(async (excludedId: string) => {
-    const next = activeThreads.find((thread) => thread.id !== excludedId);
+    const next = threads.find((thread) => thread.id !== excludedId);
     if (next !== undefined) {
       await loadSelected(next.id);
       return;
     }
     const created = await createAiThread(accessToken);
-    setActiveThreads([created]);
+    setThreads([created]);
     await loadSelected(created.id);
-  }, [accessToken, activeThreads, loadSelected]);
-
-  const archiveSelected = useCallback(() => runMutation(async () => {
-    const current = selectedThread;
-    if (current === null) return;
-    await updateAiThread(accessToken, current.id, { status: "archived" });
-    await refreshLists();
-    await chooseNextOrCreate(current.id);
-  }), [accessToken, chooseNextOrCreate, refreshLists, runMutation, selectedThread]);
-
-  const archiveThread = useCallback(async (threadId: string) => {
-    if (selectedThread?.id === threadId) {
-      await archiveSelected();
-      return;
-    }
-    await patchThread(threadId, { status: "archived" });
-  }, [archiveSelected, patchThread, selectedThread?.id]);
-
-  const restoreThread = useCallback((threadId: string) => runMutation(async () => {
-    await updateAiThread(accessToken, threadId, { status: "active" });
-    await refreshLists();
-    await loadSelected(threadId);
-  }), [accessToken, loadSelected, refreshLists, runMutation]);
+  }, [accessToken, loadSelected, threads]);
 
   const removeThread = useCallback((threadId: string) => runMutation(async () => {
     await deleteAiThread(accessToken, threadId);
@@ -215,9 +188,6 @@ export function useAiThreads({ accessToken, userId }: UseAiThreadsInput) {
   }), [accessToken, chooseNextOrCreate, refreshLists, runMutation, selectedThread?.id]);
 
   return {
-    activeThreads,
-    archiveThread,
-    archivedThreads,
     createThread,
     loading,
     messages,
@@ -227,8 +197,8 @@ export function useAiThreads({ accessToken, userId }: UseAiThreadsInput) {
     refreshSelected,
     removeThread,
     replaceReferences,
-    restoreThread,
     selectedThread,
     selectThread,
+    threads,
   };
 }

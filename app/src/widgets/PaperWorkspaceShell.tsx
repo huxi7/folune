@@ -1,15 +1,15 @@
 /**
  * [INPUT]: 依赖 motion/react、EdgeDock/PaperSurface/ArchiveCord 组件、左右工具插槽、稳定 paperIdentity 与整理结果定位信息
- * [OUTPUT]: 对外提供四层 Paper First 舞台、全尺寸 Escape/Canvas 空白关闭、响应式遮罩、无弹跳 Panel 位移、持久归档连线和撤销回执
+ * [OUTPUT]: 对外提供四层 Paper First 舞台、全尺寸 Escape/Canvas 空白关闭、响应式遮罩、无弹跳 Panel 位移、持久归档连线和撤销回执；Panel 内部 Header 负责自身关闭入口
  * [POS]: app/src/widgets 的工作台空间壳；只协调可见空间和动作解释，Panel 开关不跨位置变形，编辑器、文件树、Run 与 AI 会话仍由各自稳定组件拥有
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
 import {
-  ChatCircleDotsIcon,
+  AssistantPanelOpenIcon,
   SidebarSimpleIcon,
   XIcon,
-} from "@phosphor-icons/react";
+} from "../shared/design-system/icons";
 import {
   AnimatePresence,
   motion,
@@ -198,10 +198,8 @@ export function PaperWorkspaceShell({
               transition={fadeTransition}
             >
               <EdgeDock
-                expanded={false}
-                icon={<SidebarSimpleIcon size={16} weight="regular" />}
+                icon={<SidebarSimpleIcon size={16} />}
                 label="文件库"
-                mode="canvas"
                 onClick={onToggleLibrary}
                 side="left"
               />
@@ -219,10 +217,8 @@ export function PaperWorkspaceShell({
               transition={fadeTransition}
             >
               <EdgeDock
-                expanded={false}
-                icon={<ChatCircleDotsIcon size={16} weight="regular" />}
+                icon={<AssistantPanelOpenIcon size={16} />}
                 label="AI"
-                mode="canvas"
                 onClick={onToggleAssistant}
                 side="right"
               />
@@ -328,14 +324,6 @@ export function PaperWorkspaceShell({
               key="workspace-assistant"
             >
               <div className="workspace-panel-content workspace-panel-content-assistant">
-                <EdgeDock
-                  expanded
-                  icon={<ChatCircleDotsIcon size={16} weight="regular" />}
-                  label="AI"
-                  mode="panel"
-                  onClick={onCloseAssistant}
-                  side="right"
-                />
                 {assistant}
               </div>
             </motion.div>

@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 Bun 测试运行器、Phosphor 图标与基于工具 part 的展示适配器
+ * [INPUT]: 依赖 Bun 测试运行器、共享 Lucide 图标与基于工具 part 的展示适配器
  * [OUTPUT]: 验证自然动作命名、安全详情、状态结果及未知协议不外露
  * [POS]: AgentPanel 工具 Message UI 的展示契约测试，防止协议名、UUID、正文或原始 JSON 回流界面
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -10,7 +10,7 @@ import {
   FolderOpenIcon,
   ToolboxIcon,
   TreeStructureIcon,
-} from "@phosphor-icons/react";
+} from "../../shared/design-system/icons";
 
 import {
   agentClientToolPresentation,

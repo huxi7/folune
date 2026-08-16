@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 index.css 的 Quiet Editorial Foundations 与 Design System/Signature Components 真实类
- * [OUTPUT]: 对外提供真实主题切换、五层展示页、全状态检查轨、完整 Editorial 样板及 Paper Surface/Edge Dock/Archive Cord 生产同源预览
+ * [OUTPUT]: 对外提供真实主题切换、五层展示页、Lucide 图标语言/清单、全状态检查轨、完整 Editorial 样板及 Paper Surface/Edge Dock/Archive Cord 生产同源预览
  * [POS]: app/src/styles 的开发陈列专用视觉层，只可视化生产 token，不定义第二套颜色、曲率、阴影或 Motion
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -174,6 +174,7 @@
 
   .ds-gallery-card[data-component="Color"],
   .ds-gallery-card[data-component="Typography"],
+  .ds-gallery-card[data-component="Iconography"],
   .ds-gallery-card[data-component="RadiusElevationMotion"],
   .ds-gallery-card[data-component="PaperSurface"],
   .ds-gallery-card[data-component="ArchiveCord"] { grid-column: 1 / -1; min-height: 0; }
@@ -199,6 +200,28 @@
   .ds-color-preview [data-color="destructive"] i { background: var(--destructive); }
   .ds-color-preview small { color: var(--foreground); font-size: var(--type-caption); }
   .ds-color-preview code { overflow: hidden; color: var(--muted-foreground); font-family: var(--font-mono); font-size: 0.5625rem; text-overflow: ellipsis; white-space: nowrap; }
+
+  .ds-iconography-preview { display: grid; width: 100%; gap: var(--space-6); }
+  .ds-iconography-intro { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: var(--space-3); border-bottom: 1px solid var(--border); padding-bottom: var(--space-3); }
+  .ds-iconography-intro > div { display: grid; gap: var(--space-1); }
+  .ds-iconography-intro strong { color: var(--foreground); font-size: var(--type-heading); font-weight: 680; }
+  .ds-iconography-intro span,
+  .ds-iconography-intro p,
+  .ds-iconography-rule { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--type-caption); line-height: var(--leading-caption); }
+  .ds-icon-size-scale { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+  .ds-icon-size-scale > span { display: grid; width: var(--space-16); height: var(--space-16); place-items: center; border: 1px solid var(--border); border-radius: var(--radius-control); color: var(--foreground); }
+  .ds-icon-size-scale code { color: var(--muted-foreground); font-family: var(--font-mono); font-size: 0.5625rem; }
+  .ds-iconography-rule { max-width: 64rem; }
+  .ds-iconography-groups { display: grid; gap: var(--space-8); }
+  .ds-iconography-group { display: grid; gap: var(--space-3); }
+  .ds-iconography-group h4 { color: var(--foreground); font-family: var(--font-mono); font-size: var(--type-label); font-weight: 650; }
+  .ds-iconography-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); border-top: 1px solid var(--border); border-left: 1px solid var(--border); }
+  .ds-iconography-item { display: grid; min-width: 0; grid-template-columns: var(--space-10) minmax(0, 1fr); align-items: center; gap: var(--space-2); min-height: 5rem; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: var(--space-3); }
+  .ds-iconography-item > span { display: grid; width: var(--space-10); height: var(--space-10); place-items: center; border-radius: var(--radius-control); background: var(--surface-neutral); color: var(--foreground); }
+  .ds-iconography-item > div { display: grid; min-width: 0; gap: 0.1rem; }
+  .ds-iconography-item strong { color: var(--foreground); font-size: var(--type-label); font-weight: 650; }
+  .ds-iconography-item code,
+  .ds-iconography-item small { overflow: hidden; color: var(--muted-foreground); font-family: var(--font-mono); font-size: 0.5625rem; line-height: 1.45; text-overflow: ellipsis; white-space: nowrap; }
 
   .ds-type-system-preview { display: grid; width: 100%; gap: var(--space-6); }
   .ds-type-family-grid { display: grid; gap: var(--space-3); }
@@ -496,6 +519,14 @@
     flex-direction: column;
     gap: calc(var(--spacing) * 3);
     width: min(100%, 24rem);
+  }
+
+  .ds-composer-preview {
+    width: min(100%, 28rem);
+  }
+
+  .ds-composer-preview .agent-composer {
+    margin-top: 0;
   }
 
   .ds-user-message-preview {

@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 React 折叠状态、Phosphor 工具/状态图标、人话名称/详情与 AI SDK 调用状态
+ * [INPUT]: 依赖 React 折叠状态、共享 Lucide 工具/状态图标、人话名称/详情与 AI SDK 调用状态
  * [OUTPUT]: 对外提供不暴露原始载荷、执行中带流光、完成后可展开轻量详情的 ToolCallBubble
  * [POS]: design-system AI 消息家族的工具披露控件，以 Secondary Button 同源材质承载动作入口，详情保持普通信息排版
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -11,7 +11,7 @@ import {
   WarningCircleIcon,
   XIcon,
   type Icon,
-} from "@phosphor-icons/react";
+} from "../icons";
 import { useId, useState } from "react";
 
 export type ToolCallState =
@@ -91,12 +91,12 @@ export function ToolCallBubble({
         type="button"
       >
         <span className="ds-tool-call-icon">
-          <ToolIcon aria-hidden="true" size={15} weight="bold" />
+          <ToolIcon aria-hidden="true" size={15} />
         </span>
         <strong className="ds-tool-call-name">{name}</strong>
         {ResultIcon ? (
           <span aria-hidden="true" className="ds-tool-call-result">
-            <ResultIcon size={12} weight="bold" />
+            <ResultIcon size={12} />
           </span>
         ) : null}
       </button>

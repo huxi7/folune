@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 Hono、router/request、AI zod schemas、auth 与 AI thread/context/run services、统一 ok helper
  * [OUTPUT]: 对外提供 /ai-threads、/ai-context、/ai-runs、/ai-settings、/ai-commands 的 JWT 保护资源 routers
- * [POS]: router 层 AI Native V2 HTTP 适配器，只做认证、query/param/body 校验和 service 下传，不调用模型或直接访问 Supabase
+ * [POS]: router 层 AI Native V2 HTTP 适配器，只做认证、param/body 校验和 service 下传；会话列表无状态 query，不调用模型或直接访问 Supabase
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -13,7 +13,6 @@ import {
   aiCommandIdParamSchema,
   aiRunIdParamSchema,
   aiThreadIdParamSchema,
-  aiThreadListQuerySchema,
   createAiCommandSchema,
   createAiRunSchema,
   createAiThreadSchema,
@@ -32,7 +31,6 @@ import { aiThreadService } from "../service/ai-thread.service.ts";
 import { authService } from "../service/auth.service.ts";
 import {
   parseJsonBody,
-  parseQueryParams,
   parseRouteParams,
   readAccessToken,
 } from "./request.ts";
@@ -98,8 +96,7 @@ aiThreadRouter.post("/", async (c) => {
 
 aiThreadRouter.get("/", async (c) => {
   const { accessToken, authUser } = await authenticate(c);
-  const { status } = parseQueryParams(aiThreadListQuerySchema, c.req.query());
-  return ok(c, await aiThreadService.listThreads(authUser, accessToken, status));
+  return ok(c, await aiThreadService.listThreads(authUser, accessToken));
 });
 
 aiThreadRouter.get("/:threadId", async (c) => {

@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 Bun test、React 静态渲染、AI SDK UIMessage 与 ChatMessage
- * [OUTPUT]: 验证单一过程区、人工审批弹窗、自动执行轻量撤销、最终正文独立及普通回复无空过程入口
- * [POS]: AgentPanel 完整回复 DOM 契约测试，连接 part 分区、阻塞裁决、工具人话展示与回复动作槽位
+ * [OUTPUT]: 验证单一过程区、人工审批弹窗、自动执行轻量撤销、最终正文独立、冻结来源不污染对话及普通回复无空过程入口
+ * [POS]: AgentPanel 完整回复 DOM 契约测试，连接 part 分区、阻塞裁决、纯净消息展示、工具人话展示与回复动作槽位
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -121,7 +121,7 @@ describe("ChatMessage", () => {
     expect(assistantHtml).not.toContain(">备忘录助手<");
   });
 
-  test("用户轮次与 AI 回复都显示冻结来源和 revision", () => {
+  test("冻结来源保留在消息 metadata，但用户与 AI 对话都不展示引用笔记", () => {
     const sources = {
       primary: { memo_id: "memo-1", title: "产品规划", revision: 7 },
       references: [{ memo_id: "memo-2", title: "用户访谈", revision: 3 }],
@@ -140,17 +140,16 @@ describe("ChatMessage", () => {
         message={assistant([{ text: "结论。", type: "text" }])}
         onApproval={() => undefined}
         onUndo={async () => undefined}
-        sources={sources}
       />,
     );
 
-    expect(userHtml).toContain("产品规划");
-    expect(userHtml).toContain("用户访谈");
-    expect(userHtml).toContain("v7");
-    expect(assistantHtml).toContain("来源");
-    expect(assistantHtml).toContain("@用户访谈");
-    expect(assistantHtml).toContain("v3");
-    expect(assistantHtml).not.toContain("memo-2");
+    expect(userHtml).toContain("对比一下");
+    expect(userHtml).not.toContain("产品规划");
+    expect(userHtml).not.toContain("用户访谈");
+    expect(userHtml).not.toContain("agent-message-context");
+    expect(assistantHtml).toContain("结论。");
+    expect(assistantHtml).not.toContain("来源");
+    expect(assistantHtml).not.toContain("agent-assistant-sources");
   });
 
   test("只有当前待批工具打开模态框，同轮多条命令只显示一个整轮撤销", () => {

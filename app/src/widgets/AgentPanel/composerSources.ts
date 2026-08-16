@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 MemoTreeNode、MentionResult 与不可变 memo tree 查找
- * [OUTPUT]: 对外提供统一 ComposerSource、当前笔记/置顶/@来源归并、发送后收束及冻结上下文构造
+ * [OUTPUT]: 对外提供统一 ComposerSource、当前笔记/置顶/@来源归并、内联 mention 删除同步、发送后收束及冻结上下文构造
  * [POS]: AgentPanel Prompt Bar 的单一上下文领域层；当前笔记只是 current 来源标记，所有 chip 与发送 metadata 共用同一数组
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -107,6 +107,15 @@ export const settleComposerSourcesAfterSend = (
 ): ComposerSource[] => sources
   .map((source) => ({ ...source, manual: false }))
   .filter((source) => source.current || source.pinned);
+
+export const syncManualComposerSources = (
+  sources: readonly ComposerSource[],
+  draft: string,
+): ComposerSource[] => sources
+  .map((source) => source.manual && !draft.includes(`@${source.title}`)
+    ? { ...source, manual: false }
+    : source)
+  .filter((source) => source.current || source.manual || source.pinned);
 
 export const buildFrozenComposerContext = (
   sources: readonly ComposerSource[],

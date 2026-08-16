@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 zod 的 strict object、JSON、UUID、联合与 infer 能力
- * [OUTPUT]: 对外提供 AI threads/messages/refs/context/runs/settings/commands HTTP 与 PostgREST/RPC schema；线程 PATCH 不再接受已废弃的当前笔记开关
+ * [OUTPUT]: 对外提供 AI threads/messages/refs/context/runs/settings/commands HTTP 与 PostgREST/RPC schema；会话列表无归档分支且 PATCH 只允许标题
  * [POS]: dto 层 AI Native V2 数据边界，原样接纳 UIMessage.parts，同时严格限制冻结上下文、权限模式、命令种类、revision 与整理方案结构
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -13,13 +13,10 @@ const titleSchema = z.string().trim().min(1).max(500);
 const idempotencyKeySchema = z.string().trim().min(1).max(200);
 const jsonRecordSchema = z.record(z.string(), z.unknown());
 
-export const aiThreadStatusSchema = z.enum(["active", "archived"]);
-
 export const aiThreadRowSchema = z.object({
   id: z.uuid(),
   user_id: z.uuid(),
   title: z.string(),
-  status: aiThreadStatusSchema,
   created_at: z.string(),
   updated_at: z.string(),
   last_message_at: z.string(),
@@ -81,7 +78,6 @@ export const createAiThreadSchema = z
 export const patchAiThreadSchema = z
   .object({
     title: titleSchema.optional(),
-    status: aiThreadStatusSchema.optional(),
   })
   .strict()
   .refine((value) => Object.keys(value).length > 0, {
@@ -90,9 +86,6 @@ export const patchAiThreadSchema = z
 
 export const aiThreadIdParamSchema = z.object({ threadId: z.uuid() });
 export const aiRunIdParamSchema = z.object({ runId: z.uuid() });
-export const aiThreadListQuerySchema = z.object({
-  status: aiThreadStatusSchema.optional().default("active"),
-});
 
 export const syncAiMessageSchema = z
   .object({

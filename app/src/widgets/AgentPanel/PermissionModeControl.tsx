@@ -1,11 +1,11 @@
 /**
  * [INPUT]: 依赖 shared/api/ai settings GET/PATCH、AgentPanel Store 的后端确认状态、全局 Toast、当前 access token 与 busy 状态
- * [OUTPUT]: 对外提供账号全局“每次询问/智能审批实验/完全访问”切换、加载/保存错误明示及失败不漂移语义
- * [POS]: AgentPanel Header 的 AI 权限偏好控制器；界面只展示 API 已确认模式，不用乐观假象代替持久化事实
+ * [OUTPUT]: 对外提供账号全局“每次询问/智能审批实验/完全访问”切换、中性选中表面、精简模式说明、紧凑图标入口、加载/保存错误明示及失败不漂移语义
+ * [POS]: AgentPanel Composer 的 AI 权限偏好控制器；界面只展示 API 已确认模式，不用乐观假象代替持久化事实
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
-import { CaretDownIcon, ShieldCheckIcon } from "@phosphor-icons/react";
+import { CaretDownIcon, ShieldCheckIcon } from "../../shared/design-system/icons";
 import { useEffect, useRef, useState } from "react";
 
 import {
@@ -13,7 +13,7 @@ import {
   updateAiSettings,
   type AiPermissionMode,
 } from "../../shared/api/ai";
-import { useToast } from "../../shared/design-system/components";
+import { Button, useToast } from "../../shared/design-system/components";
 import { useAgentPanelStore } from "../../shared/store/agentPanelStore";
 
 const labels: Record<AiPermissionMode, string> = {
@@ -25,11 +25,13 @@ const labels: Record<AiPermissionMode, string> = {
 type PermissionModeControlProps = {
   accessToken: string;
   busy: boolean;
+  compact?: boolean;
 };
 
 export function PermissionModeControl({
   accessToken,
   busy,
+  compact = false,
 }: PermissionModeControlProps) {
   const [open, setOpen] = useState(false);
   const shellRef = useRef<HTMLDivElement>(null);
@@ -101,21 +103,24 @@ export function PermissionModeControl({
   };
 
   return (
-    <div className="agent-permission-control" ref={shellRef}>
-      <button
+    <div className="agent-permission-control" data-compact={compact || undefined} ref={shellRef}>
+      <Button
+        aria-label={`审批模式：${labels[mode]}`}
         aria-expanded={open}
         aria-haspopup="menu"
-        className="agent-permission-trigger"
+        className={["agent-permission-trigger", compact ? "agent-composer-tool" : ""].join(" ")}
         disabled={busy || permissionStatus === "idle" || permissionStatus === "loading" || saving}
+        icon={ShieldCheckIcon}
         onClick={() => setOpen((value) => !value)}
+        size={compact ? "square" : "default"}
+        title={`审批模式：${labels[mode]}`}
         type="button"
+        variant="ghost"
       >
-        <ShieldCheckIcon size={13} />
-        <span>{labels[mode]}</span>
-        <CaretDownIcon size={11} />
-      </button>
+        {!compact ? <><span>{labels[mode]}</span><CaretDownIcon size={11} /></> : null}
+      </Button>
       {open ? (
-        <div className="agent-permission-menu" role="menu">
+        <div className="agent-permission-menu" data-placement={compact ? "top" : "bottom"} role="menu">
           {(Object.keys(labels) as AiPermissionMode[]).map((value) => (
             <button
               aria-checked={mode === value}
@@ -126,9 +131,9 @@ export function PermissionModeControl({
             >
               <strong>{labels[value]}</strong>
               <small>
-                {value === "ask" && "所有写操作都由你确认。"}
-                {value === "auto_approve" && "AI 会综合要求、目标笔记和修改内容；不明确或高风险时仍会询问。实验功能可能误判，所有操作仍受版本检查、回收站和撤销保护。"}
-                {value === "full_access" && "自动执行，仍受版本检查与回收站保护。"}
+                {value === "ask" && "写入前都先询问。"}
+                {value === "auto_approve" && "低风险自动执行，不确定时询问。"}
+                {value === "full_access" && "无需询问，直接执行。"}
               </small>
             </button>
           ))}

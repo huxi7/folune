@@ -1,10 +1,10 @@
 /**
- * [INPUT]: 依赖 React 原生 input 属性/ref、@phosphor-icons/react 的显隐图标与同目录 Input 原语
+ * [INPUT]: 依赖 React 原生 input 属性/ref、../icons 的显隐图标与同目录 Input 原语
  * [OUTPUT]: 对外提供受控可见性、原生密码属性与无障碍显隐按钮的 PasswordInput 组件和 PasswordInputProps 类型
  * [POS]: app/src/shared/design-system/components 的 Input 家族组合件，被 AuthDialog 与 DesignSystemWorkspace 复用
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
-import { EyeIcon, EyeSlashIcon } from "@phosphor-icons/react";
+import { EyeIcon, EyeSlashIcon } from "../icons";
 import type { ComponentPropsWithRef } from "react";
 
 import { Input } from "./Input";
@@ -43,7 +43,7 @@ export function PasswordInput({
         onClick={() => onVisibilityChange(!visible)}
         type="button"
       >
-        <VisibilityIcon aria-hidden="true" size={18} weight="bold" />
+        <VisibilityIcon aria-hidden="true" size={18} />
       </button>
     </div>
   );

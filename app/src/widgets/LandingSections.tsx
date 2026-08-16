@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 React ref、本地 Button/Card/BrandMark/BlueprintDivider、Phosphor 图标、CountUp/轻量 reveal 与 React Router 导航
+ * [INPUT]: 依赖 React ref、本地 Button/Card/BrandMark/BlueprintDivider、共享 Lucide 图标、CountUp/轻量 reveal 与 React Router 导航
  * [OUTPUT]: 对外提供由唯一 Divider 分隔、无装饰 hover 填色/磁吸/聚光/浮动的指标、问题、流程、场景、定价、FAQ 与大图标/短标题/小按钮组成的无末端节点预页脚
  * [POS]: app/src/widgets 的 Landing 扩展模块，被 LandingPage 懒加载并保持工程骨架静止、内容独立入场，让正文竖轨无节点直达 Footer
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -9,7 +9,7 @@ import {
   CheckCircleIcon,
   CheckIcon,
   PlusIcon,
-} from "@phosphor-icons/react";
+} from "../shared/design-system/icons";
 import { useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -202,7 +202,7 @@ export function LandingSections() {
           <div className="landing-use-case-list" data-reveal-stagger>
             {useCases.map((item) => (
               <div data-reveal-item key={item}>
-                <CheckCircleIcon aria-hidden="true" size={16} weight="fill" />
+                <CheckCircleIcon aria-hidden="true" size={16} />
                 {item}
               </div>
             ))}
@@ -243,7 +243,7 @@ export function LandingSections() {
                 <div className="landing-plan-points">
                   {plan.points.map((point) => (
                     <p key={point}>
-                      <CheckIcon aria-hidden="true" size={14} weight="bold" />
+                      <CheckIcon aria-hidden="true" size={14} />
                       {point}
                     </p>
                   ))}
@@ -282,7 +282,6 @@ export function LandingSections() {
                     aria-hidden="true"
                     className="transition-transform duration-200 ease-out group-open:rotate-45 motion-reduce:transition-none"
                     size={17}
-                    weight="bold"
                   />
                 </summary>
                 <p>{item.answer}</p>

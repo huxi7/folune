@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 Kumo Toast Provider/Manager/Parts 的可访问队列、自动关闭、悬停暂停、焦点与滑动生命周期，依赖 Phosphor 轻量状态图标及 toast.css 的 Apple-like SuperNote 材质
+ * [INPUT]: 依赖 Kumo Toast Provider/Manager/Parts 的可访问队列、自动关闭、悬停暂停、焦点与滑动生命周期，依赖 共享 Lucide 轻量状态图标及 toast.css 的 Apple-like SuperNote 材质
  * [OUTPUT]: 对外提供稳定的 ToastProvider、useToast、ToastVariant 与 ToastInput，把既有 info/success/warning/error 业务协议适配到 Kumo Toast
  * [POS]: app/src/shared/design-system/components 的全局瞬时反馈边界；Kumo 只拥有交互机制，SuperNote 本地 API 与样式继续隔离业务和第三方实现
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -14,7 +14,7 @@ import {
   WarningCircleIcon,
   XCircleIcon,
   XIcon,
-} from "@phosphor-icons/react";
+} from "../icons";
 import {
   createContext,
   useCallback,
@@ -78,7 +78,7 @@ function ToastItem({ toast }: { toast: KumoManagedToast }) {
       <span aria-hidden="true" className="ds-toast-material" />
       <KumoToast.Content className="ds-toast-content">
         <span aria-hidden="true" className="ds-toast-icon">
-          <IconComponent size={20} weight="regular" />
+          <IconComponent size={20} />
         </span>
         <div className="ds-toast-copy">
           <KumoToast.Title className="ds-toast-title">
@@ -91,7 +91,7 @@ function ToastItem({ toast }: { toast: KumoManagedToast }) {
           ) : null}
         </div>
         <KumoToast.Close aria-label="关闭提示" className="ds-toast-dismiss">
-          <XIcon aria-hidden="true" size={12} weight="bold" />
+          <XIcon aria-hidden="true" size={12} />
         </KumoToast.Close>
       </KumoToast.Content>
     </KumoToast.Root>

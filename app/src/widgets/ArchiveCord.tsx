@@ -5,7 +5,7 @@
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
-import { ArchiveIcon } from "@phosphor-icons/react";
+import { ArchiveIcon } from "../shared/design-system/icons";
 import {
   ArcherContainer,
   ArcherElement,
@@ -157,7 +157,7 @@ export function ArchivePort({
         data-active={active}
         role="img"
       >
-        <ArchiveIcon aria-hidden="true" size={13} weight="regular" />
+        <ArchiveIcon aria-hidden="true" size={13} />
       </span>
     </ArcherElement>
   );

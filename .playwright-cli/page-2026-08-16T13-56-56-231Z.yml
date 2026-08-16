@@ -1,0 +1,5 @@
+- generic [active] [ref=e1]:
+  - main "正在载入 SuperNote 工作区" [ref=e3]:
+    - status [ref=e7]: 正在加载备忘录纸张
+  - generic:
+    - region "全局通知"

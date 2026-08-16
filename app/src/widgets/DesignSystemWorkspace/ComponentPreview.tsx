@@ -1,19 +1,21 @@
 /**
- * [INPUT]: 依赖 React、生产 Design System、真实 MarkdownEditor/MarkdownReadingView 与 PaperSurface/EdgeDock/ArchiveCord Signature Components
- * [OUTPUT]: 对外提供 Foundations、Primitives、完整 Editorial 与 AI & Organize 的生产同源状态样板
+ * [INPUT]: 依赖 React、生产 Design System/Lucide 图标边界、真实 MarkdownEditor/MarkdownReadingView 与 PaperSurface/EdgeDock/ArchiveCord Signature Components
+ * [OUTPUT]: 对外提供 Color/Type/Iconography Foundations、Primitives、完整 Editorial 与 AI & Organize 的生产同源状态样板
  * [POS]: app/src/widgets/DesignSystemWorkspace 的预览层；所有样板只读取生产 Token/API，不建立展示专用视觉系统
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import {
+  ArrowUpIcon,
   DesktopIcon,
   FileTextIcon,
   GearSixIcon,
   MoonStarsIcon,
   NotePencilIcon,
+  ShieldCheckIcon,
   SidebarSimpleIcon,
   SunIcon,
   TreeStructureIcon,
-} from "@phosphor-icons/react";
+} from "../../shared/design-system/icons";
 import { memo, useEffect, useState } from "react";
 
 import {
@@ -23,6 +25,7 @@ import {
   Card,
   Dialog,
   Input,
+  MentionInput,
   PasswordInput,
   SegmentedControl,
   Select,
@@ -37,6 +40,7 @@ import {
   useToast,
   type SegmentedControlOption,
 } from "../../shared/design-system/components";
+import { MentionMenu, type MentionResult } from "../AgentPanel/MentionMenu";
 import {
   ArchiveCordStage,
   ArchivePort,
@@ -48,6 +52,10 @@ import { MarkdownReadingView } from "../MarkdownReadingView";
 import { PaperSurface } from "../PaperSurface";
 import { useTheme } from "../../shared/theme/ThemeProvider";
 import type { DesignSystemSampleId } from "./componentCatalog";
+import {
+  iconographyCatalog,
+  type IconographyGroup,
+} from "./iconCatalog";
 
 type ComponentPreviewProps = {
   sampleId: DesignSystemSampleId;
@@ -80,6 +88,15 @@ const typographyRoles = [
   { key: "caption", role: "辅助 Caption", token: "--type-caption", size: "11px", leading: "16px", weight: "560", family: "Interface", usage: "时间 / 状态 / 辅助说明", sample: "最后保存于 14:32" },
   { key: "mono", role: "系统 Mono", token: "--type-mono", size: "11px", leading: "16px", weight: "500", family: "Mono", usage: "Token / 路径 / 技术标识", sample: "--primary · memo_2026_08" },
 ] as const;
+
+const iconographyGroups: readonly IconographyGroup[] = [
+  "Navigation",
+  "Content",
+  "Actions",
+  "Status",
+  "AI & Communication",
+  "Account & System",
+];
 
 function ColorPreview() {
   return (
@@ -168,6 +185,54 @@ function TypographyPreview() {
   );
 }
 
+function IconographyPreview() {
+  return (
+    <div className="ds-iconography-preview">
+      <header className="ds-iconography-intro">
+        <div>
+          <strong>Lucide React</strong>
+          <span>Rounded outline language</span>
+        </div>
+        <p>24×24 Grid · 2px Stroke · Round cap/join · currentColor</p>
+      </header>
+      <div aria-label="图标尺寸阶梯" className="ds-icon-size-scale">
+        {[14, 16, 20, 24].map((size) => (
+          <span key={size}>
+            <NotePencilIcon aria-hidden="true" size={size} />
+            <code>{size}px</code>
+          </span>
+        ))}
+      </div>
+      <p className="ds-iconography-rule">
+        默认使用描边图标；Primary、选中态与状态色只改变 currentColor，不切换另一套填充图形。BrandMark、ThinkingMark 与 Archive Cord 属于 SuperNote Signature，不纳入通用图标库。
+      </p>
+      <div className="ds-iconography-groups">
+        {iconographyGroups.map((group) => (
+          <section className="ds-iconography-group" key={group}>
+            <h4>{group}</h4>
+            <div className="ds-iconography-grid">
+              {iconographyCatalog.filter((item) => item.group === group).map((item) => {
+                const IconComponent = item.icon;
+
+                return (
+                  <div className="ds-iconography-item" key={item.exportName}>
+                    <span aria-hidden="true"><IconComponent size={18} /></span>
+                    <div>
+                      <strong>{item.label}</strong>
+                      <code>{item.exportName}</code>
+                      <small>{item.usage}</small>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function RadiusElevationMotionPreview() {
   return (
     <div className="ds-foundation-material-preview">
@@ -224,7 +289,7 @@ function SpatialRhythmPreview() {
             <span>48px · 12px inline</span>
           </div>
           <span className="ds-panel-header-specimen-control">
-            <NotePencilIcon aria-hidden="true" size={16} weight="bold" />
+            <NotePencilIcon aria-hidden="true" size={16} />
           </span>
         </div>
         <div className="ds-control-size-row">
@@ -336,6 +401,54 @@ function AssistantMessagePreview() {
       <Button onClick={replay} variant="ghost">
         重播流式动效
       </Button>
+    </div>
+  );
+}
+
+const composerPreviewMemos: MentionResult[] = [
+  { id: "memo-product", path: "工作 / 产品", revision: 4, title: "产品规划" },
+  { id: "memo-interview", path: "工作 / 研究", revision: 7, title: "用户访谈" },
+  { id: "memo-review", path: "工作 / 产品", revision: 2, title: "产品复盘" },
+  { id: "memo-reading", path: "阅读", revision: 3, title: "影响力第三章" },
+];
+
+function ComposerPreview() {
+  const [value, setValue] = useState("参考 ");
+  const [mention, setMention] = useState<MentionResult | null>(null);
+  const match = value.match(/(?:^|\s)@([^\s@]*)$/u);
+  const query = match?.[1] ?? "";
+  const mentionStart = match === null
+    ? null
+    : value.lastIndexOf("@", value.length - query.length - 1);
+  const results = composerPreviewMemos.filter((memo) => mention?.id !== memo.id
+    && (query.length === 0 || memo.title.includes(query)));
+
+  const selectMention = (memo: MentionResult) => {
+    if (mentionStart === null) return;
+    setMention(memo);
+    setValue(`${value.slice(0, mentionStart)}@${memo.title} `);
+  };
+
+  return (
+    <div className="ds-composer-preview">
+      <form className="agent-composer" onSubmit={(event) => event.preventDefault()}>
+        {mentionStart !== null ? <MentionMenu activeIndex={0} onSelect={selectMention} results={results} /> : null}
+        <MentionInput
+          aria-label="Prompt Composer 示例"
+          className="agent-chat-input"
+          mentions={mention === null ? [] : [{ id: mention.id, label: mention.title }]}
+          onValueChange={(nextValue) => {
+            setValue(nextValue);
+            if (mention !== null && !nextValue.includes(`@${mention.title}`)) setMention(null);
+          }}
+          placeholder="输入消息，@ 引用笔记…"
+          value={value}
+        />
+        <div className="agent-composer-footer">
+          <Button aria-label="权限管理" className="agent-composer-action" icon={ShieldCheckIcon} size="square" variant="ghost" />
+          <Button aria-label="发送消息" className="agent-composer-action" icon={ArrowUpIcon} size="square" variant="primary" />
+        </div>
+      </form>
     </div>
   );
 }
@@ -529,8 +642,8 @@ function PaperSurfacePreview() {
 function EdgeDockPreview() {
   return (
     <div className="ds-edge-dock-preview">
-      <EdgeDock expanded={false} icon={<SidebarSimpleIcon size={16} />} label="文件库" mode="canvas" onClick={() => undefined} side="left" />
-      <EdgeDock expanded icon={<ThinkingMark aria-hidden="true" size={16} />} label="AI" mode="panel" onClick={() => undefined} side="right" />
+      <EdgeDock icon={<SidebarSimpleIcon size={16} />} label="文件库" onClick={() => undefined} side="left" />
+      <EdgeDock icon={<ThinkingMark aria-hidden="true" size={16} />} label="AI" onClick={() => undefined} side="right" />
     </div>
   );
 }
@@ -624,10 +737,12 @@ export const ComponentPreview = memo(function ComponentPreview({
   switch (sampleId) {
     case "Color": return <ColorPreview />;
     case "Typography": return <TypographyPreview />;
+    case "Iconography": return <IconographyPreview />;
     case "SpatialRhythm": return <SpatialRhythmPreview />;
     case "RadiusElevationMotion": return <RadiusElevationMotionPreview />;
     case "Button": return <ButtonPreview />;
     case "Skeleton": return <SkeletonPreview />;
+    case "Composer": return <ComposerPreview />;
     case "Messages": return <AssistantMessagePreview />;
     case "ThinkingMark": return <ThinkingMarkPreview />;
     case "ThinkingIndicator": return <ThinkingIndicatorPreview />;

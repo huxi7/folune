@@ -7,7 +7,7 @@
 import {
   ArrowLeftIcon,
   GoogleLogoIcon,
-} from "@phosphor-icons/react";
+} from "../shared/design-system/icons";
 import {
   useEffect,
   useRef,

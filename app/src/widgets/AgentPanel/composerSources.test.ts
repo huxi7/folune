@@ -13,6 +13,7 @@ import {
   buildFrozenComposerContext,
   reconcileComposerSources,
   settleComposerSourcesAfterSend,
+  syncManualComposerSources,
 } from "./composerSources";
 
 const memo = (id: string, title: string, revision: number): MemoTreeNode => ({
@@ -89,5 +90,18 @@ describe("Composer sources", () => {
       title: "临时来源",
     });
     expect(settleComposerSourcesAfterSend(manualOnly).map((source) => source.id)).toEqual([A, B]);
+  });
+
+  test("删除内联 @笔记 后只清理对应手动来源", () => {
+    const selected = reconcileComposerSources([], tree, A, [], null);
+    const manualOnly = addComposerSource(selected, {
+      id: B,
+      path: "根目录",
+      revision: 7,
+      title: "用户访谈",
+    });
+
+    expect(syncManualComposerSources(manualOnly, "参考 @用户访谈 再回答").map((source) => source.id)).toEqual([A, B]);
+    expect(syncManualComposerSources(manualOnly, "不再引用").map((source) => source.id)).toEqual([A]);
   });
 });

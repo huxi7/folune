@@ -1,11 +1,11 @@
 /**
- * [INPUT]: 依赖 React 本地展开状态、Phosphor Caret、SuperNote ThinkingMark 与真实生成 active 状态
+ * [INPUT]: 依赖 React 本地展开状态、共享 Lucide Caret、SuperNote ThinkingMark 与真实生成 active 状态
  * [OUTPUT]: 对外提供顶部 Agent 状态入口、生成期强制展开、完成后可手动收起且不包裹最终正文的 AgentProcessDisclosure
  * [POS]: AgentPanel 回复过程容器，在过程内容之前管理透明度信息的显隐，不拥有工具/正文内容语义
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
-import { CaretRightIcon } from "@phosphor-icons/react";
+import { CaretRightIcon } from "../../shared/design-system/icons";
 import {
   type ReactNode,
   useEffect,
@@ -56,7 +56,7 @@ export function AgentProcessDisclosure({
         >
           <ThinkingMark aria-hidden="true" size={14} />
           <span>思考过程</span>
-          <CaretRightIcon aria-hidden="true" size={13} weight="bold" />
+          <CaretRightIcon aria-hidden="true" size={13} />
         </button>
       )}
       <div

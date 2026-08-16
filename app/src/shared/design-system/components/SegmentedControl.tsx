@@ -1,10 +1,10 @@
 /**
- * [INPUT]: 依赖 React ref/键盘事件、Phosphor Icon 类型与 segmented-control.css 的语义 token 样式
+ * [INPUT]: 依赖 React ref/键盘事件、共享 Lucide Icon 类型与 segmented-control.css 的语义 token 样式
  * [OUTPUT]: 对外提供受控 SegmentedControl、SegmentedControlOption 与方向键/Home/End 单选交互
  * [POS]: app/src/shared/design-system/components 的紧凑互斥选择原子件，用于少量稳定选项，不替代 Select 或普通 Button
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
-import type { Icon } from "@phosphor-icons/react";
+import type { Icon } from "../icons";
 import {
   useRef,
   type KeyboardEvent,
@@ -111,7 +111,7 @@ export function SegmentedControl<Value extends string>({
             type="button"
           >
             {IconComponent ? (
-              <IconComponent aria-hidden="true" size={16} weight={active ? "fill" : "regular"} />
+              <IconComponent aria-hidden="true" size={16} />
             ) : null}
             <span>{option.label}</span>
           </button>

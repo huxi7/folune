@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 shared/api/client 统一 Bearer 请求、AI SDK UIMessage 与 memo DTO mapper
- * [OUTPUT]: 对外提供 SuperNoteUIMessage、AI thread/reference/settings/command CRUD、Run apply/reject/undo/get 类型与响应归一化
+ * [OUTPUT]: 对外提供 SuperNoteUIMessage、无归档状态的 AI thread/reference/settings/command CRUD、Run apply/reject/undo/get 类型与响应归一化
  * [POS]: app/src/shared/api 的 AI Native V2 HTTP 与消息契约边界；浏览器显示冻结引用和命令状态，但真实写入只经 api/chat
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -13,8 +13,6 @@ import {
   type MemoNodeDto,
 } from "./memo.mapper";
 import type { MemoNode } from "./memo";
-
-export type AiThreadStatus = "active" | "archived";
 
 export type AiContextMemoSnapshot = {
   memo_id: string;
@@ -50,7 +48,6 @@ export type AiThread = {
   id: string;
   user_id: string;
   title: string;
-  status: AiThreadStatus;
   created_at: string;
   updated_at: string;
   last_message_at: string;
@@ -226,9 +223,8 @@ export const createAiThread = (
 
 export const listAiThreads = (
   accessToken: string,
-  status: AiThreadStatus,
 ): Promise<AiThread[]> =>
-  apiRequest(`/ai-threads?status=${status}`, {}, accessToken);
+  apiRequest("/ai-threads", {}, accessToken);
 
 export const getAiThread = (
   accessToken: string,
@@ -239,7 +235,7 @@ export const getAiThread = (
 export const updateAiThread = (
   accessToken: string,
   threadId: string,
-  input: Partial<Pick<AiThread, "title" | "status">>,
+  input: Partial<Pick<AiThread, "title">>,
 ): Promise<AiThread> =>
   apiRequest(`/ai-threads/${encodeURIComponent(threadId)}`, {
     body: JSON.stringify(input),

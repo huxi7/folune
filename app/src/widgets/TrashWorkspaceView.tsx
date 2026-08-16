@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖回收站最小 DTO、共享 Button/Dialog/Skeleton 与 Phosphor 图标
+ * [INPUT]: 依赖回收站最小 DTO、共享 Button/Dialog/Skeleton 与 共享 Lucide 图标
  * [OUTPUT]: 对外提供 TrashWorkspaceView 及其视图状态类型
  * [POS]: app/src/widgets 的纯回收站视图；不请求数据、不复制 active tree，供控制器和无网络测试复用
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -10,7 +10,7 @@ import {
   FileTextIcon,
   FolderIcon,
   TrashIcon,
-} from "@phosphor-icons/react";
+} from "../shared/design-system/icons";
 
 import type { MemoTrashItem } from "../shared/api/memo";
 import {
@@ -107,7 +107,7 @@ export function TrashWorkspaceView({
           <div className="trash-page-heading">
             <div>
               <div className="flex items-center gap-2 text-primary">
-                <TrashIcon aria-hidden="true" size={16} weight="bold" />
+                <TrashIcon aria-hidden="true" size={16} />
                 <p className="ui-kicker">Library</p>
               </div>
               <h1 className="ui-page-title">回收站</h1>
@@ -157,7 +157,7 @@ export function TrashWorkspaceView({
               return (
                 <article className="trash-item" key={item.id}>
                   <div className="trash-item-icon" aria-hidden="true">
-                    <Icon size={17} weight="duotone" />
+                    <Icon size={17} />
                   </div>
                   <div className="trash-item-copy">
                     <div className="trash-item-title-row">

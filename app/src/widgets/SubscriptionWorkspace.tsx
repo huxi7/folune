@@ -1,10 +1,10 @@
 /**
- * [INPUT]: 依赖 React 局部选择状态、本地 Button/Card 与 Phosphor 图标展示产品宪法中定义的三档订阅
+ * [INPUT]: 依赖 React 局部选择状态、本地 Button/Card 与 共享 Lucide 图标展示产品宪法中定义的三档订阅
  * [OUTPUT]: 对外提供纯白画布、三档可选方案、权益清单与选中反馈组成的 SubscriptionWorkspace
  * [POS]: app/src/widgets 的订阅入口工作区，被 AppDashboard 从 UserMenu 命令切换显示
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
-import { CheckIcon, ShieldCheckIcon, SparkleIcon } from "@phosphor-icons/react";
+import { CheckIcon, ShieldCheckIcon, SparkleIcon } from "../shared/design-system/icons";
 import { useState } from "react";
 
 import { Button, Card } from "../shared/design-system/components";
@@ -42,7 +42,7 @@ export function SubscriptionWorkspace() {
       <div className="subscription-inner">
         <header className="subscription-header motion-safe:animate-blueprint-rise motion-reduce:animate-none">
           <div className="subscription-kicker">
-            <SparkleIcon aria-hidden="true" size={14} weight="fill" />
+            <SparkleIcon aria-hidden="true" size={14} />
             Upgrade SuperNote
           </div>
           <h1>为你的记录速度，选一个刚好的方案。</h1>
@@ -80,7 +80,7 @@ export function SubscriptionWorkspace() {
                 <div className="subscription-features">
                   {plan.features.map((feature) => (
                     <p key={feature}>
-                      <CheckIcon aria-hidden="true" size={14} weight="bold" />
+                      <CheckIcon aria-hidden="true" size={14} />
                       {feature}
                     </p>
                   ))}
@@ -99,7 +99,7 @@ export function SubscriptionWorkspace() {
 
         <footer className="subscription-footer" aria-live="polite">
           <div>
-            <ShieldCheckIcon aria-hidden="true" size={17} weight="fill" />
+            <ShieldCheckIcon aria-hidden="true" size={17} />
             <span>已选择 {selectedPlan}，支付能力接入后可在此继续。</span>
           </div>
           <span>账户数据与归档结果不会因切换方案丢失。</span>

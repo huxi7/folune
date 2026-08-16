@@ -8,7 +8,7 @@ import {
   PaletteIcon,
   UserCircleIcon,
   XIcon,
-} from "@phosphor-icons/react";
+} from "../shared/design-system/icons";
 
 import {
   Button,
@@ -95,7 +95,6 @@ export function AccountDialog({
                     leading={(
                       <IconComponent
                         size={17}
-                        weight={active ? "fill" : "regular"}
                       />
                     )}
                     onClick={() => onSectionChange(item.id)}

@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 React 本地状态、React Router 返回入口、Phosphor 图标、共享 BrandMark/Button/Input/SegmentedControl/SidebarButton/UserMessageBubble 与本页隔离样式
+ * [INPUT]: 依赖 React 本地状态、React Router 返回入口、共享 Lucide 图标、共享 BrandMark/Button/Input/SegmentedControl/SidebarButton/UserMessageBubble 与本页隔离样式
  * [OUTPUT]: 对外提供仅开发态可达的 /color-lab 蓝色终选页，以同一 Paper First 界面切换现有蓝参照与灰蓝/标准墨蓝/柔和墨蓝、Light/Dark
  * [POS]: app/src/pages 的视觉决策实验页；只比较 scoped 蓝色 Primary token，不接入鉴权、业务数据或生产主题状态
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -16,7 +16,7 @@ import {
   MoonIcon,
   NotePencilIcon,
   SunIcon,
-} from "@phosphor-icons/react";
+} from "../shared/design-system/icons";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
@@ -151,7 +151,7 @@ function PreviewSidebar() {
         <p>备忘录</p>
         <SidebarButton
           label="产品设计"
-          leading={<FolderIcon size={15} weight="fill" />}
+          leading={<FolderIcon size={15} />}
           trailing={<span>2</span>}
         />
         <SidebarButton
@@ -196,9 +196,9 @@ function PreviewPaper() {
         <blockquote>一张纸、一条线、两个在需要时才出现的工具。</blockquote>
         <h3>设计原则</h3>
         <ul>
-          <li><CheckIcon aria-hidden="true" size={15} weight="bold" />Paper 始终是主角</li>
-          <li><CheckIcon aria-hidden="true" size={15} weight="bold" />颜色只解释动作与当前状态</li>
-          <li><CheckIcon aria-hidden="true" size={15} weight="bold" />AI 在后台整理，不打断书写</li>
+          <li><CheckIcon aria-hidden="true" size={15} />Paper 始终是主角</li>
+          <li><CheckIcon aria-hidden="true" size={15} />颜色只解释动作与当前状态</li>
+          <li><CheckIcon aria-hidden="true" size={15} />AI 在后台整理，不打断书写</li>
         </ul>
         <p>
           先让内容安全落在纸上，再让结构从上下文中自然出现。

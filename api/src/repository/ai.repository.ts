@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖唯一 supabase-rest 适配器、AI DTO 行/RPC 校验、请求期用户 JWT 与领域输入
- * [OUTPUT]: 对外提供 owner-scoped threads/messages/refs/settings/commands CRUD、context 数据读取及受控 Run/Command 状态机 RPC
+ * [OUTPUT]: 对外提供 owner-scoped 统一 threads 列表与 messages/refs/settings/commands CRUD、context 数据读取及受控 Run/Command 状态机 RPC
  * [POS]: repository 层 AI Native V2 PostgREST 访问器，只表达持久化操作与返回校验，不判断会话标题、上下文优先级或模型审批风险
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -33,7 +33,6 @@ import type {
   AiRun,
   AiThread,
   AiThreadReference,
-  AiThreadStatus,
   AiUserSettings,
 } from "../model/ai.model.ts";
 
@@ -152,12 +151,11 @@ export const aiRepository = {
 
   async listThreads(
     userId: string,
-    status: AiThreadStatus,
     accessToken: string,
   ): Promise<AiThread[]> {
     const query = createPostgrestQuery({
       select: "*",
-      eq: { user_id: userId, status },
+      eq: { user_id: userId },
       order: [
         { column: "last_message_at", ascending: false },
         { column: "id", ascending: true },
@@ -186,7 +184,7 @@ export const aiRepository = {
     input: Partial<
       Pick<
         AiThread,
-        "title" | "status" | "last_message_at"
+        "title" | "last_message_at"
       >
     >,
     accessToken: string,

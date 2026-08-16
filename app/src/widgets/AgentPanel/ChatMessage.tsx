@@ -1,17 +1,16 @@
 /**
- * [INPUT]: 依赖 SuperNoteUIMessage 冻结上下文、AI SDK 有序文本/reasoning/工具 parts、阻塞 ApprovalDialog、过程分区与 design-system AI 消息组件
- * [OUTPUT]: 对外提供带真实引用/revision 的用户消息、单一过程区、人工审批弹窗及回复末尾轻量撤销的 assistant 回复
- * [POS]: AgentPanel 消息语义适配层，把透明过程、人工裁决和结果动作分层，不暴露 UUID、凭据或工具原始 JSON
+ * [INPUT]: 依赖 SuperNoteUIMessage 的 AI SDK 有序文本/reasoning/工具 parts、阻塞 ApprovalDialog、过程分区与 design-system AI 消息组件
+ * [OUTPUT]: 对外提供纯净用户消息、单一过程区、人工审批弹窗及回复末尾轻量撤销的 assistant 回复
+ * [POS]: AgentPanel 消息语义适配层，把透明过程、人工裁决和结果动作分层；冻结上下文只参与请求，不进入对话视觉层
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
-import { ArrowCounterClockwiseIcon } from "@phosphor-icons/react";
+import { ArrowCounterClockwiseIcon } from "../../shared/design-system/icons";
 import { useState } from "react";
 import { getToolName, isToolUIPart } from "ai";
 
 import type {
   AiCommand,
-  AiMessageContextSnapshot,
   SuperNoteUIMessage,
 } from "../../shared/api/ai";
 import {
@@ -34,7 +33,6 @@ type ChatMessageProps = {
   message: SuperNoteUIMessage;
   onApproval: (id: string, approved: boolean) => void;
   onProgress?: () => void;
-  sources?: AiMessageContextSnapshot;
   onUndo: (commands: readonly AiCommand[]) => Promise<void>;
 };
 
@@ -55,28 +53,8 @@ type LiveAssistantTurnProps = {
   message?: SuperNoteUIMessage;
   onApproval?: ChatMessageProps["onApproval"];
   onProgress?: () => void;
-  sources?: AiMessageContextSnapshot;
   onUndo?: ChatMessageProps["onUndo"];
 };
-
-function MessageSources({ sources }: { sources?: AiMessageContextSnapshot }) {
-  if (sources === undefined
-    || (sources.primary === null && sources.references.length === 0)) {
-    return null;
-  }
-
-  return (
-    <div className="agent-assistant-sources">
-      <strong>来源</strong>
-      {sources.primary ? (
-        <span>{sources.primary.title}<small>v{sources.primary.revision}</small></span>
-      ) : null}
-      {sources.references.map((memo) => (
-        <span key={memo.memo_id}>@{memo.title}<small>v{memo.revision}</small></span>
-      ))}
-    </div>
-  );
-}
 
 function getMessageText(message: SuperNoteUIMessage) {
   return message.parts
@@ -189,7 +167,6 @@ export function ChatMessage({
   message,
   onApproval,
   onProgress,
-  sources,
   onUndo,
 }: ChatMessageProps) {
   if (message.role === "user") {
@@ -201,11 +178,6 @@ export function ChatMessage({
 
     return (
       <article className="agent-chat-turn agent-user-message-layout">
-        {(() => {
-          const snapshot = message.metadata?.context_snapshot ?? message.metadata?.context_display;
-          if (!snapshot || (snapshot.primary === null && snapshot.references.length === 0)) return null;
-          return <div className="agent-message-context">{snapshot.primary ? <span><strong>当前</strong>{snapshot.primary.title}<small>v{snapshot.primary.revision}</small></span> : null}{snapshot.references.map((memo) => <span key={memo.memo_id}>@{memo.title}<small>v{memo.revision}</small></span>)}</div>;
-        })()}
         <UserMessageBubble>
           <p>{text}</p>
         </UserMessageBubble>
@@ -225,7 +197,6 @@ export function ChatMessage({
 
   return (
     <article className="agent-chat-turn">
-      <MessageSources sources={sources} />
       <AssistantMessageContent
         activity={activity}
         approvalId={approvalId}
@@ -246,14 +217,12 @@ export function LiveAssistantTurn({
   message,
   onApproval = () => undefined,
   onProgress,
-  sources,
   onUndo = async () => undefined,
 }: LiveAssistantTurnProps) {
   const presentation = message ? getAssistantPresentation(message) : undefined;
 
   return (
     <article className="agent-chat-turn">
-      <MessageSources sources={sources} />
       {presentation ? (
         <AssistantMessageContent
           activity={activity}

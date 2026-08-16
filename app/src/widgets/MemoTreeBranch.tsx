@@ -9,7 +9,7 @@ import {
   FileTextIcon,
   FolderIcon,
   FolderOpenIcon,
-} from "@phosphor-icons/react";
+} from "../shared/design-system/icons";
 import {
   useEffect,
   useRef,
@@ -263,11 +263,10 @@ export function MemoTreeBranch(props: MemoTreeBranchProps) {
           placement: "after",
         };
         const icon = isFolder ? (
-          <FolderComponent size={15} weight="fill" />
+          <FolderComponent size={15} />
         ) : (
           <FileTextIcon
             size={14}
-            weight={isActive ? "fill" : "regular"}
           />
         );
 

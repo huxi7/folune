@@ -1,13 +1,12 @@
 /**
  * [INPUT]: 不依赖框架或校验库，仅使用 TypeScript 领域类型与 MemoTreeNode
- * [OUTPUT]: 对外提供 AI 会话、消息、引用、冻结上下文、账号权限、通用命令、整理 Run/Action 与事务结果领域类型
+ * [OUTPUT]: 对外提供无归档状态的 AI 会话、消息、引用、冻结上下文、账号权限、通用命令、整理 Run/Action 与事务结果领域类型
  * [POS]: model 层 AI Native V2 纯领域契约，分离持久化事实、模型审批建议与数据库可执行结果
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
 import type { MemoTreeNode } from "./memo.model.ts";
 
-export type AiThreadStatus = "active" | "archived";
 export type AiMessageRole = "user" | "assistant";
 export type AiMessageStatus =
   | "in_progress"
@@ -19,7 +18,6 @@ export interface AiThread {
   id: string;
   user_id: string;
   title: string;
-  status: AiThreadStatus;
   created_at: string;
   updated_at: string;
   last_message_at: string;

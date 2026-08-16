@@ -4,7 +4,7 @@
  * [POS]: app/src/pages 的 Google OAuth 回调边界，被 app/router 引用
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
-import { CircleNotchIcon, WarningCircleIcon } from "@phosphor-icons/react";
+import { CircleNotchIcon, WarningCircleIcon } from "../shared/design-system/icons";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -53,7 +53,6 @@ export function AuthCallbackPage() {
               aria-hidden="true"
               className="mx-auto text-destructive"
               size={32}
-              weight="fill"
             />
             <h1 className="mt-4 text-xl font-semibold leading-tight text-foreground">
               未能完成 Google 登录
@@ -73,7 +72,6 @@ export function AuthCallbackPage() {
               aria-hidden="true"
               className="mx-auto text-primary motion-safe:animate-spin motion-reduce:animate-none"
               size={32}
-              weight="bold"
             />
             <h1 className="mt-4 text-xl font-semibold leading-tight text-foreground">
               正在建立安全会话

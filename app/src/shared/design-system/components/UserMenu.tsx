@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 React 弹出层状态/焦点管理、Phosphor 设置/订阅/退出图标、UserAvatar/UserButton 与上层账户命令
+ * [INPUT]: 依赖 React 弹出层状态/焦点管理、共享 Lucide 设置/订阅/退出图标、UserAvatar/UserButton 与上层账户命令
  * [OUTPUT]: 对外提供顶部身份卡片直达个人资料、下方仅列设置等动作的 UserMenu 组合组件
  * [POS]: app/src/shared/design-system/components 的账户菜单；身份卡片与设置命令进入同一个 AccountDialog，不把个人资料重复成普通菜单项
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -9,7 +9,7 @@ import {
   CreditCardIcon,
   GearSixIcon,
   SignOutIcon,
-} from "@phosphor-icons/react";
+} from "../icons";
 import {
   useEffect,
   useId,
@@ -159,7 +159,7 @@ export function UserMenu({
               <strong>{name}</strong>
               <small>{email}</small>
             </span>
-            <CaretRightIcon aria-hidden="true" size={17} weight="bold" />
+            <CaretRightIcon aria-hidden="true" size={17} />
           </button>
 
           <div className="ds-user-menu-divider" />

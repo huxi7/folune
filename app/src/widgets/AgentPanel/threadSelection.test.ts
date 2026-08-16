@@ -17,7 +17,6 @@ const thread = (id: string): AiThread => ({
   id,
   user_id: "user",
   title: id,
-  status: "active",
   created_at: "2026-08-13T00:00:00Z",
   updated_at: "2026-08-13T00:00:00Z",
   last_message_at: "2026-08-13T00:00:00Z",

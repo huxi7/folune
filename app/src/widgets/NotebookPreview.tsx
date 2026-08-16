@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖本地 Card 与 Phosphor 图标展示确定性的产品结构
+ * [INPUT]: 依赖本地 Card 与 共享 Lucide 图标展示确定性的产品结构
  * [OUTPUT]: 对外提供含工具轨、文件树、文档纸面与 Agent 归档面板的 /app 工作台预览
  * [POS]: app/src/widgets 的首屏产品视觉，被 LandingHero 消费并作为实际产品信号
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -13,7 +13,7 @@ import {
   PaperPlaneRightIcon,
   PlusIcon,
   SparkleIcon,
-} from "@phosphor-icons/react";
+} from "../shared/design-system/icons";
 
 import { Card } from "../shared/design-system/components";
 
@@ -42,7 +42,7 @@ export function NotebookPreview() {
           <span />
         </div>
         <div className="notebook-window-title">
-          <SparkleIcon aria-hidden="true" size={13} weight="fill" />
+          <SparkleIcon aria-hidden="true" size={13} />
           SuperNote / 价格页
         </div>
       </header>
@@ -50,10 +50,10 @@ export function NotebookPreview() {
       <div className="notebook-preview-grid">
         <div aria-hidden="true" className="notebook-preview-rail">
           <span className="preview-rail-action">
-            <PlusIcon aria-hidden="true" size={15} weight="bold" />
+            <PlusIcon aria-hidden="true" size={15} />
           </span>
           <span className="preview-rail-action" data-active="true">
-            <FileTextIcon aria-hidden="true" size={15} weight="fill" />
+            <FileTextIcon aria-hidden="true" size={15} />
           </span>
           <span className="preview-rail-action">
             <MagnifyingGlassIcon aria-hidden="true" size={15} />
@@ -64,19 +64,19 @@ export function NotebookPreview() {
         <aside className="notebook-preview-sidebar">
           <div className="preview-sidebar-heading">
             <span>备忘录</span>
-            <DotsThreeIcon aria-hidden="true" size={15} weight="bold" />
+            <DotsThreeIcon aria-hidden="true" size={15} />
           </div>
           <div className="preview-folder-list">
             {folders.map((folder) => (
               <div key={folder.name}>
                 <div className="preview-folder-row" data-open={folder.open}>
-                  <FolderOpenIcon aria-hidden="true" size={14} weight={folder.open ? "fill" : "regular"} />
+                  <FolderOpenIcon aria-hidden="true" size={14} />
                   <span>{folder.name}</span>
                   <span>{folder.count}</span>
                 </div>
                 {folder.open ? (
                   <div className="preview-document-row" data-active="true">
-                    <FileTextIcon aria-hidden="true" size={13} weight="fill" />
+                    <FileTextIcon aria-hidden="true" size={13} />
                     <span>会员价格页</span>
                   </div>
                 ) : null}
@@ -102,7 +102,7 @@ export function NotebookPreview() {
             <p>下一步：把订阅权益写得更清楚。</p>
           </div>
           <div className="preview-filing-event">
-            <SparkleIcon aria-hidden="true" size={14} weight="fill" />
+            <SparkleIcon aria-hidden="true" size={14} />
             <span>AI 已归档至「工作 / 商业模式」</span>
           </div>
         </article>
@@ -113,7 +113,7 @@ export function NotebookPreview() {
               <p>Agent</p>
               <span>智能归档</span>
             </div>
-            <SparkleIcon aria-hidden="true" size={16} weight="fill" />
+            <SparkleIcon aria-hidden="true" size={16} />
           </div>
           <div className="preview-agent-message">
             我正在检查这条记录与当前文件树的关系。
@@ -121,14 +121,14 @@ export function NotebookPreview() {
           <ol className="preview-agent-steps">
             {filingSteps.map((step) => (
               <li key={step}>
-                <CheckCircleIcon aria-hidden="true" size={14} weight="fill" />
+                <CheckCircleIcon aria-hidden="true" size={14} />
                 {step}
               </li>
             ))}
           </ol>
           <div className="preview-agent-composer">
             <span>问它会怎么归档…</span>
-            <PaperPlaneRightIcon aria-hidden="true" size={14} weight="fill" />
+            <PaperPlaneRightIcon aria-hidden="true" size={14} />
           </div>
         </aside>
       </div>

@@ -1,23 +1,22 @@
 /**
- * [INPUT]: 依赖 useAiThreads、类型化 useChat/原生审批、统一 Composer sources、Worker 胖工具链、权限/History/Organize 视图与 Dashboard 草稿协调边界
- * [OUTPUT]: 对外提供当前笔记默认 @、冻结上下文、键盘 @搜索、阻塞审批弹窗、流完成后工具执行、乐观命令/整轮逆序撤销对账、会话恢复及停止 SSE/礼花的 AI Native 右侧工作区
+ * [INPUT]: 依赖 useAiThreads、类型化 useChat/原生审批、本地 Design System Button/MentionInput、统一 Composer sources、Worker 胖工具链、权限/History/Organize 视图与 Dashboard 草稿协调边界
+ * [OUTPUT]: 对外提供本地 Design System Ghost 图标 Header、统一历史会话、仅在 Composer 展示的当前笔记默认上下文、内联高亮 @笔记、实时紧凑搜索、冻结请求上下文、阻塞审批弹窗、流完成后工具执行、乐观命令/整轮逆序撤销对账、会话恢复及停止 SSE/礼花的 AI Native 右侧工作区
  * [POS]: /app 右侧 AI Native V2 组合根；工具参数流结束且批准后才进入 Worker，api command 是唯一写事实源，Store 只做幂等投影与回滚
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
 import { useChat } from "@ai-sdk/react";
-import { Button } from "@cloudflare/kumo/components/button";
-import { InputArea } from "@cloudflare/kumo/components/input";
 import {
   ArrowUpIcon,
+  AssistantPanelCloseIcon,
   AtIcon,
-  ChatsIcon,
-  PlusIcon,
+  MenuIcon,
+  NewConversationIcon,
   PushPinIcon,
   StopIcon,
   WarningCircleIcon,
   XIcon,
-} from "@phosphor-icons/react";
+} from "../../shared/design-system/icons";
 import {
   type FormEvent,
   type KeyboardEvent,
@@ -41,7 +40,7 @@ import {
   type SuperNoteUIMessage,
 } from "../../shared/api/ai";
 import type { MemoTreeNode } from "../../shared/api/memo";
-import { ThinkingMark } from "../../shared/design-system/components";
+import { Button, MentionInput } from "../../shared/design-system/components";
 import { useMemoTreeStore } from "../../shared/store/memoTreeStore";
 import { deriveAssistantActivity } from "./activityState";
 import { cancelCelebration } from "./celebration";
@@ -58,6 +57,7 @@ import {
   MAX_COMPOSER_SOURCES,
   reconcileComposerSources,
   settleComposerSourcesAfterSend,
+  syncManualComposerSources,
   type ComposerSource,
 } from "./composerSources";
 import {
@@ -90,6 +90,7 @@ type AgentPanelProps = {
   currentMemo: MemoTreeNode | null;
   memoTree: MemoTreeNode[];
   onApplyOrganize: () => Promise<void>;
+  onClose: () => void;
   onPrepareMutation: () => Promise<void>;
   onRejectOrganize: () => Promise<void>;
   onUndoOrganize: () => Promise<void>;
@@ -118,19 +119,6 @@ const readCommandOutput = (value: unknown): AiCommand | null => {
     && typeof command.status === "string" ? command as AiCommand : null;
 };
 
-const turnSources = (
-  messages: readonly SuperNoteUIMessage[],
-  messageIndex: number,
-) => {
-  for (let index = messageIndex - 1; index >= 0; index -= 1) {
-    const message = messages[index];
-    if (message?.role !== "user") continue;
-    return message.metadata?.context_snapshot
-      ?? message.metadata?.context_display;
-  }
-  return undefined;
-};
-
 function getErrorCopy(error: Error | undefined) {
   const code = getChatErrorCode(error);
   if (code === "UNAUTHORIZED") return { title: "需要重新登录", description: "登录状态已失效，请重新登录后再发送消息。" };
@@ -156,7 +144,8 @@ function AgentConversation({
   const [mentionStart, setMentionStart] = useState<number | null>(null);
   const [mentionQuery, setMentionQuery] = useState("");
   const [mentionIndex, setMentionIndex] = useState(0);
-  const composerRef = useRef<HTMLTextAreaElement>(null);
+  const [mentionOpen, setMentionOpen] = useState(false);
+  const composerRef = useRef<HTMLDivElement>(null);
   const messageListRef = useRef<HTMLDivElement>(null);
   const manuallyApprovedToolCalls = useRef(new Set<string>());
   const memoToolExecutions = useRef(new Map<string, Promise<unknown>>());
@@ -176,6 +165,13 @@ function AgentConversation({
     ),
     [memoTree, mentionQuery, sources],
   );
+  const inlineMentions = useMemo(
+    () => sources
+      .filter((source) => source.manual)
+      .map((source) => ({ id: source.id, label: source.title })),
+    [sources],
+  );
+  const visibleContextSources = sources.filter((source) => source.current || source.pinned);
 
   useEffect(() => {
     if (suppressedCurrentMemoId !== null && currentMemo?.id !== suppressedCurrentMemoId) {
@@ -336,8 +332,8 @@ function AgentConversation({
     composerRef.current?.focus({ preventScroll: true });
   }, [stop]);
 
-  const handleComposerKeyDown = useCallback((event: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (mentionStart !== null && !event.nativeEvent.isComposing) {
+  const handleComposerKeyDown = useCallback((event: KeyboardEvent<HTMLDivElement>) => {
+    if (mentionOpen && !event.nativeEvent.isComposing) {
       if (event.key === "ArrowDown" || event.key === "ArrowUp") {
         event.preventDefault();
         setMentionIndex((current) => {
@@ -352,13 +348,15 @@ function AgentConversation({
         event.preventDefault();
         const selected = mentionResults[mentionIndex];
         setSources((current) => addComposerSource(current, selected));
-        setInputValue((current) => current.slice(0, mentionStart));
+        setInputValue((current) => mentionStart === null ? current : current.slice(0, mentionStart));
+        setMentionOpen(false);
         setMentionStart(null);
         setMentionQuery("");
         return;
       }
       if (event.key === "Escape") {
         event.preventDefault();
+        setMentionOpen(false);
         setMentionStart(null);
         setMentionQuery("");
         return;
@@ -374,13 +372,15 @@ function AgentConversation({
       shiftKey: event.shiftKey,
     })) return;
     event.preventDefault();
-    if (canSubmitComposer(inputValue, busy)) event.currentTarget.form?.requestSubmit();
-  }, [busy, inputValue, mentionIndex, mentionResults, mentionStart]);
+    if (canSubmitComposer(inputValue, busy)) event.currentTarget.closest("form")?.requestSubmit();
+  }, [busy, inputValue, mentionIndex, mentionOpen, mentionResults, mentionStart]);
 
   const handleInputChange = useCallback((value: string) => {
     setInputValue(value);
+    setSources((current) => syncManualComposerSources(current, value));
     const match = value.match(/(?:^|\s)@([^\s@]*)$/u);
     if (match === null || sources.length >= MAX_COMPOSER_SOURCES) {
+      setMentionOpen(false);
       setMentionStart(null);
       setMentionQuery("");
       return;
@@ -389,15 +389,22 @@ function AgentConversation({
     setMentionStart(start);
     setMentionQuery(match[1] ?? "");
     setMentionIndex(0);
+    setMentionOpen(true);
   }, [sources.length]);
 
   const selectMention = useCallback((mention: MentionResult) => {
     setSources((current) => addComposerSource(current, mention));
-    setInputValue((current) => mentionStart === null ? current : current.slice(0, mentionStart));
+    setInputValue((current) => {
+      if (mentionStart === null) return current;
+      const mentionEnd = mentionStart + mentionQuery.length + 1;
+      const suffix = current.slice(mentionEnd).replace(/^\s+/u, "");
+      return `${current.slice(0, mentionStart)}@${mention.title} ${suffix}`;
+    });
+    setMentionOpen(false);
     setMentionStart(null);
     setMentionQuery("");
     composerRef.current?.focus();
-  }, [mentionStart]);
+  }, [mentionQuery.length, mentionStart]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -410,6 +417,7 @@ function AgentConversation({
       return;
     }
     setInputValue("");
+    setMentionOpen(false);
     setMentionStart(null);
     const frozen = buildFrozenComposerContext(
       sources,
@@ -433,33 +441,30 @@ function AgentConversation({
   return (
     <div className="agent-panel-body">
       <div aria-busy={busy} aria-live="polite" className="agent-message-list" ref={messageListRef} role="log">
-        {displayMessages.length === 0 ? (
-          <div className="agent-empty-state">
-            <div className="agent-empty-mark"><ThinkingMark aria-hidden="true" size={20} /></div>
-            <strong>想从哪条备忘录开始？</strong>
-            <p>你可以让我梳理思路、润色文字，或直接聊聊刚记下的内容。</p>
-          </div>
-        ) : displayMessages.map((message, index) => index === displayLiveAssistantIndex ? null : (
-          <ChatMessage activity="none" approvalId={pendingApprovalId} key={message.id} message={message} onApproval={respondToApproval} onProgress={() => scrollToLatest("auto")} onUndo={undoAssistantTurn} sources={turnSources(displayMessages, index)} />
+        {displayMessages.map((message, index) => index === displayLiveAssistantIndex ? null : (
+          <ChatMessage activity="none" approvalId={pendingApprovalId} key={message.id} message={message} onApproval={respondToApproval} onProgress={() => scrollToLatest("auto")} onUndo={undoAssistantTurn} />
         ))}
         {busy || liveAssistantMessage ? (
-          <LiveAssistantTurn activity={activity} approvalId={pendingApprovalId} key="live-assistant" message={displayLiveAssistantIndex >= 0 ? displayMessages[displayLiveAssistantIndex] : undefined} onApproval={respondToApproval} onProgress={() => scrollToLatest("auto")} onUndo={undoAssistantTurn} sources={turnSources(displayMessages, displayLiveAssistantIndex >= 0 ? displayLiveAssistantIndex : displayMessages.length)} />
+          <LiveAssistantTurn activity={activity} approvalId={pendingApprovalId} key="live-assistant" message={displayLiveAssistantIndex >= 0 ? displayMessages[displayLiveAssistantIndex] : undefined} onApproval={respondToApproval} onProgress={() => scrollToLatest("auto")} onUndo={undoAssistantTurn} />
         ) : null}
       </div>
       {error ? (
-        <div className="agent-error-state" role="alert"><WarningCircleIcon aria-hidden="true" size={17} weight="fill" /><div><strong>{errorCopy.title}</strong><p>{errorCopy.description}</p></div></div>
+        <div className="agent-error-state" role="alert"><WarningCircleIcon aria-hidden="true" size={17} /><div><strong>{errorCopy.title}</strong><p>{errorCopy.description}</p></div></div>
       ) : null}
       <form className="agent-composer" onSubmit={handleSubmit}>
-        {mentionStart !== null ? <MentionMenu activeIndex={mentionIndex} onSelect={selectMention} results={mentionResults} /> : null}
-        {sources.length > 0 ? <div className="agent-composer-sources">{sources.map((source) => {
-          return <span key={source.id}><AtIcon size={12} />{source.title}<button aria-label={`${source.pinned ? "取消置顶" : "置顶引用"} ${source.title}`} onClick={() => void onReferencesChange(source.pinned ? pinnedIds.filter((id) => id !== source.id) : [...pinnedIds, source.id])} type="button"><PushPinIcon size={11} weight={source.pinned ? "fill" : "regular"} /></button><button aria-label={`移除引用 ${source.title}`} onClick={() => void (async () => { if (source.pinned) await onReferencesChange(pinnedIds.filter((id) => id !== source.id)); if (source.current) setSuppressedCurrentMemoId(source.id); setSources((current) => current.filter((item) => item.id !== source.id)); })()} type="button"><XIcon size={11} /></button></span>;
+        {mentionOpen ? <MentionMenu activeIndex={mentionIndex} onSelect={selectMention} results={mentionResults} /> : null}
+        {visibleContextSources.length > 0 ? <div className="agent-composer-sources">{visibleContextSources.map((source) => {
+          return <span key={source.id}><AtIcon size={12} /><strong>{source.title}</strong><button aria-label={`${source.pinned ? "取消置顶" : "置顶引用"} ${source.title}`} onClick={() => void onReferencesChange(source.pinned ? pinnedIds.filter((id) => id !== source.id) : [...pinnedIds, source.id])} type="button"><PushPinIcon fill={source.pinned ? "currentColor" : "none"} size={11} /></button><button aria-label={`移除引用 ${source.title}`} onClick={() => void (async () => { if (source.pinned) await onReferencesChange(pinnedIds.filter((id) => id !== source.id)); if (source.current) setSuppressedCurrentMemoId(source.id); setSources((current) => current.filter((item) => item.id !== source.id)); })()} type="button"><XIcon size={11} /></button></span>;
         })}</div> : null}
-        <InputArea aria-label="输入消息" autoResize className="agent-chat-input" enterKeyHint="send" maxRows={6} minRows={1} onKeyDown={handleComposerKeyDown} onValueChange={handleInputChange} placeholder="输入消息，@ 引用笔记…" ref={composerRef} size="base" value={inputValue} />
-        {busy ? (
-          <Button aria-label="停止生成" className="agent-composer-action" icon={StopIcon} onClick={handleStop} shape="circle" size="base" type="button" variant="primary" />
-        ) : (
-          <Button aria-label="发送消息" className="agent-composer-action" disabled={!canSubmitComposer(inputValue, busy)} icon={ArrowUpIcon} shape="circle" size="base" type="submit" variant="primary" />
-        )}
+        <MentionInput aria-label="输入消息" className="agent-chat-input" mentions={inlineMentions} onKeyDown={handleComposerKeyDown} onValueChange={handleInputChange} placeholder="输入消息，@ 引用笔记…" ref={composerRef} value={inputValue} />
+        <div className="agent-composer-footer">
+          <PermissionModeControl accessToken={accessToken} busy={busy} compact />
+          {busy ? (
+            <Button aria-label="停止生成" className="agent-composer-action" icon={StopIcon} onClick={handleStop} size="square" type="button" variant="primary" />
+          ) : (
+            <Button aria-label="发送消息" className="agent-composer-action" disabled={!canSubmitComposer(inputValue, busy)} icon={ArrowUpIcon} size="square" type="submit" variant="primary" />
+          )}
+        </div>
       </form>
     </div>
   );
@@ -487,17 +492,16 @@ export function AgentPanel(props: AgentPanelProps) {
     <aside aria-label="备忘录助手" className="agent-panel">
       <header className="agent-panel-header">
         <div className="agent-panel-heading">
-          <div className="agent-panel-mark"><ThinkingMark aria-hidden="true" size={16} /></div>
-          <div className="min-w-0"><p className="truncate text-sm font-semibold text-foreground">{thread?.title ?? "备忘录助手"}</p><p className="text-xs text-muted-foreground">SuperNote AI</p></div>
+          <Button aria-label="会话历史" aria-pressed={historyOpen} className="agent-panel-header-button" disabled={chatBusy} icon={MenuIcon} onClick={() => setHistoryOpen((open) => !open)} size="square" variant="ghost" />
+          <p className="agent-panel-title">{thread?.title ?? "新对话"}</p>
         </div>
         <div className="agent-panel-header-actions">
-          <PermissionModeControl accessToken={props.accessToken} busy={actionBusy} />
-          <Button aria-label="新会话" disabled={actionBusy || threads.loading} icon={PlusIcon} onClick={() => void threads.createThread()} shape="square" size="sm" variant="ghost" />
-          <Button aria-label="历史会话" disabled={chatBusy} icon={ChatsIcon} onClick={() => setHistoryOpen((open) => !open)} shape="square" size="sm" variant={historyOpen ? "secondary" : "ghost"} />
+          <Button aria-label="新对话" className="agent-panel-header-button" disabled={actionBusy || threads.loading} icon={NewConversationIcon} onClick={() => void threads.createThread()} size="square" variant="ghost" />
+          <Button aria-label="收起 AI 面板" className="agent-panel-header-button" icon={AssistantPanelCloseIcon} onClick={props.onClose} size="square" variant="ghost" />
         </div>
       </header>
       {historyOpen ? (
-        <ThreadHistory active={threads.activeThreads} archived={threads.archivedThreads} busy={actionBusy} onArchive={threads.archiveThread} onClose={() => setHistoryOpen(false)} onDelete={threads.removeThread} onRename={(id, title) => threads.patchThread(id, { title })} onRestore={threads.restoreThread} onSelect={async (id) => { await threads.selectThread(id); setHistoryOpen(false); }} selectedId={thread?.id ?? null} />
+        <ThreadHistory busy={actionBusy} onClose={() => setHistoryOpen(false)} onDelete={threads.removeThread} onRename={(id, title) => threads.patchThread(id, { title })} onSelect={async (id) => { await threads.selectThread(id); setHistoryOpen(false); }} selectedId={thread?.id ?? null} threads={threads.threads} />
       ) : thread === null ? (
         <div className="agent-panel-loading">{threads.loading ? "正在恢复会话…" : "会话加载失败，请重新打开面板。"}</div>
       ) : (

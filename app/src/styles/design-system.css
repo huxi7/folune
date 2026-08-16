@@ -183,6 +183,15 @@
     box-shadow: 0 0 0 0.18rem color-mix(in srgb, var(--destructive) 16%, transparent);
   }
 
+  .ds-mention-input {
+    cursor: text;
+  }
+
+  .ds-mention-input-token {
+    color: var(--primary);
+    font-weight: 650;
+  }
+
   .ds-password-input {
     position: relative;
     width: 100%;

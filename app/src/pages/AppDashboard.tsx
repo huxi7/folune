@@ -705,6 +705,7 @@ export function AppDashboard() {
           currentMemo={isMemo(selectedMemo) ? selectedMemo : null}
           memoTree={memoTree}
           onApplyOrganize={memoOrganize.apply}
+          onClose={closeAssistant}
           onPrepareMutation={async () => {
             await notesWorkspaceRef.current?.flushCurrentDraft();
           }}

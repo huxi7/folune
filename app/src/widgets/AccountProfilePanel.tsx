@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖可后台刷新的后端 Profile、shared/api/profile 的 username/bio PATCH 与 5MB 头像上传、React 受控草稿/800ms 防抖副作用/原生文件 input、本地 UI 与 Phosphor 图标
+ * [INPUT]: 依赖可后台刷新的后端 Profile、shared/api/profile 的 username/bio PATCH 与 5MB 头像上传、React 受控草稿/800ms 防抖副作用/原生文件 input、本地 UI 与 共享 Lucide 图标
  * [OUTPUT]: 对外提供 AccountDialog 内的账户资料面板、按字段合并后台 Profile 与本地未保存草稿、用户名/简介静默自动保存、头像即时上传与全局 Toast 反馈
  * [POS]: app/src/widgets 的账户资料栏，以 stale-while-revalidate 字段级冲突保护和串行防抖保存消除整页 Loading 与显式提交区
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -7,7 +7,7 @@
 import {
   ImageSquareIcon,
   UploadSimpleIcon,
-} from "@phosphor-icons/react";
+} from "../shared/design-system/icons";
 import {
   useCallback,
   useEffect,
@@ -278,7 +278,7 @@ export function AccountProfilePanel({
                       src={profile.avatarUrl}
                     />
                   ) : (
-                    <ImageSquareIcon aria-hidden="true" size={20} weight="light" />
+                    <ImageSquareIcon aria-hidden="true" size={20} />
                   )}
                 </div>
                 <div className="account-dialog-avatar-actions">
@@ -295,7 +295,7 @@ export function AccountProfilePanel({
                       type="file"
                     />
                     <span className="ds-button-content">
-                      <UploadSimpleIcon aria-hidden="true" size={16} weight="bold" />
+                      <UploadSimpleIcon aria-hidden="true" size={16} />
                       {uploadingAvatar ? "上传中…" : "选择图片"}
                     </span>
                   </label>

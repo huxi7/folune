@@ -6,7 +6,7 @@ CLAUDE.md: 记录业务模型层职责与文档协议
 auth.model.ts: 定义只能由 Supabase Auth 校验建立的可信 AuthUser
 health.model.ts: 定义 healthy 健康状态领域类型
 memo.model.ts: 定义含删除批次的 MemoNode/MemoContent、递归 MemoTreeNode、Trash 最小项目/操作结果及 repository 写入领域类型
-ai.model.ts: 定义 AI thread/message/reference、可信 memo context、账号权限、Command/审批/风险、OrganizePlan/Run/Action 与可撤销结果的纯领域契约
+ai.model.ts: 定义无归档状态的 AI thread/message/reference、可信 memo context、账号权限、Command/审批/风险、OrganizePlan/Run/Action 与可撤销结果的纯领域契约
 profile.model.ts: 定义与 public.profiles 五列同构的最小 Profile 与首次建档数据，username 是非空、可修改且非唯一的展示名称
 response.model.ts: 定义 ApiSuccessResponse<T> 与 ApiErrorResponse 响应信封
 

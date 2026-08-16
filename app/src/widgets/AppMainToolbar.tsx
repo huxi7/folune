@@ -5,7 +5,7 @@
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
-import { MagicWandIcon } from "@phosphor-icons/react";
+import { MagicWandIcon } from "../shared/design-system/icons";
 
 import type { MemoTreeNode } from "../shared/api/memo";
 import { Button } from "../shared/design-system/components";

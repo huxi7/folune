@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun test、Hono app、Web fetch 与内存 Supabase Auth/PostgREST/RPC mock
- * [OUTPUT]: 覆盖 AI thread/message/reference/context/run 的认证、持久化、幂等、owner、失效引用与安全执行测试
+ * [OUTPUT]: 覆盖无归档状态的 AI thread/message/reference/context/run 认证、持久化、幂等、owner、废弃字段拒绝、失效引用与安全执行测试
  * [POS]: api/test 的 AI Native V1 HTTP 全链路契约测试，不连接模型或远端服务，不保存或输出真实凭据
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -48,7 +48,6 @@ const threadFixture = (
   id: THREAD_ID,
   user_id: USER_ID,
   title: "新会话",
-  status: "active",
   created_at: NOW,
   updated_at: NOW,
   last_message_at: NOW,
@@ -214,11 +213,9 @@ class MockSupabase {
     const owner = this.userId(url);
     const id = url.searchParams.get("id")?.replace(/^eq\./, "");
     const title = url.searchParams.get("title")?.replace(/^eq\./, "");
-    const status = url.searchParams.get("status")?.replace(/^eq\./, "");
     let rows = [...this.threads.values()].filter((thread) => thread.user_id === owner);
     if (id) rows = rows.filter((thread) => thread.id === id);
     if (title) rows = rows.filter((thread) => thread.title === title);
-    if (status) rows = rows.filter((thread) => thread.status === status);
 
     if (request.method === "GET") return response(rows);
     if (request.method === "PATCH") {
@@ -494,15 +491,17 @@ describe("AI settings and commands", () => {
 });
 
 describe("AI threads and messages", () => {
-  test("creates, renames, archives, lists and permanently deletes a thread", async () => {
+  test("creates, renames, lists and permanently deletes a thread", async () => {
     const created = await data<AiThread>(await request("/ai-threads", "POST", {}));
     expect(created.title).toBe("新会话");
     const renamed = await data<AiThread>(
       await request(`/ai-threads/${THREAD_ID}`, "PATCH", { title: "产品讨论" }),
     );
     expect(renamed.title).toBe("产品讨论");
-    await request(`/ai-threads/${THREAD_ID}`, "PATCH", { status: "archived" });
-    expect((await data<AiThread[]>(await request("/ai-threads?status=archived"))).length).toBe(1);
+    expect((await data<AiThread[]>(await request("/ai-threads"))).length).toBe(1);
+    expect((await request(`/ai-threads/${THREAD_ID}`, "PATCH", {
+      status: "archived",
+    })).status).toBe(400);
     expect((await request(`/ai-threads/${THREAD_ID}`, "DELETE")).status).toBe(200);
     expect(mock.threads.size).toBe(0);
   });

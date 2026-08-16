@@ -5,7 +5,7 @@
 CLAUDE.md: 记录 API 内存集成测试职责与文档协议
 memo.test.ts: 以 Hono app 和内存 Supabase Auth/PostgREST mock 验证 active memo 整树、创建补偿、JWT owner 隔离、标题/正文更新、空白保真、移动防环及回收站端点认证
 memo-trash.test.ts: 以内存 RPC/级联模型回归软删、顶层 Trash、批次独立恢复/祖先阻断、正常入口隔离、Folder 永久级联、当前用户清空、重复操作与异常净化
-ai.test.ts: 以内存 Auth/PostgREST/RPC 全链路验证 thread、冻结 snapshot、refs、三档权限、Command revision/幂等/owner/undo 与 Organize Run 生命周期
+ai.test.ts: 以内存 Auth/PostgREST/RPC 全链路验证无归档状态的 thread CRUD 与废弃字段拒绝、冻结 snapshot、refs、三档权限、Command revision/幂等/owner/undo 与 Organize Run 生命周期
 profile.test.ts: 以同源内存 mock 验证 Profile 幂等建档、字段白名单、头像格式/体积校验、Storage 生命周期与并发补偿
 request-log.test.ts: 验证开发请求卡片、健康探针摘要、生产 JSON 日志，以及控制字符净化与敏感请求信息不落日志
 

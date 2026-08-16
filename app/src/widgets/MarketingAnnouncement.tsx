@@ -1,10 +1,10 @@
 /**
- * [INPUT]: 依赖 Phosphor ArrowRightIcon 与 Landing Blueprint 公告栏样式
+ * [INPUT]: 依赖 共享 Lucide ArrowRightIcon 与 Landing Blueprint 公告栏样式
  * [OUTPUT]: 对外提供紧贴粘性导航下方、约为 Header 2/3 高、无 hover 填色且无关闭按钮的随页产品公告栏
  * [POS]: app/src/widgets 的营销公告组件，被 LandingPage 放入全宽背景、主轨与正文对齐且带视口外轨的独立 RailLayer
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
-import { ArrowRightIcon } from "@phosphor-icons/react";
+import { ArrowRightIcon } from "../shared/design-system/icons";
 
 export function MarketingAnnouncement() {
   return (
@@ -20,7 +20,6 @@ export function MarketingAnnouncement() {
         aria-hidden="true"
         className="transition-transform duration-200 ease-out motion-safe:group-hover:translate-x-0.5 motion-reduce:transform-none"
         size={13}
-        weight="bold"
       />
     </a>
   );

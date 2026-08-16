@@ -5,7 +5,7 @@
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
-import { ArrowCounterClockwiseIcon, CheckIcon, XIcon } from "@phosphor-icons/react";
+import { ArrowCounterClockwiseIcon, CheckIcon, XIcon } from "../../shared/design-system/icons";
 
 import type { AiRun } from "../../shared/api/ai";
 import { Button } from "../../shared/design-system/components";

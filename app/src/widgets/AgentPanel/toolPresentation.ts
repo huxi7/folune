@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 AgentPanel 客户端工具协议、AI SDK 工具状态与 Phosphor 极简图标
+ * [INPUT]: 依赖 AgentPanel 客户端工具协议、AI SDK 工具状态与 共享 Lucide 极简图标
  * [OUTPUT]: 对外提供基于真实 input/output 的人话动作名称、安全轻量详情及未知工具中性回退
  * [POS]: AgentPanel 工具展示适配层，隔离协议载荷与 Message UI，禁止 UUID、正文、Token 和原始 JSON 进入界面
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -13,7 +13,7 @@ import {
   ToolboxIcon,
   TreeStructureIcon,
   type Icon,
-} from "@phosphor-icons/react";
+} from "../../shared/design-system/icons";
 
 import type {
   ToolCallDetail,

@@ -1,5 +1,5 @@
 -- [INPUT]: 依赖 public.profiles/public.memo_nodes、Supabase auth.uid()、authenticated 角色与 pgcrypto UUID
--- [OUTPUT]: 建立 AI threads/messages/refs/runs/actions、V1 include_active_memo 兼容列、引用约束触发器、索引、updated_at、owner-only RLS 与显式 grants
+-- [OUTPUT]: 建立不含归档状态的 AI threads/messages/refs/runs/actions、V1 include_active_memo 兼容列、引用约束触发器、索引、updated_at、owner-only RLS 与显式 grants
 -- [POS]: api/supabase 的 AI 持久化契约，保存会话原始 parts、上下文引用、整理运行与可逆动作，不承载模型推理
 -- [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 
@@ -9,9 +9,6 @@ create table public.ai_threads (
   title text not null default '新会话'
     constraint ai_threads_title_check
     check (length(btrim(title)) between 1 and 500),
-  status text not null default 'active'
-    constraint ai_threads_status_check
-    check (status in ('active', 'archived')),
   -- 兼容既有 V1 数据；V2 前端不再把它作为上下文入口或发送依据。
   include_active_memo boolean not null default true,
   created_at timestamptz not null default now(),
@@ -143,8 +140,8 @@ create table public.ai_actions (
     on delete cascade
 );
 
-create index ai_threads_user_status_activity_idx
-on public.ai_threads (user_id, status, last_message_at desc, id);
+create index ai_threads_user_activity_idx
+on public.ai_threads (user_id, last_message_at desc, id);
 
 create index ai_messages_user_thread_position_idx
 on public.ai_messages (user_id, thread_id, position, created_at, id);

@@ -47,11 +47,19 @@ SuperNote is a quiet editorial instrument that lets users write first and allows
 
 ## Workspace panel controls
 
-- A closed Library or AI surface is represented by one fixed Ghost icon at the corresponding canvas edge: no resting background, border, shadow, visible label or width expansion. Its center line must remain identical to the expanded Header close control.
+- A closed Library or AI surface is represented by one fixed Ghost icon at the corresponding canvas edge: no resting background, border, shadow, visible label or width expansion. Expanded Panels own their close command inside the Header instead of reusing an overlaid EdgeDock.
 - The Library Header keeps the compact BrandMark on the left and its close control at the far right; search and a 32px Primary NotePencil new-memo action share the next row.
+- The AI Header is one quiet 48px row: a 16px history menu, one truncated conversation title, a 16px MessageCirclePlus new-conversation action and a matched PanelRightClose trailing command. The closed Canvas state uses the paired PanelRightOpen glyph; it never shows a ChatCircleDots substitute. It never shows a ThinkingMark, product subtitle or permission pill; the empty conversation body remains blank until a future evidence-backed welcome surface is designed.
+- AI permission remains available as a 32px/16px Ghost shield in the Composer footer, with its readable mode exposed through tooltip, accessible name and the upward menu rather than permanent Header text.
 - AI organize is a 32px icon-only Secondary command: its surface distinguishes the capability without competing with the Primary new-memo anchor.
 - Search activation replaces the existing search slot with an input and icon-only close action. It never adds a second command row or visible Cancel label.
 - Panel entry/exit uses restrained x/opacity Tween motion. Controls do not fly across the panel through shared layout identity, and panel contents are never compressed with scaleX.
+
+## Iconography
+
+- Product icons use the shared `Lucide React` registry in `src/shared/design-system/icons.tsx`, not direct third-party imports in business files.
+- The default contract is a 24×24 viewBox, 2px stroke, round caps/joins, `currentColor`, and 14/16/20/24px rendered sizes. Filled variants are not used to create a second visual language; selection and status use color/surface semantics.
+- BrandMark, ThinkingMark, Archive Cord and Google branding remain explicit local/signature exceptions rather than general-purpose icon families.
 - `border-radius` is the cross-browser baseline; supported browsers progressively receive the same squircle curve without changing component dimensions.
 
 ## Button material

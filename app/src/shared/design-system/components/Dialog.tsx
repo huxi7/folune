@@ -1,10 +1,10 @@
 /**
- * [INPUT]: 依赖 React 的 effect/id/ref 与 ReactNode，依赖 Phosphor XIcon，依赖 Button 与 index.css 暴露的 ds-dialog-panel 弹窗表面类
+ * [INPUT]: 依赖 React 的 effect/id/ref 与 ReactNode，依赖 共享 Lucide XIcon，依赖 Button 与 index.css 暴露的 ds-dialog-panel 弹窗表面类
  * [OUTPUT]: 对外提供 default/compact 密度、default/account 宽度、default/embedded 标题模式、标题描述关联、Esc 关闭、完整表单焦点循环与滚动锁定的 Dialog 受控弹窗组件
  * [POS]: app/src/shared/design-system/components 的弹窗基础件，被认证流程、统一 AccountDialog 与 Design System 预览消费
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
-import { XIcon } from "@phosphor-icons/react";
+import { XIcon } from "../icons";
 import { useEffect, useId, useRef, type ReactNode } from "react";
 
 import { Button } from "./Button";

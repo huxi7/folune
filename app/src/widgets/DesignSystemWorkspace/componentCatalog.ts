@@ -8,6 +8,7 @@
 export type DesignSystemSampleId =
   | "Color"
   | "Typography"
+  | "Iconography"
   | "SpatialRhythm"
   | "RadiusElevationMotion"
   | "Button"
@@ -26,6 +27,7 @@ export type DesignSystemSampleId =
   | "Reading"
   | "Quote"
   | "Code"
+  | "Composer"
   | "Messages"
   | "ThinkingMark"
   | "ThinkingIndicator"
@@ -58,6 +60,7 @@ export const designSystemSections: DesignSystemCategory[] = [
 export const designSystemSamples: DesignSystemSample[] = [
   { category: "Foundations", id: "Color", name: "Color", summary: "Canvas、Paper、Ink、Soft Ink Primary 交互轴、Saving Processing、Focus 与 Danger 的唯一语义颜色系统。" },
   { category: "Foundations", id: "Typography", name: "Typography", summary: "Interface、Editorial、Mono 三类字族与八级角色；36px Button 使用 14/18px，32px 文件树使用 12/16px 高密度文字。" },
+  { category: "Foundations", id: "Iconography", name: "Iconography", summary: "Lucide React 圆角描边语言、14/16/20/24px 尺寸阶梯，以及生产环境全部语义图标与真实用途。" },
   { category: "Foundations", id: "SpatialRhythm", name: "Spacing", summary: "4px 基线与 4/8/12/16/24/32/48/64/96 主节奏，32/36/48px 固定界面尺寸。" },
   { category: "Foundations", id: "RadiusElevationMotion", name: "Radius · Elevation · Motion", summary: "8/10/12/16/20px 配套曲率、嵌套同心原则与 160/260/320/600ms 时间层级。" },
   { category: "Primitives", id: "Button", name: "Button", summary: "Soft Ink Primary、Paper Secondary、Ghost 与唯一实心红色 Danger；微雾内外影，press 只下压 1px。" },
@@ -76,6 +79,7 @@ export const designSystemSamples: DesignSystemSample[] = [
   { category: "Editorial", id: "Reading", name: "Reading", summary: "Paper 阅读正文以 Editorial 字体和自然留白建立连续阅读节奏。" },
   { category: "Editorial", id: "Quote", name: "Quote", summary: "引用以 Editorial 字体、Hairline 与 Muted 墨色表达，不另造 Card。" },
   { category: "Editorial", id: "Code", name: "Code", summary: "行内与块级代码只使用 Mono、Hairline 与中性 Surface。" },
+  { category: "AI & Organize", id: "Composer", name: "Prompt Composer", summary: "原生多行输入以内联 Primary @笔记区分普通正文；候选使用可滚动 32px 紧凑文件行，底栏只保留权限与发送/停止。" },
   { category: "AI & Organize", id: "Messages", name: "Messages", summary: "用户气泡保留品牌关联，助手正文无 Card，过程状态弱于最终正文。" },
   { category: "AI & Organize", id: "ThinkingMark", name: "Thinking Mark", summary: "SuperNote AI 的 Formation 符号，以 14/16/20px 真实尺寸呈现。" },
   { category: "AI & Organize", id: "ThinkingIndicator", name: "Thinking", summary: "仅在等待正文 token 时存在的低频活动态。" },
