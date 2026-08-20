@@ -53,7 +53,7 @@ SuperNote is a quiet editorial instrument that lets users write first and allows
 - AI permission remains available as a 32px/16px Ghost shield in the Composer footer, with its readable mode exposed through tooltip, accessible name and the upward menu rather than permanent Header text.
 - The Composer's right-side send/stop action is a 32px geometric circle using the Primary Button material; it explicitly uses `corner-shape: round` instead of inheriting the global Button squircle, and both states keep identical geometry so streaming never shifts the footer silhouette.
 - AI organize is a 32px icon-only Secondary command: its surface distinguishes the capability without competing with the Primary new-memo anchor.
-- Search activation replaces the existing search slot with an input and icon-only close action. It never adds a second command row or visible Cancel label.
+- Search activation turns the existing command row into one full-width focused input with an icon-only close action and temporarily hides the new-memo button. It never compresses placeholder text beside a competing Primary, adds a second command row or shows a visible Cancel label.
 - Panel entry/exit uses restrained x/opacity Tween motion. Controls do not fly across the panel through shared layout identity, and panel contents are never compressed with scaleX.
 
 ## Iconography

@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 MemoTreeBranch、Skeleton、memoLibrary 拖拽/祖先计划、持久化展开偏好、整理定位意图、Profile、Design System 与上层 Store/文件库关闭命令
- * [OUTPUT]: 对外提供品牌与右侧 Ghost 收起 Header、同排搜索/Ghost 根级新建、真实文件树、搜索/重命名/拖拽、整理目标展开定位高亮、底部导航及节点回收站命令
+ * [OUTPUT]: 对外提供品牌与右侧 Ghost 收起 Header、同排中性搜索/Primary 根级新建及搜索时独占整行的聚焦输入、真实文件树、搜索/重命名/拖拽、整理目标展开定位高亮、底部导航及节点回收站命令
  * [POS]: app/src/widgets 的按需文件库内容层；拥有文件库内部信息层级与关闭入口，只收集业务意图，事务与路由切换由 Dashboard 编排
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -586,16 +586,18 @@ export function AppSidebar({
               title="搜索备忘录"
             />
           )}
-          <Button
-            aria-label="新建备忘录"
-            className="sidebar-create-memo-button"
-            disabled={mutating || treeStatus !== "ready"}
-            icon={NotePencilIcon}
-            onClick={() => void onCreateMemo(null)}
-            size="square"
-            title="新建备忘录"
-            variant="ghost"
-          />
+          {!searchOpen ? (
+            <Button
+              aria-label="新建备忘录"
+              className="sidebar-create-memo-button"
+              disabled={mutating || treeStatus !== "ready"}
+              icon={NotePencilIcon}
+              onClick={() => void onCreateMemo(null)}
+              size="square"
+              title="新建备忘录"
+              variant="primary"
+            />
+          ) : null}
         </div>
       </div>
 
