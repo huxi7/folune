@@ -177,7 +177,6 @@ export function useMemoOrganize({
 
   return {
     apply: () => runCommand("apply"),
-    dismissPresentation: () => setPresentationRun(null),
     organize,
     organizing,
     presentationRun,

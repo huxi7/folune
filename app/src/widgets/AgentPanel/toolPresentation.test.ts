@@ -69,6 +69,14 @@ describe("agent tool presentation", () => {
     }).name).toBe("移入回收站「旧笔记」");
   });
 
+  it("拒绝审批后显示已取消，不伪装成继续执行", () => {
+    expect(getAgentToolPresentation("edit_node", {
+      approval: { approved: false },
+      input: { op: "delete" },
+      state: "approval-responded",
+    }).details).toEqual([{ label: "状态", value: "操作已取消。" }]);
+  });
+
   it("namespaced 服务端工具仍使用同一人话展示", () => {
     expect(getAgentToolPresentation("memo.rename_node", {
       input: { title: "路线图" },

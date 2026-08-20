@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 index.css 的 Paper First 画布/纸张 token、4px 空间基线、32/36/48px 控件阶梯、统一中性 interactive-hover、全局颜色 token 及 Tailwind v4 layer
- * [OUTPUT]: 对外提供设置/订阅/回收站、816px Editorial Paper、同 Header 中心线的 Ghost Panel Toggle、品牌/搜索/Ghost 新建一体侧栏、同曲率浮动文件库/AI、纯净消息列表、统一普通菜单及会话行/审批模式 hover 与选中中性表面、响应式安全区/抽屉/遮罩、Archive Port/Target/Cord/回执与既有业务内容布局
+ * [OUTPUT]: 对外提供设置/订阅/回收站、816px Editorial Paper、同 Header 中心线的 Ghost Panel Toggle、品牌/搜索/Ghost 新建一体侧栏、同曲率浮动文件库/AI、纯净消息列表、Composer 上方非模态审批条与覆盖全局 squircle 的几何圆形发送/停止动作、统一普通菜单及会话行/审批模式 hover 与选中中性表面、响应式安全区/抽屉/遮罩、Archive Port/Target/Cord 与既有业务内容布局
  * [POS]: app/src/styles 的产品工作区布局层；中性 Canvas 只衬托唯一 Paper，左右工具以无胶囊静止图标按需浮现并在开合前后保持垂直坐标，编辑器内容保持透明且不拥有纸张外壳
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -379,16 +379,6 @@
   .agent-permission-menu small { color: var(--muted-foreground); font-size: 0.625rem; line-height: 1.45; }
   .agent-panel-body { display: flex; min-height: 0; flex: 1; flex-direction: column; padding: 0.75rem; }
   .agent-panel-loading { display: flex; min-height: 0; flex: 1; align-items: center; justify-content: center; padding: var(--space-4); color: var(--muted-foreground); font-size: 0.75rem; }
-  .organize-review-card { flex-shrink: 0; margin: var(--space-2) var(--space-3) 0; border: 1px solid color-mix(in srgb, var(--primary) 18%, var(--border)); border-radius: var(--radius-panel); background: var(--card); padding: var(--space-3); box-shadow: none; }
-  .organize-review-copy strong { color: var(--foreground); font-size: 0.75rem; }
-  .organize-review-copy p { margin-top: var(--space-1); color: var(--muted-foreground); font-size: 0.625rem; line-height: 1.55; }
-  .organize-review-plan { display: grid; gap: var(--space-1); margin-top: var(--space-2); border-top: 1px solid color-mix(in srgb, var(--border) 65%, transparent); padding-top: var(--space-2); }
-  .organize-review-plan > div { display: grid; grid-template-columns: 2.5rem minmax(0, 1fr); gap: var(--space-2); font-size: 0.625rem; }
-  .organize-review-plan dt { color: var(--muted-foreground); }
-  .organize-review-plan dd { overflow: hidden; color: var(--foreground); text-overflow: ellipsis; white-space: nowrap; }
-  .organize-review-actions { display: flex; justify-content: flex-end; gap: var(--space-2); margin-top: var(--space-3); }
-  .organize-review-actions:empty { display: none; }
-  .organize-review-actions .ds-button { min-height: var(--button-height-default); height: var(--button-height-default); padding-inline: var(--button-padding-inline); font-size: var(--button-font-size); }
   .agent-history { min-height: 0; flex: 1; overflow-y: auto; padding: var(--space-3); }
   .agent-history-heading { display: flex; align-items: center; justify-content: space-between; }
   .agent-history-heading > strong { color: var(--foreground); font-size: 0.8125rem; }
@@ -437,19 +427,19 @@
   .agent-mention-option-icon { display: inline-flex; width: 0.875rem; height: 0.875rem; flex: 0 0 0.875rem; align-items: center; justify-content: center; color: var(--muted-foreground); }
   .agent-mention-option strong { min-width: 0; overflow: hidden; font-size: var(--type-label); font-weight: 560; text-overflow: ellipsis; white-space: nowrap; }
   .agent-tool-stack { display: grid; gap: var(--space-2); }
-  .agent-approval-dialog { display: grid; gap: var(--space-3); margin-top: var(--space-4); }
-  .agent-approval-dialog-intro { display: flex; align-items: center; gap: var(--space-2); color: var(--muted-foreground); font-size: 0.6875rem; line-height: 1.5; }
-  .agent-approval-dialog-intro > svg { flex-shrink: 0; color: var(--primary); }
-  .agent-approval-dialog table { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 0.6875rem; }
-  .agent-approval-dialog th,
-  .agent-approval-dialog td { overflow: hidden; border-top: 1px solid color-mix(in srgb, var(--border) 72%, transparent); padding: 0.55rem 0.4rem; text-align: left; text-overflow: ellipsis; white-space: nowrap; }
-  .agent-approval-dialog th { color: var(--muted-foreground); font-weight: 600; }
-  .agent-approval-dialog td { color: var(--foreground); }
-  .agent-approval-dialog > footer { display: flex; justify-content: flex-end; gap: var(--space-2); }
+  .agent-approval-dock { display: flex; min-width: 0; flex-shrink: 0; align-items: center; justify-content: space-between; gap: var(--space-2); margin-top: var(--space-3); border: 1px solid color-mix(in srgb, var(--primary) 18%, var(--border)); border-radius: var(--radius-panel); background: color-mix(in srgb, var(--card) 96%, var(--accent)); padding: var(--space-2); box-shadow: none; }
+  .agent-approval-dock + .agent-composer { margin-top: var(--space-1); }
+  .agent-approval-dock-copy { display: flex; min-width: 0; flex: 1; align-items: flex-start; gap: var(--space-2); }
+  .agent-approval-dock-copy > svg { flex: 0 0 auto; margin-top: 0.08rem; color: var(--primary); }
+  .agent-approval-dock-copy > div { min-width: 0; }
+  .agent-approval-dock-copy strong { display: block; overflow: hidden; color: var(--foreground); font-size: 0.6875rem; font-weight: 650; line-height: 1.4; text-overflow: ellipsis; white-space: nowrap; }
+  .agent-approval-dock-copy p { margin-top: 0.1rem; color: var(--muted-foreground); font-size: 0.625rem; line-height: 1.45; text-wrap: pretty; }
+  .agent-approval-dock-actions { display: flex; flex: 0 0 auto; align-items: center; gap: var(--space-1); }
+  .agent-approval-dock-actions .ds-button { min-height: var(--control-height-compact); height: var(--control-height-compact); padding-inline: var(--space-2); font-size: 0.625rem; }
   .agent-response-actions { display: flex; align-items: center; gap: var(--space-1); margin-top: var(--space-1); }
   .agent-response-action.ds-button { min-height: 1.6rem; height: 1.6rem; padding-inline: 0.35rem; color: var(--muted-foreground); font-size: 0.625rem; box-shadow: none; }
   .agent-response-action.ds-button:hover { color: var(--foreground); }
-  .agent-composer-action.ds-button.ds-button-size-square { width: var(--control-height-compact); min-width: var(--control-height-compact); height: var(--control-height-compact); min-height: var(--control-height-compact); flex-shrink: 0; border-radius: var(--button-radius); }
+  .agent-composer-action.ds-button.ds-button-size-square { width: var(--control-height-compact); min-width: var(--control-height-compact); height: var(--control-height-compact); min-height: var(--control-height-compact); flex-shrink: 0; border-radius: var(--radius-pill); corner-shape: round; }
   .panel-resize-handle { position: absolute; top: 0; bottom: 0; z-index: 40; width: 6px; cursor: col-resize; touch-action: none; }
   .panel-resize-handle::after { content: ""; position: absolute; top: 0.75rem; bottom: 0.75rem; left: 50%; width: 2px; border-radius: var(--radius-pill); background: var(--ring); opacity: 0; transform: translateX(-50%); transition: opacity var(--motion-fast) var(--ease-standard); }
   .panel-resize-handle:hover::after,
@@ -459,12 +449,6 @@
   .workspace-panel-backdrop { position: fixed; inset: 0; z-index: 50; border: 0; background: var(--overlay); }
   .organize-connection-layer { position: fixed; inset: 0; z-index: 65; overflow: visible; pointer-events: none; }
   .organize-connection-layer path { fill: none; stroke: color-mix(in srgb, var(--primary) 72%, var(--foreground)); stroke-width: 1.5; stroke-linecap: round; }
-  .organize-paper-receipt { display: flex; width: min(51rem, 100%); min-height: 3.5rem; align-items: center; justify-content: space-between; gap: var(--space-4); margin: var(--space-3) auto 0; border: 1px solid color-mix(in srgb, var(--primary) 18%, var(--border)); border-radius: var(--radius-panel); background: color-mix(in srgb, var(--paper-surface) 94%, var(--accent)); padding: var(--space-2) var(--space-3); box-shadow: none; }
-  .organize-paper-receipt-copy { display: flex; min-width: 0; align-items: baseline; gap: var(--space-2); }
-  .organize-paper-receipt-copy strong { flex-shrink: 0; color: var(--foreground); font-size: 0.75rem; }
-  .organize-paper-receipt-copy span { overflow: hidden; color: var(--muted-foreground); font-size: 0.6875rem; text-overflow: ellipsis; white-space: nowrap; }
-  .organize-paper-receipt-actions { display: flex; flex-shrink: 0; align-items: center; gap: var(--space-1); }
-  .organize-paper-receipt-actions .ds-button { height: var(--control-height-compact); min-height: var(--control-height-compact); }
   .sidebar-tree-row[data-organize-target="folder"],
   .sidebar-tree-row[data-organize-target="memo"] { background: color-mix(in srgb, var(--primary) 13%, var(--sidebar)); color: var(--primary); outline: 1px solid color-mix(in srgb, var(--primary) 24%, transparent); outline-offset: -1px; }
 
@@ -547,8 +531,6 @@
     .workspace-floating-panel { top: 0.75rem; bottom: 0.75rem; width: min(88vw, 22.5rem); }
     .app-main-toolbar { padding-inline: var(--space-12); }
     .app-main-toolbar-copy { max-width: 44%; }
-    .organize-paper-receipt { align-items: flex-start; }
-    .organize-paper-receipt-copy { flex-direction: column; gap: 0.1rem; }
   }
 }
 

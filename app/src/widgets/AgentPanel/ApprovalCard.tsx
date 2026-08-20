@@ -1,15 +1,18 @@
 /**
- * [INPUT]: 依赖 AI SDK approval-requested tool part、Design System Dialog/Button 与批准/拒绝回调
- * [OUTPUT]: 对外提供阻塞式目标/旧值/新值/风险确认弹窗，仅人工审批状态可见
- * [POS]: ChatMessage 的可信人工裁决视图；自动执行审计不占回复过程，成功撤销由回复末尾轻量动作栏承载
+ * [INPUT]: 依赖 AI SDK approval-requested tool part、共享 ApprovalDock、Design System Button 与批准/拒绝回调
+ * [OUTPUT]: 对外提供普通工具单次操作的 ApprovalDock 内容适配
+ * [POS]: AgentConversation 的工具审批语义层；与 AI 整理审批共享同一视觉原语，消息正文不承载审批控件
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
-import { ShieldWarningIcon } from "../../shared/design-system/icons";
 import { getToolName, isToolUIPart, type UIMessage } from "ai";
 
-import { Button, Dialog } from "../../shared/design-system/components";
-import { normalizeAgentToolName } from "./toolPresentation";
+import { Button } from "../../shared/design-system/components";
+import { ApprovalDock } from "./ApprovalDock";
+import {
+  getAgentToolPresentation,
+  normalizeAgentToolName,
+} from "./toolPresentation";
 
 type ToolPart = Extract<UIMessage["parts"][number], { toolCallId: string }>;
 
@@ -18,32 +21,52 @@ const record = (value: unknown): Record<string, unknown> | null =>
     ? value as Record<string, unknown>
     : null;
 
-const short = (value: unknown) => {
-  if (value === null) return "根目录";
-  if (typeof value !== "string" && typeof value !== "number") return "—";
-  const text = String(value).replace(/\s+/gu, " ").trim();
-  return text.length > 72 ? `${text.slice(0, 71)}…` : text || "—";
-};
-
-const diffRows = (part: ToolPart) => {
+const approvalCopy = (part: ToolPart) => {
   const input = record(part.input);
   const operation = normalizeAgentToolName(getToolName(part));
+  const editOperation = operation === "edit_node" && typeof input?.op === "string"
+    ? input.op
+    : operation;
+  const presentation = getAgentToolPresentation(operation, part);
 
-  if (operation === "edit_node") {
-    const op = typeof input?.op === "string" ? input.op : "";
-    if (op === "rename") return [{ label: "标题", before: "当前标题", after: short(input?.title) }];
-    if (op === "move") return [{ label: "位置", before: "当前位置", after: input?.parent_id === null ? "根目录" : "目标文件夹" }];
-    if (op === "reorder") return [{ label: "顺序", before: "当前位置", after: input?.placement === "before" ? "参照笔记之前" : "参照笔记之后" }];
-    if (op === "delete") return [{ label: "状态", before: "正常", after: "回收站（可撤销）" }];
-    return [{ label: "节点", before: "不存在", after: short(input?.title) }];
+  if (editOperation === "delete" || editOperation === "trash_node") {
+    return {
+      confirmLabel: "移到回收站",
+      description: "这会把目标移到回收站，之后仍可恢复。",
+      title: presentation.name,
+      variant: "danger" as const,
+    };
   }
-
-  if (operation === "rename_node") return [{ label: "标题", before: "当前标题", after: short(input?.title) }];
-  if (operation === "move_node") return [{ label: "位置", before: "当前位置", after: input?.parent_id === null ? "根目录" : "目标文件夹" }];
-  if (operation === "reorder_node") return [{ label: "顺序", before: "当前位置", after: input?.placement === "before" ? "参照笔记之前" : "参照笔记之后" }];
-  if (operation === "trash_node") return [{ label: "状态", before: "正常", after: "回收站（可撤销）" }];
-  if (operation === "edit_memo") return [{ label: "正文", before: "当前版本", after: "替换为新版本" }];
-  return [{ label: "节点", before: "不存在", after: short(input?.title) }];
+  if (editOperation === "move" || editOperation === "move_node") {
+    return {
+      confirmLabel: "确认移动",
+      description: "这会改变目标在笔记库中的位置。",
+      title: presentation.name,
+      variant: "primary" as const,
+    };
+  }
+  if (editOperation === "reorder" || editOperation === "reorder_node") {
+    return {
+      confirmLabel: "确认调整",
+      description: "这会改变目标在当前层级中的顺序。",
+      title: presentation.name,
+      variant: "primary" as const,
+    };
+  }
+  if (editOperation === "edit_memo") {
+    return {
+      confirmLabel: "允许修改",
+      description: "这会替换当前备忘录正文，版本检查与撤销仍然生效。",
+      title: presentation.name,
+      variant: "primary" as const,
+    };
+  }
+  return {
+    confirmLabel: "允许一次",
+    description: "确认后只执行这一次操作。",
+    title: presentation.name,
+    variant: "primary" as const,
+  };
 };
 
 type ApprovalCardProps = {
@@ -54,35 +77,16 @@ type ApprovalCardProps = {
 export function ApprovalCard({ onApproval, part }: ApprovalCardProps) {
   if (!isToolUIPart(part) || part.state !== "approval-requested") return null;
 
-  const rows = diffRows(part);
-  const operation = normalizeAgentToolName(getToolName(part));
-  const risk = operation === "edit_node" && record(part.input)?.op === "delete"
-      ? "high"
-      : operation.endsWith("trash_node")
-      ? "high"
-      : operation === "edit_node" && ["move", "reorder"].includes(String(record(part.input)?.op))
-        ? "medium"
-        : operation.endsWith("move_node") || operation.endsWith("reorder_node")
-        ? "medium"
-        : "low";
-  const riskCopy = { high: "高", low: "低", medium: "中" }[risk];
+  const copy = approvalCopy(part);
 
   return (
-    <Dialog
-      density="compact"
-      description={`风险：${riskCopy}。确认后才会继续执行；版本检查、回收站和撤销保护仍然生效。`}
-      onOpenChange={(open) => { if (!open) onApproval(part.approval.id, false); }}
-      open
-      title="允许这次修改？"
-    >
-      <section className="agent-approval-dialog">
-        <div className="agent-approval-dialog-intro"><ShieldWarningIcon size={17} /><span>助手正在等待你的决定，不会在后台重复尝试。</span></div>
-        <table><thead><tr><th>项目</th><th>旧值</th><th>新值</th></tr></thead><tbody>{rows.map((row) => <tr key={row.label}><th>{row.label}</th><td>{row.before}</td><td>{row.after}</td></tr>)}</tbody></table>
-        <footer>
-          <Button onClick={() => onApproval(part.approval.id, false)} variant="ghost">拒绝</Button>
-          <Button data-dialog-autofocus onClick={() => onApproval(part.approval.id, true)} variant="primary">允许一次</Button>
-        </footer>
-      </section>
-    </Dialog>
+    <ApprovalDock
+      actions={<>
+        <Button onClick={() => onApproval(part.approval.id, false)} variant="ghost">取消</Button>
+        <Button onClick={() => onApproval(part.approval.id, true)} variant={copy.variant}>{copy.confirmLabel}</Button>
+      </>}
+      description={copy.description}
+      title={copy.title}
+    />
   );
 }

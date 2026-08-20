@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 Bun test、React 静态渲染、AI SDK UIMessage 与 ChatMessage
- * [OUTPUT]: 验证单一过程区、人工审批弹窗、自动执行轻量撤销、最终正文独立、冻结来源不污染对话及普通回复无空过程入口
- * [POS]: AgentPanel 完整回复 DOM 契约测试，连接 part 分区、阻塞裁决、纯净消息展示、工具人话展示与回复动作槽位
+ * [OUTPUT]: 验证单一过程区、Composer 紧凑审批条、自动执行轻量撤销、最终正文独立、冻结来源不污染对话及普通回复无空过程入口
+ * [POS]: AgentPanel 回复与审批 DOM 契约测试，连接 part 分区、非模态裁决、纯净消息展示、工具人话展示与回复动作槽位
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -9,6 +9,7 @@ import { describe, expect, test } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
 import type { SuperNoteUIMessage } from "../../shared/api/ai";
 
+import { ApprovalCard } from "./ApprovalCard";
 import { ChatMessage, LiveAssistantTurn } from "./ChatMessage";
 
 function assistant(parts: SuperNoteUIMessage["parts"]): SuperNoteUIMessage {
@@ -28,7 +29,6 @@ describe("ChatMessage", () => {
     const html = renderToStaticMarkup(
       <ChatMessage
         activity="none"
-        onApproval={() => undefined}
         onUndo={async () => undefined}
         message={assistant([
           { text: "先查看现有内容。", type: "text" },
@@ -75,7 +75,6 @@ describe("ChatMessage", () => {
     const html = renderToStaticMarkup(
       <ChatMessage
         activity="none"
-        onApproval={() => undefined}
         onUndo={async () => undefined}
         message={assistant([{ text: "直接回复。", type: "text" }])}
       />,
@@ -104,12 +103,11 @@ describe("ChatMessage", () => {
 
   test("用户与助手回复都不重复显示身份标题", () => {
     const userHtml = renderToStaticMarkup(
-      <ChatMessage activity="none" message={user("你好")} onApproval={() => undefined} onUndo={async () => undefined} />,
+      <ChatMessage activity="none" message={user("你好")} onUndo={async () => undefined} />,
     );
     const assistantHtml = renderToStaticMarkup(
       <ChatMessage
         activity="none"
-        onApproval={() => undefined}
         onUndo={async () => undefined}
         message={assistant([{ text: "你好。", type: "text" }])}
       />,
@@ -130,7 +128,6 @@ describe("ChatMessage", () => {
       <ChatMessage
         activity="none"
         message={{ ...user("对比一下"), metadata: { context_snapshot: sources } }}
-        onApproval={() => undefined}
         onUndo={async () => undefined}
       />,
     );
@@ -138,7 +135,6 @@ describe("ChatMessage", () => {
       <ChatMessage
         activity="none"
         message={assistant([{ text: "结论。", type: "text" }])}
-        onApproval={() => undefined}
         onUndo={async () => undefined}
       />,
     );
@@ -152,21 +148,30 @@ describe("ChatMessage", () => {
     expect(assistantHtml).not.toContain("agent-assistant-sources");
   });
 
-  test("只有当前待批工具打开模态框，同轮多条命令只显示一个整轮撤销", () => {
+  test("审批不进入消息或模态层，Composer 使用紧凑确认条且同轮只显示一个整轮撤销", () => {
     const approvalPart = {
       approval: { id: "approval-1" },
-      input: { content_mdx: "新版", expected_revision: 1, node_id: "173b31e2-15ab-4eaf-8f14-2208d7d16b13" },
+      input: { expected_revision: 1, node_id: "173b31e2-15ab-4eaf-8f14-2208d7d16b13", op: "delete" },
       state: "approval-requested" as const,
       toolCallId: "tool-approval",
-      toolName: "edit_memo",
+      toolName: "edit_node",
       type: "dynamic-tool" as const,
     };
-    const approvalHtml = renderToStaticMarkup(
-      <ChatMessage activity="none" approvalId="approval-1" message={assistant([approvalPart])} onApproval={() => undefined} onUndo={async () => undefined} />,
+    const messageHtml = renderToStaticMarkup(
+      <ChatMessage activity="none" message={assistant([approvalPart])} onUndo={async () => undefined} />,
     );
-    expect(approvalHtml).toContain('role="dialog"');
-    expect(approvalHtml).toContain("允许这次修改？");
-    expect(approvalHtml).toContain("允许一次");
+    expect(messageHtml).not.toContain('role="dialog"');
+    expect(messageHtml).not.toContain('aria-label="操作确认"');
+
+    const approvalHtml = renderToStaticMarkup(
+      <ApprovalCard onApproval={() => undefined} part={approvalPart} />,
+    );
+    expect(approvalHtml).toContain('role="group"');
+    expect(approvalHtml).toContain('aria-label="操作确认"');
+    expect(approvalHtml).toContain("移入回收站");
+    expect(approvalHtml).toContain("取消");
+    expect(approvalHtml).toContain("移到回收站");
+    expect(approvalHtml).not.toContain('role="dialog"');
 
     const command = {
       id: "command-1",
@@ -177,10 +182,9 @@ describe("ChatMessage", () => {
       <ChatMessage activity="none" message={assistant([
         { ...approvalPart, approval: { approved: true, id: "approval-1" }, output: command, state: "output-available" },
         { ...approvalPart, approval: { approved: true, id: "approval-2" }, output: { ...command, id: "command-2" }, state: "output-available", toolCallId: "tool-approval-2" },
-      ])} onApproval={() => undefined} onUndo={async () => undefined} />,
+      ])} onUndo={async () => undefined} />,
     );
     expect(successHtml).not.toContain('role="dialog"');
-    expect(successHtml).not.toContain("已安全执行");
     expect(successHtml).toContain('aria-label="回复操作"');
     expect(successHtml.match(/撤销本次操作/g)).toHaveLength(1);
   });

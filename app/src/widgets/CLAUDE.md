@@ -37,7 +37,7 @@ MarkdownReadingView.test.tsx: 阅读换行、安全、常数尾部动画节点�
 MarkdownViewMenu.tsx: 中央 Toolbar 的高频 editing/reading 切换与 More 菜单；支持外部点击、Escape、方向键/Home/End、焦点恢复，并仅复制/导出当前原始 content_mdx，title 只用于文件名
 markdownViewTypes.ts: DocumentView editing/reading 与 EditingMode live/source 的共享状态协议，阅读状态不占用编辑模式槽位
 NotesWorkspace.tsx: /app Paper 内部写作列，以跨临时/真实后端 ID 不变的 memoClientKey 保持编辑器会话；新建时聚焦并选中默认标题，imperative handle 暴露 Agent/整理 required flush、正文替换、删除 pause 与已提交 AI 标题接纳边界
-PaperWorkspaceShell.tsx: Paper First 四层空间壳；以 AnimatePresence 编排 Ghost Panel Toggle、按需文件库、唯一 Paper 与 AI 思考空间，Panel 仅使用无弹跳 x/opacity Tween，1200px+ 单侧建立安全区、1400px+ 才允许双侧同时预留，较小视口互斥覆盖并提供画布空白/遮罩/Escape 关闭；成功/撤销时持久连接 Paper 与真实树目标并在 Paper 下方保留显式撤销回执
+PaperWorkspaceShell.tsx: Paper First 四层空间壳；以 AnimatePresence 编排 Ghost Panel Toggle、按需文件库、唯一 Paper 与 AI 思考空间，Panel 仅使用无弹跳 x/opacity Tween，1200px+ 单侧建立安全区、1400px+ 才允许双侧同时预留，较小视口互斥覆盖并提供画布空白/遮罩/Escape 关闭；成功/撤销时只持久连接 Paper 与真实树目标，不在 Paper 下方追加结果回执
 useMemoAutosave.ts: 单 memo 编辑会话状态机；支持 required flush、删除期 pause/resume、AI 标题接纳，并只在没有本地草稿时采纳同一 memo 的迟到服务端初值，避免刷新空白或覆盖输入
 useMemoAutosave.test.ts: 覆盖迟到服务端正文接纳门禁、插入/删除/等长替换字符计数及三次有界指数退避
 TrashWorkspace.tsx: /app 回收站控制器，读取真实顶层删除根并编排重试、恢复、永久删除和当前用户原子清空，结果统一进入根级 Toast

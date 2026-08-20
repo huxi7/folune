@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 shared/api/client 统一 Bearer 请求、AI SDK UIMessage 与 memo DTO mapper
- * [OUTPUT]: 对外提供 SuperNoteUIMessage、无归档状态的 AI thread/reference/settings/command CRUD、Run apply/reject/undo/get 类型与响应归一化
+ * [OUTPUT]: 对外提供 SuperNoteUIMessage、无归档状态的 AI thread/message/reference/settings/command CRUD、Run apply/reject/undo/get 类型与响应归一化
  * [POS]: app/src/shared/api 的 AI Native V2 HTTP 与消息契约边界；浏览器显示冻结引用和命令状态，但真实写入只经 api/chat
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -267,6 +267,16 @@ export const listAiMessages = (
         : { context_snapshot: message.context_snapshot }),
     },
   })));
+
+export const syncAiMessages = (
+  accessToken: string,
+  threadId: string,
+  messages: readonly SuperNoteUIMessage[],
+): Promise<AiMessage[]> =>
+  apiRequest(`/ai-threads/${encodeURIComponent(threadId)}/messages`, {
+    body: JSON.stringify(messages),
+    method: "PUT",
+  }, accessToken);
 
 export const getAiSettings = (accessToken: string): Promise<AiUserSettings> =>
   apiRequest("/ai-settings", {}, accessToken);

@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 SuperNoteUIMessage 的 AI SDK 有序文本/reasoning/工具 parts、阻塞 ApprovalDialog、过程分区与 design-system AI 消息组件
- * [OUTPUT]: 对外提供纯净用户消息、单一过程区、人工审批弹窗及回复末尾轻量撤销的 assistant 回复
- * [POS]: AgentPanel 消息语义适配层，把透明过程、人工裁决和结果动作分层；冻结上下文只参与请求，不进入对话视觉层
+ * [INPUT]: 依赖 SuperNoteUIMessage 的 AI SDK 有序文本/reasoning/工具 parts、过程分区与 design-system AI 消息组件
+ * [OUTPUT]: 对外提供纯净用户消息、单一过程区及回复末尾轻量撤销的 assistant 回复
+ * [POS]: AgentPanel 消息语义适配层，只负责对话与过程；人工审批由 AgentConversation 固定在 Composer 上方，冻结上下文不进入对话视觉层
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -22,36 +22,29 @@ import {
 } from "../../shared/design-system/components";
 import { MarkdownReadingView } from "../MarkdownReadingView";
 import { AgentProcessDisclosure } from "./AgentProcessDisclosure";
-import { ApprovalCard } from "./ApprovalCard";
 import type { AssistantActivity } from "./activityState";
 import { deriveAgentMessagePresentation } from "./messagePresentation";
 import { getAgentToolPresentation } from "./toolPresentation";
 
 type ChatMessageProps = {
   activity: AssistantActivity;
-  approvalId?: string;
   message: SuperNoteUIMessage;
-  onApproval: (id: string, approved: boolean) => void;
   onProgress?: () => void;
   onUndo: (commands: readonly AiCommand[]) => Promise<void>;
 };
 
 type AssistantMessageContentProps = {
   activity: AssistantActivity;
-  approvalId?: string;
   finalText: string;
   onProgress?: () => void;
   processParts: SuperNoteUIMessage["parts"];
   undoCommands: AiCommand[];
-  onApproval: ChatMessageProps["onApproval"];
   onUndo: ChatMessageProps["onUndo"];
 };
 
 type LiveAssistantTurnProps = {
   activity: AssistantActivity;
-  approvalId?: string;
   message?: SuperNoteUIMessage;
-  onApproval?: ChatMessageProps["onApproval"];
   onProgress?: () => void;
   onUndo?: ChatMessageProps["onUndo"];
 };
@@ -65,9 +58,7 @@ function getMessageText(message: SuperNoteUIMessage) {
 
 function AssistantMessageContent({
   activity,
-  approvalId,
   finalText,
-  onApproval = () => undefined,
   onProgress,
   onUndo = async () => undefined,
   processParts,
@@ -76,11 +67,6 @@ function AssistantMessageContent({
   const [undoState, setUndoState] = useState<"idle" | "running" | "done">("idle");
   const responseActive = activity !== "none";
   const hasProcess = processParts.length > 0;
-  const approvalPart = processParts.find((part) =>
-    isToolUIPart(part)
-    && part.state === "approval-requested"
-    && part.approval.id === approvalId
-  );
 
   return (
     <>
@@ -128,9 +114,6 @@ function AssistantMessageContent({
       )}
       streaming={activity === "streaming"}
       />
-      {approvalPart && isToolUIPart(approvalPart) ? (
-        <ApprovalCard onApproval={onApproval} part={approvalPart} />
-      ) : null}
       {undoCommands.length > 0 ? (
         <div aria-label="回复操作" className="agent-response-actions">
           <Button
@@ -163,9 +146,7 @@ function getAssistantPresentation(message: SuperNoteUIMessage) {
 
 export function ChatMessage({
   activity,
-  approvalId,
   message,
-  onApproval,
   onProgress,
   onUndo,
 }: ChatMessageProps) {
@@ -199,9 +180,7 @@ export function ChatMessage({
     <article className="agent-chat-turn">
       <AssistantMessageContent
         activity={activity}
-        approvalId={approvalId}
         finalText={presentation.finalText}
-        onApproval={onApproval}
         onProgress={onProgress}
         onUndo={onUndo}
         processParts={presentation.processParts}
@@ -213,9 +192,7 @@ export function ChatMessage({
 
 export function LiveAssistantTurn({
   activity,
-  approvalId,
   message,
-  onApproval = () => undefined,
   onProgress,
   onUndo = async () => undefined,
 }: LiveAssistantTurnProps) {
@@ -226,9 +203,7 @@ export function LiveAssistantTurn({
       {presentation ? (
         <AssistantMessageContent
           activity={activity}
-          approvalId={approvalId}
           finalText={presentation.finalText}
-          onApproval={onApproval}
           onProgress={onProgress}
           onUndo={onUndo}
           processParts={presentation.processParts}

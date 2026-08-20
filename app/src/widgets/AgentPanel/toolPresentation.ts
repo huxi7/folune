@@ -20,6 +20,7 @@ import type {
   ToolCallState,
 } from "../../shared/design-system/components";
 type ToolPartLike = {
+  approval?: { approved?: boolean };
   errorText?: string;
   input?: unknown;
   output?: unknown;
@@ -103,7 +104,12 @@ function resultDetails(
   }
 
   if (part.state === "approval-responded") {
-    return [{ label: "状态", value: "已确认，正在继续。" }];
+    return [{
+      label: "状态",
+      value: part.approval?.approved === false
+        ? "操作已取消。"
+        : "已确认，正在继续。",
+    }];
   }
 
   if (part.state === "output-available") {

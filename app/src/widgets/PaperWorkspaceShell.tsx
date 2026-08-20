@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 motion/react、EdgeDock/PaperSurface/ArchiveCord 组件、左右工具插槽、稳定 paperIdentity 与整理结果定位信息
- * [OUTPUT]: 对外提供四层 Paper First 舞台、全尺寸 Escape/Canvas 空白关闭、响应式遮罩、无弹跳 Panel 位移、持久归档连线和撤销回执；Panel 内部 Header 负责自身关闭入口
+ * [OUTPUT]: 对外提供四层 Paper First 舞台、全尺寸 Escape/Canvas 空白关闭、响应式遮罩、无弹跳 Panel 位移与持久归档连线；Panel 内部 Header 负责自身关闭入口
  * [POS]: app/src/widgets 的工作台空间壳；只协调可见空间和动作解释，Panel 开关不跨位置变形，编辑器、文件树、Run 与 AI 会话仍由各自稳定组件拥有
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -8,7 +8,6 @@
 import {
   AssistantPanelOpenIcon,
   SidebarSimpleIcon,
-  XIcon,
 } from "../shared/design-system/icons";
 import {
   AnimatePresence,
@@ -24,7 +23,6 @@ import {
   type ReactNode,
 } from "react";
 
-import { Button } from "../shared/design-system/components";
 import {
   fadeTransition,
   panelEnterTransition,
@@ -47,11 +45,8 @@ type PaperWorkspaceShellProps = {
   libraryOpen: boolean;
   onCloseAssistant: () => void;
   onCloseLibrary: () => void;
-  onDismissOrganize: () => void;
   onToggleAssistant: () => void;
   onToggleLibrary: () => void;
-  onUndoOrganize: () => Promise<void>;
-  organizeBusy: boolean;
   organizing: boolean;
   paper: ReactNode;
   paperIdentity: string;
@@ -69,11 +64,8 @@ export function PaperWorkspaceShell({
   libraryOpen,
   onCloseAssistant,
   onCloseLibrary,
-  onDismissOrganize,
   onToggleAssistant,
   onToggleLibrary,
-  onUndoOrganize,
-  organizeBusy,
   organizing,
   paper,
   paperIdentity,
@@ -150,7 +142,6 @@ export function PaperWorkspaceShell({
       ".paper-surface",
       ".workspace-floating-panel",
       ".workspace-canvas-control",
-      ".organize-paper-receipt",
       ".memo-context-menu",
       ".ds-dialog-panel",
       ".ds-toast",
@@ -267,42 +258,6 @@ export function PaperWorkspaceShell({
             >
               {paper}
             </PaperSurface>
-
-            <AnimatePresence initial={false}>
-              {presentation ? (
-                <motion.div
-                  animate={{ opacity: 1, y: 0 }}
-                  className="organize-paper-receipt"
-                  exit={{ opacity: 0, y: reduceMotion ? 0 : -4 }}
-                  initial={{ opacity: 0, y: reduceMotion ? 0 : 4 }}
-                  key={`${presentation.runId}:${presentation.status}`}
-                  transition={fadeTransition}
-                >
-                  <div className="organize-paper-receipt-copy">
-                    <strong>{presentation.status === "succeeded" ? "已整理至" : "已恢复至"}</strong>
-                    <span>{presentation.path}</span>
-                  </div>
-                  <div className="organize-paper-receipt-actions">
-                    {presentation.status === "succeeded" ? (
-                      <Button
-                        disabled={organizeBusy}
-                        onClick={() => void onUndoOrganize()}
-                        variant="ghost"
-                      >
-                        撤销
-                      </Button>
-                    ) : null}
-                    <Button
-                      aria-label="关闭整理回执"
-                      icon={XIcon}
-                      onClick={onDismissOrganize}
-                      size="square"
-                      variant="ghost"
-                    />
-                  </div>
-                </motion.div>
-              ) : null}
-            </AnimatePresence>
           </motion.div>
         </div>
 

@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 React Router Profile/token、memo/WorkspaceChrome Store、AI Run、Skeleton、PaperWorkspaceShell、NotesWorkspace、AccountDialog 与可调宽浮层
- * [OUTPUT]: 对外提供 Paper First 舞台、乐观备忘录路由、草稿 flush 后删除/AI 对话/整理分流、归档定位/撤销回执与账户/视图编排
+ * [OUTPUT]: 对外提供 Paper First 舞台、乐观备忘录路由、草稿 flush 后删除/AI 对话/整理分流、归档定位与账户/视图编排
  * [POS]: app/src/pages 的 /app 编排层；编辑器、Run、Store、浮动工具、路由与 Trash 的跨域生命周期只在此建立一次等待边界
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -711,7 +711,6 @@ export function AppDashboard() {
           }}
           onRejectOrganize={memoOrganize.reject}
           onSelectedThreadChange={memoOrganize.setThreadId}
-          onUndoOrganize={memoOrganize.undo}
           organizeBusy={memoOrganize.organizing}
           organizeRun={memoOrganize.run}
           userId={profile.id}
@@ -728,11 +727,8 @@ export function AppDashboard() {
         libraryOpen={libraryOpen}
         onCloseAssistant={closeAssistant}
         onCloseLibrary={closeLibrary}
-        onDismissOrganize={memoOrganize.dismissPresentation}
         onToggleAssistant={toggleAssistant}
         onToggleLibrary={toggleLibrary}
-        onUndoOrganize={memoOrganize.undo}
-        organizeBusy={memoOrganize.organizing}
         organizing={memoOrganize.organizing}
         paper={paper}
         paperIdentity={activeView === "note" && routeMemoId !== null

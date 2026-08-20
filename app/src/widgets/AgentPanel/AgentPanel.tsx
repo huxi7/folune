@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖 useAiThreads、类型化 useChat/原生审批、本地 Design System Button/MentionInput、统一 Composer sources、Worker 胖工具链、权限/History/Organize 视图与 Dashboard 草稿协调边界
- * [OUTPUT]: 对外提供本地 Design System Ghost 图标 Header、统一历史会话、仅在 Composer 展示的当前笔记默认上下文、内联高亮 @笔记、实时紧凑搜索、冻结请求上下文、阻塞审批弹窗、流完成后工具执行、乐观命令/整轮逆序撤销对账、会话恢复及停止 SSE/礼花的 AI Native 右侧工作区
+ * [INPUT]: 依赖 useAiThreads、类型化 useChat/原生审批、持久化消息 API、本地 Design System Button/MentionInput、统一 Composer sources、Worker 胖工具链、权限/History 与 Dashboard AI 整理/草稿协调边界
+ * [OUTPUT]: 对外提供本地 Design System Ghost 图标 Header、统一历史会话、仅在 Composer 展示的当前笔记默认上下文、内联高亮 @笔记、实时紧凑搜索、冻结请求上下文、普通/整理同构的 Composer 审批 Dock、审批幂等与刷新恢复、流完成后工具执行、乐观命令/整轮逆序撤销对账、会话恢复及停止 SSE/礼花的 AI Native 右侧工作区
  * [POS]: /app 右侧 AI Native V2 组合根；工具参数流结束且批准后才进入 Worker，api command 是唯一写事实源，Store 只做幂等投影与回滚
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -33,6 +33,7 @@ import {
 } from "ai";
 
 import {
+  syncAiMessages,
   undoAiCommand,
   type AiCommand,
   type AiRun,
@@ -43,6 +44,14 @@ import type { MemoTreeNode } from "../../shared/api/memo";
 import { Button, MentionInput } from "../../shared/design-system/components";
 import { useMemoTreeStore } from "../../shared/store/memoTreeStore";
 import { deriveAssistantActivity } from "./activityState";
+import {
+  applyApprovalResponse,
+  applyToolOutput,
+  findApprovedPendingTools,
+  findPendingApproval,
+  type AgentToolPart,
+} from "./approvalState";
+import { ApprovalCard } from "./ApprovalCard";
 import { cancelCelebration } from "./celebration";
 import { ChatMessage, LiveAssistantTurn } from "./ChatMessage";
 import { getChatErrorCode } from "./chatFetch";
@@ -93,7 +102,6 @@ type AgentPanelProps = {
   onClose: () => void;
   onPrepareMutation: () => Promise<void>;
   onRejectOrganize: () => Promise<void>;
-  onUndoOrganize: () => Promise<void>;
   onSelectedThreadChange: (threadId: string | null) => void;
   organizeBusy: boolean;
   organizeRun: AiRun | null;
@@ -106,9 +114,13 @@ type ConversationProps = {
   initialMessages: SuperNoteUIMessage[];
   memoTree: readonly MemoTreeNode[];
   onBusyChange: (busy: boolean) => void;
+  onApplyOrganize: AgentPanelProps["onApplyOrganize"];
   onPrepareMutation: AgentPanelProps["onPrepareMutation"];
+  onRejectOrganize: AgentPanelProps["onRejectOrganize"];
   onReferencesChange: (memoIds: readonly string[]) => Promise<void>;
   onThreadUpdated: () => Promise<void>;
+  organizeReviewBusy: boolean;
+  organizeRun: AiRun | null;
   thread: AiThreadDetail;
 };
 
@@ -132,10 +144,14 @@ function AgentConversation({
   currentMemo,
   initialMessages,
   memoTree,
+  onApplyOrganize,
   onBusyChange,
   onPrepareMutation,
+  onRejectOrganize,
   onReferencesChange,
   onThreadUpdated,
+  organizeReviewBusy,
+  organizeRun,
   thread,
 }: ConversationProps) {
   const [inputValue, setInputValue] = useState("");
@@ -145,10 +161,16 @@ function AgentConversation({
   const [mentionQuery, setMentionQuery] = useState("");
   const [mentionIndex, setMentionIndex] = useState(0);
   const [mentionOpen, setMentionOpen] = useState(false);
+  const [approvalError, setApprovalError] = useState<string | null>(null);
+  const [respondingApprovalId, setRespondingApprovalId] = useState<string | null>(null);
   const composerRef = useRef<HTMLDivElement>(null);
   const messageListRef = useRef<HTMLDivElement>(null);
   const manuallyApprovedToolCalls = useRef(new Set<string>());
   const memoToolExecutions = useRef(new Map<string, Promise<unknown>>());
+  const respondingApprovalIds = useRef(new Set<string>());
+  const settledApprovalIds = useRef(new Set<string>());
+  const recoveredToolCalls = useRef(new Set<string>());
+  const messagesRef = useRef<SuperNoteUIMessage[]>(initialMessages);
   const transport = useMemo(
     () => createMemoChatTransport(thread.id),
     [thread.id],
@@ -195,6 +217,7 @@ function AgentConversation({
     error,
     messages,
     sendMessage,
+    setMessages,
     status,
     stop,
   } = useChat<SuperNoteUIMessage>({
@@ -206,16 +229,20 @@ function AgentConversation({
       void executePendingClientTools(message).finally(onThreadUpdated);
     },
   });
+  messagesRef.current = messages;
 
   async function executePendingClientTools(message: SuperNoteUIMessage) {
     const pending = message.parts.filter(isToolUIPart).filter((part) =>
       part.state === "input-available"
       && isAgentClientToolName(clientTools, getToolName(part))
     );
-    await Promise.all(pending.map(executeClientToolPart));
+    await Promise.all(pending.map((part) => executeClientToolPart(part)));
   }
 
-  async function executeClientToolPart(part: Extract<SuperNoteUIMessage["parts"][number], { toolCallId: string }>) {
+  async function executeClientToolPart(
+    part: AgentToolPart,
+    durableBaseMessages?: readonly SuperNoteUIMessage[],
+  ) {
     if (!isToolUIPart(part)) return;
     const toolName = getToolName(part);
     if (!isAgentClientToolName(clientTools, toolName)) return;
@@ -239,17 +266,45 @@ function AgentConversation({
         memoToolExecutions.current.set(part.toolCallId, execution);
       }
       const output = await execution;
+      const completedMessages = durableBaseMessages === undefined
+        ? undefined
+        : applyToolOutput(durableBaseMessages, part.toolCallId, {
+            output,
+            state: "output-available",
+          });
+      if (completedMessages !== undefined) {
+        try {
+          await syncAiMessages(accessToken, thread.id, completedMessages);
+        } catch {
+          // addToolResult 随后的续写仍会携带完整消息；若网络持续失败，刷新恢复会按 toolCallId 幂等补齐。
+        }
+      }
       await addToolResult({ output, tool: toolName, toolCallId: part.toolCallId });
     } catch (toolError) {
+      const errorText = toolError instanceof Error ? toolError.message : "客户端工具执行失败。";
+      const completedMessages = durableBaseMessages === undefined
+        ? undefined
+        : applyToolOutput(durableBaseMessages, part.toolCallId, {
+            errorText,
+            state: "output-error",
+          });
+      if (completedMessages !== undefined) {
+        try {
+          await syncAiMessages(accessToken, thread.id, completedMessages);
+        } catch {
+          // 交由后续 chat 请求或刷新恢复重试，不能因审计同步失败再次执行非幂等 UI 更新。
+        }
+      }
       await addToolResult({
-        errorText: toolError instanceof Error ? toolError.message : "客户端工具执行失败。",
+        errorText,
         state: "output-error",
         tool: toolName,
         toolCallId: part.toolCallId,
       });
     }
   }
-  const busy = status === "submitted" || status === "streaming";
+  const streamBusy = status === "submitted" || status === "streaming";
+  const busy = streamBusy || respondingApprovalId !== null;
   const lastMessage = messages.at(-1);
   const activity = deriveAssistantActivity(
     status,
@@ -257,11 +312,7 @@ function AgentConversation({
   );
   const liveAssistantIndex = lastMessage?.role === "assistant" ? messages.length - 1 : -1;
   const liveAssistantMessage = liveAssistantIndex >= 0 ? messages[liveAssistantIndex] : undefined;
-  const pendingApprovalId = lastMessage?.role === "assistant"
-    ? [...lastMessage.parts].reverse()
-      .find((part) => isToolUIPart(part) && part.state === "approval-requested")
-      ?.approval.id
-    : undefined;
+  const pendingApproval = findPendingApproval(messages);
   const displayMessages = useMemo(
     () => coalesceAssistantMessages(messages),
     [messages],
@@ -292,25 +343,56 @@ function AgentConversation({
     }
   }, [messages, reconcileAiCommand, rollbackAiToolCall]);
 
-  const respondToApproval = useCallback((id: string, approved: boolean) => {
-    const approvalPart = messages.flatMap((message) => message.parts)
-      .find((part) => isToolUIPart(part)
-        && "approval" in part
-        && part.approval?.id === id);
-    const toolCallId = approvalPart !== undefined && isToolUIPart(approvalPart)
-      ? approvalPart.toolCallId
-      : id;
-    if (approved) manuallyApprovedToolCalls.current.add(toolCallId);
-    else {
-      manuallyApprovedToolCalls.current.delete(toolCallId);
-      rollbackAiToolCall(toolCallId);
-    }
-    void Promise.resolve(addToolApprovalResponse({ id, approved })).then(() => {
-      if (approved && approvalPart !== undefined && isToolUIPart(approvalPart)) {
-        return executeClientToolPart(approvalPart);
+  function respondToApproval(id: string, approved: boolean) {
+    if (respondingApprovalIds.current.has(id) || settledApprovalIds.current.has(id)) return;
+
+    const previousMessages = messagesRef.current;
+    const approvalPart = findPendingApproval(previousMessages);
+    const respondedMessages = applyApprovalResponse(previousMessages, id, approved);
+    if (approvalPart === undefined
+      || approvalPart.approval.id !== id
+      || respondedMessages === undefined) return;
+
+    respondingApprovalIds.current.add(id);
+    setRespondingApprovalId(id);
+    setApprovalError(null);
+
+    void (async () => {
+      await addToolApprovalResponse({ id, approved });
+      await syncAiMessages(accessToken, thread.id, respondedMessages);
+      settledApprovalIds.current.add(id);
+
+      if (approved) {
+        manuallyApprovedToolCalls.current.add(approvalPart.toolCallId);
+        await executeClientToolPart(approvalPart, respondedMessages);
+      } else {
+        manuallyApprovedToolCalls.current.delete(approvalPart.toolCallId);
+        rollbackAiToolCall(approvalPart.toolCallId);
       }
+      await onThreadUpdated();
+    })().catch(() => {
+      if (!settledApprovalIds.current.has(id)) {
+        setMessages(previousMessages);
+        setApprovalError("确认结果未能保存，请检查网络后重试。");
+      }
+    }).finally(() => {
+      respondingApprovalIds.current.delete(id);
+      setRespondingApprovalId((current) => current === id ? null : current);
     });
-  }, [addToolApprovalResponse, messages, rollbackAiToolCall]);
+  }
+
+  useEffect(() => {
+    const recoverable = findApprovedPendingTools(messages);
+    for (const part of recoverable) {
+      if (!isAgentClientToolName(clientTools, getToolName(part))
+        || recoveredToolCalls.current.has(part.toolCallId)
+        || respondingApprovalIds.current.has(part.approval.id)) continue;
+
+      recoveredToolCalls.current.add(part.toolCallId);
+      manuallyApprovedToolCalls.current.add(part.toolCallId);
+      void executeClientToolPart(part, messages);
+    }
+  }, [clientTools, messages]);
 
   const undoAssistantTurn = useCallback(async (commands: readonly AiCommand[]) => {
     for (const command of reverseCommandsForUndo(commands)) {
@@ -442,14 +524,24 @@ function AgentConversation({
     <div className="agent-panel-body">
       <div aria-busy={busy} aria-live="polite" className="agent-message-list" ref={messageListRef} role="log">
         {displayMessages.map((message, index) => index === displayLiveAssistantIndex ? null : (
-          <ChatMessage activity="none" approvalId={pendingApprovalId} key={message.id} message={message} onApproval={respondToApproval} onProgress={() => scrollToLatest("auto")} onUndo={undoAssistantTurn} />
+          <ChatMessage activity="none" key={message.id} message={message} onProgress={() => scrollToLatest("auto")} onUndo={undoAssistantTurn} />
         ))}
         {busy || liveAssistantMessage ? (
-          <LiveAssistantTurn activity={activity} approvalId={pendingApprovalId} key="live-assistant" message={displayLiveAssistantIndex >= 0 ? displayMessages[displayLiveAssistantIndex] : undefined} onApproval={respondToApproval} onProgress={() => scrollToLatest("auto")} onUndo={undoAssistantTurn} />
+          <LiveAssistantTurn activity={activity} key="live-assistant" message={displayLiveAssistantIndex >= 0 ? displayMessages[displayLiveAssistantIndex] : undefined} onProgress={() => scrollToLatest("auto")} onUndo={undoAssistantTurn} />
         ) : null}
       </div>
       {error ? (
         <div className="agent-error-state" role="alert"><WarningCircleIcon aria-hidden="true" size={17} /><div><strong>{errorCopy.title}</strong><p>{errorCopy.description}</p></div></div>
+      ) : null}
+      {approvalError ? (
+        <div className="agent-error-state" role="alert"><WarningCircleIcon aria-hidden="true" size={17} /><div><strong>确认失败</strong><p>{approvalError}</p></div></div>
+      ) : null}
+      {pendingApproval !== undefined ? (
+        pendingApproval.approval.id !== respondingApprovalId
+          ? <ApprovalCard onApproval={respondToApproval} part={pendingApproval} />
+          : null
+      ) : respondingApprovalId === null ? (
+        <OrganizeReviewCard busy={organizeReviewBusy} onApply={onApplyOrganize} onReject={onRejectOrganize} run={organizeRun} />
       ) : null}
       <form className="agent-composer" onSubmit={handleSubmit}>
         {mentionOpen ? <MentionMenu activeIndex={mentionIndex} onSelect={selectMention} results={mentionResults} /> : null}
@@ -459,7 +551,7 @@ function AgentConversation({
         <MentionInput aria-label="输入消息" className="agent-chat-input" mentions={inlineMentions} onKeyDown={handleComposerKeyDown} onValueChange={handleInputChange} placeholder="输入消息，@ 引用笔记…" ref={composerRef} value={inputValue} />
         <div className="agent-composer-footer">
           <PermissionModeControl accessToken={accessToken} busy={busy} compact />
-          {busy ? (
+          {streamBusy ? (
             <Button aria-label="停止生成" className="agent-composer-action" icon={StopIcon} onClick={handleStop} size="square" type="button" variant="primary" />
           ) : (
             <Button aria-label="发送消息" className="agent-composer-action" disabled={!canSubmitComposer(inputValue, busy)} icon={ArrowUpIcon} size="square" type="submit" variant="primary" />
@@ -505,10 +597,7 @@ export function AgentPanel(props: AgentPanelProps) {
       ) : thread === null ? (
         <div className="agent-panel-loading">{threads.loading ? "正在恢复会话…" : "会话加载失败，请重新打开面板。"}</div>
       ) : (
-        <>
-          <OrganizeReviewCard busy={actionBusy} onApply={props.onApplyOrganize} onReject={props.onRejectOrganize} onUndo={props.onUndoOrganize} run={visibleOrganizeRun} />
-          <AgentConversation accessToken={props.accessToken} currentMemo={props.currentMemo} initialMessages={threads.messages} key={thread.id} memoTree={props.memoTree} onBusyChange={setChatBusy} onPrepareMutation={props.onPrepareMutation} onReferencesChange={threads.replaceReferences} onThreadUpdated={threads.refreshSelected} thread={thread} />
-        </>
+        <AgentConversation accessToken={props.accessToken} currentMemo={props.currentMemo} initialMessages={threads.messages} key={thread.id} memoTree={props.memoTree} onApplyOrganize={props.onApplyOrganize} onBusyChange={setChatBusy} onPrepareMutation={props.onPrepareMutation} onReferencesChange={threads.replaceReferences} onRejectOrganize={props.onRejectOrganize} onThreadUpdated={threads.refreshSelected} organizeReviewBusy={actionBusy} organizeRun={visibleOrganizeRun} thread={thread} />
       )}
     </aside>
   );

@@ -43,7 +43,7 @@ SuperNote is a quiet editorial instrument that lets users write first and allows
 - Panel `16px`: workspace panels, cards, composite inputs
 - Dialog `20px`: modal decision surfaces
 - Nested surfaces follow concentricity: inner radius equals outer radius minus the inset gap.
-- True circles and pills are reserved for avatars, status dots and tags; Panel Toggle uses the shared 10px compact radius, never pill geometry.
+- True circles and pills are reserved for avatars, status dots, tags and the AI Composer's singular 32px send/stop action; Panel Toggle and other icon commands use the shared 10px compact radius, never pill geometry.
 
 ## Workspace panel controls
 
@@ -51,6 +51,7 @@ SuperNote is a quiet editorial instrument that lets users write first and allows
 - The Library Header keeps the compact BrandMark on the left and its close control at the far right; search and a 32px Primary NotePencil new-memo action share the next row.
 - The AI Header is one quiet 48px row: a 16px history menu, one truncated conversation title, a 16px MessageCirclePlus new-conversation action and a matched PanelRightClose trailing command. The closed Canvas state uses the paired PanelRightOpen glyph; it never shows a ChatCircleDots substitute. It never shows a ThinkingMark, product subtitle or permission pill; the empty conversation body remains blank until a future evidence-backed welcome surface is designed.
 - AI permission remains available as a 32px/16px Ghost shield in the Composer footer, with its readable mode exposed through tooltip, accessible name and the upward menu rather than permanent Header text.
+- The Composer's right-side send/stop action is a 32px geometric circle using the Primary Button material; it explicitly uses `corner-shape: round` instead of inheriting the global Button squircle, and both states keep identical geometry so streaming never shifts the footer silhouette.
 - AI organize is a 32px icon-only Secondary command: its surface distinguishes the capability without competing with the Primary new-memo anchor.
 - Search activation replaces the existing search slot with an input and icon-only close action. It never adds a second command row or visible Cancel label.
 - Panel entry/exit uses restrained x/opacity Tween motion. Controls do not fly across the panel through shared layout identity, and panel contents are never compressed with scaleX.
