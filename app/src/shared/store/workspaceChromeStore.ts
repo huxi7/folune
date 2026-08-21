@@ -68,6 +68,17 @@ export function migrateWorkspaceChrome(
   };
 }
 
+// ---- localStorage 访问器降级 ----
+// 访问器本身会抛 (SecurityError: 阻止全部站点数据 / QuotaExceededError: 配额满),
+// 不只是里面的 JSON 会坏。范式取自 shared/theme/ThemeProvider.ts。
+const readStoredValue = (key: string): string | null => {
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+};
+
 const persist = (state: WorkspaceChromeState): void => {
   if (state.hydratedUserId === null) {
     return;
@@ -78,10 +89,15 @@ const persist = (state: WorkspaceChromeState): void => {
     libraryOpen: state.libraryOpen,
     version: 1,
   };
-  window.localStorage.setItem(
-    workspaceChromeStorageKey(state.hydratedUserId),
-    JSON.stringify(snapshot),
-  );
+
+  try {
+    window.localStorage.setItem(
+      workspaceChromeStorageKey(state.hydratedUserId),
+      JSON.stringify(snapshot),
+    );
+  } catch {
+    // 面板开关仍然可以在当前会话工作；持久化不可用时保持静默降级。
+  }
 };
 
 const updateVisibility = (
@@ -91,11 +107,21 @@ const updateVisibility = (
     ),
   ) => void,
   update: (state: WorkspaceChromeStore) => Partial<WorkspaceChromeStore>,
-) => set((state) => {
-  const nextState = { ...state, ...update(state) };
-  persist(nextState);
-  return nextState;
-});
+) => {
+  // persist 必须在 set() 之外: 放在 reducer 内且位于 return 之前时,
+  // 一次写入异常会让开关连内存里都不翻转 (看起来彻底点不动)。
+  let snapshot: WorkspaceChromeStore | null = null;
+
+  set((state) => {
+    const nextState = { ...state, ...update(state) };
+    snapshot = nextState;
+    return nextState;
+  });
+
+  if (snapshot !== null) {
+    persist(snapshot);
+  }
+};
 
 const isOverlayViewport = (): boolean => window.innerWidth < 1400;
 
@@ -105,15 +131,21 @@ export const useWorkspaceChromeStore = create<WorkspaceChromeStore>((set) => ({
   libraryOpen: false,
   closeAssistant: () => updateVisibility(set, () => ({ assistantOpen: false })),
   closeLibrary: () => updateVisibility(set, () => ({ libraryOpen: false })),
-  hydrate: (userId) => set(() => {
+  hydrate: (userId) => {
     const preference = migrateWorkspaceChrome(
-      window.localStorage.getItem(workspaceChromeStorageKey(userId)),
-      window.localStorage.getItem(`${LEGACY_AGENT_PANEL_KEY_PREFIX}${userId}`),
+      readStoredValue(workspaceChromeStorageKey(userId)),
+      readStoredValue(`${LEGACY_AGENT_PANEL_KEY_PREFIX}${userId}`),
     );
-    const nextState = { ...preference, hydratedUserId: userId };
+    // 恢复快照同样受窄屏互斥约束: <1400px 时两个 Panel 不得同开,
+    // 否则窄屏刷新会绕过 openLibrary/openAssistant 的互斥规则。
+    const resolved = preference.assistantOpen && preference.libraryOpen && isOverlayViewport()
+      ? { assistantOpen: preference.assistantOpen, libraryOpen: false }
+      : preference;
+    const nextState = { ...resolved, hydratedUserId: userId };
+
+    set(() => nextState);
     persist(nextState);
-    return nextState;
-  }),
+  },
   openAssistant: () => updateVisibility(set, () => ({
     assistantOpen: true,
     ...(isOverlayViewport() ? { libraryOpen: false } : {}),

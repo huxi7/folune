@@ -44,7 +44,15 @@ const readEnvelope = async (response: Response): Promise<ApiEnvelope> => {
 
   try {
     payload = await response.json();
-  } catch {
+  } catch (error) {
+    // ---- 取消是整个响应生命周期的信号, 不只是 fetch 层 ----
+    // abort 落在读 body 期间时, response.json() 抛的是同一个 AbortError。
+    // 吞掉它会把「正常取消」伪装成「后端返回畸形响应」, 让调用方的
+    // AbortError 守卫全部失效并弹出错误 Toast。
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw error;
+    }
+
     throw new ApiError(
       response.status,
       "INVALID_API_RESPONSE",

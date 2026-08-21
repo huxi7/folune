@@ -220,6 +220,21 @@ export function useMemoAutosave({
     }
 
     if (session.savingPromise !== null) {
+      // ---- page-exit 语义: 不得等待在飞请求 ----
+      // 页面正在卸载, 在飞的普通 PATCH 会随之被取消; 等它只会等到一个
+      // 已死的 promise, 然后裸 return —— keepalive 从未发出, 快照之后的
+      // 增量全部丢失。此处必须为 keepalive 新建一次请求: keepalive 的
+      // fetch 由浏览器接管, 能活过卸载。不走 saveWithRetry —— 页面已死,
+      // 重试延时没有意义。
+      if (options?.keepalive) {
+        void onSaveRef.current(session.memoId, draft, { keepalive: true })
+          .catch(() => {
+            // 卸载路径无处上报, 静默失败 (与 onFailure 不可达的现状一致)
+          });
+
+        return;
+      }
+
       try {
         await session.savingPromise;
       } catch (error) {
@@ -298,7 +313,12 @@ export function useMemoAutosave({
           draftKey(latestDraft) !== submittedKey
         ) {
           window.setTimeout(() => {
-            void flushSessionRef.current(session);
+            // 补发保留原调用的 keepalive 语义, 否则追赶出的那一次
+            // 落在卸载路径上时同样发不出去
+            void flushSessionRef.current(
+              session,
+              options?.keepalive ? { keepalive: true } : undefined,
+            );
           }, 0);
         }
       }

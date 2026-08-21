@@ -183,6 +183,7 @@
   --space-2: calc(var(--spacing) * 2);
   --space-3: calc(var(--spacing) * 3);
   --space-4: calc(var(--spacing) * 4);
+  --space-5: calc(var(--spacing) * 5);
   --space-6: calc(var(--spacing) * 6);
   --space-8: calc(var(--spacing) * 8);
   --space-10: calc(var(--spacing) * 10);
