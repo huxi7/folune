@@ -14,12 +14,14 @@ import {
   PencilSimpleIcon,
 } from "../shared/design-system/icons";
 import {
+  useCallback,
   useEffect,
   useId,
   useRef,
   useState,
   type KeyboardEvent,
 } from "react";
+import { useDismissable } from "../shared/design-system/useDismissable";
 
 import { Button, useToast } from "../shared/design-system/components";
 import type { DocumentView, EditingMode } from "./markdownViewTypes";
@@ -60,33 +62,13 @@ export function MarkdownViewMenu({
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
 
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
+  // Button 未 forwardRef, 焦点归还走既有的 id 查询路径
+  const dismissAndFocusTrigger = useCallback(() => {
+    setOpen(false);
+    document.getElementById(triggerId)?.focus();
+  }, [triggerId]);
 
-    function handlePointerDown(event: PointerEvent) {
-      if (!shellRef.current?.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    }
-
-    function handleEscape(event: globalThis.KeyboardEvent) {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        setOpen(false);
-        focusTrigger();
-      }
-    }
-
-    document.addEventListener("pointerdown", handlePointerDown);
-    document.addEventListener("keydown", handleEscape);
-
-    return () => {
-      document.removeEventListener("pointerdown", handlePointerDown);
-      document.removeEventListener("keydown", handleEscape);
-    };
-  }, [open]);
+  useDismissable({ onDismiss: dismissAndFocusTrigger, open, shellRef });
 
   function focusTrigger() {
     document.getElementById(triggerId)?.focus();

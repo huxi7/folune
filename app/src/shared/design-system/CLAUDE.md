@@ -4,6 +4,7 @@
 成员清单
 .gitkeep: 保留 design system 层空目录
 CLAUDE.md: 记录 design system 职责与文档协议
+useDismissable.ts: 弹层消散原语，统一「外部 pointerdown 关闭 + Escape 关闭 + 焦点归还触发器」三件事；Escape 分支必定 preventDefault，这是与 PaperWorkspaceShell 壳层守卫之间的层级仲裁协议——内层消费过的 Escape 不得再关闭外层 Panel，否则一次误触会连带卸载 Panel 并销毁其中的本地草稿
 icons.tsx: Lucide React 图标语言边界，以稳定语义别名提供圆角描边图标；Google 品牌标记作为本地图形例外，不把品牌 Logo 混入通用线性库
 components/: 本地组件目录，承载通用界面组件、低对比 Skeleton/延迟显示策略、SuperNote AI ThinkingMark Formation Motion、ThinkingStatusText、Kumo-backed 全局 Toast 适配器、用户菜单，以及可组合过程槽/最终正文/轻量工具详情的 User/Assistant/Streaming/Thinking/ToolCall AI 消息家族；流式正文与 SSE 同速直出，历史正文保持原生文本，只允许末尾最多五个模糊动画节点且彻底不提供尾部光标，不提供通用状态胶囊
 

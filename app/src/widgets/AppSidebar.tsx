@@ -349,6 +349,7 @@ export function AppSidebar({
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
+        event.preventDefault();
         setContextMenu(null);
       }
     }
@@ -560,6 +561,7 @@ export function AppSidebar({
                 onChange={(event) => setSearchQuery(event.target.value)}
                 onKeyDown={(event) => {
                   if (event.key === "Escape") {
+                    event.preventDefault();
                     closeSearch();
                   }
                 }}

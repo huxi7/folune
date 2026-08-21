@@ -61,6 +61,8 @@ export function Dialog({
 
     function handleKeyDown(event: globalThis.KeyboardEvent) {
       if (event.key === "Escape") {
+        // 标记已消费, 阻止壳层 (PaperWorkspaceShell) 同一次 Escape 再关 Panel
+        event.preventDefault();
         onOpenChangeRef.current(false);
         return;
       }

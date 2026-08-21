@@ -10,6 +10,7 @@ import {
   type Icon,
 } from "../icons";
 import {
+  useCallback,
   useEffect,
   useId,
   useMemo,
@@ -20,6 +21,7 @@ import {
   type ReactNode,
   type RefObject,
 } from "react";
+import { useDismissable } from "../useDismissable";
 
 export type SelectOption = {
   description?: string;
@@ -80,24 +82,22 @@ export function Select({
     [options, selectedValue],
   );
 
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
+  const closeSelect = useCallback(() => setOpen(false), []);
 
-    function handlePointerDown(event: PointerEvent) {
-      if (!shellRef.current?.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    }
-
-    document.addEventListener("pointerdown", handlePointerDown);
-    return () => document.removeEventListener("pointerdown", handlePointerDown);
-  }, [open]);
+  useDismissable({
+    focusRef: triggerRef,
+    onDismiss: closeSelect,
+    open,
+    shellRef,
+  });
 
   function openSelect(nextIndex = selectedIndex) {
     setActiveIndex(nextIndex);
     setOpen(true);
+    // Escape/方向键/Home/End 全部绑在 trigger 的 onKeyDown 上, 而 macOS 的
+    // Safari/Firefox 点击 button 不赋予焦点 —— 不显式聚焦会让菜单打开后
+    // 键盘完全失控, 只剩"点击外部"一条关闭路径。
+    triggerRef.current?.focus();
   }
 
   function selectOption(option: SelectOption) {
