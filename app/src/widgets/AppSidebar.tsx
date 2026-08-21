@@ -231,7 +231,12 @@ export function AppSidebar({
     ready: treeStatus === "ready",
     userId: profile.id,
   });
-  const searchResults = searchMemoTree(memoTree, searchQuery);
+  // 搜索会遍历全树并把每篇 content_mdx 纳入匹配, 裸在 render body 里意味着
+  // hover / dragOverTarget / 右键菜单等任意 state 变化都触发一次全库全文扫描。
+  const searchResults = useMemo(
+    () => searchMemoTree(memoTree, searchQuery),
+    [memoTree, searchQuery],
+  );
   const focusNodeId = organizeTarget?.folderId ?? organizeTarget?.memoId ?? selectedMemoId;
   const focusKey = organizeTarget?.runId ?? layoutKey;
 

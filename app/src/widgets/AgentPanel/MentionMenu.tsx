@@ -33,16 +33,24 @@ export const getMentionResults = (
       });
     }
   };
-  visit(tree, []);
-  const raw = query.trim().length === 0 ? recent : searchMemoTree(tree, query);
+  // recent 只在空 query 分支被消费, 无条件 visit 等于每次按键白扫一遍全树
+  const hasQuery = query.trim().length > 0;
 
+  if (!hasQuery) {
+    visit(tree, []);
+  }
+
+  const raw = hasQuery ? searchMemoTree(tree, query) : recent;
+
+  // 先裁剪到 8 条再回树里取 revision: 原先在 map 内对每个候选做一次
+  // findNode 全树查找, 裁剪前的结果数就是全树查找的次数。
   return raw
     .filter((result) => !selectedIds.includes(result.id))
+    .slice(0, 8)
     .map((result) => {
       const node = findNode(tree, result.id);
       return { ...result, revision: node?.revision ?? 1 };
-    })
-    .slice(0, 8);
+    });
 };
 
 type MentionMenuProps = {

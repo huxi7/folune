@@ -408,6 +408,9 @@ function AgentConversation({
   }, []);
   useEffect(() => scrollToLatest(status === "streaming" ? "auto" : "smooth"), [messages, scrollToLatest, status]);
 
+  // 稳定引用: 内联箭头函数每次渲染都是新引用, 会让下游 memo 全部失效
+  const scrollToLatestAuto = useCallback(() => scrollToLatest("auto"), [scrollToLatest]);
+
   const handleStop = useCallback(() => {
     cancelCelebration();
     void stop();
@@ -524,10 +527,10 @@ function AgentConversation({
     <div className="agent-panel-body">
       <div aria-busy={busy} aria-live="polite" className="agent-message-list" ref={messageListRef} role="log">
         {displayMessages.map((message, index) => index === displayLiveAssistantIndex ? null : (
-          <ChatMessage activity="none" key={message.id} message={message} onProgress={() => scrollToLatest("auto")} onUndo={undoAssistantTurn} />
+          <ChatMessage activity="none" key={message.id} message={message} onProgress={scrollToLatestAuto} onUndo={undoAssistantTurn} />
         ))}
         {busy || liveAssistantMessage ? (
-          <LiveAssistantTurn activity={activity} key="live-assistant" message={displayLiveAssistantIndex >= 0 ? displayMessages[displayLiveAssistantIndex] : undefined} onProgress={() => scrollToLatest("auto")} onUndo={undoAssistantTurn} />
+          <LiveAssistantTurn activity={activity} key="live-assistant" message={displayLiveAssistantIndex >= 0 ? displayMessages[displayLiveAssistantIndex] : undefined} onProgress={scrollToLatestAuto} onUndo={undoAssistantTurn} />
         ) : null}
       </div>
       {error ? (
