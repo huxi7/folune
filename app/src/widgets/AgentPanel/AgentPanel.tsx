@@ -163,6 +163,8 @@ function AgentConversation({
   const [mentionOpen, setMentionOpen] = useState(false);
   const [approvalError, setApprovalError] = useState<string | null>(null);
   const [respondingApprovalId, setRespondingApprovalId] = useState<string | null>(null);
+  // 客户端工具 (Worker 规划 + createAiCommand) 执行中: 流已结束但会话不空闲
+  const [clientToolsRunning, setClientToolsRunning] = useState(false);
   const composerRef = useRef<HTMLDivElement>(null);
   const messageListRef = useRef<HTMLDivElement>(null);
   const manuallyApprovedToolCalls = useRef(new Set<string>());
@@ -226,7 +228,16 @@ function AgentConversation({
     transport,
     sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
     onFinish: ({ message }) => {
-      void executePendingClientTools(message).finally(onThreadUpdated);
+      // 客户端工具执行期间必须计入 busy: 流已结束 (status=ready), 但 Worker
+      // 规划 + createAiCommand 两次网络往返还在跑。这几百毫秒内切换会话会
+      // 卸载 AgentConversation —— command 已落库、树已改变, tool result 永久
+      // 丢失, assistant 回复永远停在 input-available (根因 13)。
+      setClientToolsRunning(true);
+      void executePendingClientTools(message)
+        .finally(() => {
+          setClientToolsRunning(false);
+          onThreadUpdated();
+        });
     },
   });
   messagesRef.current = messages;
@@ -304,7 +315,7 @@ function AgentConversation({
     }
   }
   const streamBusy = status === "submitted" || status === "streaming";
-  const busy = streamBusy || respondingApprovalId !== null;
+  const busy = streamBusy || respondingApprovalId !== null || clientToolsRunning;
   const lastMessage = messages.at(-1);
   const activity = deriveAssistantActivity(
     status,

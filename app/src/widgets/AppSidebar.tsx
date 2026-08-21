@@ -224,6 +224,8 @@ export function AppSidebar({
   const [dropTarget, setDropTarget] = useState<MemoDropTarget | null>(null);
   const [renamingNodeId, setRenamingNodeId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
+  // 进入重命名时的原始标题, 用于提交时判定「标题未变」
+  const renameOriginalRef = useRef("");
   const layoutKey = useMemo(() => treeStructureKey(memoTree), [memoTree]);
   const folderIds = useMemo(() => getFolderIds(memoTree), [layoutKey]);
   const { expandedFolders, setExpandedFolders } = useMemoTreeExpansion({
@@ -414,6 +416,7 @@ export function AppSidebar({
     setContextMenu(null);
     setRenamingNodeId(node.id);
     setRenameValue(node.title);
+    renameOriginalRef.current = node.title;
   }
 
   function cancelRename() {
@@ -428,9 +431,13 @@ export function AppSidebar({
 
     const nodeId = renamingNodeId;
     const title = renameValue.trim();
+    const original = renameOriginalRef.current;
     cancelRename();
 
-    if (title.length > 0) {
+    // 标题未变则不发请求: 双击进入重命名后点别处 blur 是常见动作 (像在
+    // 文件管理器里双击打开), 无短路会产生一次多余 PATCH 和一条「名称已
+    // 更新」的虚假成功 Toast —— 用户从未重命名任何东西。
+    if (title.length > 0 && title !== original) {
       void onRenameNode(nodeId, title);
     }
   }
