@@ -6,7 +6,7 @@
  */
 
 import { ArrowCounterClockwiseIcon } from "../../shared/design-system/icons";
-import { useState } from "react";
+import { memo, useState } from "react";
 import { getToolName, isToolUIPart } from "ai";
 
 import type {
@@ -144,7 +144,11 @@ function getAssistantPresentation(message: SuperNoteUIMessage) {
     : undefined;
 }
 
-export function ChatMessage({
+// memo 化: 历史回复在正文编辑时不应重跑 remark/rehype 全量解析。
+// react-markdown 无自身 memo 且在 render 内执行 parse + runSync, 所以
+// 拦截必须发生在这一层 —— 配合 AgentPanel 侧稳定化的 onProgress/onUndo
+// 引用才生效 (根因 6)。
+export const ChatMessage = memo(function ChatMessage({
   activity,
   message,
   onProgress,
@@ -188,7 +192,7 @@ export function ChatMessage({
       />
     </article>
   );
-}
+});
 
 export function LiveAssistantTurn({
   activity,

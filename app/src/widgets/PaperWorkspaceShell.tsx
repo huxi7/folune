@@ -113,6 +113,26 @@ export function PaperWorkspaceShell({
         return;
       }
 
+      // ---- Escape 层级仲裁 ----
+      // 壳层是 Escape 的最后一级接收者, 内层 (弹窗/菜单/@候选/原地重命名/
+      // 搜索框) 一旦已经消费掉这次 Escape, 壳层必须让行。
+      // preventDefault 只阻止浏览器默认行为, 不阻止事件继续冒泡到 window,
+      // 所以这里必须显式检查 defaultPrevented —— 否则一次 Escape 被两层
+      // 同时消费, Panel 是条件渲染 (卸载), 误关等于草稿销毁。
+      if (event.defaultPrevented) {
+        return;
+      }
+
+      // 焦点在可编辑元素内时, Escape 属于该编辑上下文, 不是关闭 Panel 的信号。
+      const active = document.activeElement;
+      if (active instanceof HTMLElement && (
+        active.isContentEditable ||
+        active instanceof HTMLInputElement ||
+        active instanceof HTMLTextAreaElement
+      )) {
+        return;
+      }
+
       event.preventDefault();
       if (assistantOpen) {
         onCloseAssistant();

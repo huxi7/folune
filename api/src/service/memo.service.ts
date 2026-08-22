@@ -442,8 +442,14 @@ const restoreTitle = async (
       node.title,
       accessToken,
     );
-  } catch {
-    // 回滚失败不能覆盖正文更新的原始错误，也不得记录用户标识或凭据。
+  } catch (error) {
+    // 回滚失败不能覆盖正文更新的原始错误，也不得记录用户标识或凭据；
+    // 但静默会让半写状态（标题已改、正文未改）永远无法被发现，
+    // 所以留下一条不含身份信息的可观测记录。
+    console.error(
+      `[memo] title rollback failed for node ${node.id}:`,
+      error instanceof Error ? error.message : "unknown error",
+    );
   }
 };
 

@@ -9,6 +9,7 @@ import {
   type CSSProperties,
   type ReactNode,
   useEffect,
+  useRef,
   useState,
 } from "react";
 
@@ -210,9 +211,16 @@ export function StreamingText({
     resolvingWordStyles,
   };
 
+  // onProgress 只作为「text 前进时通知」的副作用触发器, 不参与依赖判定。
+  // 放进依赖数组时, 调用方传入的内联箭头函数每次渲染都是新引用, 语义会
+  // 退化成「任何渲染都通知」—— 于是外部无关的按键都会触发 scrollTo,
+  // 把 AI 列表反复拽到底部, 用户上滑读历史无法停留。
+  const onProgressRef = useRef(onProgress);
+  onProgressRef.current = onProgress;
+
   useEffect(() => {
-    onProgress?.();
-  }, [onProgress, text]);
+    onProgressRef.current?.();
+  }, [text]);
 
   return (
     <div

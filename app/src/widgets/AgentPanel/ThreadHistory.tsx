@@ -46,7 +46,10 @@ export function ThreadHistory(props: ThreadHistoryProps) {
           maxLength={500}
           onChange={(event) => setTitle(event.target.value)}
           onKeyDown={(event) => {
-            if (event.key === "Escape") setEditingId(null);
+            if (event.key === "Escape") {
+              event.preventDefault();
+              setEditingId(null);
+            }
             if (event.key === "Enter") commitRename(thread.id);
           }}
           value={title}

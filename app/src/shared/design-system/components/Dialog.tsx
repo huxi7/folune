@@ -61,6 +61,8 @@ export function Dialog({
 
     function handleKeyDown(event: globalThis.KeyboardEvent) {
       if (event.key === "Escape") {
+        // 标记已消费, 阻止壳层 (PaperWorkspaceShell) 同一次 Escape 再关 Panel
+        event.preventDefault();
         onOpenChangeRef.current(false);
         return;
       }
@@ -86,11 +88,22 @@ export function Dialog({
 
       const firstElement = focusableElements[0];
       const lastElement = focusableElements.at(-1);
+      const active = document.activeElement;
 
-      if (event.shiftKey && document.activeElement === firstElement) {
+      // ---- 不变量: 焦点必须仍在 panel 内 ----
+      // 只比对首/尾元素是不够的: 焦点停在 panel 容器自身 (tabIndex=-1) 或
+      // body 上时, 两个等值判断都不成立, Shift+Tab 直接穿出到被遮住且已锁滚
+      // 的应用界面。aria-modal 只影响读屏虚拟光标, 拦不住真实 Tab 序列。
+      if (active === null || !panelRef.current.contains(active)) {
+        event.preventDefault();
+        (event.shiftKey ? lastElement : firstElement)?.focus();
+        return;
+      }
+
+      if (event.shiftKey && active === firstElement) {
         event.preventDefault();
         lastElement?.focus();
-      } else if (!event.shiftKey && document.activeElement === lastElement) {
+      } else if (!event.shiftKey && active === lastElement) {
         event.preventDefault();
         firstElement?.focus();
       }

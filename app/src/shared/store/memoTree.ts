@@ -105,13 +105,23 @@ export function betweenSortOrders(
   return String(SORT_ORDER_GAP);
 }
 
+/**
+ * 只克隆「根 → 目标」这一条祖先路径, 其余子树保持原引用。
+ *
+ * 剪枝前: 凡有 children 的节点无条件重建, 即使目标不在该子树内 —— 于是
+ * 正文草稿的每一个字符都触发全树 O(N) 克隆 + 全部可见行重渲染, 树越大
+ * 打字越卡。剪枝后未命中的子树引用不变, 下游 memo 得以生效。
+ */
 export function updateNode(
   nodes: readonly MemoTreeNode[],
   targetId: string,
   updater: (node: MemoTreeNode) => MemoTreeNode,
 ): MemoTreeNode[] {
-  return nodes.map((node) => {
+  let changed = false;
+
+  const next = nodes.map((node) => {
     if (node.id === targetId) {
+      changed = true;
       return updater(node);
     }
 
@@ -119,11 +129,18 @@ export function updateNode(
       return node;
     }
 
-    return {
-      ...node,
-      children: updateNode(node.children, targetId, updater),
-    };
+    const nextChildren = updateNode(node.children, targetId, updater);
+
+    // 子树内没有命中目标时保持原引用, 不产生新对象
+    if (nextChildren === node.children) {
+      return node;
+    }
+
+    changed = true;
+    return { ...node, children: nextChildren };
   });
+
+  return changed ? next : (nodes as MemoTreeNode[]);
 }
 
 export function insertNode(

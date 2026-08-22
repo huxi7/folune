@@ -6,7 +6,8 @@
  */
 
 import { CaretDownIcon, ShieldCheckIcon } from "../../shared/design-system/icons";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useDismissable } from "../../shared/design-system/useDismissable";
 
 import {
   getAiSettings,
@@ -69,13 +70,9 @@ export function PermissionModeControl({
     };
   }, [accessToken, beginLoad, failPermission, resolvePermission, toast]);
 
-  useEffect(() => {
-    const close = (event: PointerEvent) => {
-      if (!shellRef.current?.contains(event.target as Node)) setOpen(false);
-    };
-    document.addEventListener("pointerdown", close);
-    return () => document.removeEventListener("pointerdown", close);
-  }, []);
+  const closeMenu = useCallback(() => setOpen(false), []);
+
+  useDismissable({ onDismiss: closeMenu, open, shellRef });
 
   const changeMode = async (nextMode: AiPermissionMode) => {
     if (saving || nextMode === mode) {

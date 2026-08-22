@@ -11,12 +11,14 @@ import {
   SignOutIcon,
 } from "../icons";
 import {
+  useCallback,
   useEffect,
   useId,
   useRef,
   useState,
   type KeyboardEvent,
 } from "react";
+import { useDismissable } from "../useDismissable";
 
 import { UserAvatar, UserButton } from "./UserButton";
 
@@ -46,35 +48,20 @@ export function UserMenu({
   const [actionError, setActionError] = useState("");
   const [open, setOpen] = useState(false);
 
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
+  const closeMenu = useCallback(() => setOpen(false), []);
 
-    function handlePointerDown(event: PointerEvent) {
-      if (!shellRef.current?.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    }
-
-    function handleEscape(event: globalThis.KeyboardEvent) {
-      if (event.key === "Escape") {
-        setOpen(false);
-        triggerRef.current?.focus();
-      }
-    }
-
-    document.addEventListener("pointerdown", handlePointerDown);
-    document.addEventListener("keydown", handleEscape);
-
-    return () => {
-      document.removeEventListener("pointerdown", handlePointerDown);
-      document.removeEventListener("keydown", handleEscape);
-    };
-  }, [open]);
+  useDismissable({
+    focusRef: triggerRef,
+    onDismiss: closeMenu,
+    open,
+    shellRef,
+  });
 
   function closeAndRun(action: () => void) {
     setActionError("");
+    // 焦点先离开即将被卸载的 menuitem, 否则 activeElement 退回 body,
+    // 下游 Dialog 会把 body 记成 previousActiveElement, 关闭时无处归还。
+    triggerRef.current?.focus();
     setOpen(false);
     action();
   }

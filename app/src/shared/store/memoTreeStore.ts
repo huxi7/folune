@@ -285,9 +285,14 @@ export const useMemoTreeStore = create<MemoTreeState>()((set, get) => ({
         const created = await createMemoRequest(accessToken, input);
         let reconciled = created;
 
+        // ---- id 身份映射: 无条件记录 ----
+        // 节点身份能跨越整树重取, 只有视觉 set() 受 generation 门禁,
+        // 映射本身必须无条件落账, 否则在飞期间的 fetchTree/reset 会把
+        // 临时 id -> 真实 id 的对应关系连坐清掉, 编辑器继续用临时 id 寻址。
+        resolvedMemoIds.set(optimistic.id, created.id);
+        memoClientKeys.set(created.id, optimistic.id);
+
         if (generation === treeGeneration) {
-          resolvedMemoIds.set(optimistic.id, created.id);
-          memoClientKeys.set(created.id, optimistic.id);
           set((state) => {
             const current = findNode(state.nodes, optimistic.id);
 
@@ -306,8 +311,10 @@ export const useMemoTreeStore = create<MemoTreeState>()((set, get) => ({
 
         return reconciled;
       } catch (error) {
+        // 失败记账同属身份层, 不受 generation 门禁 (同上)
+        failedMemoCreations.set(optimistic.id, error);
+
         if (generation === treeGeneration) {
-          failedMemoCreations.set(optimistic.id, error);
           set((state) => ({
             nodes: removeNode(state.nodes, optimistic.id),
           }));

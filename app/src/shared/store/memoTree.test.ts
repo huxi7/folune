@@ -68,6 +68,29 @@ const nestedTree = [
 ];
 
 describe("memoTree", () => {
+  test("updateNode 只克隆祖先路径，未命中的兄弟子树保持原引用", () => {
+    const untouchedSibling = nestedTree[0];
+    const updated = updateNode(nestedTree, "deep-memo", (node) => ({
+      ...node,
+      title: "renamed",
+    }));
+
+    // 兄弟节点必须是同一个引用 —— 否则每次正文按键都会重建全树，
+    // 树越大打字越卡（根因 5）
+    expect(updated[0]).toBe(untouchedSibling);
+
+    // 祖先路径必须是新对象，变更才能被 Zustand 订阅者看到
+    const nextFolder = updated[1];
+    const previousFolder = nestedTree[1];
+    expect(nextFolder).not.toBe(previousFolder);
+    expect(nextFolder?.children[0]).not.toBe(previousFolder?.children[0]);
+    expect(nextFolder?.children[0]?.children[0]?.title).toBe("renamed");
+  });
+
+  test("updateNode 目标不存在时返回原数组引用", () => {
+    expect(updateNode(nestedTree, "missing-id", (node) => node)).toBe(nestedTree);
+  });
+
   test("finds nodes and siblings at arbitrary depth", () => {
     expect(findNode(nestedTree, "deep-memo")?.parent_id).toBe("child-folder");
     expect(findSiblings(nestedTree, "child-folder")?.map((node) => node.id)).toEqual([

@@ -73,6 +73,52 @@ const placeCaretAtEnd = (element: HTMLDivElement) => {
   selection.addRange(range);
 };
 
+/**
+ * 以「纯文本偏移」记录光标位置。
+ *
+ * DOM 会被 replaceChildren 整体重建, 旧的 Range 随节点一起失效, 所以不能
+ * 保存 Range 本身 —— 只有跨重建仍然稳定的量 (光标前的字符数) 可用。
+ */
+const readCaretOffset = (element: HTMLDivElement): number | null => {
+  const selection = window.getSelection();
+  if (selection === null || selection.rangeCount === 0) return null;
+
+  const range = selection.getRangeAt(0);
+  if (!element.contains(range.startContainer)) return null;
+
+  const probe = document.createRange();
+  probe.selectNodeContents(element);
+  probe.setEnd(range.startContainer, range.startOffset);
+  return probe.toString().length;
+};
+
+const placeCaretAtOffset = (element: HTMLDivElement, offset: number) => {
+  const selection = window.getSelection();
+  if (selection === null) return;
+
+  const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+  let consumed = 0;
+  let node = walker.nextNode();
+
+  while (node !== null) {
+    const length = node.textContent?.length ?? 0;
+
+    if (consumed + length >= offset) {
+      const range = document.createRange();
+      range.setStart(node, offset - consumed);
+      range.collapse(true);
+      selection.removeAllRanges();
+      selection.addRange(range);
+      return;
+    }
+
+    consumed += length;
+    node = walker.nextNode();
+  }
+
+  placeCaretAtEnd(element);
+};
+
 const renderValue = (
   element: HTMLDivElement,
   value: string,
@@ -132,10 +178,21 @@ export function MentionInput({
     if (element === null) return;
     if (lastDomValue.current === value && lastMentionSignature.current === mentionSignature) return;
     const restoreCaret = document.activeElement === element;
+    // 删除正文中间的 @token 时 text 未变但 mentions 变了, 于是走到这里重建
+    // DOM。无条件 placeCaretAtEnd 会把光标从编辑位置弹到末尾 —— 必须按
+    // 纯文本偏移原位恢复。
+    const caretOffset = restoreCaret ? readCaretOffset(element) : null;
     renderValue(element, value, mentions);
     lastDomValue.current = value;
     lastMentionSignature.current = mentionSignature;
-    if (restoreCaret) placeCaretAtEnd(element);
+
+    if (restoreCaret) {
+      if (caretOffset === null) {
+        placeCaretAtEnd(element);
+      } else {
+        placeCaretAtOffset(element, caretOffset);
+      }
+    }
   }, [mentionSignature, mentions, value]);
 
   const emitCurrentValue = () => {
