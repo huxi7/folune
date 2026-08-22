@@ -56,7 +56,7 @@ export function AgentProcessDisclosure({
         >
           <ThinkingMark aria-hidden="true" size={14} />
           <span>思考过程</span>
-          <CaretRightIcon aria-hidden="true" size={13} />
+          <CaretRightIcon aria-hidden="true" size={14} />
         </button>
       )}
       <div

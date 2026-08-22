@@ -93,6 +93,7 @@ import { PermissionModeControl } from "./PermissionModeControl";
 import { ThreadHistory } from "./ThreadHistory";
 import { normalizeAgentToolName } from "./toolPresentation";
 import { useAiThreads } from "./useAiThreads";
+import { useMemoSearch } from "../useMemoSearch";
 
 type AgentPanelProps = {
   accessToken: string;
@@ -181,13 +182,15 @@ function AgentConversation({
   const reconcileAiCommand = useMemoTreeStore((state) => state.reconcileAiCommand);
   const rollbackAiToolCall = useMemoTreeStore((state) => state.rollbackAiToolCall);
   const pinnedIds = thread.references.map((reference) => reference.memo_id);
+  const mentionBodyHitIds = useMemoSearch(accessToken, memoTree, mentionQuery, 20);
   const mentionResults = useMemo(
     () => getMentionResults(
       memoTree,
       mentionQuery,
       sources.map((source) => source.id),
+      mentionBodyHitIds,
     ),
-    [memoTree, mentionQuery, sources],
+    [memoTree, mentionBodyHitIds, mentionQuery, sources],
   );
   const inlineMentions = useMemo(
     () => sources
@@ -545,10 +548,10 @@ function AgentConversation({
         ) : null}
       </div>
       {error ? (
-        <div className="agent-error-state" role="alert"><WarningCircleIcon aria-hidden="true" size={17} /><div><strong>{errorCopy.title}</strong><p>{errorCopy.description}</p></div></div>
+        <div className="agent-error-state" role="alert"><WarningCircleIcon aria-hidden="true" size={16} /><div><strong>{errorCopy.title}</strong><p>{errorCopy.description}</p></div></div>
       ) : null}
       {approvalError ? (
-        <div className="agent-error-state" role="alert"><WarningCircleIcon aria-hidden="true" size={17} /><div><strong>确认失败</strong><p>{approvalError}</p></div></div>
+        <div className="agent-error-state" role="alert"><WarningCircleIcon aria-hidden="true" size={16} /><div><strong>确认失败</strong><p>{approvalError}</p></div></div>
       ) : null}
       {pendingApproval !== undefined ? (
         pendingApproval.approval.id !== respondingApprovalId
@@ -560,7 +563,7 @@ function AgentConversation({
       <form className="agent-composer" onSubmit={handleSubmit}>
         {mentionOpen ? <MentionMenu activeIndex={mentionIndex} onSelect={selectMention} results={mentionResults} /> : null}
         {visibleContextSources.length > 0 ? <div className="agent-composer-sources">{visibleContextSources.map((source) => {
-          return <span key={source.id}><AtIcon size={12} /><strong>{source.title}</strong><button aria-label={`${source.pinned ? "取消置顶" : "置顶引用"} ${source.title}`} onClick={() => void onReferencesChange(source.pinned ? pinnedIds.filter((id) => id !== source.id) : [...pinnedIds, source.id])} type="button"><PushPinIcon fill={source.pinned ? "currentColor" : "none"} size={11} /></button><button aria-label={`移除引用 ${source.title}`} onClick={() => void (async () => { if (source.pinned) await onReferencesChange(pinnedIds.filter((id) => id !== source.id)); if (source.current) setSuppressedCurrentMemoId(source.id); setSources((current) => current.filter((item) => item.id !== source.id)); })()} type="button"><XIcon size={11} /></button></span>;
+          return <span key={source.id}><AtIcon size={14} /><strong>{source.title}</strong><button aria-label={`${source.pinned ? "取消置顶" : "置顶引用"} ${source.title}`} onClick={() => void onReferencesChange(source.pinned ? pinnedIds.filter((id) => id !== source.id) : [...pinnedIds, source.id])} type="button"><PushPinIcon fill={source.pinned ? "currentColor" : "none"} size={14} /></button><button aria-label={`移除引用 ${source.title}`} onClick={() => void (async () => { if (source.pinned) await onReferencesChange(pinnedIds.filter((id) => id !== source.id)); if (source.current) setSuppressedCurrentMemoId(source.id); setSources((current) => current.filter((item) => item.id !== source.id)); })()} type="button"><XIcon size={14} /></button></span>;
         })}</div> : null}
         <MentionInput aria-label="输入消息" className="agent-chat-input" mentions={inlineMentions} onKeyDown={handleComposerKeyDown} onValueChange={handleInputChange} placeholder="输入消息，@ 引用笔记…" ref={composerRef} value={inputValue} />
         <div className="agent-composer-footer">

@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 AI Run api/chat organize、当前 memo、NotesWorkspace flush/标题接纳、Memo Store 局部归并、WorkspaceChrome 分流与 Toast
+ * [INPUT]: 依赖 AI Run api/chat organize、轻量当前节点与按需正文、NotesWorkspace flush/标题接纳、Memo Store 局部归并、WorkspaceChrome 与 Toast
  * [OUTPUT]: 对外提供当前/最近 Organize Run、整理中状态、触发/确认/拒绝/撤销命令及 ⌘/Ctrl+Enter 快捷键
  * [POS]: pages 层 AI 整理生命周期 Hook；成功/撤销只唤醒文件库、待确认只唤醒 AI，stale/失败不强迫打开工具
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -14,7 +14,7 @@ import {
   undoAiRun,
   type AiRun,
 } from "../shared/api/ai";
-import type { MemoTreeNode } from "../shared/api/memo";
+import type { MemoDetailNode, MemoTreeNode } from "../shared/api/memo";
 import { useToast } from "../shared/design-system/components";
 import { findNode } from "../shared/store/memoTree";
 import { useMemoTreeStore } from "../shared/store/memoTreeStore";
@@ -37,6 +37,7 @@ type UseMemoOrganizeInput = {
   accessToken: string;
   active: boolean;
   currentMemo: MemoTreeNode | null;
+  currentDocument: MemoDetailNode | null;
   onCommittedTitle: () => void;
   userId: string;
   workspaceRef: RefObject<NotesWorkspaceHandle | null>;
@@ -46,6 +47,7 @@ export function useMemoOrganize({
   accessToken,
   active,
   currentMemo,
+  currentDocument,
   onCommittedTitle,
   userId,
   workspaceRef,
@@ -115,7 +117,7 @@ export function useMemoOrganize({
       }
       await workspaceRef.current.flushCurrentDraft();
       const latest = findNode(useMemoTreeStore.getState().nodes, currentMemo.id);
-      if (!isMemo(latest) || latest.memo?.content_mdx.trim().length === 0) {
+      if (!isMemo(latest) || currentDocument?.memo.content_mdx.trim().length === 0) {
         toast({ title: "空白备忘录无需整理", variant: "info" });
         return;
       }
@@ -133,7 +135,7 @@ export function useMemoOrganize({
     } finally {
       setOrganizing(false);
     }
-  }, [currentMemo, mergeRun, organizing, threadId, toast, workspaceRef]);
+  }, [currentDocument?.memo.content_mdx, currentMemo, mergeRun, organizing, threadId, toast, workspaceRef]);
 
   const runCommand = useCallback(async (
     command: "apply" | "reject" | "undo",

@@ -229,7 +229,7 @@ export function Select({
                 type="button"
               >
                 {IconComponent ? (
-                  <IconComponent aria-hidden="true" size={17} />
+                  <IconComponent aria-hidden="true" size={16} />
                 ) : null}
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-medium">{option.label}</span>
@@ -240,7 +240,7 @@ export function Select({
                   ) : null}
                 </span>
                 {showSelection && isSelected ? (
-                  <CheckIcon aria-hidden="true" size={15} />
+                  <CheckIcon aria-hidden="true" size={14} />
                 ) : null}
               </button>
             );

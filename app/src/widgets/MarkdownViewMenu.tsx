@@ -199,7 +199,7 @@ export function MarkdownViewMenu({
             >
               <span>实时预览</span>
               {editingMode === "live" ? (
-                <CheckIcon aria-hidden="true" size={15} />
+                <CheckIcon aria-hidden="true" size={14} />
               ) : null}
             </button>
             <button
@@ -211,7 +211,7 @@ export function MarkdownViewMenu({
             >
               <span>源码模式</span>
               {editingMode === "source" ? (
-                <CheckIcon aria-hidden="true" size={15} />
+                <CheckIcon aria-hidden="true" size={14} />
               ) : null}
             </button>
 

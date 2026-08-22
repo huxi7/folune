@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 Zustand、shared/api/memo/ai、memoTree 领域算法与 Worker plan 转换后的 AI Command 投影/事实对账纯函数
- * [OUTPUT]: 对外提供 active tree、真人乐观 CRUD、AI tool_call 投影/回滚、command 幂等对账与草稿并发保护
- * [POS]: app/src/shared/store 的 active 备忘录单一数据源；Worker 不复制状态，api command output 才是 AI 写事实
+ * [INPUT]: 依赖 Zustand、轻量 memo/ai API、memoTree 算法、memoDocumentStore 与 AI Command 投影/事实对账
+ * [OUTPUT]: 对外提供不含正文的 active tree、真人乐观结构 CRUD、AI tool_call 结构投影/回滚与 command 幂等对账
+ * [POS]: app/src/shared/store 的目录结构唯一状态源；正文交给 memoDocumentStore，api command output 才是 AI 写事实
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -15,10 +15,10 @@ import {
   moveMemoNode,
   restoreMemoNode,
   softDeleteMemoNode,
-  updateMemo,
   updateMemoNode,
   type CreateMemoFolderInput,
   type CreateMemoInput,
+  type MemoDetailNode,
   type MemoWriteOptions,
   type MemoTreeNode,
   type MoveMemoNodeInput,
@@ -37,6 +37,8 @@ import {
   sortNodes,
   updateNode,
 } from "./memoTree";
+import { summarizeMemoDetail } from "../api/memo.mapper";
+import { useMemoDocumentStore } from "./memoDocumentStore";
 import { reconcileAiRunTree } from "./aiRunTree";
 import { reconcileAiCommandTree } from "./aiCommandTree";
 import {
@@ -73,20 +75,22 @@ export type MemoTreeState = {
   restoreNode(accessToken: string, nodeId: string): Promise<MemoTreeNode>;
   getMemoClientKey(nodeId: string): string;
   resolveMemoId(nodeId: string): string;
+  waitForMemoId(nodeId: string): Promise<string>;
   updateMemoContentLocal(nodeId: string, content: string): void;
   updateMemoTitleLocal(nodeId: string, title: string): void;
+  mergeMemoDetail(detail: MemoDetailNode): void;
   saveMemoDraft(
     accessToken: string,
     nodeId: string,
     input: UpdateMemoInput,
     options?: MemoWriteOptions,
-  ): Promise<MemoTreeNode>;
+  ): Promise<MemoDetailNode>;
   saveMemoContent(
     accessToken: string,
     nodeId: string,
     content: string,
     options?: MemoWriteOptions,
-  ): Promise<MemoTreeNode>;
+  ): Promise<MemoDetailNode>;
   reconcileAiRun(run: AiRun): void;
   reconcileAiCommand(command: AiCommand): void;
   projectAiToolCall(
@@ -181,7 +185,6 @@ const optimisticNode = (
     id,
     memo: nodeType === "memo"
       ? {
-          content_mdx: content,
           created_at: now,
           excerpt: content.length === 0 ? null : content.slice(0, 240),
           metadata: {},
@@ -214,40 +217,6 @@ const mergeServerNode = (
   memo: serverNode.memo ?? currentNode.memo,
 });
 
-const reconcileCreatedMemo = (
-  currentNode: MemoTreeNode,
-  serverNode: MemoTreeNode,
-  input: CreateMemoInput,
-): MemoTreeNode => {
-  const initialContent = input.content_mdx ?? "";
-  const localTitleChanged = currentNode.title !== input.title;
-  const localContentChanged =
-    currentNode.memo?.content_mdx !== initialContent;
-  const localPositionChanged =
-    currentNode.parent_id !== input.parent_id ||
-    currentNode.sort_order !== (input.sort_order ?? currentNode.sort_order);
-
-  return {
-    ...serverNode,
-    children: currentNode.children,
-    parent_id: localPositionChanged
-      ? currentNode.parent_id
-      : serverNode.parent_id,
-    sort_order: localPositionChanged
-      ? currentNode.sort_order
-      : serverNode.sort_order,
-    title: localTitleChanged ? currentNode.title : serverNode.title,
-    memo: serverNode.memo === null || currentNode.memo === null
-      ? serverNode.memo ?? currentNode.memo
-      : {
-          ...serverNode.memo,
-          content_mdx: localContentChanged
-            ? currentNode.memo.content_mdx
-            : serverNode.memo.content_mdx,
-        },
-  };
-};
-
 const rekeyMemoNode = (
   node: MemoTreeNode,
   nodeId: string,
@@ -271,6 +240,14 @@ export const useMemoTreeStore = create<MemoTreeState>()((set, get) => ({
     }
 
     const optimistic = optimisticNode(previousNodes, "memo", input);
+    useMemoDocumentStore.getState().primeMemo({
+      ...optimistic,
+      children: [],
+      memo: {
+        ...(optimistic.memo!),
+        content_mdx: input.content_mdx ?? "",
+      },
+    });
     set({
       nodes: insertNode(
         previousNodes,
@@ -282,7 +259,8 @@ export const useMemoTreeStore = create<MemoTreeState>()((set, get) => ({
 
     const committed = (async () => {
       try {
-        const created = await createMemoRequest(accessToken, input);
+        const createdDetail = await createMemoRequest(accessToken, input);
+        const created = summarizeMemoDetail(createdDetail);
         let reconciled = created;
 
         // ---- id 身份映射: 无条件记录 ----
@@ -291,6 +269,11 @@ export const useMemoTreeStore = create<MemoTreeState>()((set, get) => ({
         // 临时 id -> 真实 id 的对应关系连坐清掉, 编辑器继续用临时 id 寻址。
         resolvedMemoIds.set(optimistic.id, created.id);
         memoClientKeys.set(created.id, optimistic.id);
+        useMemoDocumentStore.getState().rekeyMemo(
+          optimistic.id,
+          createdDetail,
+          input.content_mdx ?? "",
+        );
 
         if (generation === treeGeneration) {
           set((state) => {
@@ -300,7 +283,16 @@ export const useMemoTreeStore = create<MemoTreeState>()((set, get) => ({
               return state;
             }
 
-            reconciled = reconcileCreatedMemo(current, created, input);
+            const localPositionChanged =
+              current.parent_id !== input.parent_id ||
+              current.sort_order !== (input.sort_order ?? current.sort_order);
+            reconciled = {
+              ...created,
+              children: current.children,
+              parent_id: localPositionChanged ? current.parent_id : created.parent_id,
+              sort_order: localPositionChanged ? current.sort_order : created.sort_order,
+              title: current.title !== input.title ? current.title : created.title,
+            };
             return {
               nodes: sortNodes(
                 replaceNode(state.nodes, optimistic.id, reconciled, true),
@@ -319,6 +311,7 @@ export const useMemoTreeStore = create<MemoTreeState>()((set, get) => ({
             nodes: removeNode(state.nodes, optimistic.id),
           }));
         }
+        useMemoDocumentStore.getState().removeMemos(new Set([optimistic.id]));
 
         throw error;
       } finally {
@@ -579,17 +572,12 @@ export const useMemoTreeStore = create<MemoTreeState>()((set, get) => ({
     return resolveMemoId(nodeId);
   },
 
+  waitForMemoId(nodeId) {
+    return resolveCommittedMemoId(nodeId);
+  },
+
   updateMemoContentLocal(nodeId, content) {
-    const targetNodeId = resolveMemoId(nodeId);
-    set((state) => ({
-      nodes: updateNode(state.nodes, targetNodeId, (node) =>
-        node.memo === null
-          ? node
-          : {
-              ...node,
-              memo: { ...node.memo, content_mdx: content },
-            }),
-    }));
+    useMemoDocumentStore.getState().updateContentLocal(resolveMemoId(nodeId), content);
   },
 
   updateMemoTitleLocal(nodeId, title) {
@@ -602,84 +590,45 @@ export const useMemoTreeStore = create<MemoTreeState>()((set, get) => ({
     }));
   },
 
-  async saveMemoDraft(accessToken, nodeId, input, options) {
-    const generation = treeGeneration;
-    const localNodeId = resolveMemoId(nodeId);
-    const currentNode = findNode(get().nodes, localNodeId);
-
-    if (currentNode?.memo === null || currentNode === null) {
-      throw new Error("要保存的备忘录不存在。");
-    }
-
-    if (input.title === undefined && input.content_mdx === undefined) {
-      throw new Error("没有需要保存的备忘录字段。");
-    }
-
-    const previousTitle = currentNode.title;
-
-    if (input.title !== undefined) {
-      set((state) => ({
-        nodes: updateNode(state.nodes, localNodeId, (node) => ({
-          ...node,
-          title: input.title ?? node.title,
-        })),
-      }));
-    }
-
-    const targetNodeId = await resolveCommittedMemoId(nodeId);
-    let updated: MemoTreeNode;
-
-    try {
-      updated = await updateMemo(accessToken, targetNodeId, input, options);
-    } catch (error) {
-      if (generation === treeGeneration && input.title !== undefined) {
-        set((state) => ({
-          nodes: updateNode(state.nodes, targetNodeId, (node) =>
-            node.title === input.title
-              ? { ...node, title: previousTitle }
-              : node),
-        }));
-      }
-
-      throw error;
-    }
-
-    if (generation === treeGeneration) {
-      set((state) => {
-        const current = findNode(state.nodes, targetNodeId);
-
-        if (current?.memo === null || current === null) {
-          return state;
-        }
-
-        const titleStillCurrent =
-          input.title !== undefined && current.title === input.title;
-        const contentStillCurrent =
-          input.content_mdx !== undefined &&
-          current.memo.content_mdx === input.content_mdx;
-
-        if (!titleStillCurrent && !contentStillCurrent) {
-          return state;
-        }
-
-        return {
-          nodes: updateNode(state.nodes, targetNodeId, (currentNode) => ({
-            ...currentNode,
-            title: titleStillCurrent ? updated.title : currentNode.title,
-            memo: contentStillCurrent
-              ? updated.memo ?? currentNode.memo
-              : currentNode.memo,
-            updated_at: updated.updated_at,
-            revision: updated.revision,
-          })),
-        };
-      });
-    }
-
-    return updated;
+  mergeMemoDetail(detail) {
+    const summary = summarizeMemoDetail(detail);
+    set((state) => ({
+      nodes: updateNode(state.nodes, detail.id, (current) => ({
+        ...current,
+        ...summary,
+        children: current.children,
+        title: current.title === detail.title ? detail.title : current.title,
+      })),
+    }));
   },
 
-  async saveMemoContent(accessToken, nodeId, content, options) {
+  async saveMemoDraft(accessToken, nodeId, input, options) {
+    const localNodeId = resolveMemoId(nodeId);
+    const previousTitle = findNode(get().nodes, localNodeId)?.title;
+    if (input.title !== undefined) get().updateMemoTitleLocal(localNodeId, input.title);
+    const targetNodeId = await resolveCommittedMemoId(nodeId);
+    let detail: MemoDetailNode;
+    try {
+      detail = await useMemoDocumentStore.getState().saveMemoDraft(
+        accessToken,
+        targetNodeId,
+        input,
+        options,
+      );
+    } catch (error) {
+      if (input.title !== undefined && previousTitle !== undefined) {
+        set((state) => ({
+          nodes: updateNode(state.nodes, targetNodeId, (node) =>
+            node.title === input.title ? { ...node, title: previousTitle } : node),
+        }));
+      }
+      throw error;
+    }
+    get().mergeMemoDetail(detail);
+    return detail;
+  },
+
+  saveMemoContent(accessToken, nodeId, content, options) {
     return get().saveMemoDraft(
       accessToken,
       nodeId,
@@ -743,8 +692,7 @@ export const useMemoTreeStore = create<MemoTreeState>()((set, get) => ({
       return;
     }
     if (operation === "edit_memo" && typeof input.content_mdx === "string" && before.memo !== null) {
-      aiProjections.set(toolCallId, { before, operation, optimisticId: null, projected: { content_mdx: input.content_mdx } });
-      set({ nodes: updateNode(currentNodes, before.id, (node) => node.memo === null ? node : ({ ...node, memo: { ...node.memo, content_mdx: input.content_mdx as string } })) });
+      aiProjections.set(toolCallId, { before, operation, optimisticId: null, projected: {} });
       return;
     }
     if (operation === "trash_node") {
@@ -800,6 +748,7 @@ export const useMemoTreeStore = create<MemoTreeState>()((set, get) => ({
     memoClientKeys.clear();
     reconciledAiCommandStates.clear();
     aiProjections.clear();
+    useMemoDocumentStore.getState().reset();
     set({ nodes: [] });
   },
 }));

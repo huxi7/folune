@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖唯一 supabase-rest 适配器、memo DTO 行校验、memo 领域创建/更新类型与请求期用户 access token
- * [OUTPUT]: 对外提供强制 user_id 的 active/回收站查询、memo_nodes/memos CRUD、删除生命周期 RPC 与脱敏存储错误
+ * [OUTPUT]: 对外提供强制 user_id 的轻量 tree/正文关键词/回收站查询、memo_nodes/memos CRUD、删除生命周期 RPC 与脱敏存储错误
  * [POS]: repository 层备忘录 PostgREST 数据访问器，只表达表/RPC 操作与返回校验，不判断树、恢复可见性或业务状态
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -9,6 +9,7 @@ import { HttpError } from "../common/http-error.ts";
 import {
   emptyMemoTrashRpcResultSchema,
   memoContentRowsSchema,
+  memoContentSummaryRowsSchema,
   memoNodeRowsSchema,
   memoSortOrderRowsSchema,
   memoTrashExcerptRowsSchema,
@@ -28,6 +29,7 @@ import type {
   CreateMemoContentData,
   CreateMemoNodeData,
   MemoContent,
+  MemoContentSummary,
   MemoNode,
   UpdateMemoContentData,
   UpdateMemoNodeData,
@@ -60,6 +62,27 @@ const parseContentRows = (payload: unknown): MemoContent[] => {
 
   return parsed.data;
 };
+
+const parseContentSummaryRows = (payload: unknown): MemoContentSummary[] => {
+  const parsed = memoContentSummaryRowsSchema.safeParse(payload ?? []);
+
+  if (!parsed.success) {
+    throw new HttpError(
+      502,
+      "SUPABASE_REST_ERROR",
+      "Supabase REST returned invalid memo content summary data",
+    );
+  }
+
+  return parsed.data;
+};
+
+const literalIlikePattern = (query: string): string =>
+  `*${query
+    .replaceAll("\\", "\\\\")
+    .replaceAll("*", "\\*")
+    .replaceAll("%", "\\%")
+    .replaceAll("_", "\\_")}*`;
 
 const trashStorageError = (): HttpError =>
   new HttpError(
@@ -112,15 +135,35 @@ export const memoRepository = {
     return parseNodeRows(payload);
   },
 
+  async listContentSummaries(
+    userId: string,
+    accessToken: string,
+  ): Promise<MemoContentSummary[]> {
+    const query = createPostgrestQuery({
+      select: [
+        "node_id",
+        "user_id",
+        "excerpt",
+        "word_count",
+        "metadata",
+        "created_at",
+        "updated_at",
+      ],
+      eq: { user_id: userId },
+    });
+    const payload = await supabaseRest<unknown>(`memos${query}`, {
+      accessToken,
+    });
+
+    return parseContentSummaryRows(payload);
+  },
+
   async listContents(
     userId: string,
     accessToken: string,
     nodeIds: readonly string[],
   ): Promise<MemoContent[]> {
-    if (nodeIds.length === 0) {
-      return [];
-    }
-
+    if (nodeIds.length === 0) return [];
     const query = createPostgrestQuery({
       select: "*",
       eq: { user_id: userId },
@@ -129,8 +172,35 @@ export const memoRepository = {
     const payload = await supabaseRest<unknown>(`memos${query}`, {
       accessToken,
     });
-
     return parseContentRows(payload);
+  },
+
+  async searchContentSummaries(
+    userId: string,
+    searchQuery: string,
+    limit: number,
+    accessToken: string,
+  ): Promise<MemoContentSummary[]> {
+    const query = createPostgrestQuery({
+      select: [
+        "node_id",
+        "user_id",
+        "excerpt",
+        "word_count",
+        "metadata",
+        "created_at",
+        "updated_at",
+      ],
+      eq: { user_id: userId },
+      ilike: { content_mdx: literalIlikePattern(searchQuery) },
+      order: { column: "updated_at", ascending: false },
+      limit,
+    });
+    const payload = await supabaseRest<unknown>(`memos${query}`, {
+      accessToken,
+    });
+
+    return parseContentSummaryRows(payload);
   },
 
   async findActiveNodeById(

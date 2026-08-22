@@ -33,7 +33,6 @@ const makeNode = (
   id,
   memo: nodeType === "memo"
     ? {
-        content_mdx: `${title}正文`,
         created_at: TIME,
         excerpt: title,
         metadata: {},
@@ -170,7 +169,7 @@ describe("memo tool Worker planner", () => {
     const readPlan = planMemoTool("read_memo", { node_id: MEMO_A_ID }, tree);
     expect(readPlan).toMatchObject({
       kind: "read_memo",
-      output: { content_mdx: "影响力正文", id: MEMO_A_ID },
+      nodeId: MEMO_A_ID,
     });
 
     expect(() => planMemoTool("edit_node", {

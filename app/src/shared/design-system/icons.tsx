@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 lucide-react 的圆角描边图标与 LucideIcon/LucideProps 类型
- * [OUTPUT]: 对外提供 SuperNote 稳定语义图标别名、统一 Icon 类型与本地 Google 品牌标记
+ * [OUTPUT]: 对外提供 SuperNote 稳定语义图标别名、14/16/20/24 四档尺寸契约、统一 Icon 类型与本地 Google 品牌标记
  * [POS]: app/src/shared/design-system 的图标语言边界；业务层只依赖领域名称，第三方图形选择与品牌例外在此收口
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -68,71 +68,84 @@ import {
   type LucideIcon,
   type LucideProps,
 } from "lucide-react";
-import { forwardRef } from "react";
+import {
+  forwardRef,
+  type ForwardRefExoticComponent,
+  type RefAttributes,
+} from "react";
 
-export type Icon = LucideIcon;
+export const ICON_SIZES = [14, 16, 20, 24] as const;
+export type IconSize = (typeof ICON_SIZES)[number];
+export type IconProps = Omit<LucideProps, "size"> & { size?: IconSize };
+export type Icon = ForwardRefExoticComponent<IconProps & RefAttributes<SVGSVGElement>>;
 
-export const ArchiveIcon = Archive;
-export const AssistantPanelCloseIcon = PanelRightClose;
-export const AssistantPanelOpenIcon = PanelRightOpen;
-export const ArrowCounterClockwiseIcon = RotateCcw;
-export const ArrowLeftIcon = ArrowLeft;
-export const ArrowRightIcon = ArrowRight;
-export const ArrowUUpLeftIcon = Undo2;
-export const ArrowUpIcon = ArrowUp;
-export const AtIcon = AtSign;
-export const BookOpenTextIcon = BookOpenText;
-export const CaretDownIcon = ChevronDown;
-export const CaretRightIcon = ChevronRight;
-export const CaretUpDownIcon = ChevronsUpDown;
-export const ChatCircleDotsIcon = MessageCircleMore;
-export const ChatsIcon = MessagesSquare;
-export const CheckCircleIcon = CircleCheck;
-export const CheckIcon = Check;
-export const CircleNotchIcon = LoaderCircle;
-export const ConfettiIcon = PartyPopper;
-export const CopyIcon = Copy;
-export const CreditCardIcon = CreditCard;
-export const DesktopIcon = Monitor;
-export const DotsThreeIcon = Ellipsis;
-export const DownloadSimpleIcon = Download;
-export const EyeIcon = Eye;
-export const EyeSlashIcon = EyeOff;
-export const FileTextIcon = FileText;
-export const FolderIcon = Folder;
-export const FolderOpenIcon = FolderOpen;
-export const GearSixIcon = Settings2;
-export const ImageSquareIcon = Image;
-export const InfoIcon = Info;
-export const MagicWandIcon = WandSparkles;
-export const MagnifyingGlassIcon = Search;
-export const MenuIcon = Menu;
-export const NewConversationIcon = MessageCirclePlus;
-export const MoonIcon = Moon;
-export const MoonStarsIcon = MoonStar;
-export const NotePencilIcon = SquarePen;
-export const PaletteIcon = Palette;
-export const PaperPlaneRightIcon = SendHorizontal;
-export const PencilSimpleIcon = Pencil;
-export const PlusIcon = Plus;
-export const PushPinIcon = Pin;
-export const ShieldCheckIcon = ShieldCheck;
-export const ShieldWarningIcon = ShieldAlert;
-export const SidebarSimpleIcon = PanelLeft;
-export const SignOutIcon = LogOut;
-export const SparkleIcon = Sparkles;
-export const StopIcon = Square;
-export const SunIcon = Sun;
-export const ToolboxIcon = Wrench;
-export const TrashIcon = Trash2;
-export const TreeStructureIcon = ListTree;
-export const UploadSimpleIcon = Upload;
-export const UserCircleIcon = CircleUserRound;
-export const WarningCircleIcon = CircleAlert;
-export const XCircleIcon = CircleX;
-export const XIcon = X;
+function defineIcon(Component: LucideIcon): Icon {
+  return forwardRef<SVGSVGElement, IconProps>(function DesignSystemIcon(props, ref) {
+    return <Component ref={ref} {...props} />;
+  });
+}
 
-export const GoogleLogoIcon = forwardRef<SVGSVGElement, LucideProps>(function GoogleLogoIcon({
+export const ArchiveIcon = defineIcon(Archive);
+export const AssistantPanelCloseIcon = defineIcon(PanelRightClose);
+export const AssistantPanelOpenIcon = defineIcon(PanelRightOpen);
+export const ArrowCounterClockwiseIcon = defineIcon(RotateCcw);
+export const ArrowLeftIcon = defineIcon(ArrowLeft);
+export const ArrowRightIcon = defineIcon(ArrowRight);
+export const ArrowUUpLeftIcon = defineIcon(Undo2);
+export const ArrowUpIcon = defineIcon(ArrowUp);
+export const AtIcon = defineIcon(AtSign);
+export const BookOpenTextIcon = defineIcon(BookOpenText);
+export const CaretDownIcon = defineIcon(ChevronDown);
+export const CaretRightIcon = defineIcon(ChevronRight);
+export const CaretUpDownIcon = defineIcon(ChevronsUpDown);
+export const ChatCircleDotsIcon = defineIcon(MessageCircleMore);
+export const ChatsIcon = defineIcon(MessagesSquare);
+export const CheckCircleIcon = defineIcon(CircleCheck);
+export const CheckIcon = defineIcon(Check);
+export const CircleNotchIcon = defineIcon(LoaderCircle);
+export const ConfettiIcon = defineIcon(PartyPopper);
+export const CopyIcon = defineIcon(Copy);
+export const CreditCardIcon = defineIcon(CreditCard);
+export const DesktopIcon = defineIcon(Monitor);
+export const DotsThreeIcon = defineIcon(Ellipsis);
+export const DownloadSimpleIcon = defineIcon(Download);
+export const EyeIcon = defineIcon(Eye);
+export const EyeSlashIcon = defineIcon(EyeOff);
+export const FileTextIcon = defineIcon(FileText);
+export const FolderIcon = defineIcon(Folder);
+export const FolderOpenIcon = defineIcon(FolderOpen);
+export const GearSixIcon = defineIcon(Settings2);
+export const ImageSquareIcon = defineIcon(Image);
+export const InfoIcon = defineIcon(Info);
+export const MagicWandIcon = defineIcon(WandSparkles);
+export const MagnifyingGlassIcon = defineIcon(Search);
+export const MenuIcon = defineIcon(Menu);
+export const NewConversationIcon = defineIcon(MessageCirclePlus);
+export const MoonIcon = defineIcon(Moon);
+export const MoonStarsIcon = defineIcon(MoonStar);
+export const NotePencilIcon = defineIcon(SquarePen);
+export const PaletteIcon = defineIcon(Palette);
+export const PaperPlaneRightIcon = defineIcon(SendHorizontal);
+export const PencilSimpleIcon = defineIcon(Pencil);
+export const PlusIcon = defineIcon(Plus);
+export const PushPinIcon = defineIcon(Pin);
+export const ShieldCheckIcon = defineIcon(ShieldCheck);
+export const ShieldWarningIcon = defineIcon(ShieldAlert);
+export const SidebarSimpleIcon = defineIcon(PanelLeft);
+export const SignOutIcon = defineIcon(LogOut);
+export const SparkleIcon = defineIcon(Sparkles);
+export const StopIcon = defineIcon(Square);
+export const SunIcon = defineIcon(Sun);
+export const ToolboxIcon = defineIcon(Wrench);
+export const TrashIcon = defineIcon(Trash2);
+export const TreeStructureIcon = defineIcon(ListTree);
+export const UploadSimpleIcon = defineIcon(Upload);
+export const UserCircleIcon = defineIcon(CircleUserRound);
+export const WarningCircleIcon = defineIcon(CircleAlert);
+export const XCircleIcon = defineIcon(CircleX);
+export const XIcon = defineIcon(X);
+
+export const GoogleLogoIcon = forwardRef<SVGSVGElement, IconProps>(function GoogleLogoIcon({
   color = "currentColor",
   size = 24,
   ...props

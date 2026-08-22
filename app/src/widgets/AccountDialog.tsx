@@ -94,7 +94,7 @@ export function AccountDialog({
                     label={item.label}
                     leading={(
                       <IconComponent
-                        size={17}
+                        size={16}
                       />
                     )}
                     onClick={() => onSectionChange(item.id)}

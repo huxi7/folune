@@ -91,7 +91,7 @@ function ToastItem({ toast }: { toast: KumoManagedToast }) {
           ) : null}
         </div>
         <KumoToast.Close aria-label="关闭提示" className="ds-toast-dismiss">
-          <XIcon aria-hidden="true" size={12} />
+          <XIcon aria-hidden="true" size={14} />
         </KumoToast.Close>
       </KumoToast.Content>
     </KumoToast.Root>

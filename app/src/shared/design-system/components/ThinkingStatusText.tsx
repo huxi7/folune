@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 React 状态/interval 与调用方提供的真实中性状态文案
- * [OUTPUT]: 对外提供固定宽度、低频交叉淡化且可访问的 ThinkingStatusText
+ * [OUTPUT]: 对外提供固定宽度、低频交叉淡化且只有单一读屏播报源的 ThinkingStatusText
  * [POS]: design-system AI 活动态文字原子件，只表达真实等待语义，不推断搜索、读取或工具行为
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -46,13 +46,7 @@ export function ThinkingStatusText({
   }, [intervalMs, statuses]);
 
   return (
-    <span
-      aria-label={label ?? statuses[activeIndex]}
-      aria-live="polite"
-      aria-atomic="true"
-      className={["ds-thinking-status-text", className].filter(Boolean).join(" ")}
-      role="status"
-    >
+    <span className={["ds-thinking-status-text", className].filter(Boolean).join(" ")}>
       {statuses.map((status, index) => (
         <span
           aria-hidden="true"
@@ -62,6 +56,9 @@ export function ThinkingStatusText({
           {status}
         </span>
       ))}
+      <span aria-atomic="true" aria-live="polite" className="sr-only" role="status">
+        {label ?? statuses[activeIndex]}
+      </span>
     </span>
   );
 }

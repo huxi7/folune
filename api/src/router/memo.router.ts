@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 Hono、router/request、memo zod schemas、auth/memo services 与统一 ok helper
- * [OUTPUT]: 对外提供 /memo-tree、/memo-folders、/memos、/memo-nodes、/memo-trash 五个资源 router
- * [POS]: router 层备忘录 HTTP 适配器，只做认证、body/param 校验并把 active/回收站命令下传 service
+ * [OUTPUT]: 对外提供 /memo-tree、/memo-search、/memo-folders、/memos、/memo-nodes、/memo-trash 六个资源 router
+ * [POS]: router 层备忘录 HTTP 适配器，只做认证、body/query/param 校验并把轻量读取、单篇正文和命令下传 service
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -13,6 +13,7 @@ import {
   createMemoFolderSchema,
   createMemoSchema,
   memoNodeIdParamSchema,
+  memoSearchQuerySchema,
   moveMemoNodeSchema,
   patchMemoSchema,
   renameMemoNodeSchema,
@@ -22,6 +23,7 @@ import { memoTrashService } from "../service/memo-trash.service.ts";
 import { memoService } from "../service/memo.service.ts";
 import {
   parseJsonBody,
+  parseQueryParams,
   parseRouteParams,
   readAccessToken,
 } from "./request.ts";
@@ -34,6 +36,7 @@ const authenticate = async (c: Context) => {
 };
 
 export const memoTreeRouter = new Hono();
+export const memoSearchRouter = new Hono();
 export const memoFolderRouter = new Hono();
 export const memoRouter = new Hono();
 export const memoNodeRouter = new Hono();
@@ -43,6 +46,13 @@ memoTreeRouter.get("/", async (c) => {
   const { accessToken, authUser } = await authenticate(c);
 
   return ok(c, await memoService.getTree(authUser, accessToken));
+});
+
+memoSearchRouter.get("/", async (c) => {
+  const { accessToken, authUser } = await authenticate(c);
+  const query = parseQueryParams(memoSearchQuerySchema, c.req.query());
+
+  return ok(c, await memoService.searchMemos(authUser, accessToken, query));
 });
 
 memoFolderRouter.post("/", async (c) => {

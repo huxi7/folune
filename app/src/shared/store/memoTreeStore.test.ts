@@ -10,6 +10,7 @@ import { beforeEach, describe, expect, mock, test } from "bun:test";
 import type {
   CreateMemoFolderInput,
   CreateMemoInput,
+  MemoDetailNode,
   MemoTreeNode,
   MoveMemoNodeInput,
   UpdateMemoInput,
@@ -35,7 +36,6 @@ const makeNode = (
   id,
   memo: type === "memo"
     ? {
-        content_mdx: content,
         created_at: TIME,
         excerpt: content,
         metadata: {},
@@ -71,6 +71,26 @@ const deferred = <T>(): Deferred<T> => {
   return { promise, reject, resolve };
 };
 
+const makeDetail = (
+  id: string,
+  parentId: string | null,
+  sortOrder: string,
+  content = "正文",
+): MemoDetailNode => {
+  const { children: _children, memo, ...node } = makeNode(
+    id,
+    "memo",
+    parentId,
+    sortOrder,
+    content,
+  );
+  return {
+    ...node,
+    children: [],
+    memo: { ...memo!, content_mdx: content },
+  };
+};
+
 let createFolderHandler: (
   token: string,
   input: CreateMemoFolderInput,
@@ -78,7 +98,7 @@ let createFolderHandler: (
 let createMemoHandler: (
   token: string,
   input: CreateMemoInput,
-) => Promise<MemoTreeNode>;
+) => Promise<MemoDetailNode>;
 let moveHandler: (
   token: string,
   nodeId: string,
@@ -88,7 +108,7 @@ let updateMemoHandler: (
   token: string,
   nodeId: string,
   input: UpdateMemoInput,
-) => Promise<MemoTreeNode>;
+) => Promise<MemoDetailNode>;
 let updateNodeHandler: (
   token: string,
   nodeId: string,
@@ -113,6 +133,8 @@ mock.module("../api/memo", () => ({
     getTreeCallCount += 1;
     return [];
   },
+  getMemo: async (_token: string, nodeId: string) =>
+    makeDetail(nodeId, null, "1000"),
   moveMemoNode: (...args: [string, string, MoveMemoNodeInput]) =>
     moveHandler(...args),
   restoreMemoNode: (...args: [string, string]) => restoreHandler(...args),
@@ -125,6 +147,14 @@ mock.module("../api/memo", () => ({
 }));
 
 const { useMemoTreeStore } = await import("./memoTreeStore");
+const { useMemoDocumentStore } = await import("./memoDocumentStore");
+
+const primeDocument = (id: string, content: string, title = id) => {
+  useMemoDocumentStore.getState().primeMemo({
+    ...makeDetail(id, null, "1000", content),
+    title,
+  });
+};
 
 beforeEach(() => {
   useMemoTreeStore.getState().reset();
@@ -133,14 +163,13 @@ beforeEach(() => {
   createFolderHandler = async (_token, input) =>
     makeNode("folder-real", "folder", input.parent_id, "1000");
   createMemoHandler = async (_token, input) =>
-    makeNode("memo-real", "memo", input.parent_id, input.sort_order ?? "1000");
+    makeDetail("memo-real", input.parent_id, input.sort_order ?? "1000", input.content_mdx ?? "正文");
   moveHandler = async (_token, nodeId, input) =>
     makeNode(nodeId, "memo", input.parent_id, input.sort_order);
   updateMemoHandler = async (_token, nodeId, input) => {
     updatedMemoNodeIds.push(nodeId);
-    return makeNode(
+    return makeDetail(
       nodeId,
-      "memo",
       null,
       "1000",
       input.content_mdx ?? "正文",
@@ -160,8 +189,8 @@ beforeEach(() => {
 
 describe("memoTreeStore optimistic transactions", () => {
   test("returns optimistic memos synchronously and allows concurrent creates", async () => {
-    const firstRequest = deferred<MemoTreeNode>();
-    const secondRequest = deferred<MemoTreeNode>();
+    const firstRequest = deferred<MemoDetailNode>();
+    const secondRequest = deferred<MemoDetailNode>();
     let requestCount = 0;
     createMemoHandler = () => {
       requestCount += 1;
@@ -185,8 +214,8 @@ describe("memoTreeStore optimistic transactions", () => {
     expect(useMemoTreeStore.getState().nodes).toHaveLength(2);
     expect(requestCount).toBe(2);
 
-    secondRequest.resolve(makeNode("memo-real-2", "memo", null, "500"));
-    firstRequest.resolve(makeNode("memo-real-1", "memo", null, "1000"));
+    secondRequest.resolve(makeDetail("memo-real-2", null, "500"));
+    firstRequest.resolve(makeDetail("memo-real-1", null, "1000"));
     await Promise.all([first.committed, second.committed]);
     expect(useMemoTreeStore.getState().nodes.map((node) => node.id)).toEqual([
       "memo-real-2",
@@ -195,7 +224,7 @@ describe("memoTreeStore optimistic transactions", () => {
   });
 
   test("preserves local title and content when the temporary id commits", async () => {
-    const request = deferred<MemoTreeNode>();
+    const request = deferred<MemoDetailNode>();
     createMemoHandler = () => request.promise;
     const creation = useMemoTreeStore.getState().beginCreateMemo("token", {
       content_mdx: "",
@@ -208,7 +237,7 @@ describe("memoTreeStore optimistic transactions", () => {
     useMemoTreeStore.getState().updateMemoTitleLocal(optimisticId, "本地标题");
     useMemoTreeStore.getState().updateMemoContentLocal(optimisticId, "正在输入");
     request.resolve({
-      ...makeNode("memo-real", "memo", null, "1000", ""),
+      ...makeDetail("memo-real", null, "1000", ""),
       title: "未命名备忘录",
     });
     await creation.committed;
@@ -216,7 +245,7 @@ describe("memoTreeStore optimistic transactions", () => {
     const committed = useMemoTreeStore.getState().nodes[0];
     expect(committed?.id).toBe("memo-real");
     expect(committed?.title).toBe("本地标题");
-    expect(committed?.memo?.content_mdx).toBe("正在输入");
+    expect(useMemoDocumentStore.getState().documents["memo-real"]?.memo.content_mdx).toBe("正在输入");
     expect(useMemoTreeStore.getState().resolveMemoId(optimisticId)).toBe(
       "memo-real",
     );
@@ -226,7 +255,7 @@ describe("memoTreeStore optimistic transactions", () => {
   });
 
   test("waits for creation before saving an optimistic memo to its real id", async () => {
-    const request = deferred<MemoTreeNode>();
+    const request = deferred<MemoDetailNode>();
     createMemoHandler = () => request.promise;
     const creation = useMemoTreeStore.getState().beginCreateMemo("token", {
       content_mdx: "",
@@ -242,18 +271,18 @@ describe("memoTreeStore optimistic transactions", () => {
     );
 
     expect(updatedMemoNodeIds).toEqual([]);
-    request.resolve(makeNode("memo-real", "memo", null, "1000", ""));
+    request.resolve(makeDetail("memo-real", null, "1000", ""));
     await creation.committed;
     await saving;
     expect(updatedMemoNodeIds).toEqual(["memo-real"]);
-    expect(useMemoTreeStore.getState().nodes[0]?.memo?.content_mdx).toBe(
+    expect(useMemoDocumentStore.getState().documents["memo-real"]?.memo.content_mdx).toBe(
       "立即输入",
     );
   });
 
   test("rolls back only the failed concurrent creation", async () => {
-    const firstRequest = deferred<MemoTreeNode>();
-    const secondRequest = deferred<MemoTreeNode>();
+    const firstRequest = deferred<MemoDetailNode>();
+    const secondRequest = deferred<MemoDetailNode>();
     let requestCount = 0;
     createMemoHandler = () => {
       requestCount += 1;
@@ -269,7 +298,7 @@ describe("memoTreeStore optimistic transactions", () => {
     });
 
     firstRequest.reject(new Error("create failed"));
-    secondRequest.resolve(makeNode("memo-real", "memo", null, "1000"));
+    secondRequest.resolve(makeDetail("memo-real", null, "1000"));
     await expect(first.committed).rejects.toThrow("create failed");
     await second.committed;
     expect(useMemoTreeStore.getState().nodes.map((node) => node.id)).toEqual([
@@ -372,10 +401,11 @@ describe("memoTreeStore optimistic transactions", () => {
   });
 
   test("does not let an old save response overwrite newer local input", async () => {
-    const request = deferred<MemoTreeNode>();
+    const request = deferred<MemoDetailNode>();
     useMemoTreeStore.setState({
       nodes: [makeNode("memo", "memo", null, "1000", "准备保存")],
     });
+    primeDocument("memo", "准备保存");
     updateMemoHandler = () => request.promise;
     const saving = useMemoTreeStore.getState().saveMemoContent(
       "token",
@@ -383,22 +413,23 @@ describe("memoTreeStore optimistic transactions", () => {
       "准备保存",
     );
     useMemoTreeStore.getState().updateMemoContentLocal("memo", "继续输入的新内容");
-    request.resolve(makeNode("memo", "memo", null, "1000", "准备保存"));
+    request.resolve(makeDetail("memo", null, "1000", "准备保存"));
     await saving;
 
     expect(
-      useMemoTreeStore.getState().nodes[0]?.memo?.content_mdx,
+      useMemoDocumentStore.getState().documents["memo"]?.memo.content_mdx,
     ).toBe("继续输入的新内容");
   });
 
   test("saves title and content together while merging only current fields", async () => {
-    const request = deferred<MemoTreeNode>();
+    const request = deferred<MemoDetailNode>();
     useMemoTreeStore.setState({
       nodes: [{
         ...makeNode("memo", "memo", null, "1000", "准备保存"),
         title: "旧标题",
       }],
     });
+    primeDocument("memo", "准备保存", "旧标题");
     updateMemoHandler = () => request.promise;
     const saving = useMemoTreeStore.getState().saveMemoDraft(
       "token",
@@ -409,14 +440,14 @@ describe("memoTreeStore optimistic transactions", () => {
     expect(useMemoTreeStore.getState().nodes[0]?.title).toBe("新标题");
     useMemoTreeStore.getState().updateMemoContentLocal("memo", "继续输入");
     request.resolve({
-      ...makeNode("memo", "memo", null, "1000", "准备保存"),
+      ...makeDetail("memo", null, "1000", "准备保存"),
       title: "新标题",
     });
     await saving;
 
     expect(useMemoTreeStore.getState().nodes[0]?.title).toBe("新标题");
     expect(
-      useMemoTreeStore.getState().nodes[0]?.memo?.content_mdx,
+      useMemoDocumentStore.getState().documents["memo"]?.memo.content_mdx,
     ).toBe("继续输入");
   });
 
@@ -427,6 +458,7 @@ describe("memoTreeStore optimistic transactions", () => {
         title: "旧标题",
       }],
     });
+    primeDocument("memo", "本地正文", "旧标题");
     updateMemoHandler = async () => {
       throw new Error("offline");
     };
@@ -438,7 +470,7 @@ describe("memoTreeStore optimistic transactions", () => {
     )).rejects.toThrow("offline");
     expect(useMemoTreeStore.getState().nodes[0]?.title).toBe("旧标题");
     expect(
-      useMemoTreeStore.getState().nodes[0]?.memo?.content_mdx,
+      useMemoDocumentStore.getState().documents["memo"]?.memo.content_mdx,
     ).toBe("本地正文");
   });
 

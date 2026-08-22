@@ -41,7 +41,7 @@ export function LandingHero() {
       <div className="landing-hero">
         <div className="landing-hero-copy motion-safe:animate-blueprint-rise motion-reduce:animate-none">
           <div className="landing-eyebrow">
-            <NotePencilIcon aria-hidden="true" size={15} />
+            <NotePencilIcon aria-hidden="true" size={14} />
             SuperNote / Intelligent notes
           </div>
           <h1 className="landing-title">
@@ -79,7 +79,7 @@ export function LandingHero() {
                 <IconComponent
                   aria-hidden="true"
                   className="shrink-0 text-primary"
-                  size={17}
+                  size={16}
                 />
                 <div>
                   <h2>{item.title}</h2>

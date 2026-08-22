@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 zod，接收 Business API memo tree 与整理阈值
- * [OUTPUT]: 对外提供严格 OrganizePlan/PlannerInput schema、树投影与确定性确认策略
- * [POS]: lib 层整理领域契约，隔离模型输出与数据库命令，确保 Planner 只看目标正文和文件夹导航图
+ * [INPUT]: 依赖 zod，接收 Business API 轻量 memo tree、单篇目标正文与整理阈值
+ * [OUTPUT]: 对外提供严格 OrganizePlan/PlannerInput schema、目录+正文投影与确定性确认策略
+ * [POS]: lib 层整理领域契约，隔离模型输出与数据库命令，确保 Planner 只看目标全文和文件夹导航图
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -61,7 +61,15 @@ export type OrganizeTreeNode = {
   title: string;
   revision: number;
   children: OrganizeTreeNode[];
-  memo: { content_mdx: string } | null;
+  memo: Record<string, unknown> | null;
+};
+
+export type OrganizeMemoDetail = {
+  id: string;
+  parent_id: string | null;
+  revision: number;
+  title: string;
+  memo: { content_mdx: string };
 };
 
 const stripJsonFence = (text: string): string => {
@@ -79,6 +87,7 @@ const joinPath = (parentPath: string, title: string): string =>
 export const projectOrganizeInput = (
   memoId: string,
   tree: readonly OrganizeTreeNode[],
+  detail: OrganizeMemoDetail,
   autoApplyConfidence: number,
 ): OrganizePlannerInput | null => {
   let target: OrganizePlannerInput["memo"] | null = null;
@@ -94,14 +103,14 @@ export const projectOrganizeInput = (
           title: node.title,
           path,
         });
-      } else if (node.id === memoId && node.memo !== null) {
+      } else if (node.id === memoId && detail.id === memoId) {
         target = {
           id: node.id,
           title: node.title,
-          content_mdx: node.memo.content_mdx,
+          content_mdx: detail.memo.content_mdx,
           parent_id: node.parent_id,
           path,
-          revision: node.revision,
+          revision: detail.revision,
         };
       }
       visit(node.children, path);

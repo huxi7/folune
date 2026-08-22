@@ -4,6 +4,7 @@
 成员清单
 .gitkeep: 保留产品样式目录
 CLAUDE.md: 记录样式层职责与文档协议
+global-base.css: 全局浏览器基础层，消费 index.css 语义 token，收口文档根、表单字体、选择色、滚动条、指针与 reduced-motion 兜底
 landing.css: Blueprint Landing 专用视觉层，固定使用 Light Canvas 与确定性白/中性灰蓝表面，并承载顶边贴视口、背景全宽且仅在 1200px+ hover/fine-pointer 桌面显示 1:5 外轨的粘性 Header、约为 Header 2/3 高且随页滚走的全宽公告、触屏/窄屏单轨收束、末端无节点直达 Footer 的 1088px 正文 RailLayer、14px/贴边 Divider、10px 遮罩节点、无蓝底 hover 的能力条/内容列表/定价、极简预页脚与两段式全宽深蓝 Fat Footer
 workspace.css: 账户/外观、订阅、Paper First 暖中性 Canvas/816px Paper、Canvas 关闭态 Ghost Panel Toggle、品牌/中性搜索/Primary 新建一体侧栏、同曲率浮动文件库/AI、安全区/覆盖抽屉/遮罩、Archive Port/Target/Cord、AI 紧凑 Header/纯净消息列表/原生 MentionInput/Primary 内联 @笔记/内容宽度 28px 可滚动候选/Composer 上方普通与整理共用的非模态审批条及底部权限、显式覆盖全局 squircle 的几何圆形发送/停止工具、统一 Thread、Editorial 阅读与 Trash 布局层；递归文件树与 SidebarButton 保持 32px compact 外部高度和 16px 图标，树节点及底部 Design System/回收站复用 12px/16px Label 角色与 560 字重，文件右键/More/Agent 普通菜单统一消费中性 interactive-hover，AI 历史会话与审批模式的 hover、focus/当前选中态使用同一中性表面而不切换 Accent；>=1200px 单侧预留、>=1400px 双侧同时预留，较小视口覆盖且互斥，Panel 禁止 layoutId/scaleX，reduced-motion 取消空间位移与路径绘制
 ai-message.css: AgentPanel 与 Design System 共用的 AI 消息视觉层，承载 Primary 同源用户气泡、无卡片最终正文、最多五词常数节点错峰模糊拖尾、Formation ThinkingIndicator，以及带人话详情、灰阶结果符号和活动态 shimmer 的 Secondary 同源工具披露控件；流式正文不提供光标，历史正文不参与动画，过程与正文之间只使用自然留白，不绘制固定分隔线

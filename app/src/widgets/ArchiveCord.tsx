@@ -157,7 +157,7 @@ export function ArchivePort({
         data-active={active}
         role="img"
       >
-        <ArchiveIcon aria-hidden="true" size={13} />
+        <ArchiveIcon aria-hidden="true" size={14} />
       </span>
     </ArcherElement>
   );

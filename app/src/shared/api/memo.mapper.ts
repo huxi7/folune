@@ -1,12 +1,14 @@
 /**
  * [INPUT]: 依赖 memo API 的领域类型与后端 snake_case DTO 结构
- * [OUTPUT]: 对外提供 active tree 与 Trash DTO 的纯映射函数
- * [POS]: app/src/shared/api 的无副作用契约适配层，让 HTTP 调用与 DTO 测试彼此隔离
+ * [OUTPUT]: 对外提供轻量 active tree、完整单篇正文与 Trash DTO 的纯映射函数
+ * [POS]: app/src/shared/api 的无副作用契约适配层，让目录与正文 HTTP 契约分别受测
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
 import type {
   MemoContent,
+  MemoContentSummary,
+  MemoDetailNode,
   MemoNode,
   MemoTrashItem,
   MemoTreeNode,
@@ -18,7 +20,12 @@ export type MemoNodeDto = Omit<MemoNode, "sort_order"> & {
 
 export type MemoTreeNodeDto = MemoNodeDto & {
   children?: MemoTreeNodeDto[];
-  memo?: MemoContent | null;
+  memo?: MemoContentSummary | null;
+};
+
+export type MemoDetailNodeDto = MemoNodeDto & {
+  children?: [];
+  memo: MemoContent;
 };
 
 export const mapMemoNodeDto = (node: MemoNodeDto): MemoNode => ({
@@ -43,6 +50,25 @@ export const mapMemoTreeNodeDto = (node: MemoTreeNodeDto): MemoTreeNode => ({
   children: (node.children ?? []).map(mapMemoTreeNodeDto),
   memo: node.memo ?? null,
 });
+
+export const mapMemoDetailNodeDto = (
+  node: MemoDetailNodeDto,
+): MemoDetailNode => ({
+  ...mapMemoNodeDto(node),
+  children: [],
+  memo: node.memo,
+});
+
+export const summarizeMemoDetail = (
+  detail: MemoDetailNode,
+): MemoTreeNode => {
+  const { content_mdx: _contentMdx, ...summary } = detail.memo;
+  return {
+    ...detail,
+    children: [],
+    memo: summary,
+  };
+};
 
 export const mapMemoTrashItemDto = (item: MemoTrashItem): MemoTrashItem => ({
   deleted_at: item.deleted_at,

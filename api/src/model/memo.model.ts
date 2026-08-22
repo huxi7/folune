@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 不依赖框架或校验库，仅使用 TypeScript 领域类型
- * [OUTPUT]: 对外提供 MemoNode、MemoContent、MemoTreeNode、MemoTrashItem 及创建/更新数据类型
- * [POS]: model 层备忘录领域契约，将 active tree、删除批次和回收站最小展示数据与正文存储边界分离
+ * [OUTPUT]: 对外提供 MemoNode、MemoContent、MemoContentSummary、轻量 MemoTreeNode、完整 MemoDetailNode、搜索命中与创建/更新数据类型
+ * [POS]: model 层备忘录领域契约，将 active tree、单篇正文、关键词命中和回收站展示数据彻底分离
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -35,9 +35,21 @@ export interface MemoContent {
   updated_at: string;
 }
 
+export type MemoContentSummary = Omit<MemoContent, "content_mdx">;
+
 export interface MemoTreeNode extends MemoNode {
   children: MemoTreeNode[];
-  memo: MemoContent | null;
+  memo: MemoContentSummary | null;
+}
+
+export interface MemoDetailNode extends MemoNode {
+  children: [];
+  memo: MemoContent;
+}
+
+export interface MemoSearchHit {
+  node_id: string;
+  excerpt: string | null;
 }
 
 export interface MemoTrashItem {

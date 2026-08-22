@@ -45,7 +45,7 @@ describe("ToolCallBubble", () => {
       />,
     );
 
-    expect(html).toContain('aria-busy="false"');
+    expect(html).not.toContain('aria-busy="true"');
     expect(html).toContain("ds-tool-call-result");
     expect(html).toContain("正文修改已保存。");
     expect(html).not.toContain("ds-button-loading");
@@ -63,6 +63,8 @@ describe("ToolCallBubble", () => {
 
     expect(html).toContain("未完成");
     expect(html).toContain("ds-tool-call-result");
+    expect(html).toContain('role="status"');
+    expect(html).not.toContain("<button");
     expect(html).not.toContain("ds-button-loading");
   });
 });

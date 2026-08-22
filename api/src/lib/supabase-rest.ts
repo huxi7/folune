@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 config/env 的 Supabase URL/Publishable key、调用方传入的已验证用户 access token、common/HttpError 与 Web fetch API
- * [OUTPUT]: 对外提供唯一 supabaseRest<T> 请求函数、可组合 Prefer header、强制 accessToken 的 SupabaseRestOptions 与含 on_conflict/eq/is/in 的查询 helper
+ * [OUTPUT]: 对外提供唯一 supabaseRest<T> 请求函数、可组合 Prefer header、强制 accessToken 的 SupabaseRestOptions 与含 on_conflict/eq/ilike/is/in 的查询 helper
  * [POS]: lib 层 Supabase REST/PostgREST 适配器，以 authenticated 用户身份触发 RLS，为 repository 统一组装请求与冲突参数
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -19,6 +19,7 @@ export interface PostgrestOrder {
 export interface PostgrestQueryOptions {
   select?: string | readonly string[];
   eq?: Readonly<Record<string, PostgrestValue>>;
+  ilike?: Readonly<Record<string, string>>;
   in?: Readonly<Record<string, readonly PostgrestValue[]>>;
   is?: Readonly<Record<string, boolean | null>>;
   order?: PostgrestOrder | readonly PostgrestOrder[];
@@ -125,6 +126,12 @@ export const createPostgrestQuery = (
   if (options.eq !== undefined) {
     for (const [column, value] of Object.entries(options.eq)) {
       query.set(column, `eq.${String(value)}`);
+    }
+  }
+
+  if (options.ilike !== undefined) {
+    for (const [column, value] of Object.entries(options.ilike)) {
+      query.set(column, `ilike.${value}`);
     }
   }
 

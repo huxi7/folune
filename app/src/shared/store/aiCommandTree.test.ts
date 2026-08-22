@@ -31,7 +31,6 @@ const node = (id: string, title = "旧标题"): MemoTreeNode => ({
   memo: {
     node_id: id,
     user_id: "11111111-1111-4111-8111-111111111111",
-    content_mdx: "正文",
     excerpt: "正文",
     word_count: 2,
     metadata: {},

@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖真实 MemoTreeNode、跨临时/真实 ID 保持不变的 memoClientKey、新建聚焦意图、Dashboard 整树状态、DocumentView/EditingMode、useMemoAutosave、MarkdownEditor/ReadingView、ThemeProvider 与 Toast
+ * [INPUT]: 依赖按需加载的 MemoDetailNode、跨临时/真实 ID 保持不变的 memoClientKey、新建聚焦意图、正文加载状态、DocumentView/EditingMode、useMemoAutosave、MarkdownEditor/ReadingView、ThemeProvider 与 Toast
  * [OUTPUT]: 对外提供临时节点提交期间不重挂载的纸张内写作/阅读列与 NotesWorkspaceHandle，可聚焦新纸标题、等待草稿落库、接纳 AI 标题并把 Agent 正文替换送入同一自动保存状态机
  * [POS]: app/src/widgets 的备忘录编辑会话边界；Paper 外壳不拥有编辑状态，客户端身份隔离后端 ID 置换，Dashboard 只能经显式 handle 跨越自动保存边界
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -15,7 +15,7 @@ import {
   type KeyboardEvent,
 } from "react";
 
-import type { MemoTreeNode } from "../shared/api/memo";
+import type { MemoDetailNode } from "../shared/api/memo";
 import {
   Skeleton,
   SkeletonGroup,
@@ -43,14 +43,14 @@ type NotesWorkspaceProps = {
   documentView: DocumentView;
   editingMode: EditingMode;
   emptyTree: boolean;
-  memo: MemoTreeNode | null;
+  memo: MemoDetailNode | null;
   memoClientKey: string;
   onContentChange: (content: string) => void;
   onSave: (
     memoId: string,
     draft: MemoDraftSnapshot,
     options?: MemoSaveOptions,
-  ) => Promise<MemoTreeNode>;
+  ) => Promise<MemoDetailNode>;
   onTitleChange: (title: string) => void;
   revealContent: boolean;
   skeletonVisible: boolean;
@@ -240,7 +240,7 @@ export const NotesWorkspace = forwardRef<
     );
   }
 
-  if (memo === null || memo.memo === null) {
+  if (memo === null) {
     return (
       <main className="notes-workspace-state">
         <strong>{emptyTree ? "还没有备忘录" : "选择一条备忘录"}</strong>

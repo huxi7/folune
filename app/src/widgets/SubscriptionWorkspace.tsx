@@ -99,7 +99,7 @@ export function SubscriptionWorkspace() {
 
         <footer className="subscription-footer" aria-live="polite">
           <div>
-            <ShieldCheckIcon aria-hidden="true" size={17} />
+            <ShieldCheckIcon aria-hidden="true" size={16} />
             <span>已选择 {selectedPlan}，支付能力接入后可在此继续。</span>
           </div>
           <span>账户数据与归档结果不会因切换方案丢失。</span>

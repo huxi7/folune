@@ -7,7 +7,7 @@
 
 import type { AiCommand } from "../api/ai";
 import { mapMemoNodeDto, type MemoNodeDto } from "../api/memo.mapper";
-import type { MemoContent, MemoTreeNode } from "../api/memo";
+import type { MemoContent, MemoContentSummary, MemoTreeNode } from "../api/memo";
 import {
   findNode,
   insertNode,
@@ -27,10 +27,13 @@ const stateNode = (state: Record<string, unknown> | null): MemoTreeNode | null =
   if (node === null) return null;
   const mapped = mapMemoNodeDto(node as MemoNodeDto);
   const content = record(state?.content) as MemoContent | null;
+  const summary: MemoContentSummary | null = content === null
+    ? null
+    : (({ content_mdx: _contentMdx, ...rest }) => rest)(content);
   return {
     ...mapped,
     children: [],
-    memo: mapped.node_type === "memo" ? content : null,
+    memo: mapped.node_type === "memo" ? summary : null,
   };
 };
 
@@ -78,11 +81,14 @@ export const reconcileAiCommandTree = (
 
   const restoredNodes = Array.isArray(undo?.nodes) ? undo.nodes : [];
   const restoredContents = Array.isArray(undo?.contents) ? undo.contents : [];
-  const contentById = new Map(
+  const contentById = new Map<string, MemoContentSummary>(
     restoredContents
       .map((value) => record(value) as MemoContent | null)
       .filter((value): value is MemoContent => value !== null)
-      .map((value) => [value.node_id, value]),
+      .map((value) => {
+        const { content_mdx: _contentMdx, ...summary } = value;
+        return [value.node_id, summary] as const;
+      }),
   );
   let next = [...tree];
   for (const value of restoredNodes) {

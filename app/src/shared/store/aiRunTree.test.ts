@@ -32,7 +32,6 @@ const baseNode = (id: string, type: "folder" | "memo"): MemoTreeNode => ({
   memo: type === "memo" ? {
     node_id: id,
     user_id: "11111111-1111-4111-8111-111111111111",
-    content_mdx: "正文保留",
     excerpt: "正文保留",
     word_count: 4,
     metadata: {},
@@ -76,7 +75,7 @@ describe("AI Run tree reconciliation", () => {
     };
     const next = reconcileAiRunTree([memo], run);
     expect(findNode(next, "memo")?.title).toBe("整理后");
-    expect(findNode(next, "memo")?.memo?.content_mdx).toBe("正文保留");
+    expect(findNode(next, "memo")?.memo?.excerpt).toBe("正文保留");
     expect(findNode(next, "folder")?.children[0]?.id).toBe("memo");
   });
 
@@ -99,6 +98,6 @@ describe("AI Run tree reconciliation", () => {
     const next = reconcileAiRunTree([folder], run);
     expect(findNode(next, "folder")).toBeNull();
     expect(next[0]?.id).toBe("memo");
-    expect(next[0]?.memo?.content_mdx).toBe("正文保留");
+    expect(next[0]?.memo?.excerpt).toBe("正文保留");
   });
 });

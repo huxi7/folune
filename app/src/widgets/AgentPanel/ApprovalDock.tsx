@@ -38,7 +38,7 @@ export function ApprovalDock({
       role="group"
     >
       <div className="agent-approval-dock-copy">
-        <IconComponent aria-hidden="true" size={15} />
+        <IconComponent aria-hidden="true" size={14} />
         <div>
           <strong>{title}</strong>
           <p>{description}</p>

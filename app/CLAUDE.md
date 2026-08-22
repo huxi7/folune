@@ -13,12 +13,12 @@ UI_REFINEMENT.md: UI-only 工作台账，记录 V1 Classic Blueprint 基线、�
 brand-spec.md: SuperNote 品牌真相源，记录已选 Soft Ink Light/Dark 轴、Saving Processing 状态、8/10/12/16/20px 同心曲率、Button 微雾材质及历史候选
 vite.config.ts: Vite 配置，从 app/.env.local 加载浏览器环境，将开发服务器严格固定到 10000，连接 React/Tailwind 插件，并用 Rolldown 按 React 封装、Markdown、View、State、Language、Features 拆分 CodeMirror chunk
 src/main.tsx: React 挂载入口，以 MotionConfig reducedMotion=user 包围 ThemeProvider/ToastProvider/RouterProvider 并加载全局样式
-src/index.css: Kumo/Tailwind v4 入口与唯一语义 Token 源，冻结 Quiet Editorial Color/Type/Spacing/Radius/Elevation/Motion、Paper First 中性画布/纯净纸张及 light/dark 同轴语义，并隔离声明不写入生产主题的 Color Lab 蓝色终选候选、导入职责样式模块
-src/styles/: UI 样式实现层，以 landing.css 隔离营销页、workspace.css 隔离 Paper Stage/浮动工具/整理连线与业务布局、design-system.css 统一 Input/Select/Dialog/Skeleton 材质、button.css 独立维护 Button 的 36px 标准命令规格与微雾材质、sidebar-button.css 维护 32px compact 导航节奏、ai-message.css 统一 SSE 消息家族、CodeMirror CSS 隔离 source/live 显示协议；跨样式颜色插值统一使用 sRGB
+src/index.css: Kumo/Tailwind v4 入口与唯一语义 Token 源，冻结 Quiet Editorial Color/Type/Spacing/Radius/Elevation/Motion、Paper First 中性画布/纯净纸张及 light/dark 同轴语义，并隔离声明不写入生产主题的 Color Lab 蓝色终选候选、导入职责样式模块；浏览器元素基础规则下沉 global-base.css
+src/styles/: UI 样式实现层，以 global-base.css 收口文档根与 reduced-motion、landing.css 隔离营销页、workspace.css 隔离 Paper Stage/浮动工具/整理连线与业务布局、design-system.css 统一 Input/Select/Dialog/Skeleton 材质、button.css 独立维护 Button 的 36px 标准命令规格与微雾材质、sidebar-button.css 维护 32px compact 导航节奏、ai-message.css 统一 SSE 消息家族、CodeMirror CSS 隔离 source/live 显示协议；跨样式颜色插值统一使用 sRGB
 src/app/: 应用装配层，承载 OAuth 回调、Profile/access token 登录守卫、仅含唯一 Paper 的 /app 首次准入 Skeleton、共享 Dashboard 生命周期路由及仅 DEV 的无状态 Color Lab 入口
 src/pages/: 页面层，承载 Landing、OAuth Callback、Paper First Dashboard 与仅 DEV 的蓝色终选决策页，编排删除/AI 发送/整理前 flush、Run apply/undo、左右工具唤醒与路由收束
 src/widgets/: 业务组合组件层，承载 Landing、PaperWorkspaceShell、按需文件库、AI 思考空间、memo 编辑会话、账户/订阅与回收站
-src/shared/: 前端共享层，承载 memo/AI API、Zustand active tree/Run 局部归并、按用户 WorkspaceChromeState、design system、纯 Supabase Auth 与主题状态；前端禁止直连业务表或 Storage
+src/shared/: 前端共享层，承载 memo/AI API、Zustand 轻量 active tree、按 ID 正文缓存与 Run 局部归并、按用户 WorkspaceChromeState、design system、纯 Supabase Auth 与主题状态；前端禁止直连业务表或 Storage
 docs/: UI 验收与决策证据目录，保存 Design System 语义说明、computed Token 快照、Paper First V1.1 当前前后对比/验收截图及 Color Lab v0 同构配色快照
 package.json: Bun 包元数据、Vite dev/build/typecheck 与 Bun test scripts 及用户端依赖清单
 bun.lock: Bun 锁定依赖版本
@@ -31,7 +31,7 @@ tsconfig.json: TypeScript 编辑器与编译约束
 
 空间与尺寸约束: APP 以 4px 为唯一空间基线，并在 `src/index.css` 集中维护 32/36/48px 尺寸阶梯。三处 Panel Header 统一为 48px 高、12px 水平内边距；Header 图标命令、Sidebar 新建、中央阅读/更多/助手开关与关闭入口统一为 32px 容器和 16px 图标，因此上下自然各保留 8px 呼吸区，相邻命令间距统一为 4px。AI Header 只保留历史菜单、单行会话名、独立于 NotePencil 的 MessageCirclePlus 新对话和 PanelRightClose 尾端收起；关闭态 Canvas 使用匹配的 PanelRightOpen，不展示品牌标记、副标题或权限胶囊。标准 Button、Input 与 Select 使用 36px 外部高度；Button 采用 14px/18px UI 字体、14px 水平留白与 6px 图文间距，表单采用 14px/20px。SidebarButton 与递归文件树行使用 32px compact 外部高度和 16px 图标，文件树和底部辅助导航均使用 12px/16px。认证表单可独立使用 48px 大点击规格。Agent Composer 使用 16px Panel 曲率和内层同心曲率，底栏只保留左侧权限与右侧发送/停止两个 32/16 Button；发送与停止共享 32px 几何圆形 Primary 轮廓，并以 `corner-shape: round` 显式覆盖通用 Button squircle，状态切换不得改变几何。原生 MentionInput 最多增长到 6 行后内部滚动，@候选是可滚动菜单内按内容宽度收束的 28px 文件图标+文件名单行，不得拉伸成整行 Button。首屏 Skeleton 必须使用相同尺寸 token，禁止加载跳变；DEV Design System 必须直接呈现这套空间标尺与 Header/Composer 样板，且不得复制另一套展示专用值。
 
-备忘录状态约束: `src/shared/store/memoTreeStore.ts` 是 active 文件树与正文草稿的唯一客户端状态源。GET 整树只允许在进入 Dashboard、登录用户变化或显式刷新时发生；人工创建必须同步插入临时 Memo、立即进入编辑器且不锁定后续创建，多个提交独立并发，临时/真实 ID 替换不得重挂载编辑器或覆盖等待期间的标题/正文，失败只精确撤销对应节点。重命名、移动、软删除与恢复同样必须乐观更新或合并局部响应，严禁写成功后刷新整棵树。Trash 只保存回收站列表视图状态，不得复制 active tree。删除当前 Memo 或其祖先前必须等待 `useMemoAutosave` required flush，失败保留路由、编辑会话和 subtree；删除成功后暂停旧会话、清理受影响 last-memo 并导航到下一 Memo 或 `/app`。中央连续画布、Markdown、reading/live/source、安全渲染与空白保真继续遵循既有单一存储协议；自动保存仍使用既有调度/重试参数且所有保存携带显式 memoId。
+备忘录状态约束: `src/shared/store/memoTreeStore.ts` 只保存 active 文件夹/笔记结构与摘要，`memoDocumentStore.ts` 是按 ID 正文与草稿的唯一客户端状态源；目录响应禁止携带 `content_mdx`，用户打开笔记后才读取该 ID 的完整正文并缓存，切换/登出必须中止或门禁旧响应。当前关键词搜索可由 `/memo-search` 在服务端匹配正文，但只回传命中 ID/摘要；未来向量/混合检索不得把正文重新塞回整树。GET 整树只允许在进入 Dashboard、登录用户变化或显式刷新时发生；人工创建必须同步插入临时 Memo、立即进入编辑器且不锁定后续创建，多个提交独立并发，临时/真实 ID 替换不得重挂载编辑器或覆盖等待期间的标题/正文，失败只精确撤销对应节点。重命名、移动、软删除与恢复同样必须乐观更新或合并局部响应，严禁写成功后刷新整棵树。Trash 只保存回收站列表视图状态，不得复制 active tree。删除当前 Memo 或其祖先前必须等待 `useMemoAutosave` required flush，失败保留路由、编辑会话和 subtree；删除成功后暂停旧会话、清理受影响 last-memo/正文缓存并导航到下一 Memo 或 `/app`。中央连续画布、Markdown、reading/live/source、安全渲染与空白保真继续遵循既有单一存储协议；自动保存仍使用既有调度/重试参数且所有保存携带显式 memoId。
 
 备忘录画布约束: APP 使用纯中性灰 Workspace Canvas 衬托唯一常驻 Paper；Light Paper 纯白、Dark Paper 为同一明暗轴上的深纸面，允许极弱边缘、克制圆角与多层柔影，但禁止纹理、点阵、渐变光斑及白板交互。Paper 宽度上限 51rem、最小高度 `calc(100vh - 5rem)`，内部写作列上限 45rem；路径/整理/阅读命令位于 Paper 顶部，文件库/AI 开关位于 Canvas。切换 memo 只替换 Paper 内部内容；标题、正文、Panel 动画与 reading/live/source 切换不得破坏 CodeMirror 选区、撤销历史或自动保存会话。
 

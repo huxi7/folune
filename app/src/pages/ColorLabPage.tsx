@@ -151,23 +151,23 @@ function PreviewSidebar() {
         <p>备忘录</p>
         <SidebarButton
           label="产品设计"
-          leading={<FolderIcon size={15} />}
+          leading={<FolderIcon size={14} />}
           trailing={<span>2</span>}
         />
         <SidebarButton
           active
           className="color-lab-tree-child"
           label="给复杂系统留一张安静的纸"
-          leading={<FileTextIcon size={15} />}
+          leading={<FileTextIcon size={14} />}
         />
         <SidebarButton
           className="color-lab-tree-child"
           label="自动归档的边界"
-          leading={<FileTextIcon size={15} />}
+          leading={<FileTextIcon size={14} />}
         />
         <SidebarButton
           label="灵感"
-          leading={<FolderIcon size={15} />}
+          leading={<FolderIcon size={14} />}
           trailing={<span>4</span>}
         />
       </div>
@@ -196,9 +196,9 @@ function PreviewPaper() {
         <blockquote>一张纸、一条线、两个在需要时才出现的工具。</blockquote>
         <h3>设计原则</h3>
         <ul>
-          <li><CheckIcon aria-hidden="true" size={15} />Paper 始终是主角</li>
-          <li><CheckIcon aria-hidden="true" size={15} />颜色只解释动作与当前状态</li>
-          <li><CheckIcon aria-hidden="true" size={15} />AI 在后台整理，不打断书写</li>
+          <li><CheckIcon aria-hidden="true" size={14} />Paper 始终是主角</li>
+          <li><CheckIcon aria-hidden="true" size={14} />颜色只解释动作与当前状态</li>
+          <li><CheckIcon aria-hidden="true" size={14} />AI 在后台整理，不打断书写</li>
         </ul>
         <p>
           先让内容安全落在纸上，再让结构从上下文中自然出现。

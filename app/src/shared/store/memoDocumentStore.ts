@@ -1,0 +1,238 @@
+/**
+ * [INPUT]: 依赖 Zustand、单篇 memo API、AiCommand 输出与 MemoDetailNode
+ * [OUTPUT]: 对外提供按 ID 加载/缓存正文、临时 ID 对账、本地草稿、保存与 AI 正文投影状态
+ * [POS]: shared/store 的正文唯一客户端状态源；目录树只持有摘要，本 Store 不复制树结构或自行导航
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+
+import { create } from "zustand";
+
+import type { AiCommand } from "../api/ai";
+import {
+  getMemo,
+  updateMemo,
+  type MemoDetailNode,
+  type MemoWriteOptions,
+  type UpdateMemoInput,
+} from "../api/memo";
+import { mapMemoDetailNodeDto, type MemoDetailNodeDto } from "../api/memo.mapper";
+
+export type MemoDocumentStatus = "idle" | "loading" | "ready" | "error";
+
+type AiDocumentProjection = {
+  content: string;
+  nodeId: string;
+  previousContent: string;
+};
+
+type MemoDocumentState = {
+  documents: Record<string, MemoDetailNode>;
+  errors: Record<string, string | undefined>;
+  statuses: Record<string, MemoDocumentStatus>;
+  loadMemo(accessToken: string, nodeId: string, signal?: AbortSignal): Promise<MemoDetailNode>;
+  primeMemo(detail: MemoDetailNode): void;
+  rekeyMemo(optimisticId: string, detail: MemoDetailNode, initialContent: string): MemoDetailNode;
+  updateContentLocal(nodeId: string, content: string): void;
+  saveMemoDraft(
+    accessToken: string,
+    nodeId: string,
+    input: UpdateMemoInput,
+    options?: MemoWriteOptions,
+  ): Promise<MemoDetailNode>;
+  removeMemos(nodeIds: ReadonlySet<string>): void;
+  projectAiEdit(toolCallId: string, nodeId: string, content: string): void;
+  rollbackAiEdit(toolCallId: string): void;
+  reconcileAiCommand(command: AiCommand): void;
+  reset(): void;
+};
+
+let loadGeneration = 0;
+const requestVersions = new Map<string, number>();
+const aiProjections = new Map<string, AiDocumentProjection>();
+
+const nextRequestVersion = (nodeId: string): number => {
+  const version = (requestVersions.get(nodeId) ?? 0) + 1;
+  requestVersions.set(nodeId, version);
+  return version;
+};
+
+const commandDetail = (command: AiCommand): MemoDetailNode | null => {
+  const state = command.status === "undone" ? command.undo_result : command.after_state;
+  if (state === null) return null;
+  const node = state.node;
+  const content = state.content;
+  if (node === null || typeof node !== "object" || Array.isArray(node)) return null;
+  if (content === null || typeof content !== "object" || Array.isArray(content)) return null;
+  try {
+    return mapMemoDetailNodeDto({
+      ...(node as MemoDetailNodeDto),
+      children: [],
+      memo: content as MemoDetailNodeDto["memo"],
+    });
+  } catch {
+    return null;
+  }
+};
+
+export const useMemoDocumentStore = create<MemoDocumentState>()((set, get) => ({
+  documents: {},
+  errors: {},
+  statuses: {},
+
+  async loadMemo(accessToken, nodeId, signal) {
+    const cached = get().documents[nodeId];
+    if (cached !== undefined) return cached;
+    const generation = loadGeneration;
+    const version = nextRequestVersion(nodeId);
+    set((state) => ({
+      errors: { ...state.errors, [nodeId]: undefined },
+      statuses: { ...state.statuses, [nodeId]: "loading" },
+    }));
+    try {
+      const detail = await getMemo(accessToken, nodeId, signal);
+      if (generation === loadGeneration && requestVersions.get(nodeId) === version) {
+        set((state) => ({
+          documents: { ...state.documents, [nodeId]: detail },
+          statuses: { ...state.statuses, [nodeId]: "ready" },
+        }));
+      }
+      return detail;
+    } catch (error) {
+      if (generation === loadGeneration && requestVersions.get(nodeId) === version) {
+        set((state) => ({
+          errors: {
+            ...state.errors,
+            [nodeId]: error instanceof Error ? error.message : "备忘录正文加载失败",
+          },
+          statuses: { ...state.statuses, [nodeId]: "error" },
+        }));
+      }
+      throw error;
+    }
+  },
+
+  primeMemo(detail) {
+    set((state) => ({
+      documents: { ...state.documents, [detail.id]: detail },
+      errors: { ...state.errors, [detail.id]: undefined },
+      statuses: { ...state.statuses, [detail.id]: "ready" },
+    }));
+  },
+
+  rekeyMemo(optimisticId, detail, initialContent) {
+    const optimistic = get().documents[optimisticId];
+    const reconciled = optimistic === undefined
+      ? detail
+      : {
+          ...detail,
+          title: optimistic.title === detail.title ? detail.title : optimistic.title,
+          memo: {
+            ...detail.memo,
+            content_mdx: optimistic.memo.content_mdx === initialContent
+              ? detail.memo.content_mdx
+              : optimistic.memo.content_mdx,
+          },
+        };
+    set((state) => {
+      const documents = { ...state.documents };
+      const statuses = { ...state.statuses };
+      const errors = { ...state.errors };
+      delete documents[optimisticId];
+      delete statuses[optimisticId];
+      delete errors[optimisticId];
+      documents[detail.id] = reconciled;
+      statuses[detail.id] = "ready";
+      return { documents, errors, statuses };
+    });
+    return reconciled;
+  },
+
+  updateContentLocal(nodeId, content) {
+    set((state) => {
+      const current = state.documents[nodeId];
+      if (current === undefined) return state;
+      return {
+        documents: {
+          ...state.documents,
+          [nodeId]: { ...current, memo: { ...current.memo, content_mdx: content } },
+        },
+      };
+    });
+  },
+
+  async saveMemoDraft(accessToken, nodeId, input, options) {
+    const before = get().documents[nodeId];
+    if (before === undefined) throw new Error("要保存的备忘录正文尚未加载。");
+    const updated = await updateMemo(accessToken, nodeId, input, options);
+    set((state) => {
+      const current = state.documents[nodeId];
+      if (current === undefined) return state;
+      const contentStillCurrent = input.content_mdx !== undefined
+        && current.memo.content_mdx === input.content_mdx;
+      return {
+        documents: {
+          ...state.documents,
+          [nodeId]: {
+            ...updated,
+            title: input.title !== undefined && current.title !== input.title
+              ? current.title
+              : updated.title,
+            memo: contentStillCurrent ? updated.memo : current.memo,
+          },
+        },
+      };
+    });
+    return updated;
+  },
+
+  removeMemos(nodeIds) {
+    set((state) => {
+      const documents = { ...state.documents };
+      const statuses = { ...state.statuses };
+      const errors = { ...state.errors };
+      for (const nodeId of nodeIds) {
+        delete documents[nodeId];
+        delete statuses[nodeId];
+        delete errors[nodeId];
+      }
+      return { documents, errors, statuses };
+    });
+  },
+
+  projectAiEdit(toolCallId, nodeId, content) {
+    if (aiProjections.has(toolCallId)) return;
+    const detail = get().documents[nodeId];
+    if (detail === undefined) return;
+    aiProjections.set(toolCallId, {
+      content,
+      nodeId,
+      previousContent: detail.memo.content_mdx,
+    });
+    get().updateContentLocal(nodeId, content);
+  },
+
+  rollbackAiEdit(toolCallId) {
+    const projection = aiProjections.get(toolCallId);
+    if (projection === undefined) return;
+    aiProjections.delete(toolCallId);
+    const detail = get().documents[projection.nodeId];
+    if (detail?.memo.content_mdx === projection.content) {
+      get().updateContentLocal(projection.nodeId, projection.previousContent);
+    }
+  },
+
+  reconcileAiCommand(command) {
+    if (command.tool_call_id !== null) aiProjections.delete(command.tool_call_id);
+    const detail = commandDetail(command);
+    if (detail !== null && get().documents[detail.id] !== undefined) {
+      get().primeMemo(detail);
+    }
+  },
+
+  reset() {
+    loadGeneration += 1;
+    requestVersions.clear();
+    aiProjections.clear();
+    set({ documents: {}, errors: {}, statuses: {} });
+  },
+}));

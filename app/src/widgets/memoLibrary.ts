@@ -145,6 +145,7 @@ export function getMemoFolderPath(
 export function searchMemoTree(
   tree: readonly MemoTreeNode[],
   query: string,
+  bodyHitIds: ReadonlySet<string> = new Set(),
 ): MemoSearchResult[] {
   const normalizedQuery = query.trim().toLocaleLowerCase();
 
@@ -165,9 +166,9 @@ export function searchMemoTree(
       }
 
       const path = folders.length === 0 ? "根目录" : folders.join(" / ");
-      const values = [node.title, node.memo?.content_mdx ?? "", path];
+      const values = [node.title, path];
 
-      if (values.some((value) =>
+      if (bodyHitIds.has(node.id) || values.some((value) =>
         value.toLocaleLowerCase().includes(normalizedQuery))) {
         results.push({ id: node.id, path, title: node.title });
       }

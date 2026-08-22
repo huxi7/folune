@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun test、Hono app、Web fetch、内存 Supabase Auth/PostgREST mock 与 memo 领域模型
- * [OUTPUT]: 覆盖七组 memo API 的认证、整树组装、创建/补偿、正文统计与空白保真、owner 隔离、严格更新与防环移动测试
+ * [OUTPUT]: 覆盖 memo API 的认证、轻量树/关键词搜索、单篇正文、创建补偿、正文统计、owner 隔离、严格更新与防环移动
  * [POS]: api/test 的备忘录树 HTTP 全链路契约测试，不连接远端服务且不保存或输出真实凭据
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -78,6 +78,7 @@ class MockSupabase {
   readonly nodes = new Map<string, MemoNode>();
   readonly contents = new Map<string, MemoContent>();
   readonly operations: string[] = [];
+  readonly requestedUrls: string[] = [];
   readonly nodePatchBodies: Array<Record<string, unknown>> = [];
   headersMatched = true;
   userFiltersMatched = true;
@@ -96,6 +97,7 @@ class MockSupabase {
   ): Promise<Response> => {
     const request = new Request(input, init);
     const url = new URL(request.url);
+    this.requestedUrls.push(url.toString());
     this.headersMatched &&=
       request.headers.get("apikey") === PUBLISHABLE_KEY &&
       request.headers.get("Authorization") === `Bearer ${ACCESS_TOKEN}`;
@@ -243,6 +245,16 @@ class MockSupabase {
         );
       }
 
+      const contentFilter = url.searchParams.get("content_mdx");
+      if (contentFilter?.startsWith("ilike.*") && contentFilter.endsWith("*")) {
+        const keyword = contentFilter.slice(7, -1).replaceAll("\\", "").toLocaleLowerCase();
+        rows = rows.filter((content) =>
+          content.content_mdx.toLocaleLowerCase().includes(keyword));
+      }
+
+      const limit = Number(url.searchParams.get("limit") ?? rows.length);
+      rows = rows.slice(0, limit);
+
       return jsonResponse(rows);
     }
 
@@ -309,6 +321,7 @@ describe("memo API authentication", () => {
     const nodeId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
     const requests = [
       app.request("/memo-tree"),
+      app.request("/memo-search?q=test"),
       app.request("/memo-folders", { method: "POST" }),
       app.request("/memos", { method: "POST" }),
       app.request(`/memos/${nodeId}`),
@@ -348,7 +361,7 @@ describe("memo API authentication", () => {
 });
 
 describe("GET /memo-tree", () => {
-  test("一次读取并按排序组装完整 folder/memo 树", async () => {
+  test("一次读取并按排序组装不含正文的 folder/memo 树", async () => {
     const folderId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
     const childMemoId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
     const rootMemoId = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
@@ -384,12 +397,43 @@ describe("GET /memo-tree", () => {
     ]);
     expect(payload.data[1].children[0].id).toBe(childMemoId);
     expect(payload.data[1].children[0].memo.node_id).toBe(childMemoId);
+    expect(JSON.stringify(payload.data)).not.toContain("content_mdx");
+    expect(mock.requestedUrls.find((url) => url.includes("/rest/v1/memos")))
+      .not.toContain("node_id=in.");
     expect(mock.operations).toEqual([
       "auth:get",
       "nodes:get",
       "memos:get",
     ]);
     expect(mock.headersMatched).toBe(true);
+    expect(mock.userFiltersMatched).toBe(true);
+  });
+});
+
+describe("GET /memo-search", () => {
+  test("只返回当前用户正文命中的 ID 与摘要，不返回完整正文", async () => {
+    const matchingId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+    const otherId = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
+    mock.contents.set(matchingId, contentFixture(matchingId, {
+      content_mdx: "项目里讨论了商业模式",
+      excerpt: "项目里讨论了商业模式",
+    }));
+    mock.contents.set(otherId, contentFixture(otherId, {
+      content_mdx: "完全无关",
+      excerpt: "完全无关",
+    }));
+
+    const response = await app.fetch(authenticatedRequest(
+      "/memo-search?q=%E5%95%86%E4%B8%9A%E6%A8%A1%E5%BC%8F&limit=10",
+    ));
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.data).toEqual([{
+      excerpt: "项目里讨论了商业模式",
+      node_id: matchingId,
+    }]);
+    expect(JSON.stringify(payload.data)).not.toContain("content_mdx");
     expect(mock.userFiltersMatched).toBe(true);
   });
 });

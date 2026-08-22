@@ -8,10 +8,10 @@
 成员清单
 src/index.ts: Bun 进程入口，固定执行启动序列并用 6MiB 请求体上限在 multipart 解析前拦截异常上传
 src/app.ts: Hono 组装根，注册请求日志、CORS、X-Request-Id 跨域暴露、错误处理与 router
-src/router/: HTTP 路由层，提供 /health、/profile、active memo/trash 与 AI threads/context/settings/commands/runs 的 JWT 资源接口
+src/router/: HTTP 路由层，提供 /health、/profile、轻量 memo tree/search、单篇 memo/trash 与 AI threads/context/settings/commands/runs 的 JWT 资源接口
 src/dto/: DTO 层，定义 Auth/profile/memo/AI/PostgREST-RPC 响应与严格 HTTP body/query/param 的 zod schema/infer 类型
-src/model/: 领域模型层，定义 AuthUser、Profile、Memo tree、AI 会话/上下文/权限/Command/Run、健康状态与响应信封类型
-src/service/: 业务服务层，负责 JWT 认证、profile/头像、active memo/Trash 及 AI 会话/冻结上下文/权限/Command/Run 编排
+src/model/: 领域模型层，定义 AuthUser、Profile、轻量 Memo tree/完整 detail/搜索命中、AI 会话/上下文/权限/Command/Run、健康状态与响应信封类型
+src/service/: 业务服务层，负责 JWT 认证、profile/头像、轻量 active tree/单篇正文/搜索/Trash 及 AI 会话/冻结上下文/权限/Command/Run 编排
 src/repository/: 数据访问层，携带已验证用户 JWT 通过 Supabase REST 提供 profiles、memo、AI 持久化与受控原子 RPC
 src/middleware/: HTTP 横切层，提供请求 ID、开发态彩色 ASCII 请求卡片、生产态 JSON 日志与统一错误处理
 src/common/: 通用层，提供 HttpError 与统一响应 helper

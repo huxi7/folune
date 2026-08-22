@@ -380,7 +380,7 @@ describe("memo trash lifecycle", () => {
     }
   });
 
-  test("returns only a deleted folder root and restores hierarchy, ordering, and body", async () => {
+  test("restores a lightweight hierarchy while preserving body for single-memo reads", async () => {
     mock.nodes.set(A, node(A, "folder", null, USER_ID, 500));
     mock.nodes.set(B, node(B, "folder", A, USER_ID, 750));
     mock.nodes.set(M, node(M, "memo", B, USER_ID, 250));
@@ -393,7 +393,10 @@ describe("memo trash lifecycle", () => {
     const restored = await responseData(await request(`/memo-nodes/${A}/restore`, { method: "POST" }));
     expect(restored.children[0].id).toBe(B);
     expect(restored.children[0].children[0].sort_order).toBe(250);
-    expect(restored.children[0].children[0].memo.content_mdx).toBe(`正文:${M}`);
+    expect(restored.children[0].children[0].memo.content_mdx).toBeUndefined();
+
+    const restoredMemo = await responseData(await request(`/memos/${M}`));
+    expect(restoredMemo.memo.content_mdx).toBe(`正文:${M}`);
   });
 
   test("keeps an earlier child batch deleted when restoring its later-deleted parent", async () => {

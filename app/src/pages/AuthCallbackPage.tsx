@@ -52,7 +52,7 @@ export function AuthCallbackPage() {
             <WarningCircleIcon
               aria-hidden="true"
               className="mx-auto text-destructive"
-              size={32}
+              size={24}
             />
             <h1 className="mt-4 text-xl font-semibold leading-tight text-foreground">
               未能完成 Google 登录
@@ -71,7 +71,7 @@ export function AuthCallbackPage() {
             <CircleNotchIcon
               aria-hidden="true"
               className="mx-auto text-primary motion-safe:animate-spin motion-reduce:animate-none"
-              size={32}
+              size={24}
             />
             <h1 className="mt-4 text-xl font-semibold leading-tight text-foreground">
               正在建立安全会话

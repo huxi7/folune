@@ -27,7 +27,6 @@ const node = (
   icon: null,
   id,
   memo: type === "memo" ? {
-    content_mdx: "尚未自动保存的正文",
     created_at: TIME,
     excerpt: "正文",
     metadata: {},

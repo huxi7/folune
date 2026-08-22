@@ -38,7 +38,6 @@ const makeNode = (
   id,
   memo: type === "memo"
     ? {
-        content_mdx: id,
         created_at: TIME,
         excerpt: id,
         metadata: {},

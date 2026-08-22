@@ -43,7 +43,7 @@ export function PasswordInput({
         onClick={() => onVisibilityChange(!visible)}
         type="button"
       >
-        <VisibilityIcon aria-hidden="true" size={18} />
+        <VisibilityIcon aria-hidden="true" size={16} />
       </button>
     </div>
   );

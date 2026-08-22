@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 React 折叠状态、共享 Lucide 工具/状态图标、人话名称/详情与 AI SDK 调用状态
- * [OUTPUT]: 对外提供不暴露原始载荷、执行中带流光、完成后可展开轻量详情的 ToolCallBubble
+ * [OUTPUT]: 对外提供不暴露原始载荷、执行中带流光、有详情才可聚焦展开的 ToolCallBubble
  * [POS]: design-system AI 消息家族的工具披露控件，以 Secondary Button 同源材质承载动作入口，详情保持普通信息排版
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -70,36 +70,54 @@ export function ToolCallBubble({
         ? XIcon
         : null;
   const status = interrupted ? "未完成" : stateLabel[state];
+  const bubbleClassName = [
+    "ds-button-secondary",
+    "ds-tool-call-bubble",
+    active ? "ds-button-loading" : "",
+  ].join(" ");
+  const bubbleContent = (
+    <>
+      <span className="ds-tool-call-icon">
+        <ToolIcon aria-hidden="true" size={14} />
+      </span>
+      <strong className="ds-tool-call-name">{name}</strong>
+      {ResultIcon ? (
+        <span aria-hidden="true" className="ds-tool-call-result">
+          <ResultIcon size={14} />
+        </span>
+      ) : null}
+    </>
+  );
 
   return (
     <div
       className="ds-tool-call-disclosure"
       data-state={state}
     >
-      <button
-        aria-busy={active}
-        aria-controls={expandable ? detailsId : undefined}
-        aria-expanded={expandable ? expanded : undefined}
-        aria-label={`${name}：${status}${expandable ? "，查看详情" : ""}`}
-        className={[
-          "ds-button-secondary",
-          "ds-tool-call-bubble",
-          active ? "ds-button-loading" : "",
-        ].join(" ")}
-        data-expandable={expandable}
-        onClick={expandable ? () => setExpanded((value) => !value) : undefined}
-        type="button"
-      >
-        <span className="ds-tool-call-icon">
-          <ToolIcon aria-hidden="true" size={15} />
-        </span>
-        <strong className="ds-tool-call-name">{name}</strong>
-        {ResultIcon ? (
-          <span aria-hidden="true" className="ds-tool-call-result">
-            <ResultIcon size={12} />
-          </span>
-        ) : null}
-      </button>
+      {expandable ? (
+        <button
+          aria-busy={active || undefined}
+          aria-controls={detailsId}
+          aria-expanded={expanded}
+          aria-label={`${name}：${status}，查看详情`}
+          className={bubbleClassName}
+          data-expandable="true"
+          onClick={() => setExpanded((value) => !value)}
+          type="button"
+        >
+          {bubbleContent}
+        </button>
+      ) : (
+        <div
+          aria-busy={active || undefined}
+          aria-label={`${name}：${status}`}
+          className={bubbleClassName}
+          data-expandable="false"
+          role="status"
+        >
+          {bubbleContent}
+        </div>
+      )}
       {expandable ? (
         <dl
           className="ds-tool-call-details"

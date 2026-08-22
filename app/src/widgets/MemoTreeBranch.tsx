@@ -263,7 +263,7 @@ export function MemoTreeBranch(props: MemoTreeBranchProps) {
           placement: "after",
         };
         const icon = isFolder ? (
-          <FolderComponent size={15} />
+          <FolderComponent size={14} />
         ) : (
           <FileTextIcon
             size={14}

@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 React 原生 div/span 属性、index.css 的 Skeleton 语义 token 与 design-system.css 的单光带组动画
- * [OUTPUT]: 对外提供低对比 Skeleton、单一宽光带 SkeletonGroup 与避免快速请求闪屏的 useDelayedSkeleton
+ * [OUTPUT]: 对外提供低对比 Skeleton、仅可见时宣告 busy/status 的 SkeletonGroup 与避免快速请求闪屏的 useDelayedSkeleton
  * [POS]: app/src/shared/design-system/components 的统一占位加载原语；业务层只组合真实布局，不自行实现灰块、shimmer 或延迟计时器
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -55,14 +55,16 @@ export function SkeletonGroup({
 }: SkeletonGroupProps) {
   return (
     <div
-      aria-busy="true"
+      aria-busy={visible || undefined}
       className={["ds-skeleton-group", className].join(" ")}
       data-visible={visible}
       {...props}
     >
-      <span aria-live="polite" className="sr-only" role="status">
-        {label}
-      </span>
+      {visible ? (
+        <span aria-live="polite" className="sr-only" role="status">
+          {label}
+        </span>
+      ) : null}
       {children}
     </div>
   );

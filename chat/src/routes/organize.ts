@@ -88,10 +88,14 @@ export const organizeRoute = registerApiRoute("/v1/organize", {
         return context.json(run);
       }
 
-      const tree = await businessApi.getMemoTree(accessToken);
+      const [tree, detail] = await Promise.all([
+        businessApi.getMemoTree(accessToken),
+        businessApi.getMemo(parsed.data.memo_id, accessToken),
+      ]);
       const plannerInput = projectOrganizeInput(
         parsed.data.memo_id,
         tree,
+        detail,
         env.ORGANIZE_AUTO_APPLY_CONFIDENCE,
       );
       if (plannerInput === null) {

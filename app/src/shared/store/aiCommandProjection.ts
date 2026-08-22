@@ -47,13 +47,6 @@ export const rollbackAiCommandProjection = (
       title: before.title,
     }));
   }
-  if (projection.operation === "edit_memo"
-    && current.memo?.content_mdx === projection.projected.content_mdx) {
-    return updateNode(nodes, before.id, (node) => ({
-      ...node,
-      memo: before.memo,
-    }));
-  }
   if ((projection.operation === "move_node" || projection.operation === "reorder_node")
     && current.parent_id === projection.projected.parent_id
     && current.sort_order === projection.projected.sort_order) {

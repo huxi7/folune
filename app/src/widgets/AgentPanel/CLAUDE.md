@@ -8,7 +8,7 @@ approvalState.ts: 审批状态机纯领域层，只检查末条 assistant；统�
 approvalState.test.ts: 审批状态机回归测试，锁定同一 approval 只响应一次、拒绝不恢复、批准刷新可恢复及结果落地后退出恢复队列
 composerSources.ts: Prompt Bar 唯一上下文领域层；当前 memo 与置顶来源保持结构化上下文，手动 @笔记与正文 token 同步删除，全部来源去重、限五篇并生成同一冻结 metadata
 composerSources.test.ts: 覆盖当前 memo 默认来源、删除抑制、切换更新、手动/置顶去重、内联 mention 删除同步、发送冻结及发送后草稿来源收束
-MentionMenu.tsx: Prompt Bar 原生 @笔记命令菜单视图与搜索纯函数；标题/正文/路径参与实时匹配，结果以内容宽度的 28px 文件图标+文件名轻量行呈现，已选项排除
+MentionMenu.tsx: Prompt Bar 原生 @笔记命令菜单视图与搜索纯函数；标题/路径本地匹配并合并服务端正文命中 ID，结果以内容宽度的 28px 文件图标+文件名轻量行呈现，已选项排除
 MentionMenu.test.ts: 覆盖空 @候选、搜索排除、revision 元数据及结果只渲染文件图标+文件名的轻量结构
 PermissionModeControl.tsx: Composer 左下角账号全局每次询问/智能审批实验/完全访问 32px 本地 Ghost Button；与右侧发送/停止同尺寸，菜单向上展开，以一句短描述区分模式，hover 与当前模式共享中性表面，只显示 API 已确认模式，加载/保存失败保持旧值并经全局 Toast 明示
 ApprovalCard.tsx: 每次询问与智能审批回退的工具审批语义适配；把人话动作、最小影响说明和危险操作按钮映射到共享 ApprovalDock
@@ -31,10 +31,10 @@ clientTools.test.ts: 工具输入归一测试，覆盖 AI SDK 送达 JSON string
 memoTool.worker.ts: 专用模块 Worker 入口，只调用纯 Planner 并用 requestId 返回类型化 plan/error，不持有 token 或运行时状态
 memoToolWorkerClient.ts: 主线程并发 RPC 桥，按 requestId 关联/去重请求，Worker 崩溃时统一失败并允许下次重建
 memoToolWorkerClient.test.ts: 锁定 Worker Client 正常通信、规划错误、崩溃清场与重复请求只投递一次
-memoToolPlanner.ts: 四个胖工具的纯规划内核，基于 Store 快照验证 revision/树约束并生成单步内部命令计划
+memoToolPlanner.ts: 四个胖工具的纯规划内核，基于轻量 Tree Store 快照验证 revision/树约束并生成单步内部命令计划；read_memo 只规划可信 nodeId，不接触正文
 memoToolPlanner.test.ts: 覆盖整树/read_memo、create/rename/move/reorder/delete 五种 op、edit_memo、stale 与非法移动
 memoToolSchemas.ts: 客户端四工具的 zod 契约，与 chat 模型工具保持同构并冻结 expected_revision
-memoToolExecution.ts: 主线程可信协调器，把 Worker plan 映射到现有 ai_commands，管理乐观投影/提交/对账/失败回滚
+memoToolExecution.ts: 主线程可信协调器，把 Worker plan 映射到现有 ai_commands；read_memo 按可信 nodeId 单篇取正文，写操作分别协调 Tree/Document Store 的乐观投影、提交、对账与失败回滚
 messagePresentation.ts: UIMessage 有序 part 的纯展示分区，兼容归并历史连续 assistant 分片，以最后一次工具调用为边界保留过程、按 toolCallId 去重，并把同轮成功 commands 提取为回复末尾单一入口所需的反向撤销序列
 messagePresentation.test.ts: 回复分区纯函数测试，覆盖历史连续 assistant 归并、过程/工具穿插、重复 toolCall 去重、成功 commands 整轮反向撤销、reasoning 归属和普通回复零过程区
 toolPresentation.ts: 工具 Message UI 的唯一展示适配器，先归一化 namespaced 工具名，再基于真实操作、标题和状态生成人话动作及安全详情

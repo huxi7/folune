@@ -1,15 +1,17 @@
 /**
  * [INPUT]: 依赖 shared/api/client 的统一 Bearer 请求能力与后端 memo_nodes/memos snake_case 响应契约
- * [OUTPUT]: 对外提供 MemoTreeNode/MemoTrashItem 类型，以及显式 token 的 active tree CRUD、软删、恢复、永久删与清空 API
- * [POS]: app/src/shared/api 的备忘录 HTTP 边界，只做 snake_case DTO 归一化；active tree 乐观事务与回滚仍由 Store 接管
+ * [OUTPUT]: 对外提供轻量 MemoTreeNode、完整 MemoDetailNode、关键词命中/Trash 类型及显式 token 的 memo 资源 API
+ * [POS]: app/src/shared/api 的备忘录 HTTP 边界，只做 snake_case DTO 归一化；目录、正文与搜索载荷保持分离
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
 import { apiRequest } from "./client";
 import {
   mapMemoTrashItemDto,
+  mapMemoDetailNodeDto,
   mapMemoTreeNodeDto,
   type MemoTreeNodeDto,
+  type MemoDetailNodeDto,
 } from "./memo.mapper";
 
 export type MemoNodeType = "folder" | "memo";
@@ -24,6 +26,8 @@ export type MemoContent = {
   created_at: string;
   updated_at: string;
 };
+
+export type MemoContentSummary = Omit<MemoContent, "content_mdx">;
 
 export type MemoTreeNode = {
   id: string;
@@ -41,7 +45,12 @@ export type MemoTreeNode = {
   created_at: string;
   updated_at: string;
   children: MemoTreeNode[];
-  memo: MemoContent | null;
+  memo: MemoContentSummary | null;
+};
+
+export type MemoDetailNode = Omit<MemoTreeNode, "children" | "memo"> & {
+  children: [];
+  memo: MemoContent;
 };
 
 export type MemoNode = Omit<MemoTreeNode, "children" | "memo">;
@@ -63,6 +72,11 @@ export type MemoTrashMutation = {
 
 export type MemoTrashClearResult = {
   deleted_count: number;
+};
+
+export type MemoSearchHit = {
+  excerpt: string | null;
+  node_id: string;
 };
 
 export type CreateMemoFolderInput = {
@@ -133,7 +147,7 @@ export const createMemoFolder = async (
 export const createMemo = async (
   accessToken: string,
   input: CreateMemoInput,
-): Promise<MemoTreeNode> => {
+): Promise<MemoDetailNode> => {
   const body: Record<string, number | string | null> = {
     parent_id: input.parent_id,
     title: input.title,
@@ -147,8 +161,8 @@ export const createMemo = async (
     body["sort_order"] = serializeSortOrder(input.sort_order);
   }
 
-  return mapMemoTreeNodeDto(
-    await apiRequest<MemoTreeNodeDto>(
+  return mapMemoDetailNodeDto(
+    await apiRequest<MemoDetailNodeDto>(
       "/memos",
       {
         body: JSON.stringify(body),
@@ -163,9 +177,9 @@ export const getMemo = async (
   accessToken: string,
   nodeId: string,
   signal?: AbortSignal,
-): Promise<MemoTreeNode> =>
-  mapMemoTreeNodeDto(
-    await apiRequest<MemoTreeNodeDto>(
+): Promise<MemoDetailNode> =>
+  mapMemoDetailNodeDto(
+    await apiRequest<MemoDetailNodeDto>(
       `/memos/${encodeURIComponent(nodeId)}`,
       { signal },
       accessToken,
@@ -177,9 +191,9 @@ export const updateMemo = async (
   nodeId: string,
   input: UpdateMemoInput,
   options: MemoWriteOptions = {},
-): Promise<MemoTreeNode> =>
-  mapMemoTreeNodeDto(
-    await apiRequest<MemoTreeNodeDto>(
+): Promise<MemoDetailNode> =>
+  mapMemoDetailNodeDto(
+    await apiRequest<MemoDetailNodeDto>(
       `/memos/${encodeURIComponent(nodeId)}`,
       {
         body: JSON.stringify(input),
@@ -189,6 +203,23 @@ export const updateMemo = async (
       accessToken,
     ),
   );
+
+export const searchMemos = async (
+  accessToken: string,
+  query: string,
+  signal?: AbortSignal,
+  limit = 20,
+): Promise<MemoSearchHit[]> => {
+  const params = new URLSearchParams({
+    limit: String(limit),
+    q: query,
+  });
+  return apiRequest<MemoSearchHit[]>(
+    `/memo-search?${params.toString()}`,
+    { signal },
+    accessToken,
+  );
+};
 
 export const updateMemoNode = async (
   accessToken: string,

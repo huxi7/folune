@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖 Worker 类型化 plan、shared/api/ai Command API、账号权限设置与 memoTreeStore 乐观事务
- * [OUTPUT]: 对外提供 executeMemoToolPlan，把纯计划映射为内部原子命令并完成投影、提交、对账和失败回滚
+ * [INPUT]: 依赖 Worker 类型化 plan、单篇 memo/AI Command API、账号权限设置与 tree/document Store 乐观事务
+ * [OUTPUT]: 对外提供 executeMemoToolPlan，按 ID 读取单篇全文，或把写计划映射为内部原子命令并完成双 Store 对账
  * [POS]: AgentPanel 胖工具运行链的主线程协调器；Worker只计算，本模块不裁决 RLS/revision，最终事实完全服从 api command
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -14,6 +14,8 @@ import {
 } from "../../shared/api/ai";
 import { useMemoTreeStore } from "../../shared/store/memoTreeStore";
 import type { MemoToolPlan } from "./memoToolPlanner";
+import { getMemo } from "../../shared/api/memo";
+import { useMemoDocumentStore } from "../../shared/store/memoDocumentStore";
 
 type CommandDraft = {
   expectedRevision: number | null;
@@ -98,10 +100,28 @@ export async function executeMemoToolPlan(input: {
   threadId: string;
   toolCallId: string;
 }): Promise<AiCommand | Record<string, unknown>> {
-  if (input.plan.kind === "read_tree" || input.plan.kind === "read_memo") {
+  if (input.plan.kind === "read_tree") {
     return input.plan.output;
   }
+  if (input.plan.kind === "read_memo") {
+    const detail = await getMemo(input.accessToken, input.plan.nodeId);
+    return {
+      content_mdx: detail.memo.content_mdx,
+      id: detail.id,
+      parent_id: detail.parent_id,
+      revision: detail.revision,
+      title: detail.title,
+      updated_at: detail.memo.updated_at,
+    };
+  }
   const draft = commandDraft(input.plan)!;
+  if (input.plan.kind === "edit_memo") {
+    useMemoDocumentStore.getState().projectAiEdit(
+      input.toolCallId,
+      input.plan.nodeId,
+      input.plan.contentMdx,
+    );
+  }
   useMemoTreeStore.getState().projectAiToolCall(
     input.toolCallId,
     draft.operation,
@@ -120,9 +140,11 @@ export async function executeMemoToolPlan(input: {
       ...approvalFields(settings.permission_mode, input.manuallyApproved, draft.operation),
     });
     useMemoTreeStore.getState().reconcileAiCommand(command);
+    useMemoDocumentStore.getState().reconcileAiCommand(command);
     return command;
   } catch (error) {
     useMemoTreeStore.getState().rollbackAiToolCall(input.toolCallId);
+    useMemoDocumentStore.getState().rollbackAiEdit(input.toolCallId);
     throw error;
   }
 }

@@ -32,9 +32,9 @@ app 跑在本机 Bun/Vite 固定 10000；api 与 chat 由根 Compose 编排为 a
 ## 模块地图
 | 模块 | 职责 | 文档 |
 | --- | --- | --- |
-| app | 用户端，以 Paper First 舞台承载唯一常驻写作主体与按需文件库/AI 思考空间；唯一 @Prompt Bar 冻结上下文，Web Worker 只做纯规划，主线程乐观投影并把命令提交给 api，支持按执行逆序的整轮撤销 | [app/CLAUDE.md](app/CLAUDE.md) |
+| app | 用户端，以 Paper First 舞台承载唯一常驻写作主体与按需文件库/AI 思考空间；轻量目录与按 ID 正文缓存分离，唯一 @Prompt Bar 冻结上下文，Web Worker 只做纯规划，主线程乐观投影并把命令提交给 api，支持按执行逆序的整轮撤销 | [app/CLAUDE.md](app/CLAUDE.md) |
 | chat | AI 能力服务，冻结消息上下文；memo-agent 负责对话，无工具/无记忆的 approval-agent 独立裁决写审批，organize-planner-agent 与 organize-memo Workflow 规划整理；同轮工具/审批续写复用同一 assistant，暴露 GET /health、POST /v1/chat、POST /v1/organize | [chat/CLAUDE.md](chat/CLAUDE.md) |
-| api | 业务接口服务，承载用户 profile、带 revision 的备忘录 tree/回收站、AI 会话/冻结上下文/权限设置/可撤销 Command/整理 Run；经 owner-only RLS 与原子 RPC 构成唯一持久化边界 | [api/CLAUDE.md](api/CLAUDE.md) |
+| api | 业务接口服务，承载用户 profile、轻量备忘录 tree/正文按 ID 读取与关键词命中摘要、回收站、AI 会话/冻结上下文/权限设置/可撤销 Command/整理 Run；经 owner-only RLS 与原子 RPC 构成唯一持久化边界 | [api/CLAUDE.md](api/CLAUDE.md) |
 | deploy | 本地部署基础设施，提供 api/chat 的 Bun 开发镜像、固定容器命名与密钥分离契约 | [deploy/CLAUDE.md](deploy/CLAUDE.md) |
 | scripts | 本地开发运维入口，统一启动、停止与查看 api-dev/chat-dev 双服务 Docker 日志 | [scripts/CLAUDE.md](scripts/CLAUDE.md) |
 

@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖客户端工具 zod schema、MemoTreeNode 快照与 shared/store/memoTree 纯树算法
- * [OUTPUT]: 对外提供 planMemoTool，把四个胖工具请求转换为读结果或单步、带 revision 的 Store/API 命令计划
+ * [OUTPUT]: 对外提供 planMemoTool，把四个胖工具请求转换为结构读结果、单篇读取意图或带 revision 的 Store/API 命令计划
  * [POS]: AgentPanel Worker 的纯规划内核；只读取结构化克隆快照，不访问 React、Store、DOM、网络或数据库
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -20,7 +20,6 @@ import {
   readMemoInputSchema,
   readTreeInputSchema,
   type EditNodeInput,
-  type MemoOutput,
   type ReadTreeOutput,
 } from "./memoToolSchemas";
 
@@ -32,7 +31,7 @@ export type MemoToolCommand =
 
 export type MemoToolPlan =
   | { kind: "read_tree"; output: ReadTreeOutput }
-  | { kind: "read_memo"; output: MemoOutput }
+  | { kind: "read_memo"; nodeId: string }
   | {
       kind: "create_folder";
       op: "create";
@@ -148,19 +147,11 @@ const planReadTree = (
   };
 };
 
-const memoOutput = (node: MemoTreeNode): MemoOutput => {
+const requireMemoNode = (node: MemoTreeNode): MemoTreeNode => {
   if (node.node_type !== "memo" || node.memo === null) {
     throw new Error("目标节点不是可读取的备忘录。");
   }
-
-  return {
-    content_mdx: node.memo.content_mdx,
-    id: node.id,
-    parent_id: node.parent_id,
-    revision: node.revision,
-    title: node.title,
-    updated_at: node.memo.updated_at,
-  };
+  return node;
 };
 
 const planReadMemo = (
@@ -171,7 +162,7 @@ const planReadMemo = (
 
   return {
     kind: "read_memo",
-    output: memoOutput(requireNode(nodes, parsed.node_id)),
+    nodeId: requireMemoNode(requireNode(nodes, parsed.node_id)).id,
   };
 };
 
@@ -331,7 +322,7 @@ const planEditMemo = (
 ): MemoToolPlan => {
   const parsed = editMemoInputSchema.parse(input);
   const node = requireNode(nodes, parsed.node_id);
-  memoOutput(node);
+  requireMemoNode(node);
   requireExpectedRevision(node, parsed.expected_revision);
 
   return {

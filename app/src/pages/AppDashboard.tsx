@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 React Router Profile/token、memo/WorkspaceChrome Store、AI Run、Skeleton、PaperWorkspaceShell、NotesWorkspace、AccountDialog 与可调宽浮层
- * [OUTPUT]: 对外提供 Paper First 舞台、乐观备忘录路由、草稿 flush 后删除/AI 对话/整理分流、归档定位与账户/视图编排
- * [POS]: app/src/pages 的 /app 编排层；编辑器、Run、Store、浮动工具、路由与 Trash 的跨域生命周期只在此建立一次等待边界
+ * [INPUT]: 依赖 React Router Profile/token、轻量 tree/按需正文/WorkspaceChrome Store、AI Run、Skeleton、PaperWorkspaceShell 与业务工作区
+ * [OUTPUT]: 对外提供 Paper First 舞台、目录轻载/单篇正文路由、草稿 flush 后删除/AI/整理分流及账户/视图编排
+ * [POS]: app/src/pages 的 /app 编排层；目录、正文、编辑器、Run、浮动工具与 Trash 的跨域生命周期只在此建立一次等待边界
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -16,6 +16,7 @@ import type { MemoTreeNode } from "../shared/api/memo";
 import { getProfile, type Profile } from "../shared/api/profile";
 import { useDelayedSkeleton, useToast } from "../shared/design-system/components";
 import { findNode } from "../shared/store/memoTree";
+import { useMemoDocumentStore } from "../shared/store/memoDocumentStore";
 import { useMemoTreeStore } from "../shared/store/memoTreeStore";
 import { useWorkspaceChromeStore } from "../shared/store/workspaceChromeStore";
 import { signOutAuthenticatedUser } from "../shared/supabase/auth";
@@ -54,6 +55,7 @@ import {
 } from "./memoDeletion";
 import { buildWorkspaceOrganizePresentation } from "./organizePresentation";
 import { useOptimisticMemoCreation } from "./useOptimisticMemoCreation";
+import { useMemoDocumentLoad } from "./useMemoDocumentLoad";
 import { useMemoOrganize } from "./useMemoOrganize";
 import type {
   AccountDialogState,
@@ -118,14 +120,17 @@ export function AppDashboard() {
     (state) => state.getMemoClientKey,
   );
   const resolveMemoId = useMemoTreeStore((state) => state.resolveMemoId);
-  const updateMemoContentLocal = useMemoTreeStore(
-    (state) => state.updateMemoContentLocal,
-  );
   const updateMemoTitleLocal = useMemoTreeStore(
     (state) => state.updateMemoTitleLocal,
   );
-  const saveMemoDraft = useMemoTreeStore((state) => state.saveMemoDraft);
+  const mergeMemoDetail = useMemoTreeStore((state) => state.mergeMemoDetail);
+  const waitForMemoId = useMemoTreeStore((state) => state.waitForMemoId);
   const resetMemoTree = useMemoTreeStore((state) => state.reset);
+  const memoDocuments = useMemoDocumentStore((state) => state.documents);
+  const memoDocumentStatuses = useMemoDocumentStore((state) => state.statuses);
+  const updateMemoContentLocal = useMemoDocumentStore((state) => state.updateContentLocal);
+  const saveMemoDocument = useMemoDocumentStore((state) => state.saveMemoDraft);
+  const removeMemoDocuments = useMemoDocumentStore((state) => state.removeMemos);
   const [profile, setProfile] = useState(initialProfile);
   const [activeView, setActiveView] = useState<SidebarView>("note");
   const [documentView, setDocumentView] = useState<DocumentView>("editing");
@@ -157,11 +162,21 @@ export function AppDashboard() {
   const selectedMemo = routeMemoId === null
     ? null
     : findNode(memoTree, resolveMemoId(routeMemoId));
+  const selectedMemoId = isMemo(selectedMemo) ? selectedMemo.id : null;
+  const selectedMemoDocument = selectedMemoId === null
+    ? null
+    : memoDocuments[selectedMemoId] ?? null;
+  const selectedMemoDocumentStatus = selectedMemoId === null
+    ? "idle"
+    : memoDocumentStatuses[selectedMemoId] ?? "idle";
   const workspaceStyle: WorkspaceStyle = {
     "--workspace-agent-track": `${agentWidth}px`,
     "--workspace-sidebar-track": `${sidebarWidth}px`,
   };
   const treeSkeletonVisible = useDelayedSkeleton(treeStatus === "loading");
+  const documentLoading = selectedMemoId !== null
+    && (selectedMemoDocumentStatus === "idle" || selectedMemoDocumentStatus === "loading");
+  const documentSkeletonVisible = useDelayedSkeleton(documentLoading);
   const treePlaceholderActive = treeStatus === "loading" || treeSkeletonVisible;
   const renderedTreeStatus: TreeStatus = treePlaceholderActive
     ? "loading"
@@ -170,9 +185,16 @@ export function AppDashboard() {
     accessToken,
     active: activeView === "note",
     currentMemo: isMemo(selectedMemo) ? selectedMemo : null,
+    currentDocument: selectedMemoDocument,
     onCommittedTitle: () => setViewTitleDraft(null),
     userId: profile.id,
     workspaceRef: notesWorkspaceRef,
+  });
+  useMemoDocumentLoad({
+    accessToken,
+    enabled: treeStatus === "ready",
+    memo: selectedMemoDocument,
+    memoId: selectedMemoId,
   });
 
   useEffect(() => {
@@ -434,6 +456,7 @@ export function AppDashboard() {
       }
 
       await softDeleteNode(accessToken, nodeId);
+      removeMemoDocuments(impact.affectedMemoIds);
       const storageKey = lastMemoStorageKey(profile.id);
       const storedMemoId = window.localStorage.getItem(storageKey);
 
@@ -501,25 +524,18 @@ export function AppDashboard() {
       throw new Error("当前没有可保存的备忘录。");
     }
 
-    await saveMemoDraft(
+    const targetMemoId = await waitForMemoId(memoId);
+    const updated = await saveMemoDocument(
       accessToken,
-      memoId,
+      targetMemoId,
       {
         ...(contentChanged ? { content_mdx: content } : {}),
         ...(titleChanged ? { title } : {}),
       },
       options,
     );
-    const current = findNode(
-      useMemoTreeStore.getState().nodes,
-      resolveMemoId(memoId),
-    );
-
-    if (!isMemo(current)) {
-      throw new Error("保存后的备忘录不存在。");
-    }
-
-    return current;
+    mergeMemoDetail(updated);
+    return updated;
   }
 
   async function handleCreateFolder(title: string) {
@@ -575,6 +591,7 @@ export function AppDashboard() {
   const library = (
     <>
         <AppSidebar
+          accessToken={accessToken}
           activeView={activeView}
           memoTree={memoTree}
           mutating={treeMutating}
@@ -622,7 +639,7 @@ export function AppDashboard() {
   const paper = (
     <>
         <AppMainToolbar
-          currentMemo={activeView === "note" && isMemo(selectedMemo) ? selectedMemo : null}
+          currentMemo={activeView === "note" ? selectedMemoDocument : null}
           currentMemoTitle={currentMemoTitle}
           documentView={documentView}
           editingMode={editingMode}
@@ -647,10 +664,10 @@ export function AppDashboard() {
               memoClientKey={routeMemoId === null
                 ? "empty"
                 : getMemoClientKey(resolveMemoId(routeMemoId))}
-              memo={isMemo(selectedMemo) ? selectedMemo : null}
+              memo={selectedMemoDocument}
               onContentChange={(content) => {
                 if (routeMemoId !== null) {
-                  updateMemoContentLocal(routeMemoId, content);
+                  updateMemoContentLocal(resolveMemoId(routeMemoId), content);
                 }
               }}
               onSave={handleSaveMemo}
@@ -667,8 +684,12 @@ export function AppDashboard() {
               }}
               revealContent={revealInitialTreeContent}
               ref={notesWorkspaceRef}
-              skeletonVisible={treeSkeletonVisible}
-              treeStatus={renderedTreeStatus}
+              skeletonVisible={documentSkeletonVisible}
+              treeStatus={treeStatus === "error" || selectedMemoDocumentStatus === "error"
+                ? "error"
+                : treeStatus === "loading" || documentLoading
+                  ? "loading"
+                  : "ready"}
             />
           </div>
           {activeView === "trash" ? (

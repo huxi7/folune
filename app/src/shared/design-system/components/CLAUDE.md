@@ -22,8 +22,9 @@ ThinkingStatusText.tsx: ThinkingIndicator 的低频中性状态文字，以 2800
 ThinkingIndicator.tsx: Animated Formation ThinkingMark 与 ThinkingStatusText 的无卡片行内组合件，等待正文时 active，首 token 后 160ms 淡出，活动工具出现时由调用方立即卸载
 ThinkingMark.tsx: SuperNote AI 品牌符号，默认使用圆角核心、五条不对称折线连接与五个非等径外围节点表达信息聚合；固定 24×24 viewBox/currentColor/独立 data-part，并以 1840ms 非顺时针错峰 Formation Motion 提供 active 态，同时归档 Radiation/Formation/Fold 三个静态候选
 UserMessageBubble.tsx: 用户消息气泡，直接复用 Primary Button 的主题色、前景色、smooth corner 与均匀环绕柔影
-ToolCallBubble.tsx: 工具调用专用披露控件，整颗主按钮可点击但不绘制多余展开箭头，只展示人话动作、相关图标与灰阶结果符号，复用 Secondary Button 材质且活动态只增加低频 shimmer；点击后以普通定义列表展示调用方提供的目标/位置/结果，不接收或渲染原始载荷
+ToolCallBubble.tsx: 工具调用专用披露控件，只展示人话动作、相关图标与灰阶结果符号，复用 Secondary Button 材质且活动态只增加低频 shimmer；有详情时整颗按钮可展开普通定义列表，无详情时使用不可聚焦 status，禁止死 tab stop 与原始载荷
 ToolCallBubble.test.tsx: 工具披露最小 DOM 契约测试，锁定执行态 shimmer、完成态结果槽、可访问详情入口、无 pre/details 调试面板及停止后未完成态静止
+accessibilitySemantics.test.tsx: 基础无障碍语义回归测试，锁定 Thinking 单一播报源、隐藏 Skeleton 不宣告忙碌及 Assistant 正文不伪造具名地标
 BrandMark.tsx: SuperNote 品牌标识组件，只提供 iconOnly 纯图标与“图标 + SuperNote 标题”两种稳定锁定；所有界面删除副标题形态
 Toast.tsx: Kumo-backed 全局瞬时反馈边界，以 Kumo Toast Provider/Manager/Parts 接管四条可见上限、自动关闭、悬停暂停、焦点、滑动与卸载清理；表现层采用 Kumo 同源 Root/独立材质层/Content 结构与 Apple-like 中性浮层，只以轻量图标传达 info/success/warning/error，业务层不感知第三方实现
 Select.tsx: 本地 Select 原子组件，提供受控/非受控值、上下布局、点击外部关闭、Esc/Tab/方向键/Home/End/Enter 键盘交互与自定义触发器能力；指针/键盘临时指向项消费统一中性 interactive-hover，选中语义由 Check 与真实值承担；当前产品界面不消费，因此不进入开发态生产组件陈列

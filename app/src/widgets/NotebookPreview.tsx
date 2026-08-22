@@ -42,7 +42,7 @@ export function NotebookPreview() {
           <span />
         </div>
         <div className="notebook-window-title">
-          <SparkleIcon aria-hidden="true" size={13} />
+          <SparkleIcon aria-hidden="true" size={14} />
           SuperNote / 价格页
         </div>
       </header>
@@ -50,13 +50,13 @@ export function NotebookPreview() {
       <div className="notebook-preview-grid">
         <div aria-hidden="true" className="notebook-preview-rail">
           <span className="preview-rail-action">
-            <PlusIcon aria-hidden="true" size={15} />
+            <PlusIcon aria-hidden="true" size={14} />
           </span>
           <span className="preview-rail-action" data-active="true">
-            <FileTextIcon aria-hidden="true" size={15} />
+            <FileTextIcon aria-hidden="true" size={14} />
           </span>
           <span className="preview-rail-action">
-            <MagnifyingGlassIcon aria-hidden="true" size={15} />
+            <MagnifyingGlassIcon aria-hidden="true" size={14} />
           </span>
           <span className="preview-rail-avatar">林</span>
         </div>
@@ -64,7 +64,7 @@ export function NotebookPreview() {
         <aside className="notebook-preview-sidebar">
           <div className="preview-sidebar-heading">
             <span>备忘录</span>
-            <DotsThreeIcon aria-hidden="true" size={15} />
+            <DotsThreeIcon aria-hidden="true" size={14} />
           </div>
           <div className="preview-folder-list">
             {folders.map((folder) => (
@@ -76,7 +76,7 @@ export function NotebookPreview() {
                 </div>
                 {folder.open ? (
                   <div className="preview-document-row" data-active="true">
-                    <FileTextIcon aria-hidden="true" size={13} />
+                    <FileTextIcon aria-hidden="true" size={14} />
                     <span>会员价格页</span>
                   </div>
                 ) : null}

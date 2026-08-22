@@ -21,6 +21,7 @@ export const getMentionResults = (
   tree: readonly MemoTreeNode[],
   query: string,
   selectedIds: readonly string[],
+  bodyHitIds: ReadonlySet<string> = new Set(),
 ): MentionResult[] => {
   const recent: Array<{ id: string; path: string; title: string }> = [];
   const visit = (nodes: readonly MemoTreeNode[], folders: readonly string[]) => {
@@ -40,7 +41,7 @@ export const getMentionResults = (
     visit(tree, []);
   }
 
-  const raw = hasQuery ? searchMemoTree(tree, query) : recent;
+  const raw = hasQuery ? searchMemoTree(tree, query, bodyHitIds) : recent;
 
   // 先裁剪到 8 条再回树里取 revision: 原先在 map 内对每个候选做一次
   // findNode 全树查找, 裁剪前的结果数就是全树查找的次数。

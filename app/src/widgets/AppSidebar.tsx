@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 MemoTreeBranch、Skeleton、memoLibrary 拖拽/祖先计划、持久化展开偏好、整理定位意图、Profile、Design System 与上层 Store/文件库关闭命令
+ * [INPUT]: 依赖 MemoTreeBranch/Skeleton、memoLibrary 拖拽/祖先计划、服务端正文命中搜索、持久化展开偏好、整理定位意图、Profile、Design System 与上层 Store/文件库关闭命令
  * [OUTPUT]: 对外提供品牌与右侧 Ghost 收起 Header、同排中性搜索/Primary 根级新建及搜索时独占整行的聚焦输入、真实文件树、搜索/重命名/拖拽、整理目标展开定位高亮、底部导航及节点回收站命令
  * [POS]: app/src/widgets 的按需文件库内容层；拥有文件库内部信息层级与关闭入口，只收集业务意图，事务与路由切换由 Dashboard 编排
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -33,8 +33,6 @@ import {
   BrandMark,
   Button,
   Input,
-  Skeleton,
-  SkeletonGroup,
   SidebarButton,
   UserMenu,
 } from "../shared/design-system/components";
@@ -46,7 +44,9 @@ import {
   type MemoDropTarget,
   type MemoMovePlan,
 } from "./memoLibrary";
+import { useMemoSearch } from "./useMemoSearch";
 import { MemoTreeBranch } from "./MemoTreeBranch";
+import { MemoTreeSkeleton } from "./MemoTreeSkeleton";
 import { useMemoTreeExpansion } from "./useMemoTreeExpansion";
 
 export type SidebarView =
@@ -56,6 +56,7 @@ export type SidebarView =
   | "design-system";
 
 type AppSidebarProps = {
+  accessToken: string;
   activeView: SidebarView;
   memoTree: MemoTreeNode[];
   mutating: boolean;
@@ -106,37 +107,6 @@ const ROOT_END_TARGET: MemoDropTarget = {
   parentId: null,
   placement: "root-end",
 };
-
-function MemoTreeSkeleton({ visible }: { visible: boolean }) {
-  return (
-    <SkeletonGroup
-      className="sidebar-tree-skeleton"
-      label="正在加载备忘录文件树"
-      visible={visible}
-    >
-      <div className="sidebar-tree-skeleton-row">
-        <Skeleton className="sidebar-tree-skeleton-icon" />
-        <Skeleton className="sidebar-tree-skeleton-label sidebar-tree-skeleton-label-wide" shape="text" />
-      </div>
-      <div className="sidebar-tree-skeleton-row sidebar-tree-skeleton-row-nested">
-        <Skeleton className="sidebar-tree-skeleton-icon" />
-        <Skeleton className="sidebar-tree-skeleton-label" shape="text" />
-      </div>
-      <div className="sidebar-tree-skeleton-row sidebar-tree-skeleton-row-nested">
-        <Skeleton className="sidebar-tree-skeleton-icon" />
-        <Skeleton className="sidebar-tree-skeleton-label sidebar-tree-skeleton-label-short" shape="text" />
-      </div>
-      <div className="sidebar-tree-skeleton-row">
-        <Skeleton className="sidebar-tree-skeleton-icon" />
-        <Skeleton className="sidebar-tree-skeleton-label" shape="text" />
-      </div>
-      <div className="sidebar-tree-skeleton-row sidebar-tree-skeleton-row-nested">
-        <Skeleton className="sidebar-tree-skeleton-icon" />
-        <Skeleton className="sidebar-tree-skeleton-label sidebar-tree-skeleton-label-wide" shape="text" />
-      </div>
-    </SkeletonGroup>
-  );
-}
 
 const dropTargetsMatch = (
   left: MemoDropTarget | null,
@@ -190,6 +160,7 @@ const setMemoDragImage = (
 };
 
 export function AppSidebar({
+  accessToken,
   activeView,
   memoTree,
   mutating,
@@ -220,6 +191,7 @@ export function AppSidebar({
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
+  const bodyHitIds = useMemoSearch(accessToken, memoTree, searchQuery);
   const [draggedNodeId, setDraggedNodeId] = useState<string | null>(null);
   const [dropTarget, setDropTarget] = useState<MemoDropTarget | null>(null);
   const [renamingNodeId, setRenamingNodeId] = useState<string | null>(null);
@@ -233,11 +205,11 @@ export function AppSidebar({
     ready: treeStatus === "ready",
     userId: profile.id,
   });
-  // 搜索会遍历全树并把每篇 content_mdx 纳入匹配, 裸在 render body 里意味着
-  // hover / dragOverTarget / 右键菜单等任意 state 变化都触发一次全库全文扫描。
+  // 本地只匹配标题/路径，再合并服务端正文命中 ID；memo 化避免 hover、
+  // dragOverTarget 与右键菜单等无关状态重复遍历整棵轻量目录。
   const searchResults = useMemo(
-    () => searchMemoTree(memoTree, searchQuery),
-    [memoTree, searchQuery],
+    () => searchMemoTree(memoTree, searchQuery, bodyHitIds),
+    [bodyHitIds, memoTree, searchQuery],
   );
   const focusNodeId = organizeTarget?.folderId ?? organizeTarget?.memoId ?? selectedMemoId;
   const focusKey = organizeTarget?.runId ?? layoutKey;
@@ -638,7 +610,7 @@ export function AppSidebar({
                 className="sidebar-search-result"
                 key={memo.id}
                 label={<span className="sidebar-search-result-copy"><strong>{memo.title}</strong><small>{memo.path}</small></span>}
-                leading={<FileTextIcon size={15} />}
+                leading={<FileTextIcon size={14} />}
                 onClick={() => {
                   onSelectMemo(memo.id);
                   closeSearch();
@@ -767,7 +739,7 @@ export function AppSidebar({
             role="menuitem"
             type="button"
           >
-            <FileTextIcon size={15} />
+            <FileTextIcon size={14} />
             新建备忘录
           </button>
           <button
@@ -780,7 +752,7 @@ export function AppSidebar({
             role="menuitem"
             type="button"
           >
-            <FolderIcon size={15} />
+            <FolderIcon size={14} />
             新建文件夹
           </button>
           {contextMenuNode ? (
@@ -792,7 +764,7 @@ export function AppSidebar({
                 role="menuitem"
                 type="button"
               >
-                <PencilSimpleIcon size={15} />
+                <PencilSimpleIcon size={14} />
                 <span className="memo-context-menu-label">重命名</span>
                 <kbd className="memo-context-menu-shortcut">F2</kbd>
               </button>
@@ -807,7 +779,7 @@ export function AppSidebar({
                 role="menuitem"
                 type="button"
               >
-                <TrashIcon size={15} />
+                <TrashIcon size={14} />
                 <span className="memo-context-menu-label">移至回收站</span>
               </button>
             </>

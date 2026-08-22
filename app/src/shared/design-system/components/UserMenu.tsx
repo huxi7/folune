@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 React 弹出层状态/焦点管理、共享 Lucide 设置/订阅/退出图标、UserAvatar/UserButton 与上层账户命令
- * [OUTPUT]: 对外提供顶部身份卡片直达个人资料、下方仅列设置等动作的 UserMenu 组合组件
+ * [OUTPUT]: 对外提供顶部身份卡片直达个人资料、下方仅列设置等动作且退出失败走全局 Toast 的 UserMenu 组合组件
  * [POS]: app/src/shared/design-system/components 的账户菜单；身份卡片与设置命令进入同一个 AccountDialog，不把个人资料重复成普通菜单项
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -21,6 +21,7 @@ import {
 import { useDismissable } from "../useDismissable";
 
 import { UserAvatar, UserButton } from "./UserButton";
+import { useToast } from "./Toast";
 
 type UserMenuProps = {
   avatarUrl?: string;
@@ -45,8 +46,8 @@ export function UserMenu({
   const menuRef = useRef<HTMLDivElement>(null);
   const shellRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
-  const [actionError, setActionError] = useState("");
   const [open, setOpen] = useState(false);
+  const { toast } = useToast();
 
   const closeMenu = useCallback(() => setOpen(false), []);
 
@@ -58,7 +59,6 @@ export function UserMenu({
   });
 
   function closeAndRun(action: () => void) {
-    setActionError("");
     // 焦点先离开即将被卸载的 menuitem, 否则 activeElement 退回 body,
     // 下游 Dialog 会把 body 记成 previousActiveElement, 关闭时无处归还。
     triggerRef.current?.focus();
@@ -146,7 +146,7 @@ export function UserMenu({
               <strong>{name}</strong>
               <small>{email}</small>
             </span>
-            <CaretRightIcon aria-hidden="true" size={17} />
+            <CaretRightIcon aria-hidden="true" size={16} />
           </button>
 
           <div className="ds-user-menu-divider" />
@@ -157,7 +157,7 @@ export function UserMenu({
             role="menuitem"
             type="button"
           >
-            <CreditCardIcon aria-hidden="true" size={17} />
+            <CreditCardIcon aria-hidden="true" size={16} />
             <span>订阅</span>
           </button>
           <button
@@ -166,7 +166,7 @@ export function UserMenu({
             role="menuitem"
             type="button"
           >
-            <GearSixIcon aria-hidden="true" size={17} />
+            <GearSixIcon aria-hidden="true" size={16} />
             <span>设置</span>
           </button>
 
@@ -177,21 +177,17 @@ export function UserMenu({
             data-tone="danger"
             onClick={() => {
               setOpen(false);
-              void onSignOut().catch(() => setActionError("退出失败，请重试。"));
+              void onSignOut().catch(() => {
+                toast({ title: "退出失败，请重试。", variant: "error" });
+              });
             }}
             role="menuitem"
             type="button"
           >
-            <SignOutIcon aria-hidden="true" size={17} />
+            <SignOutIcon aria-hidden="true" size={16} />
             <span>退出登录</span>
           </button>
         </div>
-      ) : null}
-
-      {actionError ? (
-        <p className="mt-2 px-2 text-xs text-destructive" role="alert">
-          {actionError}
-        </p>
       ) : null}
     </div>
   );

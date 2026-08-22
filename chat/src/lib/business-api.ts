@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 config/env 的 BUSINESS_API_BASE_URL、调用方当前 Bearer JWT、Web fetch 与 zod
- * [OUTPUT]: 对外提供 thread 验证、消息同步、统一 @来源冻结 context、memo 读取、账号权限、通用命令与 Run 状态机的 authenticated Business API client
+ * [OUTPUT]: 对外提供 thread/消息/冻结 context、轻量 memo tree、单篇正文、账号权限、命令与 Run 的 authenticated Business API client
  * [POS]: lib 层 chat→api 唯一业务边界，每次请求临时转发用户 JWT，统一解析信封且绝不记录或持久化凭据
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -124,13 +124,29 @@ const memoNodeSchema: z.ZodType<MemoTreeNode> = z.lazy(() =>
     updated_at: z.string(),
     children: z.array(memoNodeSchema),
     memo: z.object({
-      content_mdx: z.string(),
+      excerpt: z.string().nullable(),
+      word_count: z.number().int().nonnegative(),
       updated_at: z.string(),
     }).passthrough().nullable(),
   }).passthrough(),
 );
 
 const memoTreeSchema = z.array(memoNodeSchema);
+const memoDetailSchema = z.object({
+  id: z.uuid(),
+  parent_id: z.uuid().nullable(),
+  node_type: z.literal("memo"),
+  title: z.string(),
+  sort_order: z.number(),
+  revision: z.number().int().positive(),
+  deleted_at: z.string().nullable(),
+  updated_at: z.string(),
+  children: z.array(z.never()).max(0),
+  memo: z.object({
+    content_mdx: z.string(),
+    updated_at: z.string(),
+  }).passthrough(),
+}).passthrough();
 
 export type ResolvedContext = z.infer<typeof resolvedContextSchema>;
 export type AiPermissionMode = z.infer<typeof aiPermissionModeSchema>;
@@ -147,7 +163,7 @@ export type MemoTreeNode = {
   deleted_at: string | null;
   updated_at: string;
   children: MemoTreeNode[];
-  memo: ({ content_mdx: string; updated_at: string } & Record<string, unknown>) | null;
+  memo: ({ excerpt: string | null; word_count: number; updated_at: string } & Record<string, unknown>) | null;
 } & Record<string, unknown>;
 
 export class BusinessApiError extends Error {
@@ -258,7 +274,7 @@ export const businessApi = {
   },
 
   getMemo(nodeId: string, accessToken: string) {
-    return request(`/memos/${encodeURIComponent(nodeId)}`, accessToken, memoNodeSchema);
+    return request(`/memos/${encodeURIComponent(nodeId)}`, accessToken, memoDetailSchema);
   },
 
   createCommand(

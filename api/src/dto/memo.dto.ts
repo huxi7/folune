@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 zod 的 UUID、strict object、联合与 infer 能力
- * [OUTPUT]: 对外提供 memo/PostgREST 行、回收站 RPC 结果、接口 body/param schema 及 infer 类型
- * [POS]: dto 层备忘录 HTTP/PostgREST 数据边界，校验 active tree 与删除批次响应并限制调用方写入白名单
+ * [OUTPUT]: 对外提供 memo/PostgREST 正文与摘要行、关键词查询、回收站 RPC 结果、接口 body/param schema 及 infer 类型
+ * [POS]: dto 层备忘录 HTTP/PostgREST 数据边界，分别校验轻量 tree、单篇正文、搜索与删除批次响应
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -39,8 +39,15 @@ export const memoContentRowSchema = z.object({
   updated_at: z.string(),
 });
 
+export const memoContentSummaryRowSchema = memoContentRowSchema.omit({
+  content_mdx: true,
+});
+
 export const memoNodeRowsSchema = z.array(memoNodeRowSchema);
 export const memoContentRowsSchema = z.array(memoContentRowSchema);
+export const memoContentSummaryRowsSchema = z.array(
+  memoContentSummaryRowSchema,
+);
 export const memoSortOrderRowsSchema = z.array(
   z.object({ sort_order: z.number() }),
 );
@@ -102,6 +109,11 @@ export const memoNodeIdParamSchema = z.object({
   nodeId: z.uuid(),
 });
 
+export const memoSearchQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+  q: z.string().trim().min(1).max(200),
+});
+
 export const createMemoFolderSchema = z
   .object({
     title: titleSchema,
@@ -153,6 +165,7 @@ export type RenameMemoNodeInput = z.infer<
   typeof renameMemoNodeSchema
 >;
 export type MoveMemoNodeInput = z.infer<typeof moveMemoNodeSchema>;
+export type MemoSearchQuery = z.infer<typeof memoSearchQuerySchema>;
 export type SoftDeleteMemoRpcResult = z.infer<
   typeof softDeleteMemoRpcResultSchema
 >;

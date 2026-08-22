@@ -7,6 +7,7 @@
 @source "../node_modules/@cloudflare/kumo/dist/**/*.{js,jsx,ts,tsx}";
 @import "@cloudflare/kumo/styles";
 @import "tailwindcss";
+@import "./styles/global-base.css";
 @import "./styles/workspace.css";
 @import "./styles/auth.css";
 @import "./styles/design-system.css";
@@ -746,68 +747,4 @@
   --tracking-wide: var(--tracking-normal);
   --tracking-wider: var(--tracking-normal);
   --tracking-widest: var(--tracking-normal);
-}
-
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-
-  html {
-    @apply bg-background;
-    color-scheme: light;
-    scroll-behavior: smooth;
-    scrollbar-gutter: stable;
-  }
-
-  html.dark {
-    color-scheme: dark;
-  }
-
-  body {
-    @apply min-h-screen bg-background font-sans text-foreground antialiased;
-    letter-spacing: var(--tracking-normal);
-    overflow-x: hidden;
-    text-rendering: optimizeLegibility;
-  }
-
-  button,
-  input,
-  textarea {
-    font: inherit;
-  }
-
-  button:not(:disabled),
-  [role="button"]:not([aria-disabled="true"]) {
-    cursor: pointer;
-  }
-
-  ::selection {
-    background: color-mix(in srgb, var(--primary) 28%, transparent);
-    color: var(--foreground);
-  }
-
-  * {
-    scrollbar-color: color-mix(in srgb, var(--muted-foreground) 34%, transparent) transparent;
-    scrollbar-width: thin;
-  }
-
-  #root {
-    min-height: 100vh;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
-
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    scroll-behavior: auto !important;
-    transition-duration: 0.01ms !important;
-  }
 }

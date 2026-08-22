@@ -5,7 +5,8 @@
 CLAUDE.md: 记录业务服务层职责与文档协议
 auth.service.ts: 将 router 提取的用户 access token 转换为经 Supabase Auth 校验的可信 AuthUser
 health.service.ts: 提供不依赖 Hono Context 的健康状态用例
-memo.service.ts: 以内存邻接表组装 active tree 或 RPC 返回的 detached restored subtree，编排 CRUD、父类型/防环规则与正文派生统计
+memo-tree.service.ts: 以内存邻接表把节点与正文摘要组装为轻量 active tree/detached restored subtree，并集中转换 summary/detail，禁止 tree 重新携带 content_mdx
+memo.service.ts: 编排轻量 tree、正文关键词命中摘要、单篇 detail CRUD、父类型/防环规则与正文派生统计；树组装委托 memo-tree.service
 memo-trash.service.ts: 回收站业务规则层，筛选已删除祖先下不可见的删除根、生成原路径/摘要，并把软删、恢复、永久删除、清空 RPC 状态映射为稳定 404/409
 ai-thread.service.ts: 编排无归档分支的会话 CRUD、消息完整同步、旧 context snapshot 保留、仅首次用户文本自动标题及最多五篇去重引用
 ai-context.service.ts: 从服务端 memo tree/正文解析本轮冻结 primary/显式/置顶引用，先以 expected revision 拒绝审批续写期间的漂移，再生成可信路径并分配 60k 字符预算

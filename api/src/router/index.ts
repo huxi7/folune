@@ -20,6 +20,7 @@ import {
   memoFolderRouter,
   memoNodeRouter,
   memoRouter,
+  memoSearchRouter,
   memoTrashRouter,
   memoTreeRouter,
 } from "./memo.router.ts";
@@ -30,6 +31,7 @@ export const router = new Hono();
 router.route("/health", healthRouter);
 router.route("/profile", profileRouter);
 router.route("/memo-tree", memoTreeRouter);
+router.route("/memo-search", memoSearchRouter);
 router.route("/memo-folders", memoFolderRouter);
 router.route("/memos", memoRouter);
 router.route("/memo-nodes", memoNodeRouter);

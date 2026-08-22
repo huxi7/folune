@@ -19,7 +19,7 @@ export function MarketingAnnouncement() {
       <ArrowRightIcon
         aria-hidden="true"
         className="transition-transform duration-200 ease-out motion-safe:group-hover:translate-x-0.5 motion-reduce:transform-none"
-        size={13}
+        size={14}
       />
     </a>
   );

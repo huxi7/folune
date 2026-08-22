@@ -8,7 +8,7 @@
 import { describe, expect, test } from "bun:test";
 
 import type {
-  MemoContent,
+  MemoContentSummary,
   MemoNode,
   MemoTreeNode,
 } from "../shared/api/memo";
@@ -25,9 +25,8 @@ import {
 
 const TIMESTAMP = "2026-08-05T00:00:00.000Z";
 
-function content(nodeId: string, contentMdx: string): MemoContent {
+function content(nodeId: string, contentMdx: string): MemoContentSummary {
   return {
-    content_mdx: contentMdx,
     created_at: TIMESTAMP,
     excerpt: contentMdx,
     metadata: {},
@@ -109,7 +108,7 @@ describe("memo tree view model", () => {
       "folder-child",
     ]);
     expect(getMemoFolderPath(tree, "memo-nested")).toBe("工作 / 项目 A");
-    expect(searchMemoTree(tree, "后端树")).toEqual([
+    expect(searchMemoTree(tree, "后端树", new Set(["memo-nested"]))).toEqual([
       { id: "memo-nested", path: "工作 / 项目 A", title: "会议记录" },
     ]);
   });
@@ -126,7 +125,7 @@ describe("memo tree view model", () => {
 
     expect(findMemoNode(tree, "memo-nested")?.title).toBe("会议记录");
     expect(findMemoNode(renamedTree, "memo-nested")?.title).toBe("新标题");
-    expect(findMemoNode(replacedTree, "memo-nested")?.memo?.content_mdx).toBe("新正文");
+    expect(findMemoNode(replacedTree, "memo-nested")?.memo?.excerpt).toBe("新正文");
   });
 
   test("places a node inside a folder as its first child", () => {

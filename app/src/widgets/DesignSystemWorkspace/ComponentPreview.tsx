@@ -5,6 +5,7 @@
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import {
+  ICON_SIZES,
   ArrowUpIcon,
   DesktopIcon,
   FileTextIcon,
@@ -196,7 +197,7 @@ function IconographyPreview() {
         <p>24×24 Grid · 2px Stroke · Round cap/join · currentColor</p>
       </header>
       <div aria-label="图标尺寸阶梯" className="ds-icon-size-scale">
-        {[14, 16, 20, 24].map((size) => (
+        {ICON_SIZES.map((size) => (
           <span key={size}>
             <NotePencilIcon aria-hidden="true" size={size} />
             <code>{size}px</code>
@@ -216,7 +217,7 @@ function IconographyPreview() {
 
                 return (
                   <div className="ds-iconography-item" key={item.exportName}>
-                    <span aria-hidden="true"><IconComponent size={18} /></span>
+                    <span aria-hidden="true"><IconComponent size={16} /></span>
                     <div>
                       <strong>{item.label}</strong>
                       <code>{item.exportName}</code>

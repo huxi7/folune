@@ -281,7 +281,7 @@ export function LandingSections() {
                   <PlusIcon
                     aria-hidden="true"
                     className="transition-transform duration-200 ease-out group-open:rotate-45 motion-reduce:transition-none"
-                    size={17}
+                    size={16}
                   />
                 </summary>
                 <p>{item.answer}</p>

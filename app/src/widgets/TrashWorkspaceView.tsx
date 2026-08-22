@@ -157,7 +157,7 @@ export function TrashWorkspaceView({
               return (
                 <article className="trash-item" key={item.id}>
                   <div className="trash-item-icon" aria-hidden="true">
-                    <Icon size={17} />
+                    <Icon size={16} />
                   </div>
                   <div className="trash-item-copy">
                     <div className="trash-item-title-row">

@@ -203,14 +203,14 @@
     white-space: nowrap;
   }
 
-  .ds-thinking-status-text > span {
+  .ds-thinking-status-text > span:not(.sr-only) {
     grid-area: 1 / 1;
     opacity: 0;
     transform: translateY(0.125rem);
     transition: opacity 210ms var(--ease-standard), transform 210ms var(--ease-standard);
   }
 
-  .ds-thinking-status-text > span[data-active="true"] {
+  .ds-thinking-status-text > span:not(.sr-only)[data-active="true"] {
     opacity: 1;
     transform: translateY(0);
   }
@@ -371,7 +371,7 @@
       transform: none;
     }
 
-    .ds-thinking-status-text > span {
+    .ds-thinking-status-text > span:not(.sr-only) {
       transform: none;
       transition: opacity 210ms var(--ease-standard) !important;
     }

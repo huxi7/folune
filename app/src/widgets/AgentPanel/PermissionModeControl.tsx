@@ -114,7 +114,7 @@ export function PermissionModeControl({
         type="button"
         variant="ghost"
       >
-        {!compact ? <><span>{labels[mode]}</span><CaretDownIcon size={11} /></> : null}
+        {!compact ? <><span>{labels[mode]}</span><CaretDownIcon size={14} /></> : null}
       </Button>
       {open ? (
         <div className="agent-permission-menu" data-placement={compact ? "top" : "bottom"} role="menu">

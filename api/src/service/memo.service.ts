@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖可信 AuthUser、请求期 access token、memo DTO 输入、memo repository、领域模型与 HttpError
- * [OUTPUT]: 对外提供 active 整树读取、folder/memo CRUD、节点移动与删除批次恢复后的可合并 subtree
- * [POS]: service 层 active 备忘录树规则边界，负责组树、父级/防环、原样正文派生统计、跨表补偿与恢复结果校验
+ * [OUTPUT]: 对外提供轻量 active tree、单篇正文、正文关键词命中、folder/memo CRUD、节点移动与恢复 subtree
+ * [POS]: service 层 active 备忘录写入与读取编排边界；树组装委托 memo-tree.service，正文原样存储并派生摘要
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -10,17 +10,26 @@ import type {
   CreateMemoFolderInput,
   CreateMemoInput,
   MoveMemoNodeInput,
+  MemoSearchQuery,
   PatchMemoInput,
   RenameMemoNodeInput,
 } from "../dto/memo.dto.ts";
 import type { AuthUser } from "../model/auth.model.ts";
 import type {
   MemoContent,
+  MemoDetailNode,
   MemoNode,
+  MemoSearchHit,
   MemoTreeNode,
   UpdateMemoContentData,
 } from "../model/memo.model.ts";
 import { memoRepository } from "../repository/memo.repository.ts";
+import {
+  buildMemoTree,
+  toMemoContentSummary,
+  toMemoDetailNode,
+  toMemoTreeNode,
+} from "./memo-tree.service.ts";
 
 const DEFAULT_SORT_GAP = 1000;
 const MEMO_EXCERPT_MAX_CHARACTERS = 200;
@@ -150,119 +159,6 @@ const nextSortOrder = async (
   return (currentMax ?? 0) + DEFAULT_SORT_GAP;
 };
 
-const toTreeNode = (
-  node: MemoNode,
-  memo: MemoContent | null,
-): MemoTreeNode => ({
-  ...node,
-  children: [],
-  memo,
-});
-
-const buildMemoTree = (
-  authUser: AuthUser,
-  nodes: MemoNode[],
-  contents: MemoContent[],
-  detachedRootId?: string,
-): MemoTreeNode[] => {
-  const contentByNodeId = new Map<string, MemoContent>();
-
-  for (const content of contents) {
-    assertOwnedContent(authUser, content);
-    contentByNodeId.set(content.node_id, content);
-  }
-
-  const treeById = new Map<string, MemoTreeNode>();
-
-  for (const node of nodes) {
-    assertOwnedNode(authUser, node);
-    const content = contentByNodeId.get(node.id) ?? null;
-
-    if (node.node_type === "folder" && content !== null) {
-      throw new HttpError(
-        502,
-        "MEMO_TREE_INVALID",
-        "Folder node unexpectedly has memo content",
-      );
-    }
-
-    if (node.node_type === "memo" && content === null) {
-      throw new HttpError(
-        502,
-        "MEMO_TREE_INVALID",
-        "Memo node is missing its content",
-      );
-    }
-
-    treeById.set(node.id, toTreeNode(node, content));
-  }
-
-  const roots: MemoTreeNode[] = [];
-
-  for (const node of nodes) {
-    const treeNode = treeById.get(node.id);
-
-    if (treeNode === undefined) {
-      throw new HttpError(
-        502,
-        "MEMO_TREE_INVALID",
-        "Memo tree contains an invalid node",
-      );
-    }
-
-    if (node.parent_id === null || node.id === detachedRootId) {
-      roots.push(treeNode);
-      continue;
-    }
-
-    const parent = treeById.get(node.parent_id);
-
-    if (parent === undefined || parent.node_type !== "folder") {
-      throw new HttpError(
-        502,
-        "MEMO_TREE_INVALID",
-        "Memo tree contains an invalid parent",
-      );
-    }
-
-    parent.children.push(treeNode);
-  }
-
-  const visited = new Set<string>();
-  const activePath = new Set<string>();
-
-  const visit = (node: MemoTreeNode): void => {
-    if (activePath.has(node.id)) {
-      throw new HttpError(
-        502,
-        "MEMO_TREE_INVALID",
-        "Memo tree contains a cycle",
-      );
-    }
-
-    if (visited.has(node.id)) {
-      return;
-    }
-
-    activePath.add(node.id);
-    node.children.forEach(visit);
-    activePath.delete(node.id);
-    visited.add(node.id);
-  };
-
-  roots.forEach(visit);
-
-  if (visited.size !== nodes.length) {
-    throw new HttpError(
-      502,
-      "MEMO_TREE_INVALID",
-      "Memo tree contains unreachable nodes",
-    );
-  }
-
-  return roots;
-};
-
 const extractMemoMetadataText = (contentMdx: string): string => {
   const textWithoutMarkdownSyntax = contentMdx
     .replace(/```[\s\S]*?```/g, " ")
@@ -323,7 +219,7 @@ const createFolder = async (
     );
   }
 
-  return toTreeNode(assertOwnedNode(authUser, created), null);
+  return toMemoTreeNode(assertOwnedNode(authUser, created), null);
 };
 
 const cleanupCreatedNode = async (
@@ -346,7 +242,7 @@ const createMemo = async (
   authUser: AuthUser,
   accessToken: string,
   input: CreateMemoInput,
-): Promise<MemoTreeNode> => {
+): Promise<MemoDetailNode> => {
   const parentId = input.parent_id ?? null;
   await validateParentFolder(authUser, accessToken, parentId);
   const node = await memoRepository.createNode(
@@ -391,7 +287,7 @@ const createMemo = async (
       );
     }
 
-    return toTreeNode(
+    return toMemoDetailNode(
       node,
       assertOwnedContent(authUser, content),
     );
@@ -409,23 +305,40 @@ const getTree = async (
     authUser.id,
     accessToken,
   );
-  const contents = await memoRepository.listContents(
+  const summaries = await memoRepository.listContentSummaries(
     authUser.id,
     accessToken,
-    nodes.filter((node) => node.node_type === "memo").map((node) => node.id),
   );
 
-  return buildMemoTree(authUser, nodes, contents);
+  return buildMemoTree(authUser, nodes, summaries);
 };
 
 const getMemo = async (
   authUser: AuthUser,
   accessToken: string,
   nodeId: string,
-): Promise<MemoTreeNode> => {
+): Promise<MemoDetailNode> => {
   const memo = await findOwnedMemo(authUser, accessToken, nodeId);
 
-  return toTreeNode(memo.node, memo.content);
+  return toMemoDetailNode(memo.node, memo.content);
+};
+
+const searchMemos = async (
+  authUser: AuthUser,
+  accessToken: string,
+  input: MemoSearchQuery,
+): Promise<MemoSearchHit[]> => {
+  const summaries = await memoRepository.searchContentSummaries(
+    authUser.id,
+    input.q,
+    input.limit,
+    accessToken,
+  );
+
+  return summaries.map((summary) => ({
+    excerpt: summary.excerpt,
+    node_id: summary.node_id,
+  }));
 };
 
 const restoreTitle = async (
@@ -458,7 +371,7 @@ const updateMemo = async (
   accessToken: string,
   nodeId: string,
   input: PatchMemoInput,
-): Promise<MemoTreeNode> => {
+): Promise<MemoDetailNode> => {
   const current = await findOwnedMemo(
     authUser,
     accessToken,
@@ -519,7 +432,7 @@ const updateMemo = async (
     }
   }
 
-  return toTreeNode(node, content);
+  return toMemoDetailNode(node, content);
 };
 
 const renameNode = async (
@@ -717,7 +630,7 @@ const restoreNode = async (
   const restoredTree = buildMemoTree(
     authUser,
     result.nodes,
-    result.contents,
+    result.contents.map(toMemoContentSummary),
     nodeId,
   );
   const root = restoredTree[0];
@@ -738,6 +651,7 @@ export const memoService = {
   createFolder,
   createMemo,
   getMemo,
+  searchMemos,
   updateMemo,
   renameNode,
   moveNode,

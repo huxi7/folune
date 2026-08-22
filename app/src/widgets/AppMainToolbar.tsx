@@ -7,13 +7,13 @@
 
 import { MagicWandIcon } from "../shared/design-system/icons";
 
-import type { MemoTreeNode } from "../shared/api/memo";
+import type { MemoDetailNode } from "../shared/api/memo";
 import { Button } from "../shared/design-system/components";
 import { MarkdownViewMenu } from "./MarkdownViewMenu";
 import type { DocumentView, EditingMode } from "./markdownViewTypes";
 
 type AppMainToolbarProps = {
-  currentMemo: MemoTreeNode | null;
+  currentMemo: MemoDetailNode | null;
   currentMemoTitle: string;
   documentView: DocumentView;
   editingMode: EditingMode;
@@ -32,7 +32,7 @@ export function AppMainToolbar(props: AppMainToolbarProps) {
         <span className="truncate text-xs font-medium text-muted-foreground">{props.toolbarTitle}</span>
       </div>
       <div className="note-view-actions">
-        {props.currentMemo?.memo !== null && props.currentMemo !== null ? <>
+        {props.currentMemo !== null ? <>
           <Button aria-keyshortcuts="Meta+Enter Control+Enter" aria-label="AI 整理当前备忘录" className="note-organize-button" icon={MagicWandIcon} loading={props.organizing} onClick={() => void props.onOrganize()} size="square" title="AI 整理（⌘/Ctrl + Enter）" variant="secondary" />
           <MarkdownViewMenu content={props.currentMemo.memo.content_mdx} documentView={props.documentView} editingMode={props.editingMode} onDocumentViewChange={props.onDocumentViewChange} onEditingModeChange={props.onEditingModeChange} title={props.currentMemoTitle} />
         </> : null}
