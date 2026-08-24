@@ -1,0 +1,231 @@
+/**
+ * [INPUT]: 依赖 index.css 的 Paper/Card/Ink/Muted/Hairline/Primary 语义 token、4px 空间基线、8/12/16px 曲率与 --motion-*，以及 @xyflow/react 自带的基础定位样式
+ * [OUTPUT]: 对外提供全屏 .canvas-workspace 空间壳、浮动返回/标题入口、占满视口的 .knowledge-canvas、极淡点阵底材、只读卡片、线上的理由注文与加载/错误态
+ * [POS]: app/src/styles 的已保存画布表现层；CanvasWorkspace 与 PaperWorkspace 互斥，第三方只提供 pan/zoom 与节点定位机制，视觉一律回到 SuperNote token。卡片正文限高不是省地方，而是「卡片永不原地展开」的物理执行
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+@layer components {
+  .canvas-workspace {
+    position: fixed;
+    z-index: 60;
+    inset: 0;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    background: var(--workspace-stage);
+    color: var(--foreground);
+  }
+
+  .canvas-workspace-nav {
+    position: absolute;
+    z-index: 12;
+    top: var(--space-4);
+    left: var(--space-4);
+    display: flex;
+    max-width: min(30rem, calc(100vw - 8rem));
+    min-height: var(--control-height-large);
+    align-items: center;
+    gap: var(--space-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-menu);
+    background: color-mix(in srgb, var(--card) 94%, transparent);
+    padding: var(--space-1) var(--space-3) var(--space-1) var(--space-1);
+    box-shadow: var(--shadow-xs);
+    backdrop-filter: blur(12px);
+  }
+
+  .canvas-workspace-back {
+    display: inline-flex;
+    width: var(--control-height-compact);
+    height: var(--control-height-compact);
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--button-radius);
+    color: var(--muted-foreground);
+    cursor: pointer;
+    transition: background var(--motion-fast) var(--ease-standard),
+      color var(--motion-fast) var(--ease-standard);
+  }
+  .canvas-workspace-back:hover { background: var(--interactive-hover); color: var(--foreground); }
+  .canvas-workspace-back:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+
+  .canvas-workspace-heading { display: grid; min-width: 0; gap: 1px; }
+  .canvas-workspace-heading > span {
+    color: var(--muted-foreground);
+    font-size: var(--type-caption);
+    line-height: var(--leading-label);
+  }
+  .canvas-workspace-heading > strong {
+    overflow: hidden;
+    color: var(--foreground);
+    font-size: var(--type-ui);
+    font-weight: var(--weight-ui);
+    line-height: var(--leading-label);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .canvas-workspace-loading {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted-foreground);
+    font-size: var(--type-label);
+  }
+
+  .knowledge-canvas { position: relative; width: 100%; height: 100%; min-height: 0; }
+
+  /* 纸面已是画布底色，第三方的默认底色与选框色一律让位 */
+  .knowledge-canvas .react-flow { background: transparent; }
+  .knowledge-canvas .react-flow__handle { opacity: 0; pointer-events: none; }
+  .knowledge-canvas .react-flow__node { cursor: grab; }
+  .knowledge-canvas .react-flow__node:active { cursor: grabbing; }
+  .knowledge-canvas .react-flow__attribution {
+    background: transparent;
+    color: color-mix(in srgb, var(--muted-foreground) 55%, transparent);
+    font-size: 0.625rem;
+  }
+  .knowledge-canvas .react-flow__attribution a { color: inherit; }
+
+  /* 极淡点阵是画布态的明文例外，写作纸张仍绝对禁止 */
+  .knowledge-canvas .react-flow__background-pattern circle {
+    fill: color-mix(in srgb, var(--foreground) 9%, transparent);
+  }
+
+  /* -------------------------------------------------------------------------- */
+  /* Card                                                                       */
+  /* -------------------------------------------------------------------------- */
+
+  .canvas-card {
+    display: flex;
+    width: 16.25rem;
+    flex-direction: column;
+    gap: var(--space-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-panel);
+    corner-shape: var(--corner-shape-smooth);
+    background: var(--card);
+    padding: var(--space-3) var(--space-4);
+    box-shadow: var(--shadow-xs);
+    transition: border-color var(--motion-fast) var(--ease-standard),
+      box-shadow var(--motion-fast) var(--ease-standard);
+  }
+  .canvas-card[data-selected="true"] { border-color: color-mix(in srgb, var(--primary) 42%, var(--border)); box-shadow: var(--shadow-sm); }
+  .canvas-card[data-tombstone="true"] { opacity: 0.6; }
+
+  .canvas-card-header { display: flex; min-width: 0; align-items: baseline; gap: var(--space-2); }
+  .canvas-card-title {
+    min-width: 0;
+    flex: 1;
+    overflow: hidden;
+    color: var(--foreground);
+    font-size: var(--type-ui);
+    font-weight: var(--weight-ui);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .canvas-card-flag {
+    flex-shrink: 0;
+    color: var(--muted-foreground);
+    font-size: var(--type-caption);
+    line-height: var(--leading-label);
+  }
+
+  /* 限高即「永不原地展开」: 想读全文只能跳到那一篇去 */
+  .canvas-card-body {
+    max-height: 7.5rem;
+    overflow: hidden;
+    color: var(--muted-foreground);
+    font-size: var(--type-label);
+    mask-image: linear-gradient(to bottom, #000 0 5.5rem, transparent 7.5rem);
+  }
+  .canvas-card-body .markdown-reading-view > :first-child { margin-top: 0; }
+
+  .canvas-card-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+  .canvas-card-action {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    border-radius: var(--radius-compact);
+    corner-shape: var(--corner-shape-smooth);
+    padding: var(--space-1) var(--space-2);
+    color: var(--muted-foreground);
+    font-size: var(--type-label);
+    line-height: var(--leading-label);
+    cursor: pointer;
+    transition: background var(--motion-fast) var(--ease-standard),
+      color var(--motion-fast) var(--ease-standard);
+  }
+  .canvas-card-action:hover:not(:disabled) { background: var(--interactive-hover); color: var(--foreground); }
+  .canvas-card-action:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+  .canvas-card-action:disabled { opacity: 0.5; cursor: progress; }
+  .canvas-card-note { color: var(--muted-foreground); font-size: var(--type-caption); }
+
+  /* -------------------------------------------------------------------------- */
+  /* Edge reason                                                                */
+  /* -------------------------------------------------------------------------- */
+
+  /* 与探索态同一件事: 理由和线一起被看到，而不是 hover 才出现 */
+  .canvas-edge-reason {
+    position: absolute;
+    max-width: 11rem;
+    border-radius: var(--radius-compact);
+    background: var(--paper-surface);
+    padding: 0 var(--space-1);
+    color: var(--foreground);
+    font-size: var(--type-caption);
+    line-height: var(--leading-label);
+    text-align: center;
+    text-wrap: balance;
+    pointer-events: none;
+  }
+
+  /* -------------------------------------------------------------------------- */
+  /* States                                                                     */
+  /* -------------------------------------------------------------------------- */
+
+  .canvas-loading { display: grid; gap: var(--space-4); padding: var(--space-10); }
+  .canvas-loading-card { width: 16.25rem; height: 7rem; border-radius: var(--radius-panel); }
+  .canvas-loading-card:nth-child(2) { margin-left: auto; }
+  .canvas-state {
+    display: flex;
+    height: 100%;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    color: var(--muted-foreground);
+    text-align: center;
+  }
+  .canvas-state strong { color: var(--foreground); font-size: var(--type-ui); }
+  .canvas-state span { max-width: 24rem; font-size: var(--type-label); line-height: 1.6; }
+}
+
+@layer components {
+  /* 写卡片的入口安静地待在画布右上角；它是画布上唯一的写动作 */
+  .canvas-compose-entry {
+    border: 1px solid var(--border);
+    background: var(--card);
+    box-shadow: var(--shadow-xs);
+  }
+
+  .canvas-compose-input {
+    width: 100%;
+    resize: vertical;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-control);
+    corner-shape: var(--corner-shape-smooth);
+    background: var(--background);
+    padding: var(--space-2) var(--space-3);
+    color: var(--foreground);
+    font-family: var(--font-serif);
+    font-size: var(--type-body);
+    line-height: var(--leading-body);
+  }
+  .canvas-compose-input:focus-visible { border-color: var(--primary); outline: none; }
+
+  .canvas-compose-actions { display: flex; justify-content: flex-end; gap: var(--space-2); margin-top: var(--space-4); }
+}

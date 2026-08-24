@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun test 与 organize-contracts 纯函数
- * [OUTPUT]: 覆盖目标正文最小投影、供应商无 response_format 时的 JSON 文本严格校验、目录白名单及置信/new_folder 确认策略
+ * [OUTPUT]: 覆盖目标正文最小投影、同树 canvas 隔离、供应商无 response_format 时的 JSON 文本严格校验、目录白名单及置信/new_folder 确认策略
  * [POS]: lib 测试边界，锁定 Planner 风险策略而不调用模型、HTTP 或数据库
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -16,6 +16,7 @@ import {
 
 const folderId = "11111111-1111-4111-8111-111111111111";
 const memoId = "22222222-2222-4222-8222-222222222222";
+const canvasId = "33333333-3333-4333-8333-333333333333";
 
 const tree = [
   {
@@ -37,6 +38,15 @@ const tree = [
       },
     ],
   },
+  {
+    id: canvasId,
+    parent_id: null,
+    node_type: "canvas" as const,
+    title: "研究画布",
+    revision: 1,
+    memo: null,
+    children: [],
+  },
 ];
 const detail = {
   id: memoId,
@@ -54,6 +64,7 @@ describe("organize contracts", () => {
     expect(input?.folders).toEqual([
       { id: folderId, parent_id: null, title: "工作", path: "/工作" },
     ]);
+    expect(input?.folders.some((folder) => folder.id === canvasId)).toBe(false);
   });
 
   test("低置信度或新建文件夹必须确认", () => {

@@ -59,11 +59,16 @@ const describeApprovalTarget = (
   const parentId = typeof args.parent_id === "string" ? args.parent_id : null;
   const target = flat.find((node) => node.id === targetId) ?? null;
   const parent = flat.find((node) => node.id === parentId) ?? null;
+  const targetType = target?.node_type;
   const count = (node: typeof roots[number] | null): number =>
     node === null ? 1 : 1 + node.children.reduce((total, child) => total + count(child), 0);
   return {
     target_title: target?.title ?? (typeof args.title === "string" ? args.title : null),
-    target_type: target?.node_type ?? (args.node_type === "folder" || args.node_type === "memo" ? args.node_type : null),
+    target_type: targetType === "folder" || targetType === "memo"
+      ? targetType
+      : args.node_type === "folder" || args.node_type === "memo"
+        ? args.node_type
+        : null,
     parent_title: parent?.title ?? (args.parent_id === null ? "根目录" : null),
     affected_node_count: args.op === "delete" ? count(target) : 1,
   };

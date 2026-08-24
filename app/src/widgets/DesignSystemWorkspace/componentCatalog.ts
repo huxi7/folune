@@ -33,7 +33,8 @@ export type DesignSystemSampleId =
   | "ThinkingIndicator"
   | "ToolCallBubble"
   | "EdgeDock"
-  | "ArchiveCord";
+  | "ArchiveCord"
+  | "Cord";
 
 export type DesignSystemCategory =
   | "Foundations"
@@ -58,7 +59,7 @@ export const designSystemSections: DesignSystemCategory[] = [
 ];
 
 export const designSystemSamples: DesignSystemSample[] = [
-  { category: "Foundations", id: "Color", name: "Color", summary: "Canvas、Paper、Ink、Soft Ink Primary 交互轴、Saving Processing、Focus 与 Danger 的唯一语义颜色系统。" },
+  { category: "Foundations", id: "Color", name: "Color", summary: "Stage、Paper、Ink、Soft Ink Primary 交互轴、Saving Processing、Focus 与 Danger 的唯一语义颜色系统。" },
   { category: "Foundations", id: "Typography", name: "Typography", summary: "Interface、Editorial、Mono 三类字族与八级角色；36px Button 使用 14/18px，32px 文件树使用 12/16px 高密度文字。" },
   { category: "Foundations", id: "Iconography", name: "Iconography", summary: "Lucide React 圆角描边语言、14/16/20/24px 尺寸阶梯，以及生产环境全部语义图标与真实用途。" },
   { category: "Foundations", id: "SpatialRhythm", name: "Spacing", summary: "4px 基线与 4/8/12/16/24/32/48/64/96 主节奏，32/36/48px 固定界面尺寸。" },
@@ -84,6 +85,7 @@ export const designSystemSamples: DesignSystemSample[] = [
   { category: "AI & Organize", id: "ThinkingMark", name: "Thinking Mark", summary: "SuperNote AI 的 Formation 符号，以 14/16/20px 真实尺寸呈现。" },
   { category: "AI & Organize", id: "ThinkingIndicator", name: "Thinking", summary: "仅在等待正文 token 时存在的低频活动态。" },
   { category: "AI & Organize", id: "ToolCallBubble", name: "Tool", summary: "只用工具名称、灰阶结果与低频状态反馈，不暴露载荷。" },
-  { category: "AI & Organize", id: "EdgeDock", name: "Panel Toggle", summary: "固定 Ghost 图标在 Canvas 打开工具，并由 Panel Header 尾端的独立命令关闭。" },
+  { category: "AI & Organize", id: "EdgeDock", name: "Panel Toggle", summary: "固定 Ghost 图标在 Stage 打开工具，并由 Panel Header 尾端的独立命令关闭。" },
   { category: "AI & Organize", id: "ArchiveCord", name: "Archive Cord", summary: "Paper 到文件树目标的持久近黑曲线；reduced-motion 直接静态呈现。" },
+  { category: "AI & Organize", id: "Cord", name: "Cord", summary: "共享连线原语；粗细恒定，两头收细由沿线透明度渐变造成，虚线为 AI 临时推荐、实线为已确认关联。" },
 ];

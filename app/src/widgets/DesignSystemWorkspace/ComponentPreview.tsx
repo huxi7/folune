@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 React、生产 Design System/Lucide 图标边界、真实 MarkdownEditor/MarkdownReadingView 与 PaperSurface/EdgeDock/ArchiveCord Signature Components
+ * [INPUT]: 依赖 React、生产 Design System/Lucide 图标边界、真实 MarkdownEditor/MarkdownReadingView 与 PaperSurface/EdgeDock/ArchiveCord/Cord Signature Components
  * [OUTPUT]: 对外提供 Color/Type/Iconography Foundations、Primitives、完整 Editorial 与 AI & Organize 的生产同源状态样板
  * [POS]: app/src/widgets/DesignSystemWorkspace 的预览层；所有样板只读取生产 Token/API，不建立展示专用视觉系统
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -47,6 +47,7 @@ import {
   ArchivePort,
   ArchiveTargetPort,
 } from "../ArchiveCord";
+import { Cord, CordLayer } from "../Cord";
 import { EdgeDock } from "../EdgeDock";
 import { MarkdownEditor } from "../MarkdownEditor";
 import { MarkdownReadingView } from "../MarkdownReadingView";
@@ -108,7 +109,7 @@ function ColorPreview() {
       </div>
       <div className="ds-color-preview">
         {[
-          ["Canvas", "workspace-canvas"],
+          ["Stage", "workspace-stage"],
           ["Paper", "paper-surface"],
           ["Ink", "foreground"],
           ["Muted", "muted-foreground"],
@@ -666,6 +667,30 @@ function ArchiveCordPreview() {
   );
 }
 
+function CordPreview() {
+  const paper = { height: 96, width: 132, x: 24, y: 52 };
+  const near = { height: 44, width: 132, x: 292, y: 18 };
+  const far = { height: 44, width: 132, x: 292, y: 130 };
+
+  return (
+    <div className="ds-cord-preview">
+      <CordLayer>
+        <Cord draw from={paper} mode="radial" to={near} tone="explore" variant="dashed" />
+        <Cord draw from={paper} mode="radial" to={far} tone="relation" variant="solid" />
+      </CordLayer>
+      <div className="ds-cord-preview-paper" style={{ height: paper.height, left: paper.x, top: paper.y, width: paper.width }}>
+        <strong>Paper</strong>
+      </div>
+      <div className="ds-cord-preview-card" style={{ height: near.height, left: near.x, top: near.y, width: near.width }}>
+        虚线 · AI 临时推荐
+      </div>
+      <div className="ds-cord-preview-card" style={{ height: far.height, left: far.x, top: far.y, width: far.width }}>
+        实线 · 已确认关联
+      </div>
+    </div>
+  );
+}
+
 function CardPreview() {
   return (
     <Card className="ds-preview-card" tone="accent">
@@ -764,5 +789,6 @@ export const ComponentPreview = memo(function ComponentPreview({
     case "Code": return <CodePreview />;
     case "EdgeDock": return <EdgeDockPreview />;
     case "ArchiveCord": return <ArchiveCordPreview />;
+    case "Cord": return <CordPreview />;
   }
 });

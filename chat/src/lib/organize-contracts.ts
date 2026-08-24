@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 zod，接收 Business API 轻量 memo tree、单篇目标正文与整理阈值
  * [OUTPUT]: 对外提供严格 OrganizePlan/PlannerInput schema、目录+正文投影与确定性确认策略
- * [POS]: lib 层整理领域契约，隔离模型输出与数据库命令，确保 Planner 只看目标全文和文件夹导航图
+ * [POS]: lib 层整理领域契约，隔离模型输出与数据库命令，确保 Planner 只看目标全文和文件夹导航图；同树 canvas 明确跳过，不因资源扩容破坏既有整理
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -57,7 +57,7 @@ export type OrganizePlannerInput = z.infer<typeof organizePlannerInputSchema>;
 export type OrganizeTreeNode = {
   id: string;
   parent_id: string | null;
-  node_type: "folder" | "memo";
+  node_type: "canvas" | "folder" | "memo";
   title: string;
   revision: number;
   children: OrganizeTreeNode[];

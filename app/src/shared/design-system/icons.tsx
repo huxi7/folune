@@ -18,6 +18,7 @@ import {
   ChevronsUpDown,
   CircleAlert,
   CircleCheck,
+  CircleUserRound,
   CircleX,
   Copy,
   CreditCard,
@@ -59,14 +60,14 @@ import {
   SquarePen,
   Sun,
   Trash2,
-  Undo2,
-  Upload,
-  CircleUserRound,
-  WandSparkles,
-  Wrench,
-  X,
   type LucideIcon,
   type LucideProps,
+  Undo2,
+  Upload,
+  WandSparkles,
+  Waypoints,
+  Wrench,
+  X,
 } from "lucide-react";
 import {
   forwardRef,
@@ -111,6 +112,8 @@ export const DotsThreeIcon = defineIcon(Ellipsis);
 export const DownloadSimpleIcon = defineIcon(Download);
 export const EyeIcon = defineIcon(Eye);
 export const EyeSlashIcon = defineIcon(EyeOff);
+/** 已保存画布在文件树里的身份: 一张关系星图，与纸张明确区分，且永不暴露扩展名 */
+export const CanvasIcon = defineIcon(Waypoints);
 export const FileTextIcon = defineIcon(FileText);
 export const FolderIcon = defineIcon(Folder);
 export const FolderOpenIcon = defineIcon(FolderOpen);
@@ -119,8 +122,7 @@ export const ImageSquareIcon = defineIcon(Image);
 export const InfoIcon = defineIcon(Info);
 export const MagicWandIcon = defineIcon(WandSparkles);
 export const MagnifyingGlassIcon = defineIcon(Search);
-export const MenuIcon = defineIcon(Menu);
-export const NewConversationIcon = defineIcon(MessageCirclePlus);
+export const MenuIcon = defineIcon(Menu);export const NewConversationIcon = defineIcon(MessageCirclePlus);
 export const MoonIcon = defineIcon(Moon);
 export const MoonStarsIcon = defineIcon(MoonStar);
 export const NotePencilIcon = defineIcon(SquarePen);

@@ -1,0 +1,90 @@
+/**
+ * [INPUT]: 依赖 index.css 的 Stage/Card/Ink/Muted/Hairline/Primary/Danger 语义 token、4px 空间基线、8/10/12px 曲率与 --motion-*，以及 Tailwind v4 layer
+ * [OUTPUT]: 对外提供仅 DEV 的 .explore-lab 全屏舞台容器与浮在探索浮层之上的控制栏、几何读数、真数据入口
+ * [POS]: app/src/styles 的探索态实验台表现层；纸、连线、卡片与点阵全部由生产样式（workspace.css / cord.css / explore-stage.css）负责，此处只剩「控制台」这一件实验室专属的事，因此不定义任何产品视觉
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+@layer components {
+  .explore-lab { position: relative; height: 100vh; overflow: hidden; background: var(--workspace-stage); color: var(--foreground); }
+
+  /* -------------------------------------------------------------------------- */
+  /* Controls                                                                   */
+  /* -------------------------------------------------------------------------- */
+
+  /* 浮在 .explore-stage（z-index 70）之上，否则铺满视口的浮层会把控制台盖掉 */
+  .explore-lab-controls {
+    position: fixed;
+    z-index: 80;
+    top: var(--space-3);
+    left: var(--space-3);
+    display: flex;
+    width: 17rem;
+    max-height: calc(100vh - var(--space-6));
+    flex-direction: column;
+    gap: var(--space-3);
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-panel);
+    corner-shape: var(--corner-shape-smooth);
+    background: var(--card);
+    padding: var(--space-4);
+    box-shadow: var(--shadow-md);
+  }
+  .explore-lab-controls > header { display: flex; flex-direction: column; gap: var(--space-1); border-bottom: 1px solid var(--border); padding-bottom: var(--space-2); }
+  .explore-lab-controls > header strong { font-size: var(--type-ui); font-weight: var(--weight-ui); }
+  .explore-lab-controls > header span { color: var(--muted-foreground); font-family: var(--font-mono); font-size: 0.66rem; }
+
+  .explore-lab-slider { display: flex; flex-direction: column; gap: var(--space-1); }
+  .explore-lab-slider > span { display: flex; align-items: baseline; justify-content: space-between; color: var(--muted-foreground); font-size: var(--type-label); line-height: var(--leading-label); }
+  .explore-lab-slider > span b { color: var(--foreground); font-family: var(--font-mono); font-weight: var(--weight-mono); }
+  .explore-lab-slider input { width: 100%; accent-color: var(--primary); }
+
+  .explore-lab-choice { display: flex; flex-direction: column; gap: var(--space-1); }
+  .explore-lab-choice > span { color: var(--muted-foreground); font-size: var(--type-label); line-height: var(--leading-label); }
+  .explore-lab-choice > div { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+
+  .explore-lab-choice button,
+  .explore-lab-toggles button,
+  .explore-lab-real button {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-compact);
+    corner-shape: var(--corner-shape-smooth);
+    background: var(--background);
+    padding: var(--space-1) var(--space-2);
+    color: var(--muted-foreground);
+    font-size: var(--type-label);
+    line-height: var(--leading-label);
+    cursor: pointer;
+  }
+  .explore-lab-choice button:hover,
+  .explore-lab-toggles button:hover,
+  .explore-lab-real button:hover:not(:disabled) { background: var(--interactive-hover); }
+  .explore-lab-choice button[data-active="true"],
+  .explore-lab-toggles button[data-active="true"] { border-color: color-mix(in srgb, var(--primary) 45%, var(--border)); background: var(--primary); color: var(--primary-foreground); }
+  .explore-lab-real button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .explore-lab-toggles { display: flex; flex-wrap: wrap; gap: var(--space-1); border-top: 1px solid var(--border); padding-top: var(--space-2); }
+
+  /* -------------------------------------------------------------------------- */
+  /* Readout                                                                    */
+  /* -------------------------------------------------------------------------- */
+
+  .explore-lab-readout { display: grid; gap: 0.15rem; border-top: 1px solid var(--border); padding-top: var(--space-2); color: var(--muted-foreground); font-family: var(--font-mono); font-size: 0.66rem; line-height: 1.5; }
+  .explore-lab-readout b { color: var(--foreground); font-weight: var(--weight-mono); }
+
+  .explore-lab-real { display: flex; flex-direction: column; gap: var(--space-1); border-top: 1px solid var(--border); padding-top: var(--space-2); color: var(--muted-foreground); font-size: var(--type-label); line-height: var(--leading-label); }
+  .explore-lab-real input {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-compact);
+    corner-shape: var(--corner-shape-smooth);
+    background: var(--background);
+    padding: var(--space-1) var(--space-2);
+    color: var(--foreground);
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+  }
+  .explore-lab-real input:focus-visible { border-color: var(--primary); outline: none; }
+  .explore-lab-error { color: var(--destructive); }
+
+  .explore-lab-note { margin-top: auto; color: var(--muted-foreground); font-size: var(--type-caption); line-height: 1.5; }
+}

@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖唯一 supabase-rest 适配器、memo DTO 行校验、memo 领域创建/更新类型与请求期用户 access token
- * [OUTPUT]: 对外提供强制 user_id 的轻量 tree/正文关键词/回收站查询、memo_nodes/memos CRUD、删除生命周期 RPC 与脱敏存储错误
- * [POS]: repository 层备忘录 PostgREST 数据访问器，只表达表/RPC 操作与返回校验，不判断树、恢复可见性或业务状态
+ * [OUTPUT]: 对外提供强制 user_id 的轻量 tree/回收站查询、memo_nodes/memos CRUD、关键词与混合召回两个检索 RPC、删除生命周期 RPC 与脱敏存储错误
+ * [POS]: repository 层备忘录 PostgREST 数据访问器，只表达表/RPC 操作与返回校验，不判断树、恢复可见性或业务状态；中文检索一律走 PGroonga RPC，因为 `&@*` 相似检索只在索引扫描下生效，PostgREST 的行过滤无法表达
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -11,12 +11,16 @@ import {
   memoContentRowsSchema,
   memoContentSummaryRowsSchema,
   memoNodeRowsSchema,
+  memoSearchKeywordRpcResultSchema,
+  memoSearchRelatedRpcResultSchema,
   memoSortOrderRowsSchema,
   memoTrashExcerptRowsSchema,
   permanentlyDeleteMemoRpcResultSchema,
   restoreMemoRpcResultSchema,
   softDeleteMemoRpcResultSchema,
   type EmptyMemoTrashRpcResult,
+  type MemoSearchKeywordRpcResult,
+  type MemoSearchRelatedRpcResult,
   type PermanentlyDeleteMemoRpcResult,
   type RestoreMemoRpcResult,
   type SoftDeleteMemoRpcResult,
@@ -77,12 +81,12 @@ const parseContentSummaryRows = (payload: unknown): MemoContentSummary[] => {
   return parsed.data;
 };
 
-const literalIlikePattern = (query: string): string =>
-  `*${query
-    .replaceAll("\\", "\\\\")
-    .replaceAll("*", "\\*")
-    .replaceAll("%", "\\%")
-    .replaceAll("_", "\\_")}*`;
+const searchStorageError = (): HttpError =>
+  new HttpError(
+    502,
+    "MEMO_SEARCH_STORAGE_ERROR",
+    "Memo search storage operation failed",
+  );
 
 const trashStorageError = (): HttpError =>
   new HttpError(
@@ -175,32 +179,56 @@ export const memoRepository = {
     return parseContentRows(payload);
   },
 
-  async searchContentSummaries(
+  async searchKeyword(
     userId: string,
     searchQuery: string,
     limit: number,
     accessToken: string,
-  ): Promise<MemoContentSummary[]> {
-    const query = createPostgrestQuery({
-      select: [
-        "node_id",
-        "user_id",
-        "excerpt",
-        "word_count",
-        "metadata",
-        "created_at",
-        "updated_at",
-      ],
-      eq: { user_id: userId },
-      ilike: { content_mdx: literalIlikePattern(searchQuery) },
-      order: { column: "updated_at", ascending: false },
-      limit,
-    });
-    const payload = await supabaseRest<unknown>(`memos${query}`, {
+  ): Promise<MemoSearchKeywordRpcResult> {
+    const payload = await supabaseRest<unknown>("rpc/search_memos_keyword", {
       accessToken,
+      method: "POST",
+      body: JSON.stringify({
+        p_user_id: userId,
+        p_query_text: searchQuery,
+        p_limit: limit,
+      }),
     });
+    const parsed = memoSearchKeywordRpcResultSchema.safeParse(payload);
 
-    return parseContentSummaryRows(payload);
+    if (!parsed.success) {
+      throw searchStorageError();
+    }
+
+    return parsed.data;
+  },
+
+  async searchRelated(
+    userId: string,
+    queryText: string,
+    sourceNodeId: string | null,
+    limit: number,
+    excludeNodeIds: string[],
+    accessToken: string,
+  ): Promise<MemoSearchRelatedRpcResult> {
+    const payload = await supabaseRest<unknown>("rpc/search_memos_hybrid", {
+      accessToken,
+      method: "POST",
+      body: JSON.stringify({
+        p_user_id: userId,
+        p_query_text: queryText,
+        p_source_node_id: sourceNodeId,
+        p_limit: limit,
+        p_exclude_node_ids: excludeNodeIds,
+      }),
+    });
+    const parsed = memoSearchRelatedRpcResultSchema.safeParse(payload);
+
+    if (!parsed.success) {
+      throw searchStorageError();
+    }
+
+    return parsed.data;
   },
 
   async findActiveNodeById(

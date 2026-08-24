@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Kumo Tailwind 样式源、Tailwind v4，并导入 AI 消息与 Design System 等生产样式模块消费本文件语义 token
- * [OUTPUT]: 对外提供 Kumo 基础样式、Landing Light、Quiet Editorial Instrument 与隔离 Color Lab 蓝色终选候选：唯一语义 Color/Type/Spacing/Radius/Elevation/Motion、Paper First Canvas/Paper/Panel Toggle/Archive Cord、Tailwind 映射及样式模块入口
+ * [OUTPUT]: 对外提供 Kumo 基础样式、Landing Light、Quiet Editorial Instrument 与隔离 Color Lab 蓝色终选候选：唯一语义 Color/Type/Spacing/Radius/Elevation/Motion、Paper First Stage/Paper/Panel Toggle/Archive Cord/Cord、Tailwind 映射及样式模块入口
  * [POS]: app/src 的主题入口，被 main.tsx 引入并约束 Kumo 与本地设计系统共享同一全局视觉来源
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -18,6 +18,10 @@
 @import "./styles/toast.css";
 @import "./styles/user-menu.css";
 @import "./styles/codemirror.css";
+@import "./styles/cord.css";
+@import "./styles/explore-stage.css";
+@import "./styles/knowledge-canvas.css";
+@import "./styles/explore-lab.css";
 @import "./styles/design-system-workspace.css";
 @import "./styles/landing.css";
 
@@ -86,7 +90,7 @@
 
   --background: #ffffff;
   --foreground: #232321;
-  --workspace-canvas: #f2f1ee;
+  --workspace-stage: #f2f1ee;
   --paper-surface: #ffffff;
   --paper-foreground: #232321;
   --paper-edge: #e3e1dc;
@@ -199,6 +203,9 @@
   --panel-header-padding-inline: var(--space-3);
   --panel-header-gap: var(--space-2);
   --control-cluster-gap: var(--space-1);
+
+  /* Paper 宽度上限；探索态的退后包裹必须与纸等宽，故此值不能散落在两处 */
+  --paper-max-width: 51rem;
 
   --layout-page-max: 68rem;
   --layout-page-gutter: clamp(1rem, 3vw, 2rem);
@@ -317,7 +324,7 @@
 :root.dark {
   --background: #191a19;
   --foreground: #efeee9;
-  --workspace-canvas: #171817;
+  --workspace-stage: #171817;
   --paper-surface: #232421;
   --paper-foreground: #efeee9;
   --paper-edge: #373833;
@@ -428,7 +435,7 @@
 .color-lab-system {
   --background: #ffffff;
   --foreground: #232321;
-  --workspace-canvas: #f2f1ee;
+  --workspace-stage: #f2f1ee;
   --paper-surface: #ffffff;
   --paper-foreground: #232321;
   --paper-edge: #e3e1dc;
@@ -552,7 +559,7 @@
 .color-lab-system[data-theme="dark"] {
   --background: #191a19;
   --foreground: #efeee9;
-  --workspace-canvas: #171817;
+  --workspace-stage: #171817;
   --paper-surface: #232421;
   --paper-foreground: #efeee9;
   --paper-edge: #373833;

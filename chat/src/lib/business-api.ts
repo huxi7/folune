@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 config/env 的 BUSINESS_API_BASE_URL、调用方当前 Bearer JWT、Web fetch 与 zod
- * [OUTPUT]: 对外提供 thread/消息/冻结 context、轻量 memo tree、单篇正文、账号权限、命令与 Run 的 authenticated Business API client
- * [POS]: lib 层 chat→api 唯一业务边界，每次请求临时转发用户 JWT，统一解析信封且绝不记录或持久化凭据
+ * [OUTPUT]: 对外提供 thread/消息/冻结 context、含 canvas 但不含正文的轻量 tree、单篇正文、账号权限、命令与 Run 的 authenticated Business API client
+ * [POS]: lib 层 chat→api 唯一业务边界，每次请求临时转发用户 JWT，统一解析信封且绝不记录或持久化凭据；canvas 可穿过资源校验，再由各模型投影显式过滤
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -116,7 +116,7 @@ const memoNodeSchema: z.ZodType<MemoTreeNode> = z.lazy(() =>
   z.object({
     id: z.uuid(),
     parent_id: z.uuid().nullable(),
-    node_type: z.enum(["folder", "memo"]),
+    node_type: z.enum(["canvas", "folder", "memo"]),
     title: z.string(),
     sort_order: z.number(),
     revision: z.number().int().positive(),
@@ -131,7 +131,7 @@ const memoNodeSchema: z.ZodType<MemoTreeNode> = z.lazy(() =>
   }).passthrough(),
 );
 
-const memoTreeSchema = z.array(memoNodeSchema);
+export const memoTreeSchema = z.array(memoNodeSchema);
 const memoDetailSchema = z.object({
   id: z.uuid(),
   parent_id: z.uuid().nullable(),
@@ -156,7 +156,7 @@ export type AiRun = z.infer<typeof aiRunSchema>;
 export type MemoTreeNode = {
   id: string;
   parent_id: string | null;
-  node_type: "folder" | "memo";
+  node_type: "canvas" | "folder" | "memo";
   title: string;
   sort_order: number;
   revision: number;
@@ -226,6 +226,19 @@ const request = async <T>(
   return parsed.data;
 };
 
+const relatedHitSchema = z.object({
+  node_id: z.uuid(),
+  title: z.string(),
+  excerpt: z.string().nullable(),
+  revision: z.number().int().positive(),
+  matched_channels: z.array(z.string()),
+  rank: z.number().int().positive(),
+}).passthrough();
+
+const relatedHitsSchema = z.array(relatedHitSchema);
+
+export type RelatedHit = z.infer<typeof relatedHitSchema>;
+
 const syncMessageSchema = z.array(z.object({ id: z.string() }).passthrough());
 
 export const businessApi = {
@@ -282,6 +295,22 @@ export const businessApi = {
     accessToken: string,
   ) {
     return request("/ai-commands", accessToken, aiCommandSchema, {
+      method: "POST",
+      body: JSON.stringify(input),
+    });
+  },
+
+  /** 混合召回。查询文字走 body 而非 query string——它可能是一整段选中文字，且日志契约禁止记录 query string */
+  searchRelatedMemos(
+    input: {
+      query_text: string;
+      source_node_id: string | null;
+      limit: number;
+      exclude_node_ids: string[];
+    },
+    accessToken: string,
+  ) {
+    return request("/memo-search/related", accessToken, relatedHitsSchema, {
       method: "POST",
       body: JSON.stringify(input),
     });

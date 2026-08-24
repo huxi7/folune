@@ -79,6 +79,7 @@ export type MemoTreeState = {
   updateMemoContentLocal(nodeId: string, content: string): void;
   updateMemoTitleLocal(nodeId: string, title: string): void;
   mergeMemoDetail(detail: MemoDetailNode): void;
+  mergeServerNode(node: MemoTreeNode): void;
   saveMemoDraft(
     accessToken: string,
     nodeId: string,
@@ -600,6 +601,27 @@ export const useMemoTreeStore = create<MemoTreeState>()((set, get) => ({
         title: current.title === detail.title ? detail.title : current.title,
       })),
     }));
+  },
+
+  /**
+   * 并入一个服务端已经建成的节点（保存画布、卡片晋升）。
+   * 服务端已经算好 parent_id 与 sort_order，因此原样落位；重复并入按 id 幂等替换。
+   * 存在的理由只有一个: 写成功后严禁刷新整棵树。
+   */
+  mergeServerNode(node) {
+    set((state) => {
+      const existing = findNode(state.nodes, node.id);
+      const merged: MemoTreeNode = {
+        ...node,
+        children: existing?.children ?? node.children ?? [],
+      };
+
+      return {
+        nodes: existing === null
+          ? insertNode(state.nodes, merged, node.parent_id, node.sort_order)
+          : replaceNode(state.nodes, node.id, merged),
+      };
+    });
   },
 
   async saveMemoDraft(accessToken, nodeId, input, options) {

@@ -22,7 +22,7 @@ AI 是用户的备忘录协作伙伴与智能档案管理员。
 ## 技术栈
 全栈 TypeScript，顶层由三个业务模块组成。
 
-- app: 用户端，Bun + Vite 8 + React 19 + React Router 7 + Zustand 5 + Motion for React 12 + CodeMirror 6/Lezer Markdown + react-markdown/remark/rehype-sanitize + Vercel AI SDK 6 (`@ai-sdk/react`) + `@mastra/client-js` + react-archer 5.1 + canvas-confetti + Kumo UI 2 + Tailwind CSS v4 + 本地 design system + Lucide React + Supabase Auth SDK
+- app: 用户端，Bun + Vite 8 + React 19 + React Router 7 + Zustand 5 + Motion for React 12 + @xyflow/react 12 + CodeMirror 6/Lezer Markdown + react-markdown/remark/rehype-sanitize + Vercel AI SDK 6 (`@ai-sdk/react`) + `@mastra/client-js` + react-archer 5.1 + canvas-confetti + Kumo UI 2 + Tailwind CSS v4 + 本地 design system + Lucide React + Supabase Auth SDK
 - chat: AI 能力服务，Bun + Mastra 1.57 + `@mastra/ai-sdk` + Vercel AI SDK 6 + zod 4；模型白名单只含 DeepSeek V4 Flash 且拒绝任何切换；对话/审批/整理三个 Agent 分离，模型只见 read_tree/read_memo/edit_memo/edit_node 四个胖笔记工具与 celebration
 - api: 业务接口服务，Bun + Hono 4 + zod 4 + Supabase REST/PostgREST/Storage HTTP API；只以用户 JWT 访问数据，禁止 service role、连接串与 ORM
 
@@ -32,16 +32,18 @@ app 跑在本机 Bun/Vite 固定 10000；api 与 chat 由根 Compose 编排为 a
 ## 模块地图
 | 模块 | 职责 | 文档 |
 | --- | --- | --- |
-| app | 用户端，以 Paper First 舞台承载唯一常驻写作主体与按需文件库/AI 思考空间；轻量目录与按 ID 正文缓存分离，唯一 @Prompt Bar 冻结上下文，Web Worker 只做纯规划，主线程乐观投影并把命令提交给 api，支持按执行逆序的整轮撤销 | [app/CLAUDE.md](app/CLAUDE.md) |
-| chat | AI 能力服务，冻结消息上下文；memo-agent 负责对话，无工具/无记忆的 approval-agent 独立裁决写审批，organize-planner-agent 与 organize-memo Workflow 规划整理；同轮工具/审批续写复用同一 assistant，暴露 GET /health、POST /v1/chat、POST /v1/organize | [chat/CLAUDE.md](chat/CLAUDE.md) |
-| api | 业务接口服务，承载用户 profile、轻量备忘录 tree/正文按 ID 读取与关键词命中摘要、回收站、AI 会话/冻结上下文/权限设置/可撤销 Command/整理 Run；经 owner-only RLS 与原子 RPC 构成唯一持久化边界 | [api/CLAUDE.md](api/CLAUDE.md) |
+| app | 用户端，以 Paper First 舞台承载唯一常驻写作主体与按需文件库/AI 思考空间；轻量目录与按 ID 正文缓存分离，唯一 @Prompt Bar 冻结上下文，Web Worker 只做纯规划，主线程乐观投影并把命令提交给 api，支持按执行逆序的整轮撤销；⌘E 探索态让两侧让开、活纸退后，关联候选按相关度径向浮现且退出即弃，保存后成为文件树里的画布节点；打开已保存画布时切换到无 Paper/无侧栏的全屏 React Flow 空间，可恢复卡片、连线与视口并把卡片晋升为真正的笔记 | [app/CLAUDE.md](app/CLAUDE.md) |
+| chat | AI 能力服务，冻结消息上下文；memo-agent 负责对话，无工具/无记忆的 approval-agent 独立裁决写审批，organize-planner-agent 与 organize-memo Workflow 规划整理，explore-agent 与 explore-notes Workflow 逐篇判断关联；同轮工具/审批续写复用同一 assistant，暴露 GET /health、POST /v1/chat、POST /v1/organize、POST /v1/explore；evals 除 30 条 memo 任务外还持有 Explore 的 36 条金标准与三路对比 runner，B 类（零字面重合、同一意思）的召回差距是向量去留的唯一判据 | [chat/CLAUDE.md](chat/CLAUDE.md) |
+| api | 业务接口服务，承载用户 profile、轻量备忘录 tree/正文按 ID 读取、PGroonga 关键词与混合相似召回、回收站、AI 会话/冻结上下文/权限设置/可撤销 Command/整理 Run，以及知识画布的保存/读取/布局/新增卡片与「卡片晋升为笔记」原子 RPC；正式关联住在 memo_relations（反向链接反查同一张表，AI 的临时推荐永不入库），画布本身就是 node_type='canvas' 的树节点因此白拿软删除与拖拽；经 owner-only RLS 与原子 RPC 构成唯一持久化边界 | [api/CLAUDE.md](api/CLAUDE.md) |
 | deploy | 本地部署基础设施，提供 api/chat 的 Bun 开发镜像、固定容器命名与密钥分离契约 | [deploy/CLAUDE.md](deploy/CLAUDE.md) |
 | scripts | 本地开发运维入口，统一启动、停止与查看 api-dev/chat-dev 双服务 Docker 日志 | [scripts/CLAUDE.md](scripts/CLAUDE.md) |
 
 ## 根配置
 | 文件 | 职责 |
 | --- | --- |
+| ACCEPTANCE.md | Explore 与知识画布（阶段 5~8）的按序验收清单，每步带可粘命令、该看到什么与看到什么算不对；同时如实划出「已自动验过」与「只有真人能验」的边界，并写明第 6 步那张三路对比表里 B 类召回决定阶段 9 生死的判决规则 |
 | .dockerignore | 收窄 api/chat 开发镜像的仓库根构建上下文，排除源码、缓存、密钥与无关模块 |
 | .env.example | app/api/chat 无密钥变量总览与根 Compose 可选覆盖模板；服务默认使用各自本地环境文件 |
 | .gitignore | 根级本地环境、构建缓存与系统文件忽略规则 |
+| .mcp.json | 团队共享的 Supabase MCP 接入声明。八个 feature 组全开（account/branching/database/debugging/development/docs/functions/storage）；**无 `project_ref`** 故 account 组可用、作用域为账号下全部项目；**无 `read_only`** 故具备完整写能力。`[决策: 所有者 · 2026-08-23]` —— 「api 是唯一持久化边界」对**运行时代码**依然绝对有效，MCP 写能力仅是部署与运维动作的通道，不构成绕过 api 读写业务数据的许可。文件不含密钥，OAuth 凭据留在本地 keychain |
 | docker-compose.dev.yml | 从各模块私有 `.env` 注入凭据并编排 api-dev/chat-dev 双服务、独立健康探针、依赖卷与共享网络；集中维护整理自动应用置信阈值，chat 启动前清理容器 PID 复用导致的陈旧 Mastra 开发锁，并直启 CLI 接收停止信号 |

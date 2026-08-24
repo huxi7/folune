@@ -79,6 +79,7 @@ class MockSupabase {
   readonly contents = new Map<string, MemoContent>();
   readonly operations: string[] = [];
   readonly requestedUrls: string[] = [];
+  readonly rpcBodies: { body: Record<string, unknown>; name: string }[] = [];
   readonly nodePatchBodies: Array<Record<string, unknown>> = [];
   headersMatched = true;
   userFiltersMatched = true;
@@ -120,8 +121,80 @@ class MockSupabase {
       return this.handleContents(request, url);
     }
 
+    if (url.pathname.startsWith("/rest/v1/rpc/")) {
+      return this.handleRpc(request, url.pathname.slice("/rest/v1/rpc/".length));
+    }
+
     throw new Error(`Unexpected path: ${url.pathname}`);
   };
+
+  private async handleRpc(request: Request, name: string): Promise<Response> {
+    const body = (await request.json()) as Record<string, unknown>;
+    this.rpcBodies.push({ body, name });
+    this.operations.push(`rpc:${name}`);
+
+    if (body["p_user_id"] !== USER_ID) {
+      return jsonResponse({ status: "not_found" });
+    }
+
+    const rawQuery = String(body["p_query_text"] ?? "").trim();
+    if (rawQuery === "") {
+      return jsonResponse({
+        error_code: "MEMO_SEARCH_QUERY_EMPTY",
+        status: "invalid",
+      });
+    }
+
+    // 忠实复刻 RPC 语义：必须存在对应 memo_nodes 行、node_type='memo' 且未被软删除。
+    // 这正是新实现相对旧 ilike 路径修掉的漏洞，故 mock 不做宽松处理。
+    const searchable = [...this.contents.values()].filter((content) => {
+      const node = this.nodes.get(content.node_id);
+      return content.user_id === USER_ID
+        && node !== undefined
+        && node.node_type === "memo"
+        && node.deleted_at === null;
+    });
+
+    if (name === "search_memos_keyword") {
+      const keyword = rawQuery.toLocaleLowerCase();
+      const hits = searchable
+        .filter((content) => {
+          const node = this.nodes.get(content.node_id);
+          return content.content_mdx.toLocaleLowerCase().includes(keyword)
+            || (node?.title ?? "").toLocaleLowerCase().includes(keyword);
+        })
+        .slice(0, Number(body["p_limit"] ?? 20))
+        .map((content) => ({
+          excerpt: content.excerpt,
+          node_id: content.node_id,
+        }));
+
+      return jsonResponse({ hits, status: "ok" });
+    }
+
+    if (name === "search_memos_hybrid") {
+      const excluded = new Set(
+        (body["p_exclude_node_ids"] as string[] | undefined) ?? [],
+      );
+      const source = body["p_source_node_id"] as string | null | undefined;
+      const hits = searchable
+        .filter((content) =>
+          content.node_id !== source && !excluded.has(content.node_id))
+        .slice(0, Number(body["p_limit"] ?? 12))
+        .map((content, index) => ({
+          excerpt: content.excerpt,
+          matched_channels: ["structural"],
+          node_id: content.node_id,
+          rank: index + 1,
+          revision: this.nodes.get(content.node_id)?.revision ?? 1,
+          title: this.nodes.get(content.node_id)?.title ?? "",
+        }));
+
+      return jsonResponse({ hits, status: "ok" });
+    }
+
+    throw new Error(`Unexpected rpc: ${name}`);
+  }
 
   private assertUserFilter(url: URL): string {
     const filter = url.searchParams.get("user_id");
@@ -243,13 +316,6 @@ class MockSupabase {
         rows = rows.filter(
           (content) => content.node_id === nodeFilter.slice(3),
         );
-      }
-
-      const contentFilter = url.searchParams.get("content_mdx");
-      if (contentFilter?.startsWith("ilike.*") && contentFilter.endsWith("*")) {
-        const keyword = contentFilter.slice(7, -1).replaceAll("\\", "").toLocaleLowerCase();
-        rows = rows.filter((content) =>
-          content.content_mdx.toLocaleLowerCase().includes(keyword));
       }
 
       const limit = Number(url.searchParams.get("limit") ?? rows.length);
@@ -411,17 +477,32 @@ describe("GET /memo-tree", () => {
 });
 
 describe("GET /memo-search", () => {
-  test("只返回当前用户正文命中的 ID 与摘要，不返回完整正文", async () => {
-    const matchingId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
-    const otherId = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
+  const matchingId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+  const otherId = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
+  const trashedId = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
+
+  const seedSearchCorpus = (): void => {
+    mock.nodes.set(matchingId, nodeFixture(matchingId, {
+      node_type: "memo",
+      title: "商业笔记",
+    }));
     mock.contents.set(matchingId, contentFixture(matchingId, {
       content_mdx: "项目里讨论了商业模式",
       excerpt: "项目里讨论了商业模式",
+    }));
+
+    mock.nodes.set(otherId, nodeFixture(otherId, {
+      node_type: "memo",
+      title: "无关",
     }));
     mock.contents.set(otherId, contentFixture(otherId, {
       content_mdx: "完全无关",
       excerpt: "完全无关",
     }));
+  };
+
+  test("只返回当前用户正文命中的 ID 与摘要，不返回完整正文", async () => {
+    seedSearchCorpus();
 
     const response = await app.fetch(authenticatedRequest(
       "/memo-search?q=%E5%95%86%E4%B8%9A%E6%A8%A1%E5%BC%8F&limit=10",
@@ -434,7 +515,115 @@ describe("GET /memo-search", () => {
       node_id: matchingId,
     }]);
     expect(JSON.stringify(payload.data)).not.toContain("content_mdx");
-    expect(mock.userFiltersMatched).toBe(true);
+  });
+
+  test("检索经 RPC 下传，且 body 只含服务端可信参数", async () => {
+    seedSearchCorpus();
+
+    await app.fetch(authenticatedRequest("/memo-search?q=%E5%95%86%E4%B8%9A&limit=10"));
+    const call = mock.rpcBodies.at(-1);
+
+    expect(call?.name).toBe("search_memos_keyword");
+    expect(Object.keys(call?.body ?? {}).sort().join(",")).toBe(
+      "p_limit,p_query_text,p_user_id",
+    );
+    expect(call?.body["p_user_id"]).toBe(USER_ID);
+  });
+
+  test("回收站里的正文不再被搜到", async () => {
+    seedSearchCorpus();
+    mock.nodes.set(trashedId, nodeFixture(trashedId, {
+      deleted_at: NOW,
+      deleted_root_id: trashedId,
+      node_type: "memo",
+      title: "已删除",
+    }));
+    mock.contents.set(trashedId, contentFixture(trashedId, {
+      content_mdx: "项目里讨论了商业模式",
+      excerpt: "已删除的命中",
+    }));
+
+    const response = await app.fetch(authenticatedRequest(
+      "/memo-search?q=%E5%95%86%E4%B8%9A%E6%A8%A1%E5%BC%8F&limit=10",
+    ));
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.data).toEqual([{
+      excerpt: "项目里讨论了商业模式",
+      node_id: matchingId,
+    }]);
+  });
+
+  test("缺少 Bearer 时不触碰任何存储", async () => {
+    const response = await app.fetch(new Request(
+      "http://localhost/memo-search?q=x",
+    ));
+
+    expect(response.status).toBe(401);
+    expect(mock.operations).toEqual([]);
+  });
+});
+
+describe("POST /memo-search/related", () => {
+  test("返回带名次与命中通道的相似候选，并排除源与显式排除项", async () => {
+    const sourceId = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
+    const relatedId = "ffffffff-ffff-4fff-8fff-ffffffffffff";
+    const excludedId = "aaaaaaa1-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+
+    for (const [id, title] of [
+      [sourceId, "源"],
+      [relatedId, "相关"],
+      [excludedId, "被排除"],
+    ] as const) {
+      mock.nodes.set(id, nodeFixture(id, { node_type: "memo", title }));
+      mock.contents.set(id, contentFixture(id, {
+        content_mdx: `${title}正文`,
+        excerpt: `${title}摘要`,
+      }));
+    }
+
+    const response = await app.fetch(authenticatedRequest("/memo-search/related", {
+      body: JSON.stringify({
+        exclude_node_ids: [excludedId],
+        limit: 5,
+        query_text: "过度设计导致复杂度失控",
+        source_node_id: sourceId,
+      }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    }));
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.data).toEqual([{
+      excerpt: "相关摘要",
+      matched_channels: ["structural"],
+      node_id: relatedId,
+      rank: 1,
+      revision: 1,
+      title: "相关",
+    }]);
+    expect(JSON.stringify(payload.data)).not.toContain("content_mdx");
+
+    const call = mock.rpcBodies.at(-1);
+    expect(call?.name).toBe("search_memos_hybrid");
+    expect(Object.keys(call?.body ?? {}).sort().join(",")).toBe(
+      "p_exclude_node_ids,p_limit,p_query_text,p_source_node_id,p_user_id",
+    );
+  });
+
+  test("空查询被 DTO 拦下，不触碰存储", async () => {
+    const response = await app.fetch(authenticatedRequest("/memo-search/related", {
+      body: JSON.stringify({ query_text: "   " }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    }));
+
+    expect(response.status).toBe(400);
+    // 鉴权先于 DTO 校验，故 auth:get 是合法的；此处要守的是「没有触碰任何业务数据」
+    expect(mock.operations).toEqual(["auth:get"]);
+    expect(mock.rpcBodies).toEqual([]);
   });
 });
 

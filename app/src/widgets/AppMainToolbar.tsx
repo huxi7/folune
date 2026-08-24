@@ -5,7 +5,7 @@
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
-import { MagicWandIcon } from "../shared/design-system/icons";
+import { MagicWandIcon, SparkleIcon } from "../shared/design-system/icons";
 
 import type { MemoDetailNode } from "../shared/api/memo";
 import { Button } from "../shared/design-system/components";
@@ -17,8 +17,10 @@ type AppMainToolbarProps = {
   currentMemoTitle: string;
   documentView: DocumentView;
   editingMode: EditingMode;
+  exploring: boolean;
   onDocumentViewChange: (view: DocumentView) => void;
   onEditingModeChange: (mode: EditingMode) => void;
+  onExplore: () => void;
   onOrganize: () => Promise<void>;
   organizing: boolean;
   toolbarTitle: string;
@@ -33,6 +35,7 @@ export function AppMainToolbar(props: AppMainToolbarProps) {
       </div>
       <div className="note-view-actions">
         {props.currentMemo !== null ? <>
+          <Button aria-keyshortcuts="Meta+E Control+E" aria-label="探索关联笔记" className="note-explore-button" icon={SparkleIcon} loading={props.exploring} onClick={props.onExplore} size="square" title="探索关联笔记（⌘/Ctrl + E）" variant="secondary" />
           <Button aria-keyshortcuts="Meta+Enter Control+Enter" aria-label="AI 整理当前备忘录" className="note-organize-button" icon={MagicWandIcon} loading={props.organizing} onClick={() => void props.onOrganize()} size="square" title="AI 整理（⌘/Ctrl + Enter）" variant="secondary" />
           <MarkdownViewMenu content={props.currentMemo.memo.content_mdx} documentView={props.documentView} editingMode={props.editingMode} onDocumentViewChange={props.onDocumentViewChange} onEditingModeChange={props.onEditingModeChange} title={props.currentMemoTitle} />
         </> : null}

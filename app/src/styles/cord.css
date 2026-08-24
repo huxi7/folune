@@ -1,0 +1,87 @@
+/**
+ * [INPUT]: 依赖 index.css 的 --archive-cord/--primary 语义色、--motion-* 时间线与 --ease-standard，以及 Tailwind v4 layer
+ * [OUTPUT]: 对外提供 .cord-layer 承载层、按语境映射 --cord-color 的 .cord 色板、恒定粗细配沿线透明度渐变的 .cord-line、pathLength 归一化的出场自绘与自中点向两端流动的 .cord-flow 双层白光
+ * [POS]: app/src/styles 的 Cord Signature 表现层；粗细恒定是 SVG 的硬限制，观感上的两头收细全部由 Cord.tsx 生成的透明度渐变承担，此处只负责配色、虚实与动效
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+@layer components {
+  /* -------------------------------------------------------------------------- */
+  /* Layer                                                                      */
+  /* -------------------------------------------------------------------------- */
+
+  .cord-layer { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+
+  /* -------------------------------------------------------------------------- */
+  /* Tone                                                                       */
+  /* -------------------------------------------------------------------------- */
+
+  /* 蓝 = AI 正在提议，墨 = 关系已建立。二者都只复用既有语义 token，不引入新色值。 */
+  .cord[data-tone="archive"] { --cord-color: var(--archive-cord); }
+  .cord[data-tone="explore"] { --cord-color: var(--primary); }
+  .cord[data-tone="relation"] { --cord-color: var(--archive-cord); }
+
+  .cord-stop { stop-color: var(--cord-color); }
+
+  /* -------------------------------------------------------------------------- */
+  /* Line                                                                       */
+  /* -------------------------------------------------------------------------- */
+
+  .cord-line { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* pathLength="1" 把任意长度的路径归一化，因此 dasharray/dashoffset 与实际像素长度无关 */
+  .cord-line-draw { stroke-dasharray: 1; stroke-dashoffset: 1; animation: cord-draw var(--motion-spatial) var(--ease-standard) forwards; }
+
+  /* 虚线承载「AI 临时推荐」。dasharray 已被虚实占用，故其出场改用透明度渐显而非自绘。 */
+  .cord[data-variant="dashed"] .cord-line { stroke-dasharray: 0.014 0.014; }
+  .cord[data-variant="dashed"] .cord-line-draw { stroke-dashoffset: 0; animation: cord-fade-in var(--motion-normal) var(--ease-standard) forwards; }
+
+  /* -------------------------------------------------------------------------- */
+  /* Flow                                                                       */
+  /* -------------------------------------------------------------------------- */
+
+  /* 两条子路径都以中点为起点，同一个向外的 dash 位移即得到「光自中间淌向两端」 */
+  .cord-flow-core,
+  .cord-flow-halo {
+    fill: none;
+    stroke: #fff;
+    stroke-linecap: round;
+    /* screen 让白色读作光而非涂料 */
+    mix-blend-mode: screen;
+    stroke-dasharray: 0.08 1;
+    /* 位移与呼吸周期刻意错开，节奏永不重复，因此不像机械循环 */
+    animation: cord-flow-travel 1.8s linear infinite, cord-flow-breathe 3.7s ease-in-out infinite;
+  }
+
+  /* 外发光用更宽更淡的第二条描边，而非 feGaussianBlur——滤镜动画每帧重算且不走合成层 */
+  .cord-flow-halo { opacity: 0.18; }
+  .cord-flow-core { opacity: 0.9; }
+}
+
+@keyframes cord-draw {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes cord-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes cord-flow-travel {
+  from { stroke-dashoffset: 0.08; }
+  to { stroke-dashoffset: -1; }
+}
+
+@keyframes cord-flow-breathe {
+  0%, 100% { stroke-dasharray: 0.08 1; }
+  50% { stroke-dasharray: 0.18 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @layer components {
+    /* 契约: reduced-motion 取消位移与路径绘制，直接呈现静态终态 */
+    .cord-line-draw { stroke-dasharray: none; stroke-dashoffset: 0; animation: none; }
+    .cord[data-variant="dashed"] .cord-line-draw { stroke-dasharray: 0.014 0.014; opacity: 1; animation: none; }
+    .cord-flow-core,
+    .cord-flow-halo { animation: none; }
+  }
+}

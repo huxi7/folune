@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 zod 的 UUID、strict object、联合与 infer 能力
- * [OUTPUT]: 对外提供 memo/PostgREST 正文与摘要行、关键词查询、回收站 RPC 结果、接口 body/param schema 及 infer 类型
+ * [OUTPUT]: 对外提供 memo/PostgREST 正文与摘要行、关键词查询、关键词/相似检索 RPC 结果、回收站 RPC 结果、接口 body/param schema 及 infer 类型
  * [POS]: dto 层备忘录 HTTP/PostgREST 数据边界，分别校验轻量 tree、单篇正文、搜索与删除批次响应
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -15,7 +15,7 @@ export const memoNodeRowSchema = z.object({
   id: z.uuid(),
   user_id: z.uuid(),
   parent_id: z.uuid().nullable(),
-  node_type: z.enum(["folder", "memo"]),
+  node_type: z.enum(["folder", "memo", "canvas"]),
   title: z.string(),
   sort_order: z.number(),
   icon: z.string().nullable(),
@@ -105,6 +105,51 @@ export const emptyMemoTrashRpcResultSchema = z.object({
   deleted_count: z.number().int().nonnegative(),
 });
 
+const memoSearchHitSchema = z.object({
+  node_id: z.uuid(),
+  excerpt: z.string().nullable(),
+});
+
+const rpcInvalidSchema = z.object({
+  status: z.literal("invalid"),
+  error_code: z.string(),
+});
+
+export const memoSearchKeywordRpcResultSchema = z.discriminatedUnion("status", [
+  z.object({
+    status: z.literal("ok"),
+    hits: z.array(memoSearchHitSchema),
+  }),
+  rpcInvalidSchema,
+  rpcNotFoundSchema,
+]);
+
+const memoRelatedHitSchema = z.object({
+  node_id: z.uuid(),
+  title: z.string(),
+  excerpt: z.string().nullable(),
+  revision: z.number().int().positive(),
+  matched_channels: z.array(z.string()),
+  rank: z.number().int().positive(),
+});
+
+export const memoSearchRelatedRpcResultSchema = z.discriminatedUnion("status", [
+  z.object({
+    status: z.literal("ok"),
+    hits: z.array(memoRelatedHitSchema),
+  }),
+  rpcInvalidSchema,
+  rpcNotFoundSchema,
+]);
+
+export type MemoRelatedSearchInput = z.infer<typeof memoRelatedSearchSchema>;
+export type MemoSearchKeywordRpcResult = z.infer<
+  typeof memoSearchKeywordRpcResultSchema
+>;
+export type MemoSearchRelatedRpcResult = z.infer<
+  typeof memoSearchRelatedRpcResultSchema
+>;
+
 export const memoNodeIdParamSchema = z.object({
   nodeId: z.uuid(),
 });
@@ -113,6 +158,15 @@ export const memoSearchQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(50).default(20),
   q: z.string().trim().min(1).max(200),
 });
+
+export const memoRelatedSearchSchema = z
+  .object({
+    query_text: z.string().trim().min(1).max(2000),
+    source_node_id: z.uuid().nullable().optional(),
+    exclude_node_ids: z.array(z.uuid()).max(50).optional(),
+    limit: z.number().int().min(1).max(50).optional(),
+  })
+  .strict();
 
 export const createMemoFolderSchema = z
   .object({

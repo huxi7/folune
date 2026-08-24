@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖可信 AuthUser、请求期 access token、memo DTO 输入、memo repository、领域模型与 HttpError
- * [OUTPUT]: 对外提供轻量 active tree、单篇正文、正文关键词命中、folder/memo CRUD、节点移动与恢复 subtree
- * [POS]: service 层 active 备忘录写入与读取编排边界；树组装委托 memo-tree.service，正文原样存储并派生摘要
+ * [OUTPUT]: 对外提供供画布层复用的 nextSortOrder/memoContentData 派生规则，以及轻量 active tree、单篇正文、关键词命中、带命中通道与名次的相似候选、folder/memo CRUD、节点移动与恢复 subtree
+ * [POS]: service 层 active 备忘录写入与读取编排边界；树组装委托 memo-tree.service，正文原样存储并派生摘要；检索 RPC 的失败在此收敛为稳定 HTTP 错误，且相似候选只出摘录不出正文
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -9,6 +9,7 @@ import { HttpError } from "../common/http-error.ts";
 import type {
   CreateMemoFolderInput,
   CreateMemoInput,
+  MemoRelatedSearchInput,
   MoveMemoNodeInput,
   MemoSearchQuery,
   PatchMemoInput,
@@ -19,6 +20,7 @@ import type {
   MemoContent,
   MemoDetailNode,
   MemoNode,
+  MemoRelatedHit,
   MemoSearchHit,
   MemoTreeNode,
   UpdateMemoContentData,
@@ -145,7 +147,11 @@ const validateParentFolder = async (
   }
 };
 
-const nextSortOrder = async (
+/**
+ * 新同级节点的 sort_order 规则只有这一处实现: 取同级最大值再加一个间隔。
+ * 画布保存与卡片晋升同样是「在树里插一个新节点」，因此复用它而不是各自算一遍。
+ */
+export const nextSortOrder = async (
   authUser: AuthUser,
   accessToken: string,
   parentId: string | null,
@@ -171,7 +177,12 @@ const extractMemoMetadataText = (contentMdx: string): string => {
   return textWithoutMarkdownSyntax.match(/\S+/gu)?.join(" ") ?? "";
 };
 
-const memoContentData = (
+/**
+ * 摘要与字数的派生规则同样只有这一处实现: 先剥掉 Markdown 记号，再按汉字逐字、
+ * 西文按词计数。晋升把画布卡片的正文搬成笔记时必须复用它，否则同一段文字会得到
+ * 两种摘要。派生只读副本，绝不回写正文。
+ */
+export const memoContentData = (
   contentMdx: string,
 ): UpdateMemoContentData => {
   const text = extractMemoMetadataText(contentMdx);
@@ -323,22 +334,52 @@ const getMemo = async (
   return toMemoDetailNode(memo.node, memo.content);
 };
 
+// 检索 RPC 的 status 判别式在此收敛为稳定 HTTP 错误，与 ai-run.service 的 requireRpcRun 同形。
+// 跨租户与不存在同样返回 not_found，故映射为 404 而非 403。
+const requireSearchHits = <T>(
+  result: { status: "ok"; hits: T[] } | { status: "invalid"; error_code: string } | { status: "not_found" },
+): T[] => {
+  if (result.status === "ok") {
+    return result.hits;
+  }
+
+  if (result.status === "invalid") {
+    throw new HttpError(400, result.error_code, "Memo search input was invalid");
+  }
+
+  throw new HttpError(404, "MEMO_SEARCH_NOT_FOUND", "Memo search scope was not found");
+};
+
 const searchMemos = async (
   authUser: AuthUser,
   accessToken: string,
   input: MemoSearchQuery,
 ): Promise<MemoSearchHit[]> => {
-  const summaries = await memoRepository.searchContentSummaries(
+  const result = await memoRepository.searchKeyword(
     authUser.id,
     input.q,
     input.limit,
     accessToken,
   );
 
-  return summaries.map((summary) => ({
-    excerpt: summary.excerpt,
-    node_id: summary.node_id,
-  }));
+  return requireSearchHits(result);
+};
+
+const searchRelatedMemos = async (
+  authUser: AuthUser,
+  accessToken: string,
+  input: MemoRelatedSearchInput,
+): Promise<MemoRelatedHit[]> => {
+  const result = await memoRepository.searchRelated(
+    authUser.id,
+    input.query_text,
+    input.source_node_id ?? null,
+    input.limit ?? 12,
+    input.exclude_node_ids ?? [],
+    accessToken,
+  );
+
+  return requireSearchHits(result);
 };
 
 const restoreTitle = async (
@@ -652,6 +693,7 @@ export const memoService = {
   createMemo,
   getMemo,
   searchMemos,
+  searchRelatedMemos,
   updateMemo,
   renameNode,
   moveNode,

@@ -81,7 +81,7 @@ const paletteOrder: PaletteName[] = ["current", "slate", "classic", "soft"];
 function PaletteSwatches() {
   return (
     <div aria-label="本方案关键色彩角色" className="color-lab-swatches">
-      <span><i data-swatch="canvas" />Canvas</span>
+      <span><i data-swatch="stage" />Stage</span>
       <span><i data-swatch="paper" />Paper</span>
       <span><i data-swatch="ink" />Ink</span>
       <span><i data-swatch="primary" />Primary</span>

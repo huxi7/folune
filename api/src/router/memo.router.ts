@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 Hono、router/request、memo zod schemas、auth/memo services 与统一 ok helper
  * [OUTPUT]: 对外提供 /memo-tree、/memo-search、/memo-folders、/memos、/memo-nodes、/memo-trash 六个资源 router
- * [POS]: router 层备忘录 HTTP 适配器，只做认证、body/query/param 校验并把轻量读取、单篇正文和命令下传 service
+ * [POS]: router 层备忘录 HTTP 适配器，只做认证、body/query/param 校验并把轻量读取、单篇正文和命令下传 service；相似检索用 POST /memo-search/related 而非 query string，因为查询文字可能是整段正文
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -13,6 +13,7 @@ import {
   createMemoFolderSchema,
   createMemoSchema,
   memoNodeIdParamSchema,
+  memoRelatedSearchSchema,
   memoSearchQuerySchema,
   moveMemoNodeSchema,
   patchMemoSchema,
@@ -53,6 +54,17 @@ memoSearchRouter.get("/", async (c) => {
   const query = parseQueryParams(memoSearchQuerySchema, c.req.query());
 
   return ok(c, await memoService.searchMemos(authUser, accessToken, query));
+});
+
+memoSearchRouter.post("/related", async (c) => {
+  const { accessToken, authUser } = await authenticate(c);
+  const input = await parseJsonBody(
+    c,
+    memoRelatedSearchSchema,
+    "Invalid related memo search data",
+  );
+
+  return ok(c, await memoService.searchRelatedMemos(authUser, accessToken, input));
 });
 
 memoFolderRouter.post("/", async (c) => {

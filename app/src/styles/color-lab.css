@@ -7,7 +7,7 @@
 @layer components {
   .color-lab-page {
     min-height: 100vh;
-    background: var(--workspace-canvas);
+    background: var(--workspace-stage);
     color: var(--foreground);
     padding: clamp(1rem, 2.4vw, 2rem);
   }
@@ -201,7 +201,7 @@
 
   .color-lab-swatches span { display: grid; min-width: 0; grid-template-columns: 0.7rem minmax(0, 1fr); align-items: center; gap: 0.35rem; color: var(--muted-foreground); font-size: 0.58rem; }
   .color-lab-swatches i { width: 0.7rem; height: 0.7rem; border: 1px solid var(--border); border-radius: var(--radius-pill); }
-  .color-lab-swatches [data-swatch="canvas"] { background: var(--workspace-canvas); }
+  .color-lab-swatches [data-swatch="stage"] { background: var(--workspace-stage); }
   .color-lab-swatches [data-swatch="paper"] { background: var(--paper-surface); }
   .color-lab-swatches [data-swatch="ink"] { background: var(--foreground); }
   .color-lab-swatches [data-swatch="primary"] { border-color: var(--primary); background: var(--primary); }
@@ -212,7 +212,7 @@
     display: grid;
     min-height: 31rem;
     grid-template-columns: 8.4rem minmax(18rem, 1fr) 10.8rem;
-    background: var(--workspace-canvas);
+    background: var(--workspace-stage);
   }
 
   .color-lab-sidebar,

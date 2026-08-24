@@ -11,3 +11,6 @@
 **/dist/
 
 .DS_Store
+
+# Playwright CLI 本地产物（控制台日志、页面快照、截图）
+.playwright-cli/

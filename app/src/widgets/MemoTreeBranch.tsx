@@ -6,6 +6,7 @@
  */
 
 import {
+  CanvasIcon,
   FileTextIcon,
   FolderIcon,
   FolderOpenIcon,
@@ -262,12 +263,14 @@ export function MemoTreeBranch(props: MemoTreeBranchProps) {
           parentId,
           placement: "after",
         };
+        // 画布与笔记只靠图标区分，文件名里永不出现扩展名
+        const LeafComponent = node.node_type === "canvas"
+          ? CanvasIcon
+          : FileTextIcon;
         const icon = isFolder ? (
           <FolderComponent size={14} />
         ) : (
-          <FileTextIcon
-            size={14}
-          />
+          <LeafComponent size={14} />
         );
 
         return (

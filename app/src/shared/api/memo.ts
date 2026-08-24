@@ -14,7 +14,11 @@ import {
   type MemoDetailNodeDto,
 } from "./memo.mapper";
 
-export type MemoNodeType = "folder" | "memo";
+/**
+ * canvas 与 folder/memo 并列住在同一棵树上（api 的 node_type 约束已扩容），
+ * 因此类型必须先认得它——渲染与图标区分由 KnowledgeCanvas 阶段负责。
+ */
+export type MemoNodeType = "canvas" | "folder" | "memo";
 
 export type MemoContent = {
   node_id: string;

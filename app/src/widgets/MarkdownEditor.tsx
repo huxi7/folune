@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 React 受控状态/ref、CodeMirror Markdown/State/View、GFM 语法树、Live Preview 扩展、ThemeProvider 主题、EditingMode 与干净 content_mdx
- * [OUTPUT]: 对外提供共享同一 EditorState 的 live/source MarkdownEditor/MarkdownEditorHandle，以及 inflateMarkdownBlankLines、deflateEditorBlankLineMarkers 纯适配函数
+ * [OUTPUT]: 对外提供共享同一 EditorState 的 live/source MarkdownEditor/MarkdownEditorHandle（focus 与只读的 readSelection），以及 inflateMarkdownBlankLines、deflateEditorBlankLineMarkers 纯适配函数
  * [POS]: app/src/widgets 的 Markdown 显示协议适配边界；Compartment 只切换显示扩展以保留选区/撤销历史，零宽空段落标记绝不离开编辑器
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -85,6 +85,8 @@ export const deflateEditorBlankLineMarkers = (
 
 export type MarkdownEditorHandle = {
   focus(): void;
+  /** 读取当前选中的正文文字；只读不写，不触碰选区、撤销历史或自动保存 */
+  readSelection(): string | null;
 };
 
 type MarkdownEditorProps = {
@@ -117,6 +119,19 @@ export const MarkdownEditor = forwardRef<
   useImperativeHandle(forwardedRef, () => ({
     focus() {
       codeMirrorRef.current?.view?.focus();
+    },
+    readSelection() {
+      const view = codeMirrorRef.current?.view;
+      if (view === undefined) {
+        return null;
+      }
+      const { from, to } = view.state.selection.main;
+      if (from === to) {
+        return null;
+      }
+      // 零宽空段落标记绝不离开编辑器，选中文字同样要先剥掉
+      const text = deflateEditorBlankLineMarkers(view.state.sliceDoc(from, to)).trim();
+      return text.length === 0 ? null : text;
     },
   }), []);
 

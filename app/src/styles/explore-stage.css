@@ -1,0 +1,213 @@
+/**
+ * [INPUT]: 依赖 index.css 的 Stage/Card/Ink/Muted/Hairline/Primary 语义 token、4px 空间基线、12/16px 曲率、--motion-* 与 --ease-standard，以及 Tailwind v4 layer
+ * [OUTPUT]: 对外提供 .paper-retreat 活纸退后变换、.explore-stage 星野浮层、极淡点阵、可随拖拽更新的 .explore-slot 位置层与 .explore-card/.explore-reason 表现层
+ * [POS]: app/src/styles 的探索态表现层，是 workspace.css 那张常驻纸在探索语境下的唯一覆盖处。位置与动效刻意分层: .explore-slot 只写 transform（初始排布可过渡、拖动可合成），卡片只写 opacity/scale（关键帧），因此从骨架到实卡的位移与渐显互不干扰，不触发 layout
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+@layer components {
+  /* -------------------------------------------------------------------------- */
+  /* Paper retreat                                                              */
+  /* -------------------------------------------------------------------------- */
+
+  /* 变换只落在这一层包裹上；活 CodeMirror 在探索态已由 documentView=reading 隐藏，
+     因此被缩放的子树里没有任何需要测量光标的编辑器。
+     包裹与纸严格等宽等高: 它既是被缩放的对象，也是量纸几何的那把尺，
+     宽度一旦分叉，transform-origin 与避让盒就会同时算错。 */
+  .paper-retreat {
+    width: min(var(--paper-max-width), 100%);
+    margin-inline: auto;
+    transform-origin: var(--explore-paper-origin-x, 50%) var(--explore-paper-origin-y, 0);
+    transition: transform var(--motion-spatial) var(--ease-standard);
+  }
+  .paper-retreat[data-exploring="true"] { will-change: transform; pointer-events: none; }
+  .paper-retreat[data-retreated="true"] {
+    transform: translateX(var(--explore-paper-translate-x, 0)) scale(var(--explore-paper-scale, 1));
+  }
+
+  /* 退后期间冻结滚动: 纸的落点是进入那一刻量的，滚动会让它与星野脱钩。
+     scrollbar-gutter: stable 已预留槽位，故隐藏滚动条不产生横向位移。 */
+  .app-workspace[data-exploring="true"] .paper-stage-scroll { overflow: hidden; }
+
+  /* -------------------------------------------------------------------------- */
+  /* Stage                                                                      */
+  /* -------------------------------------------------------------------------- */
+
+  /* reduced-motion / 窄窗口的静态清单: 不铺蒙层、不夺取指针，只在右上角浮一张清单 */
+  .explore-static { position: fixed; z-index: 70; inset: 0; pointer-events: none; }
+  .explore-static > .explore-result-panel { pointer-events: auto; }
+
+  .explore-stage {
+    position: fixed;
+    z-index: 70;
+    inset: 0;
+    opacity: 0;
+    transition: opacity var(--motion-normal) var(--ease-standard);
+  }
+  .explore-stage[data-active="true"] { opacity: 1; }
+  .explore-stage[data-active="false"] { pointer-events: none; }
+
+  /* 极淡点阵是探索态与画布态的明文例外，写作态的纸周围仍绝对禁止 */
+  .explore-stage-grid {
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(
+      circle at center,
+      color-mix(in srgb, var(--foreground) 9%, transparent) 0.5px,
+      transparent 0.5px
+    );
+    background-size: 26px 26px;
+    opacity: 0;
+    transition: opacity var(--motion-quiet) var(--ease-standard);
+    pointer-events: none;
+  }
+  .explore-stage[data-active="true"] .explore-stage-grid { opacity: 1; }
+
+  .explore-stage-cords { z-index: 1; }
+
+  /* -------------------------------------------------------------------------- */
+  /* Slot                                                                       */
+  /* -------------------------------------------------------------------------- */
+
+  /* 槽位是卡片中心处的零尺寸锚点: 位移只写在它身上，卡片与理由各自相对它偏移，
+     于是一次过渡同时带动卡片和线上的理由，二者永不脱节。 */
+  .explore-slot {
+    position: absolute;
+    z-index: 2;
+    top: 0;
+    left: 0;
+    transform: translate(var(--explore-x), var(--explore-y));
+    transition: transform var(--motion-spatial) var(--ease-standard);
+    transition-delay: var(--explore-glide-delay, 0ms);
+  }
+
+  /* 居中用独立的 translate 属性，transform 留给关键帧——二者由浏览器合成，互不覆盖 */
+  .explore-card {
+    position: absolute;
+    top: 0;
+    left: 0;
+    translate: -50% -50%;
+    display: flex;
+    width: var(--explore-card-width, 14rem);
+    height: var(--explore-card-height, 5.75rem);
+    flex-direction: column;
+    gap: var(--space-1);
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-panel);
+    corner-shape: var(--corner-shape-smooth);
+    background: var(--card);
+    padding: var(--space-3) var(--space-4);
+    box-shadow: var(--shadow-sm);
+    text-align: left;
+    animation: explore-card-in var(--motion-normal) var(--ease-standard) backwards;
+    animation-delay: var(--explore-materialize-delay, 0ms);
+  }
+  /* 骨架跟着出场节奏来，实卡跟着「逐张被读懂」的节奏来 */
+  .explore-card-pending { animation-delay: var(--explore-glide-delay, 0ms); }
+
+  button.explore-card { cursor: grab; touch-action: none; user-select: none; transition: border-color var(--motion-fast) var(--ease-standard), background var(--motion-fast) var(--ease-standard); }
+  button.explore-card:active { cursor: grabbing; }
+  button.explore-card:hover { border-color: color-mix(in srgb, var(--primary) 32%, var(--border)); background: var(--interactive-hover); }
+  button.explore-card:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+  .explore-card-title {
+    overflow: hidden;
+    color: var(--foreground);
+    font-size: var(--type-ui);
+    font-weight: var(--weight-ui);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* 引文用衬线呼应纸面——它逐字来自真实正文，不是界面文案 */
+  .explore-card-excerpt {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    color: var(--muted-foreground);
+    font-family: var(--font-serif);
+    font-size: var(--type-label);
+    line-height: 1.5;
+  }
+
+  .explore-card-skeleton-title { width: 62%; height: 0.75rem; }
+  .explore-card-skeleton-line { width: 100%; height: 0.6875rem; }
+  .explore-card-skeleton-line-short { width: 74%; }
+
+  /* -------------------------------------------------------------------------- */
+  /* Reason                                                                     */
+  /* -------------------------------------------------------------------------- */
+
+  /* 理由是卡片之外、线那一头的注文: 无卡片表面、无底色，因此它读作「AI 的判断」
+     而不是笔记的一部分——卡片里只有笔记自己的标题与逐字引文。 */
+  .explore-reason {
+    position: absolute;
+    z-index: 3;
+    top: 0;
+    left: 0;
+    translate: -50% calc(var(--explore-card-height, 6rem) / 2 + var(--explore-reason-gap, 0.5rem));
+    display: -webkit-box;
+    width: var(--explore-card-width, 13rem);
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    color: var(--foreground);
+    font-size: var(--type-label);
+    line-height: 1.45;
+    animation: explore-card-in var(--motion-normal) var(--ease-standard) backwards;
+    animation-delay: var(--explore-materialize-delay, 0ms);
+    pointer-events: none;
+  }
+  /* 少数超长理由在指向时展开全文——它是主角，不是 tooltip */
+  .explore-slot:hover .explore-reason,
+  .explore-slot:focus-within .explore-reason { -webkit-line-clamp: 6; }
+
+  .explore-stage-footer {
+    position: absolute;
+    bottom: var(--space-6);
+    left: 50%;
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    transform: translateX(-50%);
+  }
+  .explore-stage-caption {
+    color: var(--muted-foreground);
+    font-size: var(--type-label);
+    line-height: var(--leading-label);
+    pointer-events: none;
+  }
+
+  /* 保存是这片舞台上唯一的写操作，因此也是唯一一个实心动作 */
+  .explore-stage-save {
+    border-radius: var(--radius-control);
+    corner-shape: var(--corner-shape-smooth);
+    background: var(--primary);
+    padding: var(--space-1) var(--space-3);
+    color: var(--primary-foreground);
+    font-size: var(--type-label);
+    font-weight: var(--weight-ui);
+    line-height: var(--leading-label);
+    cursor: pointer;
+    transition: background var(--motion-fast) var(--ease-standard);
+  }
+  .explore-stage-save:hover { background: color-mix(in srgb, var(--primary) 88%, #000); }
+  .explore-stage-save:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+}
+
+@keyframes explore-card-in {
+  from { opacity: 0; transform: scale(0.94); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @layer components {
+    /* 契约: reduced-motion 取消位移与路径绘制。此模式下探索态本就降级为静态清单，
+       这里只作兜底，确保任何路径下都不出现空间位移。 */
+    .paper-retreat,
+    .explore-slot { transition: none; }
+    .explore-card,
+    .explore-reason { animation: none; }
+  }
+}

@@ -111,12 +111,21 @@ const validateParent = (
   }
 };
 
+/**
+ * 画布节点不进模型视野: 四个胖工具的契约只有 folder/memo，模型因此既看不到画布、
+ * 也无法改名/移动/删除它——这是结构上的收窄，不是遗漏。画布的编辑入口只有用户自己。
+ */
+const isModelVisible = (
+  node: MemoTreeNode,
+): node is MemoTreeNode & { node_type: "folder" | "memo" } =>
+  node.node_type === "folder" || node.node_type === "memo";
+
 const flattenTree = (
   nodes: readonly MemoTreeNode[],
   depth = 0,
   ancestors: readonly string[] = [],
 ): ReadTreeOutput["nodes"] =>
-  sortNodes(nodes).flatMap((node) => {
+  sortNodes(nodes).filter(isModelVisible).flatMap((node) => {
     const pathParts = [...ancestors, node.title];
 
     return [

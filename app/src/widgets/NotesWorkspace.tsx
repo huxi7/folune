@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖按需加载的 MemoDetailNode、跨临时/真实 ID 保持不变的 memoClientKey、新建聚焦意图、正文加载状态、DocumentView/EditingMode、useMemoAutosave、MarkdownEditor/ReadingView、ThemeProvider 与 Toast
- * [OUTPUT]: 对外提供临时节点提交期间不重挂载的纸张内写作/阅读列与 NotesWorkspaceHandle，可聚焦新纸标题、等待草稿落库、接纳 AI 标题并把 Agent 正文替换送入同一自动保存状态机
- * [POS]: app/src/widgets 的备忘录编辑会话边界；Paper 外壳不拥有编辑状态，客户端身份隔离后端 ID 置换，Dashboard 只能经显式 handle 跨越自动保存边界
+ * [OUTPUT]: 对外提供临时节点提交期间不重挂载的纸张内写作/阅读列与 NotesWorkspaceHandle，可聚焦新纸标题/编辑器、读取当前选中的一句话、等待草稿落库、接纳 AI 标题并把 Agent 正文替换送入同一自动保存状态机
+ * [POS]: app/src/widgets 的备忘录编辑会话边界；Paper 外壳不拥有编辑状态，客户端身份隔离后端 ID 置换，Dashboard 只能经显式 handle 跨越自动保存边界；按需正文未到达前绝不把空标题反写轻量树
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -60,7 +60,11 @@ type NotesWorkspaceProps = {
 export type NotesWorkspaceHandle = {
   acceptOrganizedTitle: (title: string) => void;
   flushCurrentDraft: () => Promise<void>;
+  /** 把焦点交还给正文编辑器；探索态退场后据此让选区从灰色恢复为活跃 */
+  focusEditor: () => void;
   prepareForDelete: () => Promise<void>;
+  /** 当前选中的一句话；写作态取自 CodeMirror，阅读态取自阅读视图的 DOM 选区 */
+  readSelection: () => string | null;
   replaceContentFromAgent: (content: string) => Promise<void>;
   resumeAfterDeleteFailure: () => void;
 };
@@ -141,6 +145,19 @@ export const NotesWorkspace = forwardRef<
     async flushCurrentDraft() {
       await flush({ throwOnFailure: true });
     },
+    focusEditor() {
+      editorRef.current?.focus();
+    },
+    readSelection() {
+      if (documentView === "reading") {
+        const selection = window.getSelection();
+        const text = selection === null || selection.isCollapsed
+          ? ""
+          : selection.toString().trim();
+        return text.length === 0 ? null : text;
+      }
+      return editorRef.current?.readSelection() ?? null;
+    },
     async prepareForDelete() {
       await flush({ throwOnFailure: true });
       pause();
@@ -152,7 +169,7 @@ export const NotesWorkspace = forwardRef<
     resumeAfterDeleteFailure() {
       resume();
     },
-  }), [acceptCommittedTitle, flush, pause, resume, updateContent]);
+  }), [acceptCommittedTitle, documentView, flush, pause, resume, updateContent]);
 
   useLayoutEffect(() => {
     const titleEditor = titleEditorRef.current;
@@ -188,8 +205,14 @@ export const NotesWorkspace = forwardRef<
   }, [autoFocus, documentView, memoClientKey]);
 
   useEffect(() => {
+    // 切换到未缓存笔记时，组件先以 memo=null 挂载 Skeleton。此刻 useMemoAutosave
+    // 的初值是空串，若反写树就会让侧栏标题闪一下；只有完整 detail 到场后才有
+    // 资格把状态机里的规范标题同步回轻量树。
+    if (memo === null) {
+      return;
+    }
     onTitleChangeRef.current(title);
-  }, [title]);
+  }, [memo, title]);
 
   function handleKeyboardSave(event: KeyboardEvent<HTMLElement>) {
     if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "s") {

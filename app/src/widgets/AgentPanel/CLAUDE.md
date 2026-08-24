@@ -16,6 +16,7 @@ OrganizeReviewCard.tsx: AI 整理审批语义适配；只把当前 memo 的 awai
 OrganizeReviewCard.test.tsx: AI 整理审批 DOM 同构测试，锁定 awaiting_confirmation 复用 agent-approval-dock 且 succeeded 输出为空
 ThreadHistory.tsx: Panel 内统一历史会话视图，会话行只提供切换、重命名与普通永久删除确认，hover、focus 与当前选中项共享中性表面而不使用品牌蓝底，不建立归档分组或第四栏
 organizeClient.ts: 浏览器到 Chat `/v1/organize` 的最小 authenticated client，复用 AI Run mapper，确认/apply/undo 仍经 shared/api/ai 进入 Business API
+exploreClient.ts: 浏览器到 Chat `/v1/explore` 的最小 authenticated client；探索是只读语义，故不产生 Run、不进入审批链也不写任何持久化，只把当前 memo 与可选选区送出并取回带理由/摘录/置信度的关联候选。候选的领域形状不在此定义，而是从 shared/store/explorationStore 取——那是这些数据唯一的家
 threadSelection.ts: 按用户 localStorage key 选择合法历史 thread，失效偏好回退服务端最近会话
 threadSelection.test.ts: 覆盖用户偏好隔离、合法恢复和失效 ID 回退
 useAiThreads.ts: 会话控制器，服务端持有 Thread/Message/Reference 真相；负责首次空会话、统一列表/detail/messages 加载、选择偏好与标题/删除 CRUD，并在删除当前会话后选择最近项或创建空白项
@@ -31,7 +32,7 @@ clientTools.test.ts: 工具输入归一测试，覆盖 AI SDK 送达 JSON string
 memoTool.worker.ts: 专用模块 Worker 入口，只调用纯 Planner 并用 requestId 返回类型化 plan/error，不持有 token 或运行时状态
 memoToolWorkerClient.ts: 主线程并发 RPC 桥，按 requestId 关联/去重请求，Worker 崩溃时统一失败并允许下次重建
 memoToolWorkerClient.test.ts: 锁定 Worker Client 正常通信、规划错误、崩溃清场与重复请求只投递一次
-memoToolPlanner.ts: 四个胖工具的纯规划内核，基于轻量 Tree Store 快照验证 revision/树约束并生成单步内部命令计划；read_memo 只规划可信 nodeId，不接触正文
+memoToolPlanner.ts: 四个胖工具的纯规划内核，基于轻量 Tree Store 快照验证 revision/树约束并生成单步内部命令计划；整树投影按类型谓词滤掉 canvas 节点——工具契约只有 folder/memo，模型因此既看不到画布也无法改名/移动/删除它，这是结构上的收窄而非遗漏；read_memo 只规划可信 nodeId，不接触正文
 memoToolPlanner.test.ts: 覆盖整树/read_memo、create/rename/move/reorder/delete 五种 op、edit_memo、stale 与非法移动
 memoToolSchemas.ts: 客户端四工具的 zod 契约，与 chat 模型工具保持同构并冻结 expected_revision
 memoToolExecution.ts: 主线程可信协调器，把 Worker plan 映射到现有 ai_commands；read_memo 按可信 nodeId 单篇取正文，写操作分别协调 Tree/Document Store 的乐观投影、提交、对账与失败回滚
@@ -42,7 +43,7 @@ toolPresentation.test.ts: 工具展示契约测试，锁定具体动作命名、
 activityState.ts: AI Activity 纯判定边界，以 status 和 assistant 最后一个 text/reasoning/step-start/tool part 导出 none/thinking/streaming/tool，工具 output 后只有 SDK 仍 streaming 才回到 thinking
 activityState.test.ts: Activity 状态回归测试，覆盖 submitted、首 token、活动工具、工具完成续写、新正文与 ready/error 卸载
 chatFetch.ts: 可独立测试的 HTTP 策略层，每次调用 token provider 后注入 Bearer，并把非 2xx 扁平/嵌套信封归一为带 code 的 ChatRequestError
-chatTransport.ts: 按 thread 创建类型化 DefaultChatTransport，只发送 thread_id 与携带冻结 metadata 的完整 messages；工具续写不再重读当前页面 memo
+chatTransport.ts: 按 thread 创建类型化 DefaultChatTransport，只发送 thread_id 与携带冻结 metadata 的完整 messages；工具续写不再重读当前页面 memo；并集中导出 chat 服务各端点 URL（含 /v1/explore），使 client 层不各自拼接 base URL
 chatTransport.test.ts: chatFetch 回归测试，覆盖最新 Bearer 注入、无会话短路及扁平/嵌套错误信封 code 归一
 index.ts: AgentPanel 模块稳定出口，隔离 AppDashboard 与内部文件布局
 

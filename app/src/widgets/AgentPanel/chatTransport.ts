@@ -46,4 +46,5 @@ export const createMemoChatTransport = (
 });
 
 export const getOrganizeApiUrl = (): string => chatApiUrl("/v1/organize");
+export const getExploreApiUrl = (): string => chatApiUrl("/v1/explore");
 export const authenticatedAgentFetch = authenticatedChatFetch;
