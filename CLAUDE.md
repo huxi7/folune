@@ -29,15 +29,15 @@ AI 是用户的备忘录协作伙伴与智能档案管理员。
 ## 运行形态
 app 跑在本机 Bun/Vite 固定 10000；api 与 chat 由根 Compose 编排为 api-dev(10001)/chat-dev(10002)，各自持有独立健康探针与被 Git 忽略的私有 `.env`。chat 依赖 api 健康后启动，容器内经 `http://api:10001` 访问业务 API；浏览器只接收 `VITE_` 前缀的公开配置。
 
-## 活跃产品迁移
-Canvas V2 已冻结为一级持久知识 Workspace：进入空间与执行 AI 分离，创建/拓展/保存/重开收敛到同一个真实 Canvas，用户可增量拓展、手工连接、添加已有笔记并写 Canvas 本地文字。目标契约见 [CANVAS_V2_CONTRACT.md](CANVAS_V2_CONTRACT.md)，Phase 2 已确认但不进入 MVP 的方向见 [CANVAS_V2_PHASE2_BACKLOG.md](CANVAS_V2_PHASE2_BACKLOG.md)。当前代码与下级 GEB 仍如实描述旧 ExploreStage → 保存 → KnowledgeCanvas 形态；迁移实施到哪里，L3/L2/L1 才同步更新到哪里，MVP 验收通过前禁止把目标态冒充已实现事实。
+## Canvas V2
+Canvas V2 是一级持久知识 Workspace：memo 的默认 Canvas 与 standalone Canvas 从创建、增量拓展、自动保存到重开始终使用同一 `memo_nodes.id === canvases.node_id` 身份。人工编辑与 AI expansion 共用带 version、mutation_id 和 receipt 的唯一原子 mutation 内核；浏览器先把 intent 写入 IndexedDB WAL，再串行提交并在冲突时保留意图重放。旧 Explore 生产入口和旧 HTTP 写路径已经移除，旧 SQL 函数只作为显式代码回滚面保留且 V2 运行期无执行权。目标契约见 [CANVAS_V2_CONTRACT.md](CANVAS_V2_CONTRACT.md)，MVP 外方向见 [CANVAS_V2_PHASE2_BACKLOG.md](CANVAS_V2_PHASE2_BACKLOG.md)。
 
 ## 模块地图
 | 模块 | 职责 | 文档 |
 | --- | --- | --- |
-| app | 用户端，以 Paper First 舞台承载唯一常驻写作主体与按需文件库/AI 思考空间；轻量目录与按 ID 正文缓存分离，唯一 @Prompt Bar 冻结上下文，Web Worker 只做纯规划，主线程乐观投影并把命令提交给 api，支持按执行逆序的整轮撤销；⌘E 探索态让两侧让开、活纸退后，关联候选按相关度径向浮现且退出即弃，保存后成为文件树里的画布节点；打开已保存画布时切换到无 Paper/无侧栏的全屏 React Flow 空间，可恢复卡片、连线与视口并把卡片晋升为真正的笔记 | [app/CLAUDE.md](app/CLAUDE.md) |
-| chat | AI 能力服务，冻结消息上下文；memo-agent 负责对话，无工具/无记忆的 approval-agent 独立裁决写审批，organize-planner-agent 与 organize-memo Workflow 规划整理，explore-agent 与 explore-notes Workflow 逐篇判断关联；同轮工具/审批续写复用同一 assistant，暴露 GET /health、POST /v1/chat、POST /v1/organize、POST /v1/explore；evals 保存 memo 任务基线与当前 Explore v1 的检索对比工具，供迁移调研识别现有能力而不充当 Canvas V2 产品验收 | [chat/CLAUDE.md](chat/CLAUDE.md) |
-| api | 业务接口服务，承载用户 profile、轻量备忘录 tree/正文按 ID 读取、PGroonga 关键词与混合相似召回、回收站、AI 会话/冻结上下文/权限设置/可撤销 Command/整理 Run，以及知识画布的保存/读取/布局/新增卡片与「卡片晋升为笔记」原子 RPC；正式关联住在 memo_relations（反向链接反查同一张表，AI 的临时推荐永不入库），画布本身就是 node_type='canvas' 的树节点因此白拿软删除与拖拽；经 owner-only RLS 与原子 RPC 构成唯一持久化边界 | [api/CLAUDE.md](api/CLAUDE.md) |
+| app | 用户端，以 Paper First 舞台承载写作与共享左右工具；Canvas 路由切换到始终挂载同一 React Flow 实例的独立 Workspace，支持 memo Picker、预览/返回、自由文字、连接/删除/拖拽/缩放、显式 AI 增量拓展与可靠自动保存；服务端文档、交互会话、WAL/传输状态分别收口且正文只按 memo ID 读取 | [app/CLAUDE.md](app/CLAUDE.md) |
+| chat | AI 能力服务，冻结消息上下文；对话、审批、整理与逐篇关联判断职责分离；Canvas expansion 只从 api 重取可信 context/正文/语料版本，复用 Explore 判断和逐字引文复核后返回候选，最终写入仍由浏览器经 api 统一 mutation 提交 | [chat/CLAUDE.md](chat/CLAUDE.md) |
+| api | 业务接口服务，承载 profile、memo、回收站、AI 状态机与 Canvas V2 默认/空白入口、无正文图读取、expansion context、人工/AI 共用 mutation；owner-only RLS、行锁、version、稳定 intent digest、receipt 与原子 checkpoint 共同构成唯一持久化边界 | [api/CLAUDE.md](api/CLAUDE.md) |
 | deploy | 本地部署基础设施，提供 api/chat 的 Bun 开发镜像、固定容器命名与密钥分离契约 | [deploy/CLAUDE.md](deploy/CLAUDE.md) |
 | scripts | 本地开发运维入口，统一启动、停止与查看 api-dev/chat-dev 双服务 Docker 日志 | [scripts/CLAUDE.md](scripts/CLAUDE.md) |
 

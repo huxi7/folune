@@ -1,47 +1,21 @@
 /**
- * [INPUT]: 不依赖框架或校验库，仅使用 TypeScript 领域类型与 memo.model 的 MemoContent/MemoNode
- * [OUTPUT]: 对外提供 Canvas、CanvasCard/CanvasCardTarget、CanvasEdge、CanvasDetail、CanvasSaveResult、CanvasPromotion 与布局更新结果类型
- * [POS]: model 层知识画布领域契约；画布的树身份仍是 MemoNode，此处只描述画布自己的视口、卡片与边。卡片引用笔记时只携带标题与既有摘要，正文永不进入画布载荷
+ * [INPUT]: 仅依赖 memo.model 的 MemoNode 领域类型
+ * [OUTPUT]: 对外提供 Canvas V2 单一身份、节点/边、创建回执、统一 mutation 回执与可信 expansion context 类型
+ * [POS]: model 层 Canvas V2 领域契约；Canvas ID 始终等于 memo_nodes.id/canvases.node_id，载荷只有快照与摘要而无正文
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
-import type { MemoContent, MemoNode } from "./memo.model.ts";
-
-export type CanvasCardKind = "memo_ref" | "excerpt" | "native";
+import type { MemoNode } from "./memo.model.ts";
 
 export type CanvasAuthor = "user" | "ai";
+export type CanvasKind = "memo_default" | "standalone";
 
-export interface Canvas {
-  node_id: string;
-  user_id: string;
-  origin_node_id: string | null;
-  origin_revision: number | null;
-  viewport: Readonly<Record<string, unknown>>;
-  metadata: Readonly<Record<string, unknown>>;
-  created_at: string;
-  updated_at: string;
-}
-
-/** 被引用笔记的最小可渲染投影；deleted_at 非空表示它已在回收站，target 为 null 表示已被永久删除 */
-export interface CanvasCardTarget {
+export interface CanvasTarget {
   node_id: string;
   title: string;
   revision: number;
   deleted_at: string | null;
   excerpt: string | null;
-}
-
-export interface CanvasCard {
-  id: string;
-  kind: CanvasCardKind;
-  target_node_id: string | null;
-  anchored_rev: number | null;
-  anchor: Readonly<Record<string, unknown>>;
-  text: string | null;
-  position_x: number;
-  position_y: number;
-  created_by: CanvasAuthor;
-  target: CanvasCardTarget | null;
 }
 
 export interface CanvasEdge {
@@ -52,32 +26,88 @@ export interface CanvasEdge {
   created_by: CanvasAuthor;
 }
 
-export interface CanvasDetail {
-  canvas: Canvas;
+export interface CanvasV2 {
+  node_id: string;
+  user_id: string;
+  origin_node_id: string | null;
+  origin_revision: number | null;
+  viewport: Readonly<Record<string, unknown>>;
+  metadata: Readonly<Record<string, unknown>>;
+  canvas_kind: CanvasKind;
+  version: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CanvasNodeV2 {
+  id: string;
+  kind: "memo_ref" | "native";
+  target_node_id: string | null;
+  snapshot_title: string | null;
+  snapshot_excerpt: string | null;
+  snapshot_revision: number | null;
+  discovered_from_id: string | null;
+  text: string | null;
+  x: number;
+  y: number;
+  width: number | null;
+  height: number | null;
+  created_by: CanvasAuthor;
+  target: CanvasTarget | null;
+}
+
+export interface CanvasDetailV2 {
+  canvas: CanvasV2;
   node: MemoNode;
-  cards: CanvasCard[];
+  nodes: CanvasNodeV2[];
   edges: CanvasEdge[];
 }
 
-export interface CanvasSaveResult {
-  canvas: Canvas;
+export interface CanvasEntryResult {
+  canvas: CanvasV2;
   node: MemoNode;
-  /** 实际落库的关联卡片数 */
-  card_count: number;
-  /** 探索到保存之间已失联（被删除或就是中心自己）而跳过的候选数 */
-  skipped_count: number;
+  focus_node_id: string | null;
+  created: boolean;
 }
 
-export interface CanvasLayoutResult {
-  canvas: Canvas;
-  moved_count: number;
+export interface CanvasMutationNotice {
+  index: number;
+  type: string;
+  reason: string;
+  node_id?: string;
+  edge_id?: string;
 }
 
-export interface CanvasPromotion {
-  /** 幂等重放: 该卡片此前已晋升过，本次未创建新笔记 */
-  already_promoted: boolean;
-  card: CanvasCard;
-  /** 重放且目标已被永久删除时为 null——那是墓碑，不是错误 */
-  memo: MemoContent | null;
-  node: MemoNode | null;
+export interface CanvasMutationResultV2 {
+  mutation_id: string;
+  intent_digest: string;
+  version: number;
+  upserted_nodes: Readonly<Record<string, unknown>>[];
+  removed_node_ids: string[];
+  upserted_edges: Readonly<Record<string, unknown>>[];
+  removed_edge_ids: string[];
+  aliases: Array<{ client_id: string; node_id: string }>;
+  noops: CanvasMutationNotice[];
+  dropped: CanvasMutationNotice[];
+  expansion_status: "complete" | "incomplete_due_to_capacity" | null;
+}
+
+export interface CanvasExpansionContext {
+  canvas_version: number;
+  corpus_version: number;
+  source: {
+    canvas_node_id: string;
+    memo_id: string;
+    title: string;
+    excerpt: string | null;
+    revision: number;
+  };
+  checkpoint: null | {
+    source_revision: number;
+    corpus_version: number;
+    request_id: string;
+    completion_status: "complete" | "incomplete_due_to_capacity";
+    completed_at: string;
+  };
+  neighbor_memo_ids: string[];
 }

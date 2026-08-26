@@ -1,30 +1,37 @@
 /**
- * [INPUT]: 依赖 shared/api/client 的统一 Bearer 请求能力与后端 canvases/canvas_nodes snake_case 响应契约
- * [OUTPUT]: 对外提供 Canvas/CanvasCard/CanvasEdge/CanvasDetail 类型与保存、读取、布局、新增卡片、晋升五个资源 API
- * [POS]: app/src/shared/api 的知识画布 HTTP 边界；载荷里只有卡片自己的文字与被引用笔记的标题/摘要，正文永不进入画布数据，因此画布视图不需要也拿不到 content_mdx
+ * [INPUT]: 依赖 shared/api/client 的统一 Bearer 请求与同步 keepalive 发起能力，以及后端 Canvas V2 snake_case 契约
+ * [OUTPUT]: 对外提供 Canvas V2 身份/节点/边/mutation/context 类型、默认/空白入口、读取、统一人工/AI 提交和有界 pagehide 发送
+ * [POS]: app/src/shared/api 的 Canvas V2 唯一 HTTP 边界；Canvas 载荷只有投影快照和原生文字，content_mdx 永不进入此模块
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
-import { apiRequest } from "./client";
-import type { MemoContent, MemoTreeNode } from "./memo";
+import { apiRequest, startApiKeepalive } from "./client";
+import type { MemoTreeNode } from "./memo";
 
-export type CanvasCardKind = "excerpt" | "memo_ref" | "native";
-
-export type CanvasViewport = { x: number; y: number; zoom: number };
+export type CanvasKind = "memo_default" | "standalone";
+export type CanvasNodeKind = "memo_ref" | "native";
+export type CanvasAuthor = "ai" | "user";
+export type CanvasViewport = {
+  x: number;
+  y: number;
+  zoom: number;
+  user_moved?: boolean;
+};
 
 export type Canvas = {
   node_id: string;
   user_id: string;
+  canvas_kind: CanvasKind;
   origin_node_id: string | null;
   origin_revision: number | null;
+  version: number;
   viewport: Record<string, unknown>;
   metadata: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 };
 
-/** 被引用笔记的最小投影；deleted_at 非空表示在回收站，target 为 null 表示已被永久删除 */
-export type CanvasCardTarget = {
+export type CanvasNodeTarget = {
   node_id: string;
   title: string;
   revision: number;
@@ -32,17 +39,31 @@ export type CanvasCardTarget = {
   excerpt: string | null;
 };
 
-export type CanvasCard = {
+export type CanvasNode = {
   id: string;
-  kind: CanvasCardKind;
+  kind: CanvasNodeKind;
   target_node_id: string | null;
-  anchored_rev: number | null;
-  anchor: Record<string, unknown>;
+  snapshot_title: string | null;
+  snapshot_excerpt: string | null;
+  snapshot_revision: number | null;
+  discovered_from_id: string | null;
   text: string | null;
+  x: number;
+  y: number;
+  width: number | null;
+  height: number | null;
+  created_by: CanvasAuthor;
+  target: CanvasNodeTarget | null;
+};
+
+export type CanvasNodeRow = Omit<CanvasNode, "target" | "x" | "y"> & {
+  canvas_id: string;
+  user_id: string;
   position_x: number;
   position_y: number;
-  created_by: "ai" | "user";
-  target: CanvasCardTarget | null;
+  created_at: string;
+  updated_at: string;
+  metadata: Record<string, unknown>;
 };
 
 export type CanvasEdge = {
@@ -50,60 +71,152 @@ export type CanvasEdge = {
   source_id: string;
   target_id: string;
   rationale: string | null;
-  created_by: "ai" | "user";
+  created_by: CanvasAuthor;
+};
+
+export type CanvasEdgeRow = CanvasEdge & {
+  canvas_id: string;
+  user_id: string;
+  created_at: string;
 };
 
 export type CanvasDetail = {
   canvas: Canvas;
   node: MemoTreeNode;
-  cards: CanvasCard[];
+  nodes: CanvasNode[];
   edges: CanvasEdge[];
 };
 
-export type CanvasSaveResult = {
+export type CanvasEntryResult = {
   canvas: Canvas;
   node: MemoTreeNode;
-  card_count: number;
-  skipped_count: number;
+  focus_node_id: string | null;
+  created: boolean;
 };
 
-export type CanvasPromotion = {
-  already_promoted: boolean;
-  card: CanvasCard;
-  memo: MemoContent | null;
-  node: MemoTreeNode | null;
+export type CanvasOperation =
+  | {
+      type: "add_memo";
+      node_id: string;
+      target_node_id: string;
+      discovered_from_id?: string;
+      source_node_id?: string;
+      edge_id?: string;
+      rationale?: string | null;
+      x: number;
+      y: number;
+    }
+  | {
+      type: "create_text";
+      node_id: string;
+      text: string;
+      x: number;
+      y: number;
+      width?: number;
+      height?: number;
+    }
+  | {
+      type: "update_node";
+      node_id: string;
+      x?: number;
+      y?: number;
+      text?: string;
+      width?: number;
+      height?: number;
+    }
+  | { type: "remove_node"; node_id: string }
+  | {
+      type: "upsert_edge";
+      edge_id: string;
+      source_id: string;
+      target_id: string;
+      rationale?: string | null;
+    }
+  | { type: "remove_edge"; edge_id: string }
+  | { type: "set_viewport"; viewport: CanvasViewport };
+
+export type CanvasMutationRequest = {
+  protocol_version: 2;
+  mutation_id: string;
+  base_version: number;
+  operations: CanvasOperation[];
 };
 
-export type SaveCanvasItem = {
-  confidence?: number;
-  excerpt?: string;
-  matched_channels?: string[];
-  node_id: string;
-  reason?: string;
-  revision?: number;
-  x?: number;
-  y?: number;
+export type CanvasExpansionMutationRequest = CanvasMutationRequest & {
+  source_canvas_node_id: string;
+  source_revision: number;
+  corpus_version: number;
+  request_id: string;
+  completion_status: "complete" | "incomplete_due_to_capacity";
+  candidate_revisions: Array<{ memo_id: string; revision: number }>;
 };
 
-/** accessToken 可省: 省略时 apiRequest 在请求期实时取 token，长会话功能应当走这条路 */
-export const saveExplorationCanvas = async (
-  accessToken: string | undefined,
-  input: {
-    items: SaveCanvasItem[];
-    origin_node_id: string;
-    parent_id?: string | null;
+export type CanvasMutationNotice = {
+  index: number;
+  type: string;
+  reason: string;
+  node_id?: string;
+  edge_id?: string;
+};
+
+export type CanvasMutationResult = {
+  mutation_id: string;
+  intent_digest: string;
+  version: number;
+  upserted_nodes: CanvasNodeRow[];
+  removed_node_ids: string[];
+  upserted_edges: CanvasEdgeRow[];
+  removed_edge_ids: string[];
+  aliases: Array<{ client_id: string; node_id: string }>;
+  noops: CanvasMutationNotice[];
+  dropped: CanvasMutationNotice[];
+  expansion_status: "complete" | "incomplete_due_to_capacity" | null;
+};
+
+export type CanvasExpansionContext = {
+  canvas_version: number;
+  corpus_version: number;
+  source: {
+    canvas_node_id: string;
+    memo_id: string;
     title: string;
-    viewport?: Record<string, unknown>;
-  },
-): Promise<CanvasSaveResult> =>
-  await apiRequest<CanvasSaveResult>(
+    excerpt: string | null;
+    revision: number;
+  };
+  checkpoint: null | {
+    source_revision: number;
+    corpus_version: number;
+    request_id: string;
+    completion_status: "complete" | "incomplete_due_to_capacity";
+    completed_at: string;
+  };
+  neighbor_memo_ids: string[];
+};
+
+export const getOrCreateMemoCanvas = async (
+  accessToken: string | undefined,
+  memoId: string,
+): Promise<CanvasEntryResult> =>
+  await apiRequest<CanvasEntryResult>(
+    `/memos/${encodeURIComponent(memoId)}/canvas`,
+    { method: "PUT" },
+    accessToken,
+  );
+export const createStandaloneCanvas = async (
+  accessToken: string | undefined,
+  input: { title?: string; parent_id?: string | null },
+): Promise<CanvasEntryResult> =>
+  await apiRequest<CanvasEntryResult>(
     "/canvases",
-    { body: JSON.stringify(input), method: "POST" },
+    {
+      body: JSON.stringify({ protocol_version: 2, ...input }),
+      method: "POST",
+    },
     accessToken,
   );
 
 export const getCanvas = async (
-  accessToken: string,
+  accessToken: string | undefined,
   canvasId: string,
   signal?: AbortSignal,
 ): Promise<CanvasDetail> =>
@@ -113,45 +226,50 @@ export const getCanvas = async (
     accessToken,
   );
 
-export const updateCanvasLayout = async (
-  accessToken: string,
+export const mutateCanvas = async (
+  accessToken: string | undefined,
   canvasId: string,
-  input: {
-    cards?: { id: string; x: number; y: number }[];
-    viewport?: Record<string, unknown>;
-  },
-): Promise<{ canvas: Canvas; moved_count: number }> =>
-  await apiRequest<{ canvas: Canvas; moved_count: number }>(
+  input: CanvasMutationRequest,
+): Promise<CanvasMutationResult> =>
+  await apiRequest<CanvasMutationResult>(
     `/canvases/${encodeURIComponent(canvasId)}`,
     { body: JSON.stringify(input), method: "PATCH" },
     accessToken,
   );
 
-export const createCanvasCard = async (
-  accessToken: string,
+export const commitCanvasExpansion = async (
+  accessToken: string | undefined,
   canvasId: string,
-  input: {
-    anchored_rev?: number;
-    kind: "excerpt" | "native";
-    source_node_id?: string;
-    text: string;
-    x?: number;
-    y?: number;
-  },
-): Promise<CanvasCard> =>
-  await apiRequest<CanvasCard>(
-    `/canvases/${encodeURIComponent(canvasId)}/cards`,
+  input: CanvasExpansionMutationRequest,
+): Promise<CanvasMutationResult> =>
+  await apiRequest<CanvasMutationResult>(
+    `/canvases/${encodeURIComponent(canvasId)}/expansions`,
     { body: JSON.stringify(input), method: "POST" },
     accessToken,
   );
 
-export const promoteCanvasCard = async (
+export const getCanvasExpansionContext = async (
+  accessToken: string | undefined,
+  canvasId: string,
+  nodeId: string,
+): Promise<CanvasExpansionContext> =>
+  await apiRequest<CanvasExpansionContext>(
+    `/canvases/${encodeURIComponent(canvasId)}/nodes/${encodeURIComponent(nodeId)}/expansion-context`,
+    {},
+    accessToken,
+  );
+
+/**
+ * 页面离开时仅发起、不确认。调用方必须保留 WAL，重开后靠同一 mutation_id
+ * 的 receipt 对账；这个函数不会也不能宣称服务端已经保存。
+ */
+export const startCanvasMutationKeepalive = (
   accessToken: string,
-  cardId: string,
-  input: { parent_id?: string | null; title?: string } = {},
-): Promise<CanvasPromotion> =>
-  await apiRequest<CanvasPromotion>(
-    `/canvas-cards/${encodeURIComponent(cardId)}/promote`,
-    { body: JSON.stringify(input), method: "POST" },
+  canvasId: string,
+  input: CanvasMutationRequest,
+): boolean =>
+  startApiKeepalive(
+    `/canvases/${encodeURIComponent(canvasId)}`,
+    JSON.stringify(input),
     accessToken,
   );

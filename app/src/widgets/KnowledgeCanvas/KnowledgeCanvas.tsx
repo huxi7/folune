@@ -1,243 +1,658 @@
 /**
- * [INPUT]: 依赖 @xyflow/react v12 与其基础样式、shared/api/canvas 的读取/布局/晋升、pages/canvasPresentation 的投影、memoTreeStore 的 mergeServerNode、Skeleton/Toast 与 styles/knowledge-canvas.css
- * [OUTPUT]: 对外提供 KnowledgeCanvas 只读画布视图与「写一张卡片 → 成为笔记」的沉淀入口
- * [POS]: app/src/widgets 的已保存画布内容根，住在独立全屏 CanvasWorkspace 内；此处允许 pan/zoom 与极淡点阵，因为没有活编辑器。刻意不开 onlyRenderVisibleElements——maintainer 明说它当前效果相反，真瓶颈是节点组件的反复挂载
+ * [INPUT]: 依赖 @xyflow/react v12、Canvas Chat、useCanvasSessionCoordinator、canvasWorkspaceStore、纯投影/增量布局、memo document Store 与本地设计系统
+ * [OUTPUT]: 对外提供始终挂载真实 React Flow 的 Canvas V2：受控节点/边/视口、自由文字、Picker/连接、Preview、AI 增量拓展和可靠保存状态
+ * [POS]: KnowledgeCanvas 的会话内容根；UI 只产生 intent，人工与 AI 都经同一个协调器/RPC，正文只在 Preview 按 ID 加载
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
 import {
   Background,
   BackgroundVariant,
-  Panel,
   ReactFlow,
   useEdgesState,
   useNodesState,
   type Edge,
-  type Viewport,
+  type ReactFlowInstance,
 } from "@xyflow/react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type MouseEvent as ReactMouseEvent,
+} from "react";
 
 import "@xyflow/react/dist/style.css";
 
 import {
+  layoutCanvasCandidates,
+  nearestCanvasPlacement,
+} from "../../pages/canvasIncrementalLayout";
+import {
   CANVAS_DEFAULT_VIEWPORT,
-  canvasLayoutFromNodes,
-  nextCanvasCardPosition,
+  canvasPositionOperation,
   shouldRestoreCanvasViewport,
   toCanvasFlow,
-  toCanvasFlowNode,
   type CanvasFlowNode,
 } from "../../pages/canvasPresentation";
+import { Skeleton, SkeletonGroup, useToast } from "../../shared/design-system/components";
 import {
-  createCanvasCard,
-  getCanvas,
-  promoteCanvasCard,
-  updateCanvasLayout,
-  type CanvasDetail,
-} from "../../shared/api/canvas";
-import {
-  Button,
-  Dialog,
-  Skeleton,
-  SkeletonGroup,
-  useToast,
-} from "../../shared/design-system/components";
-import { useMemoTreeStore } from "../../shared/store/memoTreeStore";
+  type CanvasIntent,
+} from "../../shared/store/canvasDocument";
+import { useCanvasWorkspaceStore } from "../../shared/store/canvasWorkspaceStore";
+import type { CanvasReturnDescriptor } from "../../shared/store/canvasReturnStore";
+import { expandCanvas } from "../AgentPanel/canvasExpandClient";
+import type { MentionResult } from "../AgentPanel/MentionMenu";
 import { CanvasActionsProvider } from "./canvasActions";
 import { CanvasCardNode } from "./CanvasCardNode";
+import { CanvasControls } from "./CanvasControls";
 import { CanvasCordEdge } from "./CanvasCordEdge";
+import { CanvasMemoPicker } from "./CanvasMemoPicker";
+import { CanvasPersistenceStatus } from "./CanvasPersistenceStatus";
+import { CanvasPreviewOverlay } from "./CanvasPreviewOverlay";
+import {
+  useCanvasSessionCoordinator,
+  type CanvasSessionControls,
+} from "./useCanvasSessionCoordinator";
 
-/** 模块级常量: React Flow 要求 nodeTypes/edgeTypes 引用稳定，否则每次渲染都重建节点 */
-const nodeTypes = { canvasCard: CanvasCardNode };
+const nodeTypes = { canvasNode: CanvasCardNode };
 const edgeTypes = { cord: CanvasCordEdge };
-/** 拖拽与平移停下后再回写，避免每一帧一个 PATCH */
-const LAYOUT_FLUSH_MS = 700;
+const panOnDrag = [1, 2];
+const proOptions = { hideAttribution: false };
 
 type KnowledgeCanvasProps = {
   accessToken: string;
   canvasId: string;
+  initialAssistantOpen: boolean;
+  initialLibraryOpen: boolean;
+  onCoordinatorReady?: (controls: CanvasSessionControls | null) => void;
+  onEditMemo: (nodeId: string) => void;
   onSelectMemo: (nodeId: string) => void;
+  restore?: CanvasReturnDescriptor | null;
+  userId: string;
 };
 
-type UserCanvasViewport = Viewport & { user_moved: true };
+type TransientTextNode = {
+  id: string;
+  text: string;
+  x: number;
+  y: number;
+};
+
+const directPair = (sourceId: string, targetId: string): string =>
+  sourceId < targetId ? `${sourceId}:${targetId}` : `${targetId}:${sourceId}`;
+
+const flowNodeFromTransient = (node: TransientTextNode): CanvasFlowNode => ({
+  data: {
+    body: node.text,
+    createdBy: "user",
+    discoveredFromId: null,
+    drifted: false,
+    kind: "native",
+    snapshotRevision: null,
+    targetDeleted: false,
+    targetNodeId: null,
+    title: "自由文字",
+    tombstone: false,
+  },
+  id: node.id,
+  position: { x: node.x, y: node.y },
+  style: { height: 120, width: 240 },
+  type: "canvasNode",
+});
 
 export function KnowledgeCanvas({
   accessToken,
   canvasId,
+  initialAssistantOpen,
+  initialLibraryOpen,
+  onCoordinatorReady,
+  onEditMemo,
   onSelectMemo,
+  restore = null,
+  userId,
 }: KnowledgeCanvasProps) {
   const { toast } = useToast();
-  const mergeServerNode = useMemoTreeStore((state) => state.mergeServerNode);
+  const document = useCanvasWorkspaceStore((state) => state.document);
+  const selectedNodeIds = useCanvasWorkspaceStore((state) => state.selectedNodeIds);
+  const selectNodes = useCanvasWorkspaceStore((state) => state.selectNodes);
+  const previewNodeId = useCanvasWorkspaceStore((state) => state.previewNodeId);
+  const openPreview = useCanvasWorkspaceStore((state) => state.openPreview);
+  const editingTextNodeId = useCanvasWorkspaceStore((state) => state.editingTextNodeId);
+  const editText = useCanvasWorkspaceStore((state) => state.editText);
+  const connectionSourceId = useCanvasWorkspaceStore((state) => state.connectionSourceId);
+  const startConnection = useCanvasWorkspaceStore((state) => state.startConnection);
+  const aiLoading = useCanvasWorkspaceStore((state) => state.aiLoading);
+  const setAiLoading = useCanvasWorkspaceStore((state) => state.setAiLoading);
+  const [pickerMode, setPickerMode] = useState<"add" | "connect" | null>(null);
+  const [transientText, setTransientText] = useState<TransientTextNode | null>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState<CanvasFlowNode>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
-  const [status, setStatus] = useState<"error" | "loading" | "ready">("loading");
-  const [viewport, setViewport] = useState<Viewport>(CANVAS_DEFAULT_VIEWPORT);
-  const [restoreViewport, setRestoreViewport] = useState(false);
-  const [busyCardId, setBusyCardId] = useState<string | null>(null);
-  const [composing, setComposing] = useState(false);
-  const [draft, setDraft] = useState("");
-  const [creating, setCreating] = useState(false);
-  const flushTimerRef = useRef(0);
-  const pendingViewportRef = useRef<UserCanvasViewport | null>(null);
-  const nodesRef = useRef<CanvasFlowNode[]>([]);
-  nodesRef.current = nodes;
+  const instanceRef = useRef<ReactFlowInstance<CanvasFlowNode, Edge> | null>(null);
+  const flowRef = useRef<HTMLDivElement>(null);
+  const initialViewportAppliedRef = useRef(false);
+  const latestDocumentRef = useRef(document);
+  latestDocumentRef.current = document;
+  const getViewport = useCallback(
+    () => instanceRef.current?.getViewport() ?? CANVAS_DEFAULT_VIEWPORT,
+    [],
+  );
+  const { coordinatorRef, loadStatus } = useCanvasSessionCoordinator({
+    accessToken,
+    canvasId,
+    getViewport,
+    initialAssistantOpen,
+    initialLibraryOpen,
+    onCoordinatorReady,
+    restore,
+    toast,
+    userId,
+  });
 
   useEffect(() => {
-    const controller = new AbortController();
-    setStatus("loading");
+    initialViewportAppliedRef.current = false;
+  }, [canvasId]);
 
-    void getCanvas(accessToken, canvasId, controller.signal)
-      .then((detail: CanvasDetail) => {
-        const flow = toCanvasFlow(detail);
-        setNodes(flow.nodes);
-        setEdges(flow.edges);
-        setViewport(flow.viewport);
-        setRestoreViewport(shouldRestoreCanvasViewport(detail.canvas.viewport));
-        setStatus("ready");
-      })
-      .catch((error: unknown) => {
-        if (error instanceof DOMException && error.name === "AbortError") {
-          return;
-        }
-        setStatus("error");
-        toast({
-          description: error instanceof Error ? error.message : undefined,
-          title: "画布加载失败",
-          variant: "error",
-        });
+  useEffect(() => {
+    const flow = document === null
+      ? { edges: [], nodes: [], viewport: CANVAS_DEFAULT_VIEWPORT }
+      : toCanvasFlow(document);
+    const selected = new Set(selectedNodeIds);
+    const nextNodes = flow.nodes.map((node) => ({
+      ...node,
+      selected: selected.has(node.id),
+    }));
+    if (transientText !== null) {
+      nextNodes.push({
+        ...flowNodeFromTransient(transientText),
+        selected: selected.has(transientText.id),
       });
-
-    return () => controller.abort();
-  }, [accessToken, canvasId, setEdges, setNodes, toast]);
-
-  // 布局回写是「安静的持久化」: 失败不打断阅读，只在下次拖拽时再试
-  const scheduleLayoutFlush = useCallback(() => {
-    window.clearTimeout(flushTimerRef.current);
-    flushTimerRef.current = window.setTimeout(() => {
-      flushTimerRef.current = 0;
-      const nextViewport = pendingViewportRef.current;
-      pendingViewportRef.current = null;
-      void updateCanvasLayout(accessToken, canvasId, {
-        cards: canvasLayoutFromNodes(nodesRef.current),
-        ...(nextViewport === null ? {} : { viewport: nextViewport }),
-      }).catch(() => undefined);
-    }, LAYOUT_FLUSH_MS);
-  }, [accessToken, canvasId]);
-
-  useEffect(() => () => window.clearTimeout(flushTimerRef.current), []);
-
-  const actions = useMemo(() => ({
-    busyCardId,
-    onOpenMemo: onSelectMemo,
-    async onPromote(cardId: string) {
-      if (busyCardId !== null) {
-        return;
-      }
-      setBusyCardId(cardId);
-      try {
-        const promotion = await promoteCanvasCard(accessToken, cardId);
-
-        if (promotion.node !== null) {
-          // 新笔记就地并入文件树，绝不因为一次晋升去刷新整棵树
-          mergeServerNode(promotion.node);
-        }
-        setNodes((current) => current.map((node) => (node.id === cardId
-          ? {
-            ...node,
-            data: {
-              ...node.data,
-              body: promotion.memo?.excerpt ?? node.data.body,
-              drifted: false,
-              kind: promotion.card.kind,
-              promotable: false,
-              targetNodeId: promotion.card.target_node_id,
-              title: promotion.node?.title ?? node.data.title,
-            },
-          }
-          : node)));
-        toast({
-          title: promotion.already_promoted ? "这张卡片已经是笔记了" : "已成为笔记",
-          variant: promotion.already_promoted ? "info" : "success",
-        });
-      } catch (error) {
-        toast({
-          description: error instanceof Error ? error.message : undefined,
-          title: "晋升失败",
-          variant: "error",
-        });
-      } finally {
-        setBusyCardId(null);
-      }
-    },
-  }), [accessToken, busyCardId, mergeServerNode, onSelectMemo, setNodes, toast]);
-
-  // 卡片正文在弹层里写，画布本身仍然只渲染只读卡片——画布上没有活编辑器
-  const commitCard = async () => {
-    const text = draft.trim();
-
-    if (text.length === 0 || creating) {
-      return;
     }
+    setNodes(nextNodes);
+    setEdges(flow.edges.map((edge) => ({
+      ...edge,
+      className: selectedNodeIds.length === 1
+        && (edge.source === selectedNodeIds[0] || edge.target === selectedNodeIds[0])
+        ? "canvas-edge-direct"
+        : "canvas-edge-muted",
+    })));
 
-    setCreating(true);
-    try {
-      const card = await createCanvasCard(accessToken, canvasId, {
-        kind: "native",
-        text,
-        ...nextCanvasCardPosition(nodesRef.current.length),
+    const instance = instanceRef.current;
+    if (
+      document !== null
+      && instance !== null
+      && !initialViewportAppliedRef.current
+    ) {
+      initialViewportAppliedRef.current = true;
+      requestAnimationFrame(() => {
+        const restoredViewport = restore?.canvasId === canvasId
+          ? restore.viewport
+          : null;
+        if (restoredViewport !== null) {
+          void instance.setViewport(restoredViewport, { duration: 0 });
+        } else if (shouldRestoreCanvasViewport(document.canvas.viewport)) {
+          void instance.setViewport(flow.viewport, { duration: 0 });
+        } else if (flow.nodes.length > 0) {
+          void instance.fitView({ duration: 0, padding: 0.18 });
+        }
       });
-      setNodes((current) => [...current, toCanvasFlowNode(card)]);
-      setComposing(false);
-      setDraft("");
+    }
+  }, [canvasId, document, restore, selectedNodeIds, setEdges, setNodes, transientText]);
+
+  const enqueue = useCallback(async (intent: CanvasIntent) => {
+    try {
+      await coordinatorRef.current?.enqueue(intent);
     } catch (error) {
       toast({
         description: error instanceof Error ? error.message : undefined,
-        title: "卡片没能放上画布",
+        title: "本机恢复不可用",
+        variant: "error",
+      });
+      throw error;
+    }
+  }, [toast]);
+
+  const persistViewport = useCallback(() => {
+    const viewport = instanceRef.current?.getViewport();
+    if (viewport === undefined) return;
+    void enqueue({
+      operation: { type: "set_viewport", viewport: { ...viewport, user_moved: true } },
+    }).catch(() => undefined);
+  }, [enqueue]);
+
+  const fitView = useCallback(() => {
+    const instance = instanceRef.current;
+    if (instance === null) return;
+    void instance.fitView({ duration: 220, padding: 0.18 }).then(persistViewport);
+  }, [persistViewport]);
+
+  const handleMoveEnd = useCallback((
+    event: MouseEvent | TouchEvent | null,
+    viewport: { x: number; y: number; zoom: number },
+  ) => {
+    if (event === null) return;
+    void enqueue({
+      operation: {
+        type: "set_viewport",
+        viewport: { ...viewport, user_moved: true },
+      },
+    }).catch(() => undefined);
+  }, [enqueue]);
+
+  const handleNodeDragStop = useCallback((
+    _: MouseEvent | TouchEvent,
+    node: CanvasFlowNode,
+  ) => {
+    const operation = canvasPositionOperation(node);
+    if (operation !== null) void enqueue({ operation }).catch(() => undefined);
+  }, [enqueue]);
+
+  const handleSelectionChange = useCallback(({
+    nodes: selectedNodes,
+  }: { nodes: CanvasFlowNode[] }) => {
+    selectNodes(selectedNodes.map((node) => node.id));
+  }, [selectNodes]);
+
+  const handlePaneClick = useCallback((event: ReactMouseEvent) => {
+    if (event.detail !== 2) return;
+    const instance = instanceRef.current;
+    if (instance === null) return;
+    const position = instance.screenToFlowPosition({
+      x: event.clientX,
+      y: event.clientY,
+    });
+    const node = {
+      id: crypto.randomUUID(),
+      text: "",
+      x: position.x,
+      y: position.y,
+    };
+    setTransientText(node);
+    editText(node.id);
+  }, [editText]);
+
+  const flushBeforeNavigation = useCallback(async (): Promise<boolean> => {
+    const coordinator = coordinatorRef.current;
+    if (coordinator === null) return true;
+    const result = await coordinator.flush();
+    if (!result.synced && result.persisted) {
+      toast({
+        title: "尚未同步，将在重开后继续",
+        variant: "info",
+      });
+    }
+    return result.persisted;
+  }, [toast]);
+
+  const navigateToMemo = useCallback(async (
+    memoId: string,
+    editOriginal = false,
+  ) => {
+    if (!await flushBeforeNavigation()) return;
+    if (editOriginal) onEditMemo(memoId);
+    else onSelectMemo(memoId);
+  }, [flushBeforeNavigation, onEditMemo, onSelectMemo]);
+
+  const viewportCenter = useCallback(() => {
+    const instance = instanceRef.current;
+    const rect = flowRef.current?.getBoundingClientRect();
+    if (instance === null || rect === undefined) return { x: 0, y: 0 };
+    return instance.screenToFlowPosition({
+      x: rect.left + rect.width / 2,
+      y: rect.top + rect.height / 2,
+    });
+  }, []);
+
+  const addMemo = useCallback(async (memo: MentionResult) => {
+    const current = latestDocumentRef.current;
+    if (current === null) return;
+    const existing = current.nodes.find(
+      (node) => node.kind === "memo_ref" && node.target_node_id === memo.id,
+    );
+    const source = connectionSourceId === null
+      ? null
+      : current.nodes.find((node) => node.id === connectionSourceId) ?? null;
+
+    if (source !== null && existing !== undefined) {
+      const pair = directPair(source.id, existing.id);
+      if (!current.edges.some(
+        (edge) => directPair(edge.source_id, edge.target_id) === pair,
+      )) {
+        await enqueue({
+          operation: {
+            edge_id: crypto.randomUUID(),
+            source_id: source.id,
+            target_id: existing.id,
+            type: "upsert_edge",
+          },
+        });
+      }
+      selectNodes([existing.id]);
+      startConnection(null);
+      return;
+    }
+
+    if (existing !== undefined) {
+      selectNodes([existing.id]);
+      instanceRef.current?.fitView({
+        duration: 220,
+        nodes: [{ id: existing.id }],
+        padding: 0.8,
+      });
+      return;
+    }
+
+    if (current.nodes.length >= 50) {
+      toast({ title: "Canvas 已达到 50 个节点上限", variant: "error" });
+      return;
+    }
+
+    const position = source === null
+      ? nearestCanvasPlacement(current.nodes, viewportCenter())
+      : layoutCanvasCandidates(
+        current.nodes,
+        source.id,
+        [{ confidence: 1, memoId: memo.id }],
+      )[0] ?? nearestCanvasPlacement(current.nodes, viewportCenter());
+    const nodeId = crypto.randomUUID();
+    await enqueue({
+      hint: { revision: memo.revision, title: memo.title },
+      operation: {
+        ...(source === null ? {} : {
+          discovered_from_id: source.id,
+          edge_id: crypto.randomUUID(),
+          source_node_id: source.id,
+        }),
+        node_id: nodeId,
+        target_node_id: memo.id,
+        type: "add_memo",
+        x: position.x,
+        y: position.y,
+      },
+    });
+    selectNodes([nodeId]);
+    startConnection(null);
+  }, [
+    connectionSourceId,
+    enqueue,
+    selectNodes,
+    startConnection,
+    toast,
+    viewportCenter,
+  ]);
+
+  const expandFromNode = useCallback(async (sourceNodeId: string) => {
+    const coordinator = coordinatorRef.current;
+    if (coordinator === null || aiLoading) return;
+    const flushed = await coordinator.flush();
+    if (!flushed.synced) {
+      toast({ title: "请先恢复网络并保存当前修改", variant: "error" });
+      return;
+    }
+
+    setAiLoading(true, sourceNodeId);
+    try {
+      const result = await expandCanvas({
+        canvasId,
+        limit: 5,
+        sourceCanvasNodeId: sourceNodeId,
+      });
+      if (result.status === "up_to_date") {
+        toast({ title: "已是最新", variant: "info" });
+        return;
+      }
+
+      const current = useCanvasWorkspaceStore.getState().document;
+      if (current === null) return;
+      const positions = layoutCanvasCandidates(
+        current.nodes,
+        sourceNodeId,
+        result.candidates.map((candidate) => ({
+          confidence: candidate.confidence,
+          memoId: candidate.memo_id,
+        })),
+      );
+      const positionByMemo = new Map(
+        positions.map((position) => [position.memoId, position]),
+      );
+      const intents: CanvasIntent[] = [];
+
+      for (const candidate of result.candidates) {
+        const existing = current.nodes.find(
+          (node) =>
+            node.kind === "memo_ref"
+            && node.target_node_id === candidate.memo_id,
+        );
+        const targetNodeId = existing?.id ?? crypto.randomUUID();
+        const pair = directPair(sourceNodeId, targetNodeId);
+        if (existing !== undefined) {
+          if (!current.edges.some(
+            (edge) => directPair(edge.source_id, edge.target_id) === pair,
+          )) {
+            intents.push({
+              operation: {
+                edge_id: crypto.randomUUID(),
+                rationale: candidate.reason,
+                source_id: sourceNodeId,
+                target_id: targetNodeId,
+                type: "upsert_edge",
+              },
+            });
+          }
+          continue;
+        }
+
+        const position = positionByMemo.get(candidate.memo_id);
+        if (position === undefined) continue;
+        intents.push({
+          hint: {
+            excerpt: candidate.excerpt,
+            revision: candidate.revision,
+            title: candidate.title,
+          },
+          operation: {
+            discovered_from_id: sourceNodeId,
+            edge_id: crypto.randomUUID(),
+            node_id: targetNodeId,
+            rationale: candidate.reason,
+            source_node_id: sourceNodeId,
+            target_node_id: candidate.memo_id,
+            type: "add_memo",
+            x: position.x,
+            y: position.y,
+          },
+        });
+      }
+
+      await coordinator.enqueueExpansion(intents, {
+        candidate_revisions: result.candidates.map((candidate) => ({
+          memo_id: candidate.memo_id,
+          revision: candidate.revision,
+        })),
+        completion_status: result.completion_status,
+        corpus_version: result.corpus_version,
+        request_id: result.request_id,
+        source_canvas_node_id: sourceNodeId,
+        source_revision: result.source_revision,
+      });
+      if (result.candidates.length === 0) {
+        toast({ title: "没有发现新的直接关联", variant: "info" });
+      }
+    } catch (error) {
+      toast({
+        description: error instanceof Error ? error.message : undefined,
+        title: "AI 拓展失败",
         variant: "error",
       });
     } finally {
-      setCreating(false);
+      setAiLoading(false);
     }
-  };
+  }, [aiLoading, canvasId, setAiLoading, toast]);
 
-  if (status === "loading") {
-    return (
-      <SkeletonGroup className="canvas-loading" label="正在加载画布">
-        <Skeleton className="canvas-loading-card" />
-        <Skeleton className="canvas-loading-card" />
-        <Skeleton className="canvas-loading-card" />
-      </SkeletonGroup>
-    );
-  }
+  const actions = useMemo(() => ({
+    aiLoading,
+    editingTextNodeId,
+    selectedNodeIds,
+    onCancelText(nodeId: string) {
+      if (transientText?.id === nodeId) setTransientText(null);
+      editText(null);
+    },
+    async onCommitText(nodeId: string, text: string) {
+      if (text.trim().length === 0) {
+        if (transientText?.id === nodeId) setTransientText(null);
+        editText(null);
+        return;
+      }
+      if (transientText?.id === nodeId) {
+        await enqueue({
+          operation: {
+            height: 120,
+            node_id: nodeId,
+            text,
+            type: "create_text",
+            width: 240,
+            x: transientText.x,
+            y: transientText.y,
+          },
+        });
+        setTransientText(null);
+      } else {
+        const existing = latestDocumentRef.current?.nodes.find(
+          (node) => node.id === nodeId,
+        );
+        if (existing?.text !== text) {
+          await enqueue({
+            operation: { node_id: nodeId, text, type: "update_node" },
+          });
+        }
+      }
+      editText(null);
+    },
+    onConnect(nodeId: string) {
+      startConnection(nodeId);
+      setPickerMode("connect");
+    },
+    onEditText(nodeId: string) {
+      editText(nodeId);
+    },
+    onExpand: expandFromNode,
+    onOpenMemo(nodeId: string) {
+      void navigateToMemo(nodeId);
+    },
+    onPreview(nodeId: string) {
+      openPreview(nodeId);
+    },
+    async onRemove(nodeId: string) {
+      await enqueue({ operation: { node_id: nodeId, type: "remove_node" } });
+      selectNodes([]);
+    },
+    async onRemoveEdge(edgeId: string) {
+      await enqueue({ operation: { edge_id: edgeId, type: "remove_edge" } });
+    },
+    async onResize(nodeId: string, width: number, height: number) {
+      await enqueue({
+        operation: {
+          height: Math.max(48, Math.min(480, height)),
+          node_id: nodeId,
+          type: "update_node",
+          width: Math.max(120, Math.min(720, width)),
+        },
+      });
+    },
+  }), [
+    aiLoading,
+    editingTextNodeId,
+    enqueue,
+    expandFromNode,
+    navigateToMemo,
+    openPreview,
+    selectNodes,
+    selectedNodeIds,
+    startConnection,
+    transientText,
+  ]);
 
-  if (status === "error") {
-    return (
-      <div className="canvas-state">
-        <strong>画布打不开</strong>
-        <span>它可能已被删除。回到文件库看看其他内容。</span>
-      </div>
-    );
-  }
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setPickerMode("add");
+        return;
+      }
+      if (event.key === "Enter" && selectedNodeIds.length === 1) {
+        const node = latestDocumentRef.current?.nodes.find(
+          (candidate) => candidate.id === selectedNodeIds[0],
+        );
+        if (node?.kind === "memo_ref" && node.target_node_id !== null) {
+          event.preventDefault();
+          openPreview(node.id);
+        }
+        return;
+      }
+      if (
+        (event.key === "Delete" || event.key === "Backspace")
+        && selectedNodeIds.length > 0
+        && !(event.target instanceof HTMLElement && (
+          event.target.isContentEditable
+          || event.target instanceof HTMLInputElement
+          || event.target instanceof HTMLTextAreaElement
+        ))
+      ) {
+        event.preventDefault();
+        for (const nodeId of selectedNodeIds) {
+          void enqueue({ operation: { node_id: nodeId, type: "remove_node" } })
+            .catch(() => undefined);
+        }
+        selectNodes([]);
+        return;
+      }
+      if (event.key !== "Escape" || event.defaultPrevented) return;
+      if (pickerMode !== null) {
+        event.preventDefault();
+        setPickerMode(null);
+      } else if (previewNodeId !== null) {
+        event.preventDefault();
+        openPreview(null);
+      } else if (connectionSourceId !== null) {
+        event.preventDefault();
+        startConnection(null);
+      } else if (selectedNodeIds.length > 0) {
+        event.preventDefault();
+        selectNodes([]);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [
+    connectionSourceId,
+    enqueue,
+    openPreview,
+    pickerMode,
+    previewNodeId,
+    selectNodes,
+    selectedNodeIds,
+    startConnection,
+  ]);
 
-  if (nodes.length === 0) {
-    return (
-      <div className="canvas-state">
-        <strong>这张画布还没有卡片</strong>
-        <span>返回笔记重新探索，或在这里写下第一张卡片。</span>
-      </div>
-    );
-  }
-
+  const previewNode = document?.nodes.find((node) => node.id === previewNodeId) ?? null;
+  const previewMemoId = previewNode?.target_node_id ?? null;
+  const previewTitle = previewNode?.target?.title
+    ?? previewNode?.snapshot_title
+    ?? "笔记预览";
+  const sourceTitle = document?.nodes.find(
+    (node) => node.id === connectionSourceId,
+  )?.snapshot_title ?? undefined;
   return (
     <CanvasActionsProvider actions={actions}>
-      <div className="knowledge-canvas">
+      <div
+        className="knowledge-canvas"
+        ref={flowRef}
+      >
         <ReactFlow
-          defaultViewport={viewport}
           edgeTypes={edgeTypes}
           edges={edges}
           elementsSelectable
-          fitView={!restoreViewport && nodes.length > 0}
-          fitViewOptions={{ padding: 0.18 }}
           maxZoom={2}
           minZoom={0.2}
           nodeTypes={nodeTypes}
@@ -245,66 +660,106 @@ export function KnowledgeCanvas({
           nodesConnectable={false}
           nodesDraggable
           onEdgesChange={onEdgesChange}
-          onMoveEnd={(event, nextViewport) => {
-            // fitView/初始化产生的程序化移动没有事件，不得伪装成用户视口落库。
-            if (event === null) {
-              return;
-            }
-            pendingViewportRef.current = {
-              ...nextViewport,
-              user_moved: true,
-            };
-            scheduleLayoutFlush();
+          onInit={(instance) => {
+            instanceRef.current = instance;
           }}
-          onNodeDragStop={scheduleLayoutFlush}
+          onMoveEnd={handleMoveEnd}
+          onNodeClick={(_, node) => {
+            if (connectionSourceId === null || node.id === connectionSourceId) return;
+            const current = latestDocumentRef.current;
+            const source = current?.nodes.find(
+              (candidate) => candidate.id === connectionSourceId,
+            );
+            const target = current?.nodes.find((candidate) => candidate.id === node.id);
+            if (source?.kind !== "memo_ref" || target?.kind !== "memo_ref") return;
+            void enqueue({
+              operation: {
+                edge_id: crypto.randomUUID(),
+                source_id: source.id,
+                target_id: target.id,
+                type: "upsert_edge",
+              },
+            })
+              .then(() => startConnection(null))
+              .catch(() => undefined);
+          }}
+          onNodeDragStop={handleNodeDragStop}
           onNodesChange={onNodesChange}
-          proOptions={{ hideAttribution: false }}
+          onPaneClick={handlePaneClick}
+          onSelectionChange={handleSelectionChange}
+          panActivationKeyCode="Space"
+          panOnDrag={panOnDrag}
+          proOptions={proOptions}
+          selectionOnDrag
+          zoomOnDoubleClick={false}
         >
           <Background gap={26} size={1} variant={BackgroundVariant.Dots} />
-          <Panel position="top-right">
-            <button
-              className="canvas-card-action canvas-compose-entry"
-              onClick={() => setComposing(true)}
-              type="button"
-            >
-              写一张卡片
-            </button>
-          </Panel>
+          <CanvasControls
+            onAdd={() => setPickerMode("add")}
+            onFit={fitView}
+            onZoomIn={() => void instanceRef.current
+              ?.zoomIn({ duration: 160 }).then(persistViewport)}
+            onZoomOut={() => void instanceRef.current
+              ?.zoomOut({ duration: 160 }).then(persistViewport)}
+          />
         </ReactFlow>
 
-        <Dialog
-          description="写在画布上的卡片是只读的；想让它成为一篇笔记，用卡片上的「成为笔记」。"
-          onOpenChange={(open) => {
-            setComposing(open);
-            if (!open) {
-              setDraft("");
-            }
-          }}
-          open={composing}
-          title="写一张卡片"
-        >
-          <textarea
-            aria-label="卡片正文"
-            className="canvas-compose-input"
-            onChange={(event) => setDraft(event.target.value)}
-            placeholder="第一行会成为它的名字…"
-            rows={6}
-            value={draft}
-          />
-          <div className="canvas-compose-actions">
-            <Button onClick={() => setComposing(false)} variant="secondary">
-              取消
-            </Button>
-            <Button
-              disabled={draft.trim().length === 0}
-              loading={creating}
-              onClick={() => void commitCard()}
-            >
-              放到画布
-            </Button>
+        {loadStatus === "loading" ? (
+          <SkeletonGroup className="canvas-loading" label="正在加载 Canvas">
+            <Skeleton className="canvas-loading-card" />
+            <Skeleton className="canvas-loading-card" />
+          </SkeletonGroup>
+        ) : null}
+        {loadStatus === "error" ? (
+          <div className="canvas-state">
+            <strong>Canvas 打不开</strong>
+            <span>它可能已被删除，或当前登录已失效。</span>
           </div>
-        </Dialog>
+        ) : null}
+        {loadStatus === "ready" && document?.nodes.length === 0 ? (
+          <div className="canvas-empty-hint">
+            双击空白写一段自由文字，或按 ⌘K 加入笔记
+          </div>
+        ) : null}
+
+        {connectionSourceId !== null ? (
+          <div className="canvas-mode-notice">
+            选择另一张笔记卡片建立关系
+            <button onClick={() => startConnection(null)} type="button">取消</button>
+          </div>
+        ) : null}
+
+        <CanvasPersistenceStatus coordinatorRef={coordinatorRef} />
+
+        {aiLoading ? (
+          <div className="canvas-ai-state">正在拓展这条知识分支…</div>
+        ) : null}
       </div>
+
+      {pickerMode === null ? null : (
+        <CanvasMemoPicker
+          accessToken={accessToken}
+          mode={pickerMode}
+          onAdd={addMemo}
+          onClose={() => setPickerMode(null)}
+          onOpenMemo={async (memoId) => {
+            await navigateToMemo(memoId);
+          }}
+          sourceTitle={sourceTitle}
+        />
+      )}
+
+      {previewMemoId === null ? null : (
+        <CanvasPreviewOverlay
+          accessToken={accessToken}
+          memoId={previewMemoId}
+          onClose={() => openPreview(null)}
+          onEditOriginal={async () => {
+            await navigateToMemo(previewMemoId, true);
+          }}
+          title={previewTitle}
+        />
+      )}
     </CanvasActionsProvider>
   );
 }

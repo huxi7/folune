@@ -253,6 +253,21 @@
   .edge-dock-icon > svg,
   .agent-panel-header-button .ds-button-content > svg { width: var(--icon-size-control); height: var(--icon-size-control); stroke-width: 2; }
   .sidebar-primary-actions { display: grid; grid-template-columns: minmax(0, 1fr) var(--control-height-compact); align-items: center; gap: var(--control-cluster-gap); padding-inline: 0.15rem; }
+  .sidebar-create-split { position: relative; display: grid; height: var(--control-height-compact); grid-template-columns: var(--space-7) var(--space-5); border-radius: var(--button-radius); background: var(--primary); color: var(--primary-foreground); box-shadow: var(--shadow-xs); }
+  .sidebar-create-main,
+  .sidebar-create-more { display: inline-flex; min-width: 0; align-items: center; justify-content: center; color: inherit; transition: background var(--motion-fast) var(--ease-standard); }
+  .sidebar-create-main { border-radius: var(--button-radius) 0 0 var(--button-radius); }
+  .sidebar-create-more { border-left: 1px solid color-mix(in srgb, var(--primary-foreground) 24%, transparent); border-radius: 0 var(--button-radius) var(--button-radius) 0; }
+  .sidebar-create-main:hover:not(:disabled),
+  .sidebar-create-more:hover:not(:disabled) { background: color-mix(in srgb, var(--primary-foreground) 12%, transparent); }
+  .sidebar-create-main:focus-visible,
+  .sidebar-create-more:focus-visible { z-index: 1; outline: 2px solid var(--ring); outline-offset: 1px; }
+  .sidebar-create-main:disabled,
+  .sidebar-create-more:disabled { opacity: 0.52; cursor: not-allowed; }
+  .sidebar-create-menu { position: absolute; z-index: 90; top: calc(100% + var(--space-2)); right: 0; display: grid; width: 10.5rem; border: 1px solid var(--border); border-radius: var(--radius-menu); background: var(--popover); padding: var(--space-1); color: var(--popover-foreground); box-shadow: var(--shadow-md); }
+  .sidebar-create-menu button { display: flex; min-height: var(--control-height-compact); align-items: center; gap: var(--space-2); border-radius: var(--radius-compact); padding: var(--space-1) var(--space-2); font-size: var(--type-label); text-align: left; }
+  .sidebar-create-menu button:hover,
+  .sidebar-create-menu button:focus-visible { background: var(--interactive-hover); outline: none; }
   .sidebar-search-trigger { min-width: 0; }
   .sidebar-create-memo-button .ds-button-content > svg { width: var(--icon-size-control); height: var(--icon-size-control); }
   .sidebar-search-field { position: relative; min-width: 0; height: var(--control-height-compact); grid-column: 1 / -1; }

@@ -37,12 +37,13 @@ excerpt 必须从候选正文里逐字摘录一句或一小段，用来向用户
 <confidence>
 confidence 是你对这条关联成立的把握，必须诚实校准。判据薄弱时给低分，不要为了让结果好看而抬高。
 最终展示哪几条由系统按把握排序决定，因此抬高分数不会让这一条更容易被看到，只会让排序失真。
+它必须是 0 到 1 之间的小数（例如 0.82），不得写成百分数，也不得使用 1 到 10 或 1 到 100 的评分。
 </confidence>
 
 <output>
 只返回一个 JSON 对象，不要 Markdown 代码块、解释或前后缀。
 判为不相关时，只返回 {"keep": false}，不要附带理由或引文。
-判为相关时，返回四个字段：keep 为 true、reason、excerpt、confidence。
+判为相关时，返回四个字段：keep 为 true、reason、excerpt、confidence；confidence 必须是 0 到 1 之间的 JSON number。
 </output>
 `;
 

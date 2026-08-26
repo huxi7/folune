@@ -36,6 +36,12 @@ describe("explore system prompt", () => {
     expect(explorePrompt).toContain("少而准");
   });
 
+  test("把 confidence 固定为 0 到 1 的 JSON 小数", () => {
+    expect(explorePrompt).toContain("0 到 1 之间的小数");
+    expect(explorePrompt).toContain("不得写成百分数");
+    expect(explorePrompt).toContain("JSON number");
+  });
+
   test("禁止 reason 退化为没有信息量的套话", () => {
     expect(explorePrompt).toContain("主题相似");
     expect(explorePrompt).toContain("没有信息量");

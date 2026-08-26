@@ -2,12 +2,18 @@
 > L2 | 父级: ../CLAUDE.md
 
 成员清单
-KnowledgeCanvas.tsx: 已保存画布内容根；在 CanvasWorkspace 的确定全屏尺寸内读取画布，仅恢复带 user_moved 标记的真实用户视口，首次或旧版污染视口重新 fit 全图；程序化移动不落库，真实拖拽与平移合并成一次防抖布局回写。它协调卡片晋升并把新笔记就地并入文件树；刻意不开 `onlyRenderVisibleElements`，nodeTypes/edgeTypes 提到模块级以免每次渲染重建节点
-CanvasCardNode.tsx: 只读卡片节点；引用卡片只提供「打开这一篇」，摘录/原生卡片提供「成为笔记」，正文限高并渐隐——卡片永不原地展开，因为展开等于把画布变成第二个编辑器，而正文只有一个家
-CanvasCordEdge.tsx: 连线适配层，把 React Flow 给的端点坐标包成零尺寸盒交给共享 Cord；画布态与探索态因此是同一条 Signature，实线代表已写入关系表。理由用 EdgeLabelRenderer 落在弦的中点，与线同时可见而不是 hover 才出现
-canvasActions.tsx: 跳转与晋升两个命令的 Context 通道；回调塞进 node data 会让每次 setState 重建全部节点，故与数据分离
+CLAUDE.md: 记录 Canvas V2 交互子域成员、职责边界与 GEB 回环协议
+KnowledgeCanvas.tsx: Canvas V2 会话内容根；始终挂载受控 React Flow，协调自由文字、memo Picker、连接/删除、拖拽/缩放、Preview、显式 AI 增量拓展与保存状态，所有人工/AI 操作只产生 intent 进入同一协调器
+CanvasCardNode.tsx: memo_ref 三态卡片与可原地编辑/四角缩放的 native 节点；memo 正文只经 Preview 按 ID 读取，自由文字才在 Canvas 内拥有正文
+CanvasControls.tsx: React Flow 右上角无状态命令条，提供加入、fit、缩放与操作说明，不读写图数据
+CanvasMemoPicker.tsx: 全局 Cmd/Ctrl+K Canvas memo Picker；复用 tree/正文搜索，Enter 只打开对象，显式加号才加入/关联且永不把 canvas 当 memo
+CanvasPersistenceStatus.tsx: 显示保存、恢复、冲突和显式重试状态，只解释协调器事实，不参与排队
+CanvasPreviewOverlay.tsx: 不卸载 Canvas 的 Paper 预览层；用户明确预览时才从 memoDocumentStore 按 ID 读正文，“编辑原文”由外层 flush 后导航
+CanvasCordEdge.tsx: 关系交互层；可见线复用 Cord Signature，宽命中区在 hover/选中时显示理由与删除入口
+canvasActions.tsx: Preview、AI、连接、自由文字编辑/缩放和移除的稳定 Context 通道，使 React Flow data 保持纯可序列化事实
+useCanvasSessionCoordinator.ts: 读取 Canvas、建立 Store 会话、恢复 IndexedDB WAL、注册 pagehide 与 flush 控制的基础设施 Hook，隔离网络/计时器和交互组件
 index.ts: 模块稳定出口，隔离 WorkspaceAuxViews 与内部文件布局
 
-职责: 已保存画布的只读空间内容，只能由独立全屏 CanvasWorkspace 承载；此处允许 pan/zoom 与极淡点阵，因为没有活编辑器。画布只持有卡片自己的文字与被引用笔记的标题/摘要，永不持有 content_mdx；坐标与视口的持久化是安静的，失败不打断阅读。嵌套深度恒为 1——卡片只跳转，不展开。
+职责: Canvas V2 交互空间，只能由 CanvasWorkspace 承载；服务端图不含 content_mdx，memo 正文按需预览，native 文字才归 Canvas。组件只产生 intent，人工与 AI 都经 WAL/Coordinator/统一 mutation；旧节点不因增量拓展重排，失败必须显式保留可恢复状态。
 
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md

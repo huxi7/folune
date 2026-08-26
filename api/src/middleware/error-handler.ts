@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 Hono ErrorHandler/NotFoundHandler、common/HttpError 与 fail helper
+ * [INPUT]: 依赖 Hono ErrorHandler/NotFoundHandler、common/HttpError（含可选结构化 data）与 fail helper
  * [OUTPUT]: 对外提供 errorHandler 与 notFoundHandler 统一错误信封处理器
  * [POS]: middleware 层错误出口，屏蔽内部异常细节并保持响应结构一致
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -12,7 +12,7 @@ import { fail } from "../common/response.ts";
 
 export const errorHandler: ErrorHandler = (error, c) => {
   if (error instanceof HttpError) {
-    return fail(c, error.code, error.message, error.status);
+    return fail(c, error.code, error.message, error.status, error.data);
   }
 
   console.error(

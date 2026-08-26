@@ -15,7 +15,7 @@ import {
   aiThreadRouter,
 } from "./ai.router.ts";
 
-import { canvasCardRouter, canvasRouter } from "./canvas.router.ts";
+import { canvasRouter, memoCanvasRouter } from "./canvas.router.ts";
 import { healthRouter } from "./health.router.ts";
 import {
   memoFolderRouter,
@@ -34,6 +34,7 @@ router.route("/profile", profileRouter);
 router.route("/memo-tree", memoTreeRouter);
 router.route("/memo-search", memoSearchRouter);
 router.route("/memo-folders", memoFolderRouter);
+router.route("/memos", memoCanvasRouter);
 router.route("/memos", memoRouter);
 router.route("/memo-nodes", memoNodeRouter);
 router.route("/memo-trash", memoTrashRouter);
@@ -43,4 +44,3 @@ router.route("/ai-runs", aiRunRouter);
 router.route("/ai-settings", aiSettingsRouter);
 router.route("/ai-commands", aiCommandRouter);
 router.route("/canvases", canvasRouter);
-router.route("/canvas-cards", canvasCardRouter);

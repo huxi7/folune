@@ -27,7 +27,7 @@ export const getMentionResults = (
   const visit = (nodes: readonly MemoTreeNode[], folders: readonly string[]) => {
     for (const node of nodes) {
       if (node.node_type === "folder") visit(node.children, [...folders, node.title]);
-      else recent.push({
+      else if (node.node_type === "memo") recent.push({
         id: node.id,
         path: folders.length === 0 ? "根目录" : folders.join(" / "),
         title: node.title,
@@ -43,15 +43,15 @@ export const getMentionResults = (
 
   const raw = hasQuery ? searchMemoTree(tree, query, bodyHitIds) : recent;
 
-  // 先裁剪到 8 条再回树里取 revision: 原先在 map 内对每个候选做一次
-  // findNode 全树查找, 裁剪前的结果数就是全树查找的次数。
-  return raw
-    .filter((result) => !selectedIds.includes(result.id))
-    .slice(0, 8)
-    .map((result) => {
-      const node = findNode(tree, result.id);
-      return { ...result, revision: node?.revision ?? 1 };
-    });
+  const results: MentionResult[] = [];
+  for (const result of raw) {
+    if (selectedIds.includes(result.id)) continue;
+    const node = findNode(tree, result.id);
+    if (node?.node_type !== "memo") continue;
+    results.push({ ...result, revision: node.revision });
+    if (results.length === 8) break;
+  }
+  return results;
 };
 
 type MentionMenuProps = {

@@ -1,17 +1,26 @@
 /**
  * [INPUT]: 依赖 react 的 createContext/useContext
- * [OUTPUT]: 对外提供 CanvasActionsProvider 与 useCanvasActions
- * [POS]: KnowledgeCanvas 的动作通道；React Flow 只把 data 交给节点，把回调塞进 data 会让节点在每次 setState 时全部重建，因此改用 Context 传递「跳转」「晋升」两个命令
+ * [OUTPUT]: 对外提供 CanvasActionsProvider 与 useCanvasActions，传递预览、AI、关联、自由文字编辑/缩放和移除命令
+ * [POS]: KnowledgeCanvas 的动作通道；React Flow data 只保存可序列化视图事实，回调与交互会话通过稳定 Context 下沉，避免每次状态变化重建全部节点
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
 import { createContext, useContext, type ReactNode } from "react";
 
 export type CanvasActions = {
-  /** 正在晋升中的卡片 id，用于禁用重复点击 */
-  busyCardId: string | null;
+  aiLoading: boolean;
+  editingTextNodeId: string | null;
+  selectedNodeIds: readonly string[];
+  onCancelText: (nodeId: string) => void;
+  onCommitText: (nodeId: string, text: string) => Promise<void>;
+  onConnect: (nodeId: string) => void;
+  onEditText: (nodeId: string) => void;
+  onExpand: (nodeId: string) => Promise<void>;
   onOpenMemo: (nodeId: string) => void;
-  onPromote: (cardId: string) => Promise<void>;
+  onPreview: (nodeId: string) => void;
+  onRemove: (nodeId: string) => Promise<void>;
+  onRemoveEdge: (edgeId: string) => Promise<void>;
+  onResize: (nodeId: string, width: number, height: number) => Promise<void>;
 };
 
 const CanvasActionsContext = createContext<CanvasActions | null>(null);

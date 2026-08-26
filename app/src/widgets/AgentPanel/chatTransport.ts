@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 AI SDK DefaultChatTransport、SuperNoteUIMessage、shared/supabase/auth token 与 chatFetch
- * [OUTPUT]: 对外提供 createMemoChatTransport，为 submit/工具续写发送 thread_id 与携带消息级冻结 metadata 的完整消息
+ * [OUTPUT]: 对外提供 createMemoChatTransport，以及 organize/canvas-expand 的统一鉴权 URL/Fetch 边界
  * [POS]: AgentPanel 的 AI SDK 会话传输工厂；稳定绑定一个 thread，当前页面 memo 不再作为动态请求状态进入工具续写
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -46,5 +46,5 @@ export const createMemoChatTransport = (
 });
 
 export const getOrganizeApiUrl = (): string => chatApiUrl("/v1/organize");
-export const getExploreApiUrl = (): string => chatApiUrl("/v1/explore");
+export const getCanvasExpandApiUrl = (): string => chatApiUrl("/v1/canvas-expand");
 export const authenticatedAgentFetch = authenticatedChatFetch;

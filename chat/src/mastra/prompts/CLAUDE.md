@@ -8,8 +8,8 @@ memo-agent.test.ts: 提示词结构回归测试，锁定协作优先双模式、
 memo-context.ts: 把 Business API 返回的 primary/references 正文序列化到不可信用户数据区，明确 primary 优先级、截断语义与 prompt injection 隔离
 approval-agent.ts: 实验性独立审批规则，限定 approve/manual/deny 与风险理由，强制综合用户原话、实际目标、参数和影响范围，禁止只按 op 判断
 organize-planner.ts: 约束 Planner 只返回无 Markdown 前后缀的标题/目录 JSON 对象，优先复用现有目录，并把目标正文和文件夹投影封装为不可信数据以供本地严格验证
-explore.ts: 关联判断指令与不可信候选序列化器；把候选标题/正文严格降级为数据，要求逐字摘录以便后端对着真实正文复核（编造即整条丢弃），并声明排序由服务端按置信度决定，抬高分数只会让排序失真
-explore.test.ts: 锁定「一次只判一篇」的粒度与果断判断要求、不相关只返回 {"keep": false}，并断言请求里不出现候选 node_id
+explore.ts: 关联判断指令与不可信候选序列化器；把候选标题/正文严格降级为数据，要求逐字摘录并把 confidence 限定为 0..1 JSON 小数，禁止百分数或 1..10/1..100 量表，后端仍以真实正文复核
+explore.test.ts: 锁定单篇粒度、果断判断、0..1 confidence、逐字摘录、不相关最小响应及请求不出现候选 node_id
 CLAUDE.md: 记录提示词资产的成员、职责边界与 GEB 回环协议
 
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md

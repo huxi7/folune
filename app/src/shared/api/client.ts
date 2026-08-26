@@ -13,6 +13,32 @@ const apiBaseUrl = (
   import.meta.env.VITE_API_BASE_URL?.trim() || DEFAULT_API_BASE_URL
 ).replace(/\/+$/, "");
 
+/**
+ * 页面销毁期只能同步发起 keepalive，不能等待 Supabase 刷新会话或读取响应。
+ * 调用方必须把同一请求保留在持久 WAL；这里返回 true 只表示浏览器接收了请求，
+ * 绝不表示服务端已经提交。
+ */
+export const startApiKeepalive = (
+  path: string,
+  body: string,
+  accessToken: string,
+): boolean => {
+  try {
+    void fetch(`${apiBaseUrl}/${path.replace(/^\/+/, "")}`, {
+      body,
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      keepalive: true,
+      method: "PATCH",
+    }).catch(() => undefined);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 type ApiEnvelope = {
   code: string;
   data: unknown;
@@ -21,13 +47,15 @@ type ApiEnvelope = {
 
 export class ApiError extends Error {
   readonly code: string;
+  readonly data: unknown;
   readonly status: number;
 
-  constructor(status: number, code: string, message: string) {
+  constructor(status: number, code: string, message: string, data: unknown = null) {
     super(message);
     this.name = "ApiError";
     this.status = status;
     this.code = code;
+    this.data = data;
   }
 }
 
@@ -129,7 +157,12 @@ export const apiRequest = async <T>(
   const envelope = await readEnvelope(response);
 
   if (!response.ok || envelope.code !== "ok") {
-    throw new ApiError(response.status, envelope.code, envelope.message);
+    throw new ApiError(
+      response.status,
+      envelope.code,
+      envelope.message,
+      envelope.data,
+    );
   }
 
   return envelope.data as T;

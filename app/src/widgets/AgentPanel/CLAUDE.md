@@ -2,21 +2,23 @@
 > L2 | 父级: ../CLAUDE.md
 
 成员清单
+CLAUDE.md: 记录 AgentPanel 子域成员、依赖方向与 GEB 回环协议
 AgentPanel.tsx: AI Native V2 组合根；48px Header 以本地 Design System Ghost Button 承载 16px 历史菜单、新对话与收起动作；Prompt Bar 冻结统一 sources，右下角发送/停止共享 32px 几何圆形 Primary 轮廓且不继承 Button squircle；普通 tool approval 与 AI 整理 awaiting_confirmation 在 Composer 上方竞争同一个 ApprovalDock 槽位，普通审批优先，整理成功不在 Panel 重复显示；批准/拒绝先同步完整消息再执行或回滚，同一 approval 防连点，刷新后的已批准未完成工具按 toolCallId 幂等恢复，tool result 续写复用同一 assistant，同轮 commands 逆序撤销并继续走版本门禁
 ApprovalDock.tsx: Composer 上方唯一的紧凑非模态审批视觉原语，统一图标、标题、影响说明、按钮槽位与无蒙层语义；普通工具和 AI 整理审批只能适配它，禁止复制表面
 approvalState.ts: 审批状态机纯领域层，只检查末条 assistant；统一负责 requested 单次响应投影、approved 未完成工具恢复候选与 output 结果投影，避免 UI、持久化和恢复各自解释 AI SDK 状态
 approvalState.test.ts: 审批状态机回归测试，锁定同一 approval 只响应一次、拒绝不恢复、批准刷新可恢复及结果落地后退出恢复队列
 composerSources.ts: Prompt Bar 唯一上下文领域层；当前 memo 与置顶来源保持结构化上下文，手动 @笔记与正文 token 同步删除，全部来源去重、限五篇并生成同一冻结 metadata
 composerSources.test.ts: 覆盖当前 memo 默认来源、删除抑制、切换更新、手动/置顶去重、内联 mention 删除同步、发送冻结及发送后草稿来源收束
-MentionMenu.tsx: Prompt Bar 原生 @笔记命令菜单视图与搜索纯函数；标题/路径本地匹配并合并服务端正文命中 ID，结果以内容宽度的 28px 文件图标+文件名轻量行呈现，已选项排除
-MentionMenu.test.ts: 覆盖空 @候选、搜索排除、revision 元数据及结果只渲染文件图标+文件名的轻量结构
+MentionMenu.tsx: Prompt Bar 与 Canvas Picker 共用的 memo 搜索纯函数；只投影 folder 导航下的 memo，显式排除 canvas，标题/路径本地匹配并合并正文命中，视图仍只显示文件图标与文件名
+MentionMenu.test.ts: 覆盖空 @候选、搜索排除、revision、Canvas 节点隔离及轻量渲染结构
 PermissionModeControl.tsx: Composer 左下角账号全局每次询问/智能审批实验/完全访问 32px 本地 Ghost Button；与右侧发送/停止同尺寸，菜单向上展开，以一句短描述区分模式，hover 与当前模式共享中性表面，只显示 API 已确认模式，加载/保存失败保持旧值并经全局 Toast 明示
 ApprovalCard.tsx: 每次询问与智能审批回退的工具审批语义适配；把人话动作、最小影响说明和危险操作按钮映射到共享 ApprovalDock
 OrganizeReviewCard.tsx: AI 整理审批语义适配；只把当前 memo 的 awaiting_confirmation 标题/位置影响与确认/取消映射到共享 ApprovalDock，其他 Run 状态不在 AgentPanel 或 Paper 下方重复展示
 OrganizeReviewCard.test.tsx: AI 整理审批 DOM 同构测试，锁定 awaiting_confirmation 复用 agent-approval-dock 且 succeeded 输出为空
 ThreadHistory.tsx: Panel 内统一历史会话视图，会话行只提供切换、重命名与普通永久删除确认，hover、focus 与当前选中项共享中性表面而不使用品牌蓝底，不建立归档分组或第四栏
 organizeClient.ts: 浏览器到 Chat `/v1/organize` 的最小 authenticated client，复用 AI Run mapper，确认/apply/undo 仍经 shared/api/ai 进入 Business API
-exploreClient.ts: 浏览器到 Chat `/v1/explore` 的最小 authenticated client；探索是只读语义，故不产生 Run、不进入审批链也不写任何持久化，只把当前 memo 与可选选区送出并取回带理由/摘录/置信度的关联候选。候选的领域形状不在此定义，而是从 shared/store/explorationStore 取——那是这些数据唯一的家
+canvasExpandClient.ts: 浏览器到 Chat `/v1/canvas-expand` 的最小 authenticated client；只发送 canvas_id/source_canvas_node_id/limit 并校验 up_to_date/候选，Chat 不写业务库，最终 intent 仍交给 CanvasSaveCoordinator
+canvasExpandClient.test.ts: Canvas expansion 响应契约门禁，锁定身份/版本、最多五项、0..1 confidence 与两种完成状态，畸形 Chat 输出不得进入 Canvas intent
 threadSelection.ts: 按用户 localStorage key 选择合法历史 thread，失效偏好回退服务端最近会话
 threadSelection.test.ts: 覆盖用户偏好隔离、合法恢复和失效 ID 回退
 useAiThreads.ts: 会话控制器，服务端持有 Thread/Message/Reference 真相；负责首次空会话、统一列表/detail/messages 加载、选择偏好与标题/删除 CRUD，并在删除当前会话后选择最近项或创建空白项
@@ -43,7 +45,7 @@ toolPresentation.test.ts: 工具展示契约测试，锁定具体动作命名、
 activityState.ts: AI Activity 纯判定边界，以 status 和 assistant 最后一个 text/reasoning/step-start/tool part 导出 none/thinking/streaming/tool，工具 output 后只有 SDK 仍 streaming 才回到 thinking
 activityState.test.ts: Activity 状态回归测试，覆盖 submitted、首 token、活动工具、工具完成续写、新正文与 ready/error 卸载
 chatFetch.ts: 可独立测试的 HTTP 策略层，每次调用 token provider 后注入 Bearer，并把非 2xx 扁平/嵌套信封归一为带 code 的 ChatRequestError
-chatTransport.ts: 按 thread 创建类型化 DefaultChatTransport，只发送 thread_id 与携带冻结 metadata 的完整 messages；工具续写不再重读当前页面 memo；并集中导出 chat 服务各端点 URL（含 /v1/explore），使 client 层不各自拼接 base URL
+chatTransport.ts: 按 thread 创建类型化 DefaultChatTransport，只发送 thread_id 与携带冻结 metadata 的完整 messages；工具续写不再重读当前页面 memo；并集中导出 chat、organize、canvas-expand 端点 URL
 chatTransport.test.ts: chatFetch 回归测试，覆盖最新 Bearer 注入、无会话短路及扁平/嵌套错误信封 code 归一
 index.ts: AgentPanel 模块稳定出口，隔离 AppDashboard 与内部文件布局
 

@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 config/env 的 BUSINESS_API_BASE_URL、调用方当前 Bearer JWT、Web fetch 与 zod
- * [OUTPUT]: 对外提供 thread/消息/冻结 context、含 canvas 但不含正文的轻量 tree、单篇正文、账号权限、命令与 Run 的 authenticated Business API client
+ * [OUTPUT]: 对外提供 thread/消息/冻结 context、轻量 tree、单篇正文、Canvas expansion 可信上下文、账号权限、命令与 Run 的 authenticated Business API client
  * [POS]: lib 层 chat→api 唯一业务边界，每次请求临时转发用户 JWT，统一解析信封且绝不记录或持久化凭据；canvas 可穿过资源校验，再由各模型投影显式过滤
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -148,11 +148,32 @@ const memoDetailSchema = z.object({
   }).passthrough(),
 }).passthrough();
 
+export const canvasExpansionContextSchema = z.object({
+  canvas_version: z.number().int().nonnegative(),
+  corpus_version: z.number().int().nonnegative(),
+  source: z.object({
+    canvas_node_id: z.uuid(),
+    memo_id: z.uuid(),
+    title: z.string(),
+    excerpt: z.string().nullable(),
+    revision: z.number().int().positive(),
+  }),
+  checkpoint: z.object({
+    source_revision: z.number().int().positive(),
+    corpus_version: z.number().int().nonnegative(),
+    request_id: z.uuid(),
+    completion_status: z.enum(["complete", "incomplete_due_to_capacity"]),
+    completed_at: z.string(),
+  }).nullable(),
+  neighbor_memo_ids: z.array(z.uuid()),
+});
+
 export type ResolvedContext = z.infer<typeof resolvedContextSchema>;
 export type AiPermissionMode = z.infer<typeof aiPermissionModeSchema>;
 export type AiSettings = z.infer<typeof aiSettingsSchema>;
 export type AiCommand = z.infer<typeof aiCommandSchema>;
 export type AiRun = z.infer<typeof aiRunSchema>;
+export type CanvasExpansionContext = z.infer<typeof canvasExpansionContextSchema>;
 export type MemoTreeNode = {
   id: string;
   parent_id: string | null;
@@ -288,6 +309,18 @@ export const businessApi = {
 
   getMemo(nodeId: string, accessToken: string) {
     return request(`/memos/${encodeURIComponent(nodeId)}`, accessToken, memoDetailSchema);
+  },
+
+  getCanvasExpansionContext(
+    canvasId: string,
+    sourceCanvasNodeId: string,
+    accessToken: string,
+  ) {
+    return request(
+      `/canvases/${encodeURIComponent(canvasId)}/nodes/${encodeURIComponent(sourceCanvasNodeId)}/expansion-context`,
+      accessToken,
+      canvasExpansionContextSchema,
+    );
   },
 
   createCommand(

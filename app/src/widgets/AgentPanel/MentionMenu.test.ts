@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun test、React SSR、memo tree fixture 与 MentionMenu/getMentionResults
- * [OUTPUT]: 验证空 @ 候选、标题搜索、已选排除、revision 元数据及文件图标+文件名的轻量结果结构
+ * [OUTPUT]: 验证空 @ 候选、标题搜索、Canvas 排除、已选排除、revision 元数据及文件图标+文件名的轻量结果结构
  * [POS]: AgentPanel Prompt Bar 的 @检索与静态结构回归测试，不涉及浏览器键盘事件
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -39,6 +39,12 @@ const memo = (id: string, title: string, revision: number): MemoTreeNode => ({
   },
 });
 
+const canvas = (id: string, title: string): MemoTreeNode => ({
+  ...memo(id, title, 1),
+  memo: null,
+  node_type: "canvas",
+});
+
 describe("Prompt Bar mention search", () => {
   test("lists memos for bare @ and preserves revision", () => {
     const results = getMentionResults([
@@ -57,6 +63,23 @@ describe("Prompt Bar mention search", () => {
       memo(selected, "产品规划", 4),
       memo("bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", "产品复盘", 2),
     ], "产品", [selected]).map((result) => result.title)).toEqual(["产品复盘"]);
+  });
+
+  test("never exposes Canvas tree nodes as memo references", () => {
+    const canvasNode = canvas(
+      "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+      "产品画布",
+    );
+    const memoNode = memo(
+      "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "产品规划",
+      4,
+    );
+
+    expect(getMentionResults([canvasNode, memoNode], "", []).map((result) => result.id))
+      .toEqual([memoNode.id]);
+    expect(getMentionResults([canvasNode, memoNode], "产品", []).map((result) => result.id))
+      .toEqual([memoNode.id]);
   });
 
   test("renders each result as file icon and filename only", () => {

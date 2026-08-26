@@ -2,6 +2,7 @@
 > L2 | 父级: ../CLAUDE.md
 
 成员清单
+CLAUDE.md: 记录客户端状态层的职责边界、成员地图与 GEB 回环协议
 agentPanelStore.ts: AgentPanel 权限薄状态，只缓存后端已确认审批模式及 loading/saving/error；可见性统一归 WorkspaceChromeState，禁止复制 AI SDK 消息或文件树
 agentPanelStore.test.ts: 锁定审批保存失败保留原值、成功后才更新模式
 workspaceChromeStore.ts: Paper First 外壳唯一 UI 状态，按用户持久化 libraryOpen/assistantOpen，新用户双关闭，兼容旧 Agent 开关迁移，并在覆盖式视口保证左右工具互斥
@@ -17,9 +18,14 @@ memoTreeStore.ts: Zustand 轻量 active tree 唯一数据源；mergeServerNode �
 memoTreeStore.test.ts: 轻量 Tree Store 事务回归测试，覆盖真人 CRUD 并发/回滚、临时 ID 与 Document Store 对账及 AI rename/create 投影去重
 memoDocumentStore.ts: Zustand 单篇正文/草稿唯一数据源；按 ID 加载缓存、用 generation/version 拒绝迟到响应，承载临时 ID 对账、保存与 AI 正文投影/回滚
 memoDocumentStore.test.ts: 正文生命周期回归测试，锁定只按打开 ID 请求、缓存复用与 reset 后旧响应不回填
-explorationStore.ts: 探索候选与摘录的唯一住所；savedCanvasId 记下这一次是否已保存成画布，连线据此由虚转实；相位机 idle/pending/ready/empty/error/leaving 承载「等待即开场、退场留到动画结束」，用 requestId 作废过期响应。它存在的理由就是让「候选绝不进 memoTreeStore」有物理落点——探索是只读判断，不持久化、不并入目录树、不进 Command 台账
-explorationStore.test.ts: 探索相位回归测试，覆盖连按两次时旧响应作废、零结果进 empty、退场期间候选留存与 reset 后清空
+canvasDocument.ts: Canvas intent 的纯领域内核；归一连续编辑、乐观投影、服务端回执/alias 对账和冲突 rebase，React、网络与 IndexedDB 禁止进入
+canvasDocument.test.ts: 锁定稳定 UUID 合并、create+remove 由数据库判定 no-op、默认根移除清边、alias 对账与 dropped 不固化
+canvasWal.ts: 按 user_id+canvas_id 隔离的 IndexedDB WAL；原子保存 draft/queued mutation 与发送状态，不保存 JWT、access token 或组件实例，并提供内存实现供测试
+canvasWorkspaceStore.ts: Canvas Workspace 唯一客户端状态源；把服务端文档、交互会话和持久化状态分组三个 slice，不持有网络计时器或 memo 正文
+CanvasSaveCoordinator.ts: 单 Canvas 单标签页保存协调器；600ms 封装、100 操作/48KiB 限额、WAL-first、人工先于随后 AI 的严格顺序、稳定 mutation_id、串行重试、receipt 重放、单次 409 rebase、AI stale 丢弃与 pagehide 首批发送均在此收口
+CanvasSaveCoordinator.test.ts: 锁定空 WAL 恢复、WAL 失败不伪成功、人工/AI 版本顺序、响应丢失幂等、409 保留远端事实、pagehide 有界与 source revision 漂移不留 AI 幽灵节点
+canvasReturnStore.ts: 标签页内 Canvas→原文→Canvas 返回描述，只保存路由/视口/选择/临时 Panel，不持久化业务图或 WAL
 
-职责: 隔离业务 API 与 React 组件之间的客户端领域状态，并容纳不复制服务数据的薄 UI 状态与退出即弃的瞬时判断；组件只发命令和订阅节点，不直接维护第二棵树，也不在写操作成功后重新拉取整树。
+职责: 隔离业务 API 与 React 组件之间的客户端领域状态；Canvas 文档、交互、WAL 和传输职责分离，组件只产生 intent 与订阅事实，不维护第二棵树，也不在写成功后重拉整树。
 
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
