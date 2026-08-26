@@ -11,7 +11,7 @@ src/lib/: Business API 边界、非序列化 memo context、审批协调/契约�
 src/mastra/: Mastra 组合根、对话/审批/Planner/探索 Agents、动态提示词、整理/探索 Workflow 与服务端工具契约
 src/middleware/: Supabase JWT 远端验证、可信 RequestContext 身份注入与安全请求日志
 src/routes/: POST /v1/chat 的 context/消息持久化与 SSE 桥接、POST /v1/organize 的 Run/Workflow 编排、POST /v1/explore 的只读混合召回与 AI 关联判断（摘录逐字复核）
-src/evals/: 30 条中文真实任务基线与五项指标，外加 Explore 的 36 条金标准（8 A / 28 B）、七项指标与三路对比 runner；B 类零字面重合是唯一判据，静态门禁机器复核这条声明
+src/evals/: 30 条中文真实任务基线与五项指标，外加当前 Explore v1 的 36 条检索场景、七项指标与三路对比 runner；这里只记录和回归现有检索行为，不定义 Canvas V2 的产品目标与验收标准
 package.json: 独立 Bun 工程脚本、工具契约测试入口及锁定的 Mastra/AI SDK 兼容依赖
 bun.lock: Bun 依赖锁文件，固定可复现安装结果
 tsconfig.json: ES2022 + bundler 解析、严格类型与 @/ -> src/ 别名

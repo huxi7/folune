@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 api/supabase/seed-dev-corpus.sql 那 60 篇中文语料的标题与正文（本文件只引用标题与逐字选段，不复制正文）
  * [OUTPUT]: 对外提供 exploreCorpusTitles、36 条探索金标准场景、三路通道类型与 scoreExploreEvaluation/scoreExploreByChannel 指标聚合器
- * [POS]: chat 的探索质量基线，与 memo-v2 并列而不改它。判据是 B 类: 两段话说的是同一件事却一个字都不重合——词面通道在这类场景上必然失手，因此只有 B 类的召回差距才能回答「混合检索和 Agent 阅读值不值得留」
+ * [POS]: chat 的当前 Explore v1 检索回归基线，与 memo-v2 并列而不改它；为迁移调研提供现有通道的可比数据，不定义 Canvas V2 的产品验收
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -103,9 +103,8 @@ const ratio = (hits: number, total: number): number =>
   total === 0 ? 0 : hits / total;
 
 /**
- * 指标只回答三个问题: 该找到的找到了吗（分 A/B 两类看）、找回来的是不是噪声、
- * 以及每一条是不是都带着可复核的理由与引文。没有 F1 之类的复合分数，
- * 因为决策只需要「B 类召回差多少」这一个数。
+ * 指标回答三个问题: 该找到的找到了吗（分 A/B 两类看）、找回来的是不是噪声、
+ * 以及每一条是不是都带着可复核的理由与引文；保持分项结果，避免复合分数掩盖通道差异。
  */
 export const scoreExploreEvaluation = (
   outcomes: readonly ExploreEvalOutcome[],
