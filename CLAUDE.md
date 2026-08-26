@@ -29,6 +29,9 @@ AI 是用户的备忘录协作伙伴与智能档案管理员。
 ## 运行形态
 app 跑在本机 Bun/Vite 固定 10000；api 与 chat 由根 Compose 编排为 api-dev(10001)/chat-dev(10002)，各自持有独立健康探针与被 Git 忽略的私有 `.env`。chat 依赖 api 健康后启动，容器内经 `http://api:10001` 访问业务 API；浏览器只接收 `VITE_` 前缀的公开配置。
 
+## 活跃产品迁移
+Canvas V2 已冻结为一级持久知识 Workspace：进入空间与执行 AI 分离，创建/拓展/保存/重开收敛到同一个真实 Canvas，用户可增量拓展、手工连接、添加已有笔记并写 Canvas 本地文字。目标契约见 [CANVAS_V2_CONTRACT.md](CANVAS_V2_CONTRACT.md)，Phase 2 已确认但不进入 MVP 的方向见 [CANVAS_V2_PHASE2_BACKLOG.md](CANVAS_V2_PHASE2_BACKLOG.md)。当前代码与下级 GEB 仍如实描述旧 ExploreStage → 保存 → KnowledgeCanvas 形态；迁移实施到哪里，L3/L2/L1 才同步更新到哪里，MVP 验收通过前禁止把目标态冒充已实现事实。
+
 ## 模块地图
 | 模块 | 职责 | 文档 |
 | --- | --- | --- |
@@ -41,6 +44,8 @@ app 跑在本机 Bun/Vite 固定 10000；api 与 chat 由根 Compose 编排为 a
 ## 根配置
 | 文件 | 职责 |
 | --- | --- |
+| CANVAS_V2_CONTRACT.md | Canvas V2 产品目标真相源；冻结一级持久 Workspace、同构画布、显式 AI、增量图、添加/连接/自由文字、自动保存及 MVP 边界，并明确目标态不冒充当前实现 |
+| CANVAS_V2_PHASE2_BACKLOG.md | MVP 后增强方向清单；记录 MiniMap、文件库拖入、整理/Undo、导航与视觉打磨，但明确不是 Plan 2，须待 MVP 验收后基于真实代码重新规划 |
 | ACCEPTANCE.md | Explore 与知识画布（阶段 5~8）的按序验收清单，每步带可粘命令、该看到什么与看到什么算不对；同时如实划出「已自动验过」与「只有真人能验」的边界，并写明第 6 步那张三路对比表里 B 类召回决定阶段 9 生死的判决规则 |
 | .dockerignore | 收窄 api/chat 开发镜像的仓库根构建上下文，排除源码、缓存、密钥与无关模块 |
 | .env.example | app/api/chat 无密钥变量总览与根 Compose 可选覆盖模板；服务默认使用各自本地环境文件 |

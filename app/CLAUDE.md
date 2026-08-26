@@ -5,6 +5,8 @@
 
 技术栈: Bun + Vite + React 19 + React Router + Zustand + Motion for React (`motion/react`) + @xyflow/react 12 + react-archer 5.1 + Vercel AI SDK/useChat + @mastra/client-js + canvas-confetti + Kumo UI + Tailwind CSS v4 + 本地 design system + Supabase Auth SDK + system/light/dark 全局主题偏好 + Lucide React + CodeMirror 6/Lezer Markdown GFM + react-markdown/remark-gfm/remark-breaks/rehype-sanitize + TypeScript。
 
+迁移状态: Canvas V2 的已确认产品目标在 [CANVAS_V2_CONTRACT.md](../CANVAS_V2_CONTRACT.md)，MVP 后增强方向在 [CANVAS_V2_PHASE2_BACKLOG.md](../CANVAS_V2_PHASE2_BACKLOG.md)。当前实现仍是下文如实记录的临时 ExploreStage 与已保存 KnowledgeCanvas 两套空间；后续 Plan 必须服从目标契约，但只有对应代码真正迁移后才能改写本 L1、`src/widgets/CLAUDE.md` 与文件 L3，严禁文档先于代码宣称 V2 已落地。
+
 成员清单
 index.html: Vite HTML 宿主页面，声明 V1 Classic Blueprint 默认画布、同步解析 App 的 system/light/dark 与 Landing 浅色画布 pre-paint bootstrap、提供 root 挂载点并内联折角笔记页 favicon
 .env.example: app 浏览器环境变量模板，声明业务 API、chat 服务 base URL 与 Supabase 公开连接配置
