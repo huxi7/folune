@@ -59,7 +59,7 @@ import {
 const nodeTypes = { canvasNode: CanvasCardNode };
 const edgeTypes = { cord: CanvasCordEdge };
 const panOnDrag = [1, 2];
-const proOptions = { hideAttribution: false };
+const proOptions = { hideAttribution: true };
 
 type KnowledgeCanvasProps = {
   accessToken: string;
