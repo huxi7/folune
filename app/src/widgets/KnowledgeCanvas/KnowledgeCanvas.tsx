@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖 @xyflow/react v12、Canvas Chat、useCanvasSessionCoordinator、canvasWorkspaceStore、纯投影/增量布局、memo document Store 与本地设计系统
- * [OUTPUT]: 对外提供始终挂载真实 React Flow 的 Canvas V2：受控节点/边/视口、自由文字、Picker/连接、Preview、AI 增量拓展和可靠保存状态
+ * [INPUT]: 依赖 @xyflow/react v12 的 Pane 指针/坐标协议、Canvas Chat、useCanvasSessionCoordinator、canvasWorkspaceStore、纯投影/增量布局、memo document Store 与本地设计系统
+ * [OUTPUT]: 对外提供始终挂载真实 React Flow 的 Canvas V2：受控节点/边/视口、空白 Pane 双击自由文字、Picker/连接、Preview、AI 增量拓展和可靠保存状态
  * [POS]: KnowledgeCanvas 的会话内容根；UI 只产生 intent，人工与 AI 都经同一个协调器/RPC，正文只在 Preview 按 ID 加载
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -254,8 +254,14 @@ export function KnowledgeCanvas({
     selectNodes(selectedNodes.map((node) => node.id));
   }, [selectNodes]);
 
-  const handlePaneClick = useCallback((event: ReactMouseEvent) => {
-    if (event.detail !== 2) return;
+  const handlePaneDoubleClick = useCallback((event: ReactMouseEvent) => {
+    if (event.button !== 0) return;
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    const pane = target.closest(".react-flow__pane");
+    const paneSurface = target === pane
+      || target.closest(".react-flow__background") !== null;
+    if (pane === null || !paneSurface) return;
     const instance = instanceRef.current;
     if (instance === null) return;
     const position = instance.screenToFlowPosition({
@@ -660,6 +666,7 @@ export function KnowledgeCanvas({
           nodesConnectable={false}
           nodesDraggable
           onEdgesChange={onEdgesChange}
+          onDoubleClick={handlePaneDoubleClick}
           onInit={(instance) => {
             instanceRef.current = instance;
           }}
@@ -685,7 +692,6 @@ export function KnowledgeCanvas({
           }}
           onNodeDragStop={handleNodeDragStop}
           onNodesChange={onNodesChange}
-          onPaneClick={handlePaneClick}
           onSelectionChange={handleSelectionChange}
           panActivationKeyCode="Space"
           panOnDrag={panOnDrag}
