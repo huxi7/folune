@@ -10,8 +10,8 @@ memo-search.sql: 建立 memo 标题/正文的 PGroonga 索引与 search_memos_hy
 knowledge-canvas.sql: Canvas V1 基础 schema，建立 memo_nodes 中的 canvas 身份以及 canvases/canvas_nodes/canvas_edges/memo_relations、触发器、索引和 owner-only RLS；V2 在其上加法扩展，故此文件继续是全新环境的前置部署输入，不代表当前运行时协议
 knowledge-canvas-rpc.sql: Canvas V1 的 save/read/layout/promote SECURITY INVOKER 定义，保留用于从旧 checkpoint 重建或显式回滚；V2 cutover 已撤销三个旧写函数的 authenticated 执行权，运行时不得调用
 canvas-v2-schema.sql: 在不改 Canvas node_id 身份且保留旧列/旧 RPC 回滚面的前提下，加法扩展 canvas_kind/version、节点快照/尺寸/同 Canvas 引用、无向边唯一性、语料版本、expansion checkpoint 与 mutation receipt；完整 memo 写入/语义变化在同一事务推进 corpus，硬删前由触发器冻结最后可见快照
-canvas-v2-entry-rpc.sql: Canvas V2 的持久入口与只读投影；按源 memo 行锁并发幂等 get-or-create 默认 Canvas，创建空白 standalone，读取不含 content_mdx 的完整图，并只向 Chat 暴露可信 source/corpus/checkpoint/邻居上下文
-canvas-v2-mutation-rpc.sql: Canvas V2 唯一 mutation 内核；人工 PATCH 与 AI expansion 共用行锁、base_version、稳定 intent digest、30 天 receipt、容量/同图端点/稳定 UUID 校验及原子 checkpoint，任何失败不留下部分节点、边或版本
+canvas-v2-entry-rpc.sql: Canvas V2 的持久入口与只读投影；按源 memo 行锁并发幂等 get-or-create 默认 Canvas，创建空白 standalone，读取不含 content_mdx 的完整图并恢复空间文字 text_scale，且只向 Chat 暴露可信 source/corpus/checkpoint/邻居上下文
+canvas-v2-mutation-rpc.sql: Canvas V2 唯一 mutation 内核；人工 PATCH 与 AI expansion 共用行锁、base_version、稳定 intent digest、30 天 receipt、容量/同图端点/稳定 UUID 校验及原子 checkpoint，空间文字宽高与 text_scale 也在同一 RPC 内校验并写入，任何失败不留下部分节点、边或版本
 canvas-v2-index-fix.sql: 为同 Canvas 边端点、receipt 归属与旧目标单列外键补齐前导列完全匹配的覆盖索引，消除 V2 迁移新增的数据库 advisor 外键告警
 canvas-v2-cutover.sql: V2 切流事务；核对单一 Canvas 身份、重复引用/边与跨租户不变量后，撤销 authenticated 对三个旧写 RPC 的执行权，只开放 V2 入口/读取/统一 mutation/context
 canvas-v2-rollback-grants.sql: 代码回滚到 4c89827 一类旧 checkpoint 时人工执行的权限配套脚本；只恢复旧 save/layout/promote 执行权，不改业务数据，正常 V2 部署绝不执行

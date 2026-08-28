@@ -61,6 +61,7 @@ const placeholderMemoNode = (
   },
   target_node_id: operation.target_node_id,
   text: null,
+  text_scale: null,
   width: null,
   x: operation.x,
   y: operation.y,
@@ -113,7 +114,7 @@ const applyOne = (
     detail.nodes.push({
       created_by: "user",
       discovered_from_id: null,
-      height: operation.height ?? 120,
+      height: operation.height ?? 48,
       id: operation.node_id,
       kind: "native",
       snapshot_excerpt: null,
@@ -122,6 +123,7 @@ const applyOne = (
       target: null,
       target_node_id: null,
       text: operation.text,
+      text_scale: operation.text_scale ?? 1,
       width: operation.width ?? 240,
       x: operation.x,
       y: operation.y,
@@ -144,6 +146,9 @@ const applyOne = (
     }
     if (operation.height !== undefined && node.kind === "native") {
       node.height = operation.height;
+    }
+    if (operation.text_scale !== undefined && node.kind === "native") {
+      node.text_scale = operation.text_scale;
     }
     return;
   }
@@ -255,6 +260,9 @@ export const normalizeCanvasIntents = (
               ...(operation.text === undefined ? {} : { text: operation.text }),
               ...(operation.width === undefined ? {} : { width: operation.width }),
               ...(operation.height === undefined ? {} : { height: operation.height }),
+              ...(operation.text_scale === undefined
+                ? {}
+                : { text_scale: operation.text_scale }),
             },
           };
         }
@@ -320,6 +328,11 @@ const fromNodeRow = (
   target: previous?.target ?? null,
   target_node_id: row.target_node_id,
   text: row.text,
+  text_scale: row.kind === "native"
+    ? typeof row.metadata.text_scale === "number"
+      ? row.metadata.text_scale
+      : 1
+    : null,
   width: row.width,
   x: Number(row.position_x),
   y: Number(row.position_y),

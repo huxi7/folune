@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 zod 的 UUID/strict object/判别联合能力与 memo.dto 的 memoNodeRowSchema
- * [OUTPUT]: 对外提供 Canvas V2 创建、读取、统一 mutation、AI expansion 与可信 context 的 HTTP/RPC schemas
+ * [OUTPUT]: 对外提供 Canvas V2 创建、读取、含自由文字持久缩放的统一 mutation、AI expansion 与可信 context 的 HTTP/RPC schemas
  * [POS]: dto 层 Canvas V2 唯一协议边界；只承认 protocol_version=2、node_id 单一身份、有限几何与最多 100 个原子操作
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -14,8 +14,9 @@ const coordinateSchema = z.number().finite();
 const titleSchema = z.string().trim().min(1).max(500);
 const rationaleSchema = z.string().max(120).nullable().optional();
 const nativeTextSchema = z.string().min(1).max(5000);
-const widthSchema = z.number().finite().min(120).max(720);
-const heightSchema = z.number().finite().min(48).max(480);
+const widthSchema = z.number().finite().min(20).max(2880);
+const heightSchema = z.number().finite().min(24).max(3840);
+const textScaleSchema = z.number().finite().min(0.25).max(4);
 const rpcNotFoundSchema = z.object({ status: z.literal("not_found") });
 const rpcInvalidSchema = z.object({
   status: z.literal("invalid"),
@@ -64,6 +65,7 @@ export const canvasNodeV2Schema = z.object({
   y: z.coerce.number().finite(),
   width: z.coerce.number().finite().nullable(),
   height: z.coerce.number().finite().nullable(),
+  text_scale: z.coerce.number().finite().min(0.25).max(4).nullable(),
   created_by: z.enum(["user", "ai"]),
   target: canvasTargetSchema.nullable(),
 });
@@ -119,6 +121,7 @@ export const canvasOperationSchema = z.discriminatedUnion("type", [
     y: coordinateSchema,
     width: widthSchema.optional(),
     height: heightSchema.optional(),
+    text_scale: textScaleSchema.optional(),
   }).strict(),
   z.object({
     type: z.literal("update_node"),
@@ -128,8 +131,10 @@ export const canvasOperationSchema = z.discriminatedUnion("type", [
     text: nativeTextSchema.optional(),
     width: widthSchema.optional(),
     height: heightSchema.optional(),
+    text_scale: textScaleSchema.optional(),
   }).strict().refine(
-    (value) => ["x", "y", "text", "width", "height"].some((key) => key in value),
+    (value) => ["x", "y", "text", "width", "height", "text_scale"]
+      .some((key) => key in value),
     { message: "update_node requires at least one field" },
   ),
   z.object({ type: z.literal("remove_node"), node_id: z.uuid() }).strict(),

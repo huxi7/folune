@@ -51,6 +51,7 @@ const detail = (): CanvasDetail => ({
     },
     target_node_id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
     text: null,
+    text_scale: null,
     width: null,
     x: 0,
     y: 0,
@@ -61,7 +62,14 @@ describe("normalizeCanvasIntents", () => {
     const nodeId = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
     const intents: CanvasIntent[] = [
       { operation: { node_id: nodeId, text: "初稿", type: "create_text", x: 0, y: 0 } },
-      { operation: { node_id: nodeId, text: "定稿", type: "update_node", width: 360 } },
+      { operation: {
+        height: 180,
+        node_id: nodeId,
+        text: "定稿",
+        text_scale: 1.5,
+        type: "update_node",
+        width: 360,
+      } },
       { operation: { type: "set_viewport", viewport: { x: 0, y: 0, zoom: 1 } } },
       { operation: { type: "set_viewport", viewport: { x: 2, y: 3, zoom: 0.8 } } },
     ];
@@ -71,6 +79,8 @@ describe("normalizeCanvasIntents", () => {
     expect(normalized[0]!.operation).toMatchObject({
       node_id: nodeId,
       text: "定稿",
+      height: 180,
+      text_scale: 1.5,
       type: "create_text",
       width: 360,
     });

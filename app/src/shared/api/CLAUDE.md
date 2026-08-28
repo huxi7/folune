@@ -12,7 +12,7 @@ ai-settings.test.ts: 审批设置 HTTP 契约测试，锁定 GET/PATCH 路径、
 memo.ts: 与后端 snake_case 同构的备忘录领域/API 边界，区分不含正文的 active tree summary、单篇 MemoDetail 与正文关键词命中摘要，并集中暴露显式 access token 的 CRUD/搜索/回收站命令
 memo.mapper.ts: 无副作用 DTO 适配层，把 PostgREST 数字 sort_order 归一为 Store 字符串，并分别收敛轻量 active tree、完整单篇正文与 Trash 响应字段
 memo.test.ts: DTO 纯映射回归测试，验证 Trash 最小契约、恢复 subtree 排序归一及正文只存在于 detail 契约
-canvas.ts: Canvas V2 唯一 HTTP 边界；定义 protocol 2 身份/节点/边/operation/receipt/context，提供 memo 默认入口、standalone 创建、无正文图读取、人工/AI 统一 mutation 与 48KiB pagehide keepalive；accessToken 可省，省略时请求期读取当前会话
+canvas.ts: Canvas V2 唯一 HTTP 边界；定义 protocol 2 身份/节点/边/operation/receipt/context，提供 memo 默认入口、standalone 创建、无正文图读取、空间文字 text_scale、人工/AI 统一 mutation 与 48KiB pagehide keepalive；accessToken 可省，省略时请求期读取当前会话
 profile.ts: 五字段 profile 业务 API 边界，以非空 username 统一展示名称、限制 username/bio PATCH，并以 multipart 调用后端头像替换接口
 
 职责: 所有非认证业务网络请求必须从此目录进入后端；UI 禁止裸写 fetch，Supabase SDK 只存在于相邻 supabase/ 认证边界。

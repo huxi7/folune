@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 仅依赖 memo.model 的 MemoNode 领域类型
- * [OUTPUT]: 对外提供 Canvas V2 单一身份、节点/边、创建回执、统一 mutation 回执与可信 expansion context 类型
+ * [OUTPUT]: 对外提供 Canvas V2 单一身份、含自由文字持久缩放的节点/边、创建回执、统一 mutation 回执与可信 expansion context 类型
  * [POS]: model 层 Canvas V2 领域契约；Canvas ID 始终等于 memo_nodes.id/canvases.node_id，载荷只有快照与摘要而无正文
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -52,6 +52,7 @@ export interface CanvasNodeV2 {
   y: number;
   width: number | null;
   height: number | null;
+  text_scale: number | null;
   created_by: CanvasAuthor;
   target: CanvasTarget | null;
 }

@@ -284,7 +284,18 @@ describe("Canvas V2 唯一 mutation 内核", () => {
   test("人工 PATCH 只调用 apply_canvas_mutation 且 expansion 明确为 null", async () => {
     const response = await app.request(request(`/canvases/${CANVAS_ID}`, {
       method: "PATCH",
-      body: JSON.stringify(mutationBody()),
+      body: JSON.stringify(mutationBody({
+        operations: [{
+          height: 72,
+          node_id: NODE_ID,
+          text: "空间文字",
+          text_scale: 1.5,
+          type: "create_text",
+          width: 240,
+          x: 10,
+          y: 20,
+        }],
+      })),
     }));
     const body = await response.json();
 
@@ -300,8 +311,34 @@ describe("Canvas V2 唯一 mutation 内核", () => {
         p_mutation_id: MUTATION_ID,
         p_base_version: 4,
         p_expansion: null,
+        p_operations: [{
+          height: 72,
+          node_id: NODE_ID,
+          text: "空间文字",
+          text_scale: 1.5,
+          type: "create_text",
+          width: 240,
+          x: 10,
+          y: 20,
+        }],
       },
     });
+  });
+
+  test("自由文字缩放比例越界时在 DTO 层拒绝", async () => {
+    const response = await app.request(request(`/canvases/${CANVAS_ID}`, {
+      method: "PATCH",
+      body: JSON.stringify(mutationBody({
+        operations: [{
+          node_id: NODE_ID,
+          text_scale: 4.01,
+          type: "update_node",
+        }],
+      })),
+    }));
+
+    expect(response.status).toBe(400);
+    expect(mock.calls).toEqual([]);
   });
 
   test("409 返回当前 version，供 WAL 保留 intent 后安全 rebase", async () => {

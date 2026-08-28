@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 workspace.css 的共享 Panel 网格、Quiet Editorial 语义 token、@xyflow/react 定位层与 Canvas V2 交互组件
- * [OUTPUT]: 对外提供全视口 Canvas 壳、点阵舞台、可编辑节点、宽命中关系、Picker/Preview、保存/AI 状态及窄屏降级
+ * [OUTPUT]: 对外提供全视口 Canvas 壳、点阵舞台、无卡片表面的空间文字、宽命中关系、Picker/Preview、保存/AI 状态及窄屏降级
  * [POS]: app/src/styles 的 Canvas V2 视觉边界；桌面保留空间画布，窄屏保留可达操作，不覆盖 React Flow 的业务状态
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -46,7 +46,6 @@
 
   .canvas-workspace-back,
   .canvas-control,
-  .canvas-node-icon-action,
   .canvas-edge-delete {
     display: inline-flex;
     align-items: center;
@@ -61,11 +60,9 @@
   .canvas-workspace-back { width: var(--control-height-compact); height: var(--control-height-compact); }
   .canvas-workspace-back:hover:not(:disabled),
   .canvas-control:hover,
-  .canvas-node-icon-action:hover,
   .canvas-edge-delete:hover { background: var(--interactive-hover); color: var(--foreground); }
   .canvas-workspace-back:focus-visible,
   .canvas-control:focus-visible,
-  .canvas-node-icon-action:focus-visible,
   .canvas-edge-delete:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
 
   .canvas-workspace-heading { display: grid; min-width: 0; gap: 1px; }
@@ -95,23 +92,15 @@
     height: 100%;
     min-width: 0;
     flex-direction: column;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-panel);
-    background: var(--card);
-    box-shadow: var(--shadow-xs);
-    transition: border-color var(--motion-fast) var(--ease-standard),
-      box-shadow var(--motion-fast) var(--ease-standard);
   }
-  .canvas-card { gap: var(--space-2); padding: var(--space-3) var(--space-4); }
-  .canvas-card[data-selected="true"],
-  .canvas-text-node[data-selected="true"] { border-color: color-mix(in srgb, var(--primary) 50%, var(--border)); box-shadow: var(--shadow-sm), 0 0 0 1px color-mix(in srgb, var(--primary) 10%, transparent); }
+  .canvas-card { gap: var(--space-2); border: 1px solid var(--border); border-radius: var(--radius-panel); background: var(--card); padding: var(--space-3) var(--space-4); box-shadow: var(--shadow-xs); transition: border-color var(--motion-fast) var(--ease-standard), box-shadow var(--motion-fast) var(--ease-standard); }
+  .canvas-card[data-selected="true"] { border-color: color-mix(in srgb, var(--primary) 50%, var(--border)); box-shadow: var(--shadow-sm), 0 0 0 1px color-mix(in srgb, var(--primary) 10%, transparent); }
   .canvas-card[data-tombstone="true"] { opacity: 0.62; }
   .canvas-card-header { display: flex; min-width: 0; align-items: baseline; gap: var(--space-2); }
   .canvas-card-title { min-width: 0; flex: 1; overflow: hidden; color: var(--foreground); font-size: var(--type-ui); font-weight: var(--weight-ui); text-overflow: ellipsis; white-space: nowrap; }
   .canvas-card-flag { flex-shrink: 0; color: var(--muted-foreground); font-size: var(--type-caption); line-height: var(--leading-label); }
   .canvas-card-body { max-height: 7.5rem; overflow: hidden; color: var(--muted-foreground); font-size: var(--type-label); mask-image: linear-gradient(to bottom, #000 0 5.5rem, transparent 7.5rem); }
-  .canvas-card-body .markdown-reading-view > :first-child,
-  .canvas-text-copy .markdown-reading-view > :first-child { margin-top: 0; }
+  .canvas-card-body .markdown-reading-view > :first-child { margin-top: 0; }
   .canvas-card-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); border-top: 1px solid var(--border); padding-top: var(--space-2); }
   .canvas-card-action { display: inline-flex; align-items: center; gap: var(--space-1); border-radius: var(--radius-compact); padding: var(--space-1) var(--space-2); color: var(--muted-foreground); font-size: var(--type-label); line-height: var(--leading-label); cursor: pointer; transition: background var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard); }
   .canvas-card-action:hover:not(:disabled) { background: var(--interactive-hover); color: var(--foreground); }
@@ -119,12 +108,18 @@
   .canvas-card-action:disabled { opacity: 0.5; cursor: progress; }
   .canvas-card-note { color: var(--muted-foreground); font-size: var(--type-caption); }
 
-  .canvas-text-node { min-width: 120px; min-height: 48px; padding: var(--space-3); }
-  .canvas-text-node[data-editing="true"] { border-color: color-mix(in srgb, var(--primary) 52%, var(--border)); cursor: text; }
-  .canvas-text-copy { height: 100%; overflow: hidden; color: var(--foreground); font-family: var(--font-serif); font-size: var(--type-body); line-height: var(--leading-body); }
-  .canvas-text-editor { width: 100%; height: 100%; min-height: 3rem; resize: none; border: 0; outline: 0; background: transparent; color: var(--foreground); font-family: var(--font-serif); font-size: var(--type-body); line-height: var(--leading-body); }
-  .canvas-node-icon-action { position: absolute; top: var(--space-1); right: var(--space-1); width: 1.75rem; height: 1.75rem; background: color-mix(in srgb, var(--card) 88%, transparent); }
-  .canvas-node-resize-handle { width: 0.55rem !important; height: 0.55rem !important; border: 1px solid var(--primary) !important; border-radius: 50%; background: var(--card) !important; }
+  .canvas-text-node { min-width: 0; min-height: 0; overflow: visible; border: 0; border-radius: 0; background: transparent; padding: 0; box-shadow: none; }
+  .canvas-text-node[data-selected="true"],
+  .canvas-text-node[data-editing="true"] { outline: 1px solid color-mix(in srgb, var(--primary) 62%, var(--border)); outline-offset: 0; }
+  .canvas-text-node[data-editing="true"] { cursor: text; }
+  .canvas-text-surface { position: absolute; top: 0; left: 0; transform-origin: top left; }
+  .canvas-text-copy,
+  .canvas-text-editor,
+  .canvas-text-measure { box-sizing: border-box; color: var(--foreground); font-family: var(--font-serif); font-size: var(--type-body); font-weight: var(--weight-body); line-height: var(--leading-body); overflow-wrap: anywhere; tab-size: 2; white-space: pre-wrap; }
+  .canvas-text-copy { width: 100%; height: 100%; overflow: hidden; }
+  .canvas-text-editor { display: block; width: 100%; height: 100%; overflow: hidden; resize: none; appearance: none; border: 0; border-radius: 0; outline: 0; background: transparent; padding: 0; }
+  .canvas-text-measure { position: absolute; top: 0; left: 0; width: max-content; max-width: 30rem; min-width: 1em; visibility: hidden; pointer-events: none; }
+  .canvas-node-resize-handle { z-index: 2; width: 0.55rem !important; height: 0.55rem !important; border: 1px solid var(--primary) !important; border-radius: 50%; background: var(--card) !important; }
 
   /* ------------------------------------------------------------------------ */
   /* Relations and controls                                                   */

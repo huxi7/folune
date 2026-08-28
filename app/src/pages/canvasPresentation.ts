@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 @xyflow/react 的 Edge/Node 类型（仅类型）与 shared/api/canvas 的 Canvas V2 投影
- * [OUTPUT]: 对外提供固定节点尺寸、标题/视口容错、React Flow 投影、最近空位、路由类型解析与坐标回写纯函数
+ * [OUTPUT]: 对外提供固定 memo 尺寸、含持久 text_scale 的空间文字投影、标题/视口容错、最近空位、路由类型解析与坐标回写纯函数
  * [POS]: app/src/pages 的 Canvas 表现策略边界；服务端快照在此翻译为受控 React Flow 形状，组件不再猜测墓碑、漂移或几何默认值
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -29,6 +29,9 @@ export type CanvasFlowNodeData = {
   snapshotRevision: number | null;
   targetDeleted: boolean;
   targetNodeId: string | null;
+  textHeight: number | null;
+  textScale: number;
+  textWidth: number | null;
   title: string;
   tombstone: boolean;
 };
@@ -104,6 +107,9 @@ export const toCanvasFlowNode = (node: CanvasNode): CanvasFlowNode => {
       targetDeleted: node.target?.deleted_at !== null
         && node.target?.deleted_at !== undefined,
       targetNodeId: node.target_node_id,
+      textHeight: node.kind === "native" ? height : null,
+      textScale: node.kind === "native" ? node.text_scale ?? 1 : 1,
+      textWidth: node.kind === "native" ? width : null,
       title: canvasNodeTitle(node),
       tombstone: node.kind === "memo_ref" && node.target_node_id === null,
     },

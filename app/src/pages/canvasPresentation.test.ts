@@ -43,6 +43,7 @@ const node = (overrides: Partial<CanvasNode> = {}): CanvasNode => ({
   x: 10,
   y: -20,
   ...overrides,
+  text_scale: overrides.text_scale ?? null,
 });
 const detail = (nodes: CanvasNode[], viewport: unknown = {}): CanvasDetail => ({
   canvas: {
@@ -111,6 +112,7 @@ describe("toCanvasFlow", () => {
       target: null,
       target_node_id: null,
       text: "写在画布上",
+      text_scale: 1.5,
       width: 320,
     }));
 
@@ -120,6 +122,11 @@ describe("toCanvasFlow", () => {
     });
     expect(textFlow.style).toMatchObject({ height: 160, width: 320 });
     expect(textFlow.data.body).toBe("写在画布上");
+    expect(textFlow.data).toMatchObject({
+      textHeight: 160,
+      textScale: 1.5,
+      textWidth: 320,
+    });
     expect(memoFlow.type).toBe("canvasNode");
   });
 

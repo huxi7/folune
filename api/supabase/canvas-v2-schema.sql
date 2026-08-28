@@ -1,5 +1,5 @@
 -- [INPUT]: 依赖现有 memo_nodes/memos、Knowledge Canvas 三表、profiles、auth.uid() 与 extensions.pgcrypto
--- [OUTPUT]: 把旧画布数据就地扩展为 Canvas V2：唯一身份/版本、快照与尺寸、无向边约束、语料版本、AI checkpoint、mutation receipt、RLS/grants 与删除前快照冻结
+-- [OUTPUT]: 把旧画布数据就地扩展为 Canvas V2：唯一身份/版本、快照、空间文字尺寸/缩放、无向边约束、语料版本、AI checkpoint、mutation receipt、RLS/grants 与删除前快照冻结
 -- [POS]: api/supabase 的 Canvas V2 加法 Schema 迁移；保留旧列与旧 RPC 供稳定切轨/回滚，任何 V2 写入规则由 canvas-v2-rpc.sql 的统一 mutation 内核承载
 -- [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 
@@ -103,8 +103,16 @@ alter table public.canvas_nodes
     check (
       (width is null and height is null)
       or (
-        width between 120 and 720
-        and height between 48 and 480
+        width between 20 and 2880
+        and height between 24 and 3840
+      )
+    ),
+  add constraint canvas_nodes_text_scale_check
+    check (
+      not (metadata ? 'text_scale')
+      or (
+        jsonb_typeof(metadata->'text_scale') = 'number'
+        and (metadata->>'text_scale')::numeric between 0.25 and 4
       )
     ),
   add constraint canvas_nodes_canvas_id_id_key unique (canvas_id, id);

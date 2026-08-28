@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 happy-dom、Testing Library、真实 KnowledgeCanvas/React Flow 节点层与可观测 Canvas 协调器替身
- * [OUTPUT]: 覆盖 Pane 双击到 textarea、提交 intent/乐观持久化，以及空白和 Esc 取消不入队的交互回归测试
- * [POS]: KnowledgeCanvas 的浏览器 DOM 纵向交互测试；不绕过组件去单测 reducer，专门锁定 selectionOnDrag 下的自由文字入口与保存链
+ * [OUTPUT]: 覆盖 Pane 双击到 textarea、内容边界提交、再次编辑不跳变、四角等比缩放、统一持久化，以及空白和 Esc 取消不入队的交互回归测试
+ * [POS]: KnowledgeCanvas 的浏览器 DOM 纵向交互测试；不绕过组件去单测 reducer/RPC，专门锁定 selectionOnDrag 下空间文字从入口到 WAL/协调器/mutation 的完整链路
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -195,16 +195,31 @@ const openTextEditorFromPane = async () => {
   });
 };
 
+const setMeasuredTextSize = (width: number, height: number) => {
+  const measure = document.querySelector<HTMLElement>(".canvas-text-measure");
+  expect(measure).not.toBeNull();
+  Object.defineProperties(measure!, {
+    offsetHeight: { configurable: true, value: height },
+    offsetWidth: { configurable: true, value: width },
+    scrollHeight: { configurable: true, value: height },
+    scrollWidth: { configurable: true, value: width },
+  });
+};
+
 describe("KnowledgeCanvas 自由文字纵向交互", () => {
   test("Pane 双击创建 textarea，失焦后进入协调器并成为唯一节点", async () => {
     const editor = await openTextEditorFromPane();
     fireEvent.change(editor, { target: { value: "从 Pane 写下的真实文字" } });
+    setMeasuredTextSize(216, 48);
     fireEvent.blur(editor);
 
     await waitFor(() => expect(walStorage.records.size).toBe(1));
     expect([...walStorage.records.values()][0]?.intents[0]?.operation).toMatchObject({
       text: "从 Pane 写下的真实文字",
+      height: 48,
+      text_scale: 1,
       type: "create_text",
+      width: 216,
     });
     expect(await coordinatorRef.current?.flush()).toEqual({
       persisted: true,
@@ -213,7 +228,10 @@ describe("KnowledgeCanvas 自由文字纵向交互", () => {
     expect(mutationRequests).toHaveLength(1);
     expect(mutationRequests[0]?.operations[0]).toMatchObject({
       text: "从 Pane 写下的真实文字",
+      height: 48,
+      text_scale: 1,
       type: "create_text",
+      width: 216,
     });
     expect(walStorage.records.size).toBe(0);
     expect(useCanvasWorkspaceStore.getState().document?.nodes).toHaveLength(1);
@@ -224,6 +242,7 @@ describe("KnowledgeCanvas 自由文字纵向交互", () => {
   test("已有自由文字再次双击编辑，更新后仍只有一个持久节点", async () => {
     const firstEditor = await openTextEditorFromPane();
     fireEvent.change(firstEditor, { target: { value: "初稿" } });
+    setMeasuredTextSize(120, 48);
     fireEvent.blur(firstEditor);
     await coordinatorRef.current?.flush();
 
@@ -232,6 +251,8 @@ describe("KnowledgeCanvas 自由文字纵向交互", () => {
       expect(element).not.toBeNull();
       return element!;
     });
+    const beforeEditSurface = textNode.querySelector<HTMLElement>(".canvas-text-surface");
+    expect(beforeEditSurface?.style.cssText).toContain("transform: scale(1)");
     fireEvent.doubleClick(textNode, { button: 0 });
     const editor = await waitFor(() => {
       const element = document.querySelector<HTMLTextAreaElement>(
@@ -240,18 +261,53 @@ describe("KnowledgeCanvas 自由文字纵向交互", () => {
       expect(element).not.toBeNull();
       return element!;
     });
+    expect(textNode.querySelector<HTMLElement>(".canvas-text-surface")?.style.cssText)
+      .toBe(beforeEditSurface?.style.cssText);
     fireEvent.change(editor, { target: { value: "修改后的正文" } });
+    setMeasuredTextSize(180, 72);
     fireEvent.blur(editor);
     await coordinatorRef.current?.flush();
 
     expect(mutationRequests).toHaveLength(2);
     expect(mutationRequests[1]?.operations[0]).toMatchObject({
       text: "修改后的正文",
+      height: 72,
       type: "update_node",
+      width: 180,
     });
     expect(useCanvasWorkspaceStore.getState().document?.nodes).toHaveLength(1);
     expect(useCanvasWorkspaceStore.getState().document?.nodes[0]?.text)
       .toBe("修改后的正文");
+  });
+
+  test("选中自由文字只渲染四个角点，不产生侧边缩放控件", async () => {
+    const editor = await openTextEditorFromPane();
+    fireEvent.change(editor, { target: { value: "等比缩放" } });
+    setMeasuredTextSize(160, 64);
+    fireEvent.blur(editor);
+    await coordinatorRef.current?.flush();
+
+    const textNode = await waitFor(() => {
+      const element = document.querySelector<HTMLElement>(".canvas-text-node");
+      expect(element).not.toBeNull();
+      return element!;
+    });
+    fireEvent.click(textNode, { button: 0 });
+
+    const handles = await waitFor(() => {
+      const elements = [...document.querySelectorAll<HTMLElement>(
+        ".canvas-node-resize-handle",
+      )];
+      expect(elements).toHaveLength(4);
+      return elements;
+    });
+    expect(handles.map((handle) => handle.className)).toEqual([
+      expect.stringContaining("top left"),
+      expect.stringContaining("top right"),
+      expect.stringContaining("bottom left"),
+      expect.stringContaining("bottom right"),
+    ]);
+    expect(document.querySelectorAll(".canvas-node-resize-line")).toHaveLength(0);
   });
 
   test("空内容失焦不入队，也不产生节点", async () => {

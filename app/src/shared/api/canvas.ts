@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 shared/api/client 的统一 Bearer 请求与同步 keepalive 发起能力，以及后端 Canvas V2 snake_case 契约
- * [OUTPUT]: 对外提供 Canvas V2 身份/节点/边/mutation/context 类型、默认/空白入口、读取、统一人工/AI 提交和有界 pagehide 发送
+ * [OUTPUT]: 对外提供 Canvas V2 身份/节点/边/mutation/context 类型、含持久 text_scale 的自由文字协议、默认/空白入口、读取、统一人工/AI 提交和有界 pagehide 发送
  * [POS]: app/src/shared/api 的 Canvas V2 唯一 HTTP 边界；Canvas 载荷只有投影快照和原生文字，content_mdx 永不进入此模块
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -52,11 +52,12 @@ export type CanvasNode = {
   y: number;
   width: number | null;
   height: number | null;
+  text_scale: number | null;
   created_by: CanvasAuthor;
   target: CanvasNodeTarget | null;
 };
 
-export type CanvasNodeRow = Omit<CanvasNode, "target" | "x" | "y"> & {
+export type CanvasNodeRow = Omit<CanvasNode, "target" | "text_scale" | "x" | "y"> & {
   canvas_id: string;
   user_id: string;
   position_x: number;
@@ -114,6 +115,7 @@ export type CanvasOperation =
       y: number;
       width?: number;
       height?: number;
+      text_scale?: number;
     }
   | {
       type: "update_node";
@@ -123,6 +125,7 @@ export type CanvasOperation =
       text?: string;
       width?: number;
       height?: number;
+      text_scale?: number;
     }
   | { type: "remove_node"; node_id: string }
   | {

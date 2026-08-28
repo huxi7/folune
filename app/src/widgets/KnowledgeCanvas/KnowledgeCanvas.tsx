@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖 @xyflow/react v12 的 Pane 指针/坐标协议、Canvas Chat、useCanvasSessionCoordinator、canvasWorkspaceStore、纯投影/增量布局、memo document Store 与本地设计系统
- * [OUTPUT]: 对外提供始终挂载真实 React Flow 的 Canvas V2：受控节点/边/视口、空白 Pane 双击自由文字、Picker/连接、Preview、AI 增量拓展和可靠保存状态
+ * [INPUT]: 依赖 @xyflow/react v12 的 Pane 指针/坐标协议、Canvas Chat、useCanvasSessionCoordinator、canvasWorkspaceStore、空间文字几何、纯投影/增量布局、memo document Store 与本地设计系统
+ * [OUTPUT]: 对外提供始终挂载真实 React Flow 的 Canvas V2：受控节点/边/视口、空白 Pane 双击空间文字、Picker/连接、Preview、AI 增量拓展和可靠保存状态
  * [POS]: KnowledgeCanvas 的会话内容根；UI 只产生 intent，人工与 AI 都经同一个协调器/RPC，正文只在 Preview 按 ID 加载
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -55,6 +55,12 @@ import {
   useCanvasSessionCoordinator,
   type CanvasSessionControls,
 } from "./useCanvasSessionCoordinator";
+import {
+  CANVAS_TEXT_DEFAULT_HEIGHT,
+  CANVAS_TEXT_DEFAULT_WIDTH,
+  normalizeTextGeometry,
+  type SpatialTextGeometry,
+} from "./spatialTextGeometry";
 
 const nodeTypes = { canvasNode: CanvasCardNode };
 const edgeTypes = { cord: CanvasCordEdge };
@@ -74,8 +80,11 @@ type KnowledgeCanvasProps = {
 };
 
 type TransientTextNode = {
+  height: number;
   id: string;
+  scale: number;
   text: string;
+  width: number;
   x: number;
   y: number;
 };
@@ -93,12 +102,15 @@ const flowNodeFromTransient = (node: TransientTextNode): CanvasFlowNode => ({
     snapshotRevision: null,
     targetDeleted: false,
     targetNodeId: null,
+    textHeight: node.height,
+    textScale: node.scale,
+    textWidth: node.width,
     title: "自由文字",
     tombstone: false,
   },
   id: node.id,
   position: { x: node.x, y: node.y },
-  style: { height: 120, width: 240 },
+  style: { height: node.height, width: node.width },
   type: "canvasNode",
 });
 
@@ -269,8 +281,11 @@ export function KnowledgeCanvas({
       y: event.clientY,
     });
     const node = {
+      height: CANVAS_TEXT_DEFAULT_HEIGHT,
       id: crypto.randomUUID(),
+      scale: 1,
       text: "",
+      width: CANVAS_TEXT_DEFAULT_WIDTH,
       x: position.x,
       y: position.y,
     };
@@ -504,20 +519,26 @@ export function KnowledgeCanvas({
       if (transientText?.id === nodeId) setTransientText(null);
       editText(null);
     },
-    async onCommitText(nodeId: string, text: string) {
+    async onCommitText(
+      nodeId: string,
+      text: string,
+      geometry: SpatialTextGeometry,
+    ) {
       if (text.trim().length === 0) {
         if (transientText?.id === nodeId) setTransientText(null);
         editText(null);
         return;
       }
+      const nextGeometry = normalizeTextGeometry(geometry);
       if (transientText?.id === nodeId) {
         await enqueue({
           operation: {
-            height: 120,
+            height: nextGeometry.height,
             node_id: nodeId,
             text,
+            text_scale: nextGeometry.scale,
             type: "create_text",
-            width: 240,
+            width: nextGeometry.width,
             x: transientText.x,
             y: transientText.y,
           },
@@ -527,10 +548,26 @@ export function KnowledgeCanvas({
         const existing = latestDocumentRef.current?.nodes.find(
           (node) => node.id === nodeId,
         );
-        if (existing?.text !== text) {
-          await enqueue({
-            operation: { node_id: nodeId, text, type: "update_node" },
-          });
+        if (existing !== undefined) {
+          const operation = {
+            node_id: nodeId,
+            type: "update_node" as const,
+            ...(existing.text === text ? {} : { text }),
+            ...(existing.width === nextGeometry.width
+              ? {}
+              : { width: nextGeometry.width }),
+            ...(existing.height === nextGeometry.height
+              ? {}
+              : { height: nextGeometry.height }),
+            ...(existing.text_scale === nextGeometry.scale
+              ? {}
+              : { text_scale: nextGeometry.scale }),
+          };
+          if (Object.keys(operation).length > 2) {
+            await enqueue({
+              operation,
+            });
+          }
         }
       }
       editText(null);
@@ -556,13 +593,17 @@ export function KnowledgeCanvas({
     async onRemoveEdge(edgeId: string) {
       await enqueue({ operation: { edge_id: edgeId, type: "remove_edge" } });
     },
-    async onResize(nodeId: string, width: number, height: number) {
+    async onResize(nodeId: string, geometry: SpatialTextGeometry) {
+      const nextGeometry = normalizeTextGeometry(geometry);
       await enqueue({
         operation: {
-          height: Math.max(48, Math.min(480, height)),
+          height: nextGeometry.height,
           node_id: nodeId,
+          ...(nextGeometry.x === undefined ? {} : { x: nextGeometry.x }),
+          ...(nextGeometry.y === undefined ? {} : { y: nextGeometry.y }),
+          text_scale: nextGeometry.scale,
           type: "update_node",
-          width: Math.max(120, Math.min(720, width)),
+          width: nextGeometry.width,
         },
       });
     },

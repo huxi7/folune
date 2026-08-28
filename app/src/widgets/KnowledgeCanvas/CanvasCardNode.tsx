@@ -1,20 +1,22 @@
 /**
- * [INPUT]: 依赖 @xyflow/react 的 Handle/NodeProps/NodeResizer、CanvasFlowNode 数据、设计系统图标与 canvasActions Context
- * [OUTPUT]: 对外提供 memo_ref 三态卡片与可原地编辑/四角缩放的 native 自由文字节点
- * [POS]: KnowledgeCanvas 的节点表现层；memo 正文只经 Preview Overlay 读取，自由文字才在画布内编辑，所有写入仍交给统一协调器
+ * [INPUT]: 依赖 @xyflow/react 的 Handle/NodeProps/四角 NodeResizeControl、CanvasFlowNode 数据、空间文字几何、设计系统图标与 canvasActions Context
+ * [OUTPUT]: 对外提供 memo_ref 三态卡片与静止无表面、可原地编辑、四角等比缩放的 native 空间文字节点
+ * [POS]: KnowledgeCanvas 的节点表现层；memo 正文只经 Preview Overlay 读取，空间文字把自身 scale 与视口 zoom 分离，全部持久修改仍交给统一协调器
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
 import {
   Handle,
-  NodeResizer,
+  NodeResizeControl,
   Position,
+  ResizeControlVariant,
   type NodeProps,
 } from "@xyflow/react";
 import {
   useEffect,
   useRef,
   useState,
+  type CSSProperties,
 } from "react";
 
 import type { CanvasFlowNode } from "../../pages/canvasPresentation";
@@ -26,15 +28,61 @@ import {
 } from "../../shared/design-system/icons";
 import { MarkdownReadingView } from "../MarkdownReadingView";
 import { useCanvasActions } from "./canvasActions";
+import {
+  CANVAS_TEXT_DEFAULT_HEIGHT,
+  CANVAS_TEXT_DEFAULT_WIDTH,
+  CANVAS_TEXT_MAX_HEIGHT,
+  CANVAS_TEXT_MAX_SCALE,
+  CANVAS_TEXT_MAX_WIDTH,
+  CANVAS_TEXT_MIN_HEIGHT,
+  CANVAS_TEXT_MIN_SCALE,
+  CANVAS_TEXT_MIN_WIDTH,
+  normalizeTextGeometry,
+  resizedTextScale,
+  scaleTextGeometry,
+  textBaseGeometry,
+} from "./spatialTextGeometry";
 
-export function CanvasCardNode({ data, id, selected }: NodeProps<CanvasFlowNode>) {
+const textResizeCorners = [
+  "top-left",
+  "top-right",
+  "bottom-left",
+  "bottom-right",
+] as const;
+
+const measuredTextBase = (
+  element: HTMLElement | null,
+  fallback: { height: number; width: number },
+): { height: number; width: number } => {
+  if (element === null) return fallback;
+  const measuredHeight = Math.max(element.offsetHeight, element.scrollHeight);
+  const measuredWidth = Math.max(element.offsetWidth, element.scrollWidth);
+  return {
+    height: measuredHeight > 0
+      ? Math.max(CANVAS_TEXT_MIN_HEIGHT, measuredHeight)
+      : fallback.height,
+    width: measuredWidth > 0
+      ? Math.max(CANVAS_TEXT_MIN_WIDTH, measuredWidth)
+      : fallback.width,
+  };
+};
+
+export function CanvasCardNode({
+  data,
+  height,
+  id,
+  selected,
+  width,
+}: NodeProps<CanvasFlowNode>) {
   const actions = useCanvasActions();
   const editing = actions.editingTextNodeId === id;
   const singleSelected = selected
     && actions.selectedNodeIds.length === 1
     && actions.selectedNodeIds[0] === id;
   const [text, setText] = useState(data.body ?? "");
+  const [resizingScale, setResizingScale] = useState<number | null>(null);
   const editorRef = useRef<HTMLTextAreaElement>(null);
+  const measureRef = useRef<HTMLSpanElement>(null);
   const cancelledRef = useRef(false);
 
   useEffect(() => {
@@ -49,68 +97,115 @@ export function CanvasCardNode({ data, id, selected }: NodeProps<CanvasFlowNode>
   }, [editing]);
 
   if (data.kind === "native") {
+    const persistedGeometry = normalizeTextGeometry({
+      height: data.textHeight ?? height ?? CANVAS_TEXT_DEFAULT_HEIGHT,
+      scale: data.textScale,
+      width: data.textWidth ?? width ?? CANVAS_TEXT_DEFAULT_WIDTH,
+    });
+    const baseGeometry = textBaseGeometry(persistedGeometry);
+    const activeScale = resizingScale ?? persistedGeometry.scale;
+    const surfaceStyle = {
+      height: baseGeometry.height,
+      transform: `scale(${activeScale})`,
+      width: baseGeometry.width,
+    } satisfies CSSProperties;
+
     return (
       <article
         className="canvas-text-node"
         data-editing={editing}
         data-selected={selected}
+        data-text-scale={activeScale}
         onDoubleClick={(event) => {
           event.stopPropagation();
           actions.onEditText(id);
         }}
       >
-        <NodeResizer
-          handleClassName="canvas-node-resize-handle"
-          isVisible={selected && !editing}
-          keepAspectRatio={false}
-          maxHeight={480}
-          maxWidth={720}
-          minHeight={48}
-          minWidth={120}
-          onResizeEnd={(_, parameters) => {
-            void actions.onResize(id, parameters.width, parameters.height)
-              .catch(() => undefined);
-          }}
-        />
-        {editing ? (
-          <textarea
-            aria-label="自由文字"
-            className="canvas-text-editor nodrag nowheel"
-            maxLength={5000}
-            onBlur={() => {
-              if (cancelledRef.current) {
-                cancelledRef.current = false;
-                return;
-              }
-              void actions.onCommitText(id, text).catch(() => undefined);
+        {selected && !editing ? textResizeCorners.map((position) => (
+          <NodeResizeControl
+            className="canvas-node-resize-handle"
+            key={position}
+            keepAspectRatio
+            maxHeight={Math.min(
+              CANVAS_TEXT_MAX_HEIGHT,
+              baseGeometry.height * CANVAS_TEXT_MAX_SCALE,
+            )}
+            maxWidth={Math.min(
+              CANVAS_TEXT_MAX_WIDTH,
+              baseGeometry.width * CANVAS_TEXT_MAX_SCALE,
+            )}
+            minHeight={Math.max(
+              CANVAS_TEXT_MIN_HEIGHT,
+              baseGeometry.height * CANVAS_TEXT_MIN_SCALE,
+            )}
+            minWidth={Math.max(
+              CANVAS_TEXT_MIN_WIDTH,
+              baseGeometry.width * CANVAS_TEXT_MIN_SCALE,
+            )}
+            onResize={(_, parameters) => {
+              setResizingScale(resizedTextScale(
+                persistedGeometry.width,
+                persistedGeometry.scale,
+                parameters.width,
+              ));
             }}
-            onChange={(event) => setText(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Escape") {
-                event.preventDefault();
-                event.stopPropagation();
-                cancelledRef.current = true;
-                actions.onCancelText(id);
-                event.currentTarget.blur();
-              }
+            onResizeEnd={(_, parameters) => {
+              const scale = resizedTextScale(
+                persistedGeometry.width,
+                persistedGeometry.scale,
+                parameters.width,
+              );
+              void actions.onResize(id, {
+                height: parameters.height,
+                scale,
+                width: parameters.width,
+                x: parameters.x,
+                y: parameters.y,
+              }).finally(() => setResizingScale(null));
             }}
-            ref={editorRef}
-            value={text}
+            position={position}
+            variant={ResizeControlVariant.Handle}
           />
-        ) : (
-          <div className="canvas-text-copy">
-            <MarkdownReadingView content={data.body ?? ""} preserveSoftBreaks />
-          </div>
-        )}
-        {singleSelected && !editing ? (
-          <button
-            aria-label="移出画布"
-            className="canvas-node-icon-action nodrag"
-            onClick={() => void actions.onRemove(id).catch(() => undefined)}
-            type="button"
-          >
-            <TrashIcon size={14} />
-          </button>
+        )) : null}
+        <div className="canvas-text-surface" style={surfaceStyle}>
+          {editing ? (
+            <textarea
+              aria-label="自由文字"
+              className="canvas-text-editor nodrag nowheel"
+              maxLength={5000}
+              onBlur={() => {
+                if (cancelledRef.current) {
+                  cancelledRef.current = false;
+                  return;
+                }
+                const natural = measuredTextBase(measureRef.current, baseGeometry);
+                void actions.onCommitText(
+                  id,
+                  text,
+                  scaleTextGeometry(natural, persistedGeometry.scale),
+                ).catch(() => undefined);
+              }}
+              onChange={(event) => setText(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Escape") {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  cancelledRef.current = true;
+                  actions.onCancelText(id);
+                  event.currentTarget.blur();
+                }
+              }}
+              ref={editorRef}
+              value={text}
+            />
+          ) : (
+            <div className="canvas-text-copy">{data.body ?? ""}</div>
+          )}
+        </div>
+        {editing ? (
+          <span aria-hidden className="canvas-text-measure" ref={measureRef}>
+            {text.length === 0 ? "\u200b" : text}
+          </span>
         ) : null}
       </article>
     );

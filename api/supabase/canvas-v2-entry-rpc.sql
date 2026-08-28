@@ -1,5 +1,5 @@
 -- [INPUT]: 依赖 canvas-v2-schema.sql 扩展后的 Canvas 表、memo tree/RLS、extensions.pgcrypto 与 auth.uid()
--- [OUTPUT]: 提供默认/空白 Canvas 创建、V2 读取与可信 expansion context 四个 SECURITY INVOKER RPC
+-- [OUTPUT]: 提供默认/空白 Canvas 创建、含空间文字 text_scale 的 V2 读取与可信 expansion context 四个 SECURITY INVOKER RPC
 -- [POS]: api/supabase 的 Canvas V2 会话入口与只读投影层；创建只建立持久身份，后续人工/AI 修改统一交给 canvas-v2-mutation-rpc.sql
 -- [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 
@@ -314,6 +314,11 @@ begin
             end,
             'height', case
               when cn.kind in ('native', 'excerpt') then coalesce(cn.height, 120)
+              else null
+            end,
+            'text_scale', case
+              when cn.kind in ('native', 'excerpt')
+                then coalesce((cn.metadata->>'text_scale')::numeric, 1)
               else null
             end,
             'created_by', cn.created_by,

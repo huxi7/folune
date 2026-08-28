@@ -30,6 +30,7 @@ const memoNode = (
   target: null,
   target_node_id: id,
   text: null,
+  text_scale: null,
   width: null,
   x,
   y,

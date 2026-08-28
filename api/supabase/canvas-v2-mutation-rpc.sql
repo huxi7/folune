@@ -1,5 +1,5 @@
 -- [INPUT]: 依赖 canvas-v2-schema.sql 与 canvas-v2-entry-rpc.sql、Canvas/memo 表、extensions.pgcrypto、RLS 与 auth.uid()
--- [OUTPUT]: 提供人工编辑与 AI expansion 共用的 apply_canvas_mutation 原子函数，统一 version、receipt、checkpoint、容量、快照与幂等回执
+-- [OUTPUT]: 提供人工编辑与 AI expansion 共用的 apply_canvas_mutation 原子函数，统一 version、receipt、checkpoint、空间文字尺寸/缩放、容量、快照与幂等回执
 -- [POS]: api/supabase 的 Canvas V2 唯一 mutation 内核；业务 API 的 PATCH 与 expansion commit 只能调用此处，禁止再生第二套节点/边写入规则
 -- [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 
@@ -387,8 +387,9 @@ begin
 
       if length(coalesce(op->>'text', '')) < 1
         or length(op->>'text') > 5000
-        or coalesce((op->>'width')::numeric, 240) not between 120 and 720
-        or coalesce((op->>'height')::numeric, 120) not between 48 and 480
+        or coalesce((op->>'width')::numeric, 240) not between 20 and 2880
+        or coalesce((op->>'height')::numeric, 48) not between 24 and 3840
+        or coalesce((op->>'text_scale')::numeric, 1) not between 0.25 and 4
       then
         raise exception 'native canvas node shape is invalid'
           using errcode = '23514';
@@ -425,15 +426,18 @@ begin
 
         insert into public.canvas_nodes (
           id, user_id, canvas_id, kind, text, position_x, position_y,
-          width, height, created_by
+          width, height, created_by, metadata
         )
         values (
           client_node_id, p_user_id, p_canvas_id, 'native', op->>'text',
           coalesce((op->>'x')::numeric, 0),
           coalesce((op->>'y')::numeric, 0),
           coalesce((op->>'width')::numeric, 240),
-          coalesce((op->>'height')::numeric, 120),
-          'user'
+          coalesce((op->>'height')::numeric, 48),
+          'user',
+          jsonb_build_object(
+            'text_scale', coalesce((op->>'text_scale')::numeric, 1)
+          )
         )
         returning * into node_row;
         upserted_nodes := upserted_nodes || jsonb_build_array(to_jsonb(node_row));
@@ -466,15 +470,20 @@ begin
         if length(coalesce(op->>'text', '')) < 1 or length(op->>'text') > 5000 then
           raise exception 'native canvas text is invalid' using errcode = '23514';
         end if;
-      elsif node_row.kind = 'memo_ref' and (op ? 'text' or op ? 'width' or op ? 'height') then
+      elsif node_row.kind = 'memo_ref' and (
+        op ? 'text' or op ? 'width' or op ? 'height' or op ? 'text_scale'
+      ) then
         raise exception 'memo_ref content and dimensions are immutable' using errcode = '23514';
       end if;
 
-      if op ? 'width' and (op->>'width')::numeric not between 120 and 720 then
+      if op ? 'width' and (op->>'width')::numeric not between 20 and 2880 then
         raise exception 'native canvas width is invalid' using errcode = '23514';
       end if;
-      if op ? 'height' and (op->>'height')::numeric not between 48 and 480 then
+      if op ? 'height' and (op->>'height')::numeric not between 24 and 3840 then
         raise exception 'native canvas height is invalid' using errcode = '23514';
+      end if;
+      if op ? 'text_scale' and (op->>'text_scale')::numeric not between 0.25 and 4 then
+        raise exception 'native canvas text scale is invalid' using errcode = '23514';
       end if;
 
       update public.canvas_nodes
@@ -482,7 +491,16 @@ begin
           position_y = case when op ? 'y' then (op->>'y')::numeric else position_y end,
           text = case when op ? 'text' then op->>'text' else text end,
           width = case when op ? 'width' then (op->>'width')::numeric else width end,
-          height = case when op ? 'height' then (op->>'height')::numeric else height end
+          height = case when op ? 'height' then (op->>'height')::numeric else height end,
+          metadata = case
+            when op ? 'text_scale' then jsonb_set(
+              metadata,
+              '{text_scale}',
+              to_jsonb((op->>'text_scale')::numeric),
+              true
+            )
+            else metadata
+          end
       where user_id = p_user_id
         and canvas_id = p_canvas_id
         and id = node_row.id
