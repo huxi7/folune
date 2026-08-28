@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 @xyflow/react 的 Edge/Node 类型（仅类型）与 shared/api/canvas 的 Canvas V2 投影
- * [OUTPUT]: 对外提供固定 memo 尺寸、含持久 text_scale 的空间文字投影、标题/视口容错、最近空位、路由类型解析与坐标回写纯函数
+ * [OUTPUT]: 对外提供固定 280x360 纵向 memo 卡片尺寸、含持久 text_scale 的空间文字投影、标题/视口容错、最近空位、路由类型解析与坐标回写纯函数
  * [POS]: app/src/pages 的 Canvas 表现策略边界；服务端快照在此翻译为受控 React Flow 形状，组件不再猜测墓碑、漂移或几何默认值
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -14,8 +14,12 @@ import type {
   CanvasViewport,
 } from "../shared/api/canvas";
 
+/**
+ * memo_ref 卡片是一张纵向笔记预览纸，尺寸固定在此，不散落到组件或样式里。
+ * 只作用于 memo_ref: native 空间文字的宽高与 text_scale 是用户数据，永不被这里覆盖。
+ */
 export const CANVAS_MEMO_WIDTH = 280;
-export const CANVAS_MEMO_HEIGHT = 180;
+export const CANVAS_MEMO_HEIGHT = 360;
 export const CANVAS_TEXT_WIDTH = 240;
 export const CANVAS_TEXT_HEIGHT = 120;
 export const CANVAS_DEFAULT_VIEWPORT: CanvasViewport = { x: 0, y: 0, zoom: 1 };

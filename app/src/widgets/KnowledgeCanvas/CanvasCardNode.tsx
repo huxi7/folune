@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 @xyflow/react 的 Handle/NodeProps/四角 NodeResizeControl、CanvasFlowNode 数据、空间文字几何、设计系统图标与 canvasActions Context
- * [OUTPUT]: 对外提供 memo_ref 三态卡片与静止无表面、编辑态稳定聚焦且无边框、四角等比缩放的 native 空间文字节点
- * [POS]: KnowledgeCanvas 的节点表现层；memo 正文只经 Preview Overlay 读取，空间文字把自身 scale 与视口 zoom 分离，全部持久修改仍交给统一协调器
+ * [INPUT]: 依赖 @xyflow/react 的 Handle/NodeProps/四角 NodeResizeControl、CanvasFlowNode 数据、共享 NotePaper thumbnail 纸面、空间文字几何、设计系统图标与 canvasActions Context
+ * [OUTPUT]: 对外提供 280x360 纵向 memo_ref 笔记预览卡（嵌套纸张、渐隐摘录、悬浮展开按钮、固定高度元信息行）与静止无表面、编辑态稳定聚焦且无边框、四角等比缩放的 native 空间文字节点
+ * [POS]: KnowledgeCanvas 的节点表现层；卡片只读快照标题/摘录，正文只经 Preview Overlay 按 ID 读取，空间文字把自身 scale 与视口 zoom 分离，全部持久修改仍交给统一协调器
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -23,12 +23,12 @@ import {
 
 import type { CanvasFlowNode } from "../../pages/canvasPresentation";
 import {
-  EyeIcon,
+  ExpandIcon,
   MagicWandIcon,
   PlusIcon,
   TrashIcon,
 } from "../../shared/design-system/icons";
-import { MarkdownReadingView } from "../MarkdownReadingView";
+import { NotePaper } from "../NotePaper";
 import { useCanvasActions } from "./canvasActions";
 import {
   CANVAS_TEXT_DEFAULT_HEIGHT,
@@ -86,9 +86,6 @@ export function CanvasCardNode({
 }: NodeProps<CanvasFlowNode>) {
   const actions = useCanvasActions();
   const editing = actions.editingTextNodeId === id;
-  const singleSelected = selected
-    && actions.selectedNodeIds.length === 1
-    && actions.selectedNodeIds[0] === id;
   const [text, setText] = useState(data.body ?? "");
   const [resizingScale, setResizingScale] = useState<number | null>(null);
   const [draftBaseGeometry, setDraftBaseGeometry] = useState<{
@@ -287,8 +284,18 @@ export function CanvasCardNode({
     );
   }
 
-  const previewable = data.targetNodeId !== null && !data.tombstone;
-  const expandable = previewable && !data.targetDeleted;
+  // 目标笔记仍然可读时才提供阅读/AI/关联: 回收站与永久删除的目标读不出正文,
+  // 给出一个注定报错的入口比不给更糟。
+  const available = data.targetNodeId !== null
+    && !data.tombstone
+    && !data.targetDeleted;
+  const status = data.tombstone
+    ? "原笔记已被永久删除"
+    : data.targetDeleted
+      ? "在回收站"
+      : data.drifted
+        ? "原文已更新"
+        : "";
 
   return (
     <article
@@ -298,69 +305,72 @@ export function CanvasCardNode({
       data-tombstone={data.tombstone}
       onDoubleClick={(event) => {
         event.stopPropagation();
-        if (previewable) actions.onPreview(id);
+        if (available) actions.onPreview(id);
       }}
     >
       <Handle isConnectable={false} position={Position.Left} type="target" />
-      <header className="canvas-card-header">
-        <span className="canvas-card-title">{data.title}</span>
-        {data.drifted ? <span className="canvas-card-flag">原文已更新</span> : null}
-        {data.targetDeleted ? <span className="canvas-card-flag">在回收站</span> : null}
-      </header>
 
-      {data.body === null || data.body.length === 0 ? null : (
-        <div className="canvas-card-body">
-          <MarkdownReadingView content={data.body} preserveSoftBreaks />
-        </div>
-      )}
+      <NotePaper
+        className="canvas-card-paper"
+        emptyLabel={data.tombstone ? "原文已不在库中" : "这页还没有正文"}
+        excerpt={data.body}
+        overlay={available ? (
+          <button
+            aria-label={`展开阅读${data.title}`}
+            className="canvas-card-expand nodrag"
+            onClick={(event) => {
+              event.stopPropagation();
+              actions.onPreview(id);
+            }}
+            title="展开阅读"
+            type="button"
+          >
+            <ExpandIcon size={16} />
+          </button>
+        ) : null}
+        title={data.title}
+        variant="thumbnail"
+      />
 
-      {singleSelected ? (
-        <footer className="canvas-card-actions nodrag">
-          {expandable ? (
+      {/* 元信息行高度固定: 上下文操作只改变透明度, 出现与消失都不移动纸张 */}
+      <footer className="canvas-card-meta nodrag">
+        <span className="canvas-card-status">{status}</span>
+        <span className="canvas-card-actions">
+          {available ? (
             <button
+              aria-label="AI 拓展这条分支"
               className="canvas-card-action"
               disabled={actions.aiLoading}
               onClick={() => void actions.onExpand(id)}
+              title="AI 拓展"
               type="button"
             >
               <MagicWandIcon size={14} />
-              AI 拓展
             </button>
           ) : null}
-          {expandable ? (
+          {available ? (
             <button
+              aria-label="关联另一篇笔记"
               className="canvas-card-action"
               onClick={() => actions.onConnect(id)}
+              title="关联"
               type="button"
             >
               <PlusIcon size={14} />
-              关联
-            </button>
-          ) : null}
-          {previewable ? (
-            <button
-              className="canvas-card-action"
-              onClick={() => actions.onPreview(id)}
-              type="button"
-            >
-              <EyeIcon size={14} />
-              预览
             </button>
           ) : null}
           <button
+            aria-label="从画布移除"
             className="canvas-card-action"
             onClick={() => void actions.onRemove(id).catch(() => undefined)}
+            title="移除"
             type="button"
           >
             <TrashIcon size={14} />
-            移除
           </button>
-        </footer>
-      ) : null}
+        </span>
+      </footer>
 
-      {data.tombstone ? (
-        <span className="canvas-card-note">原笔记已被永久删除</span>
-      ) : null}
       <Handle isConnectable={false} position={Position.Right} type="source" />
     </article>
   );

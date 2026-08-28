@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun test 与 canvasPresentation 的 Canvas V2 纯投影函数
- * [OUTPUT]: 覆盖节点取名、固定/可变尺寸、视口容错、快照漂移/墓碑、边投影、坐标操作与路由身份
+ * [OUTPUT]: 覆盖节点取名、memo 固定纵向尺寸与 native 持久几何不被改写、视口容错、快照漂移/墓碑、边投影、坐标操作与路由身份
  * [POS]: pages 的 Canvas V2 表现回归门禁；锁定服务端投影到 React Flow 的含义，不测试 React 或网络
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -100,7 +100,7 @@ describe("Canvas viewport", () => {
 });
 
 describe("toCanvasFlow", () => {
-  test("memo 固定 280x180，native 恢复自己的尺寸与文字", () => {
+  test("memo 固定 280x360 纵向卡片，native 恢复自己的尺寸与文字", () => {
     const memoFlow = toCanvasFlowNode(node());
     const textFlow = toCanvasFlowNode(node({
       height: 160,
@@ -128,6 +128,39 @@ describe("toCanvasFlow", () => {
       textWidth: 320,
     });
     expect(memoFlow.type).toBe("canvasNode");
+  });
+
+  // 卡片改版只允许作用于 memo_ref。native 空间文字的宽高与 text_scale 是
+  // 用户已经持久化的数据（真实库里跨度 23x35 到 810x186），投影层一旦对它
+  // 施加统一 min/max 或默认值，就会静默改写用户内容，因此在此显式锁死。
+  test("native 空间文字的持久几何绝不被卡片常量改写", () => {
+    for (const geometry of [
+      { height: 35, text_scale: 1, width: 23 },
+      { height: 186, text_scale: 0.5, width: 810 },
+      { height: 41, text_scale: 8, width: 120 },
+    ]) {
+      const flow = toCanvasFlowNode(node({
+        height: geometry.height,
+        kind: "native",
+        target: null,
+        target_node_id: null,
+        text: "空间文字",
+        text_scale: geometry.text_scale,
+        width: geometry.width,
+      }));
+
+      expect(flow.style).toEqual({
+        height: geometry.height,
+        width: geometry.width,
+      });
+      expect(flow.data).toMatchObject({
+        textHeight: geometry.height,
+        textScale: geometry.text_scale,
+        textWidth: geometry.width,
+      });
+      expect(flow.style?.height).not.toBe(CANVAS_MEMO_HEIGHT);
+      expect(flow.style?.width).not.toBe(CANVAS_MEMO_WIDTH);
+    }
   });
 
   test("revision 漂移、回收站和永久删除墓碑各自成立", () => {

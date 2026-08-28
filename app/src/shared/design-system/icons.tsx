@@ -24,6 +24,7 @@ import {
   CreditCard,
   Download,
   Ellipsis,
+  Expand,
   Eye,
   EyeOff,
   FileText,
@@ -112,6 +113,7 @@ export const CreditCardIcon = defineIcon(CreditCard);
 export const DesktopIcon = defineIcon(Monitor);
 export const DotsThreeIcon = defineIcon(Ellipsis);
 export const DownloadSimpleIcon = defineIcon(Download);
+export const ExpandIcon = defineIcon(Expand);
 export const EyeIcon = defineIcon(Eye);
 export const EyeSlashIcon = defineIcon(EyeOff);
 /** 已保存画布在文件树里的身份: 一张关系星图，与纸张明确区分，且永不暴露扩展名 */

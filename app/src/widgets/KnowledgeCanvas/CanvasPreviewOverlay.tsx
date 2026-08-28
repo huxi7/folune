@@ -1,20 +1,21 @@
 /**
- * [INPUT]: 依赖 design-system Dialog/Skeleton、memoDocumentStore 的按 ID 正文缓存与 MarkdownReadingView
- * [OUTPUT]: 对外提供不卸载 Canvas 的可滚动 Paper Preview Overlay，并把“编辑原文”交给外层 flush 后导航
- * [POS]: KnowledgeCanvas 的正文阅读边界；Canvas API 永不携带 content_mdx，只有用户明确预览时才按目标 memo ID 加载正文
+ * [INPUT]: 依赖 design-system Dialog（bare 表面）/Skeleton、共享 NotePaper reader 纸面、memoDocumentStore 的按 ID 正文缓存与 MarkdownReadingView
+ * [OUTPUT]: 对外提供不卸载 Canvas 的全尺寸 Paper 预览层：柔和遮罩、纸张自身滚动、纸外右上角 44px 圆形关闭，以及交回外层 flush 的“编辑原文”
+ * [POS]: KnowledgeCanvas 的正文阅读边界；Canvas API 永不携带 content_mdx，只有用户明确预览时才按目标 memo ID 加载正文；Esc/遮罩/焦点归还统一复用 Dialog 的模态行为，不另造第二套弹窗
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
 import { useEffect } from "react";
 
 import {
-  Button,
   Dialog,
   Skeleton,
   SkeletonGroup,
 } from "../../shared/design-system/components";
+import { XIcon } from "../../shared/design-system/icons";
 import { useMemoDocumentStore } from "../../shared/store/memoDocumentStore";
 import { MarkdownReadingView } from "../MarkdownReadingView";
+import { NotePaper } from "../NotePaper";
 
 type CanvasPreviewOverlayProps = {
   accessToken: string;
@@ -52,32 +53,44 @@ export function CanvasPreviewOverlay({
         if (!open) onClose();
       }}
       open
+      surface="bare"
       title={title}
     >
-      <div className="canvas-preview-paper">
-        {document === undefined && status !== "error" ? (
-          <SkeletonGroup label="正在读取原文">
-            <Skeleton className="canvas-preview-title-skeleton" />
-            <Skeleton className="canvas-preview-line-skeleton" />
-            <Skeleton className="canvas-preview-line-skeleton" />
-          </SkeletonGroup>
-        ) : status === "error" ? (
-          <p className="canvas-preview-error">{error ?? "原文读取失败。"}</p>
-        ) : (
-          <MarkdownReadingView
-            content={document?.memo.content_mdx ?? ""}
-            preserveSoftBreaks
-          />
-        )}
-      </div>
-      <div className="canvas-preview-actions">
-        <Button onClick={onClose} variant="secondary">关闭</Button>
-        <Button
-          disabled={document === undefined}
-          onClick={() => void onEditOriginal()}
+      <div className="canvas-preview-shell">
+        <NotePaper autoFocus title={title} variant="reader">
+          {document === undefined && status !== "error" ? (
+            <SkeletonGroup label="正在读取原文">
+              <Skeleton className="canvas-preview-line-skeleton" />
+              <Skeleton className="canvas-preview-line-skeleton" />
+              <Skeleton className="canvas-preview-line-skeleton" />
+            </SkeletonGroup>
+          ) : status === "error" ? (
+            <p className="canvas-preview-error">{error ?? "原文读取失败。"}</p>
+          ) : (
+            <MarkdownReadingView
+              content={document?.memo.content_mdx ?? ""}
+              preserveSoftBreaks
+            />
+          )}
+          {/* 唯一的纸内动作: 遮罩中央只允许出现纸张本身, 因此不再有纸外按钮行 */}
+          <button
+            className="canvas-preview-edit"
+            disabled={document === undefined}
+            onClick={() => void onEditOriginal()}
+            type="button"
+          >
+            编辑原文
+          </button>
+        </NotePaper>
+        <button
+          aria-label="关闭预览"
+          className="canvas-preview-close"
+          onClick={onClose}
+          title="关闭预览"
+          type="button"
         >
-          编辑原文
-        </Button>
+          <XIcon size={20} />
+        </button>
       </div>
     </Dialog>
   );

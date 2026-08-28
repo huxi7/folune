@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 React 的 effect/id/ref 与 ReactNode，依赖 共享 Lucide XIcon，依赖 Button 与 index.css 暴露的 ds-dialog-panel 弹窗表面类
- * [OUTPUT]: 对外提供 default/compact 密度、default/account 宽度、default/embedded 标题模式、标题描述关联、Esc 关闭、完整表单焦点循环与滚动锁定的 Dialog 受控弹窗组件
- * [POS]: app/src/shared/design-system/components 的弹窗基础件，被认证流程、统一 AccountDialog 与 Design System 预览消费
+ * [OUTPUT]: 对外提供 default/compact 密度、default/account 宽度、panel/bare 表面、default/embedded 标题模式、标题描述关联、Esc 关闭、完整表单焦点循环与滚动锁定的 Dialog 受控弹窗组件
+ * [POS]: app/src/shared/design-system/components 的唯一模态基础件；Esc、焦点循环、滚动锁定与焦点归还只在此实现一次，bare 表面让 Canvas 全尺寸预览直接把纸张当作模态内容而无需第二套 Dialog
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { XIcon } from "../icons";
@@ -16,12 +16,15 @@ type DialogProps = {
   headerMode?: DialogHeaderMode;
   onOpenChange: (open: boolean) => void;
   open: boolean;
+  /** bare 表面不提供任何弹窗外壳，只保留遮罩与模态行为，由 children 自己拥有视觉 */
+  surface?: DialogSurface;
   title: string;
   width?: DialogWidth;
 };
 
 export type DialogDensity = "compact" | "default";
 export type DialogHeaderMode = "default" | "embedded";
+export type DialogSurface = "bare" | "panel";
 export type DialogWidth = "account" | "default";
 
 export function Dialog({
@@ -31,9 +34,12 @@ export function Dialog({
   headerMode = "default",
   onOpenChange,
   open,
+  surface = "panel",
   title,
   width = "default",
 }: DialogProps) {
+  // bare 表面没有可见外壳, 可见标题栏在其中没有意义, 统一收敛为读屏可用的隐式标题。
+  const resolvedHeaderMode = surface === "bare" ? "embedded" : headerMode;
   const titleId = useId();
   const descriptionId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
@@ -140,20 +146,24 @@ export function Dialog({
       />
       <div
         className={[
-          "ds-dialog-panel relative z-10",
-          width === "account" ? "account-dialog-panel" : "w-full max-w-lg",
-          headerMode === "embedded"
-            ? "p-0"
-            : density === "compact"
-              ? "p-4"
-              : "p-5",
+          "relative z-10",
+          surface === "bare" ? "ds-dialog-shell" : "ds-dialog-panel",
+          ...(surface === "bare" ? [] : [
+            width === "account" ? "account-dialog-panel" : "w-full max-w-lg",
+            resolvedHeaderMode === "embedded"
+              ? "p-0"
+              : density === "compact"
+                ? "p-4"
+                : "p-5",
+          ]),
         ].join(" ")}
         data-density={density}
+        data-surface={surface}
         data-width={width}
         ref={panelRef}
         tabIndex={-1}
       >
-        {headerMode === "embedded" ? (
+        {resolvedHeaderMode === "embedded" ? (
           <div className="sr-only">
             <h2 id={titleId}>{title}</h2>
             {description ? (

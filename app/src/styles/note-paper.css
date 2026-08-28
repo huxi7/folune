@@ -1,0 +1,129 @@
+/**
+ * [INPUT]: 依赖 index.css 的 Paper 语义 token（paper-surface/paper-edge/paper-foreground/paper-shadow/paper-max-width）、font-serif、4px 空间基线与同心曲率阶梯
+ * [OUTPUT]: 对外提供唯一共享纸面 .note-paper 及 thumbnail/reader 两个 variant 的排版、渐隐与滚动契约
+ * [POS]: app/src/styles 的纸张视觉单一真相；Canvas 卡片缩略与全尺寸阅读共用同一套纸面规则，禁止任何组件再复制近似 Paper 样式
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+
+@layer components {
+  .note-paper {
+    position: relative;
+    display: flex;
+    box-sizing: border-box;
+    min-width: 0;
+    min-height: 0;
+    flex-direction: column;
+    border: 1px solid var(--paper-edge);
+    border-radius: var(--radius-paper);
+    background: var(--paper-surface);
+    color: var(--paper-foreground);
+  }
+
+  .note-paper-column {
+    display: flex;
+    min-width: 0;
+    min-height: 0;
+    flex-direction: column;
+  }
+
+  .note-paper-title {
+    margin: 0;
+    color: var(--paper-foreground);
+    font-family: var(--font-serif);
+    font-weight: 500;
+    letter-spacing: -0.032em;
+    overflow-wrap: anywhere;
+    text-wrap: pretty;
+  }
+
+  .note-paper-body {
+    min-width: 0;
+    color: var(--paper-foreground);
+    font-family: var(--font-serif);
+  }
+
+  .note-paper-excerpt {
+    margin: 0;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+  }
+
+  .note-paper-placeholder {
+    margin: 0;
+    color: color-mix(in srgb, var(--paper-foreground) 42%, transparent);
+  }
+
+  /* ------------------------------------------------------------------------ */
+  /* thumbnail: 卡片内的缩略纸张，正文永不滚动，只在底部自然渐隐            */
+  /* ------------------------------------------------------------------------ */
+
+  .note-paper[data-variant="thumbnail"] {
+    overflow: hidden;
+    box-shadow: var(--shadow-2xs);
+  }
+  .note-paper[data-variant="thumbnail"] .note-paper-column {
+    flex: 1;
+    gap: var(--space-2);
+    padding: var(--space-4) var(--space-4) 0;
+  }
+  .note-paper[data-variant="thumbnail"] .note-paper-title {
+    display: -webkit-box;
+    overflow: hidden;
+    flex: 0 0 auto;
+    -webkit-box-orient: vertical;
+    font-size: 1.0625rem;
+    -webkit-line-clamp: 3;
+    line-height: 1.34;
+  }
+  .note-paper[data-variant="thumbnail"] .note-paper-body {
+    flex: 1;
+    overflow: hidden;
+    font-size: var(--type-label);
+    line-height: 1.75;
+    /* 底部渐隐：纸张正文淡出到操作区，而不是被硬切一刀 */
+    mask-image: linear-gradient(to bottom, #000 0, #000 calc(100% - 3.25rem), transparent 100%);
+  }
+
+  /* ------------------------------------------------------------------------ */
+  /* reader: 全尺寸阅读纸张，纸自身独立滚动                                  */
+  /* ------------------------------------------------------------------------ */
+
+  .note-paper[data-variant="reader"] {
+    width: min(var(--paper-max-width), 100%);
+    max-height: 100%;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    box-shadow: var(--paper-shadow);
+    scrollbar-gutter: stable;
+  }
+  .note-paper[data-variant="reader"]:focus {
+    outline: none;
+  }
+  .note-paper[data-variant="reader"] .note-paper-column {
+    width: min(100%, 45rem);
+    margin-inline: auto;
+    padding:
+      clamp(2rem, 5vh, 3.4rem)
+      clamp(1.25rem, 5vw, 3rem)
+      clamp(2.5rem, 7vh, 4rem);
+  }
+  .note-paper[data-variant="reader"] .note-paper-title {
+    font-size: clamp(1.5rem, 4vw, 1.875rem);
+    line-height: 1.22;
+  }
+  .note-paper[data-variant="reader"] .note-paper-body {
+    margin-top: 1.15rem;
+  }
+  .note-paper[data-variant="reader"] .markdown-reading-view {
+    color: var(--paper-foreground);
+    font-family: var(--font-serif);
+  }
+}
+
+@supports (corner-shape: squircle) {
+  @layer components {
+    .note-paper {
+      corner-shape: var(--corner-shape-smooth);
+    }
+  }
+}

@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 index.css 的 Quiet Editorial 语义 Color/Type/Spacing/Radius/Elevation/Motion、统一中性 interactive-hover 与 Tailwind v4 layer
- * [OUTPUT]: 对外提供平面 Input/Select/Card、纯色 BrandMark、克制 Dialog 层级、Skeleton/Thinking/loading 信息态；Select 临时指向状态与普通菜单共享中性 hover，Button 由 button.css 独立维护
+ * [OUTPUT]: 对外提供平面 Input/Select/Card、纯色 BrandMark、克制 Dialog panel/bare 两种模态表面、Skeleton/Thinking/loading 信息态；Select 临时指向状态与普通菜单共享中性 hover，Button 由 button.css 独立维护
  * [POS]: app/src/styles 的组件视觉层，被 index.css 统一导入
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -318,6 +318,20 @@
   }
 
   .ds-dialog-panel:focus {
+    outline: none;
+  }
+
+  /* bare 表面: 只承担模态几何与入场, 视觉完全由 children 拥有 */
+  .ds-dialog-shell {
+    display: flex;
+    max-width: 100%;
+    max-height: 100%;
+    min-width: 0;
+    min-height: 0;
+    animation: ds-panel-in var(--motion-normal) var(--ease-standard);
+  }
+
+  .ds-dialog-shell:focus {
     outline: none;
   }
 
