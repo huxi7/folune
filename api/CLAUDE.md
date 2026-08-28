@@ -14,11 +14,11 @@ src/model/: 领域模型层，定义 AuthUser、Profile、Memo、AI 状态机、
 src/service/: 业务服务层，负责 JWT、profile、memo/Trash、AI 状态机及 Canvas V2 入口/读取/统一 mutation/context 的稳定 HTTP 编排
 src/repository/: 数据访问层，携带已验证用户 JWT 通过 Supabase REST 提供 profiles、memo、AI 与 Canvas V2 受控 RPC
 src/middleware/: HTTP 横切层，提供请求 ID、开发态彩色 ASCII 请求卡片、生产态 JSON 日志与统一错误处理
-src/common/: 通用层，提供 HttpError 与统一响应 helper
+src/common/: 通用层，提供 HttpError、统一响应 helper 与命名冲突翻译/默认名分配
 src/config/: 配置层，集中校验 API 环境变量
 src/lib/: 基础设施层，提供 Supabase Auth/PostgREST/Storage HTTP 适配器与启动横幅
-supabase/: 数据库契约层，保存 profiles、memo tree/检索、AI 状态机、Canvas V2 schema/入口/统一 mutation/cutover/rollback、owner-only RLS 与原子 RPC；旧 Canvas SQL 定义仅为显式代码回滚面
-test/: Bun 内置 API 回归测试，使用内存 Supabase HTTP/RPC mock 验证认证、profile、memo/Trash、AI 生命周期与 Canvas V2 唯一写内核契约
+supabase/: 数据库契约层，保存 profiles、memo tree/检索/命名唯一约束与默认画布标题触发器、AI 状态机、Canvas V2 schema/入口/统一 mutation/cutover/rollback、owner-only RLS 与原子 RPC；旧 Canvas SQL 定义仅为显式代码回滚面
+test/: Bun 内置 API 回归测试，使用共享内存 Supabase HTTP/RPC mock 验证认证、profile、memo/Trash/命名重名、AI 生命周期与 Canvas V2 唯一写内核契约
 .env.example: 无真实凭据的本地环境变量模板，使用 Supabase Publishable key、后端端口 10001、前端 CORS 来源端口 10000
 .gitignore: api 模块忽略规则
 package.json: Bun scripts（含 typecheck/test）与 hono、zod 运行依赖清单

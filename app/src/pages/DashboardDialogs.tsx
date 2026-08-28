@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 AccountDialog/MemoNodeDialog、Profile 与 Dashboard 的受控 Dialog 状态/回调
- * [OUTPUT]: 对外提供 DashboardDialogs，集中渲染账户与新建文件夹两个互斥覆盖层
+ * [OUTPUT]: 对外提供 DashboardDialogs，集中渲染账户与新建文件夹两个互斥覆盖层，并把新文件夹的落点交给弹窗做同级重名判定
  * [POS]: pages 的纯覆盖层组合；AppDashboard 只保留业务状态与命令，不展开重复 Dialog 生命周期标记
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -63,6 +63,7 @@ export function DashboardDialogs({
           }}
           onSubmit={onCreateFolder}
           open
+          parentId={memoDialog.parentId}
         />
       )}
     </>

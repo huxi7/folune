@@ -34,6 +34,10 @@ import {
   UserMenu,
 } from "../shared/design-system/components";
 import {
+  canRenameMemoNode,
+  memoNodeTitleTaken,
+} from "../shared/store/memoTitleRules";
+import {
   createMemoMovePlan,
   getAncestorFolderIds,
   getFolderIds,
@@ -197,6 +201,14 @@ export function AppSidebar({
   const [renameValue, setRenameValue] = useState("");
   // 进入重命名时的原始标题, 用于提交时判定「标题未变」
   const renameOriginalRef = useRef("");
+  const renamingNode = renamingNodeId === null
+    ? null
+    : findMemoNode(memoTree, renamingNodeId);
+  const renameConflict = memoNodeTitleTaken(
+    memoTree,
+    renamingNode,
+    renameValue,
+  );
   const layoutKey = useMemo(() => treeStructureKey(memoTree), [memoTree]);
   const folderIds = useMemo(() => getFolderIds(memoTree), [layoutKey]);
   const { expandedFolders, setExpandedFolders } = useMemoTreeExpansion({
@@ -385,6 +397,12 @@ export function AppSidebar({
 
   function beginRename(node: MemoTreeNode) {
     setContextMenu(null);
+
+    // 默认 Canvas 的名称跟随来源笔记, 不可独立编辑
+    if (!canRenameMemoNode(node)) {
+      return;
+    }
+
     setRenamingNodeId(node.id);
     setRenameValue(node.title);
     renameOriginalRef.current = node.title;
@@ -397,6 +415,15 @@ export function AppSidebar({
 
   function commitRename() {
     if (renamingNodeId === null) {
+      return;
+    }
+
+    /*
+     * 撞名时不提交、不收起、不清空: 用户的输入必须留在原地等他改, 而不是
+     * 先发一次注定被唯一约束驳回的 PATCH 再静默回滚。提示由行内 data-conflict
+     * 承担, 想放弃就按 Escape。
+     */
+    if (renameConflict) {
       return;
     }
 
@@ -596,6 +623,7 @@ export function AppSidebar({
               onSelectMemo={onSelectMemo}
               onToggleFolder={toggleFolder}
               parentId={null}
+              renameConflict={renameConflict}
               renameValue={renameValue}
               renamingNodeId={renamingNodeId}
               selectedMemoId={selectedMemoId}
@@ -686,16 +714,18 @@ export function AppSidebar({
           {contextMenuNode ? (
             <>
               <span className="memo-context-menu-separator" />
-              <button
-                disabled={mutating}
-                onClick={() => beginRename(contextMenuNode)}
-                role="menuitem"
-                type="button"
-              >
-                <PencilSimpleIcon size={14} />
-                <span className="memo-context-menu-label">重命名</span>
-                <kbd className="memo-context-menu-shortcut">F2</kbd>
-              </button>
+              {canRenameMemoNode(contextMenuNode) ? (
+                <button
+                  disabled={mutating}
+                  onClick={() => beginRename(contextMenuNode)}
+                  role="menuitem"
+                  type="button"
+                >
+                  <PencilSimpleIcon size={14} />
+                  <span className="memo-context-menu-label">重命名</span>
+                  <kbd className="memo-context-menu-shortcut">F2</kbd>
+                </button>
+              ) : null}
               <button
                 className="memo-context-menu-danger"
                 disabled={mutating}

@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖后端 MemoTreeNode、memoLibrary 落点、紧凑 SidebarButton、ArchiveTargetPort 与上层展开/拖拽/原地重命名命令
- * [OUTPUT]: 对外提供递归树、folder/memo 落点、归档目标端口、拖拽状态、原地重命名及本次归档语义标记
+ * [OUTPUT]: 对外提供递归树、folder/memo 落点、归档目标端口、拖拽状态、原地重命名（默认 Canvas 除外）、重名原位提示及本次归档语义标记
  * [POS]: app/src/widgets 的纯树交互渲染器；只表达可见层级、HTML5 DnD 几何与归档锚点，不拥有树数据、连线生命周期或 API
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -22,6 +22,7 @@ import {
 
 import type { MemoTreeNode } from "../shared/api/memo";
 import { SidebarButton } from "../shared/design-system/components";
+import { canRenameMemoNode } from "../shared/store/memoTitleRules";
 import { ArchiveTargetPort } from "./ArchiveCord";
 import type { MemoDropTarget } from "./memoLibrary";
 
@@ -40,6 +41,7 @@ type MemoTreeBranchProps = {
   nodes: readonly MemoTreeNode[];
   notesActive: boolean;
   parentId: string | null;
+  renameConflict: boolean;
   renamingNodeId: string | null;
   renameValue: string;
   onBeginRename: (node: MemoTreeNode) => void;
@@ -134,7 +136,12 @@ function MemoTreeDropZone({
   );
 }
 
+const renameConflictId = (nodeId: string): string =>
+  `memo-tree-rename-conflict-${nodeId}`;
+
 type InlineRenameProps = {
+  /** 同级已有同名对象：提交被挂起，编辑态与用户输入一律保留 */
+  conflict: boolean;
   icon: ReactNode;
   nodeId: string;
   onCancel: () => void;
@@ -145,6 +152,7 @@ type InlineRenameProps = {
 };
 
 function InlineRename({
+  conflict,
   icon,
   nodeId,
   onCancel,
@@ -164,6 +172,7 @@ function InlineRename({
   return (
     <div
       className="ds-sidebar-button sidebar-tree-row memo-tree-rename-row"
+      data-conflict={conflict ? "" : undefined}
       data-memo-tree-row-id={nodeId}
       data-size="default"
       style={style}
@@ -172,6 +181,8 @@ function InlineRename({
         {icon}
       </span>
       <input
+        aria-describedby={conflict ? renameConflictId(nodeId) : undefined}
+        aria-invalid={conflict ? true : undefined}
         aria-label="重命名节点"
         className="memo-tree-rename-input"
         maxLength={500}
@@ -196,6 +207,15 @@ function InlineRename({
         ref={inputRef}
         value={value}
       />
+      {conflict ? (
+        <span
+          className="memo-tree-rename-conflict"
+          id={renameConflictId(nodeId)}
+          role="alert"
+        >
+          已存在同名
+        </span>
+      ) : null}
     </div>
   );
 }
@@ -212,6 +232,7 @@ export function MemoTreeBranch(props: MemoTreeBranchProps) {
     nodes,
     notesActive,
     parentId,
+    renameConflict,
     renamingNodeId,
     renameValue,
     onBeginRename,
@@ -267,6 +288,8 @@ export function MemoTreeBranch(props: MemoTreeBranchProps) {
         const LeafComponent = node.node_type === "canvas"
           ? CanvasIcon
           : FileTextIcon;
+        // 默认 Canvas 的名字跟随来源笔记, 三个重命名入口都对它关闭
+        const renameable = canRenameMemoNode(node);
         const icon = isFolder ? (
           <FolderComponent size={14} />
         ) : (
@@ -285,6 +308,7 @@ export function MemoTreeBranch(props: MemoTreeBranchProps) {
           >
             {renamingNodeId === node.id ? (
               <InlineRename
+                conflict={renameConflict}
                 icon={icon}
                 nodeId={node.id}
                 onCancel={onCancelRename}
@@ -297,7 +321,7 @@ export function MemoTreeBranch(props: MemoTreeBranchProps) {
               <SidebarButton
                 active={isActive}
                 aria-current={!isFolder && isActive ? "page" : undefined}
-                aria-keyshortcuts="F2"
+                aria-keyshortcuts={renameable ? "F2" : undefined}
                 className={[
                   "sidebar-tree-row",
                   isFolder ? "sidebar-folder-row" : "sidebar-document-row",
@@ -340,14 +364,14 @@ export function MemoTreeBranch(props: MemoTreeBranchProps) {
                 }}
                 onContextMenu={(event) => onContextMenu(event, node)}
                 onDoubleClick={(event) => {
-                  if (!mutating) {
+                  if (!mutating && renameable) {
                     event.preventDefault();
                     event.stopPropagation();
                     onBeginRename(node);
                   }
                 }}
                 onKeyDown={(event) => {
-                  if (event.key === "F2" && !mutating) {
+                  if (event.key === "F2" && !mutating && renameable) {
                     event.preventDefault();
                     event.stopPropagation();
                     onBeginRename(node);

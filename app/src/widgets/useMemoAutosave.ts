@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 React state/effect/ref、真实 MemoTreeNode、Store 正文本地更新命令与显式 memoId 的后台保存命令
- * [OUTPUT]: 对外提供 useMemoAutosave、加载期无本地草稿的服务端初值接纳、可等待强制 flush、删除期 pause/resume、已提交标题接纳、草稿类型、调度参数与可测试重试器
- * [POS]: app/src/widgets 的编辑会话协调边界；删除前可证明保存完成并暂停卸载 flush，普通输入仍沿用单一自动保存状态机
+ * [OUTPUT]: 对外提供 useMemoAutosave、加载期无本地草稿的服务端初值接纳、可等待强制 flush、删除期 pause/resume、已提交标题接纳、titleConflict 原位提示状态、草稿类型、调度参数与可测试重试器
+ * [POS]: app/src/widgets 的编辑会话协调边界；删除前可证明保存完成并暂停卸载 flush，普通输入仍沿用单一自动保存状态机。标题与正文是两条独立提交路径：同级重名只挂起 title 字段并原位提示，正文永远继续自动保存
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -13,6 +13,7 @@ import {
 } from "react";
 
 import type { MemoTreeNode } from "../shared/api/memo";
+import { isMemoTitleConflictError } from "../shared/store/memoTitleRules";
 
 export const AUTOSAVE_CHAR_THRESHOLD = 32;
 export const AUTOSAVE_IDLE_MS = 1_500;
@@ -35,6 +36,8 @@ type MemoFlushOptions = MemoSaveOptions & {
 };
 
 type UseMemoAutosaveInput = {
+  /** 标题即时预检查：同级已有同名对象时返回 true */
+  hasTitleConflict: (title: string) => boolean;
   initialContent: string;
   initialTitle: string;
   memoId: string;
@@ -60,6 +63,8 @@ type AutosaveSession = {
   memoId: string;
   paused: boolean;
   savingPromise: Promise<void> | null;
+  /** 被服务端唯一约束驳回的那个标题；只挂起 title，正文照常保存 */
+  serverRejectedTitle: string | null;
 };
 
 type UseMemoAutosaveResult = {
@@ -70,6 +75,8 @@ type UseMemoAutosaveResult = {
   resume: () => void;
   restoreTitleIfEmpty: () => void;
   title: string;
+  /** 当前标题与同级重名：原位提示的唯一状态源 */
+  titleConflict: boolean;
   updateContent: (content: string) => void;
   updateTitle: (title: string) => void;
 };
@@ -102,6 +109,7 @@ export const shouldAdoptInitialMemo = (input: {
 export async function saveWithRetry<T>(
   operation: () => Promise<T>,
   wait: Sleep = sleep,
+  shouldRetry: (error: unknown) => boolean = () => true,
 ): Promise<T> {
   let retryIndex = 0;
 
@@ -111,7 +119,9 @@ export async function saveWithRetry<T>(
     } catch (error) {
       const delayMs = AUTOSAVE_RETRY_DELAYS_MS[retryIndex];
 
-      if (delayMs === undefined) {
+      // 结构性拒绝（同级重名）重试三次也只会得到同一个答案；退避只对
+      // 瞬时故障有意义，对确定性冲突只是把提示推迟了 2.8 秒。
+      if (delayMs === undefined || !shouldRetry(error)) {
         throw error;
       }
 
@@ -138,6 +148,7 @@ const createSession = (
   memoId,
   paused: false,
   savingPromise: null,
+  serverRejectedTitle: null,
 });
 
 const clearAutosaveTimers = (session: AutosaveSession) => {
@@ -152,13 +163,32 @@ const clearAutosaveTimers = (session: AutosaveSession) => {
   }
 };
 
+/**
+ * 标题是否被挂起。两个来源：本地预检查发现同级重名，或服务端唯一约束刚驳回过
+ * 这个标题。挂起只影响 title 字段——正文永远继续保存，否则用户在冲突状态下
+ * 写的正文会随着一次注定失败的改名一起丢掉。
+ */
+const isTitleBlocked = (
+  session: AutosaveSession,
+  hasConflict: (title: string) => boolean,
+): boolean => {
+  const normalizedTitle = session.latestTitle.trim();
+
+  if (normalizedTitle.length === 0) return false;
+  if (session.serverRejectedTitle === normalizedTitle) return true;
+
+  return hasConflict(normalizedTitle);
+};
+
 const draftForSession = (
   session: AutosaveSession,
+  titleBlocked: boolean,
 ): MemoDraftSnapshot | null => {
   const normalizedTitle = session.latestTitle.trim();
   const contentChanged = session.latestContent !== session.lastSavedContent;
-  const titleChanged =
-    normalizedTitle.length > 0 && normalizedTitle !== session.lastSavedTitle;
+  const titleChanged = !titleBlocked
+    && normalizedTitle.length > 0
+    && normalizedTitle !== session.lastSavedTitle;
 
   if (!contentChanged && !titleChanged) {
     return null;
@@ -179,6 +209,7 @@ const draftKey = (draft: MemoDraftSnapshot): string =>
   ]);
 
 export function useMemoAutosave({
+  hasTitleConflict,
   initialContent,
   initialTitle,
   memoId,
@@ -188,6 +219,8 @@ export function useMemoAutosave({
 }: UseMemoAutosaveInput): UseMemoAutosaveResult {
   const [content, setContent] = useState(initialContent);
   const [title, setTitle] = useState(initialTitle);
+  const [titleConflict, setTitleConflict] = useState(false);
+  const hasTitleConflictRef = useRef(hasTitleConflict);
   const onContentChangeRef = useRef(onContentChange);
   const onFailureRef = useRef(onFailure);
   const onSaveRef = useRef(onSave);
@@ -199,9 +232,25 @@ export function useMemoAutosave({
     options?: MemoFlushOptions,
   ) => Promise<void>>(async () => undefined);
 
+  hasTitleConflictRef.current = hasTitleConflict;
   onContentChangeRef.current = onContentChange;
   onFailureRef.current = onFailure;
   onSaveRef.current = onSave;
+
+  /*
+   * 每次取草稿都重新解释一次"标题是否被挂起", 并把结论同步给视图。判据放在
+   * 取草稿这一刻而不是缓存起来: 用户改一个字就可能让冲突消失, 提示必须立刻跟着
+   * 消失, 标题也要立刻恢复可提交。
+   */
+  const draftNow = useCallback((session: AutosaveSession) => {
+    const blocked = isTitleBlocked(session, hasTitleConflictRef.current);
+
+    if (sessionRef.current === session && !session.disposed) {
+      setTitleConflict(blocked);
+    }
+
+    return draftForSession(session, blocked);
+  }, []);
 
   const flushSession = useCallback(async (
     session: AutosaveSession,
@@ -213,7 +262,7 @@ export function useMemoAutosave({
       return;
     }
 
-    const draft = draftForSession(session);
+    const draft = draftNow(session);
 
     if (draft === null) {
       return;
@@ -243,7 +292,7 @@ export function useMemoAutosave({
         }
       }
 
-      if (options?.throwOnFailure && draftForSession(session) !== null) {
+      if (options?.throwOnFailure && draftNow(session) !== null) {
         return flushSession(session, options);
       }
 
@@ -254,12 +303,16 @@ export function useMemoAutosave({
     let request!: Promise<void>;
     request = (async () => {
       try {
-        const updated = await saveWithRetry(() =>
-          onSaveRef.current(
-            session.memoId,
-            draft,
-            options?.keepalive ? { keepalive: true } : undefined,
-          ));
+        const updated = await saveWithRetry(
+          () =>
+            onSaveRef.current(
+              session.memoId,
+              draft,
+              options?.keepalive ? { keepalive: true } : undefined,
+            ),
+          undefined,
+          (error) => !isMemoTitleConflictError(error),
+        );
 
         if (
           draft.contentChanged &&
@@ -283,7 +336,25 @@ export function useMemoAutosave({
 
         session.failedDraftKey = null;
       } catch (error) {
-        const latestDraft = draftForSession(session);
+        /*
+         * ---- 唯一约束驳回：只挂起标题，绝不连坐正文 ----
+         * 前端预检查是快速反馈，唯一索引才是并发下的最终真相；预检查放过的
+         * 标题仍可能在这里被驳回。记下这个标题后重新取草稿，下一次提交就只
+         * 带正文，用户在冲突期间写的字照常落库。冲突不走 onFailure 的错误
+         * Toast，但也没有被吞掉——它变成标题编辑区的原位提示。
+         */
+        if (isMemoTitleConflictError(error) && draft.titleChanged) {
+          session.serverRejectedTitle = draft.title;
+          // 重新取草稿会把提示点亮并让下一份草稿只剩正文；补发交给 finally 里
+          // 既有的"草稿已变化就追赶"分支，不另建第二条重试路径。
+          draftNow(session);
+
+          if (!options?.throwOnFailure) {
+            return;
+          }
+        }
+
+        const latestDraft = draftNow(session);
 
         if (
           latestDraft !== null &&
@@ -304,7 +375,7 @@ export function useMemoAutosave({
           session.savingPromise = null;
         }
 
-        const latestDraft = draftForSession(session);
+        const latestDraft = draftNow(session);
 
         if (
           !session.paused &&
@@ -327,10 +398,10 @@ export function useMemoAutosave({
     session.savingPromise = request;
     await request;
 
-    if (options?.throwOnFailure && draftForSession(session) !== null) {
+    if (options?.throwOnFailure && draftNow(session) !== null) {
       return flushSession(session, options);
     }
-  }, []);
+  }, [draftNow]);
 
   flushSessionRef.current = flushSession;
 
@@ -382,10 +453,10 @@ export function useMemoAutosave({
 
     session.paused = false;
 
-    if (draftForSession(session) !== null) {
+    if (draftNow(session) !== null) {
       scheduleAutosave(session);
     }
-  }, [scheduleAutosave]);
+  }, [draftNow, scheduleAutosave]);
 
   useEffect(() => {
     let session = sessionRef.current;
@@ -477,8 +548,10 @@ export function useMemoAutosave({
     session.latestTitle = nextTitle;
     session.failedDraftKey = null;
     setTitle(nextTitle);
+    // 提示必须在敲字的这一刻就出现/消失，不能等 1.5s 的 autosave 才知道
+    draftNow(session);
     scheduleAutosave(session);
-  }, [scheduleAutosave]);
+  }, [draftNow, scheduleAutosave]);
 
   const restoreTitleIfEmpty = useCallback(() => {
     const session = sessionRef.current;
@@ -494,7 +567,10 @@ export function useMemoAutosave({
     session.lastSavedTitle = nextTitle;
     session.latestTitle = nextTitle;
     session.failedDraftKey = null;
+    // 这个标题是服务端已提交的事实，之前的驳回记录随之作废
+    session.serverRejectedTitle = null;
     setTitle(nextTitle);
+    setTitleConflict(false);
   }, []);
 
   return {
@@ -505,6 +581,7 @@ export function useMemoAutosave({
     resume,
     restoreTitleIfEmpty,
     title,
+    titleConflict,
     updateContent,
     updateTitle,
   };

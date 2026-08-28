@@ -1,11 +1,12 @@
 /**
  * [INPUT]: 依赖可信 AuthUser/JWT、Canvas V2 entry/read/mutation/context DTO、唯一 canvas repository 与结构化 HttpError
- * [OUTPUT]: 对外提供默认/独立 Canvas 创建、读取、人工 mutation、AI expansion commit 与可信 context
+ * [OUTPUT]: 对外提供默认/独立 Canvas 创建（独立 Canvas 的系统默认名撞名时顺位让开）、读取、人工 mutation、AI expansion commit 与可信 context
  * [POS]: service 层 Canvas V2 状态映射边界；人工与 AI 写入都下沉到同一数据库内核，409 携带版本事实供 WAL 安全 rebase
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
 import { HttpError } from "../common/http-error.ts";
+import { createWithAvailableTitle } from "../common/memo-title.ts";
 import type {
   CanvasEntryRpcResult,
   CanvasExpansionContextRpcResult,
@@ -138,11 +139,17 @@ export const canvasService = {
     accessToken: string,
     input: CreateCanvasV2Input,
   ): Promise<CanvasEntryResult> {
-    return requireEntry(await canvasRepository.createStandalone({
-      parentId: input.parent_id ?? null,
-      title: input.title,
-      userId: authUser.id,
-    }, accessToken));
+    /*
+     * 新建独立 Canvas 的标题是系统默认名（「未命名 Canvas」），与新建备忘录
+     * 同理：同一目录里连着新建两次必然撞上同父同类型唯一约束，因此默认名顺位
+     * 让开，而不是让最高频的动作直接失败。
+     */
+    return await createWithAvailableTitle(input.title, async (title) =>
+      requireEntry(await canvasRepository.createStandalone({
+        parentId: input.parent_id ?? null,
+        title,
+        userId: authUser.id,
+      }, accessToken)));
   },
 
   async read(

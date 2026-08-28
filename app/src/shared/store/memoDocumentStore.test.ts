@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun mock/test、可控单篇 memo API Promise 与 memoDocumentStore
- * [OUTPUT]: 验证正文按 ID 缓存、切换隔离及 reset 后旧响应不得回填新会话
+ * [OUTPUT]: 验证正文按 ID 缓存、切换隔离、reset 后旧响应不得回填新会话，以及临时 ID 对账时服务端顺位让开的默认名被接纳而用户在途输入不被覆盖
  * [POS]: shared/store 的正文生命周期回归测试，保护目录轻载后只读取被打开笔记这一核心边界
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -93,5 +93,39 @@ describe("memoDocumentStore", () => {
 
     expect(useMemoDocumentStore.getState().documents).toEqual({});
     expect(useMemoDocumentStore.getState().statuses).toEqual({});
+  });
+});
+
+describe("临时 ID 对账", () => {
+  const primeOptimistic = (title: string, content: string) => {
+    const optimistic = { ...makeDetail("temp-1", content), title };
+    useMemoDocumentStore.getState().primeMemo(optimistic);
+  };
+
+  test("用户没动过标题：接纳服务端顺位让开后的默认名", () => {
+    primeOptimistic("未命名备忘录", "");
+    const server = { ...makeDetail("real-1", ""), title: "未命名备忘录 2" };
+    const reconciled = useMemoDocumentStore.getState().rekeyMemo(
+      "temp-1",
+      server,
+      "",
+      "未命名备忘录",
+    );
+
+    expect(reconciled.title).toBe("未命名备忘录 2");
+    expect(useMemoDocumentStore.getState().documents["temp-1"]).toBeUndefined();
+  });
+
+  test("提交期间用户已经开始命名：本地标题不被服务端覆盖", () => {
+    primeOptimistic("熵与妄作", "");
+    const server = { ...makeDetail("real-2", ""), title: "未命名备忘录 2" };
+    const reconciled = useMemoDocumentStore.getState().rekeyMemo(
+      "temp-1",
+      server,
+      "",
+      "未命名备忘录",
+    );
+
+    expect(reconciled.title).toBe("熵与妄作");
   });
 });

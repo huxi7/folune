@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖 React Router Profile/token、轻量 tree/按需正文/WorkspaceChrome Store、AI Run、PaperWorkspaceShell/CanvasWorkspace 与业务工作区
- * [OUTPUT]: 对外提供互斥的 Paper First 写作舞台/全屏知识画布、路由类型未决时的中性全屏等待、目录轻载/单篇正文路由、草稿 flush 后删除/AI/整理/探索分流及账户/视图编排
+ * [INPUT]: 依赖 React Router Profile/token、轻量 tree/按需正文/WorkspaceChrome Store、memoTitleRules 重名判据、useMemoNodeDeletion 删除编排、AI Run、PaperWorkspaceShell/CanvasWorkspace 与业务工作区
+ * [OUTPUT]: 对外提供互斥的 Paper First 写作舞台/全屏知识画布、路由类型未决时的中性全屏等待、目录轻载/单篇正文路由、草稿 flush 后删除/AI/整理/探索分流、标题重名即时判据下传及账户/视图编排
  * [POS]: app/src/pages 的 /app 编排层；目录、正文、编辑器、Run、浮动工具与 Trash 的跨域生命周期只在此建立一次等待边界，并依据路由节点类型在 Paper 与 Canvas 两种空间壳之间切换；深链刷新时先确认节点类型再挂载空间壳，避免画布前闪出 Paper/Panel
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -17,6 +17,7 @@ import type { Profile } from "../shared/api/profile";
 import { useDelayedSkeleton, useToast } from "../shared/design-system/components";
 import { findNode } from "../shared/store/memoTree";
 import { useMemoDocumentStore } from "../shared/store/memoDocumentStore";
+import { isMemoTitleConflictError, memoNodeTitleTaken } from "../shared/store/memoTitleRules";
 import { useMemoTreeStore } from "../shared/store/memoTreeStore";
 import { useWorkspaceChromeStore } from "../shared/store/workspaceChromeStore";
 import { useCanvasChromeStore } from "../shared/store/canvasChromeStore";
@@ -60,6 +61,7 @@ import { buildWorkspaceOrganizePresentation } from "./organizePresentation";
 import { useOptimisticMemoCreation } from "./useOptimisticMemoCreation";
 import { useMemoDocumentLoad } from "./useMemoDocumentLoad";
 import { useMemoCanvasEntry } from "./useMemoCanvasEntry";
+import { useMemoNodeDeletion } from "./useMemoNodeDeletion";
 import { useStandaloneCanvasCreation } from "./useStandaloneCanvasCreation";
 import { useAccountProfileRefresh } from "./useAccountProfileRefresh";
 import { useMemoOrganize } from "./useMemoOrganize";
@@ -204,6 +206,21 @@ export function AppDashboard() {
     toast,
   });
   const canvasCreation = useStandaloneCanvasCreation({ accessToken, mergeServerNode, navigate, toast });
+  const memoDeletion = useMemoNodeDeletion({
+    accessToken,
+    editingSession: notesWorkspaceRef,
+    lastMemoStorageKey: lastMemoStorageKey(profile.id),
+    mutating: treeMutating,
+    navigate,
+    onDeleted: () => setTrashRevision((revision) => revision + 1),
+    onLeaveRoute: () => {
+      setViewTitleDraft(null);
+      setActiveView("note");
+    },
+    routeNodeId: routeMemoId,
+    setMutating: setTreeMutating,
+    toast,
+  });
   const paperView: WorkspaceAuxView = activeView;
   useMemoDocumentLoad({
     accessToken,
@@ -434,92 +451,14 @@ export function AppDashboard() {
       await renameNode(accessToken, nodeId, title);
       toast({ title: "名称已更新", variant: "success" });
     } catch (error) {
+      // 唯一约束是并发下的最终真相: 预检查放过的名字仍可能在这里被驳回,
+      // 此时要说清"重名"而不是笼统的"保存失败"。
+      const conflict = isMemoTitleConflictError(error);
       toast({
-        description: error instanceof Error ? error.message : undefined,
-        title: "重命名保存失败",
+        description: conflict || !(error instanceof Error) ? undefined : error.message,
+        title: conflict ? "同一位置已存在同名对象" : "重命名保存失败",
         variant: "error",
       });
-    }
-  }
-
-  async function handleSoftDeleteNode(nodeId: string): Promise<boolean> {
-    if (treeMutating) {
-      return false;
-    }
-
-    const treeBeforeDelete = useMemoTreeStore.getState().nodes;
-    const impact = getMemoDeletionImpact(
-      treeBeforeDelete,
-      nodeId,
-      routeMemoId,
-    );
-
-    if (impact === null) {
-      toast({ title: "要删除的项目不存在", variant: "error" });
-      return false;
-    }
-
-    let autosavePaused = false;
-    setTreeMutating(true);
-
-    try {
-      if (impact.affectsCurrentMemo) {
-        const autosaveBoundary = notesWorkspaceRef.current;
-
-        if (autosaveBoundary === null) {
-          throw new Error("编辑会话尚未准备好，请稍后重试。");
-        }
-
-        await autosaveBoundary.prepareForDelete();
-        autosavePaused = true;
-      }
-
-      await softDeleteNode(accessToken, nodeId);
-      removeMemoDocuments(impact.affectedMemoIds);
-      const storageKey = lastMemoStorageKey(profile.id);
-      const storedMemoId = window.localStorage.getItem(storageKey);
-
-      if (
-        storedMemoId !== null &&
-        impact.affectedMemoIds.has(storedMemoId)
-      ) {
-        window.localStorage.removeItem(storageKey);
-      }
-
-      setTrashRevision((revision) => revision + 1);
-
-      if (impact.affectsCurrentRoute) {
-        const destination = getPostDeletionDestination(
-          useMemoTreeStore.getState().nodes,
-        );
-        setViewTitleDraft(null);
-        setActiveView("note");
-
-        if (destination.memoId === null) {
-          navigate(destination.path, { replace: true });
-        } else {
-          window.localStorage.setItem(storageKey, destination.memoId);
-          navigate(destination.path, {
-            replace: true,
-          });
-        }
-      }
-
-      toast({ title: "已移至回收站", variant: "success" });
-      return true;
-    } catch (error) {
-      if (autosavePaused) {
-        notesWorkspaceRef.current?.resumeAfterDeleteFailure();
-      }
-
-      toast({
-        description: error instanceof Error ? error.message : undefined,
-        title: "移至回收站失败",
-        variant: "error",
-      });
-      return false;
-    } finally {
-      setTreeMutating(false);
     }
   }
 
@@ -645,7 +584,7 @@ export function AppDashboard() {
           onOpenSubscription={() => setActiveView("subscription")}
           onRenameNode={handleRenameNode}
           onSoftDeleteNode={async (nodeId) => {
-            await handleSoftDeleteNode(nodeId);
+            await memoDeletion.deleteNode(nodeId);
           }}
           onRequestCreateFolder={(parentId) => setMemoDialog({ parentId })}
           onSelectMemo={handleSelectMemo}
@@ -710,6 +649,8 @@ export function AppDashboard() {
               memoClientKey={routeMemoId === null
                 ? "empty"
                 : getMemoClientKey(resolveMemoId(routeMemoId))}
+              hasTitleConflict={(title) =>
+                memoNodeTitleTaken(memoTree, selectedMemo, title)}
               memo={selectedMemoDocument}
               onContentChange={(content) => {
                 if (routeMemoId !== null) {

@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 config/env 的 Supabase URL/Publishable key、调用方传入的已验证用户 access token、common/HttpError 与 Web fetch API
- * [OUTPUT]: 对外提供唯一 supabaseRest<T> 请求函数、可组合 Prefer header、强制 accessToken 的 SupabaseRestOptions 与含 on_conflict/eq/is/in 的查询 helper
+ * [OUTPUT]: 对外提供唯一 supabaseRest<T> 请求函数、可组合 Prefer header、强制 accessToken 的 SupabaseRestOptions、含 on_conflict/eq/is/in 的查询 helper 与 postgrestErrorCode 原始 SQLSTATE 取回
  * [POS]: lib 层 Supabase REST/PostgREST 适配器，以 authenticated 用户身份触发 RLS，为 repository 统一组装请求与冲突参数
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -32,27 +32,46 @@ export interface SupabaseRestOptions extends Omit<RequestInit, "headers"> {
   returnRepresentation?: boolean;
 }
 
-const readErrorMessage = async (response: Response): Promise<string> => {
+const readError = async (
+  response: Response,
+): Promise<{ code: string | null; message: string }> => {
   const fallback = `Supabase REST responded with HTTP ${response.status}`;
 
   try {
     const payload = (await response.json()) as {
+      code?: unknown;
       message?: unknown;
       details?: unknown;
     };
+    const code = typeof payload.code === "string" && payload.code.length > 0
+      ? payload.code
+      : null;
 
     if (typeof payload.message === "string" && payload.message.length > 0) {
-      return payload.message;
+      return { code, message: payload.message };
     }
 
     if (typeof payload.details === "string" && payload.details.length > 0) {
-      return payload.details;
+      return { code, message: payload.details };
     }
 
-    return fallback;
+    return { code, message: fallback };
   } catch {
-    return fallback;
+    return { code: null, message: fallback };
   }
+};
+
+/**
+ * PostgREST 把 Postgres 的 SQLSTATE 原样放在错误载荷的 `code` 里。上层需要它
+ * 才能把 23505 一类结构性拒绝翻译成业务错误（例如同父同名），所以这里保留
+ * 原始码而不是让它消失在 502 里；翻译语义归 service，lib 不认识业务概念。
+ */
+export const postgrestErrorCode = (error: unknown): string | null => {
+  if (!(error instanceof HttpError)) return null;
+  const data = error.data;
+  if (data === null || typeof data !== "object") return null;
+  const code = (data as { postgrestCode?: unknown }).postgrestCode;
+  return typeof code === "string" ? code : null;
 };
 
 export const supabaseRest = async <T>(
@@ -92,10 +111,13 @@ export const supabaseRest = async <T>(
   });
 
   if (!response.ok) {
+    const failure = await readError(response);
+
     throw new HttpError(
       502,
       "SUPABASE_REST_ERROR",
-      await readErrorMessage(response),
+      failure.message,
+      { postgrestCode: failure.code },
     );
   }
 

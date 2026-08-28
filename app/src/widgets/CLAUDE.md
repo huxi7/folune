@@ -14,12 +14,12 @@ LandingSections.tsx: Landing 扩展模块，包含 CountUp 行为指标、问题
 LandingFooter.tsx: Landing 无 BlueprintFrame 的全宽深蓝 Fat Footer，品牌锁定只显示 SuperNote 主名称并移除 Write first 副标题，上层用无位移 hover 的独立分栏网格承载品牌/导航/元信息，下层以大块留白呈现与分栏线同色的 1.5px 描边、3% 偏白浅蓝填充、400 字重和负字距的大尺寸 SuperNote SVG 幽灵字
 LandingMotion/: Landing 克制反馈模块，只提供 CountUp 与一次性 reveal；磁吸、指针聚光与装饰点阵已移除，当前页面只保留有信息价值的计数与 3–4px 入场反馈
 NotebookPreview.tsx: Landing 的真实工作台预览，以工具轨、单栏文件 tree、文档纸面和 Agent 归档面板呈现核心体验
-AppSidebar.tsx: /app 与 Canvas 共用的文件库内容；以紧凑 BrandMark、固定操作行（中性搜索按钮 + 96px 新建 split）承载 memo/Canvas/folder 创建，搜索只负责打开全局 Command Palette 而不再拥有本地输入框或独立结果树，并承载真实树展开/rename/HTML5 拖拽/回收站命令、整理目标定位高亮与 Palette 的文件夹定位
+AppSidebar.tsx: /app 与 Canvas 共用的文件库内容；以紧凑 BrandMark、固定操作行（中性搜索按钮 + 96px 新建 split）承载 memo/Canvas/folder 创建，搜索只负责打开全局 Command Palette 而不再拥有本地输入框或独立结果树，并承载真实树展开/rename（默认 Canvas 不开放，撞名不提交也不收起）/HTML5 拖拽/回收站命令、整理目标定位高亮与 Palette 的文件夹定位
 SidebarCreateMenu.tsx: 文件库创建入口；96px split 控件的 64px 主区（图标 + 「新建」）默认新建 memo，32px 下拉区显式选择 memo/standalone Canvas/folder，菜单支持方向键/Home/End 与外部点击关闭，不持有树事务或路由
 AppMainToolbar.tsx: Paper 顶部 48px 文档命令条，呈现低对比完整路径、32px Canvas 入口、整理、阅读/编辑与更多菜单；进入默认 Canvas 前由页面层完成 required flush，命令条不直接发业务请求
-MemoTreeBranch.tsx: 无限递归树渲染器；画布与笔记只靠叶子图标区分（星图 vs 纸张）且永不暴露扩展名，Folder/FolderOpen 单图标承担开合，同层共享固定图标槽；双击/F2 原地重命名，folder/memo 使用固定 DnD 落点，并接收本次整理 folder/memo id 绘制短期归档高亮
+MemoTreeBranch.tsx: 无限递归树渲染器；画布与笔记只靠叶子图标区分（星图 vs 纸张）且永不暴露扩展名，Folder/FolderOpen 单图标承担开合，同层共享固定图标槽；双击/F2 原地重命名（默认 Canvas 除外，它的名字跟随来源笔记），撞名时行内提示且提交挂起，folder/memo 使用固定 DnD 落点，并接收本次整理 folder/memo id 绘制短期归档高亮
 MemoTreeSkeleton.tsx: 文件库首次加载的真实行结构占位组件，只组合共享 Skeleton 并由调用方控制延迟显隐
-MemoNodeDialog.tsx: 文件树命名弹窗，以设计系统 Dialog/Input/Button 承载新建文件夹，负责非空校验、提交锁与 API 错误展示，不使用浏览器 prompt 或直接访问 API
+MemoNodeDialog.tsx: 文件树命名弹窗，以设计系统 Dialog/Input/Button 承载新建文件夹，负责非空校验、同级重名即时提示与提交拦截、提交锁与 API 错误展示（服务端 MEMO_TITLE_CONFLICT 也说人话），不使用浏览器 prompt 或直接访问 API
 memoLibrary.ts: 后端轻量文件树的纯视图模型工具，复用 shared/store/memoTree 算法提供首个 memo、祖先/路径、标题/路径与服务端正文命中 ID 搜索，以及 before/after/inside/root-end 防环计划；folder inside 固定计算第一个子节点 sort_order
 memoLibrary.test.ts: Bun 拖拽视图回归测试，覆盖无限嵌套查找、搜索/路径、根末尾、folder 首位放入、混合排序及自己/后代防环
 useMemoTreeExpansion.ts: 文件树展开偏好的设备级持久化边界；仅在整树 ready 后按用户读取带版本 localStorage 快照，保留明确的全折叠状态，并随 folder 增删清理失效 id、默认展开新 folder
@@ -47,10 +47,10 @@ MarkdownReadingView.tsx: react-markdown + remark-gfm + 可选 remark-breaks + re
 MarkdownReadingView.test.tsx: 阅读换行、安全、常数尾部动画节点与文件边界测试，覆盖备忘录单换行/空行分段、GFM 表格/任务/删除线/引用/代码、脚本/HTML/危险链接剔除、Markdown 五词错峰拖尾、历史正文不装饰、结束回归原生文本，以及 title 到 .md 文件名归一化
 MarkdownViewMenu.tsx: 中央 Toolbar 的高频 editing/reading 切换与 More 菜单；支持外部点击、Escape、方向键/Home/End、焦点恢复，并仅复制/导出当前原始 content_mdx，title 只用于文件名
 markdownViewTypes.ts: DocumentView editing/reading 与 EditingMode live/source 的共享状态协议，阅读状态不占用编辑模式槽位
-NotesWorkspace.tsx: /app Paper 内部写作列，以跨临时/真实后端 ID 不变的 memoClientKey 保持编辑器会话；按需正文未到达前不把空标题反写轻量树，新建时聚焦并选中默认标题，imperative handle 暴露 Agent/Canvas/整理 required flush、正文替换、删除 pause 与已提交 AI 标题接纳
+NotesWorkspace.tsx: /app Paper 内部写作列，以跨临时/真实后端 ID 不变的 memoClientKey 保持编辑器会话；按需正文未到达前不把空标题反写轻量树、撞名的标题同样不反写（它一次也没提交过），标题与提示同属一个网格行以免挤走正文最小高度，新建时聚焦并选中默认标题，imperative handle 暴露 Agent/Canvas/整理 required flush、正文替换、删除 pause 与已提交 AI 标题接纳
 PaperWorkspaceShell.tsx: Paper First 四层空间壳；以 AnimatePresence 编排 Ghost Panel Toggle、按需文件库、唯一 Paper 与 AI 思考空间，Panel 只使用无弹跳 x/opacity Tween；成功/撤销时只持久连接 Paper 与真实树目标，Canvas 空间由并列的 CanvasWorkspace 承担
-useMemoAutosave.ts: 单 memo 编辑会话状态机；支持 required flush、删除期 pause/resume、AI 标题接纳，并只在没有本地草稿时采纳同一 memo 的迟到服务端初值，避免刷新空白或覆盖输入
-useMemoAutosave.test.ts: 覆盖迟到服务端正文接纳门禁、插入/删除/等长替换字符计数及三次有界指数退避
+useMemoAutosave.ts: 单 memo 编辑会话状态机；支持 required flush、删除期 pause/resume、AI 标题接纳，并只在没有本地草稿时采纳同一 memo 的迟到服务端初值，避免刷新空白或覆盖输入。标题与正文是两条独立提交路径：同级重名（本地预检查或服务端 409）只挂起 title 并点亮原位提示，正文永远继续保存，确定性冲突也不进入退避重试
+useMemoAutosave.test.ts: 覆盖迟到服务端正文接纳门禁、插入/删除/等长替换字符计数、三次有界指数退避，以及驱动真实 Hook 证明标题冲突只挂起 title 而正文照常落库
 WorkspaceAuxViews.tsx: 纸内辅助视图挂载点；订阅、回收站、Design System 住在 Paper 内部且彼此互斥。已保存画布属于独立空间语境，明确由 CanvasWorkspace 承载，不得重新并入此分支
 WorkspaceCommandPalette.tsx: 全局唯一 Command Surface；680px 顶部对齐面板、⌘K 双向开合、稳定 id 作为 active 身份、六档排序结果、默认画布降级为笔记行的次级动作，Canvas 语境下只对笔记提供 ⌘Enter 连续加入
 WorkspaceCommandPalette.test.tsx: 键盘状态机门禁，覆盖双向开合、焦点稳定、首项选中、方向键/Enter/Esc、IME 合成期不跳转、⌘Enter 加入后保持打开、正文结果补入时 active 不跳走与 loading/empty/error 状态

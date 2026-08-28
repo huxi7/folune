@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Zustand、单篇 memo API、AiCommand 输出与 MemoDetailNode
- * [OUTPUT]: 对外提供按 ID 加载/缓存正文、临时 ID 对账、本地草稿、保存与 AI 正文投影状态
+ * [OUTPUT]: 对外提供按 ID 加载/缓存正文、按提交值判定的临时 ID 对账（接纳服务端顺位让开的默认名而不覆盖用户在途输入）、本地草稿、保存与 AI 正文投影状态
  * [POS]: shared/store 的正文唯一客户端状态源；目录树只持有摘要，本 Store 不复制树结构或自行导航
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -31,7 +31,12 @@ type MemoDocumentState = {
   statuses: Record<string, MemoDocumentStatus>;
   loadMemo(accessToken: string, nodeId: string, signal?: AbortSignal): Promise<MemoDetailNode>;
   primeMemo(detail: MemoDetailNode): void;
-  rekeyMemo(optimisticId: string, detail: MemoDetailNode, initialContent: string): MemoDetailNode;
+  rekeyMemo(
+    optimisticId: string,
+    detail: MemoDetailNode,
+    initialContent: string,
+    submittedTitle: string,
+  ): MemoDetailNode;
   updateContentLocal(nodeId: string, content: string): void;
   saveMemoDraft(
     accessToken: string,
@@ -119,13 +124,22 @@ export const useMemoDocumentStore = create<MemoDocumentState>()((set, get) => ({
     }));
   },
 
-  rekeyMemo(optimisticId, detail, initialContent) {
+  rekeyMemo(optimisticId, detail, initialContent, submittedTitle) {
     const optimistic = get().documents[optimisticId];
+    /*
+     * 判据是"本地标题是否还等于我们提交上去的那个", 不是"是否等于服务端返回的"。
+     * 系统默认名在同父撞名时由服务端顺位让开（未命名备忘录 → 未命名备忘录 2），
+     * 于是"和服务端不一致"既可能是用户已经开始打字, 也可能只是服务端换了名字;
+     * 只有与提交值比较才能把两者分开, 否则新建出来的笔记会一直显示一个它从未
+     * 拥有过的名字, 并把它反写回文件树。
+     */
     const reconciled = optimistic === undefined
       ? detail
       : {
           ...detail,
-          title: optimistic.title === detail.title ? detail.title : optimistic.title,
+          title: optimistic.title === submittedTitle
+            ? detail.title
+            : optimistic.title,
           memo: {
             ...detail.memo,
             content_mdx: optimistic.memo.content_mdx === initialContent

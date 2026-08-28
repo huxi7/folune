@@ -1,11 +1,15 @@
 /**
  * [INPUT]: 依赖可信 AuthUser、请求期 access token、memo DTO 输入、memo repository、领域模型与 HttpError
- * [OUTPUT]: 对外提供供画布层复用的 nextSortOrder/memoContentData 派生规则，以及轻量 active tree、单篇正文、关键词命中、带命中通道与名次的相似候选、folder/memo CRUD、节点移动与恢复 subtree
- * [POS]: service 层 active 备忘录写入与读取编排边界；树组装委托 memo-tree.service，正文原样存储并派生摘要；检索 RPC 的失败在此收敛为稳定 HTTP 错误，且相似候选只出摘录不出正文
+ * [OUTPUT]: 对外提供供画布层复用的 nextSortOrder/memoContentData 派生规则，以及轻量 active tree、单篇正文、关键词命中、带命中通道与名次的相似候选、folder/memo CRUD（系统默认名撞名顺位让开、用户输入撞名回 MEMO_TITLE_CONFLICT）、节点移动与恢复 subtree
+ * [POS]: service 层 active 备忘录写入与读取编排边界；树组装委托 memo-tree.service，正文原样存储并派生摘要；检索 RPC 的失败在此收敛为稳定 HTTP 错误，且相似候选只出摘录不出正文。PATCH /memos 固定先写正文后写标题——标题会撞唯一约束、正文不会，先写正文才让重名只挂起 title 而不连坐正文，也就不再需要半写回滚
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
 import { HttpError } from "../common/http-error.ts";
+import {
+  createWithAvailableTitle,
+  withTitleConflictTranslation,
+} from "../common/memo-title.ts";
 import type {
   CreateMemoFolderInput,
   CreateMemoInput,
@@ -208,20 +212,19 @@ const createFolder = async (
 ): Promise<MemoTreeNode> => {
   const parentId = input.parent_id ?? null;
   await validateParentFolder(authUser, accessToken, parentId);
-  const created = await memoRepository.createNode(
-    {
-      user_id: authUser.id,
-      parent_id: parentId,
-      node_type: "folder",
-      title: input.title,
-      sort_order: await nextSortOrder(
-        authUser,
-        accessToken,
-        parentId,
-      ),
-    },
-    accessToken,
-  );
+  const sortOrder = await nextSortOrder(authUser, accessToken, parentId);
+  // 用户亲手命名文件夹：撞名不替他改名，翻译成可原位提示的业务冲突。
+  const created = await withTitleConflictTranslation(() =>
+    memoRepository.createNode(
+      {
+        user_id: authUser.id,
+        parent_id: parentId,
+        node_type: "folder",
+        title: input.title,
+        sort_order: sortOrder,
+      },
+      accessToken,
+    ));
 
   if (created === null) {
     throw new HttpError(
@@ -257,18 +260,24 @@ const createMemo = async (
 ): Promise<MemoDetailNode> => {
   const parentId = input.parent_id ?? null;
   await validateParentFolder(authUser, accessToken, parentId);
-  const node = await memoRepository.createNode(
-    {
-      user_id: authUser.id,
-      parent_id: parentId,
-      node_type: "memo",
-      title: input.title,
-      sort_order:
-        input.sort_order ??
-        (await nextSortOrder(authUser, accessToken, parentId)),
-    },
-    accessToken,
-  );
+  const sortOrder = input.sort_order
+    ?? (await nextSortOrder(authUser, accessToken, parentId));
+  /*
+   * 新建备忘录的标题永远是系统默认名（「未命名备忘录」）。同一目录里连着新建
+   * 两次时它必然撞上同父同类型唯一约束, 所以默认名在冲突时顺位让开, 拿到
+   * 「未命名备忘录 2」而不是让最高频的动作直接失败。
+   */
+  const node = await createWithAvailableTitle(input.title, (title) =>
+    memoRepository.createNode(
+      {
+        user_id: authUser.id,
+        parent_id: parentId,
+        node_type: "memo",
+        title,
+        sort_order: sortOrder,
+      },
+      accessToken,
+    ));
 
   if (node === null) {
     throw new HttpError(
@@ -397,31 +406,6 @@ const searchRelatedMemos = async (
   return requireSearchHits(result);
 };
 
-const restoreTitle = async (
-  authUser: AuthUser,
-  accessToken: string,
-  node: MemoNode,
-  currentTitle: string,
-): Promise<void> => {
-  try {
-    await memoRepository.updateNodeTitleIfCurrent(
-      authUser.id,
-      node.id,
-      currentTitle,
-      node.title,
-      accessToken,
-    );
-  } catch (error) {
-    // 回滚失败不能覆盖正文更新的原始错误，也不得记录用户标识或凭据；
-    // 但静默会让半写状态（标题已改、正文未改）永远无法被发现，
-    // 所以留下一条不含身份信息的可观测记录。
-    console.error(
-      `[memo] title rollback failed for node ${node.id}:`,
-      error instanceof Error ? error.message : "unknown error",
-    );
-  }
-};
-
 const updateMemo = async (
   authUser: AuthUser,
   accessToken: string,
@@ -433,15 +417,43 @@ const updateMemo = async (
     accessToken,
     nodeId,
   );
+  let content = current.content;
+
+  /*
+   * ---- 顺序是正文先、标题后 ----
+   * 标题会撞上同父同类型唯一约束，正文不会。先写正文，标题冲突就只挂起标题
+   * 这一件事：用户在冲突状态下写的正文已经落库，不会被一次注定失败的改名
+   * 连坐带走，也不再需要"标题已改、正文未改"的半写回滚补偿。
+   */
+  if (input.content_mdx !== undefined) {
+    const updatedContent = await memoRepository.updateContent(
+      authUser.id,
+      current.node.id,
+      memoContentData(input.content_mdx),
+      accessToken,
+    );
+
+    if (updatedContent === null) {
+      throw new HttpError(
+        409,
+        "MEMO_UPDATE_CONFLICT",
+        "Memo changed before it could be updated",
+      );
+    }
+
+    content = assertOwnedContent(authUser, updatedContent);
+  }
+
   let node = current.node;
 
   if (input.title !== undefined) {
-    const updatedNode = await memoRepository.updateNode(
-      authUser.id,
-      node.id,
-      { title: input.title },
-      accessToken,
-    );
+    const updatedNode = await withTitleConflictTranslation(() =>
+      memoRepository.updateNode(
+        authUser.id,
+        current.node.id,
+        { title: input.title as string },
+        accessToken,
+      ));
 
     if (updatedNode === null) {
       throw new HttpError(
@@ -454,40 +466,6 @@ const updateMemo = async (
     node = assertOwnedNode(authUser, updatedNode);
   }
 
-  let content = current.content;
-
-  if (input.content_mdx !== undefined) {
-    try {
-      const updatedContent = await memoRepository.updateContent(
-        authUser.id,
-        node.id,
-        memoContentData(input.content_mdx),
-        accessToken,
-      );
-
-      if (updatedContent === null) {
-        throw new HttpError(
-          409,
-          "MEMO_UPDATE_CONFLICT",
-          "Memo changed before it could be updated",
-        );
-      }
-
-      content = assertOwnedContent(authUser, updatedContent);
-    } catch (error) {
-      if (input.title !== undefined) {
-        await restoreTitle(
-          authUser,
-          accessToken,
-          current.node,
-          input.title,
-        );
-      }
-
-      throw error;
-    }
-  }
-
   return toMemoDetailNode(node, content);
 };
 
@@ -498,12 +476,13 @@ const renameNode = async (
   input: RenameMemoNodeInput,
 ): Promise<MemoNode> => {
   await findOwnedNode(authUser, accessToken, nodeId);
-  const updated = await memoRepository.updateNode(
-    authUser.id,
-    nodeId,
-    { title: input.title },
-    accessToken,
-  );
+  const updated = await withTitleConflictTranslation(() =>
+    memoRepository.updateNode(
+      authUser.id,
+      nodeId,
+      { title: input.title },
+      accessToken,
+    ));
 
   if (updated === null) {
     throw new HttpError(

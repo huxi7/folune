@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖按需加载的 MemoDetailNode、跨临时/真实 ID 保持不变的 memoClientKey、新建聚焦意图、正文加载状态、DocumentView/EditingMode、useMemoAutosave、MarkdownEditor/ReadingView、ThemeProvider 与 Toast
  * [OUTPUT]: 对外提供临时节点提交期间不重挂载的纸张内写作/阅读列与 NotesWorkspaceHandle，可聚焦新纸标题/编辑器、读取当前选中的一句话、等待草稿落库、接纳 AI 标题并把 Agent 正文替换送入同一自动保存状态机
- * [POS]: app/src/widgets 的备忘录编辑会话边界；Paper 外壳不拥有编辑状态，客户端身份隔离后端 ID 置换，Dashboard 只能经显式 handle 跨越自动保存边界；按需正文未到达前绝不把空标题反写轻量树
+ * [POS]: app/src/widgets 的备忘录编辑会话边界；Paper 外壳不拥有编辑状态，客户端身份隔离后端 ID 置换，Dashboard 只能经显式 handle 跨越自动保存边界；按需正文未到达前绝不把空标题反写轻量树；同级重名在标题区原位提示且不阻断正文自动保存
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -37,12 +37,15 @@ import {
 export type { MemoDraftSnapshot, MemoSaveOptions } from "./useMemoAutosave";
 
 const MAX_TITLE_LENGTH = 500;
+const TITLE_CONFLICT_HINT_ID = "note-editor-title-conflict";
 
 type NotesWorkspaceProps = {
   autoFocus: boolean;
   documentView: DocumentView;
   editingMode: EditingMode;
   emptyTree: boolean;
+  /** 标题即时预检查：同级已有同名笔记时返回 true。判据归 memoTitleRules */
+  hasTitleConflict: (title: string) => boolean;
   memo: MemoDetailNode | null;
   memoClientKey: string;
   onContentChange: (content: string) => void;
@@ -98,6 +101,7 @@ export const NotesWorkspace = forwardRef<
   documentView,
   editingMode,
   emptyTree,
+  hasTitleConflict,
   memo,
   memoClientKey,
   onContentChange,
@@ -121,9 +125,11 @@ export const NotesWorkspace = forwardRef<
     resume,
     restoreTitleIfEmpty,
     title,
+    titleConflict,
     updateContent,
     updateTitle,
   } = useMemoAutosave({
+    hasTitleConflict,
     initialContent: memo?.memo?.content_mdx ?? "",
     initialTitle: memo?.title ?? "",
     memoId: memoClientKey,
@@ -208,11 +214,14 @@ export const NotesWorkspace = forwardRef<
     // 切换到未缓存笔记时，组件先以 memo=null 挂载 Skeleton。此刻 useMemoAutosave
     // 的初值是空串，若反写树就会让侧栏标题闪一下；只有完整 detail 到场后才有
     // 资格把状态机里的规范标题同步回轻量树。
-    if (memo === null) {
+    //
+    // 撞名的标题同样不反写：它一次也没提交过，文件树若跟着显示就等于宣称一个
+    // 并不存在的改名（还会顺着默认画布传下去），刷新后又悄悄弹回去。
+    if (memo === null || titleConflict) {
       return;
     }
     onTitleChangeRef.current(title);
-  }, [memo, title]);
+  }, [memo, title, titleConflict]);
 
   function handleKeyboardSave(event: KeyboardEvent<HTMLElement>) {
     if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "s") {
@@ -231,7 +240,6 @@ export const NotesWorkspace = forwardRef<
     }
 
     updateTitle(nextTitle);
-    onTitleChangeRef.current(nextTitle);
   }
 
   function handleTitleKeyDown(event: KeyboardEvent<HTMLHeadingElement>) {
@@ -283,21 +291,36 @@ export const NotesWorkspace = forwardRef<
       onKeyDown={handleKeyboardSave}
     >
       <article className="note-editor-canvas" data-document-view={documentView}>
-        <h1
-          aria-label="备忘录标题"
-          aria-multiline={documentView === "editing" ? "false" : undefined}
-          aria-readonly={documentView === "reading" ? true : undefined}
-          className="note-editor-title"
-          contentEditable={documentView === "editing" ? "plaintext-only" : false}
-          data-placeholder="备忘录标题"
-          onBlur={handleTitleBlur}
-          onInput={handleTitleInput}
-          onKeyDown={handleTitleKeyDown}
-          ref={titleEditorRef}
-          role={documentView === "editing" ? "textbox" : undefined}
-          spellCheck={documentView === "editing"}
-          suppressContentEditableWarning
-        />
+        {/* 标题与它的校验提示是同一个标题块：包一层才不会在 canvas 网格里多占一行 */}
+        <div className="note-editor-heading">
+          <h1
+            aria-describedby={titleConflict ? TITLE_CONFLICT_HINT_ID : undefined}
+            aria-invalid={titleConflict ? true : undefined}
+            aria-label="备忘录标题"
+            aria-multiline={documentView === "editing" ? "false" : undefined}
+            aria-readonly={documentView === "reading" ? true : undefined}
+            className="note-editor-title"
+            contentEditable={documentView === "editing" ? "plaintext-only" : false}
+            data-conflict={titleConflict ? "" : undefined}
+            data-placeholder="备忘录标题"
+            onBlur={handleTitleBlur}
+            onInput={handleTitleInput}
+            onKeyDown={handleTitleKeyDown}
+            ref={titleEditorRef}
+            role={documentView === "editing" ? "textbox" : undefined}
+            spellCheck={documentView === "editing"}
+            suppressContentEditableWarning
+          />
+          {titleConflict && documentView === "editing" ? (
+            <p
+              className="note-editor-title-conflict"
+              id={TITLE_CONFLICT_HINT_ID}
+              role="alert"
+            >
+              已存在同名笔记，换一个名字即可继续保存标题；正文仍在自动保存。
+            </p>
+          ) : null}
+        </div>
         <div
           aria-hidden={documentView === "reading"}
           className="note-editor-content"

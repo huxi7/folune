@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 Zustand、轻量 memo/ai API、memoTree 算法、memoDocumentStore 与 AI Command 投影/事实对账
+ * [INPUT]: 依赖 Zustand、轻量 memo/ai API、memoTree 算法、memoTitleRules 的默认画布标题跟随、memoDocumentStore 与 AI Command 投影/事实对账
  * [OUTPUT]: 对外提供不含正文的 active tree、真人乐观结构 CRUD、AI tool_call 结构投影/回滚与 command 幂等对账
- * [POS]: app/src/shared/store 的目录结构唯一状态源；正文交给 memoDocumentStore，api command output 才是 AI 写事实
+ * [POS]: app/src/shared/store 的目录结构唯一状态源；正文交给 memoDocumentStore，api command output 才是 AI 写事实。任何本地改标题都顺带镜像数据库的默认画布同步触发器，否则文件树会显示一个服务端已经改掉的旧画布名
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -39,6 +39,7 @@ import {
 } from "./memoTree";
 import { summarizeMemoDetail } from "../api/memo.mapper";
 import { useMemoDocumentStore } from "./memoDocumentStore";
+import { withDefaultCanvasTitles } from "./memoTitleRules";
 import { reconcileAiRunTree } from "./aiRunTree";
 import { reconcileAiCommandTree } from "./aiCommandTree";
 import {
@@ -274,6 +275,7 @@ export const useMemoTreeStore = create<MemoTreeState>()((set, get) => ({
           optimistic.id,
           createdDetail,
           input.content_mdx ?? "",
+          input.title,
         );
 
         if (generation === treeGeneration) {
@@ -457,11 +459,12 @@ export const useMemoTreeStore = create<MemoTreeState>()((set, get) => ({
       throw new Error("要重命名的节点不存在。");
     }
 
+    // 默认 Canvas 的标题跟随来源笔记：数据库触发器在同一事务里改，本地树同步镜像
     set({
-      nodes: updateNode(previousNodes, nodeId, (node) => ({
+      nodes: withDefaultCanvasTitles(updateNode(previousNodes, nodeId, (node) => ({
         ...node,
         title: normalizedTitle,
-      })),
+      }))),
     });
 
     try {
@@ -481,8 +484,10 @@ export const useMemoTreeStore = create<MemoTreeState>()((set, get) => ({
       ) {
         const targetNodeId = resolveMemoId(nodeId);
         set((state) => ({
-          nodes: updateNode(state.nodes, targetNodeId, (currentNode) =>
-            mergeServerNode(currentNode, updated)),
+          nodes: withDefaultCanvasTitles(
+            updateNode(state.nodes, targetNodeId, (currentNode) =>
+              mergeServerNode(currentNode, updated)),
+          ),
         }));
       }
 
@@ -494,10 +499,12 @@ export const useMemoTreeStore = create<MemoTreeState>()((set, get) => ({
       ) {
         const targetNodeId = resolveMemoId(nodeId);
         set((state) => ({
-          nodes: updateNode(state.nodes, targetNodeId, (node) => ({
-            ...node,
-            title: previousTitle,
-          })),
+          nodes: withDefaultCanvasTitles(
+            updateNode(state.nodes, targetNodeId, (node) => ({
+              ...node,
+              title: previousTitle,
+            })),
+          ),
         }));
       }
 
@@ -584,22 +591,22 @@ export const useMemoTreeStore = create<MemoTreeState>()((set, get) => ({
   updateMemoTitleLocal(nodeId, title) {
     const targetNodeId = resolveMemoId(nodeId);
     set((state) => ({
-      nodes: updateNode(state.nodes, targetNodeId, (node) => ({
+      nodes: withDefaultCanvasTitles(updateNode(state.nodes, targetNodeId, (node) => ({
         ...node,
         title,
-      })),
+      }))),
     }));
   },
 
   mergeMemoDetail(detail) {
     const summary = summarizeMemoDetail(detail);
     set((state) => ({
-      nodes: updateNode(state.nodes, detail.id, (current) => ({
+      nodes: withDefaultCanvasTitles(updateNode(state.nodes, detail.id, (current) => ({
         ...current,
         ...summary,
         children: current.children,
         title: current.title === detail.title ? detail.title : current.title,
-      })),
+      }))),
     }));
   },
 
@@ -640,8 +647,10 @@ export const useMemoTreeStore = create<MemoTreeState>()((set, get) => ({
     } catch (error) {
       if (input.title !== undefined && previousTitle !== undefined) {
         set((state) => ({
-          nodes: updateNode(state.nodes, targetNodeId, (node) =>
-            node.title === input.title ? { ...node, title: previousTitle } : node),
+          nodes: withDefaultCanvasTitles(
+            updateNode(state.nodes, targetNodeId, (node) =>
+              node.title === input.title ? { ...node, title: previousTitle } : node),
+          ),
         }));
       }
       throw error;
@@ -660,7 +669,9 @@ export const useMemoTreeStore = create<MemoTreeState>()((set, get) => ({
   },
 
   reconcileAiRun(run) {
-    set((state) => ({ nodes: reconcileAiRunTree(state.nodes, run) }));
+    set((state) => ({
+      nodes: withDefaultCanvasTitles(reconcileAiRunTree(state.nodes, run)),
+    }));
   },
 
   reconcileAiCommand(command) {
@@ -677,7 +688,11 @@ export const useMemoTreeStore = create<MemoTreeState>()((set, get) => ({
             ? state.nodes
             : removeNode(state.nodes, projection.optimisticId)
           : rollbackAiCommandProjection(state.nodes, projection);
-      return { nodes: reconcileAiCommandTree(withoutProjection, command) };
+      return {
+        nodes: withDefaultCanvasTitles(
+          reconcileAiCommandTree(withoutProjection, command),
+        ),
+      };
     });
   },
 
@@ -710,7 +725,14 @@ export const useMemoTreeStore = create<MemoTreeState>()((set, get) => ({
     if (before === null) return;
     if (operation === "rename_node" && typeof input.title === "string") {
       aiProjections.set(toolCallId, { before, operation, optimisticId: null, projected: { title: input.title } });
-      set({ nodes: updateNode(currentNodes, before.id, (node) => ({ ...node, title: input.title as string })) });
+      set({
+        nodes: withDefaultCanvasTitles(
+          updateNode(currentNodes, before.id, (node) => ({
+            ...node,
+            title: input.title as string,
+          })),
+        ),
+      });
       return;
     }
     if (operation === "edit_memo" && typeof input.content_mdx === "string" && before.memo !== null) {
@@ -754,7 +776,9 @@ export const useMemoTreeStore = create<MemoTreeState>()((set, get) => ({
     if (projection === undefined) return;
     aiProjections.delete(toolCallId);
     set((state) => ({
-      nodes: rollbackAiCommandProjection(state.nodes, projection),
+      nodes: withDefaultCanvasTitles(
+        rollbackAiCommandProjection(state.nodes, projection),
+      ),
     }));
   },
 
