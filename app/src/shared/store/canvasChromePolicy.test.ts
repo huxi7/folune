@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun test 与 canvasChromePolicy 的纯策略
- * [OUTPUT]: 逐行锁定 Canvas 侧栏状态矩阵：memo 默认双收起、新建独立只展开文件库、文件树切换保持现状、直接链接恢复该画布快照，以及 <1200 覆盖式与 <1400 互斥两条断点钳制
+ * [OUTPUT]: 逐行锁定 Canvas 侧栏状态矩阵：memo 默认与新建独立都双收起、文件树切换保持现状、直接链接恢复该画布快照，以及 <1200 覆盖式与 <1400 互斥两条断点钳制
  * [POS]: shared/store 的 Canvas 侧栏进入门禁；只验证策略，不触碰 Store、localStorage 或 React
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -38,10 +38,12 @@ describe("Canvas 侧栏状态矩阵", () => {
     })).toEqual(CLOSED);
   });
 
-  test("新建独立 Canvas：只展开文件库，AI 保持收起", () => {
-    expect(entry({ intent: "standalone" })).toEqual(LIBRARY_ONLY);
+  test("新建独立 Canvas：同样双收起，先看到完整画布", () => {
+    expect(entry({ intent: "standalone" })).toEqual(CLOSED);
+    // 新画布不继承任何现状，也不去恢复别处的快照
     expect(entry({ intent: "standalone", snapshot: ASSISTANT_ONLY }))
-      .toEqual(LIBRARY_ONLY);
+      .toEqual(CLOSED);
+    expect(entry({ inherited: OPEN_BOTH, intent: "standalone" })).toEqual(CLOSED);
   });
 
   test("从文件树切换已有 Canvas：桌面端逐字保持现状", () => {

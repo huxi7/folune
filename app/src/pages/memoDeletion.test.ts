@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun test、MemoTreeNode fixtures 与 memoDeletion 纯编排函数
- * [OUTPUT]: 验证删除当前 Memo/祖先 Folder 的影响集合、下一 Memo 路由与无剩余 Memo 空态
+ * [OUTPUT]: 验证删除当前 Memo/祖先 Folder 的影响集合、删除正在打开的 Canvas 只需导航不需 flush、下一 Memo 路由与无剩余 Memo 空态
  * [POS]: app/src/pages 的删除路由与 last-memo 清理决策回归测试，不执行网络或浏览器导航
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -16,7 +16,7 @@ import {
 const TIME = "2026-08-09T08:00:00.000Z";
 const node = (
   id: string,
-  type: "folder" | "memo",
+  type: "canvas" | "folder" | "memo",
   children: MemoTreeNode[] = [],
 ): MemoTreeNode => ({
   children,
@@ -51,7 +51,35 @@ describe("memo deletion orchestration", () => {
     const impact = getMemoDeletionImpact(tree, "folder", "current");
 
     expect(impact?.affectsCurrentMemo).toBe(true);
+    expect(impact?.affectsCurrentRoute).toBe(true);
     expect([...impact!.affectedMemoIds]).toEqual(["current"]);
+  });
+
+  // 画布没有 autosave 会话可等: 若把它算作"当前 memo", 删除会卡在一个永远
+  // 拿不到的编辑器引用上并静默失败, 但导航离开仍然必须发生。
+  test("deleting the open canvas needs navigation but no autosave flush", () => {
+    const tree = [node("canvas-1", "canvas"), node("memo-1", "memo")];
+    const impact = getMemoDeletionImpact(tree, "canvas-1", "canvas-1");
+
+    expect(impact?.affectsCurrentRoute).toBe(true);
+    expect(impact?.affectsCurrentMemo).toBe(false);
+    expect([...impact!.affectedMemoIds]).toEqual([]);
+  });
+
+  test("deleting a folder that holds the open canvas behaves the same", () => {
+    const tree = [node("folder", "folder", [node("canvas-1", "canvas")])];
+    const impact = getMemoDeletionImpact(tree, "folder", "canvas-1");
+
+    expect(impact?.affectsCurrentRoute).toBe(true);
+    expect(impact?.affectsCurrentMemo).toBe(false);
+  });
+
+  test("deleting an unrelated node touches neither route nor autosave", () => {
+    const tree = [node("other", "memo"), node("current", "memo")];
+    const impact = getMemoDeletionImpact(tree, "other", "current");
+
+    expect(impact?.affectsCurrentRoute).toBe(false);
+    expect(impact?.affectsCurrentMemo).toBe(false);
   });
 
   test("selects the next active memo or returns the /app empty state", () => {

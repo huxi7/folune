@@ -162,8 +162,17 @@ export function CanvasWorkspace({
     return () => window.removeEventListener("resize", handleResize);
   }, [assistantOpen, closeAssistant, libraryOpen]);
 
-  // 用户在这张画布上的最后一次布局就是下次直接链接/刷新要恢复的状态
+  /*
+   * 只有用户亲手开关过, 才写进这张画布的最近布局。挂载时那一次是进入策略的
+   * 输出而不是用户的偏好 —— 把它也记下来, 会让"新建时自动展开""从笔记进入自动
+   * 收起"变成永久的假偏好, 之后每次进来都照抄一遍系统自己的决定。
+   */
+  const entryPersistedRef = useRef(false);
   useEffect(() => {
+    if (!entryPersistedRef.current) {
+      entryPersistedRef.current = true;
+      return;
+    }
     rememberChrome(canvasId, { assistantOpen, libraryOpen });
   }, [assistantOpen, canvasId, libraryOpen, rememberChrome]);
 

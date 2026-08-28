@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun test 与 canvasPresentation 的 Canvas V2 纯投影函数
- * [OUTPUT]: 覆盖节点取名、memo 固定纵向尺寸与 native 持久几何不被改写、视口容错、快照漂移/墓碑、边投影、坐标操作与路由身份
+ * [OUTPUT]: 覆盖节点取名、memo 固定纵向尺寸与 native 持久几何不被改写、视口容错与跨设备恢复判据、快照漂移/墓碑、边投影、坐标操作与路由身份
  * [POS]: pages 的 Canvas V2 表现回归门禁；锁定服务端投影到 React Flow 的含义，不测试 React 或网络
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -13,7 +13,9 @@ import {
   CANVAS_MEMO_HEIGHT,
   CANVAS_MEMO_WIDTH,
   canvasNodeTitle,
+  canvasNodesBounds,
   canvasPositionOperation,
+  canvasViewportShowsNodes,
   resolveCanvasNodeId,
   shouldRestoreCanvasViewport,
   toCanvasFlow,
@@ -181,6 +183,49 @@ describe("toCanvasFlow", () => {
       target: "card-1",
       type: "cord",
     });
+  });
+});
+
+describe("恢复用户视口的可用性判据", () => {
+  const flow = toCanvasFlow(detail([
+    node({ x: 0, y: 0 }),
+    node({ id: "card-2", x: 600, y: 400 }),
+  ]));
+  const bounds = canvasNodesBounds(flow.nodes);
+
+  test("包围盒来自本层写入的固定尺寸", () => {
+    expect(bounds).toEqual({
+      height: 400 + CANVAS_MEMO_HEIGHT,
+      width: 600 + CANVAS_MEMO_WIDTH,
+      x: 0,
+      y: 0,
+    });
+  });
+
+  test("同一视口在宽屏可用，换到窄屏后整幅图落在屏幕外", () => {
+    // 1440 宽屏上把图缩到 0.29 并右移 880：宽屏看得见
+    const viewport = { x: 880, y: 380, zoom: 0.29 };
+    expect(canvasViewportShowsNodes(bounds, viewport, {
+      height: 900,
+      width: 1440,
+    })).toBe(true);
+    // 同一个视口搬到 390 宽的手机上：左边界 880 已经超出 390
+    expect(canvasViewportShowsNodes(bounds, viewport, {
+      height: 844,
+      width: 390,
+    })).toBe(false);
+  });
+
+  test("空画布与尺寸未知时不阻止恢复", () => {
+    expect(canvasNodesBounds([])).toBeNull();
+    expect(canvasViewportShowsNodes(null, CANVAS_DEFAULT_VIEWPORT, {
+      height: 900,
+      width: 1440,
+    })).toBe(true);
+    expect(canvasViewportShowsNodes(bounds, CANVAS_DEFAULT_VIEWPORT, {
+      height: 0,
+      width: 0,
+    })).toBe(true);
   });
 });
 

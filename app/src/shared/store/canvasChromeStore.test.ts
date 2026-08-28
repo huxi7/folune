@@ -33,10 +33,16 @@ describe("canvasChromeStore", () => {
       .not.toBe(canvasChromeStorageKey("user-b"));
   });
 
+  // tree 是唯一结果与 direct 兜底不同的意图, 因此用它来证明"意图确实生效了",
+  // 而不是碰巧和兜底一样。
   test("进入意图只生效一次，解析结果对重复调用幂等", () => {
     const state = () => useCanvasChromeStore.getState();
     state().hydrate("user-1");
-    state().rememberEntry({ canvasId: "canvas-1", intent: "standalone" });
+    state().rememberEntry({
+      canvasId: "canvas-1",
+      inherited: { assistantOpen: false, libraryOpen: true },
+      intent: "tree",
+    });
 
     const first = state().entryChrome("canvas-1", 1440);
     const second = state().entryChrome("canvas-1", 1440);
@@ -50,7 +56,11 @@ describe("canvasChromeStore", () => {
   test("切到另一张画布重新解析，不复用上一张的答案", () => {
     const state = () => useCanvasChromeStore.getState();
     state().hydrate("user-1");
-    state().rememberEntry({ canvasId: "canvas-1", intent: "standalone" });
+    state().rememberEntry({
+      canvasId: "canvas-1",
+      inherited: { assistantOpen: false, libraryOpen: true },
+      intent: "tree",
+    });
     expect(state().entryChrome("canvas-1", 1440).libraryOpen).toBe(true);
 
     expect(state().entryChrome("canvas-2", 1440)).toEqual({

@@ -7,9 +7,9 @@ agentPanelStore.ts: AgentPanel 权限薄状态，只缓存后端已确认审批�
 agentPanelStore.test.ts: 锁定审批保存失败保留原值、成功后才更新模式
 workspaceChromeStore.ts: Paper First 外壳唯一 UI 状态，按用户持久化 libraryOpen/assistantOpen，新用户双关闭，兼容旧 Agent 开关迁移，并在覆盖式视口保证左右工具互斥
 workspaceChromeStore.test.ts: 覆盖按用户 key、首次双关闭、版本化恢复、损坏容错与旧 AI 偏好迁移
-canvasChromePolicy.ts: Canvas 侧栏进入策略纯函数，把 memo_default/standalone/tree/direct 四种进入语境与 1200/1400 两个断点翻译成左右两个独立布尔值；进入之后的开关一律以用户操作为准
+canvasChromePolicy.ts: Canvas 侧栏进入策略纯函数，把 memo_default/standalone/tree/direct 四种进入语境与 1200/1400 两个断点翻译成左右两个独立布尔值；新建与从笔记进入都双收起（命名由画布标题原地完成），只有文件树切换继承现状、直接链接恢复快照，进入之后一律以用户操作为准
 canvasChromePolicy.test.ts: 逐行锁定状态矩阵与两条断点钳制，并证明左右面板不会被绑成同一个值
-canvasChromeStore.ts: Canvas 侧栏状态唯一所有者；登记一次性进入意图、幂等解析进入状态（StrictMode 双渲染同答案）并按用户持久化每画布最近布局，与 Paper 的用户级偏好完全隔离
+canvasChromeStore.ts: Canvas 侧栏状态唯一所有者；登记一次性进入意图、幂等解析进入状态（StrictMode 双渲染同答案）并按用户持久化每画布最近布局，只记录用户亲手的开关而不把进入策略的输出写成假偏好，与 Paper 的用户级偏好完全隔离
 canvasChromeStore.test.ts: 覆盖意图只生效一次、解析幂等、切换画布重新解析、每画布快照持久化/按用户隔离与损坏容错
 aiRunTree.ts: AI 整理结果的无副作用局部树归并器，移动/改名目标 memo、插入工作流新目录，并在 undo 时恢复原位和删除可安全移除的空目录
 aiRunTree.test.ts: 覆盖 apply/undo 局部归并、摘要与 children 保真和工作流创建目录回收

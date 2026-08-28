@@ -31,7 +31,9 @@ import {
 } from "../../pages/canvasIncrementalLayout";
 import {
   CANVAS_DEFAULT_VIEWPORT,
+  canvasNodesBounds,
   canvasPositionOperation,
+  canvasViewportShowsNodes,
   shouldRestoreCanvasViewport,
   toCanvasFlow,
   type CanvasFlowNode,
@@ -196,13 +198,20 @@ export function KnowledgeCanvas({
     ) {
       initialViewportAppliedRef.current = true;
       requestAnimationFrame(() => {
-        const restoredViewport = restore?.canvasId === canvasId
+        const restored = restore?.canvasId === canvasId
           ? restore.viewport
-          : null;
-        if (restoredViewport !== null) {
-          void instance.setViewport(restoredViewport, { duration: 0 });
-        } else if (shouldRestoreCanvasViewport(document.canvas.viewport)) {
-          void instance.setViewport(flow.viewport, { duration: 0 });
+          : shouldRestoreCanvasViewport(document.canvas.viewport)
+            ? flow.viewport
+            : null;
+        // 视口是按存它时的画布尺寸算的; 换到更小的窗口可能整幅图都在屏幕外
+        const rect = flowRef.current?.getBoundingClientRect();
+        const usable = restored !== null && canvasViewportShowsNodes(
+          canvasNodesBounds(flow.nodes),
+          restored,
+          { height: rect?.height ?? 0, width: rect?.width ?? 0 },
+        );
+        if (restored !== null && usable) {
+          void instance.setViewport(restored, { duration: 0 });
         } else if (flow.nodes.length > 0) {
           void instance.fitView({ duration: 0, padding: 0.18 });
         }

@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 @xyflow/react 的 Edge/Node 类型（仅类型）与 shared/api/canvas 的 Canvas V2 投影
- * [OUTPUT]: 对外提供固定 280x360 纵向 memo 卡片尺寸、含持久 text_scale 的空间文字投影、标题/视口容错、最近空位、路由类型解析与坐标回写纯函数
+ * [OUTPUT]: 对外提供固定 280x360 纵向 memo 卡片尺寸、含持久 text_scale 的空间文字投影、标题/视口容错、恢复视口可用性判据、最近空位、路由类型解析与坐标回写纯函数
  * [POS]: app/src/pages 的 Canvas 表现策略边界；服务端快照在此翻译为受控 React Flow 形状，组件不再猜测墓碑、漂移或几何默认值
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -137,6 +137,49 @@ export const toCanvasFlow = (
   nodes: detail.nodes.map(toCanvasFlowNode),
   viewport: toCanvasViewport(detail.canvas.viewport),
 });
+
+type CanvasBounds = { height: number; width: number; x: number; y: number };
+
+/** 节点包围盒；尺寸只来自本文件写入的 style，不依赖 React Flow 的测量时机 */
+export const canvasNodesBounds = (
+  nodes: readonly CanvasFlowNode[],
+): CanvasBounds | null => {
+  if (nodes.length === 0) return null;
+  let left = Number.POSITIVE_INFINITY;
+  let top = Number.POSITIVE_INFINITY;
+  let right = Number.NEGATIVE_INFINITY;
+  let bottom = Number.NEGATIVE_INFINITY;
+
+  for (const node of nodes) {
+    const width = typeof node.style?.width === "number" ? node.style.width : 0;
+    const height = typeof node.style?.height === "number" ? node.style.height : 0;
+    left = Math.min(left, node.position.x);
+    top = Math.min(top, node.position.y);
+    right = Math.max(right, node.position.x + width);
+    bottom = Math.max(bottom, node.position.y + height);
+  }
+
+  return { height: bottom - top, width: right - left, x: left, y: top };
+};
+
+/**
+ * 恢复用户视口前的可用性判据。视口是按当前设备的画布尺寸存下来的：把 1440 宽
+ * 屏上的平移缩放原样搬到手机上，全部节点会落在可视区外，用户看到一张空画布。
+ * 因此恢复之前先问一句"这个视口还看得见东西吗"，看不见就退回 fitView。
+ */
+export const canvasViewportShowsNodes = (
+  bounds: CanvasBounds | null,
+  viewport: CanvasViewport,
+  size: { height: number; width: number },
+): boolean => {
+  if (bounds === null) return true;
+  if (size.width <= 0 || size.height <= 0) return true;
+  const left = bounds.x * viewport.zoom + viewport.x;
+  const top = bounds.y * viewport.zoom + viewport.y;
+  const right = left + bounds.width * viewport.zoom;
+  const bottom = top + bounds.height * viewport.zoom;
+  return right > 0 && left < size.width && bottom > 0 && top < size.height;
+};
 
 /** 视口中心附近的确定性落点；碰撞规避由 canvasIncrementalLayout 统一负责。 */
 export const nextCanvasTextPosition = (

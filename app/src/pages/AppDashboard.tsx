@@ -470,7 +470,7 @@ export function AppDashboard() {
 
       setTrashRevision((revision) => revision + 1);
 
-      if (impact.affectsCurrentMemo) {
+      if (impact.affectsCurrentRoute) {
         const destination = getPostDeletionDestination(
           useMemoTreeStore.getState().nodes,
         );
