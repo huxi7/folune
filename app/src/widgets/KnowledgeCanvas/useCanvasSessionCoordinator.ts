@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 Canvas V2 API、CanvasSaveCoordinator/IndexedDB WAL、canvasWorkspaceStore 与可注入当前 React Flow 视口
+ * [INPUT]: 依赖 Canvas V2 API、CanvasSaveCoordinator/IndexedDB WAL、canvasWorkspaceStore、上层解析好的进入侧栏状态与可注入当前 React Flow 视口
  * [OUTPUT]: 对外提供 useCanvasSessionCoordinator，完成真实读取、Store 建会话、WAL 恢复、pagehide 与会话控制注册
  * [POS]: KnowledgeCanvas 的会话基础设施 Hook；把网络/恢复生命周期从交互组件中剥离，组件只消费 coordinatorRef 与 loadStatus
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -19,6 +19,7 @@ import {
   type CanvasViewport,
 } from "../../shared/api/canvas";
 import type { ToastInput } from "../../shared/design-system/components";
+import type { CanvasChromeState } from "../../shared/store/canvasChromePolicy";
 import {
   CanvasSaveCoordinator,
   type CanvasCoordinatorSink,
@@ -35,9 +36,9 @@ export type CanvasSessionControls = {
 type UseCanvasSessionCoordinatorInput = {
   accessToken: string;
   canvasId: string;
+  /** 进入这张画布那一刻由 canvasChromeStore 解析出的左右面板状态 */
+  entryChrome: CanvasChromeState;
   getViewport: () => CanvasViewport;
-  initialAssistantOpen: boolean;
-  initialLibraryOpen: boolean;
   onCoordinatorReady?: (controls: CanvasSessionControls | null) => void;
   restore: CanvasReturnDescriptor | null;
   toast: (input: ToastInput) => void;
@@ -47,9 +48,8 @@ type UseCanvasSessionCoordinatorInput = {
 export function useCanvasSessionCoordinator({
   accessToken,
   canvasId,
+  entryChrome,
   getViewport,
-  initialAssistantOpen,
-  initialLibraryOpen,
   onCoordinatorReady,
   restore,
   toast,
@@ -71,7 +71,7 @@ export function useCanvasSessionCoordinator({
       .then(async (detail) => {
         if (!active) return;
         beginSession({
-          assistantOpen: restore?.assistantOpen ?? initialAssistantOpen,
+          assistantOpen: entryChrome.assistantOpen,
           canvasId,
           detail,
           focusNodeId: restore?.canvasId === canvasId
@@ -81,7 +81,7 @@ export function useCanvasSessionCoordinator({
               : detail.nodes.find(
                 (node) => node.target_node_id === detail.canvas.origin_node_id,
               )?.id ?? null,
-          libraryOpen: restore?.libraryOpen ?? initialLibraryOpen,
+          libraryOpen: entryChrome.libraryOpen,
           userId,
         });
 
@@ -189,9 +189,8 @@ export function useCanvasSessionCoordinator({
     accessToken,
     beginSession,
     canvasId,
+    entryChrome,
     getViewport,
-    initialAssistantOpen,
-    initialLibraryOpen,
     onCoordinatorReady,
     resetSession,
     restore,

@@ -19,6 +19,7 @@ import { findNode } from "../shared/store/memoTree";
 import { useMemoDocumentStore } from "../shared/store/memoDocumentStore";
 import { useMemoTreeStore } from "../shared/store/memoTreeStore";
 import { useWorkspaceChromeStore } from "../shared/store/workspaceChromeStore";
+import { useCanvasChromeStore } from "../shared/store/canvasChromeStore";
 import { useCanvasWorkspaceStore } from "../shared/store/canvasWorkspaceStore";
 import { useCanvasReturnStore } from "../shared/store/canvasReturnStore";
 import { signOutAuthenticatedUser } from "../shared/supabase/auth";
@@ -92,6 +93,8 @@ export function AppDashboard() {
   const closeAssistant = useWorkspaceChromeStore((state) => state.closeAssistant);
   const closeLibrary = useWorkspaceChromeStore((state) => state.closeLibrary);
   const hydrateWorkspaceChrome = useWorkspaceChromeStore((state) => state.hydrate);
+  const hydrateCanvasChrome = useCanvasChromeStore((state) => state.hydrate);
+  const rememberCanvasEntry = useCanvasChromeStore((state) => state.rememberEntry);
   const toggleAssistant = useWorkspaceChromeStore((state) => state.toggleAssistant);
   const toggleLibrary = useWorkspaceChromeStore((state) => state.toggleLibrary);
   const memoTree = useMemoTreeStore((state) => state.nodes);
@@ -200,7 +203,8 @@ export function AppDashboard() {
 
   useEffect(() => {
     hydrateWorkspaceChrome(profile.id);
-  }, [hydrateWorkspaceChrome, profile.id]);
+    hydrateCanvasChrome(profile.id);
+  }, [hydrateCanvasChrome, hydrateWorkspaceChrome, profile.id]);
 
   useEffect(() => {
     if (treePlaceholderActive) {
@@ -349,6 +353,26 @@ export function AppDashboard() {
     clearCanvasReturn();
     setFocusMemoClientKey(null);
     setActiveView("note");
+    // 从文件树切到已有 Canvas 是普通对象切换: 把当前布局作为"保持现状"的依据,
+    // 在导航发生的这一刻捕获，而不是等新会话去猜上一个空间留下了什么。
+    const target = findNode(useMemoTreeStore.getState().nodes, resolveMemoId(memoId));
+    if (resolveCanvasNodeId(target) !== null) {
+      const canvasSession = useCanvasWorkspaceStore.getState();
+      const paperChrome = useWorkspaceChromeStore.getState();
+      const onCanvas = canvasSession.canvasId !== null;
+      rememberCanvasEntry({
+        canvasId: memoId,
+        inherited: {
+          assistantOpen: onCanvas
+            ? canvasSession.assistantOpen
+            : paperChrome.assistantOpen,
+          libraryOpen: onCanvas
+            ? canvasSession.libraryOpen
+            : paperChrome.libraryOpen,
+        },
+        intent: "tree",
+      });
+    }
     navigate(`/app/notes/${encodeURIComponent(memoId)}`);
   }
 
@@ -760,13 +784,10 @@ export function AppDashboard() {
         <CanvasRouteCoordinator
           accessToken={accessToken}
           assistant={assistant}
-          assistantOpen={assistantOpen}
           canvasId={canvasNodeId}
           key={canvasNodeId}
           library={library}
-          libraryOpen={libraryOpen}
-          memoTree={memoTree}
-          onSelectMemo={handleSelectMemo}
+          onRename={handleRenameNode}
           style={workspaceStyle}
           title={selectedMemo?.title ?? "知识画布"}
           userId={profile.id}

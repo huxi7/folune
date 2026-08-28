@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 motion/react、共享 EdgeDock/Panel 插槽、ArchiveCord 空闲上下文、canvasWorkspaceStore 临时 Chrome、KnowledgeCanvas 会话控制与 Quiet Editorial token
- * [OUTPUT]: 对外提供与 Paper 共用左右工具基础设施、但中央始终保持同一 React Flow 实例的全视口 CanvasWorkspace
- * [POS]: widgets 的 Canvas V2 会话壳；负责返回 flush、Panel 会话状态和空间布局，数据/交互/恢复归 KnowledgeCanvas
+ * [INPUT]: 依赖 motion/react、共享 EdgeDock/Panel 插槽、ArchiveCord 空闲上下文、canvasChromeStore 进入策略与每画布快照、canvasWorkspaceStore 会话 Chrome、KnowledgeCanvas 会话控制与 Quiet Editorial token
+ * [OUTPUT]: 对外提供与 Paper 共用左右工具基础设施、但中央始终保持同一 React Flow 实例的全视口 CanvasWorkspace，以及左上开关+标题／右上 AI 开关的无卡片顶层分区
+ * [POS]: widgets 的 Canvas V2 会话壳；负责返回 flush、Panel 会话状态、每画布布局记忆与空间布局，数据/交互/恢复归 KnowledgeCanvas；左右面板各自独立开关，永不共用一个布尔值
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -22,10 +22,15 @@ import {
 } from "react";
 
 import {
-  ArrowLeftIcon,
   AssistantPanelOpenIcon,
   SidebarSimpleIcon,
 } from "../shared/design-system/icons";
+import { useCanvasChromeStore } from "../shared/store/canvasChromeStore";
+import {
+  CANVAS_DUAL_PANEL_BREAKPOINT,
+  CANVAS_PANEL_BREAKPOINT,
+  type CanvasChromeState,
+} from "../shared/store/canvasChromePolicy";
 import { useCanvasWorkspaceStore } from "../shared/store/canvasWorkspaceStore";
 import type { CanvasReturnDescriptor } from "../shared/store/canvasReturnStore";
 import {
@@ -35,6 +40,7 @@ import {
 } from "../pages/workspaceMotion";
 import { ArchiveCordStage } from "./ArchiveCord";
 import { EdgeDock } from "./EdgeDock";
+import { CanvasTitle } from "./KnowledgeCanvas/CanvasTitle";
 import type { CanvasSessionControls } from "./KnowledgeCanvas/useCanvasSessionCoordinator";
 
 const KnowledgeCanvas = lazy(() =>
@@ -47,29 +53,22 @@ type CanvasWorkspaceProps = {
   accessToken: string;
   assistant: ReactNode;
   canvasId: string;
-  initialAssistantOpen: boolean;
-  initialLibraryOpen: boolean;
   library: ReactNode;
-  onExit: () => void;
   onNavigateMemo: (nodeId: string, descriptor: CanvasReturnDescriptor) => void;
+  onRename: (title: string) => Promise<void>;
   restore?: CanvasReturnDescriptor | null;
   style: CSSProperties;
   title: string;
   userId: string;
 };
 
-const PANEL_BREAKPOINT = 1200;
-const DUAL_PANEL_SAFE_BREAKPOINT = 1400;
-
 export function CanvasWorkspace({
   accessToken,
   assistant,
   canvasId,
-  initialAssistantOpen,
-  initialLibraryOpen,
   library,
-  onExit,
   onNavigateMemo,
+  onRename,
   restore = null,
   style,
   title,
@@ -80,19 +79,35 @@ export function CanvasWorkspace({
   const sessionAssistantOpen = useCanvasWorkspaceStore((state) => state.assistantOpen);
   const sessionLibraryOpen = useCanvasWorkspaceStore((state) => state.libraryOpen);
   const setCanvasChrome = useCanvasWorkspaceStore((state) => state.setCanvasChrome);
+  const rememberChrome = useCanvasChromeStore((state) => state.remember);
+  /*
+   * 进入语境只在挂载那一刻解释一次: 返回描述优先(从原文回到画布要恢复离开前的
+   * 样子), 否则交给 canvasChromeStore 按 memo_default / standalone / tree /
+   * direct 四种意图解析。解析结果被 Store 幂等缓存, 因此 StrictMode 双渲染与
+   * 后续重渲染都得到同一个答案, 也绝不读写 Paper 的用户级偏好。
+   */
+  const [entryChrome] = useState<CanvasChromeState>(() => {
+    if (restore?.canvasId === canvasId) {
+      return {
+        assistantOpen: restore.assistantOpen,
+        libraryOpen: restore.libraryOpen,
+      };
+    }
+    // 没有视口就没有断点可言(服务端渲染与结构测试), 一律按双关闭起步
+    if (typeof window === "undefined") {
+      return { assistantOpen: false, libraryOpen: false };
+    }
+    return useCanvasChromeStore.getState()
+      .entryChrome(canvasId, window.innerWidth);
+  });
   const assistantOpen = sessionCanvasId === canvasId
     ? sessionAssistantOpen
-    : restore?.canvasId === canvasId
-      ? restore.assistantOpen
-      : initialAssistantOpen;
+    : entryChrome.assistantOpen;
   const libraryOpen = sessionCanvasId === canvasId
     ? sessionLibraryOpen
-    : restore?.canvasId === canvasId
-      ? restore.libraryOpen
-      : initialLibraryOpen;
+    : entryChrome.libraryOpen;
   const [overlayPanels, setOverlayPanels] = useState(() =>
-    typeof window !== "undefined" && window.innerWidth < PANEL_BREAKPOINT);
-  const [leaving, setLeaving] = useState(false);
+    typeof window !== "undefined" && window.innerWidth < CANVAS_PANEL_BREAKPOINT);
   const controlsRef = useRef<CanvasSessionControls | null>(null);
   const anyPanelOpen = assistantOpen || libraryOpen;
 
@@ -111,7 +126,7 @@ export function CanvasWorkspace({
   const openAssistant = useCallback(() => {
     setCanvasChrome({
       assistantOpen: true,
-      ...(window.innerWidth < DUAL_PANEL_SAFE_BREAKPOINT
+      ...(window.innerWidth < CANVAS_DUAL_PANEL_BREAKPOINT
         ? { libraryOpen: false }
         : {}),
     });
@@ -119,7 +134,7 @@ export function CanvasWorkspace({
 
   const openLibrary = useCallback(() => {
     setCanvasChrome({
-      ...(window.innerWidth < DUAL_PANEL_SAFE_BREAKPOINT
+      ...(window.innerWidth < CANVAS_DUAL_PANEL_BREAKPOINT
         ? { assistantOpen: false }
         : {}),
       libraryOpen: true,
@@ -128,14 +143,14 @@ export function CanvasWorkspace({
 
   useEffect(() => {
     const handleResize = () => {
-      const overlay = window.innerWidth < PANEL_BREAKPOINT || (
+      const overlay = window.innerWidth < CANVAS_PANEL_BREAKPOINT || (
         libraryOpen
         && assistantOpen
-        && window.innerWidth < DUAL_PANEL_SAFE_BREAKPOINT
+        && window.innerWidth < CANVAS_DUAL_PANEL_BREAKPOINT
       );
       setOverlayPanels(overlay);
       if (
-        window.innerWidth < PANEL_BREAKPOINT
+        window.innerWidth < CANVAS_PANEL_BREAKPOINT
         && libraryOpen
         && assistantOpen
       ) {
@@ -146,6 +161,11 @@ export function CanvasWorkspace({
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, [assistantOpen, closeAssistant, libraryOpen]);
+
+  // 用户在这张画布上的最后一次布局就是下次直接链接/刷新要恢复的状态
+  useEffect(() => {
+    rememberChrome(canvasId, { assistantOpen, libraryOpen });
+  }, [assistantOpen, canvasId, libraryOpen, rememberChrome]);
 
   useEffect(() => {
     if (!anyPanelOpen) return;
@@ -167,16 +187,16 @@ export function CanvasWorkspace({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [anyPanelOpen, assistantOpen, closeAssistant, closeLibrary]);
 
-  const exit = async () => {
-    if (leaving) return;
-    setLeaving(true);
-    try {
-      const result = await controlsRef.current?.flush();
-      if (result?.persisted === false) return;
-      onExit();
-    } finally {
-      setLeaving(false);
-    }
+  /*
+   * 默认 Canvas 的标题就是它的来源笔记，点它等于"回到原文"。走的是和卡片打开
+   * 笔记完全相同的一条路: 先 flush，再带着返回描述导航，因此回来时视口、选择
+   * 与临时 Panel 状态都还在——旧的伪返回按钮只会清掉这些。
+   */
+  const openOrigin = async (memoId: string) => {
+    const result = await controlsRef.current?.flush();
+    if (result?.persisted === false) return;
+    const descriptor = controlsRef.current?.getReturnDescriptor(title);
+    if (descriptor !== undefined) onNavigateMemo(memoId, descriptor);
   };
 
   return (
@@ -189,44 +209,6 @@ export function CanvasWorkspace({
         data-overlay-panels={overlayPanels}
         style={style}
       >
-      <AnimatePresence initial={false}>
-        {!libraryOpen ? (
-          <motion.div
-            animate={{ opacity: 1 }}
-            className="workspace-stage-control workspace-library-control"
-            exit={{ opacity: 0 }}
-            initial={{ opacity: 0 }}
-            transition={fadeTransition}
-          >
-            <EdgeDock
-              icon={<SidebarSimpleIcon size={16} />}
-              label="文件库"
-              onClick={openLibrary}
-              side="left"
-            />
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
-
-      <AnimatePresence initial={false}>
-        {!assistantOpen ? (
-          <motion.div
-            animate={{ opacity: 1 }}
-            className="workspace-stage-control workspace-assistant-control"
-            exit={{ opacity: 0 }}
-            initial={{ opacity: 0 }}
-            transition={fadeTransition}
-          >
-            <EdgeDock
-              icon={<AssistantPanelOpenIcon size={16} />}
-              label="AI"
-              onClick={openAssistant}
-              side="right"
-            />
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
-
       <AnimatePresence initial={false}>
         {libraryOpen ? (
           <motion.div
@@ -248,20 +230,60 @@ export function CanvasWorkspace({
       </AnimatePresence>
 
       <section className="canvas-stage">
-        <div className="canvas-workspace-nav">
-          <button
-            aria-label="返回笔记"
-            className="canvas-workspace-back"
-            disabled={leaving}
-            onClick={() => void exit()}
-            type="button"
-          >
-            <ArrowLeftIcon size={16} />
-          </button>
-          <div className="canvas-workspace-heading">
-            <span>Canvas</span>
-            <strong title={title}>{title}</strong>
-          </div>
+        {/*
+          顶层分区只有四块: 左上开关+标题、右上 AI 开关、底部中央命令、右下保存
+          状态。全部锚在 canvas-stage 上并共用同一组 --canvas-chrome-* 变量，
+          因此侧栏预留安全区时它们跟着让位，不靠零散的 top/left 互相躲避。
+          开关槽位常驻: Panel 打开后按钮进入 Panel 自己的 Header，槽位留空以
+          保证标题的横坐标不因开合而移动。
+        */}
+        <div className="canvas-chrome canvas-chrome-start">
+          <span className="canvas-chrome-slot">
+            <AnimatePresence initial={false}>
+              {!libraryOpen ? (
+                <motion.span
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  initial={{ opacity: 0 }}
+                  transition={fadeTransition}
+                >
+                  <EdgeDock
+                    icon={<SidebarSimpleIcon size={16} />}
+                    label="文件库"
+                    onClick={openLibrary}
+                    side="left"
+                  />
+                </motion.span>
+              ) : null}
+            </AnimatePresence>
+          </span>
+          <CanvasTitle
+            onOpenOrigin={(memoId) => void openOrigin(memoId)}
+            onRename={onRename}
+            title={title}
+          />
+        </div>
+
+        <div className="canvas-chrome canvas-chrome-end">
+          <span className="canvas-chrome-slot">
+            <AnimatePresence initial={false}>
+              {!assistantOpen ? (
+                <motion.span
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  initial={{ opacity: 0 }}
+                  transition={fadeTransition}
+                >
+                  <EdgeDock
+                    icon={<AssistantPanelOpenIcon size={16} />}
+                    label="AI"
+                    onClick={openAssistant}
+                    side="right"
+                  />
+                </motion.span>
+              ) : null}
+            </AnimatePresence>
+          </span>
         </div>
 
         <Suspense
@@ -274,8 +296,7 @@ export function CanvasWorkspace({
           <KnowledgeCanvas
             accessToken={accessToken}
             canvasId={canvasId}
-            initialAssistantOpen={initialAssistantOpen}
-            initialLibraryOpen={initialLibraryOpen}
+            entryChrome={entryChrome}
             onCoordinatorReady={registerControls}
             onEditMemo={(nodeId) => {
               const descriptor = controlsRef.current?.getReturnDescriptor(title);

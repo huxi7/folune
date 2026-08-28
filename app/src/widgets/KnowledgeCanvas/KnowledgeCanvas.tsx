@@ -40,6 +40,7 @@ import { Skeleton, SkeletonGroup, useToast } from "../../shared/design-system/co
 import {
   type CanvasIntent,
 } from "../../shared/store/canvasDocument";
+import type { CanvasChromeState } from "../../shared/store/canvasChromePolicy";
 import { useCanvasWorkspaceStore } from "../../shared/store/canvasWorkspaceStore";
 import type { CanvasReturnDescriptor } from "../../shared/store/canvasReturnStore";
 import { expandCanvas } from "../AgentPanel/canvasExpandClient";
@@ -70,8 +71,7 @@ const proOptions = { hideAttribution: true };
 type KnowledgeCanvasProps = {
   accessToken: string;
   canvasId: string;
-  initialAssistantOpen: boolean;
-  initialLibraryOpen: boolean;
+  entryChrome: CanvasChromeState;
   onCoordinatorReady?: (controls: CanvasSessionControls | null) => void;
   onEditMemo: (nodeId: string) => void;
   onSelectMemo: (nodeId: string) => void;
@@ -117,8 +117,7 @@ const flowNodeFromTransient = (node: TransientTextNode): CanvasFlowNode => ({
 export function KnowledgeCanvas({
   accessToken,
   canvasId,
-  initialAssistantOpen,
-  initialLibraryOpen,
+  entryChrome,
   onCoordinatorReady,
   onEditMemo,
   onSelectMemo,
@@ -153,9 +152,8 @@ export function KnowledgeCanvas({
   const { coordinatorRef, loadStatus } = useCanvasSessionCoordinator({
     accessToken,
     canvasId,
+    entryChrome,
     getViewport,
-    initialAssistantOpen,
-    initialLibraryOpen,
     onCoordinatorReady,
     restore,
     toast,

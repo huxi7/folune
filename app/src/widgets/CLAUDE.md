@@ -34,8 +34,8 @@ cordGeometry.test.ts: 以独立三次贝塞尔求值反证中点切分，并覆�
 Cord.tsx: 共享连线 Signature 渲染层；粗细沿路径恒定是 SVG 硬限制，两头收细由 Cord 生成的沿线透明度渐变承担，虚线表 AI 临时推荐、实线表已确认关联，出场自绘与流光下沉 CSS 以避免每帧 React 更新
 EdgeDock.tsx: 文件库/AI 共用的 Stage 关闭态 Ghost 图标入口，桌面 32px、窄屏 44px，静止无背景/描边/文字且不使用共享 layoutId；Panel 关闭入口由各自 Header 内部拥有
 PaperSurface.tsx: 816px Paper Signature 边界，拥有非对称 Paper 阴影、Archive Port 与只替换内容不重挂载编辑会话的内部过渡
-CanvasWorkspace.tsx: Canvas V2 全视口会话壳；与 Paper 互斥但复用左右文件库/AI Panel 和 ArchiveCord 上下文，Panel/Preview 开合不卸载中央 React Flow，退出前等待协调器 flush
-CanvasWorkspace.test.tsx: Canvas 会话壳回归测试，锁定中央 Canvas、共享 Panel 与 Paper 互斥关系
+CanvasWorkspace.tsx: Canvas V2 全视口会话壳；与 Paper 互斥但复用左右文件库/AI Panel 和 ArchiveCord 上下文，Panel/Preview 开合不卸载中央 React Flow；进入状态只在挂载那一刻由返回描述或 canvasChromeStore 解释一次，之后每次开关都记进该画布的最近布局，顶层只保留左上开关+标题与右上 AI 开关两块无卡片分区
+CanvasWorkspace.test.tsx: Canvas 会话壳回归测试，锁定中央 Canvas、共享 Panel、Paper 互斥关系，以及伪返回按钮/Canvas 文字标识/厚重标题卡片确已消失
 KnowledgeCanvas/: Canvas V2 交互内容根，以受控 React Flow 承载持久视口、memo/native 节点、连接/删除/拖拽/缩放、Picker、Preview、显式 AI expansion、WAL 恢复与保存状态
 DesignSystemWorkspace/: 开发态 Quiet Editorial Design System 工作区，按 Foundations/Primitives/Navigation & Overlays/Editorial/AI & Organize 五层直接陈列生产 Token、Lucide Iconography、完整 Markdown/Reading/Quote/Code 与四种 Signature Components；通过 lazy import 只在 import.meta.env.DEV 下暴露
 NotePaper.tsx: 共享纸面原语，以 thumbnail/reader 两个 variant 承载 Canvas 卡片缩略纸与小开本浮纸；纸张曲率、纸边、墨色与渐隐只在此实现一次，reader 只承载正文、纸面静止而正文在纸内滚动，可声明 Dialog autofocus 契约

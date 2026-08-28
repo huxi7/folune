@@ -169,8 +169,7 @@ const renderCanvas = () => render(
     <KnowledgeCanvas
       accessToken="test-token"
       canvasId="test-canvas"
-      initialAssistantOpen={false}
-      initialLibraryOpen={false}
+      entryChrome={{ assistantOpen: false, libraryOpen: false }}
       onEditMemo={() => undefined}
       onSelectMemo={() => undefined}
       userId="test-user"

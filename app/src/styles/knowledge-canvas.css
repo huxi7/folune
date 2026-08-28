@@ -1,12 +1,22 @@
 /**
  * [INPUT]: 依赖 workspace.css 的共享 Panel 网格、note-paper.css 的共享纸面 variant、Quiet Editorial 语义 token、@xyflow/react 定位层与 Canvas V2 交互组件
- * [OUTPUT]: 对外提供全视口 Canvas 壳、点阵舞台、280x360 纵向笔记卡与同心嵌套纸张、编辑无框且选中边界等距贴合的空间文字、宽命中关系、Picker、纸外工具列 + 小开本浮纸的 Preview、保存/AI 状态及窄屏降级
+ * [OUTPUT]: 对外提供全视口 Canvas 壳、由 --canvas-chrome-* 单一坐标系定位的四块顶层分区（左上开关+安静标题／右上 AI 开关／底部中央命令条／右下保存状态）、点阵舞台、280x360 纵向笔记卡与同心嵌套纸张、编辑无框且选中边界等距贴合的空间文字、宽命中关系、Picker、纸外工具列 + A4 浮纸的 Preview 及窄屏降级
  * [POS]: app/src/styles 的 Canvas V2 视觉边界；桌面保留空间画布，窄屏保留可达操作，不覆盖 React Flow 的业务状态
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
 @layer components {
   .canvas-workspace {
+    /*
+     * 顶层控件的唯一坐标系。四块分区（左上开关+标题、右上 AI 开关、底部中央
+     * 命令条、右下保存状态）全部只用这三个变量定位，因此侧栏预留安全区、浏览
+     * 器缩放、窄屏与长标题都只需要改这里，而不是让每个浮层各自记一串 top/left。
+     */
+    --canvas-chrome-inset: var(--space-4);
+    --canvas-chrome-size: var(--control-height-compact);
+    --canvas-chrome-gap: var(--space-2);
+    /* 命令条外高 = 控件 + 上下 4px 内边距 + 上下 1px 边框 */
+    --canvas-dock-height: calc(var(--canvas-chrome-size) + var(--space-2) + 2px);
     position: fixed;
     z-index: 60;
     inset: 0;
@@ -26,25 +36,22 @@
   }
   .canvas-workspace[data-overlay-panels="true"] .canvas-stage { grid-column: 1; }
 
-  .canvas-workspace-nav {
-    position: absolute;
-    z-index: 12;
-    top: var(--space-4);
-    left: var(--space-4);
-    display: flex;
-    max-width: min(30rem, calc(100vw - 8rem));
-    min-height: var(--control-height-large);
-    align-items: center;
-    gap: var(--space-2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-menu);
-    background: color-mix(in srgb, var(--card) 94%, transparent);
-    padding: var(--space-1) var(--space-3) var(--space-1) var(--space-1);
-    box-shadow: var(--shadow-xs);
-    backdrop-filter: blur(12px);
-  }
+  /* 顶层不再有包裹整组内容的卡片: 开关与标题直接活在画布上 */
+  .canvas-chrome { position: absolute; z-index: 12; top: var(--canvas-chrome-inset); display: flex; min-width: 0; align-items: center; gap: var(--canvas-chrome-gap); }
+  /* 标题永远给右上的 AI 开关留出通行宽度, 长标题只截断自己 */
+  .canvas-chrome-start { left: var(--canvas-chrome-inset); max-width: calc(100% - var(--canvas-chrome-inset) * 3 - var(--canvas-chrome-size) - var(--canvas-chrome-gap)); }
+  .canvas-chrome-end { right: var(--canvas-chrome-inset); }
+  /* 槽位常驻: Panel 打开后按钮移入 Panel Header, 标题的横坐标不得因此移动 */
+  .canvas-chrome-slot { display: inline-flex; width: var(--canvas-chrome-size); height: var(--canvas-chrome-size); flex: 0 0 auto; align-items: center; justify-content: center; }
 
-  .canvas-workspace-back,
+  .canvas-title,
+  .canvas-title-input { min-width: 0; max-width: 100%; border-radius: var(--radius-control); padding: var(--space-1) var(--space-2); font-size: var(--type-ui); font-weight: var(--weight-ui); line-height: var(--leading-ui); }
+  .canvas-title { overflow: hidden; border: 0; background: transparent; color: var(--foreground); cursor: pointer; text-align: left; text-overflow: ellipsis; white-space: nowrap; transition: background var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard); }
+  .canvas-title:hover { background: var(--interactive-hover); }
+  .canvas-title:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+  .canvas-title-input { width: min(24rem, 100%); border: 1px solid color-mix(in srgb, var(--primary) 42%, var(--border)); background: var(--card); color: var(--foreground); outline: none; }
+  .canvas-title-input:focus-visible { border-color: var(--primary); }
+
   .canvas-control,
   .canvas-edge-delete {
     display: inline-flex;
@@ -57,17 +64,11 @@
     transition: background var(--motion-fast) var(--ease-standard),
       color var(--motion-fast) var(--ease-standard);
   }
-  .canvas-workspace-back { width: var(--control-height-compact); height: var(--control-height-compact); }
-  .canvas-workspace-back:hover:not(:disabled),
   .canvas-control:hover,
   .canvas-edge-delete:hover { background: var(--interactive-hover); color: var(--foreground); }
-  .canvas-workspace-back:focus-visible,
   .canvas-control:focus-visible,
   .canvas-edge-delete:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
 
-  .canvas-workspace-heading { display: grid; min-width: 0; gap: 1px; }
-  .canvas-workspace-heading > span { color: var(--muted-foreground); font-size: var(--type-caption); line-height: var(--leading-label); }
-  .canvas-workspace-heading > strong { overflow: hidden; color: var(--foreground); font-size: var(--type-ui); font-weight: var(--weight-ui); line-height: var(--leading-label); text-overflow: ellipsis; white-space: nowrap; }
   .canvas-workspace-loading { display: flex; width: 100%; height: 100%; align-items: center; justify-content: center; color: var(--muted-foreground); font-size: var(--type-label); }
 
   .knowledge-canvas { position: relative; width: 100%; height: 100%; min-height: 0; }
@@ -143,8 +144,10 @@
   .canvas-edge-reason > span { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
   .canvas-edge-delete { width: 1.6rem; height: 1.6rem; flex: 0 0 auto; }
 
+  /* React Flow 的 Panel 只负责贴边, 间距统一由 --canvas-chrome-inset 说话 */
+  .knowledge-canvas .react-flow__panel.canvas-controls { margin: var(--canvas-chrome-inset); }
   .canvas-controls { display: flex; gap: 2px; border: 1px solid var(--border); border-radius: var(--radius-menu); background: color-mix(in srgb, var(--card) 94%, transparent); padding: var(--space-1); box-shadow: var(--shadow-xs); backdrop-filter: blur(12px); }
-  .canvas-control { width: var(--control-height-compact); height: var(--control-height-compact); }
+  .canvas-control { width: var(--canvas-chrome-size); height: var(--canvas-chrome-size); }
 
   /* ------------------------------------------------------------------------ */
   /* Overlay and state                                                        */
@@ -161,16 +164,17 @@
   .canvas-save-state,
   .canvas-ai-state { position: absolute; z-index: 8; border: 1px solid var(--border); border-radius: var(--radius-menu); background: color-mix(in srgb, var(--card) 95%, transparent); box-shadow: var(--shadow-xs); color: var(--muted-foreground); font-size: var(--type-label); backdrop-filter: blur(12px); }
   .canvas-empty-hint { top: 50%; left: 50%; padding: var(--space-3) var(--space-4); transform: translate(-50%, -50%); pointer-events: none; }
-  .canvas-mode-notice { bottom: var(--space-6); left: 50%; display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-3); transform: translateX(-50%); }
+  /* 连接提示落在命令条正上方而不是压住它 */
+  .canvas-mode-notice { bottom: calc(var(--canvas-chrome-inset) * 2 + var(--canvas-dock-height)); left: 50%; display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-3); transform: translateX(-50%); }
   .canvas-mode-notice button { color: var(--foreground); font-weight: var(--weight-ui); }
-  .canvas-save-state { right: var(--space-4); bottom: var(--space-4); display: flex; max-width: min(24rem, calc(100vw - 2rem)); align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-3); }
+  .canvas-save-state { right: var(--canvas-chrome-inset); bottom: var(--canvas-chrome-inset); display: flex; max-width: min(24rem, calc(100% - var(--canvas-chrome-inset) * 2)); align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-3); }
   .canvas-save-state[data-status="unsaved"],
   .canvas-save-state[data-status="conflict"],
   .canvas-save-state[data-status="local_recovery_unavailable"],
   .canvas-save-state[data-status="recovery_error"] { border-color: color-mix(in srgb, var(--destructive) 35%, var(--border)); color: var(--foreground); }
   .canvas-save-state small { overflow: hidden; max-width: 13rem; text-overflow: ellipsis; white-space: nowrap; }
   .canvas-save-state .ds-button { min-height: var(--control-height-compact); }
-  .canvas-ai-state { top: var(--space-4); left: 50%; padding: var(--space-2) var(--space-3); transform: translateX(-50%); }
+  .canvas-ai-state { top: var(--canvas-chrome-inset); left: 50%; padding: var(--space-2) var(--space-3); transform: translateX(-50%); }
 
   .canvas-picker-results { display: grid; max-height: min(23rem, 48vh); overflow-y: auto; gap: 2px; margin-top: var(--space-3); }
   .canvas-picker-row { display: grid; min-width: 0; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--space-2); border-radius: var(--radius-control); padding: var(--space-1); }
@@ -203,8 +207,8 @@
    否则嵌套表面会出现"外圆内方"的形状冲突。圆形入口显式退回 round。 */
 @supports (corner-shape: squircle) {
   @layer components {
-    .canvas-workspace-nav,
-    .canvas-workspace-back,
+    .canvas-title,
+    .canvas-title-input,
     .canvas-control,
     .canvas-controls,
     .canvas-edge-delete,
@@ -226,15 +230,23 @@
 
 @media (max-width: 767px) {
   @layer components {
-    .canvas-workspace-nav { top: 0.75rem; left: 3.5rem; max-width: calc(100vw - 7rem); }
-    .canvas-controls { margin-top: 3.75rem !important; }
-    .canvas-mode-notice { bottom: 4.5rem; width: max-content; max-width: calc(100vw - 1.5rem); }
-    .canvas-save-state { right: 0.75rem; bottom: 0.75rem; left: 0.75rem; max-width: none; justify-content: space-between; }
-    .canvas-ai-state { top: 5rem; }
+    .canvas-workspace { --canvas-chrome-inset: 0.75rem; }
+    .canvas-mode-notice { width: max-content; max-width: calc(100vw - 1.5rem); }
+    /* 保存状态在窄屏独占一行, 因此命令条与它上下相让 */
+    .canvas-save-state { right: var(--canvas-chrome-inset); bottom: var(--canvas-chrome-inset); left: var(--canvas-chrome-inset); max-width: none; justify-content: space-between; }
+    .knowledge-canvas .react-flow__panel.canvas-controls { margin-bottom: calc(var(--canvas-chrome-inset) * 2 + var(--control-height-large)); }
+    .canvas-ai-state { top: calc(var(--canvas-chrome-inset) * 2 + var(--canvas-chrome-size)); }
     /* 窄屏没有纸外空间: 工具列回到视口右上角横排, 纸张占满可用宽度 */
     .canvas-preview-shell { gap: 0; }
     .canvas-preview-tools { position: fixed; z-index: 2; top: 0.75rem; right: 0.75rem; flex-direction: row-reverse; }
     .canvas-preview-tool { width: 2.75rem; height: 2.75rem; }
+  }
+}
+
+@media (max-width: 479px) {
+  @layer components {
+    /* 与 workspace.css 的 44px 触摸目标同一断点、同一尺寸 */
+    .canvas-workspace { --canvas-chrome-size: 2.75rem; }
   }
 }
 
@@ -244,7 +256,7 @@
     .canvas-card-actions,
     .canvas-text-node,
     .canvas-control,
-    .canvas-workspace-back { transition-duration: 1ms; }
+    .canvas-title { transition-duration: 1ms; }
     .canvas-card-expand { transition-duration: 1ms; transform: none; }
   }
 }

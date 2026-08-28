@@ -17,21 +17,31 @@ describe("CanvasWorkspace", () => {
       accessToken: "test-token",
       assistant: createElement("aside", null, "AI panel"),
       canvasId: "canvas-1",
-      initialAssistantOpen: true,
-      initialLibraryOpen: true,
       library: createElement("aside", null, "Library panel"),
-      onExit: () => undefined,
       onNavigateMemo: () => undefined,
+      onRename: async () => undefined,
+      // 返回描述是唯一不依赖视口断点的进入语境, 因此结构测试用它打开两侧 Panel
+      restore: {
+        assistantOpen: true,
+        canvasId: "canvas-1",
+        libraryOpen: true,
+        selectedNodeId: null,
+        title: "可逆的动作用户才敢用",
+        viewport: { x: 0, y: 0, zoom: 1 },
+      },
       style: {},
       title: "可逆的动作用户才敢用",
       userId: "user-1",
     }));
 
     expect(html).toContain("canvas-workspace");
-    expect(html).toContain('aria-label="返回笔记"');
     expect(html).toContain("可逆的动作用户才敢用");
     expect(html).not.toContain("paper-workspace");
     expect(html).toContain("Library panel");
     expect(html).toContain("AI panel");
+    // 顶层不再有伪返回按钮、Canvas 文字标识与包裹整组内容的厚重卡片
+    expect(html).not.toContain('aria-label="返回笔记"');
+    expect(html).not.toContain("canvas-workspace-nav");
+    expect(html).not.toContain("canvas-workspace-heading");
   });
 });

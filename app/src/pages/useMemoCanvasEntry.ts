@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 React state、React Router navigate、Canvas 默认入口 API、memoTreeStore merge 与 Toast
+ * [INPUT]: 依赖 React state、React Router navigate、Canvas 默认入口 API、memoTreeStore merge、canvasChromeStore 进入意图与 Toast
  * [OUTPUT]: 对外提供 useMemoCanvasEntry，在 memo 草稿 required flush 后幂等进入唯一默认 Canvas
- * [POS]: pages 的 memo→Canvas 路由协调器；创建/复用结果只局部并入目录，绝不刷新整树或触发 AI
+ * [POS]: pages 的 memo→Canvas 路由协调器；创建/复用结果只局部并入目录，绝不刷新整树或触发 AI；进入语境登记为 memo_default，由 Canvas 侧栏策略解释
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -11,6 +11,7 @@ import type { NavigateFunction } from "react-router-dom";
 import { getOrCreateMemoCanvas } from "../shared/api/canvas";
 import type { MemoTreeNode } from "../shared/api/memo";
 import type { ToastInput } from "../shared/design-system/components";
+import { useCanvasChromeStore } from "../shared/store/canvasChromeStore";
 
 type UseMemoCanvasEntryInput = {
   accessToken: string;
@@ -28,6 +29,7 @@ export function useMemoCanvasEntry({
   toast,
 }: UseMemoCanvasEntryInput) {
   const [enteringCanvas, setEnteringCanvas] = useState(false);
+  const rememberEntry = useCanvasChromeStore((state) => state.rememberEntry);
 
   const enterCanvas = async (memoId: string | null) => {
     if (memoId === null || enteringCanvas) return;
@@ -36,6 +38,8 @@ export function useMemoCanvasEntry({
       await prepare();
       const entry = await getOrCreateMemoCanvas(accessToken, memoId);
       mergeServerNode(entry.node);
+      // 从线性阅读切到空间思考: 先给完整画布, 两侧工具都收起
+      rememberEntry({ canvasId: entry.canvas.node_id, intent: "memo_default" });
       navigate(`/app/notes/${encodeURIComponent(entry.canvas.node_id)}`);
     } catch (error) {
       toast({

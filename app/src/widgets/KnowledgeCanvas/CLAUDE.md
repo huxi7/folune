@@ -6,7 +6,8 @@ CLAUDE.md: 记录 Canvas V2 交互子域成员、职责边界与 GEB 回环协�
 KnowledgeCanvas.tsx: Canvas V2 会话内容根；始终挂载受控 React Flow，协调空间文字、memo Picker、连接/删除、拖拽/缩放、Preview、显式 AI 增量拓展与保存状态，所有人工/AI 操作只产生 intent 进入同一协调器
 CanvasCardNode.tsx: 280x360 纵向 memo_ref 笔记卡与无表面的 native 空间文字节点；卡片内嵌共享 NotePaper thumbnail、只读快照标题/摘录并以渐隐过渡到固定高度元信息行，展开与上下文操作常驻 DOM 只靠透明度浮现；自由文字编辑态稳定聚焦且完全无边框，点出后经同一提交函数保存，选中才以等距紧贴内容的四角边界按 text_scale 缩放
 CanvasCardNode.test.tsx: 卡片结构回归门禁，锁定嵌套纸张骨架、常驻展开入口、空/超长/墓碑/回收站/漂移五种数据下骨架逐字一致
-CanvasControls.tsx: React Flow 右上角无状态命令条，提供加入、fit、缩放与操作说明，不读写图数据
+CanvasTitle.tsx: Canvas 顶层安静标题；默认 Canvas 的标题只读跟随来源笔记，并且它本身就是回到原文的入口，独立 Canvas 才能在此原地重命名，长标题截断并以 tooltip 给出全名
+CanvasControls.tsx: React Flow 底部中央无状态命令条，提供加入、fit、缩放与操作说明，不读写图数据
 CanvasMemoPicker.tsx: 全局 Cmd/Ctrl+K Canvas memo Picker；复用 tree/正文搜索，Enter 只打开对象，显式加号才加入/关联且永不把 canvas 当 memo
 CanvasPersistenceStatus.tsx: 显示保存、恢复、冲突和显式重试状态，只解释协调器事实，不参与排队
 CanvasPreviewOverlay.tsx: 不卸载 Canvas 的小开本 Paper 预览层；复用 Dialog bare 表面获得 Esc/遮罩/滚动锁定/焦点归还，中央只出现一张比写作区更小、以均匀柔影悬浮的 NotePaper reader，纸内只有正文；关闭与“编辑原文”住在与纸顶右角对齐的纸外 32px 圆形工具列（窄屏 44px 横排），因此正文再长也不会把任何入口推出视野；用户明确预览时才按 ID 读正文，“编辑原文”由外层 flush 后导航

@@ -18,7 +18,7 @@ toast.css: Kumo Toast Parts 的 Quiet Editorial 适配层，消费其堆叠/展�
 user-menu.css: UserMenu 专用视觉层，以身份卡片、统一 smooth-corner 分组动作、与文件树同源的中性 interactive-hover 及无填色危险动作组成账户弹层，并与通用 Select 样式职责分离
 codemirror.css: 未分层的 CodeMirror 6 适配层，以根语义 Token 覆盖 light/dark、14px source 与 15px live 正文，并把 Live Preview 标题/引用映射到 Editorial 字体、活动标记弱化、链接/列表/任务/代码/GFM 表格保持清晰；第三方语法颜色不得泄漏为竞争性色轴，pre-wrap 继续保真原始空白
 cord.css: Cord Signature 表现层，按语境把 --cord-color 映射到既有 --archive-cord/--primary，承载 pathLength 归一化的出场自绘、虚实区分与自中点向两端流动的双层白光；外发光用更宽更淡的第二条描边而非 feGaussianBlur，reduced-motion 直接静态
-knowledge-canvas.css: Canvas V2 表现层；承载与 Paper 互斥但复用 Panel 的全视口 Workspace、React Flow/点阵、280x360 纵向笔记卡与同心嵌套纸张、编辑无框且选中边界等距贴合的空间文字、关系命中层、Picker、小开本浮纸 + 纸外 32px 圆形工具列的 Preview、命令条和持久化状态；全部非圆形 Canvas 表面与全站共享同一 squircle 平滑圆角，并把第三方默认视觉收敛回 SuperNote token
+knowledge-canvas.css: Canvas V2 表现层；以 --canvas-chrome-inset/size/gap 一组变量统一定位左上开关+安静标题、右上 AI 开关、底部中央命令条与右下保存状态四块顶层分区，禁止零散 top/left 互相躲避；并承载全视口 Workspace、React Flow/点阵、280x360 纵向笔记卡与同心嵌套纸张、编辑无框且选中边界等距贴合的空间文字、关系命中层、Picker、A4 浮纸 + 纸外 32px 圆形工具列的 Preview；全部非圆形 Canvas 表面与全站共享同一 squircle 平滑圆角，并把第三方默认视觉收敛回 SuperNote token
 design-system-workspace.css: DEV Design System 五层生产矩阵与响应式样式；直接可视化 Foundations、Lucide Iconography、真实主题切换、组件全状态检查轨、CodeMirror/Reading/Quote/Code 及 Paper Surface/Edge Dock/Archive Cord，所有演示只消费生产 Token
 color-lab.css: DEV `/color-lab` 蓝色终选决策画布，以同构静态 Library/Paper/AI 工作区、候选选择与 Light/Dark 响应式控制消费 index.css 隔离的现有蓝/灰蓝/标准墨蓝/柔和墨蓝 token；不定义颜色值、不读取业务状态、不改生产主题
 

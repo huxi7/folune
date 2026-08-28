@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 React Flow Panel、设计系统 Dialog/图标与上层明确的加入/视口命令
- * [OUTPUT]: 对外提供 Canvas 右上角加入、适配、缩放和操作说明控件
- * [POS]: KnowledgeCanvas 的无状态空间命令条；说明 Overlay 状态局部自持，不读写图数据
+ * [OUTPUT]: 对外提供 Canvas 底部中央加入、适配、缩放和操作说明控件
+ * [POS]: KnowledgeCanvas 的无状态空间命令条；顶层四块分区里它只占底部中央，说明 Overlay 状态局部自持，不读写图数据
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -32,7 +32,7 @@ export function CanvasControls({
   const [helpOpen, setHelpOpen] = useState(false);
   return (
     <>
-      <Panel className="canvas-controls" position="top-right">
+      <Panel className="canvas-controls" position="bottom-center">
         <button aria-label="加入笔记" className="canvas-control" onClick={onAdd} type="button">
           <PlusIcon size={16} />
         </button>
