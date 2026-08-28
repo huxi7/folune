@@ -6,6 +6,7 @@
  */
 
 import type {
+  MemoCanvasIdentity,
   MemoContent,
   MemoContentSummary,
   MemoDetailNode,
@@ -19,6 +20,7 @@ export type MemoNodeDto = Omit<MemoNode, "sort_order"> & {
 };
 
 export type MemoTreeNodeDto = MemoNodeDto & {
+  canvas?: MemoCanvasIdentity;
   children?: MemoTreeNodeDto[];
   memo?: MemoContentSummary | null;
 };
@@ -47,6 +49,7 @@ export const mapMemoNodeDto = (node: MemoNodeDto): MemoNode => ({
 
 export const mapMemoTreeNodeDto = (node: MemoTreeNodeDto): MemoTreeNode => ({
   ...mapMemoNodeDto(node),
+  ...(node.canvas === undefined ? {} : { canvas: node.canvas }),
   children: (node.children ?? []).map(mapMemoTreeNodeDto),
   memo: node.memo ?? null,
 });

@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 @xyflow/react v12 的 Pane 指针/坐标协议、Canvas Chat、useCanvasSessionCoordinator、canvasWorkspaceStore、空间文字几何、纯投影/增量布局、memo document Store 与本地设计系统
- * [OUTPUT]: 对外提供始终挂载真实 React Flow 的 Canvas V2：受控节点/边/视口、空白 Pane 双击空间文字、Picker/连接、Preview、AI 增量拓展和可靠保存状态
+ * [OUTPUT]: 对外提供始终挂载真实 React Flow 的 Canvas V2：受控节点/边/视口、空白 Pane 双击空间文字、向全局 Command Palette 登记"加入当前画布"、连接、Preview、AI 增量拓展和可靠保存状态
  * [POS]: KnowledgeCanvas 的会话内容根；UI 只产生 intent，人工与 AI 都经同一个协调器/RPC，正文只在 Preview 按 ID 加载
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -43,15 +43,17 @@ import {
   type CanvasIntent,
 } from "../../shared/store/canvasDocument";
 import type { CanvasChromeState } from "../../shared/store/canvasChromePolicy";
+import {
+  useCommandPaletteStore,
+  type CommandAddTarget,
+} from "../../shared/store/commandPaletteStore";
 import { useCanvasWorkspaceStore } from "../../shared/store/canvasWorkspaceStore";
 import type { CanvasReturnDescriptor } from "../../shared/store/canvasReturnStore";
 import { expandCanvas } from "../AgentPanel/canvasExpandClient";
-import type { MentionResult } from "../AgentPanel/MentionMenu";
 import { CanvasActionsProvider } from "./canvasActions";
 import { CanvasCardNode } from "./CanvasCardNode";
 import { CanvasControls } from "./CanvasControls";
 import { CanvasCordEdge } from "./CanvasCordEdge";
-import { CanvasMemoPicker } from "./CanvasMemoPicker";
 import { CanvasPersistenceStatus } from "./CanvasPersistenceStatus";
 import { CanvasPreviewOverlay } from "./CanvasPreviewOverlay";
 import {
@@ -138,7 +140,10 @@ export function KnowledgeCanvas({
   const startConnection = useCanvasWorkspaceStore((state) => state.startConnection);
   const aiLoading = useCanvasWorkspaceStore((state) => state.aiLoading);
   const setAiLoading = useCanvasWorkspaceStore((state) => state.setAiLoading);
-  const [pickerMode, setPickerMode] = useState<"add" | "connect" | null>(null);
+  const openPalette = useCommandPaletteStore((state) => state.openPalette);
+  const registerCanvasCommand = useCommandPaletteStore(
+    (state) => state.registerCanvas,
+  );
   const [transientText, setTransientText] = useState<TransientTextNode | null>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState<CanvasFlowNode>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
@@ -332,7 +337,7 @@ export function KnowledgeCanvas({
     });
   }, []);
 
-  const addMemo = useCallback(async (memo: MentionResult) => {
+  const addMemo = useCallback(async (memo: CommandAddTarget) => {
     const current = latestDocumentRef.current;
     if (current === null) return;
     const existing = current.nodes.find(
@@ -581,7 +586,7 @@ export function KnowledgeCanvas({
     },
     onConnect(nodeId: string) {
       startConnection(nodeId);
-      setPickerMode("connect");
+      openPalette();
     },
     onEditText(nodeId: string) {
       editText(nodeId);
@@ -629,11 +634,6 @@ export function KnowledgeCanvas({
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
-        event.preventDefault();
-        setPickerMode("add");
-        return;
-      }
       if (event.key === "Enter" && selectedNodeIds.length === 1) {
         const node = latestDocumentRef.current?.nodes.find(
           (candidate) => candidate.id === selectedNodeIds[0],
@@ -662,10 +662,7 @@ export function KnowledgeCanvas({
         return;
       }
       if (event.key !== "Escape" || event.defaultPrevented) return;
-      if (pickerMode !== null) {
-        event.preventDefault();
-        setPickerMode(null);
-      } else if (previewNodeId !== null) {
+      if (previewNodeId !== null) {
         event.preventDefault();
         openPreview(null);
       } else if (connectionSourceId !== null) {
@@ -682,21 +679,27 @@ export function KnowledgeCanvas({
     connectionSourceId,
     enqueue,
     openPreview,
-    pickerMode,
     previewNodeId,
     selectNodes,
     selectedNodeIds,
     startConnection,
   ]);
 
+  /*
+   * Canvas 会话期间把"加入当前画布"登记给唯一的 Command Palette。因此不存在
+   * 第二个相似 Dialog: Sidebar/Paper/Canvas 的 ⌘K 是同一个面板, 只是这里多了
+   * 一个次级动作。
+   */
+  useEffect(() => {
+    registerCanvasCommand({ canvasId, onAdd: addMemo });
+    return () => registerCanvasCommand(null);
+  }, [addMemo, canvasId, registerCanvasCommand]);
+
   const previewNode = document?.nodes.find((node) => node.id === previewNodeId) ?? null;
   const previewMemoId = previewNode?.target_node_id ?? null;
   const previewTitle = previewNode?.target?.title
     ?? previewNode?.snapshot_title
     ?? "笔记预览";
-  const sourceTitle = document?.nodes.find(
-    (node) => node.id === connectionSourceId,
-  )?.snapshot_title ?? undefined;
   return (
     <CanvasActionsProvider actions={actions}>
       <div
@@ -749,7 +752,7 @@ export function KnowledgeCanvas({
         >
           <Background gap={26} size={1} variant={BackgroundVariant.Dots} />
           <CanvasControls
-            onAdd={() => setPickerMode("add")}
+            onAdd={openPalette}
             onFit={fitView}
             onZoomIn={() => void instanceRef.current
               ?.zoomIn({ duration: 160 }).then(persistViewport)}
@@ -772,7 +775,7 @@ export function KnowledgeCanvas({
         ) : null}
         {loadStatus === "ready" && document?.nodes.length === 0 ? (
           <div className="canvas-empty-hint">
-            双击空白写一段自由文字，或按 ⌘K 加入笔记
+            双击空白写一段自由文字，或按 ⌘K 搜索并加入笔记
           </div>
         ) : null}
 
@@ -789,19 +792,6 @@ export function KnowledgeCanvas({
           <div className="canvas-ai-state">正在拓展这条知识分支…</div>
         ) : null}
       </div>
-
-      {pickerMode === null ? null : (
-        <CanvasMemoPicker
-          accessToken={accessToken}
-          mode={pickerMode}
-          onAdd={addMemo}
-          onClose={() => setPickerMode(null)}
-          onOpenMemo={async (memoId) => {
-            await navigateToMemo(memoId);
-          }}
-          sourceTitle={sourceTitle}
-        />
-      )}
 
       {previewMemoId === null ? null : (
         <CanvasPreviewOverlay

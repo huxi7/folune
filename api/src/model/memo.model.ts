@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 不依赖框架或校验库，仅使用 TypeScript 领域类型
- * [OUTPUT]: 对外提供 MemoNode、MemoContent、MemoContentSummary、轻量 MemoTreeNode、完整 MemoDetailNode、关键词命中 MemoSearchHit、相似候选 MemoRelatedHit 与创建/更新数据类型
+ * [OUTPUT]: 对外提供 MemoNode、MemoContent、MemoContentSummary、轻量 MemoTreeNode（canvas 节点附带 MemoCanvasIdentity）、完整 MemoDetailNode、关键词命中 MemoSearchHit、相似候选 MemoRelatedHit 与创建/更新数据类型
  * [POS]: model 层备忘录领域契约，将 active tree、单篇正文、关键词命中、相似候选和回收站展示数据彻底分离；MemoRelatedHit 携带命中通道与融合名次，供上层排序与解释召回来源
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -38,7 +38,18 @@ export interface MemoContent {
 
 export type MemoContentSummary = Omit<MemoContent, "content_mdx">;
 
+/**
+ * canvas 树节点的身份。默认画布带来源笔记 id，独立画布没有；只有 node_type
+ * 为 canvas 的节点才携带这个字段，folder/memo 节点连键都不出现。客户端靠它把
+ * "某篇笔记的默认画布"从搜索结果里去重成那篇笔记行上的次级动作。
+ */
+export interface MemoCanvasIdentity {
+  kind: "memo_default" | "standalone";
+  origin_node_id: string | null;
+}
+
 export interface MemoTreeNode extends MemoNode {
+  canvas?: MemoCanvasIdentity;
   children: MemoTreeNode[];
   memo: MemoContentSummary | null;
 }

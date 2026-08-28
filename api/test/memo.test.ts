@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun test、Hono app、Web fetch、内存 Supabase Auth/PostgREST mock 与 memo 领域模型
- * [OUTPUT]: 覆盖 memo API 的认证、轻量树/关键词搜索、单篇正文、创建补偿、正文统计、owner 隔离、严格更新与防环移动
+ * [OUTPUT]: 覆盖 memo API 的认证、轻量树/画布身份/关键词搜索、单篇正文、创建补偿、正文统计、owner 隔离、严格更新与防环移动
  * [POS]: api/test 的备忘录树 HTTP 全链路契约测试，不连接远端服务且不保存或输出真实凭据
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -77,6 +77,12 @@ type MockOptions = {
 class MockSupabase {
   readonly nodes = new Map<string, MemoNode>();
   readonly contents = new Map<string, MemoContent>();
+  readonly canvases = new Map<string, {
+    canvas_kind: "memo_default" | "standalone";
+    node_id: string;
+    origin_node_id: string | null;
+    user_id: string;
+  }>();
   readonly operations: string[] = [];
   readonly requestedUrls: string[] = [];
   readonly rpcBodies: { body: Record<string, unknown>; name: string }[] = [];
@@ -119,6 +125,20 @@ class MockSupabase {
 
     if (url.pathname === "/rest/v1/memos") {
       return this.handleContents(request, url);
+    }
+
+    if (url.pathname === "/rest/v1/canvases") {
+      this.operations.push("canvases:get");
+      const userId = this.assertUserFilter(url);
+      return jsonResponse(
+        Array.from(this.canvases.values())
+          .filter((row) => row.user_id === userId)
+          .map(({ canvas_kind, node_id, origin_node_id }) => ({
+            canvas_kind,
+            node_id,
+            origin_node_id,
+          })),
+      );
     }
 
     if (url.pathname.startsWith("/rest/v1/rpc/")) {
@@ -473,6 +493,67 @@ describe("GET /memo-tree", () => {
     ]);
     expect(mock.headersMatched).toBe(true);
     expect(mock.userFiltersMatched).toBe(true);
+  });
+});
+
+describe("GET /memo-tree canvas identity", () => {
+  test("canvas 节点带上画布身份，folder/memo 连键都不出现", async () => {
+    const memoId = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
+    const defaultCanvasId = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
+    const standaloneId = "ffffffff-ffff-4fff-8fff-ffffffffffff";
+    mock.nodes.set(memoId, nodeFixture(memoId, { node_type: "memo", title: "少则得" }));
+    mock.contents.set(memoId, contentFixture(memoId));
+    mock.nodes.set(defaultCanvasId, nodeFixture(defaultCanvasId, {
+      node_type: "canvas",
+      sort_order: 2000,
+      title: "少则得",
+    }));
+    mock.nodes.set(standaloneId, nodeFixture(standaloneId, {
+      node_type: "canvas",
+      sort_order: 3000,
+      title: "空间草稿",
+    }));
+    mock.canvases.set(defaultCanvasId, {
+      canvas_kind: "memo_default",
+      node_id: defaultCanvasId,
+      origin_node_id: memoId,
+      user_id: USER_ID,
+    });
+    mock.canvases.set(standaloneId, {
+      canvas_kind: "standalone",
+      node_id: standaloneId,
+      origin_node_id: null,
+      user_id: USER_ID,
+    });
+
+    const response = await app.fetch(authenticatedRequest("/memo-tree"));
+    const payload = await response.json();
+    const byId = new Map<string, Record<string, unknown>>(
+      payload.data.map((node: Record<string, unknown>) => [node["id"], node]),
+    );
+
+    expect(response.status).toBe(200);
+    expect(byId.get(defaultCanvasId)?.["canvas"]).toEqual({
+      kind: "memo_default",
+      origin_node_id: memoId,
+    });
+    expect(byId.get(standaloneId)?.["canvas"]).toEqual({
+      kind: "standalone",
+      origin_node_id: null,
+    });
+    // memo/folder 不携带这个键，客户端既有断言与投影不受影响
+    expect(Object.keys(byId.get(memoId) ?? {})).not.toContain("canvas");
+    expect(mock.operations).toContain("canvases:get");
+  });
+
+  test("没有 canvas 节点时不多发一次 canvases 请求", async () => {
+    const memoId = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
+    mock.nodes.set(memoId, nodeFixture(memoId, { node_type: "memo" }));
+    mock.contents.set(memoId, contentFixture(memoId));
+
+    await app.fetch(authenticatedRequest("/memo-tree"));
+
+    expect(mock.operations).not.toContain("canvases:get");
   });
 });
 

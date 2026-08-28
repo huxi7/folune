@@ -182,7 +182,8 @@ function AgentConversation({
   const reconcileAiCommand = useMemoTreeStore((state) => state.reconcileAiCommand);
   const rollbackAiToolCall = useMemoTreeStore((state) => state.rollbackAiToolCall);
   const pinnedIds = thread.references.map((reference) => reference.memo_id);
-  const mentionBodyHitIds = useMemoSearch(accessToken, memoTree, mentionQuery, 20);
+  const { bodyHitIds: mentionBodyHitIds } =
+    useMemoSearch(accessToken, memoTree, mentionQuery, 20);
   const mentionResults = useMemo(
     () => getMentionResults(
       memoTree,

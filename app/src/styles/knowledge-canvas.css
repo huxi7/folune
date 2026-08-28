@@ -176,18 +176,6 @@
   .canvas-save-state .ds-button { min-height: var(--control-height-compact); }
   .canvas-ai-state { top: var(--canvas-chrome-inset); left: 50%; padding: var(--space-2) var(--space-3); transform: translateX(-50%); }
 
-  .canvas-picker-results { display: grid; max-height: min(23rem, 48vh); overflow-y: auto; gap: 2px; margin-top: var(--space-3); }
-  .canvas-picker-row { display: grid; min-width: 0; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--space-2); border-radius: var(--radius-control); padding: var(--space-1); }
-  .canvas-picker-row[data-active="true"] { background: var(--interactive-hover); }
-  .canvas-picker-open { display: flex; min-width: 0; align-items: center; gap: var(--space-2); border-radius: var(--radius-control); padding: var(--space-2); text-align: left; }
-  .canvas-picker-open > span { display: grid; min-width: 0; gap: 1px; }
-  .canvas-picker-open strong,
-  .canvas-picker-open small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .canvas-picker-open strong { color: var(--foreground); font-size: var(--type-label); }
-  .canvas-picker-open small,
-  .canvas-picker-empty { color: var(--muted-foreground); font-size: var(--type-caption); }
-  .canvas-picker-empty { padding: var(--space-6); text-align: center; }
-
   /* 遮罩中央只允许出现真实纸张; 全部动作活在纸外工具列, 与纸保持 16px 间距 */
   .canvas-preview-shell { display: flex; min-width: 0; min-height: 0; max-width: 100%; max-height: 100%; align-items: flex-start; gap: var(--space-4); }
   /* 工具列与纸顶右角对齐后向下排列, 命令间距沿用全局 4px */
@@ -220,9 +208,7 @@
     .canvas-empty-hint,
     .canvas-mode-notice,
     .canvas-save-state,
-    .canvas-ai-state,
-    .canvas-picker-row,
-    .canvas-picker-open {
+    .canvas-ai-state {
       corner-shape: var(--corner-shape-smooth);
     }
   }

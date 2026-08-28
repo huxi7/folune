@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 React 的 effect/id/ref 与 ReactNode，依赖 共享 Lucide XIcon，依赖 Button 与 design-system.css 暴露的 ds-dialog-overlay/ds-dialog-panel/ds-dialog-shell 模态材质类
- * [OUTPUT]: 对外提供 default/compact 密度、default/account 宽度、panel/bare 表面、default/embedded 标题模式、标题描述关联、Esc 关闭、完整表单焦点循环与滚动锁定的 Dialog 受控弹窗组件
+ * [OUTPUT]: 对外提供 default/compact 密度、default/account/command 宽度、center/top 对齐、panel/bare 表面、default/embedded 标题模式、标题描述关联、Esc 关闭、完整表单焦点循环与滚动锁定的 Dialog 受控弹窗组件
  * [POS]: app/src/shared/design-system/components 的唯一模态基础件；Esc、焦点循环、滚动锁定与焦点归还只在此实现一次，bare 表面让 Canvas 全尺寸预览直接把纸张当作模态内容而无需第二套 Dialog
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -10,6 +10,8 @@ import { useEffect, useId, useRef, type ReactNode } from "react";
 import { Button } from "./Button";
 
 type DialogProps = {
+  /** top 让弹窗贴近视口上方，命令面板需要它才不会在长结果时上下跳 */
+  align?: DialogAlign;
   children: ReactNode;
   density?: DialogDensity;
   description?: string;
@@ -22,12 +24,14 @@ type DialogProps = {
   width?: DialogWidth;
 };
 
+export type DialogAlign = "center" | "top";
 export type DialogDensity = "compact" | "default";
 export type DialogHeaderMode = "default" | "embedded";
 export type DialogSurface = "bare" | "panel";
-export type DialogWidth = "account" | "default";
+export type DialogWidth = "account" | "command" | "default";
 
 export function Dialog({
+  align = "center",
   children,
   density = "default",
   description,
@@ -134,7 +138,8 @@ export function Dialog({
       aria-describedby={description ? descriptionId : undefined}
       aria-labelledby={titleId}
       aria-modal="true"
-      className="ds-dialog-overlay fixed inset-0 flex items-center justify-center p-4"
+      className="ds-dialog-overlay fixed inset-0 flex justify-center p-4"
+      data-align={align}
       data-surface={surface}
       role="dialog"
     >
@@ -150,7 +155,11 @@ export function Dialog({
           "relative z-10",
           surface === "bare" ? "ds-dialog-shell" : "ds-dialog-panel",
           ...(surface === "bare" ? [] : [
-            width === "account" ? "account-dialog-panel" : "w-full max-w-lg",
+            width === "account"
+              ? "account-dialog-panel"
+              : width === "command"
+                ? "command-palette-panel"
+                : "w-full max-w-lg",
             resolvedHeaderMode === "embedded"
               ? "p-0"
               : density === "compact"

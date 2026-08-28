@@ -335,6 +335,10 @@
     outline: none;
   }
 
+  /* 居中是默认; top 让面板贴近视口上方 18%, 结果多少都不改变它的纵向位置 */
+  .ds-dialog-overlay[data-align="center"] { align-items: center; }
+  .ds-dialog-overlay[data-align="top"] { align-items: flex-start; padding-top: 18vh; }
+
   .ds-dialog-overlay {
     z-index: 80;
     background: color-mix(in srgb, var(--shadow-color) 38%, transparent);

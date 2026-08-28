@@ -20,6 +20,9 @@ import { useMemoDocumentStore } from "../shared/store/memoDocumentStore";
 import { useMemoTreeStore } from "../shared/store/memoTreeStore";
 import { useWorkspaceChromeStore } from "../shared/store/workspaceChromeStore";
 import { useCanvasChromeStore } from "../shared/store/canvasChromeStore";
+import { clampCanvasChrome } from "../shared/store/canvasChromePolicy";
+import { useCommandPaletteStore } from "../shared/store/commandPaletteStore";
+import { useRecentNodesStore } from "../shared/store/recentNodesStore";
 import { useCanvasWorkspaceStore } from "../shared/store/canvasWorkspaceStore";
 import { useCanvasReturnStore } from "../shared/store/canvasReturnStore";
 import { signOutAuthenticatedUser } from "../shared/supabase/auth";
@@ -45,7 +48,7 @@ import { PanelResizeHandle } from "../widgets/PanelResizeHandle";
 import { PaperWorkspaceShell } from "../widgets/PaperWorkspaceShell";
 import type { WorkspaceOrganizePresentation } from "../widgets/archiveCordPolicy";
 import { WorkspaceAuxViews, type WorkspaceAuxView } from "../widgets/WorkspaceAuxViews";
-import { WorkspaceCommandDialog } from "../widgets/WorkspaceCommandDialog";
+import { WorkspaceCommandPalette } from "../widgets/WorkspaceCommandPalette";
 import {
   getMemoDeletionImpact,
   getPostDeletionDestination,
@@ -91,9 +94,13 @@ export function AppDashboard() {
   const assistantOpen = useWorkspaceChromeStore((state) => state.assistantOpen);
   const libraryOpen = useWorkspaceChromeStore((state) => state.libraryOpen);
   const closeAssistant = useWorkspaceChromeStore((state) => state.closeAssistant);
+  const openPaperLibrary = useWorkspaceChromeStore((state) => state.openLibrary);
   const closeLibrary = useWorkspaceChromeStore((state) => state.closeLibrary);
   const hydrateWorkspaceChrome = useWorkspaceChromeStore((state) => state.hydrate);
   const hydrateCanvasChrome = useCanvasChromeStore((state) => state.hydrate);
+  const hydrateRecentNodes = useRecentNodesStore((state) => state.hydrate);
+  const rememberRecentNode = useRecentNodesStore((state) => state.remember);
+  const openCommandPalette = useCommandPaletteStore((state) => state.openPalette);
   const rememberCanvasEntry = useCanvasChromeStore((state) => state.rememberEntry);
   const toggleAssistant = useWorkspaceChromeStore((state) => state.toggleAssistant);
   const toggleLibrary = useWorkspaceChromeStore((state) => state.toggleLibrary);
@@ -133,6 +140,10 @@ export function AppDashboard() {
   const [treeMutating, setTreeMutating] = useState(false);
   const [trashRevision, setTrashRevision] = useState(0);
   const [focusMemoClientKey, setFocusMemoClientKey] = useState<string | null>(null);
+  // Command Palette 打开文件夹时只在文件库里定位它; seq 让同一目标可反复定位
+  const [revealTarget, setRevealTarget] = useState<
+    { nodeId: string; seq: number } | null
+  >(null);
   const notesWorkspaceRef = useRef<NotesWorkspaceHandle>(null);
   const initialTreeHandledRef = useRef<string | null>(null);
   const treePlaceholderWasActiveRef = useRef(false);
@@ -204,7 +215,13 @@ export function AppDashboard() {
   useEffect(() => {
     hydrateWorkspaceChrome(profile.id);
     hydrateCanvasChrome(profile.id);
-  }, [hydrateCanvasChrome, hydrateWorkspaceChrome, profile.id]);
+    hydrateRecentNodes(profile.id);
+  }, [
+    hydrateCanvasChrome,
+    hydrateRecentNodes,
+    hydrateWorkspaceChrome,
+    profile.id,
+  ]);
 
   useEffect(() => {
     if (treePlaceholderActive) {
@@ -353,6 +370,7 @@ export function AppDashboard() {
     clearCanvasReturn();
     setFocusMemoClientKey(null);
     setActiveView("note");
+    rememberRecentNode(memoId);
     // 从文件树切到已有 Canvas 是普通对象切换: 把当前布局作为"保持现状"的依据,
     // 在导航发生的这一刻捕获，而不是等新会话去猜上一个空间留下了什么。
     const target = findNode(useMemoTreeStore.getState().nodes, resolveMemoId(memoId));
@@ -592,6 +610,15 @@ export function AppDashboard() {
     ? closeLibrary
     : () => useCanvasWorkspaceStore.getState()
       .setCanvasChrome({ libraryOpen: false });
+  // Palette 定位文件夹要先让文件库可见; 具体是 Paper 还是 Canvas 的那一个,
+  // 由当前空间决定, 两个 Chrome 状态源仍然各自独立。
+  const openActiveLibrary = canvasNodeId === null
+    ? openPaperLibrary
+    : () => useCanvasWorkspaceStore.getState()
+      .setCanvasChrome(clampCanvasChrome(
+        { assistantOpen: false, libraryOpen: true },
+        window.innerWidth,
+      ));
   const closeActiveAssistant = canvasNodeId === null
     ? closeAssistant
     : () => useCanvasWorkspaceStore.getState()
@@ -599,7 +626,6 @@ export function AppDashboard() {
   const library = (
     <>
         <AppSidebar
-          accessToken={accessToken}
           activeView={activeView}
           memoTree={memoTree}
           mutating={treeMutating || canvasCreation.creatingCanvas}
@@ -614,6 +640,7 @@ export function AppDashboard() {
           onMoveNode={handleMoveNode}
           onOpenDesignSystem={() => setActiveView("design-system")}
           onOpenProfile={() => handleOpenAccountDialog("account")}
+          onOpenSearch={openCommandPalette}
           onOpenSettings={() => handleOpenAccountDialog("appearance")}
           onOpenSubscription={() => setActiveView("subscription")}
           onRenameNode={handleRenameNode}
@@ -625,6 +652,7 @@ export function AppDashboard() {
           onSelectView={setActiveView}
           onSignOut={handleSignOut}
           profile={profile}
+          reveal={revealTarget}
           revealContent={revealInitialTreeContent}
           selectedMemoId={routeMemoId === null
             ? null
@@ -809,10 +837,22 @@ export function AppDashboard() {
         onProfileChange={setProfile}
         profile={profile}
       />
-      <WorkspaceCommandDialog
+      <WorkspaceCommandPalette
         accessToken={accessToken}
-        enabled={canvasNodeId === null}
-        onOpenMemo={handleSelectMemo}
+        onOpenCanvas={(memoId) => void memoCanvasEntry.enterCanvas(memoId)}
+        onOpenNode={(nodeId) => {
+          const target = findNode(useMemoTreeStore.getState().nodes, nodeId);
+          // 文件夹不是路由对象: 打开文件库并在树里定位它
+          if (target?.node_type === "folder") {
+            openActiveLibrary();
+            setRevealTarget((current) => ({
+              nodeId,
+              seq: (current?.seq ?? 0) + 1,
+            }));
+            return;
+          }
+          handleSelectMemo(nodeId);
+        }}
       />
     </>
   );

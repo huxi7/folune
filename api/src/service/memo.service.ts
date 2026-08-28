@@ -25,6 +25,7 @@ import type {
   MemoTreeNode,
   UpdateMemoContentData,
 } from "../model/memo.model.ts";
+import { canvasRepository } from "../repository/canvas.repository.ts";
 import { memoRepository } from "../repository/memo.repository.ts";
 import {
   buildMemoTree,
@@ -308,6 +309,16 @@ const createMemo = async (
   }
 };
 
+/** canvases 行 → 树节点身份；tree 与 restore 共用同一条翻译 */
+const canvasIdentities = async (
+  authUser: AuthUser,
+  accessToken: string,
+): Promise<{ identity: { kind: "memo_default" | "standalone"; origin_node_id: string | null }; node_id: string }[]> =>
+  (await canvasRepository.listIdentities(authUser.id, accessToken)).map((row) => ({
+    identity: { kind: row.canvas_kind, origin_node_id: row.origin_node_id },
+    node_id: row.node_id,
+  }));
+
 const getTree = async (
   authUser: AuthUser,
   accessToken: string,
@@ -320,8 +331,12 @@ const getTree = async (
     authUser.id,
     accessToken,
   );
+  // 画布身份是树结构的一部分（哪张画布是哪篇笔记的默认视图），不是图内容
+  const identities = nodes.some((node) => node.node_type === "canvas")
+    ? await canvasIdentities(authUser, accessToken)
+    : [];
 
-  return buildMemoTree(authUser, nodes, summaries);
+  return buildMemoTree(authUser, nodes, summaries, identities);
 };
 
 const getMemo = async (
@@ -672,6 +687,9 @@ const restoreNode = async (
     authUser,
     result.nodes,
     result.contents.map(toMemoContentSummary),
+    result.nodes.some((node) => node.node_type === "canvas")
+      ? await canvasIdentities(authUser, accessToken)
+      : [],
     nodeId,
   );
   const root = restoredTree[0];

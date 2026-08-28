@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖可信 AuthUser、memo 领域节点/正文/摘要与 HttpError
- * [OUTPUT]: 对外提供正文摘要投影、单篇详情投影及 owner-safe 轻量 memo tree 组装
+ * [OUTPUT]: 对外提供正文摘要投影、单篇详情投影及 owner-safe 轻量 memo tree 组装；canvas 节点在此附带画布身份，folder/memo 连键都不出现
  * [POS]: service 层 memo 读取结构内核；只负责结构与契约校验，不访问 repository 或处理写事务
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -8,6 +8,7 @@
 import { HttpError } from "../common/http-error.ts";
 import type { AuthUser } from "../model/auth.model.ts";
 import type {
+  MemoCanvasIdentity,
   MemoContent,
   MemoContentSummary,
   MemoDetailNode,
@@ -61,8 +62,10 @@ export const toMemoDetailNode = (
 export const toMemoTreeNode = (
   node: MemoNode,
   memo: MemoContentSummary | null,
+  canvas?: MemoCanvasIdentity,
 ): MemoTreeNode => ({
   ...node,
+  ...(canvas === undefined ? {} : { canvas }),
   children: [],
   memo,
 });
@@ -71,6 +74,7 @@ export const buildMemoTree = (
   authUser: AuthUser,
   nodes: MemoNode[],
   summaries: MemoContentSummary[],
+  canvasIdentities: readonly { node_id: string; identity: MemoCanvasIdentity }[] = [],
   detachedRootId?: string,
 ): MemoTreeNode[] => {
   const summaryByNodeId = new Map<string, MemoContentSummary>();
@@ -80,6 +84,9 @@ export const buildMemoTree = (
     summaryByNodeId.set(summary.node_id, summary);
   }
 
+  const identityByNodeId = new Map(
+    canvasIdentities.map((entry) => [entry.node_id, entry.identity]),
+  );
   const treeById = new Map<string, MemoTreeNode>();
 
   for (const node of nodes) {
@@ -102,7 +109,13 @@ export const buildMemoTree = (
       );
     }
 
-    treeById.set(node.id, toMemoTreeNode(node, summary));
+    treeById.set(node.id, toMemoTreeNode(
+      node,
+      summary,
+      node.node_type === "canvas"
+        ? identityByNodeId.get(node.id)
+        : undefined,
+    ));
   }
 
   const roots: MemoTreeNode[] = [];

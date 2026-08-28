@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖设计系统图标、文件库当前目录语境与上层 memo/canvas/folder 创建意图
- * [OUTPUT]: 对外提供主按钮默认新建笔记、相邻菜单显式选择笔记/Canvas/文件夹的 SidebarCreateMenu
+ * [OUTPUT]: 对外提供 96px split 新建控件：64px 主区（图标 + 「新建」）默认新建笔记，32px 下拉区显式选择笔记/Canvas/文件夹，菜单支持方向键/Home/End 与外部点击关闭
  * [POS]: AppSidebar 的创建入口；只管理菜单焦点和选择，不持有树事务或路由状态
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -30,6 +30,7 @@ export function SidebarCreateMenu({
 }: SidebarCreateMenuProps) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -40,6 +41,7 @@ export function SidebarCreateMenu({
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") setOpen(false);
     };
+    menuRef.current?.querySelector<HTMLButtonElement>("button")?.focus();
     window.addEventListener("pointerdown", dismiss);
     window.addEventListener("keydown", handleKeyDown);
     return () => {
@@ -63,7 +65,8 @@ export function SidebarCreateMenu({
         title="新建备忘录"
         type="button"
       >
-        <NotePencilIcon size={16} />
+        <NotePencilIcon aria-hidden size={16} />
+        <span>新建</span>
       </button>
       <button
         aria-expanded={open}
@@ -72,13 +75,45 @@ export function SidebarCreateMenu({
         className="sidebar-create-more"
         disabled={disabled}
         onClick={() => setOpen((current) => !current)}
+        onKeyDown={(event) => {
+          if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+            event.preventDefault();
+            setOpen(true);
+          }
+        }}
         title="更多新建选项"
         type="button"
       >
-        <CaretDownIcon size={14} />
+        <CaretDownIcon aria-hidden size={14} />
       </button>
       {open ? (
-        <div className="sidebar-create-menu" role="menu">
+        <div
+          className="sidebar-create-menu"
+          onKeyDown={(event) => {
+            const items = [...(menuRef.current?.querySelectorAll<HTMLButtonElement>(
+              "button",
+            ) ?? [])];
+            const index = items.indexOf(
+              document.activeElement as HTMLButtonElement,
+            );
+            if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+              event.preventDefault();
+              const next = index === -1
+                ? 0
+                : (index + (event.key === "ArrowDown" ? 1 : -1) + items.length)
+                  % items.length;
+              items[next]?.focus();
+            } else if (event.key === "Home") {
+              event.preventDefault();
+              items[0]?.focus();
+            } else if (event.key === "End") {
+              event.preventDefault();
+              items.at(-1)?.focus();
+            }
+          }}
+          ref={menuRef}
+          role="menu"
+        >
           <button onClick={() => choose(onCreateMemo)} role="menuitem" type="button">
             <FileTextIcon size={14} />新建备忘录
           </button>

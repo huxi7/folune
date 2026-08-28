@@ -33,7 +33,18 @@ export type MemoContent = {
 
 export type MemoContentSummary = Omit<MemoContent, "content_mdx">;
 
+/**
+ * canvas 树节点的身份。只有 node_type === "canvas" 的节点携带；默认画布带来源
+ * 笔记 id，独立画布为 null。整树读取与两个画布入口都会填上它，Command Palette
+ * 靠它把"某篇笔记的默认画布"去重成那篇笔记行上的次级动作。
+ */
+export type MemoCanvasIdentity = {
+  kind: "memo_default" | "standalone";
+  origin_node_id: string | null;
+};
+
 export type MemoTreeNode = {
+  canvas?: MemoCanvasIdentity;
   id: string;
   user_id: string;
   parent_id: string | null;

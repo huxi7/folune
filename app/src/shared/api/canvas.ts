@@ -196,27 +196,43 @@ export type CanvasExpansionContext = {
   neighbor_memo_ids: string[];
 };
 
+/**
+ * 入口 RPC 分别返回 canvases 行与 memo_nodes 行，但树只认后者。这里把身份补回
+ * tree node，让"就地并入目录"的节点与整树读取得到的节点携带同一套事实——否则
+ * 刚创建的默认画布会在搜索里被当成独立画布重复出现一次。
+ */
+const withCanvasIdentity = (result: CanvasEntryResult): CanvasEntryResult => ({
+  ...result,
+  node: {
+    ...result.node,
+    canvas: {
+      kind: result.canvas.canvas_kind,
+      origin_node_id: result.canvas.origin_node_id,
+    },
+  },
+});
+
 export const getOrCreateMemoCanvas = async (
   accessToken: string | undefined,
   memoId: string,
 ): Promise<CanvasEntryResult> =>
-  await apiRequest<CanvasEntryResult>(
+  withCanvasIdentity(await apiRequest<CanvasEntryResult>(
     `/memos/${encodeURIComponent(memoId)}/canvas`,
     { method: "PUT" },
     accessToken,
-  );
+  ));
 export const createStandaloneCanvas = async (
   accessToken: string | undefined,
   input: { title?: string; parent_id?: string | null },
 ): Promise<CanvasEntryResult> =>
-  await apiRequest<CanvasEntryResult>(
+  withCanvasIdentity(await apiRequest<CanvasEntryResult>(
     "/canvases",
     {
       body: JSON.stringify({ protocol_version: 2, ...input }),
       method: "POST",
     },
     accessToken,
-  );
+  ));
 
 export const getCanvas = async (
   accessToken: string | undefined,

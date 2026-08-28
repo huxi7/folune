@@ -1,13 +1,14 @@
 /**
  * [INPUT]: 依赖唯一 supabase-rest 适配器、Canvas V2 entry/read/mutation/context RPC schemas 与请求期 access token
- * [OUTPUT]: 对外提供默认/独立 Canvas 创建、V2 读取、统一人工/AI mutation 与可信 expansion context RPC 调用
- * [POS]: repository 层 Canvas V2 唯一数据访问器；所有图写入只调用 apply_canvas_mutation，不逐表写、不触达 memo_relations
+ * [OUTPUT]: 对外提供默认/独立 Canvas 创建、V2 读取、统一人工/AI mutation、可信 expansion context RPC 调用与整树用的画布身份只读
+ * [POS]: repository 层 Canvas V2 唯一数据访问器；所有图写入只调用 apply_canvas_mutation，不逐表写、不触达 memo_relations；canvases 表的只读身份查询也在此收口，memo 域不得自己去读这张表
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
 import { HttpError } from "../common/http-error.ts";
 import {
   canvasEntryRpcResultSchema,
+  canvasIdentityRowsSchema,
   canvasExpansionContextRpcResultSchema,
   canvasMutationRpcResultSchema,
   readCanvasV2RpcResultSchema,
@@ -15,10 +16,11 @@ import {
   type CanvasExpansionContextRpcResult,
   type CanvasExpansionMutationInput,
   type CanvasMutationInput,
+  type CanvasIdentityRow,
   type CanvasMutationRpcResult,
   type ReadCanvasV2RpcResult,
 } from "../dto/canvas.dto.ts";
-import { supabaseRest } from "../lib/supabase-rest.ts";
+import { createPostgrestQuery, supabaseRest } from "../lib/supabase-rest.ts";
 
 const canvasStorageError = (): HttpError =>
   new HttpError(502, "CANVAS_STORAGE_ERROR", "Canvas storage operation failed");
@@ -45,6 +47,32 @@ const callRpc = async <T>(
 };
 
 export const canvasRepository = {
+  /**
+   * 整树读取时给 canvas 节点补身份。只选三列、只读自己的行；图内容仍然只经
+   * read_canvas_v2，这里不碰 canvas_nodes/canvas_edges。
+   */
+  async listIdentities(
+    userId: string,
+    accessToken: string,
+  ): Promise<CanvasIdentityRow[]> {
+    let payload: unknown;
+    try {
+      // createPostgrestQuery 自带前导 "?"，路径侧不能再补一个
+      payload = await supabaseRest<unknown>(
+        `canvases${createPostgrestQuery({
+          eq: { user_id: userId },
+          select: "node_id,canvas_kind,origin_node_id",
+        })}`,
+        { accessToken },
+      );
+    } catch {
+      throw canvasStorageError();
+    }
+    const parsed = canvasIdentityRowsSchema.safeParse(payload ?? []);
+    if (!parsed.success) throw canvasStorageError();
+    return parsed.data;
+  },
+
   getOrCreateForMemo(
     userId: string,
     memoId: string,

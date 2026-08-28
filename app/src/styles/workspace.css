@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 index.css 的 Paper First 画布/纸张 token、4px 空间基线、32/36/48px 控件阶梯、统一中性 interactive-hover、全局颜色 token 及 Tailwind v4 layer
- * [OUTPUT]: 对外提供设置/订阅/回收站、816px Editorial Paper、同 Header 中心线的 Ghost Panel Toggle、品牌/中性搜索/Primary 新建一体侧栏、同曲率浮动文件库/AI、纯净消息列表、Composer 上方非模态审批条与覆盖全局 squircle 的几何圆形发送/停止动作、统一普通菜单及会话行/审批模式 hover 与选中中性表面、响应式安全区/抽屉/遮罩、Archive Port/Target/Cord，以及可把剩余高度真实传给笔记/画布子视图的业务内容布局
+ * [OUTPUT]: 对外提供设置/订阅/回收站、816px Editorial Paper、同 Header 中心线的 Ghost Panel Toggle、680px 顶部对齐 Command Palette、品牌/中性搜索/新建 split 一体侧栏、同曲率浮动文件库/AI、纯净消息列表、Composer 上方非模态审批条与覆盖全局 squircle 的几何圆形发送/停止动作、统一普通菜单及会话行/审批模式 hover 与选中中性表面、响应式安全区/抽屉/遮罩、Archive Port/Target/Cord，以及可把剩余高度真实传给笔记/画布子视图的业务内容布局
  * [POS]: app/src/styles 的产品工作区布局层；中性 Stage 只衬托唯一 Paper，左右工具以无胶囊静止图标按需浮现并在开合前后保持垂直坐标，编辑器内容保持透明且不拥有纸张外壳
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -246,17 +246,17 @@
   .app-sidebar-heading { display: flex; height: var(--panel-header-height); min-height: var(--panel-header-height); align-items: center; justify-content: space-between; gap: var(--panel-header-gap); padding-inline: 0.15rem; }
   .app-sidebar-heading .ds-brand-mark + div > p { font-size: 0.8125rem; font-weight: 620; }
   .sidebar-collapse-button.ds-button.ds-button-size-square,
-  .sidebar-create-memo-button.ds-button.ds-button-size-square { width: var(--control-height-compact); min-width: var(--control-height-compact); height: var(--control-height-compact); min-height: var(--control-height-compact); border-radius: var(--button-radius); }
   .sidebar-collapse-button.ds-button { --button-surface-hover: var(--interactive-hover); --button-face-top-hover: var(--interactive-hover); --button-face-bottom-hover: var(--interactive-hover); }
   .app-sidebar-heading .ds-button-content > svg,
   .sidebar-primary-actions .ds-button-content > svg,
   .edge-dock-icon > svg,
   .agent-panel-header-button .ds-button-content > svg { width: var(--icon-size-control); height: var(--icon-size-control); stroke-width: 2; }
-  .sidebar-primary-actions { display: grid; grid-template-columns: minmax(0, 1fr) var(--control-height-compact); align-items: center; gap: var(--control-cluster-gap); padding-inline: 0.15rem; }
-  .sidebar-create-split { position: relative; display: grid; height: var(--control-height-compact); grid-template-columns: var(--space-7) var(--space-5); border-radius: var(--button-radius); background: var(--primary); color: var(--primary-foreground); box-shadow: var(--shadow-xs); }
+  .sidebar-primary-actions { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--control-cluster-gap); padding-inline: 0.15rem; }
+  /* 96px = 64px 主区(图标+「新建」) + 32px 下拉区, 两区共享同一外轮廓 */
+  .sidebar-create-split { position: relative; display: grid; height: var(--control-height-compact); grid-template-columns: 4rem var(--control-height-compact); border-radius: var(--button-radius); background: var(--primary); color: var(--primary-foreground); box-shadow: var(--shadow-xs); }
   .sidebar-create-main,
   .sidebar-create-more { display: inline-flex; min-width: 0; align-items: center; justify-content: center; color: inherit; transition: background var(--motion-fast) var(--ease-standard); }
-  .sidebar-create-main { border-radius: var(--button-radius) 0 0 var(--button-radius); }
+  .sidebar-create-main { gap: var(--space-1); border-radius: var(--button-radius) 0 0 var(--button-radius); font-size: var(--type-label); font-weight: var(--weight-label); line-height: var(--leading-label); }
   .sidebar-create-more { border-left: 1px solid color-mix(in srgb, var(--primary-foreground) 24%, transparent); border-radius: 0 var(--button-radius) var(--button-radius) 0; }
   .sidebar-create-main:hover:not(:disabled),
   .sidebar-create-more:hover:not(:disabled) { background: color-mix(in srgb, var(--primary-foreground) 12%, transparent); }
@@ -268,14 +268,34 @@
   .sidebar-create-menu button { display: flex; min-height: var(--control-height-compact); align-items: center; gap: var(--space-2); border-radius: var(--radius-compact); padding: var(--space-1) var(--space-2); font-size: var(--type-label); text-align: left; }
   .sidebar-create-menu button:hover,
   .sidebar-create-menu button:focus-visible { background: var(--interactive-hover); outline: none; }
+  /* ---------------------------------------------------------------------- */
+  /* Command Palette: Sidebar/Paper/Canvas 共用的唯一 Command Surface        */
+  /* ---------------------------------------------------------------------- */
+
+  .command-palette-panel { width: min(42.5rem, calc(100vw - 2rem)); overflow: hidden; }
+  .command-palette { display: grid; min-height: 0; }
+  /* 56px 无边框搜索区: 输入框与外壳融为一体, 只在结果区前留一条 hairline */
+  .command-palette-search { display: flex; height: 3.5rem; align-items: center; gap: var(--space-3); padding-inline: var(--space-4); color: var(--muted-foreground); }
+  .command-palette-input { min-width: 0; flex: 1; border: 0; background: transparent; color: var(--foreground); font-size: var(--type-body); line-height: var(--leading-body); outline: none; }
+  .command-palette-input::placeholder { color: color-mix(in srgb, var(--muted-foreground) 76%, transparent); }
+  .command-palette-status { border-top: 1px solid var(--border); padding: var(--space-2) var(--space-4); color: var(--muted-foreground); font-size: var(--type-caption); line-height: var(--leading-caption); }
+  .command-palette-results { display: grid; max-height: min(24rem, 52vh); overflow-y: auto; overscroll-behavior: contain; gap: 2px; padding: 0 var(--space-2) var(--space-2); }
+  .command-palette-results:empty { display: none; }
+  /* 48px 结果行; 选中态只用中性表面, 不用大面积品牌蓝 */
+  .command-row { display: grid; min-width: 0; height: var(--space-12); grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: var(--space-1); border-radius: var(--radius-control); padding-right: var(--space-1); }
+  .command-row[data-active="true"] { background: var(--interactive-hover); }
+  .command-row-open { display: flex; height: 100%; min-width: 0; align-items: center; gap: var(--space-3); border-radius: inherit; padding-inline: var(--space-3); color: var(--muted-foreground); cursor: pointer; text-align: left; }
+  .command-row-copy { display: grid; min-width: 0; gap: 1px; }
+  .command-row-copy strong,
+  .command-row-copy small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .command-row-copy strong { color: var(--foreground); font-size: var(--type-ui); font-weight: var(--weight-ui); line-height: var(--leading-label); }
+  .command-row-copy small { color: var(--muted-foreground); font-size: var(--type-caption); line-height: var(--leading-caption); }
+  .command-row-tag { margin-left: var(--space-2); }
+  .command-row-action { display: inline-flex; width: var(--control-height-compact); height: var(--control-height-compact); align-items: center; justify-content: center; border-radius: var(--radius-compact); color: var(--muted-foreground); cursor: pointer; transition: background var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard); }
+  .command-row-action:hover:not(:disabled) { background: var(--card); color: var(--foreground); }
+  .command-row-action:disabled { opacity: 0.5; cursor: progress; }
+
   .sidebar-search-trigger { min-width: 0; }
-  .sidebar-create-memo-button .ds-button-content > svg { width: var(--icon-size-control); height: var(--icon-size-control); }
-  .sidebar-search-field { position: relative; min-width: 0; height: var(--control-height-compact); grid-column: 1 / -1; }
-  .sidebar-search-field-icon { position: absolute; top: 50%; left: var(--space-2); z-index: 1; color: var(--muted-foreground); pointer-events: none; transform: translateY(-50%); }
-  .sidebar-search-input.ds-input { width: 100%; min-width: 0; height: var(--control-height-compact); min-height: var(--control-height-compact); overflow: hidden; border-radius: var(--button-radius); padding-inline: var(--space-8) var(--space-10); font-size: var(--type-label); line-height: var(--leading-label); text-overflow: ellipsis; white-space: nowrap; }
-  .sidebar-search-close { position: absolute; top: 50%; right: var(--space-1); z-index: 1; display: inline-flex; width: var(--space-6); height: var(--space-6); align-items: center; justify-content: center; border-radius: var(--radius-compact); color: var(--muted-foreground); transform: translateY(-50%); transition: background var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard); }
-  .sidebar-search-close:hover,
-  .sidebar-search-close:focus-visible { background: var(--interactive-hover); color: var(--foreground); outline: none; }
   .toolbar-icon-button:focus-visible { outline: 2px solid color-mix(in srgb, var(--ring) 45%, transparent); outline-offset: -2px; }
   .app-sidebar-tree { min-height: 0; flex: 1; overflow-y: auto; margin-top: 0.75rem; padding-inline: 0.15rem; scrollbar-width: thin; }
   .memo-tree-scroll-area { display: flex; flex-direction: column; }
@@ -286,18 +306,9 @@
   .sidebar-tree-skeleton-label { width: 52%; height: 0.58rem; }
   .sidebar-tree-skeleton-label-wide { width: 68%; }
   .sidebar-tree-skeleton-label-short { width: 38%; }
-  .sidebar-search-results { margin-top: 0.5rem; }
   .sidebar-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; padding-right: 0.45rem; }
   .sidebar-section-heading > span { color: var(--muted-foreground); font-family: var(--font-mono); font-size: 0.625rem; }
   .sidebar-section-label { padding: 0 0.45rem 0.3rem; color: var(--muted-foreground); font-family: var(--font-mono); font-size: 0.625rem; font-weight: 600; text-transform: uppercase; }
-  .sidebar-search-empty { margin: 0.35rem 0.45rem; border: 1px dashed var(--sidebar-border); border-radius: var(--radius-menu); background: var(--card); padding: 0.85rem; color: var(--muted-foreground); font-size: 0.6875rem; line-height: 1.6; }
-  .sidebar-search-result { align-items: flex-start; padding-block: 0.25rem; }
-  .sidebar-search-result .ds-sidebar-button-leading { margin-top: 0.08rem; color: var(--primary); }
-  .sidebar-search-result-copy,
-  .sidebar-search-result-copy strong,
-  .sidebar-search-result-copy small { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .sidebar-search-result-copy strong { color: inherit; font-size: 0.75rem; font-weight: 620; line-height: 1; }
-  .sidebar-search-result-copy small { margin-top: 0.1rem; color: var(--muted-foreground); font-size: 0.625rem; line-height: 1; }
   .memo-tree-level,
   .memo-tree-item { min-width: 0; }
   .memo-tree-level { --memo-tree-step: 1rem; flex-shrink: 0; }
@@ -488,6 +499,9 @@
 @supports (corner-shape: squircle) {
   @layer components {
     .memo-context-menu button,
+    .command-row,
+    .command-row-open,
+    .command-row-action,
     .toolbar-icon-button,
     .agent-composer,
     .account-dialog-panel,

@@ -13,7 +13,6 @@ import {
   PencilSimpleIcon,
   SidebarSimpleIcon,
   TrashIcon,
-  XIcon,
 } from "../shared/design-system/icons";
 import {
   useEffect,
@@ -31,7 +30,6 @@ import type { Profile } from "../shared/api/profile";
 import {
   BrandMark,
   Button,
-  Input,
   SidebarButton,
   UserMenu,
 } from "../shared/design-system/components";
@@ -39,12 +37,10 @@ import {
   createMemoMovePlan,
   getAncestorFolderIds,
   getFolderIds,
-  searchMemoTree,
   findMemoNode,
   type MemoDropTarget,
   type MemoMovePlan,
 } from "./memoLibrary";
-import { useMemoSearch } from "./useMemoSearch";
 import { MemoTreeBranch } from "./MemoTreeBranch";
 import { MemoTreeSkeleton } from "./MemoTreeSkeleton";
 import { SidebarCreateMenu } from "./SidebarCreateMenu";
@@ -57,7 +53,6 @@ export type SidebarView =
   | "design-system";
 
 type AppSidebarProps = {
-  accessToken: string;
   activeView: SidebarView;
   memoTree: MemoTreeNode[];
   mutating: boolean;
@@ -73,6 +68,7 @@ type AppSidebarProps = {
   onOpenDesignSystem: () => void;
   onOpenProfile: () => void;
   onOpenSettings: () => void;
+  onOpenSearch: () => void;
   onOpenSubscription: () => void;
   onRenameNode: (nodeId: string, title: string) => Promise<void>;
   onSoftDeleteNode: (nodeId: string) => Promise<void>;
@@ -81,6 +77,8 @@ type AppSidebarProps = {
   onSelectView: (view: SidebarView) => void;
   onSignOut: () => Promise<void>;
   profile: Profile;
+  /** Command Palette 打开文件夹时在树里定位它；seq 让同一目标可以反复定位 */
+  reveal: { nodeId: string; seq: number } | null;
   revealContent: boolean;
   selectedMemoId: string | null;
   skeletonVisible: boolean;
@@ -162,7 +160,6 @@ const setMemoDragImage = (
 };
 
 export function AppSidebar({
-  accessToken,
   activeView,
   memoTree,
   mutating,
@@ -174,6 +171,7 @@ export function AppSidebar({
   onOpenDesignSystem,
   onOpenProfile,
   onOpenSettings,
+  onOpenSearch,
   onOpenSubscription,
   onRenameNode,
   onSoftDeleteNode,
@@ -182,6 +180,7 @@ export function AppSidebar({
   onSelectView,
   onSignOut,
   profile,
+  reveal,
   revealContent,
   selectedMemoId,
   skeletonVisible,
@@ -191,10 +190,7 @@ export function AppSidebar({
   const treeRef = useRef<HTMLDivElement>(null);
   const flipSnapshotRef = useRef<Map<string, DOMRect> | null>(null);
   const previousLayoutRef = useRef<Map<string, DOMRect> | null>(null);
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
-  const bodyHitIds = useMemoSearch(accessToken, memoTree, searchQuery);
   const [draggedNodeId, setDraggedNodeId] = useState<string | null>(null);
   const [dropTarget, setDropTarget] = useState<MemoDropTarget | null>(null);
   const [renamingNodeId, setRenamingNodeId] = useState<string | null>(null);
@@ -208,20 +204,19 @@ export function AppSidebar({
     ready: treeStatus === "ready",
     userId: profile.id,
   });
-  // 本地只匹配标题/路径，再合并服务端正文命中 ID；memo 化避免 hover、
-  // dragOverTarget 与右键菜单等无关状态重复遍历整棵轻量目录。
-  const searchResults = useMemo(
-    () => searchMemoTree(memoTree, searchQuery, bodyHitIds),
-    [bodyHitIds, memoTree, searchQuery],
-  );
-  const focusNodeId = organizeTarget?.folderId ?? organizeTarget?.memoId ?? selectedMemoId;
+  const focusNodeId = reveal?.nodeId
+    ?? organizeTarget?.folderId
+    ?? organizeTarget?.memoId
+    ?? selectedMemoId;
   const selectedNode = selectedMemoId === null
     ? null
     : findMemoNode(memoTree, selectedMemoId);
   const createParentId = selectedNode?.node_type === "folder"
     ? selectedNode.id
     : selectedNode?.parent_id ?? null;
-  const focusKey = organizeTarget?.runId ?? layoutKey;
+  const focusKey = reveal === null
+    ? organizeTarget?.runId ?? layoutKey
+    : `reveal:${reveal.seq}`;
 
   useEffect(() => {
     if (focusNodeId === null) {
@@ -388,11 +383,6 @@ export function AppSidebar({
     });
   }
 
-  function closeSearch() {
-    setSearchOpen(false);
-    setSearchQuery("");
-  }
-
   function beginRename(node: MemoTreeNode) {
     setContextMenu(null);
     setRenamingNodeId(node.id);
@@ -539,94 +529,28 @@ export function AppSidebar({
             variant="ghost"
           />
         </div>
+        {/* 固定操作行: 搜索占弹性槽只负责打开全局 Command Palette, 新建是 split */}
         <div className="sidebar-primary-actions">
-          {searchOpen ? (
-            <div className="sidebar-search-field" role="search">
-              <MagnifyingGlassIcon
-                aria-hidden="true"
-                className="sidebar-search-field-icon"
-                size={16}
-              />
-              <Input
-                aria-label="搜索备忘录"
-                autoFocus
-                className="sidebar-search-input"
-                onChange={(event) => setSearchQuery(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Escape") {
-                    event.preventDefault();
-                    closeSearch();
-                  }
-                }}
-                placeholder="搜索标题、正文或路径"
-                value={searchQuery}
-              />
-              <button
-                aria-label="关闭搜索"
-                className="sidebar-search-close"
-                onClick={closeSearch}
-                title="关闭搜索"
-                type="button"
-              >
-                <XIcon aria-hidden="true" size={14} />
-              </button>
-            </div>
-          ) : (
-            <SidebarButton
-              aria-label="搜索备忘录"
-              className="sidebar-search-trigger"
-              label="搜索"
-              leading={<MagnifyingGlassIcon size={16} />}
-              onClick={() => setSearchOpen(true)}
-              title="搜索备忘录"
-            />
-          )}
-          {!searchOpen ? (
-            <SidebarCreateMenu
-              disabled={mutating || treeStatus !== "ready"}
-              onCreateCanvas={() => onCreateCanvas(createParentId)}
-              onCreateFolder={() => onRequestCreateFolder(createParentId)}
-              onCreateMemo={() => onCreateMemo(createParentId)}
-            />
-          ) : null}
+          <SidebarButton
+            aria-keyshortcuts="Meta+K Control+K"
+            aria-label="搜索笔记、画布与文件夹"
+            className="sidebar-search-trigger"
+            label="搜索"
+            leading={<MagnifyingGlassIcon size={16} />}
+            onClick={onOpenSearch}
+            title="搜索（⌘/Ctrl + K）"
+          />
+          <SidebarCreateMenu
+            disabled={mutating || treeStatus !== "ready"}
+            onCreateCanvas={() => onCreateCanvas(createParentId)}
+            onCreateFolder={() => onRequestCreateFolder(createParentId)}
+            onCreateMemo={() => onCreateMemo(createParentId)}
+          />
         </div>
       </div>
 
-      {searchOpen ? (
-        <div
-          aria-label="备忘录搜索结果"
-          aria-live="polite"
-          className="app-sidebar-tree sidebar-search-results"
-        >
-          <p className="sidebar-section-label">搜索结果</p>
-          {!searchQuery.trim() ? (
-            <div className="sidebar-search-empty">输入关键词，搜索标题、正文内容或文件夹路径。</div>
-          ) : null}
-          {searchQuery.trim() && searchResults.length === 0 ? (
-            <div className="sidebar-search-empty">没有找到与“{searchQuery.trim()}”相关的备忘录。</div>
-          ) : null}
-          {searchResults.map((memo) => {
-            const isActive = activeView === "note" && selectedMemoId === memo.id;
-
-            return (
-              <SidebarButton
-                active={isActive}
-                aria-current={isActive ? "page" : undefined}
-                className="sidebar-search-result"
-                key={memo.id}
-                label={<span className="sidebar-search-result-copy"><strong>{memo.title}</strong><small>{memo.path}</small></span>}
-                leading={<FileTextIcon size={14} />}
-                onClick={() => {
-                  onSelectMemo(memo.id);
-                  closeSearch();
-                }}
-              />
-            );
-          })}
-        </div>
-      ) : (
-        <div
-          aria-label="备忘录文件树"
+      <div
+        aria-label="备忘录文件树"
           aria-busy={treeStatus === "loading"}
           className={[
             "app-sidebar-tree memo-tree-scroll-area",
@@ -687,8 +611,7 @@ export function AppSidebar({
               onDrop={(event) => handleDropTarget(event, ROOT_END_TARGET)}
             />
           ) : null}
-        </div>
-      )}
+      </div>
 
       <div className="app-sidebar-footer">
         <nav aria-label="辅助导航" className="sidebar-utility-list">

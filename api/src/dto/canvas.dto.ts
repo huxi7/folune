@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 zod 的 UUID/strict object/判别联合能力与 memo.dto 的 memoNodeRowSchema
- * [OUTPUT]: 对外提供 Canvas V2 创建、读取、含自由文字持久缩放的统一 mutation、AI expansion 与可信 context 的 HTTP/RPC schemas
+ * [OUTPUT]: 对外提供 Canvas V2 创建、读取、含自由文字持久缩放的统一 mutation、AI expansion、可信 context 与整树画布身份行的 HTTP/RPC schemas
  * [POS]: dto 层 Canvas V2 唯一协议边界；只承认 protocol_version=2、node_id 单一身份、有限几何与最多 100 个原子操作
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -69,6 +69,15 @@ export const canvasNodeV2Schema = z.object({
   created_by: z.enum(["user", "ai"]),
   target: canvasTargetSchema.nullable(),
 });
+
+/** 整树读取只需要画布身份三个字段，不碰图内容 */
+export const canvasIdentityRowSchema = z.object({
+  canvas_kind: z.enum(["memo_default", "standalone"]),
+  node_id: z.uuid(),
+  origin_node_id: z.uuid().nullable(),
+});
+export const canvasIdentityRowsSchema = z.array(canvasIdentityRowSchema);
+export type CanvasIdentityRow = z.infer<typeof canvasIdentityRowSchema>;
 
 export const canvasEntryRpcResultSchema = z.discriminatedUnion("status", [
   z.object({
