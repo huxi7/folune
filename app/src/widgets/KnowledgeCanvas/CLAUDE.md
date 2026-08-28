@@ -9,7 +9,7 @@ CanvasCardNode.test.tsx: 卡片结构回归门禁，锁定嵌套纸张骨架、�
 CanvasControls.tsx: React Flow 右上角无状态命令条，提供加入、fit、缩放与操作说明，不读写图数据
 CanvasMemoPicker.tsx: 全局 Cmd/Ctrl+K Canvas memo Picker；复用 tree/正文搜索，Enter 只打开对象，显式加号才加入/关联且永不把 canvas 当 memo
 CanvasPersistenceStatus.tsx: 显示保存、恢复、冲突和显式重试状态，只解释协调器事实，不参与排队
-CanvasPreviewOverlay.tsx: 不卸载 Canvas 的全尺寸 Paper 预览层；复用 Dialog bare 表面获得 Esc/遮罩/滚动锁定/焦点归还，中央只出现自身滚动的 NotePaper reader，关闭按钮是纸外 44px 圆形；用户明确预览时才从 memoDocumentStore 按 ID 读正文，“编辑原文”由外层 flush 后导航
+CanvasPreviewOverlay.tsx: 不卸载 Canvas 的整页 Paper 预览层；复用 Dialog bare 表面获得 Esc/遮罩/滚动锁定/焦点归还，中央只出现与写作区同尺寸同排版的 NotePaper reader，纸面与关闭按钮在滚动中静止不动，关闭按钮是纸外 32px 圆形（窄屏 44px）；用户明确预览时才从 memoDocumentStore 按 ID 读正文，“编辑原文”由外层 flush 后导航
 CanvasCordEdge.tsx: 关系交互层；可见线复用 Cord Signature，宽命中区在 hover/选中时显示理由与删除入口
 canvasActions.tsx: Preview、AI、连接、自由文字编辑/缩放和移除的稳定 Context 通道，使 React Flow data 保持纯可序列化事实
 spatialTextGeometry.ts: 空间文字宽高、内容基准尺寸与 text_scale（0.25–8）的约束及等比缩放纯函数，隔离对象自身缩放和 Canvas viewport zoom

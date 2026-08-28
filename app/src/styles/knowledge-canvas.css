@@ -186,7 +186,8 @@
 
   /* 遮罩中央只允许出现真实纸张; 关闭按钮活在纸外右上角, 与纸保持 16px 间距 */
   .canvas-preview-shell { display: flex; min-width: 0; min-height: 0; max-width: 100%; max-height: 100%; align-items: flex-start; gap: var(--space-4); }
-  .canvas-preview-close { display: inline-flex; width: 2.75rem; height: 2.75rem; flex: 0 0 auto; align-items: center; justify-content: center; border: 1px solid var(--border); border-radius: var(--radius-pill); background: var(--card); padding: 0; color: var(--muted-foreground); box-shadow: var(--shadow-sm); cursor: pointer; transition: background var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard); }
+  /* 关闭入口服从设计系统的图标命令规格: 桌面 32px 容器 + 16px 图标, 窄屏 44px */
+  .canvas-preview-close { display: inline-flex; width: var(--control-height-compact); height: var(--control-height-compact); flex: 0 0 auto; align-items: center; justify-content: center; border: 1px solid var(--border); border-radius: var(--radius-pill); corner-shape: round; background: var(--card); padding: 0; color: var(--muted-foreground); box-shadow: var(--shadow-xs); cursor: pointer; transition: background var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard); }
   .canvas-preview-close:hover { background: var(--interactive-hover); color: var(--foreground); }
   .canvas-preview-close:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
   .canvas-preview-edit { display: block; width: 100%; margin-top: 2.25rem; border-top: 1px solid color-mix(in srgb, var(--paper-edge) 82%, transparent); padding-top: var(--space-4); color: color-mix(in srgb, var(--paper-foreground) 60%, transparent); font-size: var(--type-label); line-height: var(--leading-label); text-align: left; cursor: pointer; transition: color var(--motion-fast) var(--ease-standard); }
@@ -199,6 +200,31 @@
   .canvas-help-list { display: grid; gap: var(--space-3); padding-left: var(--space-5); color: var(--muted-foreground); font-size: var(--type-label); line-height: 1.6; }
 }
 
+/* 全站平滑圆角同样适用于 Canvas: 卡片外壳与其中的纸张、按钮必须是同一种曲率,
+   否则嵌套表面会出现"外圆内方"的形状冲突。圆形入口显式退回 round。 */
+@supports (corner-shape: squircle) {
+  @layer components {
+    .canvas-workspace-nav,
+    .canvas-workspace-back,
+    .canvas-control,
+    .canvas-controls,
+    .canvas-edge-delete,
+    .canvas-edge-reason,
+    .canvas-card,
+    .canvas-card-expand,
+    .canvas-card-action,
+    .canvas-loading-card,
+    .canvas-empty-hint,
+    .canvas-mode-notice,
+    .canvas-save-state,
+    .canvas-ai-state,
+    .canvas-picker-row,
+    .canvas-picker-open {
+      corner-shape: var(--corner-shape-smooth);
+    }
+  }
+}
+
 @media (max-width: 767px) {
   @layer components {
     .canvas-workspace-nav { top: 0.75rem; left: 3.5rem; max-width: calc(100vw - 7rem); }
@@ -208,7 +234,7 @@
     .canvas-ai-state { top: 5rem; }
     /* 窄屏没有纸外空间: 关闭按钮回到视口右上角, 纸张占满可用宽度 */
     .canvas-preview-shell { gap: 0; }
-    .canvas-preview-close { position: fixed; z-index: 2; top: 0.75rem; right: 0.75rem; }
+    .canvas-preview-close { position: fixed; z-index: 2; top: 0.75rem; right: 0.75rem; width: 2.75rem; height: 2.75rem; }
   }
 }
 

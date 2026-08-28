@@ -89,7 +89,7 @@ export function CanvasPreviewOverlay({
           title="关闭预览"
           type="button"
         >
-          <XIcon size={20} />
+          <XIcon size={16} />
         </button>
       </div>
     </Dialog>
