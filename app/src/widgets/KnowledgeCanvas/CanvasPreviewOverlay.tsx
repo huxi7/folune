@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 design-system Dialog（bare 表面）/Skeleton、共享 NotePaper reader 纸面、memoDocumentStore 的按 ID 正文缓存与 MarkdownReadingView
- * [OUTPUT]: 对外提供不卸载 Canvas 的全尺寸 Paper 预览层：柔和遮罩、纸张自身滚动、纸外右上角 44px 圆形关闭，以及交回外层 flush 的“编辑原文”
- * [POS]: KnowledgeCanvas 的正文阅读边界；Canvas API 永不携带 content_mdx，只有用户明确预览时才按目标 memo ID 加载正文；Esc/遮罩/焦点归还统一复用 Dialog 的模态行为，不另造第二套弹窗
+ * [OUTPUT]: 对外提供不卸载 Canvas 的小开本 Paper 预览层：柔和遮罩、均匀柔影、正文在纸内滚动，关闭与交回外层 flush 的“编辑原文”都住在纸外工具列
+ * [POS]: KnowledgeCanvas 的正文阅读边界；Canvas API 永不携带 content_mdx，只有用户明确预览时才按目标 memo ID 加载正文；纸内只有正文，动作一律在纸外，因此正文长度不影响任何入口的可达性；Esc/遮罩/焦点归还统一复用 Dialog 的模态行为，不另造第二套弹窗
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -12,7 +12,7 @@ import {
   Skeleton,
   SkeletonGroup,
 } from "../../shared/design-system/components";
-import { XIcon } from "../../shared/design-system/icons";
+import { PencilSimpleIcon, XIcon } from "../../shared/design-system/icons";
 import { useMemoDocumentStore } from "../../shared/store/memoDocumentStore";
 import { MarkdownReadingView } from "../MarkdownReadingView";
 import { NotePaper } from "../NotePaper";
@@ -72,25 +72,32 @@ export function CanvasPreviewOverlay({
               preserveSoftBreaks
             />
           )}
-          {/* 唯一的纸内动作: 遮罩中央只允许出现纸张本身, 因此不再有纸外按钮行 */}
+        </NotePaper>
+        {/*
+          纸内只有正文。动作住在纸外的工具列里, 与纸顶右角对齐后向下排列:
+          正文再长也不会把「编辑原文」推到看不见的地方, 而纸面保持一张干净的纸。
+        */}
+        <div className="canvas-preview-tools">
           <button
-            className="canvas-preview-edit"
-            disabled={document === undefined}
-            onClick={() => void onEditOriginal()}
+            aria-label="关闭预览"
+            className="canvas-preview-tool"
+            onClick={onClose}
+            title="关闭预览"
             type="button"
           >
-            编辑原文
+            <XIcon size={16} />
           </button>
-        </NotePaper>
-        <button
-          aria-label="关闭预览"
-          className="canvas-preview-close"
-          onClick={onClose}
-          title="关闭预览"
-          type="button"
-        >
-          <XIcon size={16} />
-        </button>
+          <button
+            aria-label="编辑原文"
+            className="canvas-preview-tool"
+            disabled={document === undefined}
+            onClick={() => void onEditOriginal()}
+            title="编辑原文"
+            type="button"
+          >
+            <PencilSimpleIcon size={16} />
+          </button>
+        </div>
       </div>
     </Dialog>
   );

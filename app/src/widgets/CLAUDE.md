@@ -38,7 +38,7 @@ CanvasWorkspace.tsx: Canvas V2 全视口会话壳；与 Paper 互斥但复用左
 CanvasWorkspace.test.tsx: Canvas 会话壳回归测试，锁定中央 Canvas、共享 Panel 与 Paper 互斥关系
 KnowledgeCanvas/: Canvas V2 交互内容根，以受控 React Flow 承载持久视口、memo/native 节点、连接/删除/拖拽/缩放、Picker、Preview、显式 AI expansion、WAL 恢复与保存状态
 DesignSystemWorkspace/: 开发态 Quiet Editorial Design System 工作区，按 Foundations/Primitives/Navigation & Overlays/Editorial/AI & Organize 五层直接陈列生产 Token、Lucide Iconography、完整 Markdown/Reading/Quote/Code 与四种 Signature Components；通过 lazy import 只在 import.meta.env.DEV 下暴露
-NotePaper.tsx: 共享纸面原语，以 thumbnail/reader 两个 variant 承载 Canvas 卡片缩略纸与整页阅读纸；纸张曲率、纸边、墨色与渐隐只在此实现一次，reader 与写作区 Paper 同尺寸同排版且纸面静止、正文在纸内滚动，可声明 Dialog autofocus 契约
+NotePaper.tsx: 共享纸面原语，以 thumbnail/reader 两个 variant 承载 Canvas 卡片缩略纸与小开本浮纸；纸张曲率、纸边、墨色与渐隐只在此实现一次，reader 只承载正文、纸面静止而正文在纸内滚动，可声明 Dialog autofocus 契约
 NotePaper.test.tsx: 纸面骨架回归测试，锁定两个 variant 的 DOM 同构、空摘录占位、children 覆盖摘录与 overlay 不进入正文流
 MarkdownEditor.tsx: Markdown 存储协议与 CodeMirror 显示协议之间的唯一 adapter；handle 只暴露 focus 与只读 readSelection（剥掉零宽标记后返回选中文字，不触碰选区/撤销/自动保存），GFM language 常驻，live/source 只通过 Compartment 重配显示扩展以共享 EditorState/选区/撤销历史，零宽空行标记和纯文本粘贴继续保证 content_mdx 无损往返
 MarkdownEditor.test.ts: 以 content_mdx 恒等 round-trip 验证普通文本、2/5+ 连续空行、首尾/连续空格、强调段、空白行与 CRLF，约束零宽标记、HTML 空标签和 nbsp 永不离开 adapter

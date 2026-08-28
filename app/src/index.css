@@ -97,6 +97,16 @@
     0 1px 2px rgb(42 40 36 / 4%),
     -0.3rem 1.3rem 2.6rem -1.9rem rgb(42 40 36 / 20%),
     0.7rem 2.8rem 5.5rem -3.6rem rgb(42 40 36 / 26%);
+  /*
+   * 纸悬浮在遮罩之上时用的均匀柔影: 前两层 0 偏移, 因此四周等量地淌开一圈,
+   * 后两层给向下的重量。--paper-shadow 是纸躺在 Stage 桌面上的非对称桌影,
+   * 两者语境不同, 不可互换。
+   */
+  --paper-float-shadow:
+    0 0 1px rgb(42 40 36 / 7%),
+    0 0 2.25rem rgb(42 40 36 / 9%),
+    0 0.9rem 2.5rem -0.75rem rgb(42 40 36 / 16%),
+    0 2.25rem 5.25rem -1.75rem rgb(42 40 36 / 20%);
   --card: #ffffff;
   --card-foreground: var(--foreground);
   --popover: #ffffff;
@@ -331,6 +341,11 @@
     0 1px 2px rgb(0 0 0 / 18%),
     0 18px 38px -22px rgb(0 0 0 / 48%),
     0 36px 80px -42px rgb(0 0 0 / 62%);
+  --paper-float-shadow:
+    0 0 1px rgb(0 0 0 / 34%),
+    0 0 2rem rgb(0 0 0 / 30%),
+    0 1rem 2.75rem -0.75rem rgb(0 0 0 / 48%),
+    0 2.5rem 5.5rem -1.875rem rgb(0 0 0 / 60%);
   --card: #222320;
   --card-foreground: #efeee9;
   --popover: #292a26;

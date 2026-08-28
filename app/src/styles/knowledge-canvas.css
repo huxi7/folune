@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 workspace.css 的共享 Panel 网格、note-paper.css 的共享纸面 variant、Quiet Editorial 语义 token、@xyflow/react 定位层与 Canvas V2 交互组件
- * [OUTPUT]: 对外提供全视口 Canvas 壳、点阵舞台、280x360 纵向笔记卡与同心嵌套纸张、编辑无框且选中边界等距贴合的空间文字、宽命中关系、Picker、纸外圆形关闭的全尺寸 Preview、保存/AI 状态及窄屏降级
+ * [OUTPUT]: 对外提供全视口 Canvas 壳、点阵舞台、280x360 纵向笔记卡与同心嵌套纸张、编辑无框且选中边界等距贴合的空间文字、宽命中关系、Picker、纸外工具列 + 小开本浮纸的 Preview、保存/AI 状态及窄屏降级
  * [POS]: app/src/styles 的 Canvas V2 视觉边界；桌面保留空间画布，窄屏保留可达操作，不覆盖 React Flow 的业务状态
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -184,16 +184,15 @@
   .canvas-picker-empty { color: var(--muted-foreground); font-size: var(--type-caption); }
   .canvas-picker-empty { padding: var(--space-6); text-align: center; }
 
-  /* 遮罩中央只允许出现真实纸张; 关闭按钮活在纸外右上角, 与纸保持 16px 间距 */
+  /* 遮罩中央只允许出现真实纸张; 全部动作活在纸外工具列, 与纸保持 16px 间距 */
   .canvas-preview-shell { display: flex; min-width: 0; min-height: 0; max-width: 100%; max-height: 100%; align-items: flex-start; gap: var(--space-4); }
-  /* 关闭入口服从设计系统的图标命令规格: 桌面 32px 容器 + 16px 图标, 窄屏 44px */
-  .canvas-preview-close { display: inline-flex; width: var(--control-height-compact); height: var(--control-height-compact); flex: 0 0 auto; align-items: center; justify-content: center; border: 1px solid var(--border); border-radius: var(--radius-pill); corner-shape: round; background: var(--card); padding: 0; color: var(--muted-foreground); box-shadow: var(--shadow-xs); cursor: pointer; transition: background var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard); }
-  .canvas-preview-close:hover { background: var(--interactive-hover); color: var(--foreground); }
-  .canvas-preview-close:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
-  .canvas-preview-edit { display: block; width: 100%; margin-top: 2.25rem; border-top: 1px solid color-mix(in srgb, var(--paper-edge) 82%, transparent); padding-top: var(--space-4); color: color-mix(in srgb, var(--paper-foreground) 60%, transparent); font-size: var(--type-label); line-height: var(--leading-label); text-align: left; cursor: pointer; transition: color var(--motion-fast) var(--ease-standard); }
-  .canvas-preview-edit:hover:not(:disabled) { color: var(--primary); }
-  .canvas-preview-edit:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
-  .canvas-preview-edit:disabled { opacity: 0.55; cursor: progress; }
+  /* 工具列与纸顶右角对齐后向下排列, 命令间距沿用全局 4px */
+  .canvas-preview-tools { display: flex; flex: 0 0 auto; flex-direction: column; gap: var(--control-cluster-gap); }
+  /* 纸外动作服从设计系统的图标命令规格: 桌面 32px 容器 + 16px 图标, 窄屏 44px */
+  .canvas-preview-tool { display: inline-flex; width: var(--control-height-compact); height: var(--control-height-compact); flex: 0 0 auto; align-items: center; justify-content: center; border: 1px solid var(--border); border-radius: var(--radius-pill); corner-shape: round; background: var(--card); padding: 0; color: var(--muted-foreground); box-shadow: var(--shadow-xs); cursor: pointer; transition: background var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard); }
+  .canvas-preview-tool:hover:not(:disabled) { background: var(--interactive-hover); color: var(--foreground); }
+  .canvas-preview-tool:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+  .canvas-preview-tool:disabled { opacity: 0.5; cursor: progress; }
   .canvas-preview-error { color: var(--destructive); font-size: var(--type-label); }
   .canvas-preview-line-skeleton { width: 100%; height: 0.7rem; margin-top: var(--space-4); }
   .canvas-preview-line-skeleton:last-child { width: 72%; }
@@ -232,9 +231,10 @@
     .canvas-mode-notice { bottom: 4.5rem; width: max-content; max-width: calc(100vw - 1.5rem); }
     .canvas-save-state { right: 0.75rem; bottom: 0.75rem; left: 0.75rem; max-width: none; justify-content: space-between; }
     .canvas-ai-state { top: 5rem; }
-    /* 窄屏没有纸外空间: 关闭按钮回到视口右上角, 纸张占满可用宽度 */
+    /* 窄屏没有纸外空间: 工具列回到视口右上角横排, 纸张占满可用宽度 */
     .canvas-preview-shell { gap: 0; }
-    .canvas-preview-close { position: fixed; z-index: 2; top: 0.75rem; right: 0.75rem; width: 2.75rem; height: 2.75rem; }
+    .canvas-preview-tools { position: fixed; z-index: 2; top: 0.75rem; right: 0.75rem; flex-direction: row-reverse; }
+    .canvas-preview-tool { width: 2.75rem; height: 2.75rem; }
   }
 }
 

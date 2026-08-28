@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖 index.css 的 Paper 语义 token（paper-surface/paper-edge/paper-foreground/paper-shadow/paper-max-width）、font-serif、4px 空间基线与同心曲率阶梯
- * [OUTPUT]: 对外提供唯一共享纸面 .note-paper 及 thumbnail/reader 两个 variant；reader 与写作区 Paper 同宽同高同排版，纸面静止而正文在纸内滚动
+ * [INPUT]: 依赖 index.css 的 Paper 语义 token（paper-surface/paper-edge/paper-foreground/paper-shadow/paper-float-shadow/paper-max-width）、font-serif、4px 空间基线与同心曲率阶梯
+ * [OUTPUT]: 对外提供唯一共享纸面 .note-paper 及 thumbnail/reader 两个 variant；reader 是小于写作区整页 Paper 的小开本、以均匀柔影悬浮，纸面静止而正文在纸内滚动且字行长度与写作区相同
  * [POS]: app/src/styles 的纸张视觉单一真相；Canvas 卡片缩略与全尺寸阅读共用同一套纸面规则，禁止任何组件再复制近似 Paper 样式
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -85,40 +85,44 @@
   }
 
   /* ------------------------------------------------------------------------ */
-  /* reader: 与写作区同尺寸的整页纸张                                        */
+  /* reader: 悬浮在遮罩之上的一张小开本纸                                    */
   /* ------------------------------------------------------------------------ */
 
   /*
-   * 纸的几何是常量，不随正文长度变化：816px 宽、calc(100vh - 5rem) 高，与
-   * app-main-panel.paper-surface 完全一致。模态是一个固定取景框，纸在框里静止，
-   * 正文在纸内滚动——所以展开一篇短笔记和一篇长笔记看到的是同一张纸。
-   * 滚动条沿用 global-base.css 的全局细滚动条，不预留 gutter：既不假装内容
-   * 到此为止，也不用一条常驻轨道破坏纸面。
+   * 几何是常量，不随正文长度变化——所以展开一篇短笔记和一篇长笔记看到的是同
+   * 一张纸；模态是固定取景框，纸在框里静止，正文在纸内滚动，滚动条沿用
+   * global-base.css 的全局细滚动条且不预留 gutter：既不假装内容到此为止，也
+   * 不用一条常驻轨道破坏纸面。
+   *
+   * 尺寸刻意小于写作区的整页 Paper（720x704 对 816x820）：这是一次瞥读而不
+   * 是目的地，小开本更精致，也让四周留出足够的遮罩来承载那圈柔影。宽度取
+   * 写作列的 45rem，因此配上 48px 页边后字行长度与写作区逐字相同——纸变小，
+   * 阅读节奏不变。
    */
   .note-paper[data-variant="reader"] {
     /*
      * 尺寸必须是确定值而不是百分比: reader 声明 container-type 以复用写作区的
      * cqw 排版，容器查询会切断它对内容宽度的贡献，若再用 100% 就会与被内容
      * 撑开的模态外壳互相依赖并塌成一条竖线。7.5rem 预留遮罩内边距、纸外
-     * 16px 间距与 32px 关闭按钮。
+     * 16px 间距与 32px 纸外工具列。
      */
-    width: min(var(--paper-max-width), calc(100vw - 7.5rem));
-    height: calc(100vh - 5rem);
+    width: min(45rem, calc(100vw - 7.5rem));
+    height: min(calc(100vh - 10rem), 44rem);
     container-type: inline-size;
     overflow: hidden;
-    box-shadow: var(--paper-shadow);
+    box-shadow: var(--paper-float-shadow);
   }
   .note-paper[data-variant="reader"]:focus {
     outline: none;
   }
   .note-paper[data-variant="reader"] .note-paper-column {
-    width: min(100%, 45rem);
+    width: 100%;
     flex: 1;
     overflow-y: auto;
     overscroll-behavior: contain;
     margin-inline: auto;
-    /* 与 .note-editor-canvas 逐字相同的书写列内边距 */
-    padding: clamp(2.4rem, 6vh, 3.8rem) clamp(1.5rem, 6cqw, 3rem) 4rem;
+    /* 页边 48px: 720 - 96 = 624px 字行长度，与写作区逐字相同 */
+    padding: clamp(2rem, 4.5vh, 2.75rem) clamp(1.25rem, 6.7cqw, 3rem) 3rem;
   }
   /* 与 .note-editor-title 逐字相同的标题排版 */
   .note-paper[data-variant="reader"] .note-paper-title {
@@ -137,12 +141,13 @@
 @media (max-width: 767px) {
   @layer components {
     /* 窄屏与写作区同样收紧内边距，并让纸占满模态可用高度 */
+    /* 窄屏没有"更精致"的余量，纸占满模态可用空间并收紧页边 */
     .note-paper[data-variant="reader"] {
       width: calc(100vw - 2rem);
       height: calc(100vh - 2rem);
     }
     .note-paper[data-variant="reader"] .note-paper-column {
-      padding: 2rem 1.25rem 4rem;
+      padding: 2rem 1.25rem 3rem;
     }
   }
 }
