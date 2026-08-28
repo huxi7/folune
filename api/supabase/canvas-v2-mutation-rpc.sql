@@ -389,7 +389,7 @@ begin
         or length(op->>'text') > 5000
         or coalesce((op->>'width')::numeric, 240) not between 20 and 2880
         or coalesce((op->>'height')::numeric, 48) not between 24 and 3840
-        or coalesce((op->>'text_scale')::numeric, 1) not between 0.25 and 4
+        or coalesce((op->>'text_scale')::numeric, 1) not between 0.25 and 8
       then
         raise exception 'native canvas node shape is invalid'
           using errcode = '23514';
@@ -482,7 +482,7 @@ begin
       if op ? 'height' and (op->>'height')::numeric not between 24 and 3840 then
         raise exception 'native canvas height is invalid' using errcode = '23514';
       end if;
-      if op ? 'text_scale' and (op->>'text_scale')::numeric not between 0.25 and 4 then
+      if op ? 'text_scale' and (op->>'text_scale')::numeric not between 0.25 and 8 then
         raise exception 'native canvas text scale is invalid' using errcode = '23514';
       end if;
 

@@ -211,7 +211,9 @@ describe("KnowledgeCanvas 自由文字纵向交互", () => {
     const editor = await openTextEditorFromPane();
     fireEvent.change(editor, { target: { value: "从 Pane 写下的真实文字" } });
     setMeasuredTextSize(216, 48);
-    fireEvent.blur(editor);
+    const pane = document.querySelector<HTMLElement>(".react-flow__pane")!;
+    fireEvent.pointerDown(pane);
+    fireEvent.pointerDown(pane);
 
     await waitFor(() => expect(walStorage.records.size).toBe(1));
     expect([...walStorage.records.values()][0]?.intents[0]?.operation).toMatchObject({
@@ -219,7 +221,7 @@ describe("KnowledgeCanvas 自由文字纵向交互", () => {
       height: 48,
       text_scale: 1,
       type: "create_text",
-      width: 216,
+      width: 217,
     });
     expect(await coordinatorRef.current?.flush()).toEqual({
       persisted: true,
@@ -231,7 +233,7 @@ describe("KnowledgeCanvas 自由文字纵向交互", () => {
       height: 48,
       text_scale: 1,
       type: "create_text",
-      width: 216,
+      width: 217,
     });
     expect(walStorage.records.size).toBe(0);
     expect(useCanvasWorkspaceStore.getState().document?.nodes).toHaveLength(1);
@@ -273,7 +275,7 @@ describe("KnowledgeCanvas 自由文字纵向交互", () => {
       text: "修改后的正文",
       height: 72,
       type: "update_node",
-      width: 180,
+      width: 181,
     });
     expect(useCanvasWorkspaceStore.getState().document?.nodes).toHaveLength(1);
     expect(useCanvasWorkspaceStore.getState().document?.nodes[0]?.text)
@@ -308,6 +310,16 @@ describe("KnowledgeCanvas 自由文字纵向交互", () => {
       expect.stringContaining("bottom right"),
     ]);
     expect(document.querySelectorAll(".canvas-node-resize-line")).toHaveLength(0);
+  });
+
+  test("编辑态只显示输入光标，不显示选择边框和缩放角点", async () => {
+    const editor = await openTextEditorFromPane();
+    const textNode = document.querySelector<HTMLElement>(".canvas-text-node");
+
+    expect(textNode).not.toBeNull();
+    expect(textNode?.dataset.editing).toBe("true");
+    expect(document.activeElement).toBe(editor);
+    expect(document.querySelectorAll(".canvas-node-resize-handle")).toHaveLength(0);
   });
 
   test("空内容失焦不入队，也不产生节点", async () => {

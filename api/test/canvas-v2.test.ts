@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun test、Hono app 与只实现 Canvas V2 RPC 的内存 Supabase HTTP mock
- * [OUTPUT]: 覆盖默认/空白 Canvas 入口、strict protocol=2、人工/AI 共用 mutation、409 恢复事实与可信 expansion context
+ * [OUTPUT]: 覆盖默认/空白 Canvas 入口、strict protocol=2、人工/AI 共用 mutation、自由文字 scale=8 边界、409 恢复事实与可信 expansion context
  * [POS]: api/test 的 Canvas V2 HTTP 纵向契约；数据库原子性由 staging 回滚事务验证，本文件锁定 router→service→repository 的唯一 RPC 路径
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -331,7 +331,7 @@ describe("Canvas V2 唯一 mutation 内核", () => {
       body: JSON.stringify(mutationBody({
         operations: [{
           node_id: NODE_ID,
-          text_scale: 4.01,
+          text_scale: 8.01,
           type: "update_node",
         }],
       })),

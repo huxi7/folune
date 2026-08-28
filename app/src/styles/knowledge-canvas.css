@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 workspace.css 的共享 Panel 网格、Quiet Editorial 语义 token、@xyflow/react 定位层与 Canvas V2 交互组件
- * [OUTPUT]: 对外提供全视口 Canvas 壳、点阵舞台、无卡片表面的空间文字、宽命中关系、Picker/Preview、保存/AI 状态及窄屏降级
+ * [OUTPUT]: 对外提供全视口 Canvas 壳、点阵舞台、编辑无框且选中边界等距贴合的空间文字、宽命中关系、Picker/Preview、保存/AI 状态及窄屏降级
  * [POS]: app/src/styles 的 Canvas V2 视觉边界；桌面保留空间画布，窄屏保留可达操作，不覆盖 React Flow 的业务状态
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -109,16 +109,16 @@
   .canvas-card-note { color: var(--muted-foreground); font-size: var(--type-caption); }
 
   .canvas-text-node { min-width: 0; min-height: 0; overflow: visible; border: 0; border-radius: 0; background: transparent; padding: 0; box-shadow: none; }
-  .canvas-text-node[data-selected="true"],
-  .canvas-text-node[data-editing="true"] { outline: 1px solid color-mix(in srgb, var(--primary) 62%, var(--border)); outline-offset: 0; }
+  .canvas-text-node[data-selected="true"]:not([data-editing="true"]) { outline: 1px solid color-mix(in srgb, var(--primary) 62%, var(--border)); outline-offset: 0; }
   .canvas-text-node[data-editing="true"] { cursor: text; }
   .canvas-text-surface { position: absolute; top: 0; left: 0; transform-origin: top left; }
   .canvas-text-copy,
   .canvas-text-editor,
-  .canvas-text-measure { box-sizing: border-box; color: var(--foreground); font-family: var(--font-serif); font-size: var(--type-body); font-weight: var(--weight-body); line-height: var(--leading-body); overflow-wrap: anywhere; tab-size: 2; white-space: pre-wrap; }
-  .canvas-text-copy { width: 100%; height: 100%; overflow: hidden; }
-  .canvas-text-editor { display: block; width: 100%; height: 100%; overflow: hidden; resize: none; appearance: none; border: 0; border-radius: 0; outline: 0; background: transparent; padding: 0; }
-  .canvas-text-measure { position: absolute; top: 0; left: 0; width: max-content; max-width: 30rem; min-width: 1em; visibility: hidden; pointer-events: none; }
+  .canvas-text-measure { box-sizing: border-box; color: var(--foreground); font-family: var(--font-serif); font-size: var(--type-body); font-weight: var(--weight-body); line-height: var(--leading-body); overflow-wrap: anywhere; padding: 2px; tab-size: 2; white-space: pre-wrap; }
+  .canvas-text-copy { display: flex; width: 100%; height: 100%; align-items: center; justify-content: center; overflow: hidden; }
+  .canvas-text-copy > span { display: block; max-width: 100%; white-space: pre-wrap; }
+  .canvas-text-editor { display: block; width: 100%; height: 100%; overflow: hidden; resize: none; appearance: none; border: 0; border-radius: 0; outline: 0; background: transparent; }
+  .canvas-text-measure { position: absolute; top: 0; left: 0; width: max-content; min-width: 1em; visibility: hidden; pointer-events: none; }
   .canvas-node-resize-handle { z-index: 2; width: 0.55rem !important; height: 0.55rem !important; border: 1px solid var(--primary) !important; border-radius: 50%; background: var(--card) !important; }
 
   /* ------------------------------------------------------------------------ */

@@ -12,7 +12,7 @@ export const CANVAS_TEXT_MIN_HEIGHT = 24;
 export const CANVAS_TEXT_MAX_WIDTH = 2880;
 export const CANVAS_TEXT_MAX_HEIGHT = 3840;
 export const CANVAS_TEXT_MIN_SCALE = 0.25;
-export const CANVAS_TEXT_MAX_SCALE = 4;
+export const CANVAS_TEXT_MAX_SCALE = 8;
 
 export type SpatialTextGeometry = {
   height: number;

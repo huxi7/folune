@@ -28,6 +28,13 @@ describe("空间文字几何", () => {
     expect(resizedTextScale(240, 1.25, 360)).toBe(1.875);
   });
 
+  test("对象缩放可越过旧四倍上限且不改变内容基准尺寸", () => {
+    const scaled = scaleTextGeometry({ height: 31, width: 135 }, 6);
+
+    expect(scaled).toEqual({ height: 186, scale: 6, width: 810 });
+    expect(textBaseGeometry(scaled)).toEqual({ height: 31, width: 135 });
+  });
+
   test("异常值和越界缩放被收口到协议范围", () => {
     expect(normalizeTextGeometry({ height: 0, scale: 0, width: 0 }))
       .toMatchObject({ height: 24, scale: CANVAS_TEXT_MIN_SCALE, width: 20 });

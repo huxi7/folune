@@ -112,7 +112,7 @@ alter table public.canvas_nodes
       not (metadata ? 'text_scale')
       or (
         jsonb_typeof(metadata->'text_scale') = 'number'
-        and (metadata->>'text_scale')::numeric between 0.25 and 4
+        and (metadata->>'text_scale')::numeric between 0.25 and 8
       )
     ),
   add constraint canvas_nodes_canvas_id_id_key unique (canvas_id, id);

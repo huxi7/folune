@@ -16,7 +16,7 @@ const rationaleSchema = z.string().max(120).nullable().optional();
 const nativeTextSchema = z.string().min(1).max(5000);
 const widthSchema = z.number().finite().min(20).max(2880);
 const heightSchema = z.number().finite().min(24).max(3840);
-const textScaleSchema = z.number().finite().min(0.25).max(4);
+const textScaleSchema = z.number().finite().min(0.25).max(8);
 const rpcNotFoundSchema = z.object({ status: z.literal("not_found") });
 const rpcInvalidSchema = z.object({
   status: z.literal("invalid"),
@@ -65,7 +65,7 @@ export const canvasNodeV2Schema = z.object({
   y: z.coerce.number().finite(),
   width: z.coerce.number().finite().nullable(),
   height: z.coerce.number().finite().nullable(),
-  text_scale: z.coerce.number().finite().min(0.25).max(4).nullable(),
+  text_scale: z.coerce.number().finite().min(0.25).max(8).nullable(),
   created_by: z.enum(["user", "ai"]),
   target: canvasTargetSchema.nullable(),
 });
