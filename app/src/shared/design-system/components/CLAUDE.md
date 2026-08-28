@@ -13,7 +13,7 @@ MentionInput.tsx: 原生 contenteditable 多行输入件，以受控纯文本和
 MentionInput.test.ts: MentionInput 纯文本分段回归测试，锁定中文标题、最长标题优先和特殊字符标题的内联 token 边界
 PasswordInput.tsx: Input 家族的隐私输入组合件，复用 Input 内凹表面，提供受控明文/掩码切换、显隐图标按钮、aria-label/aria-pressed 与原生 input 属性/ref
 Card.tsx: 本地 Card 组件，仅保留产品实际使用的 default、accent 两种 V1 语义表面与短阴影
-Dialog.tsx: 本地唯一模态基础件，封装 default/compact 密度、default/account 宽度、panel/bare 表面、default/embedded 标题模式、受控弹窗、中性遮罩、标题描述关联、Esc 关闭、完整表单焦点循环、滚动锁定与关闭后焦点恢复；embedded 模式允许 AccountDialog 在同一弹窗语义内拥有横竖分隔标题骨架，bare 表面只保留遮罩与模态行为供 Canvas 全尺寸纸张预览复用，禁止为新的模态另造第二套 Esc/焦点/滚动实现
+Dialog.tsx: 本地唯一模态基础件，封装 default/compact 密度、default/account 宽度、panel/bare 表面、default/embedded 标题模式、受控弹窗、中性遮罩、标题描述关联、Esc 关闭、完整表单焦点循环、滚动锁定与关闭后焦点恢复；embedded 模式允许 AccountDialog 在同一弹窗语义内拥有横竖分隔标题骨架，bare 表面只保留遮罩与模态行为供 Canvas 纸张预览复用，并把遮罩从压暗改为明亮磨砂以免吃掉 children 自带的柔影，禁止为新的模态另造第二套 Esc/焦点/滚动实现
 AssistantMessage.tsx: AI 消息正文根，不绘制“助手”等可见身份标题，以零卡片表面依次组合可选过程槽、独立 StreamingText 最终正文与兼容 children 工具区；向纯文本/Markdown 渲染器透传统一词级动效状态，不拥有过程分区或折叠状态
 StreamingText.tsx: 首个真实 text part 后把 SSE 目标文本在同次上游更新中完整直出，不设置逐词显示队列、全文时间轴或 useLayoutEffect 状态；历史正文保持一个原生文本节点，只有末尾最多 5 个词使用 55ms 负时间错峰的常数动画节点，不提供任何尾部光标状态或 DOM，reduced-motion 下跳过模糊
 streamingTextSegments.ts: 语言无关的流式分词纯函数，以 Intl.Segmenter 同时支持英文单词和中文语义词组，并把标点、空白及 Markdown 标记完整归入相邻显示单元

@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 index.css 的 Paper 语义 token（paper-surface/paper-edge/paper-foreground/paper-shadow/paper-float-shadow/paper-max-width）、font-serif、4px 空间基线与同心曲率阶梯
- * [OUTPUT]: 对外提供唯一共享纸面 .note-paper 及 thumbnail/reader 两个 variant；reader 是小于写作区整页 Paper 的小开本、以均匀柔影悬浮，纸面静止而正文在纸内滚动且字行长度与写作区相同
+ * [OUTPUT]: 对外提供唯一共享纸面 .note-paper 及 thumbnail/reader 两个 variant；reader 是按 ISO 216 的 1:√2 立起的 A4 开本、以渐变柔影悬浮，纸面静止而正文在纸内滚动
  * [POS]: app/src/styles 的纸张视觉单一真相；Canvas 卡片缩略与全尺寸阅读共用同一套纸面规则，禁止任何组件再复制近似 Paper 样式
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -94,20 +94,28 @@
    * global-base.css 的全局细滚动条且不预留 gutter：既不假装内容到此为止，也
    * 不用一条常驻轨道破坏纸面。
    *
-   * 尺寸刻意小于写作区的整页 Paper（720x704 对 816x820）：这是一次瞥读而不
-   * 是目的地，小开本更精致，也让四周留出足够的遮罩来承载那圈柔影。宽度取
-   * 写作列的 45rem，因此配上 48px 页边后字行长度与写作区逐字相同——纸变小，
-   * 阅读节奏不变。
+   * 开本刻意不同于写作区的整页 Paper：这是一次瞥读而不是目的地。它按 A4 的
+   * 1:√2 立着，比写作区的纸更窄更修长，四周留出遮罩承载那圈渐变柔影。
    */
   .note-paper[data-variant="reader"] {
     /*
+     * 开本是 ISO 216 的 1:√2（A4 的那个比例，Lichtenberg 比：唯一对折后与
+     * 自身相似的长方形）。纸永远是这个比例，只有绝对尺寸随视口收放，三个约束
+     * 里最紧的那个说话：
+     *   40rem      —— 字行舒适上限，避免高屏上宽成一块板
+     *   视口高度   —— 纸尽量占满模态可用高度，得到修长的立姿
+     *   视口宽度   —— 预留遮罩内边距、16px 纸外间距与 32px 工具列
      * 尺寸必须是确定值而不是百分比: reader 声明 container-type 以复用写作区的
      * cqw 排版，容器查询会切断它对内容宽度的贡献，若再用 100% 就会与被内容
-     * 撑开的模态外壳互相依赖并塌成一条竖线。7.5rem 预留遮罩内边距、纸外
-     * 16px 间距与 32px 纸外工具列。
+     * 撑开的模态外壳互相依赖并塌成一条竖线。
      */
-    width: min(45rem, calc(100vw - 7.5rem));
-    height: min(calc(100vh - 10rem), 44rem);
+    --reader-paper-width: min(
+      40rem,
+      calc((100vh - 3.5rem) / 1.4142),
+      calc(100vw - 7.5rem)
+    );
+    width: var(--reader-paper-width);
+    height: calc(var(--reader-paper-width) * 1.4142);
     container-type: inline-size;
     overflow: hidden;
     box-shadow: var(--paper-float-shadow);
@@ -121,13 +129,13 @@
     overflow-y: auto;
     overscroll-behavior: contain;
     margin-inline: auto;
-    /* 页边 48px: 720 - 96 = 624px 字行长度，与写作区逐字相同 */
-    padding: clamp(2rem, 4.5vh, 2.75rem) clamp(1.25rem, 6.7cqw, 3rem) 3rem;
+    /* 页边随开本等比收放，始终是纸宽的 8%，上限仍是写作区的 48px */
+    padding: clamp(2rem, 5.5vh, 3.25rem) clamp(1.25rem, 8cqw, 3rem) clamp(1.75rem, 4vh, 3rem);
   }
-  /* 与 .note-editor-title 逐字相同的标题排版 */
+  /* 标题沿用写作区的字重/字距，字号随小开本等比收一档 */
   .note-paper[data-variant="reader"] .note-paper-title {
-    font-size: clamp(1.5rem, 4cqw, 1.875rem);
-    line-height: 1.22;
+    font-size: clamp(1.375rem, 4.6cqw, 1.75rem);
+    line-height: 1.24;
   }
   .note-paper[data-variant="reader"] .note-paper-body {
     margin-top: 1.15rem;
@@ -146,8 +154,9 @@
       width: calc(100vw - 2rem);
       height: calc(100vh - 2rem);
     }
+    /* 工具列在窄屏浮在纸的右上角之上, 因此正文从按钮下沿之后才开始 */
     .note-paper[data-variant="reader"] .note-paper-column {
-      padding: 2rem 1.25rem 3rem;
+      padding: 3.75rem 1.25rem 3rem;
     }
   }
 }

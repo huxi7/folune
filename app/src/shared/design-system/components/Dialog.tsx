@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 React 的 effect/id/ref 与 ReactNode，依赖 共享 Lucide XIcon，依赖 Button 与 index.css 暴露的 ds-dialog-panel 弹窗表面类
+ * [INPUT]: 依赖 React 的 effect/id/ref 与 ReactNode，依赖 共享 Lucide XIcon，依赖 Button 与 design-system.css 暴露的 ds-dialog-overlay/ds-dialog-panel/ds-dialog-shell 模态材质类
  * [OUTPUT]: 对外提供 default/compact 密度、default/account 宽度、panel/bare 表面、default/embedded 标题模式、标题描述关联、Esc 关闭、完整表单焦点循环与滚动锁定的 Dialog 受控弹窗组件
  * [POS]: app/src/shared/design-system/components 的唯一模态基础件；Esc、焦点循环、滚动锁定与焦点归还只在此实现一次，bare 表面让 Canvas 全尺寸预览直接把纸张当作模态内容而无需第二套 Dialog
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -134,7 +134,8 @@ export function Dialog({
       aria-describedby={description ? descriptionId : undefined}
       aria-labelledby={titleId}
       aria-modal="true"
-      className="ds-dialog-overlay fixed inset-0 flex items-center justify-center p-4 backdrop-blur-md"
+      className="ds-dialog-overlay fixed inset-0 flex items-center justify-center p-4"
+      data-surface={surface}
       role="dialog"
     >
       <button

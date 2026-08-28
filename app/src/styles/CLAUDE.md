@@ -6,11 +6,11 @@
 CLAUDE.md: 记录样式层职责与文档协议
 global-base.css: 全局浏览器基础层，消费 index.css 语义 token，收口文档根、表单字体、选择色、滚动条、指针与 reduced-motion 兜底
 landing.css: Blueprint Landing 专用视觉层，固定使用 Light Canvas 与确定性白/中性灰蓝表面，并承载顶边贴视口、背景全宽且仅在 1200px+ hover/fine-pointer 桌面显示 1:5 外轨的粘性 Header、约为 Header 2/3 高且随页滚走的全宽公告、触屏/窄屏单轨收束、末端无节点直达 Footer 的 1088px 正文 RailLayer、14px/贴边 Divider、10px 遮罩节点、无蓝底 hover 的能力条/内容列表/定价、极简预页脚与两段式全宽深蓝 Fat Footer
-note-paper.css: 共享纸面视觉层，唯一实现 .note-paper 与 thumbnail/reader 两个 variant 的纸边、曲率、Editorial 标题与摘录渐隐；reader 是刻意小于写作区整页 Paper 的小开本（45rem × min(100vh-10rem, 44rem)）、消费 --paper-float-shadow 均匀柔影，纸面静止而正文在纸内滚动且 48px 页边保持与写作区相同的字行长度；Canvas 卡片与预览共用，禁止任何组件复制近似 Paper 样式
+note-paper.css: 共享纸面视觉层，唯一实现 .note-paper 与 thumbnail/reader 两个 variant 的纸边、曲率、Editorial 标题与摘录渐隐；reader 按 ISO 216 的 1:√2 立成 A4 开本（宽取 40rem/视口高/视口宽三者最紧者，高由比例导出），消费 --paper-float-shadow 的渐变柔影，纸面静止而正文在纸内滚动、页边固定为纸宽 8%；Canvas 卡片与预览共用，禁止任何组件复制近似 Paper 样式
 workspace.css: 账户/外观、订阅、Paper First Stage/816px Paper、Paper/Canvas 共用浮动文件库与 AI Panel、安全区/覆盖抽屉/遮罩、创建菜单、全局对象命令、Archive Cord、AI Composer/审批、Thread、阅读与 Trash 的共享布局层；递归树与 SidebarButton 维持 compact 节奏，>=1200px 单侧预留、>=1400px 双侧预留，较小视口覆盖互斥，reduced-motion 取消空间位移
 ai-message.css: AgentPanel 与 Design System 共用的 AI 消息视觉层，承载 Primary 同源用户气泡、无卡片最终正文、最多五词常数节点错峰模糊拖尾、Formation ThinkingIndicator，以及带人话详情、灰阶结果符号和活动态 shimmer 的 Secondary 同源工具披露控件；流式正文不提供光标，历史正文不参与动画，过程与正文之间只使用自然留白，不绘制固定分隔线
 auth.css: 登录/注册 Dialog 专用样式，承载共享平面 Input/PasswordInput 的认证尺寸、自动填充、模式切换与协议提示
-design-system.css: Quiet Editorial 基础组件视觉层与 ThinkingMark Formation Motion；Dialog 同时提供 panel 与只承担模态几何的 bare 表面，Input/Select 使用 36px 表单高度与 10px 控件曲率，Select 临时指向态与普通菜单共享中性 interactive-hover，消费纯色表面和 Hairline；Button 由 button.css 独立维护，Skeleton/Loading 只保留低频信息型光带并在 reduced-motion 静止
+design-system.css: Quiet Editorial 基础组件视觉层与 ThinkingMark Formation Motion；Dialog 同时提供压暗遮罩的 panel 表面与只承担模态几何、遮罩改为明亮磨砂以便 children 自带柔影可见的 bare 表面，Input/Select 使用 36px 表单高度与 10px 控件曲率，Select 临时指向态与普通菜单共享中性 interactive-hover，消费纯色表面和 Hairline；Button 由 button.css 独立维护，Skeleton/Loading 只保留低频信息型光带并在 reduced-motion 静止
 button.css: Button 专用视觉层；统一 36px 标准命令高度、14px/18px UI 文字、14px 横向留白、6px 图文间距、10px 控件曲率，以 1px 清晰内亮环和薄内侧柔光构成克制的连续环绕内高光；Primary/Secondary/Danger/Ghost 共用 1px press 与 16 度倾斜窄光带 Saving 状态，文件树、SidebarButton 与 Header 命令独立消费 32px compact 尺寸
 sidebar-button.css: SidebarButton 专用 32px compact 平面视觉层，APP/账户导航与 36px 标准 Button 共享 10px 控件曲率而不强制等高；hover 消费全局中性 interactive-hover，active 只使用轻中性表面和墨色，hover/press/选中不抬升，侧栏底部 Design System/回收站以 12px/16px Label 文字和 primary 前景色表达当前位置
 segmented-control.css: SegmentedControl 专用视觉层，以默认 Button 总高度、统一 smooth corner、确定性中性灰轨道与纯白选中片段组成平整控制面，不使用内凹阴影、外投影或位移

@@ -339,6 +339,17 @@
     z-index: 80;
     background: color-mix(in srgb, var(--shadow-color) 38%, transparent);
     animation: ds-overlay-in var(--motion-normal) var(--ease-standard);
+    backdrop-filter: blur(12px);
+  }
+
+  /*
+   * bare 表面把视觉完全交给 children，而 children 通常是一张自带柔影的纸。
+   * 压暗式遮罩会把那圈阴影吃掉——阴影是暗的，背景更暗时它不可见。所以这里改成
+   * 明亮的磨砂玻璃：世界仍然退后，但纸的投影重新读得出来。
+   */
+  .ds-dialog-overlay[data-surface="bare"] {
+    background: color-mix(in srgb, var(--background) 66%, transparent);
+    backdrop-filter: blur(20px) saturate(1.04);
   }
 
   .ds-select-shell {
