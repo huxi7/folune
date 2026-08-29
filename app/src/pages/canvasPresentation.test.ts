@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun test 与 canvasPresentation 的 Canvas V2 纯投影函数
- * [OUTPUT]: 覆盖节点取名、memo 固定纵向尺寸与 native 持久几何不被改写、视口容错与跨设备恢复判据、快照漂移/墓碑、边投影、坐标操作与路由身份
+ * [OUTPUT]: 覆盖节点取名、memo 固定纵向尺寸与 native 持久几何不被改写、视口容错与跨设备恢复判据、快照漂移/墓碑、含人工或 AI 来源的边投影、坐标操作与路由身份
  * [POS]: pages 的 Canvas V2 表现回归门禁；锁定服务端投影到 React Flow 的含义，不测试 React 或网络
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -179,6 +179,10 @@ describe("toCanvasFlow", () => {
     expect(flow.nodes[1]!.data.targetDeleted).toBe(true);
     expect(flow.nodes[2]!.data.tombstone).toBe(true);
     expect(flow.edges[0]).toMatchObject({
+      data: {
+        createdBy: "ai",
+        rationale: "同一命题的另一种表述",
+      },
       source: "card-0",
       target: "card-1",
       type: "cord",

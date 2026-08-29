@@ -15,7 +15,7 @@ LandingFooter.tsx: Landing 无 BlueprintFrame 的全宽深蓝 Fat Footer，品�
 LandingMotion/: Landing 克制反馈模块，只提供 CountUp 与一次性 reveal；磁吸、指针聚光与装饰点阵已移除，当前页面只保留有信息价值的计数与 3–4px 入场反馈
 NotebookPreview.tsx: Landing 的真实工作台预览，以工具轨、单栏文件 tree、文档纸面和 Agent 归档面板呈现核心体验
 AppSidebar.tsx: /app 与 Canvas 共用的文件库内容；以紧凑 BrandMark、固定操作行（中性搜索按钮 + 96px 新建 split）承载 memo/Canvas/folder 创建，搜索只负责打开全局 Command Palette 而不再拥有本地输入框或独立结果树，并承载真实树展开/rename（默认 Canvas 不开放，撞名不提交也不收起）/HTML5 拖拽/回收站命令、整理目标定位高亮与 Palette 的文件夹定位
-SidebarCreateMenu.tsx: 文件库创建入口；96px split 控件的 64px 主区（图标 + 「新建」）默认新建 memo，32px 下拉区显式选择 memo/standalone Canvas/folder，菜单支持方向键/Home/End 与外部点击关闭，不持有树事务或路由
+SidebarCreateMenu.tsx: 文件库创建入口；96px smooth-corner split 控件的 64px 主区（图标 + 「新建」）默认新建 memo，32px 下拉区显式选择 memo/standalone Canvas/folder，菜单支持方向键/Home/End 与外部点击关闭，不持有树事务或路由
 AppMainToolbar.tsx: Paper 顶部 48px 文档命令条，呈现低对比完整路径、32px Canvas 入口、整理、阅读/编辑与更多菜单；进入默认 Canvas 前由页面层完成 required flush，命令条不直接发业务请求
 MemoTreeBranch.tsx: 无限递归树渲染器；画布与笔记只靠叶子图标区分（星图 vs 纸张）且永不暴露扩展名，Folder/FolderOpen 单图标承担开合，同层共享固定图标槽；双击/F2 原地重命名（默认 Canvas 除外，它的名字跟随来源笔记），撞名时行内提示且提交挂起，folder/memo 使用固定 DnD 落点，并接收本次整理 folder/memo id 绘制短期归档高亮
 MemoTreeSkeleton.tsx: 文件库首次加载的真实行结构占位组件，只组合共享 Skeleton 并由调用方控制延迟显隐
@@ -38,7 +38,7 @@ CanvasWorkspace.tsx: Canvas V2 全视口会话壳；与 Paper 互斥但复用左
 CanvasWorkspace.test.tsx: Canvas 会话壳回归测试，锁定中央 Canvas、共享 Panel、Paper 互斥关系，以及伪返回按钮/Canvas 文字标识/厚重标题卡片确已消失
 KnowledgeCanvas/: Canvas V2 交互内容根，以受控 React Flow 承载持久视口、memo/native 节点、连接/删除/拖拽/缩放、Picker、Preview、显式 AI expansion、WAL 恢复与保存状态
 DesignSystemWorkspace/: 开发态 Quiet Editorial Design System 工作区，按 Foundations/Primitives/Navigation & Overlays/Editorial/AI & Organize 五层直接陈列生产 Token、Lucide Iconography、完整 Markdown/Reading/Quote/Code 与四种 Signature Components；通过 lazy import 只在 import.meta.env.DEV 下暴露
-NotePaper.tsx: 共享纸面原语，以 thumbnail/reader 两个 variant 承载 Canvas 卡片缩略纸与小开本浮纸；纸张曲率、纸边、墨色与渐隐只在此实现一次，reader 只承载正文、纸面静止而正文在纸内滚动，可声明 Dialog autofocus 契约
+NotePaper.tsx: 共享纸面原语，以 thumbnail/reader 两个 variant 承载 Canvas 卡片缩略纸与小开本浮纸；纸张曲率、纸边、墨色与 thumbnail 末端短距离模糊渐隐只在此实现一次，reader 只承载正文、纸面静止而正文在纸内滚动，可声明 Dialog autofocus 契约
 NotePaper.test.tsx: 纸面骨架回归测试，锁定两个 variant 的 DOM 同构、空摘录占位、children 覆盖摘录与 overlay 不进入正文流
 MarkdownEditor.tsx: Markdown 存储协议与 CodeMirror 显示协议之间的唯一 adapter；handle 只暴露 focus 与只读 readSelection（剥掉零宽标记后返回选中文字，不触碰选区/撤销/自动保存），GFM language 常驻，live/source 只通过 Compartment 重配显示扩展以共享 EditorState/选区/撤销历史，零宽空行标记和纯文本粘贴继续保证 content_mdx 无损往返
 MarkdownEditor.test.ts: 以 content_mdx 恒等 round-trip 验证普通文本、2/5+ 连续空行、首尾/连续空格、强调段、空白行与 CRLF，约束零宽标记、HTML 空标签和 nbsp 永不离开 adapter

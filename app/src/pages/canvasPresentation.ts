@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 @xyflow/react 的 Edge/Node 类型（仅类型）与 shared/api/canvas 的 Canvas V2 投影
- * [OUTPUT]: 对外提供固定 280x360 纵向 memo 卡片尺寸、含持久 text_scale 的空间文字投影、标题/视口容错、恢复视口可用性判据、最近空位、路由类型解析与坐标回写纯函数
+ * [OUTPUT]: 对外提供固定 280x360 纵向 memo 卡片尺寸、含持久 text_scale 的空间文字投影、携带人工/AI 来源的关系投影、标题/视口容错、恢复视口可用性判据、最近空位、路由类型解析与坐标回写纯函数
  * [POS]: app/src/pages 的 Canvas 表现策略边界；服务端快照在此翻译为受控 React Flow 形状，组件不再猜测墓碑、漂移或几何默认值
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -40,6 +40,11 @@ export type CanvasFlowNodeData = {
   tombstone: boolean;
 };
 export type CanvasFlowNode = Node<CanvasFlowNodeData, "canvasNode">;
+export type CanvasFlowEdgeData = {
+  createdBy: "ai" | "user";
+  rationale: string | null;
+};
+export type CanvasFlowEdge = Edge<CanvasFlowEdgeData, "cord">;
 
 const FALLBACK_TEXT_TITLE = "自由文字";
 
@@ -126,9 +131,12 @@ export const toCanvasFlowNode = (node: CanvasNode): CanvasFlowNode => {
 
 export const toCanvasFlow = (
   detail: CanvasDetail,
-): { edges: Edge[]; nodes: CanvasFlowNode[]; viewport: CanvasViewport } => ({
+): { edges: CanvasFlowEdge[]; nodes: CanvasFlowNode[]; viewport: CanvasViewport } => ({
   edges: detail.edges.map((edge) => ({
-    data: { rationale: edge.rationale },
+    data: {
+      createdBy: edge.created_by,
+      rationale: edge.rationale,
+    },
     id: edge.id,
     source: edge.source_id,
     target: edge.target_id,

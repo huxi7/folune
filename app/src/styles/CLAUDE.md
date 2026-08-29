@@ -6,8 +6,8 @@
 CLAUDE.md: 记录样式层职责与文档协议
 global-base.css: 全局浏览器基础层，消费 index.css 语义 token，收口文档根、表单字体、选择色、滚动条、指针与 reduced-motion 兜底
 landing.css: Blueprint Landing 专用视觉层，固定使用 Light Canvas 与确定性白/中性灰蓝表面，并承载顶边贴视口、背景全宽且仅在 1200px+ hover/fine-pointer 桌面显示 1:5 外轨的粘性 Header、约为 Header 2/3 高且随页滚走的全宽公告、触屏/窄屏单轨收束、末端无节点直达 Footer 的 1088px 正文 RailLayer、14px/贴边 Divider、10px 遮罩节点、无蓝底 hover 的能力条/内容列表/定价、极简预页脚与两段式全宽深蓝 Fat Footer
-note-paper.css: 共享纸面视觉层，唯一实现 .note-paper 与 thumbnail/reader 两个 variant 的纸边、曲率、Editorial 标题与摘录渐隐；reader 按 ISO 216 的 1:√2 立成 A4 开本（宽取 40rem/视口高/视口宽三者最紧者，高由比例导出），消费 --paper-float-shadow 的渐变柔影，纸面静止而正文在纸内滚动、页边固定为纸宽 8%；Canvas 卡片与预览共用，禁止任何组件复制近似 Paper 样式
-workspace.css: 账户/外观、订阅、Paper First Stage/816px Paper 与标题区同名原位提示（标题与提示同属一个网格行，不侵占正文的最小高度）、Paper/Canvas 共用浮动文件库与 AI Panel、安全区/覆盖抽屉/遮罩、96px 新建 split 与固定搜索行、撞名只换焦点环颜色而不改行高的树内重命名、680px 顶部对齐 Command Palette、Archive Cord、AI Composer/审批、Thread、阅读与 Trash 的共享布局层；递归树与 SidebarButton 维持 compact 节奏，>=1200px 单侧预留、>=1400px 双侧预留，较小视口覆盖互斥，reduced-motion 取消空间位移
+note-paper.css: 共享纸面视觉层，唯一实现 .note-paper 与 thumbnail/reader 两个 variant 的纸边、曲率、Editorial 标题与摘录收尾；thumbnail 让正文写到纸底后只在最后约两行叠加透明度与背景模糊，禁止整块 mask 提前吞字，reader 按 ISO 216 的 1:√2 立成 A4 开本（宽取 40rem/视口高/视口宽三者最紧者，高由比例导出），消费 --paper-float-shadow 的渐变柔影，纸面静止而正文在纸内滚动、页边固定为纸宽 8%；Canvas 卡片与预览共用，禁止任何组件复制近似 Paper 样式
+workspace.css: 账户/外观、订阅、Paper First Stage/816px Paper 与标题区同名原位提示（标题与提示同属一个网格行，不侵占正文的最小高度）、Paper/Canvas 共用浮动文件库与 AI Panel、安全区/覆盖抽屉/遮罩、符合全局 smooth-corner 的 96px 新建 split 与固定搜索行、撞名只换焦点环颜色而不改行高的树内重命名、680px 顶部对齐 Command Palette、Archive Cord、AI Composer/审批、Thread、阅读与 Trash 的共享布局层；递归树与 SidebarButton 维持 compact 节奏，>=1200px 单侧预留、>=1400px 双侧预留，较小视口覆盖互斥，reduced-motion 取消空间位移
 ai-message.css: AgentPanel 与 Design System 共用的 AI 消息视觉层，承载 Primary 同源用户气泡、无卡片最终正文、最多五词常数节点错峰模糊拖尾、Formation ThinkingIndicator，以及带人话详情、灰阶结果符号和活动态 shimmer 的 Secondary 同源工具披露控件；流式正文不提供光标，历史正文不参与动画，过程与正文之间只使用自然留白，不绘制固定分隔线
 auth.css: 登录/注册 Dialog 专用样式，承载共享平面 Input/PasswordInput 的认证尺寸、自动填充、模式切换与协议提示
 design-system.css: Quiet Editorial 基础组件视觉层与 ThinkingMark Formation Motion；Dialog 同时提供压暗遮罩的 panel 表面与只承担模态几何、遮罩改为明亮磨砂以便 children 自带柔影可见的 bare 表面，Input/Select 使用 36px 表单高度与 10px 控件曲率，Select 临时指向态与普通菜单共享中性 interactive-hover，消费纯色表面和 Hairline；Button 由 button.css 独立维护，Skeleton/Loading 只保留低频信息型光带并在 reduced-motion 静止
@@ -18,7 +18,7 @@ toast.css: Kumo Toast Parts 的 Quiet Editorial 适配层，消费其堆叠/展�
 user-menu.css: UserMenu 专用视觉层，以身份卡片、统一 smooth-corner 分组动作、与文件树同源的中性 interactive-hover 及无填色危险动作组成账户弹层，并与通用 Select 样式职责分离
 codemirror.css: 未分层的 CodeMirror 6 适配层，以根语义 Token 覆盖 light/dark、14px source 与 15px live 正文，并把 Live Preview 标题/引用映射到 Editorial 字体、活动标记弱化、链接/列表/任务/代码/GFM 表格保持清晰；第三方语法颜色不得泄漏为竞争性色轴，pre-wrap 继续保真原始空白
 cord.css: Cord Signature 表现层，按语境把 --cord-color 映射到既有 --archive-cord/--primary，承载 pathLength 归一化的出场自绘、虚实区分与自中点向两端流动的双层白光；外发光用更宽更淡的第二条描边而非 feGaussianBlur，reduced-motion 直接静态
-knowledge-canvas.css: Canvas V2 表现层；以 --canvas-chrome-inset/size/gap 一组变量统一定位左上开关+安静标题、右上 AI 开关、底部中央命令条与右下保存状态四块顶层分区，禁止零散 top/left 互相躲避；并承载全视口 Workspace、React Flow/点阵、280x360 纵向笔记卡与同心嵌套纸张、编辑无框且选中边界等距贴合的空间文字、关系命中层、A4 浮纸 + 纸外 32px 圆形工具列的 Preview；全部非圆形 Canvas 表面与全站共享同一 squircle 平滑圆角，并把第三方默认视觉收敛回 SuperNote token
+knowledge-canvas.css: Canvas V2 表现层；以 --canvas-chrome-inset/size/gap 一组变量统一定位左上开关+安静标题、右上 AI 开关、底部中央命令条与右下保存状态四块顶层分区，禁止零散 top/left 互相躲避；并承载全视口 Workspace、React Flow/点阵、280x360 纵向笔记卡与同心嵌套纸张、编辑无框且选中边界等距贴合的空间文字、中心重合 Handle/宽命中关系/中点理由检查器、A4 浮纸 + 纸外 32px 圆形工具列的 Preview；全部非圆形 Canvas 表面与全站共享同一 squircle 平滑圆角，并把第三方默认视觉收敛回 SuperNote token
 design-system-workspace.css: DEV Design System 五层生产矩阵与响应式样式；直接可视化 Foundations、Lucide Iconography、真实主题切换、组件全状态检查轨、CodeMirror/Reading/Quote/Code 及 Paper Surface/Edge Dock/Archive Cord，所有演示只消费生产 Token
 color-lab.css: DEV `/color-lab` 蓝色终选决策画布，以同构静态 Library/Paper/AI 工作区、候选选择与 Light/Dark 响应式控制消费 index.css 隔离的现有蓝/灰蓝/标准墨蓝/柔和墨蓝 token；不定义颜色值、不读取业务状态、不改生产主题
 

@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 workspace.css 的共享 Panel 网格、note-paper.css 的共享纸面 variant、Quiet Editorial 语义 token、@xyflow/react 定位层与 Canvas V2 交互组件
- * [OUTPUT]: 对外提供全视口 Canvas 壳、由 --canvas-chrome-* 单一坐标系定位的四块顶层分区（左上开关+安静标题／右上 AI 开关／底部中央命令条／右下保存状态）、点阵舞台、280x360 纵向笔记卡与同心嵌套纸张、编辑无框且选中边界等距贴合的空间文字、宽命中关系、Picker、纸外工具列 + A4 浮纸的 Preview 及窄屏降级
+ * [OUTPUT]: 对外提供全视口 Canvas 壳、由 --canvas-chrome-* 单一坐标系定位的四块顶层分区（左上开关+安静标题／右上 AI 开关／底部中央命令条／右下保存状态）、点阵舞台、280x360 纵向笔记卡与同心嵌套纸张、编辑无框且选中边界等距贴合的空间文字、中心连心关系与可展开理由检查器、Picker、纸外工具列 + A4 浮纸的 Preview 及窄屏降级
  * [POS]: app/src/styles 的 Canvas V2 视觉边界；桌面保留空间画布，窄屏保留可达操作，不覆盖 React Flow 的业务状态
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -74,6 +74,9 @@
   .knowledge-canvas { position: relative; width: 100%; height: 100%; min-height: 0; }
   .knowledge-canvas .react-flow { background: transparent; }
   .knowledge-canvas .react-flow__handle { opacity: 0; pointer-events: none; }
+  /* source/target Handle 在几何中心重合；边层位于节点下方，卡片会自然遮住内部线段，
+     因而视觉端点永远沿另一张卡片的方向穿出边界，不再锁死在左右两侧。 */
+  .knowledge-canvas .react-flow__handle.canvas-card-center-handle { top: 50%; right: auto; bottom: auto; left: 50%; transform: translate(-50%, -50%); }
   .knowledge-canvas .react-flow__node { cursor: grab; }
   .knowledge-canvas .react-flow__node:active { cursor: grabbing; }
   .knowledge-canvas .react-flow__attribution { background: transparent; color: color-mix(in srgb, var(--muted-foreground) 55%, transparent); font-size: 0.625rem; }
@@ -140,9 +143,17 @@
   .canvas-edge-hit { cursor: pointer; pointer-events: stroke; }
   .canvas-edge-muted { opacity: 0.34; }
   .canvas-edge-direct { opacity: 1; }
-  .canvas-edge-reason { position: absolute; display: flex; max-width: 13rem; align-items: center; gap: var(--space-1); border: 1px solid var(--border); border-radius: var(--radius-compact); background: color-mix(in srgb, var(--paper-surface) 96%, transparent); padding: var(--space-1) var(--space-1) var(--space-1) var(--space-2); color: var(--foreground); box-shadow: var(--shadow-xs); font-size: var(--type-caption); line-height: var(--leading-label); text-align: left; pointer-events: all; }
-  .canvas-edge-reason > span { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
-  .canvas-edge-delete { width: 1.6rem; height: 1.6rem; flex: 0 0 auto; }
+  .canvas-edge-inspector { position: absolute; display: grid; place-items: center; pointer-events: all; }
+  .canvas-edge-reason-trigger { display: inline-flex; width: 1.5rem; height: 1.5rem; align-items: center; justify-content: center; border: 1px solid color-mix(in srgb, var(--border) 82%, transparent); border-radius: var(--radius-pill); background: color-mix(in srgb, var(--paper-surface) 88%, transparent); padding: 0; color: color-mix(in srgb, var(--muted-foreground) 82%, transparent); box-shadow: var(--shadow-2xs); cursor: pointer; opacity: 0.72; transition: opacity var(--motion-fast) var(--ease-standard), background var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard), transform var(--motion-fast) var(--ease-standard); backdrop-filter: blur(8px); }
+  .canvas-edge-inspector:hover .canvas-edge-reason-trigger,
+  .canvas-edge-inspector:focus-within .canvas-edge-reason-trigger,
+  .canvas-edge-inspector[data-open="true"] .canvas-edge-reason-trigger { background: var(--paper-surface); color: var(--foreground); opacity: 1; transform: scale(1.04); }
+  .canvas-edge-reason-trigger:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+  .canvas-edge-reason { position: absolute; bottom: calc(100% + var(--space-2)); left: 50%; display: flex; width: max-content; max-width: min(20rem, calc(100vw - 2rem)); align-items: flex-start; gap: var(--space-2); border: 1px solid var(--border); border-radius: var(--radius-menu); background: color-mix(in srgb, var(--paper-surface) 96%, transparent); padding: var(--space-2); color: var(--foreground); box-shadow: var(--shadow-sm); font-size: var(--type-caption); line-height: 1.55; text-align: left; transform: translateX(-50%); backdrop-filter: blur(14px); }
+  .canvas-edge-reason-copy { display: grid; min-width: 0; max-width: 16rem; gap: 2px; }
+  .canvas-edge-reason-copy small { color: var(--muted-foreground); font-size: 0.6875rem; font-weight: var(--weight-label); letter-spacing: 0.02em; }
+  .canvas-edge-reason-copy > span { overflow-wrap: anywhere; text-wrap: pretty; }
+  .canvas-edge-delete { width: 1.75rem; height: 1.75rem; flex: 0 0 auto; }
 
   /* React Flow 的 Panel 只负责贴边, 间距统一由 --canvas-chrome-inset 说话 */
   .knowledge-canvas .react-flow__panel.canvas-controls { margin: var(--canvas-chrome-inset); }
@@ -200,6 +211,7 @@
     .canvas-control,
     .canvas-controls,
     .canvas-edge-delete,
+    .canvas-edge-reason-trigger,
     .canvas-edge-reason,
     .canvas-card,
     .canvas-card-expand,

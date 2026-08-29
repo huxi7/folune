@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 @xyflow/react 的 Handle/NodeProps/四角 NodeResizeControl、CanvasFlowNode 数据、共享 NotePaper thumbnail 纸面、空间文字几何、设计系统图标与 canvasActions Context
- * [OUTPUT]: 对外提供 280x360 纵向 memo_ref 笔记预览卡（嵌套纸张、渐隐摘录、悬浮展开按钮、固定高度元信息行）与静止无表面、编辑态稳定聚焦且无边框、四角等比缩放的 native 空间文字节点
- * [POS]: KnowledgeCanvas 的节点表现层；卡片只读快照标题/摘录，正文只经 Preview Overlay 按 ID 读取，空间文字把自身 scale 与视口 zoom 分离，全部持久修改仍交给统一协调器
+ * [INPUT]: 依赖 @xyflow/react 的中心 Handle/NodeProps/四角 NodeResizeControl、CanvasFlowNode 数据、共享 NotePaper thumbnail 纸面、空间文字几何、设计系统图标与 canvasActions Context
+ * [OUTPUT]: 对外提供 280x360 纵向 memo_ref 笔记预览卡（中心重合关系锚点、嵌套纸张、模糊渐隐摘录、悬浮展开按钮、固定高度元信息行）与静止无表面、编辑态稳定聚焦且无边框、四角等比缩放的 native 空间文字节点
+ * [POS]: KnowledgeCanvas 的节点表现层；卡片关系从几何中心发出并由节点表面自然遮住内部线段，卡片只读快照标题/摘录，正文只经 Preview Overlay 按 ID 读取，空间文字把自身 scale 与视口 zoom 分离，全部持久修改仍交给统一协调器
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -308,7 +308,12 @@ export function CanvasCardNode({
         if (available) actions.onPreview(id);
       }}
     >
-      <Handle isConnectable={false} position={Position.Left} type="target" />
+      <Handle
+        className="canvas-card-center-handle"
+        isConnectable={false}
+        position={Position.Left}
+        type="target"
+      />
 
       <NotePaper
         className="canvas-card-paper"
@@ -371,7 +376,12 @@ export function CanvasCardNode({
         </span>
       </footer>
 
-      <Handle isConnectable={false} position={Position.Right} type="source" />
+      <Handle
+        className="canvas-card-center-handle"
+        isConnectable={false}
+        position={Position.Right}
+        type="source"
+      />
     </article>
   );
 }

@@ -23,7 +23,7 @@ useMemoCanvasEntry.ts: memo→默认 Canvas 路由协调器；先 required flush
 useStandaloneCanvasCreation.ts: standalone Canvas 创建协调器；重复提交门禁后只接受服务器事务返回的真实身份，再局部并入 tree、登记 standalone 进入语境并导航
 canvasIncrementalLayout.ts: Canvas 候选增量布局纯策略；复用既有分支向外生长并以确定性角度/半径寻找无碰撞位置，人工加入和 AI expansion 共用且永不移动旧节点
 canvasIncrementalLayout.test.ts: 锁定候选稳定排序、分支外向生长、无碰撞与旧节点对象/坐标不变
-canvasPresentation.ts: Canvas V2 图投影纯决策；把服务端 memo_ref/native/墓碑、尺寸、text_scale、边与 user_moved 视口翻译成 React Flow 数据，过滤非有限坐标，并判定跨设备恢复的视口是否还看得见节点
+canvasPresentation.ts: Canvas V2 图投影纯决策；把服务端 memo_ref/native/墓碑、尺寸、text_scale、含人工/AI 来源的边与 user_moved 视口翻译成 React Flow 数据，过滤非有限坐标，并判定跨设备恢复的视口是否还看得见节点
 canvasPresentation.test.ts: 锁定 memo 快照/墓碑/native 空间文字尺寸与 text_scale、revision 漂移、视口钳制、用户视口恢复与跨设备可用性判据、V2 路由识别
 organizePresentation.ts: 整理 Run 到 Workspace 工具唤醒及归档展示快照的无副作用策略；成功使用服务端目标路径，撤销使用当前树恢复路径
 workspaceLayout.ts: Paper First 浮层几何与宽度持久化边界，集中维护文件库/AI 尺寸约束、CSS 变量类型和 localStorage 校验
