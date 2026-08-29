@@ -99,3 +99,10 @@ grant execute on function public.memo_title_norm(text) to authenticated;
 --    笔记与画布同名，因此改名不需要任何数据迁移，重名照旧由索引裁决。
 --    执行后在一个 rollback 掉的事务里正向验证过两个方向都已独立：给默认画布
 --    改名不再被回落，来源笔记改名也不再带着画布一起改。
+--    ⚠️ 应用层与这条 drop 是配对的，必须同进同退：触发器还活着时，用户给默认
+--    画布改的名会被 anchor 静默回落，看起来像"改了又自己变回去"；反过来，回滚
+--    到建立触发器之前的应用代码去配已经 drop 的库，则跟随行为凭空消失。
+--    远端可追溯性（三条 migration 构成同一个故事，回滚要成对）：
+--      20260828172141  memo_naming_unique_titles_and_default_canvas_sync  建立
+--      20260828172957  memo_default_canvas_title_drop_suffix              去后缀
+--      20260829092153  release_default_canvas_naming                      收走
