@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 workspace.css 的共享 Panel 网格、note-paper.css 的共享纸面 variant、Quiet Editorial 语义 token、@xyflow/react 定位层与 Canvas V2 交互组件
+ * [INPUT]: 依赖 workspace.css 的全屏 Stage 与独立浮层 Panel、note-paper.css 的共享纸面 variant、Quiet Editorial 语义 token、@xyflow/react 定位层与 Canvas V2 交互组件
  * [OUTPUT]: 对外提供全视口 Canvas 壳、由 --canvas-chrome-* 单一坐标系定位的四块顶层分区（左上开关+安静标题／右上 AI 开关／底部中央命令条／右下保存状态）、点阵舞台、280x360 纵向笔记卡与同心嵌套纸张、编辑无框且选中边界等距贴合的空间文字、中心射线求交且随拖拽换边的浮动关系与可展开理由检查器、Picker、纸外工具列 + A4 浮纸的 Preview 及窄屏降级
  * [POS]: app/src/styles 的 Canvas V2 视觉边界；桌面保留空间画布，窄屏保留可达操作，不覆盖 React Flow 的业务状态
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -31,10 +31,9 @@
     position: relative;
     min-width: 0;
     min-height: 0;
-    grid-column: 2;
+    grid-column: 1;
     overflow: hidden;
   }
-  .canvas-workspace[data-overlay-panels="true"] .canvas-stage { grid-column: 1; }
 
   /* 顶层不再有包裹整组内容的卡片: 开关与标题直接活在画布上 */
   .canvas-chrome { position: absolute; z-index: 12; top: var(--canvas-chrome-inset); display: flex; min-width: 0; align-items: center; gap: var(--canvas-chrome-gap); }

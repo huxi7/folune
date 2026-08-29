@@ -5,9 +5,9 @@
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
-/** <1200px 两个面板都是覆盖式抽屉，进入画布时一律不覆盖画布 */
+/** <1200px 两个面板都是带遮罩的覆盖抽屉，进入画布时先呈现完整背景 */
 export const CANVAS_PANEL_BREAKPOINT = 1200;
-/** <1400px 无法同时为两个面板预留安全区，因此二者互斥 */
+/** <1400px 两个浮层同时打开会遮住大部分有效背景，因此二者互斥 */
 export const CANVAS_DUAL_PANEL_BREAKPOINT = 1400;
 
 export type CanvasChromeState = {

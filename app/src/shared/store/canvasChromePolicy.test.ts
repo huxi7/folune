@@ -62,7 +62,7 @@ describe("Canvas 侧栏状态矩阵", () => {
     expect(entry({ intent: "direct", snapshot: null })).toEqual(CLOSED);
   });
 
-  test("小视口切换：<1200 一律不让覆盖式面板遮住画布", () => {
+  test("小视口切换：<1200 进入时先呈现完整背景", () => {
     for (const intent of ["direct", "memo_default", "standalone", "tree"] as const) {
       expect(entry({
         inherited: OPEN_BOTH,
@@ -73,7 +73,7 @@ describe("Canvas 侧栏状态矩阵", () => {
     }
   });
 
-  test("1200–1399 无法同时预留两侧安全区，双开时只保留文件库", () => {
+  test("1200–1399 避免双浮层遮住大部分背景，只保留文件库", () => {
     expect(entry({
       inherited: OPEN_BOTH,
       intent: "tree",

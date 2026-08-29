@@ -34,7 +34,7 @@ cordGeometry.test.ts: 以独立三次贝塞尔求值反证中点切分，并覆�
 Cord.tsx: 共享连线 Signature 渲染层；粗细沿路径恒定是 SVG 硬限制，两头收细由 Cord 生成的沿线透明度渐变承担，虚线表 AI 临时推荐、实线表已确认关联，出场自绘与流光下沉 CSS 以避免每帧 React 更新
 EdgeDock.tsx: 文件库/AI 共用的 Stage 关闭态 Ghost 图标入口，桌面 32px、窄屏 44px，静止无背景/描边/文字且不使用共享 layoutId；Panel 关闭入口由各自 Header 内部拥有
 PaperSurface.tsx: 816px Paper Signature 边界，拥有非对称 Paper 阴影、Archive Port 与只替换内容不重挂载编辑会话的内部过渡
-CanvasWorkspace.tsx: Canvas V2 全视口会话壳；与 Paper 互斥但复用左右文件库/AI Panel 和 ArchiveCord 上下文，Panel/Preview 开合不卸载中央 React Flow；进入状态只在挂载那一刻由返回描述或 canvasChromeStore 解释一次，之后每次开关都记进该画布的最近布局，顶层只保留左上开关+标题与右上 AI 开关两块无卡片分区
+CanvasWorkspace.tsx: Canvas V2 全视口会话壳；与 Paper 互斥但复用只在自身边框内遮盖 Stage 的左右文件库/AI Panel 和 ArchiveCord 上下文，Panel/Preview 开合既不改变 Canvas 几何也不卸载中央 React Flow；进入状态只在挂载那一刻由返回描述或 canvasChromeStore 解释一次，之后每次开关都记进该画布的最近布局，顶层只保留左上开关+标题与右上 AI 开关两块无卡片分区
 CanvasWorkspace.test.tsx: Canvas 会话壳回归测试，锁定中央 Canvas、共享 Panel、Paper 互斥关系，以及伪返回按钮/Canvas 文字标识/厚重标题卡片确已消失
 KnowledgeCanvas/: Canvas V2 交互内容根，以受控 React Flow 承载持久视口、memo/native 节点、连接/删除/拖拽/缩放、Picker、Preview、显式 AI expansion、WAL 恢复与保存状态
 DesignSystemWorkspace/: 开发态 Quiet Editorial Design System 工作区，按 Foundations/Primitives/Navigation & Overlays/Editorial/AI & Organize 五层直接陈列生产 Token、Lucide Iconography、完整 Markdown/Reading/Quote/Code 与四种 Signature Components；通过 lazy import 只在 import.meta.env.DEV 下暴露
@@ -48,7 +48,7 @@ MarkdownReadingView.test.tsx: 阅读换行、安全、常数尾部动画节点�
 MarkdownViewMenu.tsx: 中央 Toolbar 的高频 editing/reading 切换与 More 菜单；支持外部点击、Escape、方向键/Home/End、焦点恢复，并仅复制/导出当前原始 content_mdx，title 只用于文件名
 markdownViewTypes.ts: DocumentView editing/reading 与 EditingMode live/source 的共享状态协议，阅读状态不占用编辑模式槽位
 NotesWorkspace.tsx: /app Paper 内部写作列，以跨临时/真实后端 ID 不变的 memoClientKey 保持编辑器会话；按需正文未到达前不把空标题反写轻量树、撞名的标题同样不反写（它一次也没提交过），标题与提示同属一个网格行以免挤走正文最小高度，新建时聚焦并选中默认标题，imperative handle 暴露 Agent/Canvas/整理 required flush、正文替换、删除 pause 与已提交 AI 标题接纳
-PaperWorkspaceShell.tsx: Paper First 四层空间壳；以 AnimatePresence 编排 Ghost Panel Toggle、按需文件库、唯一 Paper 与 AI 思考空间，Panel 只使用无弹跳 x/opacity Tween；成功/撤销时只持久连接 Paper 与真实树目标，Canvas 空间由并列的 CanvasWorkspace 承担
+PaperWorkspaceShell.tsx: Paper First 四层空间壳；以 AnimatePresence 编排 Ghost Panel Toggle、唯一 Paper 及只覆盖自身边界的文件库/AI 独立浮层，Panel 开合不改变 Paper/Stage 几何且只使用无弹跳 x/opacity Tween；成功/撤销时只持久连接 Paper 与真实树目标，Canvas 空间由并列的 CanvasWorkspace 承担
 useMemoAutosave.ts: 单 memo 编辑会话状态机；支持 required flush、删除期 pause/resume、AI 标题接纳，并只在没有本地草稿时采纳同一 memo 的迟到服务端初值，避免刷新空白或覆盖输入。标题与正文是两条独立提交路径：同级重名（本地预检查或服务端 409）只挂起 title 并点亮原位提示，正文永远继续保存，确定性冲突也不进入退避重试
 useMemoAutosave.test.ts: 覆盖迟到服务端正文接纳门禁、插入/删除/等长替换字符计数、三次有界指数退避，以及驱动真实 Hook 证明标题冲突只挂起 title 而正文照常落库
 WorkspaceAuxViews.tsx: 纸内辅助视图挂载点；订阅、回收站、Design System 住在 Paper 内部且彼此互斥。已保存画布属于独立空间语境，明确由 CanvasWorkspace 承载，不得重新并入此分支
