@@ -3,9 +3,9 @@
 
 成员清单
 CLAUDE.md: 记录 API 内存集成测试职责与文档协议
-support/supabase-mock.ts: memo 两组契约测试共用的内存 Supabase Auth/PostgREST/RPC 替身；忠实复刻 memo_nodes 的两条标题 partial 唯一索引（含规范化与 deleted_at 排除），避免两个测试文件各自复刻一遍 PostgREST 行为而彼此漂移
+support/: 测试替身模块，提供 memo 域两组契约测试共用的内存 Supabase Auth/PostgREST/RPC mock，并忠实复刻 memo_nodes 的两条标题 partial 唯一索引与默认画布标题同步触发器
 memo.test.ts: 以 Hono app 和共享 mock 验证 active memo 整树、canvas 节点的画布身份与无 canvas 时不多发请求、创建补偿、JWT owner 隔离、标题/正文更新、空白保真、移动防环及回收站端点认证
-memo-naming.test.ts: 命名边界契约；锁定新建默认名撞名顺位让开、用户输入撞名只回 MEMO_TITLE_CONFLICT、不同类型同名合法、标题撞名回 409 但正文已落库、根节点作用域、soft-delete 后名称可复用与并发提交只成功一个
+memo-naming.test.ts: 命名边界契约；锁定新建默认名撞名顺位让开、用户输入撞名只回 MEMO_TITLE_CONFLICT、不同类型同名合法、标题撞名回 409 但正文已落库、根节点作用域、soft-delete 后名称可复用、来源笔记改名时默认画布在同一次写入里同步，以及并发提交只成功一个
 memo-trash.test.ts: 以内存 RPC/级联模型回归软删、顶层 Trash、批次独立恢复/祖先阻断、正常入口隔离、Folder 永久级联、当前用户清空、重复操作与异常净化
 ai.test.ts: 以内存 Auth/PostgREST/RPC 全链路验证无归档状态的 thread CRUD 与废弃字段拒绝、冻结 snapshot、refs、三档权限、Command revision/幂等/owner/undo 与 Organize Run 生命周期
 profile.test.ts: 以同源内存 mock 验证 Profile 幂等建档、字段白名单、头像格式/体积校验、Storage 生命周期与并发补偿

@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun test、Hono app 与 test/support 的内存 Supabase mock（忠实复刻两条标题唯一索引）
- * [OUTPUT]: 覆盖默认名撞名顺位让开、用户输入撞名只回稳定业务冲突、跨类型同名合法、标题冲突不连坐正文、根节点作用域、soft-delete 后名称可复用与并发只成功一个
+ * [OUTPUT]: 覆盖默认名撞名顺位让开、用户输入撞名只回稳定业务冲突、跨类型同名合法、标题冲突不连坐正文、根节点作用域、soft-delete 后名称可复用、来源笔记改名与默认画布同一次写入同步，以及并发只成功一个
  * [POS]: api/test 的命名边界契约测试；唯一约束的最终裁决在数据库，这里锁定 api 把 23505 翻译成 MEMO_TITLE_CONFLICT 之后的可观测行为
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -201,6 +201,64 @@ describe("同父同类型重名", () => {
     expect(response.status).toBe(200);
     // 名字原样可用，不该被让位成「旧名 2」
     expect(payload.data.title).toBe("旧名");
+  });
+
+  test("来源笔记改名：默认画布标题在同一次写入里跟随，独立画布不受影响", async () => {
+    seedFolder();
+    const memoId = "77777777-7777-4777-8777-777777777771";
+    const defaultCanvasId = "77777777-7777-4777-8777-777777777772";
+    const standaloneId = "77777777-7777-4777-8777-777777777773";
+    mock.nodes.set(
+      memoId,
+      nodeFixture(memoId, {
+        node_type: "memo",
+        parent_id: FOLDER_ID,
+        title: "旧笔记名",
+      }),
+    );
+    mock.nodes.set(
+      defaultCanvasId,
+      nodeFixture(defaultCanvasId, {
+        node_type: "canvas",
+        parent_id: FOLDER_ID,
+        title: "旧笔记名",
+      }),
+    );
+    mock.nodes.set(
+      standaloneId,
+      nodeFixture(standaloneId, {
+        node_type: "canvas",
+        parent_id: FOLDER_ID,
+        title: "空间草稿",
+      }),
+    );
+    mock.canvases.set(defaultCanvasId, {
+      canvas_kind: "memo_default",
+      node_id: defaultCanvasId,
+      origin_node_id: memoId,
+      user_id: mock.nodes.get(memoId)!.user_id,
+    });
+    mock.canvases.set(standaloneId, {
+      canvas_kind: "standalone",
+      node_id: standaloneId,
+      origin_node_id: null,
+      user_id: mock.nodes.get(standaloneId)!.user_id,
+    });
+
+    const response = await app.fetch(
+      authenticatedRequest(`/memo-nodes/${memoId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ title: "新笔记名" }),
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect((await response.json()).data.title).toBe("新笔记名");
+    // 同步是数据库触发器在同一事务里做的：一次 PATCH 之后就该是新名字，
+    // 不需要第二次请求，也不允许出现"笔记已改、画布还旧"的中间态
+    expect(mock.nodes.get(defaultCanvasId)?.title).toBe("新笔记名");
+    expect(mock.nodes.get(standaloneId)?.title).toBe("空间草稿");
+    expect(mock.operations.filter((op) => op === "nodes:patch")).toHaveLength(1);
   });
 
   test("并发提交同一个用户命名：只有一个成功，另一个拿到稳定冲突", async () => {

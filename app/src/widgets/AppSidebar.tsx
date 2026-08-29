@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖 MemoTreeBranch/Skeleton、SidebarCreateMenu、memoLibrary 拖拽/祖先计划、服务端正文命中搜索、持久化展开偏好、整理定位意图、Profile 与上层事务命令
- * [OUTPUT]: 对外提供文件库 Header、搜索、笔记优先的分流新建入口、真实文件树、搜索/重命名/拖拽、整理定位高亮、底部导航及节点回收站命令
+ * [INPUT]: 依赖 MemoTreeBranch/Skeleton、SidebarCreateMenu、memoLibrary 拖拽/祖先计划、memoTitleRules 的重名与可改名判据、持久化展开偏好、整理定位意图、Profile 与上层事务命令
+ * [OUTPUT]: 对外提供文件库 Header、搜索入口、笔记优先的分流新建入口、真实文件树、重命名（默认 Canvas 不开放，撞名挂起提交并保留编辑态）/拖拽、整理定位高亮、底部导航及节点回收站命令
  * [POS]: app/src/widgets 的按需文件库内容层；拥有文件库内部信息层级与关闭入口，只收集业务意图，事务与路由切换由 Dashboard 编排
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
