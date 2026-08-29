@@ -1,9 +1,11 @@
 /**
  * [INPUT]: 依赖 React、生产 Design System/Lucide 图标边界、真实 MarkdownEditor/MarkdownReadingView 与 PaperSurface/EdgeDock/ArchiveCord/Cord Signature Components
- * [OUTPUT]: 对外提供 Color/Type/Iconography Foundations、Primitives、完整 Editorial 与 AI & Organize 的生产同源状态样板
+ * [OUTPUT]: 对外提供 Color/Type/Iconography、Primitives、Editorial 与 AI 状态样板；自定义 Input 家族由包裹 label 提供可见名称
  * [POS]: app/src/widgets/DesignSystemWorkspace 的预览层；所有样板只读取生产 Token/API，不建立展示专用视觉系统
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
+
+/* oxlint-disable jsx-a11y/label-has-associated-control -- 预览中的 label 包裹本地 Input/PasswordInput，插件无法穿透自定义组件识别原生控件 */
 import {
   ICON_SIZES,
   ArrowUpIcon,

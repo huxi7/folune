@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 React 弹出层状态/焦点管理、共享 Lucide 设置/订阅/退出图标、UserAvatar/UserButton 与上层账户命令
- * [OUTPUT]: 对外提供顶部身份卡片直达个人资料、下方仅列设置等动作且退出失败走全局 Toast 的 UserMenu 组合组件
+ * [OUTPUT]: 对外提供顶部身份卡片直达个人资料、具备菜单焦点容器的动作区与退出失败全局 Toast
  * [POS]: app/src/shared/design-system/components 的账户菜单；身份卡片与设置命令进入同一个 AccountDialog，不把个人资料重复成普通菜单项
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -12,7 +12,6 @@ import {
 } from "../icons";
 import {
   useCallback,
-  useEffect,
   useId,
   useRef,
   useState,
@@ -129,6 +128,7 @@ export function UserMenu({
           onKeyDown={handleMenuKeyDown}
           ref={menuRef}
           role="menu"
+          tabIndex={-1}
         >
           <button
             aria-label={`打开 ${name} 的个人资料`}

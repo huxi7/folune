@@ -15,7 +15,7 @@ PasswordInput.tsx: Input 家族的隐私输入组合件，复用 Input 内凹表
 Card.tsx: 本地 Card 组件，仅保留产品实际使用的 default、accent 两种 V1 语义表面与短阴影
 Dialog.tsx: 本地唯一模态基础件，封装 default/compact 密度、default/account 宽度、panel/bare 表面、default/embedded 标题模式、受控弹窗、中性遮罩、标题描述关联、Esc 关闭、完整表单焦点循环、滚动锁定与关闭后焦点恢复；embedded 模式允许 AccountDialog 在同一弹窗语义内拥有横竖分隔标题骨架，bare 表面只保留遮罩与模态行为供 Canvas 纸张预览复用，并把遮罩从压暗改为明亮磨砂以免吃掉 children 自带的柔影，禁止为新的模态另造第二套 Esc/焦点/滚动实现
 AssistantMessage.tsx: AI 消息正文根，不绘制“助手”等可见身份标题，以零卡片表面依次组合可选过程槽、独立 StreamingText 最终正文与兼容 children 工具区；向纯文本/Markdown 渲染器透传统一词级动效状态，不拥有过程分区或折叠状态
-StreamingText.tsx: 首个真实 text part 后把 SSE 目标文本在同次上游更新中完整直出，不设置逐词显示队列、全文时间轴或 useLayoutEffect 状态；历史正文保持一个原生文本节点，只有末尾最多 5 个词使用 55ms 负时间错峰的常数动画节点，不提供任何尾部光标状态或 DOM，reduced-motion 下跳过模糊
+StreamingText.tsx: 首个真实 text part 后把 SSE 目标文本在同次上游更新中完整直出，不设置逐词显示队列、全文时间轴、冗余 performance 时钟或 useLayoutEffect 状态；历史正文保持原生文本，只有尾部最多 5 个词使用常数动画节点
 streamingTextSegments.ts: 语言无关的流式分词纯函数，以 Intl.Segmenter 同时支持英文单词和中文语义词组，并把标点、空白及 Markdown 标记完整归入相邻显示单元
 streamingTextSegments.test.ts: 流式分词、直出时间轴与时间进度回归测试，锁定英文标点/空白归组、中文语义分组、Markdown 源文本字符保真、1000 单元不排队且只动画尾部 5 个，以及 DOM 重组后通过负 animation-delay 从当前模糊进度续播
 ThinkingStatusText.tsx: ThinkingIndicator 的低频中性状态文字，以 2800ms 固定宽度交叉淡化轮换“思考/整理思路/组织回答”，不虚构搜索、文件或工具行为
@@ -26,10 +26,10 @@ ToolCallBubble.tsx: 工具调用专用披露控件，只展示人话动作、相
 ToolCallBubble.test.tsx: 工具披露最小 DOM 契约测试，锁定执行态 shimmer、完成态结果槽、可访问详情入口、无 pre/details 调试面板及停止后未完成态静止
 accessibilitySemantics.test.tsx: 基础无障碍语义回归测试，锁定 Thinking 单一播报源、隐藏 Skeleton 不宣告忙碌及 Assistant 正文不伪造具名地标
 BrandMark.tsx: SuperNote 品牌标识组件，只提供 iconOnly 纯图标与“图标 + SuperNote 标题”两种稳定锁定；所有界面删除副标题形态
-Toast.tsx: Kumo-backed 全局瞬时反馈边界，以 Kumo Toast Provider/Manager/Parts 接管四条可见上限、自动关闭、悬停暂停、焦点、滑动与卸载清理；表现层采用 Kumo 同源 Root/独立材质层/Content 结构与 Apple-like 中性浮层，只以轻量图标传达 info/success/warning/error，业务层不感知第三方实现
-Select.tsx: 本地 Select 原子组件，提供受控/非受控值、上下布局、点击外部关闭、Esc/Tab/方向键/Home/End/Enter 键盘交互与自定义触发器能力；指针/键盘临时指向项消费统一中性 interactive-hover，选中语义由 Check 与真实值承担；当前产品界面不消费，因此不进入开发态生产组件陈列
+Toast.tsx: Kumo-backed 全局瞬时反馈边界，以 Kumo Toast Provider/Manager/Parts 接管四条可见上限、自动关闭、悬停暂停、焦点、滑动与卸载清理；ToastInput 可携带一个业务回执动作，队列仍由 Kumo 保存但 ToastItem 必须用本地 Button 渲染，避免引入第二套按钮；其余表现采用 Kumo 同源 Root/独立材质层/Content 结构与 Apple-like 中性浮层，以轻量图标传达 info/success/warning/error
+Select.tsx: 本地 Select 原子组件，默认触发器以 combobox/listbox 契约提供 aria-activedescendant，支持受控/非受控值、上下布局、外部关闭、完整键盘交互与自定义触发器能力
 UserButton.tsx: 本地用户身份原子组件，提供可复用 UserAvatar 与显示头像、姓名、邮箱、展开状态的 UserButton 触发器，不包含业务跳转
-UserMenu.tsx: 本地账户菜单组合组件，顶部身份卡片整栏可点击并直达个人资料，下方不重复个人资料项，只发出订阅、设置与退出命令；所有普通项目与文件树共享中性 interactive-hover，危险项只保留红色文字；支持外部点击/Esc/方向键焦点管理
+UserMenu.tsx: 本地账户菜单组合组件，顶部身份卡片直达个人资料，下方只发出订阅、设置与退出命令；menu 容器可聚焦，支持外部点击/Esc/方向键与触发器焦点归还
 index.ts: 本地 design system 组件出口，统一暴露通用组件、Skeleton/延迟显示策略、ThinkingMark/ThinkingStatusText/互斥 AI 消息家族、Toast 根能力与公开类型
 
 职责: 本地组件目录；首次无旧内容的稳定结构才使用统一 Skeleton，已有内容刷新必须优先保留内容，业务组件不得复制 shimmer；AI 最终正文永远不得拥有卡片表面，用户消息复用 Primary 主题，过程与正文的语义分区由业务层决定，ToolCallBubble 只消费已净化的人话详情；所有组件只能使用 app/src/index.css 暴露的语义 token 与组件层 class，不得在组件中硬编码颜色值或引入第二套 UI 系统。

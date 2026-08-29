@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun test、react-dom/server、@xyflow/react 的 ReactFlowProvider、canvasActions Context 与真实 CanvasCardNode
- * [OUTPUT]: 锁定 memo_ref 纵向卡片的中心重合关系注册 Handle、嵌套纸张结构、渐隐摘录、常驻展开入口、固定高度元信息行，以及空/超长/墓碑/回收站/漂移五种数据下的结构稳定
+ * [OUTPUT]: 锁定 memo_ref 纵向卡片的中心重合关系注册 Handle、嵌套纸张结构、渐隐摘录、常驻展开入口、固定高度元信息行，以及普通/墓碑/回收站都只把唯一移除命令交给会话层处理的结构边界
  * [POS]: KnowledgeCanvas 的卡片结构回归门禁；只断言真实组件产出的 DOM 契约，hover/焦点浮现由 CSS 承担并在浏览器验收
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -127,7 +127,8 @@ describe("Canvas memo card", () => {
     expect(long).toContain("熵增者，妄作之果也。");
   });
 
-  test("墓碑与回收站目标不提供阅读、AI 与关联入口，只保留移除", () => {
+  test("普通、墓碑与回收站都只有一个移除入口，恢复与确认语义留给会话层", () => {
+    const available = renderCard(cardData());
     const tombstone = renderCard(cardData({
       body: null,
       targetNodeId: null,
@@ -135,11 +136,13 @@ describe("Canvas memo card", () => {
     }));
     const trashed = renderCard(cardData({ targetDeleted: true }));
 
+    expect(available.match(/aria-label="从画布移除"/g)).toHaveLength(1);
     for (const html of [tombstone, trashed]) {
       expect(html).not.toContain("canvas-card-expand");
       expect(html).not.toContain('aria-label="AI 拓展这条分支"');
       expect(html).not.toContain('aria-label="关联另一篇笔记"');
       expect(html).toContain('aria-label="从画布移除"');
+      expect(html.match(/aria-label="从画布移除"/g)).toHaveLength(1);
     }
     expect(tombstone).toContain('data-tombstone="true"');
     expect(tombstone).toContain("原文已不在库中");

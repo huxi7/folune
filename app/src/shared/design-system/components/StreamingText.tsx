@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 React effect、Unicode 分词、目标文本、真实流状态与可选渲染器
- * [OUTPUT]: 对外提供 SSE 同步直出、仅尾部最多五词使用常数节点模糊落定的 StreamingText，以及尾词错峰样式
+ * [OUTPUT]: 对外提供 SSE 同步直出、仅尾部最多五词使用常数节点模糊落定的 StreamingText，以及无冗余时钟分支的尾词错峰样式
  * [POS]: design-system AI 消息家族的动态文字内核；每个网络分块只消费一次上游渲染，不维护逐字队列、全文时间轴或历史词节点
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -34,10 +34,6 @@ export type StreamingWordTimeline = {
   revealedAt: readonly number[];
   units: readonly string[];
 };
-
-function motionTime() {
-  return typeof performance === "undefined" ? Date.now() : performance.now();
-}
 
 function resolvedWordTimes(count: number) {
   return Array.from({ length: count }, () => Number.NEGATIVE_INFINITY);

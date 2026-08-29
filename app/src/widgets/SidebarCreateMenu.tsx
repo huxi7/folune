@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖设计系统图标、文件库当前目录语境与上层 memo/canvas/folder 创建意图
- * [OUTPUT]: 对外提供 96px split 新建控件：64px 主区（图标 + 「新建」）默认新建笔记，32px 下拉区显式选择笔记/Canvas/文件夹，菜单支持方向键/Home/End 与外部点击关闭
+ * [OUTPUT]: 对外提供 96px split 新建控件及可聚焦菜单容器，支持笔记/Canvas/文件夹选择、方向键/Home/End 与外部关闭
  * [POS]: AppSidebar 的创建入口；只管理菜单焦点和选择，不持有树事务或路由状态
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -113,6 +113,7 @@ export function SidebarCreateMenu({
           }}
           ref={menuRef}
           role="menu"
+          tabIndex={-1}
         >
           <button onClick={() => choose(onCreateMemo)} role="menuitem" type="button">
             <FileTextIcon size={14} />新建备忘录

@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun test、react-dom/server 与 MarkdownReadingView 的软换行、安全渲染及词级装饰边界
- * [OUTPUT]: 覆盖备忘录单换行、GFM、安全过滤，以及常数尾部动画节点不破坏 Markdown 语义或结束态结构
+ * [OUTPUT]: 覆盖备忘录单换行、GFM、安全过滤，以及无冗余正则转义的常数尾部动画与结束态结构
  * [POS]: app/src/widgets 的 Markdown 阅读回归测试；同时锁定阅读安全、Agent 直出表现与结束无抖动边界
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -97,7 +97,7 @@ alert("文本，不执行")
     expect(html).toContain("<p>先<span class=\"ds-streaming-text-token\" data-resolving=\"true\" style=\"animation-delay:-75ms\">确认 </span>");
     expect(html).toContain("data-resolving=\"true\" style=\"animation-delay:-20ms\">目标</span>");
     expect(html.match(/ds-streaming-text-token/g)).toHaveLength(2);
-    expect(html.match(/data-resolving=\"true\"/g)).toHaveLength(2);
+    expect(html.match(/data-resolving="true"/g)).toHaveLength(2);
   });
 
   test("keeps old paragraphs native and decorates only the final block tail", () => {
@@ -117,7 +117,7 @@ alert("文本，不执行")
     );
 
     expect(html).toContain("<p>第一段已经稳定。</p>");
-    expect(html.match(/data-resolving=\"true\"/g)?.length).toBeLessThanOrEqual(5);
+    expect(html.match(/data-resolving="true"/g)?.length).toBeLessThanOrEqual(5);
     expect(html).toContain("data-resolving=\"true\" style=\"animation-delay:-15ms\">出现。</span>");
   });
 

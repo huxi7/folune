@@ -15,7 +15,7 @@ design-system.css: Quiet Editorial 基础组件视觉层与 ThinkingMark Formati
 button.css: Button 专用视觉层；统一 36px 标准命令高度、14px/18px UI 文字、14px 横向留白、6px 图文间距、10px 控件曲率，以 1px 清晰内亮环和薄内侧柔光构成克制的连续环绕内高光；Primary/Secondary/Danger/Ghost 共用 1px press 与 16 度倾斜窄光带 Saving 状态，文件树、SidebarButton 与 Header 命令独立消费 32px compact 尺寸
 sidebar-button.css: SidebarButton 专用 32px compact 平面视觉层，APP/账户导航与 36px 标准 Button 共享 10px 控件曲率而不强制等高；hover 消费全局中性 interactive-hover，active 只使用轻中性表面和墨色，hover/press/选中不抬升，侧栏底部 Design System/回收站以 12px/16px Label 文字和 primary 前景色表达当前位置
 segmented-control.css: SegmentedControl 专用视觉层，以默认 Button 总高度、统一 smooth corner、确定性中性灰轨道与纯白选中片段组成平整控制面，不使用内凹阴影、外投影或位移
-toast.css: Kumo Toast Parts 的 Quiet Editorial 适配层，消费其堆叠/展开/滑动 data state，以中性不透明 Popover、12px 曲率、克制浮层阴影与轻量状态符号表达 info/success/warning/error；禁止玻璃、彩色容器、竖线和图标盒
+toast.css: Kumo Toast Parts 的 Quiet Editorial 适配层，消费其堆叠/展开/滑动 data state，以中性不透明 Popover、12px 曲率、克制浮层阴影、轻量状态符号与本地 Button 单一回执动作表达 info/success/warning/error；禁止玻璃、彩色容器、竖线、图标盒与 Kumo Button
 user-menu.css: UserMenu 专用视觉层，以身份卡片、统一 smooth-corner 分组动作、与文件树同源的中性 interactive-hover 及无填色危险动作组成账户弹层，并与通用 Select 样式职责分离
 codemirror.css: 未分层的 CodeMirror 6 适配层，以根语义 Token 覆盖 light/dark、14px source 与 15px live 正文，并把 Live Preview 标题/引用映射到 Editorial 字体、活动标记弱化、链接/列表/任务/代码/GFM 表格保持清晰；第三方语法颜色不得泄漏为竞争性色轴，pre-wrap 继续保真原始空白
 cord.css: Cord Signature 表现层，按语境把 --cord-color 映射到既有 --archive-cord/--primary，承载 pathLength 归一化的出场自绘、虚实区分与自中点向两端流动的双层白光；外发光用更宽更淡的第二条描边而非 feGaussianBlur，reduced-motion 直接静态

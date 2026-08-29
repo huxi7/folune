@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 happy-dom、Testing Library、真实 KnowledgeCanvas/React Flow 节点层与可观测 Canvas 协调器替身
- * [OUTPUT]: 覆盖 Pane 双击到 textarea、内容边界提交、再次编辑不跳变、清空已有文字即删除、四角等比缩放、多选立刻成框且与 React Flow 自带框互斥、关系注册与理由的键盘/保持查看、统一持久化，以及新建空白和 Esc 取消不入队的交互回归测试
- * [POS]: KnowledgeCanvas 的浏览器 DOM 纵向交互测试；不绕过组件去单测 reducer/RPC，专门锁定 selectionOnDrag 下空间文字从入口到 WAL/协调器/mutation 的完整链路
+ * [OUTPUT]: 覆盖 Pane 双击到 textarea、内容边界提交、空间文字编辑/缩放、多选成框、普通节点与关系的可撤销移除、Delete 批量原子入队、墓碑诚实回执、来源卡片单删/批量确认与 Esc 最内层收束
+ * [POS]: KnowledgeCanvas 的浏览器 DOM 纵向交互测试；不绕过组件去单测 reducer/RPC，锁定 selectionOnDrag 下空间文字、来源确认与移除回执从真实 DOM 到 WAL/协调器/mutation 的完整链路
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -128,6 +128,31 @@ const relationCanvas = (): CanvasDetail => ({
       y: 220,
     },
   ],
+});
+
+const tombstoneCanvas = (): CanvasDetail => {
+  const detail = relationCanvas();
+  const tombstone = detail.nodes[0]!;
+  return {
+    ...detail,
+    edges: [],
+    nodes: [{
+      ...tombstone,
+      snapshot_title: "已经永久删除的笔记",
+      target: null,
+      target_node_id: null,
+    }],
+  };
+};
+
+const originCanvas = (): CanvasDetail => ({
+  ...relationCanvas(),
+  canvas: {
+    ...relationCanvas().canvas,
+    canvas_kind: "memo_default",
+    origin_node_id: "memo-a",
+    origin_revision: 1,
+  },
 });
 
 Object.assign(globalThis, {
@@ -264,6 +289,179 @@ const setMeasuredTextSize = (width: number, height: number) => {
     scrollWidth: { configurable: true, value: width },
   });
 };
+
+const cardButton = async (nodeId: string, label: string) => await waitFor(() => {
+  const card = document.querySelector<HTMLElement>(
+    `.react-flow__node[data-id="${nodeId}"]`,
+  );
+  expect(card).not.toBeNull();
+  const button = card?.querySelector<HTMLButtonElement>(`button[aria-label="${label}"]`);
+  expect(button).not.toBeNull();
+  return button!;
+});
+
+const buttonWithText = async (text: string) => await waitFor(() => {
+  const button = [...document.querySelectorAll<HTMLButtonElement>("button")]
+    .find((candidate) => candidate.textContent?.trim() === text);
+  expect(button).not.toBeUndefined();
+  return button!;
+});
+
+describe("KnowledgeCanvas 移除回执", () => {
+  test("普通节点移除后可原子恢复节点身份、发现来源、坐标、关系与理由", async () => {
+    useCanvasWorkspaceStore.getState().replaceServer(relationCanvas(), []);
+    renderCanvas();
+
+    fireEvent.click(await cardButton("memo-card-b", "从画布移除"));
+    await waitFor(() => expect(
+      useCanvasWorkspaceStore.getState().document?.nodes,
+    ).toHaveLength(1));
+    expect(document.body.textContent).toContain("已从 Canvas 移除");
+    expect(document.body.textContent).toContain("同时移除了 1 条关联");
+    await coordinatorRef.current?.flush();
+
+    fireEvent.click(await buttonWithText("撤销"));
+    await waitFor(() => {
+      expect(useCanvasWorkspaceStore.getState().document?.nodes).toHaveLength(2);
+      expect(useCanvasWorkspaceStore.getState().document?.edges).toHaveLength(1);
+    });
+    await coordinatorRef.current?.flush();
+
+    expect(mutationRequests[0]?.operations).toEqual([{
+      node_id: "memo-card-b",
+      type: "remove_node",
+    }]);
+    expect(mutationRequests[1]?.operations).toEqual([
+      {
+        discovered_from_id: "memo-card-a",
+        node_id: "memo-card-b",
+        target_node_id: "memo-b",
+        type: "add_memo",
+        x: 420,
+        y: 220,
+      },
+      {
+        edge_id: "edge-related",
+        rationale: "两篇笔记都在追问记录如何保留真实经验。",
+        source_id: "memo-card-a",
+        target_id: "memo-card-b",
+        type: "upsert_edge",
+      },
+    ]);
+  });
+
+  test("Delete 多选只写一条 WAL 记录，并以一次 mutation 移除全部节点", async () => {
+    useCanvasWorkspaceStore.getState().replaceServer(relationCanvas(), []);
+    useCanvasWorkspaceStore.getState().selectNodes(["memo-card-a", "memo-card-b"]);
+    renderCanvas();
+
+    fireEvent.keyDown(window, { key: "Delete" });
+    await waitFor(() => expect(walStorage.records.size).toBe(1));
+    const record = [...walStorage.records.values()][0];
+    expect(record?.intents.map((intent) => intent.operation)).toEqual([
+      { node_id: "memo-card-a", type: "remove_node" },
+      { node_id: "memo-card-b", type: "remove_node" },
+    ]);
+    await coordinatorRef.current?.flush();
+    expect(mutationRequests).toHaveLength(1);
+    expect(mutationRequests[0]?.operations).toHaveLength(2);
+    expect(document.body.textContent).toContain("已从 Canvas 移除 2 个节点");
+  });
+
+  test("墓碑卡片只给无法撤销的诚实回执", async () => {
+    useCanvasWorkspaceStore.getState().replaceServer(tombstoneCanvas(), []);
+    renderCanvas();
+
+    fireEvent.click(await cardButton("memo-card-a", "从画布移除"));
+    await waitFor(() => expect(document.body.textContent).toContain(
+      "原笔记已永久删除，这次清理无法撤销。",
+    ));
+    expect(document.querySelector(".ds-toast-action")).toBeNull();
+  });
+
+  test("源笔记卡片取消移除后不发 mutation", async () => {
+    useCanvasWorkspaceStore.getState().replaceServer(originCanvas(), []);
+    renderCanvas();
+
+    fireEvent.click(await cardButton("memo-card-a", "从画布移除"));
+    await waitFor(() => expect(document.querySelector('[role="dialog"]')).not.toBeNull());
+    expect(document.body.textContent).toContain("原笔记完全不受影响");
+    expect(document.body.textContent).toContain("永久转为独立画布");
+    expect(document.body.textContent).toContain("会创建一张新的画布");
+
+    fireEvent.click(await buttonWithText("取消"));
+    await waitFor(() => expect(document.querySelector('[role="dialog"]')).toBeNull());
+    expect(walStorage.records.size).toBe(0);
+    expect(mutationRequests).toHaveLength(0);
+    expect(useCanvasWorkspaceStore.getState().document?.canvas.canvas_kind)
+      .toBe("memo_default");
+  });
+
+  test("源笔记卡片确认后转为独立画布，回执不含撤销按钮", async () => {
+    useCanvasWorkspaceStore.getState().replaceServer(originCanvas(), []);
+    renderCanvas();
+
+    fireEvent.click(await cardButton("memo-card-a", "从画布移除"));
+    await waitFor(() => expect(document.querySelector('[role="dialog"]')).not.toBeNull());
+    expect(walStorage.records.size).toBe(0);
+    expect(useCanvasWorkspaceStore.getState().document?.canvas.canvas_kind)
+      .toBe("memo_default");
+
+    fireEvent.click(await buttonWithText("解除并移除"));
+    await waitFor(() => expect(
+      useCanvasWorkspaceStore.getState().document?.canvas.canvas_kind,
+    ).toBe("standalone"));
+    expect(walStorage.records.size).toBe(1);
+    expect(document.body.textContent).toContain(
+      "「交互测试 Canvas」已转为独立画布",
+    );
+    expect(document.querySelector(".ds-toast-action")).toBeNull();
+  });
+
+  test("包含源笔记卡片的批量删除同样确认，并保持一次原子入队", async () => {
+    useCanvasWorkspaceStore.getState().replaceServer(originCanvas(), []);
+    useCanvasWorkspaceStore.getState().selectNodes(["memo-card-a", "memo-card-b"]);
+    renderCanvas();
+
+    fireEvent.keyDown(window, { key: "Delete" });
+    await waitFor(() => expect(document.querySelector('[role="dialog"]')).not.toBeNull());
+    expect(document.body.textContent).toContain("所选 2 个节点中包含源笔记卡片");
+    expect(walStorage.records.size).toBe(0);
+
+    fireEvent.click(await buttonWithText("解除并移除"));
+    await waitFor(() => expect(walStorage.records.size).toBe(1));
+    const record = [...walStorage.records.values()][0];
+    expect(record?.intents.map((intent) => intent.operation)).toEqual([
+      { node_id: "memo-card-a", type: "remove_node" },
+      { node_id: "memo-card-b", type: "remove_node" },
+    ]);
+    expect(document.body.textContent).toContain(
+      "撤销只恢复普通节点及仍可恢复的关联",
+    );
+    fireEvent.click(await buttonWithText("撤销普通节点"));
+    await waitFor(() => expect(
+      useCanvasWorkspaceStore.getState().document?.nodes.map((node) => node.id),
+    ).toEqual(["memo-card-b"]));
+    expect(useCanvasWorkspaceStore.getState().document?.canvas.canvas_kind)
+      .toBe("standalone");
+  });
+
+  test("确认框内按 Esc 只关闭确认，不取消节点选择", async () => {
+    useCanvasWorkspaceStore.getState().replaceServer(originCanvas(), []);
+    useCanvasWorkspaceStore.getState().selectNodes(["memo-card-a"]);
+    renderCanvas();
+
+    fireEvent.keyDown(window, { key: "Backspace" });
+    const confirmButton = await buttonWithText("解除并移除");
+    fireEvent.keyDown(confirmButton, { key: "Escape" });
+
+    await waitFor(() => expect(document.querySelector('[role="dialog"]')).toBeNull());
+    expect(useCanvasWorkspaceStore.getState().selectedNodeIds).toEqual([
+      "memo-card-a",
+    ]);
+    expect(walStorage.records.size).toBe(0);
+  });
+});
 
 describe("KnowledgeCanvas 自由文字纵向交互", () => {
   test("两张卡片保留关系注册，AI 理由可聚焦查看并点击保持", async () => {

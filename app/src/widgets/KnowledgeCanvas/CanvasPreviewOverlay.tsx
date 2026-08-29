@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 design-system Dialog（bare 表面）/Skeleton、共享 NotePaper reader 纸面、memoDocumentStore 的按 ID 正文缓存与 MarkdownReadingView
- * [OUTPUT]: 对外提供不卸载 Canvas 的小开本 Paper 预览层：柔和遮罩、均匀柔影、正文在纸内滚动，关闭与交回外层 flush 的“编辑原文”都住在纸外工具列
+ * [OUTPUT]: 对外提供不卸载 Canvas 的小开本 Paper 预览层，并以一次请求生命周期避免 loading 状态反向中止正文加载
  * [POS]: KnowledgeCanvas 的正文阅读边界；Canvas API 永不携带 content_mdx，只有用户明确预览时才按目标 memo ID 加载正文；纸内只有正文，动作一律在纸外，因此正文长度不影响任何入口的可达性；Esc/遮罩/焦点归还统一复用 Dialog 的模态行为，不另造第二套弹窗
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -37,14 +37,15 @@ export function CanvasPreviewOverlay({
   const error = useMemoDocumentStore((state) => state.errors[memoId]);
   const loadMemo = useMemoDocumentStore((state) => state.loadMemo);
 
+  // status 由本次 loadMemo 自己切到 loading；若加入依赖会 cleanup 并中止刚发出的请求。
+  // oxlint-disable react-hooks/exhaustive-deps -- 请求状态是 effect 结果，不是重启条件
   useEffect(() => {
     if (document !== undefined || status === "loading") return;
     const controller = new AbortController();
     void loadMemo(accessToken, memoId, controller.signal).catch(() => undefined);
     return () => controller.abort();
-    // status 由本次 loadMemo 自己切到 loading；若把它放进依赖，effect
-    // 会立即 cleanup 并中止刚发出的请求，随后 error/loading 互相重试。
   }, [accessToken, document, loadMemo, memoId]);
+  // oxlint-enable react-hooks/exhaustive-deps
 
   return (
     <Dialog

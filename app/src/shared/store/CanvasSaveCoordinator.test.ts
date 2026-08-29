@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun test、内存 WAL、ApiError、CanvasSaveCoordinator 与 canvasDocument 投影
- * [OUTPUT]: 覆盖空恢复归闲、WAL 先于 UI、手势级原子入账、人工/AI 顺序、稳定 ID 重试、单次 409 rebase、串行回执清理和 48KiB pagehide 有界发送
+ * [OUTPUT]: 覆盖空恢复归闲、WAL 先于 UI、手势级原子入账、稳定 ID 重试、单次 409 rebase、串行回执清理和 48KiB pagehide 有界发送
  * [POS]: shared/store 的 Canvas persistenceSlice/协调器回归门禁；断网与响应丢失不能复制或丢弃用户意图
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -22,7 +22,6 @@ import {
 import {
   applyCanvasIntents,
   applyCanvasMutationResult,
-  type CanvasIntent,
 } from "./canvasDocument";
 import { createMemoryCanvasWalStorage } from "./canvasWal";
 

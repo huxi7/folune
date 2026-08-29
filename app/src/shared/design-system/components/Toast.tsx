@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 Kumo Toast Provider/Manager/Parts 的可访问队列、自动关闭、悬停暂停、焦点与滑动生命周期，依赖 共享 Lucide 轻量状态图标及 toast.css 的 Apple-like SuperNote 材质
- * [OUTPUT]: 对外提供稳定的 ToastProvider、useToast、ToastVariant 与 ToastInput，把既有 info/success/warning/error 业务协议适配到 Kumo Toast
- * [POS]: app/src/shared/design-system/components 的全局瞬时反馈边界；Kumo 只拥有交互机制，SuperNote 本地 API 与样式继续隔离业务和第三方实现
+ * [INPUT]: 依赖 Kumo Toast Provider/Manager/Parts 的可访问队列、自动关闭、悬停暂停、焦点与滑动生命周期，依赖本地 Button、共享 Lucide 轻量状态图标及 toast.css 的 Apple-like SuperNote 材质
+ * [OUTPUT]: 对外提供稳定的 ToastProvider、useToast、ToastVariant 与支持单一回执动作的 ToastInput，把既有 info/success/warning/error 业务协议适配到 Kumo Toast
+ * [POS]: app/src/shared/design-system/components 的全局瞬时反馈边界；Kumo 只拥有队列与交互机制，业务动作仍由 SuperNote 本地 Button 渲染，隔离业务和第三方表现实现
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import {
@@ -24,9 +24,15 @@ import {
   type ReactNode,
 } from "react";
 
+import { Button } from "./Button";
+
 export type ToastVariant = "info" | "success" | "warning" | "error";
 
 export type ToastInput = {
+  action?: {
+    label: string;
+    onClick: () => void;
+  };
   description?: string;
   duration?: number;
   title: string;
@@ -89,6 +95,20 @@ function ToastItem({ toast }: { toast: KumoManagedToast }) {
               {toast.description}
             </KumoToast.Description>
           ) : null}
+          {toast.actions?.length ? (
+            <div className="ds-toast-actions">
+              {toast.actions.map((action, index) => (
+                <Button
+                  className="ds-toast-action"
+                  key={`${toast.id}-action-${index}`}
+                  onClick={action.onClick}
+                  variant="ghost"
+                >
+                  {action.children}
+                </Button>
+              ))}
+            </div>
+          ) : null}
         </div>
         <KumoToast.Close aria-label="关闭提示" className="ds-toast-dismiss">
           <XIcon aria-hidden="true" size={14} />
@@ -115,6 +135,10 @@ function ToastRuntime({ children }: { children: ReactNode }) {
       const variant = input.variant ?? "info";
 
       toastManagerRef.current.add({
+        actions: input.action === undefined ? undefined : [{
+          children: input.action.label,
+          onClick: input.action.onClick,
+        }],
         description: input.description,
         id: getToastId(id),
         priority: variant === "error" || variant === "warning" ? "high" : "low",

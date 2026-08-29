@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 useAiThreads、类型化 useChat/原生审批、持久化消息 API、本地 Design System Button/MentionInput、统一 Composer sources、Worker 胖工具链、权限/History 与 Dashboard AI 整理/草稿协调边界
- * [OUTPUT]: 对外提供本地 Design System Ghost 图标 Header、统一历史会话、仅在 Composer 展示的当前笔记默认上下文、内联高亮 @笔记、实时紧凑搜索、冻结请求上下文、普通/整理同构的 Composer 审批 Dock、审批幂等与刷新恢复、流完成后工具执行、乐观命令/整轮逆序撤销对账、会话恢复及停止 SSE/礼花的 AI Native 右侧工作区
+ * [OUTPUT]: 对外提供 AI Native 右侧工作区；引用源按 memo 身份/置顶列表精确对账，已批准工具按持久消息语义幂等恢复，外层只回报选中会话 id
  * [POS]: /app 右侧 AI Native V2 组合根；工具参数流结束且批准后才进入 Worker，api command 是唯一写事实源，Store 只做幂等投影与回滚
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -181,7 +181,13 @@ function AgentConversation({
   const clientTools = useMemo(() => createAgentClientTools(), []);
   const reconcileAiCommand = useMemoTreeStore((state) => state.reconcileAiCommand);
   const rollbackAiToolCall = useMemoTreeStore((state) => state.rollbackAiToolCall);
-  const pinnedIds = thread.references.map((reference) => reference.memo_id);
+  const pinnedIds = useMemo(
+    () => thread.references.map((reference) => reference.memo_id),
+    [thread.references],
+  );
+  const currentMemoSourceId = currentMemo?.node_type === "memo"
+    ? currentMemo.id
+    : null;
   const { bodyHitIds: mentionBodyHitIds } =
     useMemoSearch(accessToken, memoTree, mentionQuery, 20);
   const mentionResults = useMemo(
@@ -211,11 +217,11 @@ function AgentConversation({
     setSources((current) => reconcileComposerSources(
       current,
       memoTree,
-      currentMemo?.node_type === "memo" ? currentMemo.id : null,
+      currentMemoSourceId,
       pinnedIds,
       suppressedCurrentMemoId,
     ));
-  }, [currentMemo?.id, memoTree, pinnedIds.join("|"), suppressedCurrentMemoId]);
+  }, [currentMemoSourceId, memoTree, pinnedIds, suppressedCurrentMemoId]);
   const {
     addToolApprovalResponse,
     addToolResult,
@@ -396,6 +402,8 @@ function AgentConversation({
     });
   }
 
+  // 恢复扫描只由持久消息与稳定工具表驱动；执行函数使用当轮闭包，放入依赖会让每次 render 重扫。
+  // oxlint-disable react-hooks/exhaustive-deps -- recoveredToolCalls 已按 toolCallId 保证幂等
   useEffect(() => {
     const recoverable = findApprovedPendingTools(messages);
     for (const part of recoverable) {
@@ -408,6 +416,7 @@ function AgentConversation({
       void executeClientToolPart(part, messages);
     }
   }, [clientTools, messages]);
+  // oxlint-enable react-hooks/exhaustive-deps
 
   const undoAssistantTurn = useCallback(async (commands: readonly AiCommand[]) => {
     for (const command of reverseCommandsForUndo(commands)) {
@@ -593,10 +602,11 @@ export function AgentPanel(props: AgentPanelProps) {
   const visibleOrganizeRun = props.organizeRun?.memo_id === props.currentMemo?.id
     ? props.organizeRun
     : null;
+  const { onSelectedThreadChange } = props;
 
   useEffect(() => {
-    props.onSelectedThreadChange(thread?.id ?? null);
-  }, [props.onSelectedThreadChange, thread?.id]);
+    onSelectedThreadChange(thread?.id ?? null);
+  }, [onSelectedThreadChange, thread?.id]);
 
   return (
     <aside aria-label="备忘录助手" className="agent-panel">

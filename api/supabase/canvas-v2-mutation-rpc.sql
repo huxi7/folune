@@ -1,5 +1,5 @@
 -- [INPUT]: 依赖 canvas-v2-schema.sql 与 canvas-v2-entry-rpc.sql、Canvas/memo 表、extensions.pgcrypto、RLS 与 auth.uid()
--- [OUTPUT]: 提供人工编辑与 AI expansion 共用的 apply_canvas_mutation 原子函数，统一 version、receipt、checkpoint、空间文字尺寸/缩放、容量、快照与幂等回执
+-- [OUTPUT]: 提供人工编辑与 AI expansion 共用的 apply_canvas_mutation 原子函数，统一 version、receipt、checkpoint、空间文字尺寸/缩放、无节点硬上限的写入、关系容量、快照与幂等回执
 -- [POS]: api/supabase 的 Canvas V2 唯一 mutation 内核；业务 API 的 PATCH 与 expansion commit 只能调用此处，禁止再生第二套节点/边写入规则
 -- [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 
@@ -48,7 +48,6 @@ declare
   target_memo_id uuid;
   source_node_id uuid;
   requested_edge_id uuid;
-  node_count integer;
   edge_count integer;
   capacity_limited boolean := false;
   skip_create boolean;
@@ -274,20 +273,6 @@ begin
         and target_node_id = target_memo_id;
 
       if not found then
-        select count(*) into node_count
-        from public.canvas_nodes
-        where user_id = p_user_id and canvas_id = p_canvas_id;
-
-        if node_count >= 50 then
-          capacity_limited := true;
-          dropped := dropped || jsonb_build_array(jsonb_build_object(
-            'index', op_index - 1,
-            'type', op_type,
-            'reason', 'Canvas 已达到 50 个节点上限'
-          ));
-          continue;
-        end if;
-
         source_node_id := nullif(op->>'discovered_from_id', '')::uuid;
         if source_node_id is not null then
           perform 1 from public.canvas_nodes
@@ -410,20 +395,6 @@ begin
           'node_id', node_row.id
         ));
       else
-        select count(*) into node_count
-        from public.canvas_nodes
-        where user_id = p_user_id and canvas_id = p_canvas_id;
-
-        if node_count >= 50 then
-          capacity_limited := true;
-          dropped := dropped || jsonb_build_array(jsonb_build_object(
-            'index', op_index - 1,
-            'type', op_type,
-            'reason', 'Canvas 已达到 50 个节点上限'
-          ));
-          continue;
-        end if;
-
         insert into public.canvas_nodes (
           id, user_id, canvas_id, kind, text, position_x, position_y,
           width, height, created_by, metadata

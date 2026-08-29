@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖可后台刷新的后端 Profile、shared/api/profile 的 username/bio PATCH 与 5MB 头像上传、React 受控草稿/800ms 防抖副作用/原生文件 input、本地 UI 与 共享 Lucide 图标
- * [OUTPUT]: 对外提供 AccountDialog 内的账户资料面板、按字段合并后台 Profile 与本地未保存草稿、用户名/简介静默自动保存、头像即时上传与全局 Toast 反馈
+ * [OUTPUT]: 对外提供 AccountDialog 内的账户资料面板、仅按 bio/username 合并后台 Profile 与本地草稿、静默自动保存、头像即时上传与全局 Toast 反馈
  * [POS]: app/src/widgets 的账户资料栏，以 stale-while-revalidate 字段级冲突保护和串行防抖保存消除整页 Loading 与显式提交区
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -66,7 +66,11 @@ export function AccountProfilePanel({
   const lastSavedDraft = useRef(normalizeProfileDraft(createProfileDraft(profile)));
 
   useEffect(() => {
-    const refreshedDraft = normalizeProfileDraft(createProfileDraft(profile));
+    const refreshedProfileDraft = {
+      bio: profile.bio ?? "",
+      username: profile.username,
+    };
+    const refreshedDraft = normalizeProfileDraft(refreshedProfileDraft);
 
     setDraft((currentDraft) => {
       const currentNormalized = normalizeProfileDraft(currentDraft);
@@ -75,10 +79,10 @@ export function AccountProfilePanel({
 
       return {
         bio: currentNormalized.bio === previousSavedDraft.bio
-          ? profile.bio ?? ""
+          ? refreshedProfileDraft.bio
           : currentDraft.bio,
         username: currentNormalized.username === previousSavedDraft.username
-          ? profile.username
+          ? refreshedProfileDraft.username
           : currentDraft.username,
       };
     });

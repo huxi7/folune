@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 React state/effect/ref、真实 MemoTreeNode、Store 正文本地更新命令与显式 memoId 的后台保存命令
- * [OUTPUT]: 对外提供 useMemoAutosave、加载期无本地草稿的服务端初值接纳、可等待强制 flush、删除期 pause/resume、已提交标题接纳、titleConflict 原位提示状态、草稿类型、调度参数与可测试重试器
+ * [OUTPUT]: 对外提供以 memoId 为唯一 session 身份、具名递归 flush、晚到初值独立接纳、删除 pause/resume 与标题冲突隔离的 useMemoAutosave
  * [POS]: app/src/widgets 的编辑会话协调边界；删除前可证明保存完成并暂停卸载 flush，普通输入仍沿用单一自动保存状态机。标题与正文是两条独立提交路径：同级重名只挂起 title 字段并原位提示，正文永远继续自动保存
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -252,10 +252,10 @@ export function useMemoAutosave({
     return draftForSession(session, blocked);
   }, []);
 
-  const flushSession = useCallback(async (
+  const flushSession = useCallback(async function flushSession(
     session: AutosaveSession,
     options?: MemoFlushOptions,
-  ) => {
+  ) {
     clearAutosaveTimers(session);
 
     if (session.paused) {
@@ -458,6 +458,8 @@ export function useMemoAutosave({
     }
   }, [draftNow, scheduleAutosave]);
 
+  // session 只以 memoId 为身份；initial* 的晚到刷新由下一段 effect 安全采纳，不能在这里销毁重建保存会话。
+  // oxlint-disable react-hooks/exhaustive-deps -- 避免服务端刷新中断在途自动保存
   useEffect(() => {
     let session = sessionRef.current;
 
@@ -476,6 +478,7 @@ export function useMemoAutosave({
       }
     };
   }, [flushSession, memoId]);
+  // oxlint-enable react-hooks/exhaustive-deps
 
   useEffect(() => {
     const session = sessionRef.current;

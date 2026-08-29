@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 Kumo Toast Parts 的堆叠/滑动状态与 index.css 的中性 Popover、Radius、Elevation、Motion token
- * [OUTPUT]: 对外提供不玻璃化、不使用彩色状态容器的轻量 Toast、克制状态符号与 reduced-motion 降级
- * [POS]: app/src/styles 的瞬时反馈视觉层；Kumo 负责交互，SuperNote 只定义安静纸面材质
+ * [INPUT]: 依赖 Kumo Toast Parts 的堆叠/滑动状态、本地 Button 与 index.css 的中性 Popover、Radius、Elevation、Motion token
+ * [OUTPUT]: 对外提供不玻璃化、不使用彩色状态容器的轻量 Toast、克制状态符号、单一回执动作与 reduced-motion 降级
+ * [POS]: app/src/styles 的瞬时反馈视觉层；Kumo 负责队列交互，SuperNote 定义安静纸面材质与本地动作层级
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 @layer components {
@@ -166,6 +166,19 @@
     color: var(--muted-foreground);
     font-size: 0.75rem;
     line-height: 1.45;
+  }
+
+  .ds-toast-actions {
+    display: flex;
+    margin-top: var(--space-2);
+  }
+
+  .ds-toast-action.ds-button {
+    width: auto;
+    height: var(--space-7);
+    padding-inline: var(--space-2);
+    color: var(--foreground);
+    font-size: 0.75rem;
   }
 
   .ds-toast-dismiss {

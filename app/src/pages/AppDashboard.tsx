@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 React Router Profile/token、轻量 tree/按需正文/WorkspaceChrome Store、memoTitleRules 重名判据、useMemoNodeDeletion 删除编排、AI Run、PaperWorkspaceShell/CanvasWorkspace 与业务工作区
- * [OUTPUT]: 对外提供互斥的 Paper First 写作舞台/全屏知识画布、路由类型未决时的中性全屏等待、目录轻载/单篇正文路由、草稿 flush 后删除/AI/整理/探索分流、标题重名即时判据下传及账户/视图编排
+ * [OUTPUT]: 对外提供互斥的 Paper First 写作舞台/全屏知识画布、目录轻载/单篇正文路由、以稳定 client key 初始化首篇笔记、草稿 flush 后业务分流及账户/视图编排
  * [POS]: app/src/pages 的 /app 编排层；目录、正文、编辑器、Run、浮动工具与 Trash 的跨域生命周期只在此建立一次等待边界，并依据路由节点类型在 Paper 与 Canvas 两种空间壳之间切换；深链刷新时先确认节点类型再挂载空间壳，避免画布前闪出 Paper/Panel
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -13,7 +13,6 @@ import {
 } from "react-router-dom";
 
 import type { MemoTreeNode } from "../shared/api/memo";
-import type { Profile } from "../shared/api/profile";
 import { useDelayedSkeleton, useToast } from "../shared/design-system/components";
 import { findNode } from "../shared/store/memoTree";
 import { useMemoDocumentStore } from "../shared/store/memoDocumentStore";
@@ -50,10 +49,6 @@ import { PaperWorkspaceShell } from "../widgets/PaperWorkspaceShell";
 import type { WorkspaceOrganizePresentation } from "../widgets/archiveCordPolicy";
 import { WorkspaceAuxViews, type WorkspaceAuxView } from "../widgets/WorkspaceAuxViews";
 import { WorkspaceCommandPalette } from "../widgets/WorkspaceCommandPalette";
-import {
-  getMemoDeletionImpact,
-  getPostDeletionDestination,
-} from "./memoDeletion";
 import { resolveCanvasNodeId } from "./canvasPresentation";
 import { CanvasRouteCoordinator } from "./CanvasRouteCoordinator";
 import { DashboardDialogs } from "./DashboardDialogs";
@@ -112,7 +107,6 @@ export function AppDashboard() {
   const createMemo = useMemoTreeStore((state) => state.createMemo);
   const moveNode = useMemoTreeStore((state) => state.moveNode);
   const renameNode = useMemoTreeStore((state) => state.renameNode);
-  const softDeleteNode = useMemoTreeStore((state) => state.softDeleteNode);
   const restoreNode = useMemoTreeStore((state) => state.restoreNode);
   const getMemoClientKey = useMemoTreeStore(
     (state) => state.getMemoClientKey,
@@ -129,7 +123,6 @@ export function AppDashboard() {
   const memoDocumentStatuses = useMemoDocumentStore((state) => state.statuses);
   const updateMemoContentLocal = useMemoDocumentStore((state) => state.updateContentLocal);
   const saveMemoDocument = useMemoDocumentStore((state) => state.saveMemoDraft);
-  const removeMemoDocuments = useMemoDocumentStore((state) => state.removeMemos);
   const [profile, setProfile] = useState(initialProfile);
   const [activeView, setActiveView] = useState<SidebarView>("note");
   const [documentView, setDocumentView] = useState<DocumentView>("editing");
@@ -355,6 +348,7 @@ export function AppDashboard() {
   }, [
     accessToken,
     createMemo,
+    getMemoClientKey,
     memoTree,
     navigate,
     profile.id,

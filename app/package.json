@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "lint": "oxlint --react-plugin --jsx-a11y-plugin -D react-hooks src",
     "preview": "vite preview",
     "test": "bun test",
     "typecheck": "tsc --noEmit --allowJs false"
@@ -18,6 +19,7 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.3",
     "happy-dom": "^20.11.8",
+    "oxlint": "^1.80.0",
     "tailwindcss": "^4.3.2",
     "vite": "^8.1.4"
   },

@@ -1,11 +1,12 @@
 /**
  * [INPUT]: 依赖 shared/api/canvas 的 V2 文档、操作与 mutation 回执类型
- * [OUTPUT]: 对外提供带本地展示提示的 Canvas intent、操作合并、乐观投影、服务端回执归一与冲突 rebase 纯函数
+ * [OUTPUT]: 对外提供 Canvas 来源卡片统一判据、带本地展示提示的 intent、操作合并、乐观投影、服务端回执归一与冲突 rebase 纯函数
  * [POS]: shared/store 的 Canvas documentSlice 领域内核；React、网络、IndexedDB 都不能进入这里，保证恢复与在线编辑走同一套确定性投影
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
 import type {
+  Canvas,
   CanvasDetail,
   CanvasEdge,
   CanvasMutationResult,
@@ -24,6 +25,14 @@ export type CanvasIntent = {
   operation: CanvasOperation;
   hint?: CanvasIntentHint;
 };
+
+/** 来源身份只有这一条判据，UI 与乐观投影不得各自猜测。 */
+export const isCanvasOriginNode = (
+  canvas: Canvas,
+  node: CanvasNode | null | undefined,
+): boolean =>
+  canvas.canvas_kind === "memo_default"
+  && node?.target_node_id === canvas.origin_node_id;
 
 const cloneDetail = (detail: CanvasDetail): CanvasDetail => ({
   canvas: { ...detail.canvas, metadata: { ...detail.canvas.metadata }, viewport: { ...detail.canvas.viewport } },
@@ -161,10 +170,7 @@ const applyOne = (
         edge.source_id !== operation.node_id
         && edge.target_id !== operation.node_id,
     );
-    if (
-      detail.canvas.canvas_kind === "memo_default"
-      && removed?.target_node_id === detail.canvas.origin_node_id
-    ) {
+    if (isCanvasOriginNode(detail.canvas, removed)) {
       detail.canvas.canvas_kind = "standalone";
       detail.canvas.origin_node_id = null;
       detail.canvas.origin_revision = null;

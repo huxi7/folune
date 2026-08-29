@@ -3,7 +3,7 @@
 
 成员清单
 CLAUDE.md: 记录 AgentPanel 子域成员、依赖方向与 GEB 回环协议
-AgentPanel.tsx: AI Native V2 组合根；48px Header 以本地 Design System Ghost Button 承载 16px 历史菜单、新对话与收起动作；Prompt Bar 冻结统一 sources，右下角发送/停止共享 32px 几何圆形 Primary 轮廓且不继承 Button squircle；普通 tool approval 与 AI 整理 awaiting_confirmation 在 Composer 上方竞争同一个 ApprovalDock 槽位，普通审批优先，整理成功不在 Panel 重复显示；批准/拒绝先同步完整消息再执行或回滚，同一 approval 防连点，刷新后的已批准未完成工具按 toolCallId 幂等恢复，tool result 续写复用同一 assistant，同轮 commands 逆序撤销并继续走版本门禁
+AgentPanel.tsx: AI Native V2 组合根；Prompt Bar 的当前 memo 与置顶 references 先稳定为身份数组再对账 sources，普通 tool approval 与 AI 整理共用唯一 Dock；刷新后的已批准未完成工具只由持久消息与稳定工具表触发扫描、按 toolCallId 幂等恢复，选中 thread id 经解构回调通知外层，避免 props 对象身份驱动 effect
 ApprovalDock.tsx: Composer 上方唯一的紧凑非模态审批视觉原语，统一图标、标题、影响说明、按钮槽位与无蒙层语义；普通工具和 AI 整理审批只能适配它，禁止复制表面
 approvalState.ts: 审批状态机纯领域层，只检查末条 assistant；统一负责 requested 单次响应投影、approved 未完成工具恢复候选与 output 结果投影，避免 UI、持久化和恢复各自解释 AI SDK 状态
 approvalState.test.ts: 审批状态机回归测试，锁定同一 approval 只响应一次、拒绝不恢复、批准刷新可恢复及结果落地后退出恢复队列
@@ -45,7 +45,7 @@ toolPresentation.test.ts: 工具展示契约测试，锁定具体动作命名、
 activityState.ts: AI Activity 纯判定边界，以 status 和 assistant 最后一个 text/reasoning/step-start/tool part 导出 none/thinking/streaming/tool，工具 output 后只有 SDK 仍 streaming 才回到 thinking
 activityState.test.ts: Activity 状态回归测试，覆盖 submitted、首 token、活动工具、工具完成续写、新正文与 ready/error 卸载
 chatFetch.ts: 可独立测试的 HTTP 策略层，每次调用 token provider 后注入 Bearer，并把非 2xx 扁平/嵌套信封归一为带 code 的 ChatRequestError
-chatTransport.ts: 按 thread 创建类型化 DefaultChatTransport，只发送 thread_id 与携带冻结 metadata 的完整 messages；工具续写不再重读当前页面 memo；并集中导出 chat、organize、canvas-expand 端点 URL
+chatTransport.ts: 按 thread 创建 DefaultChatTransport，只发送 thread_id 与携带冻结 metadata 的完整 SuperNoteUIMessage；工具续写不再重读当前页面 memo，并集中导出 chat、organize、canvas-expand 端点 URL
 chatTransport.test.ts: chatFetch 回归测试，覆盖最新 Bearer 注入、无会话短路及扁平/嵌套错误信封 code 归一
 index.ts: AgentPanel 模块稳定出口，隔离 AppDashboard 与内部文件布局
 

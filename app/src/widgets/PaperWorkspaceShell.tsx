@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 motion/react、EdgeDock/PaperSurface/ArchiveCord、左右工具插槽、稳定 paperIdentity 与整理结果定位信息
- * [OUTPUT]: 对外提供 Paper First 共享 Workspace Chrome、响应式 Panel/遮罩、Escape/舞台收束、无弹跳位移与持久归档连线
+ * [OUTPUT]: 对外提供 Paper First 共享 Workspace Chrome、由面板状态闭包稳定驱动的响应式遮罩、Escape 收束与持久归档连线
  * [POS]: widgets 的写作工作台空间壳；Canvas 已成为独立持久 Workspace，旧临时探索舞台不再进入生产壳
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -11,6 +11,7 @@ import {
   useReducedMotion,
 } from "motion/react";
 import {
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -76,9 +77,9 @@ export function PaperWorkspaceShell({
   const paperScrollRef = useRef<HTMLDivElement>(null);
   const workspaceRef = useRef<HTMLDivElement>(null);
   const paperIdentityRef = useRef(paperIdentity);
-  const shouldOverlayPanels = () => window.innerWidth < PANEL_BREAKPOINT || (
+  const shouldOverlayPanels = useCallback(() => window.innerWidth < PANEL_BREAKPOINT || (
     libraryOpen && assistantOpen && window.innerWidth < DUAL_PANEL_SAFE_BREAKPOINT
-  );
+  ), [assistantOpen, libraryOpen]);
   const [overlayPanels, setOverlayPanels] = useState(shouldOverlayPanels);
   const anyPanelOpen = libraryOpen || assistantOpen;
 
@@ -96,7 +97,7 @@ export function PaperWorkspaceShell({
     handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, [assistantOpen, libraryOpen, onCloseAssistant]);
+  }, [assistantOpen, libraryOpen, onCloseAssistant, shouldOverlayPanels]);
 
   useEffect(() => {
     if (paperIdentityRef.current === paperIdentity) return;

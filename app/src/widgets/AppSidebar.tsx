@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 MemoTreeBranch/Skeleton、SidebarCreateMenu、memoLibrary 拖拽/祖先计划、memoTitleRules 的重名与可改名判据、持久化展开偏好、整理定位意图、Profile 与上层事务命令
- * [OUTPUT]: 对外提供文件库 Header、搜索入口、笔记优先的分流新建入口、真实文件树、重命名（默认 Canvas 不开放，撞名挂起提交并保留编辑态）/拖拽、整理定位高亮、底部导航及节点回收站命令
+ * [OUTPUT]: 对外提供文件库 Header、搜索入口、笔记优先的分流新建入口、可聚焦真实文件树、重命名/拖拽、按结构语义定位展开、底部导航及节点回收站命令
  * [POS]: app/src/widgets 的按需文件库内容层；拥有文件库内部信息层级与关闭入口，只收集业务意图，事务与路由切换由 Dashboard 编排
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -207,7 +207,7 @@ export function AppSidebar({
     renameValue,
   );
   const layoutKey = useMemo(() => treeStructureKey(memoTree), [memoTree]);
-  const folderIds = useMemo(() => getFolderIds(memoTree), [layoutKey]);
+  const folderIds = useMemo(() => getFolderIds(memoTree), [memoTree]);
   const { expandedFolders, setExpandedFolders } = useMemoTreeExpansion({
     folderIds,
     ready: treeStatus === "ready",
@@ -227,6 +227,8 @@ export function AppSidebar({
     ? organizeTarget?.runId ?? layoutKey
     : `reveal:${reveal.seq}`;
 
+  // focusKey/layoutKey 是定位与树结构的语义触发器；标题等 memoTree 身份变化不应反复抢占展开状态。
+  // oxlint-disable react-hooks/exhaustive-deps -- setter 稳定，organizeTarget 已折叠进 focusNodeId/focusKey
   useEffect(() => {
     if (focusNodeId === null) {
       return;
@@ -243,6 +245,7 @@ export function AppSidebar({
       );
     }
   }, [focusKey, focusNodeId, layoutKey]);
+  // oxlint-enable react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (focusNodeId === null || treeRef.current === null) {
@@ -584,6 +587,7 @@ export function AppSidebar({
           }}
           ref={treeRef}
           role="tree"
+          tabIndex={0}
         >
           <p className="sidebar-section-label">备忘录</p>
           {treeStatus === "loading" ? (

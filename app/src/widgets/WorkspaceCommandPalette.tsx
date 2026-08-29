@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 commandPaletteStore 的唯一开合与 Canvas 次级动作、memoTreeStore 轻量树、recentNodesStore 最近顺序、useMemoSearch 正文命中与 commandResults 排序纯函数
- * [OUTPUT]: 对外提供全局唯一 Command Palette：⌘K 双向开合、稳定 id 作为 active 身份、六档排序结果、Tab 打开笔记的画布、Canvas 语境下 ⌘Enter 连续加入，并以底部提示条声明此刻真能按的键
+ * [OUTPUT]: 对外提供全局唯一 Command Palette：⌘K 开合、可聚焦 option、稳定 active 身份、六档排序、Tab 进画布与 Canvas 连续加入
  * [POS]: widgets 的唯一 Command Surface，由 AppDashboard 挂载一次即覆盖 Paper 与 Canvas；Sidebar/Paper/Canvas 只是入口，排序归 commandResults，模态行为归 Dialog
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -314,6 +314,7 @@ export function WorkspaceCommandPalette({
                 key={result.id}
                 onMouseEnter={() => setActiveId(result.id)}
                 role="option"
+                tabIndex={-1}
               >
                 <button
                   className="command-row-open"

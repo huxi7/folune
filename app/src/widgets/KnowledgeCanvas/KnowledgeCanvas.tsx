@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 @xyflow/react v12 的 Pane 指针/坐标协议、Canvas Chat、useCanvasSessionCoordinator、canvasWorkspaceStore、空间文字几何、纯投影/增量布局、memo document Store 与本地设计系统
- * [OUTPUT]: 对外提供始终挂载真实 React Flow 的 Canvas V2：受控节点/边/视口、空白 Pane 双击空间文字、清空已有文字即删除、向全局 Command Palette 登记"加入当前画布"、连接、Preview、框选与全程可见的成组外接框、整组坐标原子回写、AI 增量拓展和可靠保存状态
- * [POS]: KnowledgeCanvas 的会话内容根；节点几何只跟随文档、选择只有 React Flow 一个所有者而 Store 是它的镜像，UI 只产生 intent，人工与 AI 都经同一个协调器/RPC，正文只在 Preview 按 ID 加载
+ * [INPUT]: 依赖 @xyflow/react v12 的 Pane 指针/坐标协议、Canvas Chat、useCanvasSessionCoordinator、canvasWorkspaceStore 的来源卡片统一判据、空间文字几何、纯投影/增量布局、memo document Store 与本地 Dialog/Toast/Button
+ * [OUTPUT]: 对外提供始终挂载真实 React Flow 的 Canvas V2：受控节点/边/视口、空白 Pane 双击空间文字、向全局 Command Palette 登记"加入当前画布"、连接、Preview、框选、整组坐标原子回写、带完整关系快照的移除回执/撤销、来源卡片单删/批量事前确认、AI 增量拓展和可靠保存状态
+ * [POS]: KnowledgeCanvas 的会话内容根；节点几何只跟随文档、选择只有 React Flow 一个所有者而 Store 是它的镜像，UI 只产生可由协调器/WAL 原子重放的 intent；来源血缘解除先由最内层 Dialog 收束，混合批量只允许撤销普通节点，正文只在 Preview 按 ID 加载
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -39,8 +39,20 @@ import {
   toCanvasFlow,
   type CanvasFlowNode,
 } from "../../pages/canvasPresentation";
-import { Skeleton, SkeletonGroup, useToast } from "../../shared/design-system/components";
+import type {
+  CanvasDetail,
+  CanvasEdge,
+  CanvasNode,
+} from "../../shared/api/canvas";
 import {
+  Button,
+  Dialog,
+  Skeleton,
+  SkeletonGroup,
+  useToast,
+} from "../../shared/design-system/components";
+import {
+  isCanvasOriginNode,
   type CanvasIntent,
 } from "../../shared/store/canvasDocument";
 import type { CanvasChromeState } from "../../shared/store/canvasChromePolicy";
@@ -95,6 +107,15 @@ type TransientTextNode = {
   y: number;
 };
 
+type CanvasRemovalSnapshot = {
+  canvasTitle: string;
+  edges: CanvasEdge[];
+  includesOrigin: boolean;
+  includesTombstone: boolean;
+  nodes: CanvasNode[];
+  originNodeId: string | null;
+};
+
 /*
  * 键盘加速器落在输入框或空间文字编辑态里时必须让路: 那时用户在打字, Delete 是
  * 删字符、⌘E 不该拓展。
@@ -108,6 +129,164 @@ const typingInto = (target: EventTarget | null): boolean =>
 
 const directPair = (sourceId: string, targetId: string): string =>
   sourceId < targetId ? `${sourceId}:${targetId}` : `${targetId}:${sourceId}`;
+
+const captureRemoval = (
+  detail: CanvasDetail,
+  nodeIds: readonly string[],
+): CanvasRemovalSnapshot => {
+  const removedIds = new Set(nodeIds);
+  const nodes = detail.nodes
+    .filter((node) => removedIds.has(node.id))
+    .map((node) => ({
+      ...node,
+      target: node.target === null ? null : { ...node.target },
+    }));
+  const capturedIds = new Set(nodes.map((node) => node.id));
+  const originNode = nodes.find((node) =>
+    isCanvasOriginNode(detail.canvas, node)
+  );
+
+  return {
+    canvasTitle: detail.node.title,
+    edges: detail.edges
+      .filter((edge) =>
+        capturedIds.has(edge.source_id) || capturedIds.has(edge.target_id)
+      )
+      .map((edge) => ({ ...edge })),
+    includesOrigin: originNode !== undefined,
+    includesTombstone: nodes.some(
+      (node) => node.kind === "memo_ref" && node.target_node_id === null,
+    ),
+    nodes,
+    originNodeId: originNode?.id ?? null,
+  };
+};
+
+/*
+ * 来源卡片不可恢复，但同一批次里的普通节点仍应保留既有撤销能力。过滤所有依赖
+ * 已永久移除节点的发现来源与关系，避免用一个注定失败的“撤销”继续欺骗用户。
+ */
+const restorableOrdinaryRemoval = (
+  snapshot: CanvasRemovalSnapshot,
+): CanvasRemovalSnapshot => {
+  const nodes = snapshot.nodes.filter((node) =>
+    node.id !== snapshot.originNodeId
+    && !(node.kind === "memo_ref" && node.target_node_id === null)
+  );
+  const restorableIds = new Set(nodes.map((node) => node.id));
+  const excludedIds = new Set(
+    snapshot.nodes
+      .filter((node) => !restorableIds.has(node.id))
+      .map((node) => node.id),
+  );
+
+  return {
+    canvasTitle: snapshot.canvasTitle,
+    edges: snapshot.edges.filter(
+      (edge) =>
+        !excludedIds.has(edge.source_id) && !excludedIds.has(edge.target_id),
+    ),
+    includesOrigin: false,
+    includesTombstone: false,
+    nodes: nodes.map((node) =>
+      node.discovered_from_id !== null
+        && excludedIds.has(node.discovered_from_id)
+        ? { ...node, discovered_from_id: null }
+        : node
+    ),
+    originNodeId: null,
+  };
+};
+
+/* 首次发现来源必须先恢复，add_memo 才能在同一原子 mutation 中通过端点校验。 */
+const orderNodesForRestore = (nodes: readonly CanvasNode[]): CanvasNode[] => {
+  const byId = new Map(nodes.map((node) => [node.id, node]));
+  const visiting = new Set<string>();
+  const visited = new Set<string>();
+  const ordered: CanvasNode[] = [];
+
+  const visit = (node: CanvasNode) => {
+    if (visited.has(node.id)) return;
+    if (visiting.has(node.id)) {
+      throw new Error("Canvas 节点的首次发现来源形成了循环，无法安全撤销。");
+    }
+    visiting.add(node.id);
+    const source = node.discovered_from_id === null
+      ? undefined
+      : byId.get(node.discovered_from_id);
+    if (source !== undefined) visit(source);
+    visiting.delete(node.id);
+    visited.add(node.id);
+    ordered.push(node);
+  };
+
+  nodes.forEach(visit);
+  return ordered;
+};
+
+const removalRestoreIntents = (
+  snapshot: CanvasRemovalSnapshot,
+): CanvasIntent[] => {
+  const intents: CanvasIntent[] = [];
+
+  for (const node of orderNodesForRestore(snapshot.nodes)) {
+    if (node.kind === "memo_ref") {
+      if (node.target_node_id === null) {
+        throw new Error("原笔记已永久删除，墓碑卡片无法恢复。");
+      }
+      intents.push({
+        hint: {
+          excerpt: node.snapshot_excerpt,
+          ...(node.snapshot_revision === null
+            ? {}
+            : { revision: node.snapshot_revision }),
+          ...(node.snapshot_title === null ? {} : { title: node.snapshot_title }),
+        },
+        operation: {
+          ...(node.discovered_from_id === null
+            ? {}
+            : { discovered_from_id: node.discovered_from_id }),
+          node_id: node.id,
+          target_node_id: node.target_node_id,
+          type: "add_memo",
+          x: node.x,
+          y: node.y,
+        },
+      });
+      continue;
+    }
+
+    if (node.text === null || node.text.length === 0) {
+      throw new Error("自由文字快照无效，无法安全撤销。");
+    }
+    intents.push({
+      operation: {
+        ...(node.height === null ? {} : { height: node.height }),
+        node_id: node.id,
+        text: node.text,
+        ...(node.text_scale === null ? {} : { text_scale: node.text_scale }),
+        type: "create_text",
+        ...(node.width === null ? {} : { width: node.width }),
+        x: node.x,
+        y: node.y,
+      },
+    });
+  }
+
+  for (const edge of snapshot.edges) {
+    intents.push({
+      operation: {
+        edge_id: edge.id,
+        rationale: edge.rationale,
+        source_id: edge.source_id,
+        target_id: edge.target_id,
+        type: "upsert_edge",
+      },
+    });
+  }
+
+  return intents;
+};
 
 const flowNodeFromTransient = (node: TransientTextNode): CanvasFlowNode => ({
   data: {
@@ -141,7 +320,7 @@ export function KnowledgeCanvas({
   restore = null,
   userId,
 }: KnowledgeCanvasProps) {
-  const { toast } = useToast();
+  const { dismissToast, toast } = useToast();
   const document = useCanvasWorkspaceStore((state) => state.document);
   const selectedNodeIds = useCanvasWorkspaceStore((state) => state.selectedNodeIds);
   const selectNodes = useCanvasWorkspaceStore((state) => state.selectNodes);
@@ -158,6 +337,9 @@ export function KnowledgeCanvas({
     (state) => state.registerCanvas,
   );
   const [transientText, setTransientText] = useState<TransientTextNode | null>(null);
+  const [pendingOriginRemoval, setPendingOriginRemoval] =
+    useState<CanvasRemovalSnapshot | null>(null);
+  const [originRemovalBusy, setOriginRemovalBusy] = useState(false);
   const [nodes, setNodes, onNodesChange] = useNodesState<CanvasFlowNode>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const instanceRef = useRef<ReactFlowInstance<CanvasFlowNode, Edge> | null>(null);
@@ -165,6 +347,8 @@ export function KnowledgeCanvas({
   const initialViewportAppliedRef = useRef(false);
   const entryFocusAppliedRef = useRef(false);
   const latestDocumentRef = useRef(document);
+  // oxlint 的 react/refs 在项目配置中关闭：事件回调必须同步读到本次 render 的文档，
+  // 若改成 effect 更新会留出一帧旧快照窗口；这里不参与渲染，也不会触发状态回环。
   latestDocumentRef.current = document;
   const getViewport = useCallback(
     () => instanceRef.current?.getViewport() ?? CANVAS_DEFAULT_VIEWPORT,
@@ -279,12 +463,153 @@ export function KnowledgeCanvas({
       });
       throw error;
     }
-  }, [toast]);
+  }, [coordinatorRef, toast]);
 
   const enqueue = useCallback(
     async (intent: CanvasIntent) => { await enqueueMany([intent]); },
     [enqueueMany],
   );
+
+  /*
+   * 逆流而上的程序化选择(取消、加入后定位、连接完成后回到来源)。既然选择归
+   * React Flow, 外部想改它就必须写进它的节点; 只改镜像会让卡片的描边和事实脱节。
+   * 镜像随后由 onSelectionChange 自己追上, 因此这里不需要两边都算一遍。
+   */
+  const selectOnly = useCallback((nodeIds: readonly string[]) => {
+    const next = new Set(nodeIds);
+    setNodes((current) => current.map((node) => {
+      const selected = next.has(node.id);
+      return node.selected === selected ? node : { ...node, selected };
+    }));
+    selectNodes(nodeIds);
+  }, [selectNodes, setNodes]);
+
+  const showUndoReceipt = useCallback((
+    snapshot: CanvasRemovalSnapshot,
+    originRemoved = false,
+  ) => {
+    let undoing = false;
+    let toastId = 0;
+    toastId = toast({
+      action: {
+        label: originRemoved ? "撤销普通节点" : "撤销",
+        onClick: () => {
+          if (undoing) return;
+          undoing = true;
+          void enqueueMany(removalRestoreIntents(snapshot))
+            .then(() => dismissToast(toastId))
+            .catch(() => undefined)
+            .finally(() => {
+              undoing = false;
+            });
+        },
+      },
+      description: originRemoved
+        ? "撤销只恢复普通节点及仍可恢复的关联；来源卡片与画布来源关系无法恢复。"
+        : snapshot.edges.length === 0
+          ? undefined
+          : `同时移除了 ${snapshot.edges.length} 条关联。`,
+      duration: 10_000,
+      title: snapshot.nodes.length === 1
+        ? "已从 Canvas 移除"
+        : `已从 Canvas 移除 ${snapshot.nodes.length} 个节点`,
+      variant: "info",
+    });
+  }, [dismissToast, enqueueMany, toast]);
+
+  const commitNodeRemoval = useCallback(async (
+    snapshot: CanvasRemovalSnapshot,
+  ) => {
+    if (snapshot.nodes.length === 0) return;
+    await enqueueMany(snapshot.nodes.map((node) => ({
+      operation: { node_id: node.id, type: "remove_node" },
+    })));
+    selectOnly([]);
+
+    if (snapshot.includesOrigin) {
+      toast({
+        description: "原笔记完全不受影响；画布来源关系已永久解除。",
+        title: `「${snapshot.canvasTitle}」已转为独立画布`,
+        variant: "warning",
+      });
+      const ordinarySnapshot = restorableOrdinaryRemoval(snapshot);
+      if (ordinarySnapshot.nodes.length > 0) {
+        showUndoReceipt(ordinarySnapshot, true);
+      }
+      return;
+    }
+    if (snapshot.includesTombstone) {
+      toast({
+        description: "原笔记已永久删除，这次清理无法撤销。",
+        title: snapshot.nodes.length === 1
+          ? "已清理失效卡片"
+          : `已移除 ${snapshot.nodes.length} 个节点`,
+        variant: "info",
+      });
+      return;
+    }
+    showUndoReceipt(snapshot);
+  }, [enqueueMany, selectOnly, showUndoReceipt, toast]);
+
+  const requestNodeRemoval = useCallback(async (nodeIds: readonly string[]) => {
+    const current = latestDocumentRef.current;
+    if (current === null) return;
+    const snapshot = captureRemoval(current, nodeIds);
+    if (snapshot.nodes.length === 0) return;
+    if (snapshot.includesOrigin) {
+      setPendingOriginRemoval(snapshot);
+      return;
+    }
+    await commitNodeRemoval(snapshot);
+  }, [commitNodeRemoval]);
+
+  const confirmOriginRemoval = useCallback(async () => {
+    if (pendingOriginRemoval === null || originRemovalBusy) return;
+    setOriginRemovalBusy(true);
+    try {
+      await commitNodeRemoval(pendingOriginRemoval);
+      setPendingOriginRemoval(null);
+    } finally {
+      setOriginRemovalBusy(false);
+    }
+  }, [commitNodeRemoval, originRemovalBusy, pendingOriginRemoval]);
+
+  const removeEdge = useCallback(async (edgeId: string) => {
+    const edge = latestDocumentRef.current?.edges.find(
+      (candidate) => candidate.id === edgeId,
+    );
+    if (edge === undefined) return;
+    await enqueue({ operation: { edge_id: edgeId, type: "remove_edge" } });
+
+    let undoing = false;
+    let toastId = 0;
+    toastId = toast({
+      action: {
+        label: "撤销",
+        onClick: () => {
+          if (undoing) return;
+          undoing = true;
+          void enqueue({
+            operation: {
+              edge_id: edge.id,
+              rationale: edge.rationale,
+              source_id: edge.source_id,
+              target_id: edge.target_id,
+              type: "upsert_edge",
+            },
+          })
+            .then(() => dismissToast(toastId))
+            .catch(() => undefined)
+            .finally(() => {
+              undoing = false;
+            });
+        },
+      },
+      duration: 10_000,
+      title: "已移除关系",
+      variant: "info",
+    });
+  }, [dismissToast, enqueue, toast]);
 
   const persistViewport = useCallback(() => {
     const viewport = instanceRef.current?.getViewport();
@@ -337,20 +662,6 @@ export function KnowledgeCanvas({
   }, [selectNodes]);
 
   /*
-   * 逆流而上的程序化选择(取消、加入后定位、连接完成后回到来源)。既然选择归
-   * React Flow, 外部想改它就必须写进它的节点; 只改镜像会让卡片的描边和事实脱节。
-   * 镜像随后由 onSelectionChange 自己追上, 因此这里不需要两边都算一遍。
-   */
-  const selectOnly = useCallback((nodeIds: readonly string[]) => {
-    const next = new Set(nodeIds);
-    setNodes((current) => current.map((node) => {
-      const selected = next.has(node.id);
-      return node.selected === selected ? node : { ...node, selected };
-    }));
-    selectNodes(nodeIds);
-  }, [selectNodes, setNodes]);
-
-  /*
    * 唯一一次由外部写入选择: 进入这张画布时的聚焦节点(默认 Canvas 的来源笔记卡,
    * 或从预览返回时记住的那一个)。只在这张画布的第一份文档到达时交给 React Flow
    * 一次, 此后选择归它。
@@ -400,7 +711,7 @@ export function KnowledgeCanvas({
       });
     }
     return result.persisted;
-  }, [toast]);
+  }, [coordinatorRef, toast]);
 
   const navigateToMemo = useCallback(async (
     memoId: string,
@@ -471,11 +782,6 @@ export function KnowledgeCanvas({
       return;
     }
 
-    if (current.nodes.length >= 50) {
-      toast({ title: "Canvas 已达到 50 个节点上限", variant: "error" });
-      return;
-    }
-
     const position = source === null
       ? nearestCanvasPlacement(current.nodes, viewportCenter())
       : layoutCanvasCandidates(
@@ -506,7 +812,6 @@ export function KnowledgeCanvas({
     enqueue,
     selectOnly,
     startConnection,
-    toast,
     viewportCenter,
   ]);
 
@@ -616,7 +921,7 @@ export function KnowledgeCanvas({
     } finally {
       setAiLoading(false);
     }
-  }, [aiLoading, canvasId, setAiLoading, toast]);
+  }, [aiLoading, canvasId, coordinatorRef, setAiLoading, toast]);
 
   const actions = useMemo(() => ({
     aiLoading,
@@ -699,12 +1004,9 @@ export function KnowledgeCanvas({
       openPreview(nodeId);
     },
     async onRemove(nodeId: string) {
-      await enqueue({ operation: { node_id: nodeId, type: "remove_node" } });
-      selectOnly([]);
+      await requestNodeRemoval([nodeId]);
     },
-    async onRemoveEdge(edgeId: string) {
-      await enqueue({ operation: { edge_id: edgeId, type: "remove_edge" } });
-    },
+    onRemoveEdge: removeEdge,
     async onResize(nodeId: string, geometry: SpatialTextGeometry) {
       const nextGeometry = normalizeTextGeometry(geometry);
       await enqueue({
@@ -726,6 +1028,10 @@ export function KnowledgeCanvas({
     expandFromNode,
     navigateToMemo,
     openPreview,
+    openPalette,
+    editText,
+    removeEdge,
+    requestNodeRemoval,
     selectOnly,
     selectedNodeIds,
     startConnection,
@@ -773,11 +1079,7 @@ export function KnowledgeCanvas({
         && !typingInto(event.target)
       ) {
         event.preventDefault();
-        for (const nodeId of selectedNodeIds) {
-          void enqueue({ operation: { node_id: nodeId, type: "remove_node" } })
-            .catch(() => undefined);
-        }
-        selectOnly([]);
+        void requestNodeRemoval(selectedNodeIds).catch(() => undefined);
         return;
       }
       if (event.key !== "Escape" || event.defaultPrevented) return;
@@ -796,11 +1098,10 @@ export function KnowledgeCanvas({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [
     connectionSourceId,
-    enqueue,
-    expandFromNode,
     expandFromNode,
     openPreview,
     previewNodeId,
+    requestNodeRemoval,
     selectOnly,
     selectedNodeIds,
     startConnection,
@@ -927,6 +1228,36 @@ export function KnowledgeCanvas({
           title={previewTitle}
         />
       )}
+
+      <Dialog
+        description={pendingOriginRemoval !== null
+          && pendingOriginRemoval.nodes.length > 1
+          ? `所选 ${pendingOriginRemoval.nodes.length} 个节点中包含源笔记卡片。原笔记完全不受影响；继续会移除所选节点，并让「${pendingOriginRemoval.canvasTitle}」永久转为独立画布。以后再从那篇笔记选择「进入画布」，会创建一张新的画布。`
+          : `原笔记完全不受影响。移除这张源笔记卡片后，「${pendingOriginRemoval?.canvasTitle ?? "这张画布"}」将永久转为独立画布；以后再从那篇笔记选择「进入画布」，会创建一张新的画布。`}
+        onOpenChange={(open) => {
+          if (!open && !originRemovalBusy) setPendingOriginRemoval(null);
+        }}
+        open={pendingOriginRemoval !== null}
+        title="移除源笔记卡片？"
+      >
+        <div className="mt-5 flex justify-end gap-2">
+          <Button
+            disabled={originRemovalBusy}
+            onClick={() => setPendingOriginRemoval(null)}
+            variant="ghost"
+          >
+            取消
+          </Button>
+          <Button
+            data-dialog-autofocus
+            loading={originRemovalBusy}
+            onClick={() => void confirmOriginRemoval()}
+            variant="danger"
+          >
+            解除并移除
+          </Button>
+        </div>
+      </Dialog>
     </CanvasActionsProvider>
   );
 }

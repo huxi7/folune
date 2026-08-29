@@ -5,7 +5,7 @@
 
 技术栈: Bun + Vite + React 19 + React Router + Zustand + Motion for React (`motion/react`) + @xyflow/react 12 + react-archer 5.1 + Vercel AI SDK/useChat + @mastra/client-js + canvas-confetti + Kumo UI + Tailwind CSS v4 + 本地 design system + Supabase Auth SDK + system/light/dark 全局主题偏好 + Lucide React + CodeMirror 6/Lezer Markdown GFM + react-markdown/remark-gfm/remark-breaks/rehype-sanitize + TypeScript。
 
-Canvas V2 已落地为一级持久 Workspace。memo 默认 Canvas 与 standalone Canvas 都直接进入同一 React Flow 会话；用户可添加已有 memo、预览/编辑原文、创建自由文字、连接/删除/拖拽/缩放，并显式触发 AI 增量拓展。所有 UI intent 先进入 IndexedDB WAL，再由单一保存协调器提交；页面重开、冲突、响应丢失和 pagehide 都沿同一恢复协议处理。旧 ExploreStage 生产路径与开发实验页已经移除。
+Canvas V2 已落地为一级持久 Workspace。memo 默认 Canvas 与 standalone Canvas 都直接进入同一 React Flow 会话；用户可添加已有 memo、预览/编辑原文、创建自由文字、连接/删除/拖拽/缩放，并显式触发 AI 增量拓展。Canvas 不设节点硬上限；AI 拓展只读取明确源节点的一篇正文，不把整图塞进模型上下文。普通节点与关系移除保留完整快照并给局部撤销回执，批量移除/恢复各自原子入队；来源卡片先确认再解除血缘，永久删除墓碑只给真实不可撤销回执。所有 UI intent 先进入 IndexedDB WAL，再由单一保存协调器提交；页面重开、冲突、响应丢失和 pagehide 都沿同一恢复协议处理。旧 ExploreStage 生产路径与开发实验页已经移除。
 
 成员清单
 index.html: Vite HTML 宿主页面，声明 V1 Classic Blueprint 默认画布、同步解析 App 的 system/light/dark 与 Landing 浅色画布 pre-paint bootstrap、提供 root 挂载点并内联折角笔记页 favicon
@@ -24,8 +24,9 @@ src/pages/: 页面层，承载 Landing、OAuth Callback、Paper/Canvas 路由协
 src/widgets/: 业务组合组件层，承载 Landing、PaperWorkspaceShell/CanvasWorkspace、共享文件库/AI Panel、memo 编辑会话、账户/订阅/回收站、全局对象命令与 Canvas V2 React Flow 交互
 src/shared/: 前端共享层，承载 memo/AI/Canvas API、轻量 tree、按 ID 正文、Canvas document/WAL/Workspace Store/保存协调器、Paper 与 Canvas 各自独立的 Chrome 状态、design system、纯 Supabase Auth 与主题状态；前端禁止直连业务表或 Storage
 docs/: UI 验收与决策证据目录，保存 Design System 语义说明、computed Token 快照、Paper First V1.1 当前前后对比/验收截图及 Color Lab v0 同构配色快照
-package.json: Bun 包元数据、Vite dev/build/typecheck 与 Bun test scripts 及用户端依赖清单
+package.json: Bun 包元数据、Vite dev/build/typecheck、Bun test 与 oxlint scripts 及用户端依赖清单
 bun.lock: Bun 锁定依赖版本
+.oxlintrc.json: 前端静态检查策略，启用 React Hooks、JSX a11y 与未使用变量诊断；render 期 latest ref 写入等已证明安全的模式只允许带就地中文依据后局部豁免
 tsconfig.json: TypeScript 编辑器与编译约束
 .gitignore: app 模块忽略规则
 

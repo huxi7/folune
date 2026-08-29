@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 React 本地编辑状态与上层的重命名命令；不再读取 canvas_kind/origin_node_id
- * [OUTPUT]: 对外提供 Canvas 顶层安静标题：任何画布都能就地重命名，零特例
+ * [OUTPUT]: 对外提供 Canvas 顶层安静标题：任何画布都能就地重命名，且仅在进入编辑态时聚焦并全选
  * [POS]: KnowledgeCanvas 的画布身份表现层；不绘制卡片表面、不持有树事务，重命名交回上层，长标题截断并以 tooltip 给出全名。回到来源笔记不在这里——它是画布上那张 memo_ref 卡片的职责
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -22,12 +22,13 @@ export function CanvasTitle({ onRename, title }: CanvasTitleProps) {
   const [draft, setDraft] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const committingRef = useRef(false);
+  const editing = draft !== null;
 
   useEffect(() => {
-    if (draft === null) return;
+    if (!editing) return;
     inputRef.current?.focus();
     inputRef.current?.select();
-  }, [draft !== null]);
+  }, [editing]);
 
   const commit = () => {
     if (draft === null || committingRef.current) return;

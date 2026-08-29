@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 React 弹层/焦点状态、共享 Lucide 视图图标、共享 Button/Toast、当前 title/content 与 Markdown 视图状态协议
- * [OUTPUT]: 对外提供高频编辑/阅读切换、可键盘操作的 More 菜单、原始 Markdown 复制与 .md 导出
+ * [OUTPUT]: 对外提供高频编辑/阅读切换、具备完整菜单焦点语义的 More 菜单、原始 Markdown 复制与 .md 导出
  * [POS]: app/src/widgets 的编辑视图命令边界；只操作本地显示状态和原始正文副本，不拼接 title、不触发保存或改造业务数据流
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -15,7 +15,6 @@ import {
 } from "../shared/design-system/icons";
 import {
   useCallback,
-  useEffect,
   useId,
   useRef,
   useState,
@@ -40,6 +39,7 @@ const menuItemSelector = '[role="menuitem"], [role="menuitemradio"]';
 export function markdownExportFilename(title: string): string {
   const safeTitle = title
     .trim()
+    // oxlint-disable-next-line eslint/no-control-regex -- 导出文件名必须显式过滤 ASCII 控制字符
     .replace(/[<>:"/\\|?*\u0000-\u001F]/g, "-")
     .replace(/[. ]+$/g, "")
     .slice(0, 180);
@@ -189,6 +189,7 @@ export function MarkdownViewMenu({
             onKeyDown={handleMenuKeyDown}
             ref={menuRef}
             role="menu"
+            tabIndex={-1}
           >
             <button
               aria-checked={editingMode === "live"}
@@ -215,7 +216,11 @@ export function MarkdownViewMenu({
               ) : null}
             </button>
 
-            <div className="note-more-menu-separator" role="separator" />
+            <div
+              aria-label="Markdown 操作分隔"
+              className="note-more-menu-separator"
+              role="separator"
+            />
 
             <button
               className="note-more-menu-item"

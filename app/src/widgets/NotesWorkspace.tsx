@@ -1,9 +1,11 @@
 /**
  * [INPUT]: 依赖按需加载的 MemoDetailNode、跨临时/真实 ID 保持不变的 memoClientKey、新建聚焦意图、正文加载状态、DocumentView/EditingMode、useMemoAutosave、MarkdownEditor/ReadingView、ThemeProvider 与 Toast
- * [OUTPUT]: 对外提供临时节点提交期间不重挂载的纸张内写作/阅读列与 NotesWorkspaceHandle，可聚焦新纸标题/编辑器、读取当前选中的一句话、等待草稿落库、接纳 AI 标题并把 Agent 正文替换送入同一自动保存状态机
+ * [OUTPUT]: 对外提供临时节点提交期间不重挂载的纸张内写作/阅读列与 NotesWorkspaceHandle，并仅在笔记身份切换时聚焦新纸标题/编辑器
  * [POS]: app/src/widgets 的备忘录编辑会话边界；Paper 外壳不拥有编辑状态，客户端身份隔离后端 ID 置换，Dashboard 只能经显式 handle 跨越自动保存边界；按需正文未到达前绝不把空标题反写轻量树；同级重名在标题区原位提示且不阻断正文自动保存
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
+
+/* oxlint-disable jsx-a11y/heading-has-content -- contentEditable h1 的可访问名称由 aria-label 与运行时 textContent 提供 */
 
 import {
   forwardRef,
@@ -185,6 +187,8 @@ export const NotesWorkspace = forwardRef<
     }
   }, [memo?.id, title]);
 
+  // memoClientKey 才是编辑会话身份；memo 对象随自动保存刷新时不能重新聚焦或全选标题。
+  // oxlint-disable react-hooks/exhaustive-deps -- 避免保存回包抢走正文光标
   useEffect(() => {
     if (!autoFocus || documentView !== "editing" || memo === null) {
       return;
@@ -209,6 +213,7 @@ export const NotesWorkspace = forwardRef<
 
     return () => window.cancelAnimationFrame(frameId);
   }, [autoFocus, documentView, memoClientKey]);
+  // oxlint-enable react-hooks/exhaustive-deps
 
   useEffect(() => {
     // 切换到未缓存笔记时，组件先以 memo=null 挂载 Skeleton。此刻 useMemoAutosave

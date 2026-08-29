@@ -1,11 +1,11 @@
 /**
  * [INPUT]: 依赖 happy-dom、Testing Library、真实 WorkspaceCommandPalette/Dialog、memoTreeStore/recentNodesStore 与被替身接管的 /memo-search 响应
- * [OUTPUT]: 覆盖 ⌘K 双向开合、焦点稳定在输入框、查询变化后首项选中、方向键/Enter/Tab/Esc、IME 合成期不接管、Canvas 语境 ⌘Enter 连续加入、正文结果补入时 active 稳定、提示条按行灰掉与五种状态
+ * [OUTPUT]: 覆盖 ⌘K 双向开合、输入焦点、键盘/IME 状态机、Canvas 连续加入、正文补入稳定与提示条状态
  * [POS]: widgets 的全局搜索键盘状态机门禁；只驱动真实组件与真实 Store，不绕过组件去单测排序（排序归 commandResults.test）
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
-import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { Window } from "happy-dom";
 
 import type { MemoTreeNode } from "../shared/api/memo";

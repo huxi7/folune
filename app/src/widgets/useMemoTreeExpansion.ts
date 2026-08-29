@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 React 状态/副作用、浏览器 localStorage、当前用户 id、树加载完成信号与有效 folder id 列表
- * [OUTPUT]: 对外提供 useMemoTreeExpansion hook，以及可测试的展开快照解析与 folder 集合归一化工具
+ * [OUTPUT]: 对外提供 useMemoTreeExpansion hook，以及按存储身份水合、按 folder 语义键对账的展开快照工具
  * [POS]: app/src/widgets 的设备级文件树 UI 偏好边界；按用户持久化展开 id，不污染 memo 业务表，并在树增删后自动清理或展开新 folder
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -123,6 +123,8 @@ export function useMemoTreeExpansion({
     () => new Set(),
   );
 
+  // 水合只由用户存储身份与 ready 驱动；folder 增删交给下一段对账，避免重置用户刚改的展开状态。
+  // oxlint-disable react-hooks/exhaustive-deps -- folderIds 不是水合生命周期依赖
   useEffect(() => {
     if (!ready) {
       knownFolderIdsRef.current = new Set();
@@ -144,7 +146,10 @@ export function useMemoTreeExpansion({
     setExpandedFolders(nextExpandedFolders);
     setHydratedStorageKey(storageKey);
   }, [ready, storageKey]);
+  // oxlint-enable react-hooks/exhaustive-deps
 
+  // folderKey 是 folderIds 的稳定语义快照；依赖数组本体会把父组件的数组身份误当成树变化。
+  // oxlint-disable react-hooks/exhaustive-deps -- 使用序列化语义键而非不稳定数组身份
   useEffect(() => {
     if (hydratedStorageKey !== storageKey) {
       return;
@@ -164,6 +169,7 @@ export function useMemoTreeExpansion({
         : reconciled;
     });
   }, [folderKey, hydratedStorageKey, storageKey]);
+  // oxlint-enable react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (hydratedStorageKey === storageKey) {
