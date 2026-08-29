@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 @xyflow/react EdgeProps/EdgeLabelRenderer/useInternalNode、CanvasFlowEdge/CanvasFlowNode、共享 Cord/矩形射线几何、设计系统图标与 canvasActions
- * [OUTPUT]: 对外提供 CanvasCordEdge 动态浮动 Cord/宽命中区、canvasFloatingCurve 纯几何适配器，以及支持悬浮预览/点击保持/键盘聚焦的 CanvasEdgeReasonInspector 完整理由检查器与删除入口
- * [POS]: KnowledgeCanvas 的关系交互层；每次节点移动都从两张卡片的真实中心连线求边界交点，彻底绕过固定左右 Handle 坐标，关系中点以安静圆点保证人工与 AI 理由始终可发现且可读
+ * [OUTPUT]: 对外提供 CanvasCordEdge 动态浮动 Cord/承担整线 hover 的宽命中区、canvasFloatingCurve 纯几何适配器，以及支持整线悬浮/中点悬浮/点击保持/键盘聚焦的 CanvasEdgeReasonInspector 完整理由检查器与删除入口
+ * [POS]: KnowledgeCanvas 的关系交互层；每次节点移动都从两张卡片的真实中心连线求边界交点，彻底绕过固定左右 Handle 坐标；线本身是指向面，中点标记只是它常驻可见的把手与键盘入口
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -88,6 +88,8 @@ export const canvasFloatingCurve = (
 
 type CanvasEdgeReasonInspectorProps = {
   createdBy: "ai" | "user";
+  /** 整条关系线正被指向: 线是对象本身, 中点标记只是它的把手 */
+  lineHovered?: boolean;
   onRemove: () => void;
   rationale: string | null;
   selected?: boolean;
@@ -96,6 +98,7 @@ type CanvasEdgeReasonInspectorProps = {
 
 export function CanvasEdgeReasonInspector({
   createdBy,
+  lineHovered = false,
   onRemove,
   rationale,
   selected = false,
@@ -105,7 +108,7 @@ export function CanvasEdgeReasonInspector({
   const [expanded, setExpanded] = useState(false);
   const [hovered, setHovered] = useState(false);
   const normalizedRationale = rationale?.trim() ?? "";
-  const showDetails = expanded || hovered || selected;
+  const showDetails = expanded || hovered || lineHovered || selected;
   const relationKind = createdBy === "ai" ? "AI 关联理由" : "手工关联";
   const reason = normalizedRationale.length === 0
     ? createdBy === "ai"
@@ -182,6 +185,7 @@ export function CanvasCordEdge({
   const actions = useCanvasActions();
   const sourceNode = useInternalNode<CanvasFlowNode>(source);
   const targetNode = useInternalNode<CanvasFlowNode>(target);
+  const [lineHovered, setLineHovered] = useState(false);
   const rationale = data?.rationale?.trim() ?? "";
   const createdBy = data?.createdBy ?? "user";
   const curve = canvasFloatingCurve(sourceNode, targetNode, {
@@ -201,16 +205,33 @@ export function CanvasCordEdge({
         tone="relation"
         variant="solid"
       />
+      {/*
+        命中区是这条关系的真实指向面: 理由不要求用户先找到中点那个小标记, 落在
+        线上任意一处就能读到。离开时如果指针正走向中点标记(它渲染在另一个 DOM
+        层), 就不要熄灭, 否则交接的那一帧会闪一下。
+      */}
       <path
         className="canvas-edge-hit"
         d={curve.d}
         fill="none"
+        onMouseEnter={() => setLineHovered(true)}
+        onMouseLeave={(event) => {
+          const next = event.relatedTarget;
+          if (
+            next instanceof Element
+            && next.closest(".canvas-edge-inspector") !== null
+          ) {
+            return;
+          }
+          setLineHovered(false);
+        }}
         stroke="transparent"
         strokeWidth={18}
       />
       <EdgeLabelRenderer>
         <CanvasEdgeReasonInspector
           createdBy={createdBy}
+          lineHovered={lineHovered}
           onRemove={() => void actions.onRemoveEdge(id).catch(() => undefined)}
           rationale={rationale}
           selected={selected}

@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 无外部依赖的纯几何计算，不访问 DOM、React 或 Motion
- * [OUTPUT]: 对外提供 CordPoint/CordBox/CordCurve 类型、cordAnchor 边缘锚点、cordCurve 三次贝塞尔与中点切分、cordBow 距离自适应弯度
+ * [OUTPUT]: 对外提供 CordPoint/CordBox/CordCurve 类型、cordAnchor 边缘锚点、cordCurve 三次贝塞尔与中点切分、cordBow 距离自适应弯度；radial 模式的弯度按 sin(2θ) 反对称分布，轴向对齐即直线、对角线最弯且随角度 360° 连续
  * [POS]: app/src/widgets 的 Cord Signature 连线几何内核；Cord.tsx 只负责渲染与动效，一切坐标与路径字符串在此确定，因此可脱离浏览器单测
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -31,7 +31,10 @@ export type CordCurveOptions = {
   bow?: number;
   /** 达到最大弯度所需的距离 */
   bowSpan?: number;
-  /** 控制点方向：horizontal 走左右出入（侧边栏语境），radial 沿弦法向起拱（画布语境） */
+  /**
+   * 控制点方向：horizontal 走左右出入（侧边栏语境）；
+   * radial 沿弦法向反对称起拱（画布语境），轴向对齐退化成直线，对角线成 S
+   */
   mode?: "horizontal" | "radial";
 };
 
@@ -139,17 +142,30 @@ export const cordCurve = (
     c1 = { x: from.x + offset * direction, y: from.y };
     c2 = { x: to.x - offset * direction, y: to.y };
   } else {
-    // radial: 控制点沿弦推进，并向弦的法向抬起，使任意方向的连线都自然起拱
+    /*
+     * radial: 控制点沿弦推进 d/3, 再向弦的法向做「反对称」偏移——起点推一侧、
+     * 终点推另一侧, 于是曲线穿过弦一次, 成为有两个弯的 S 而不是单向的弓。
+     *
+     * 偏移量用 sway = bow · sin(2θ)。展开后 sin(2θ) = 2·dx·dy / L², 不需要三角
+     * 函数, 而且这正是产品要的那条曲率律:
+     *   - 水平或垂直对齐(dx=0 或 dy=0) → sway=0, 两个控制点落在弦上, 就是直线;
+     *   - 四条 45° 对角线 → |sin(2θ)|=1, 弯度最大;
+     *   - 其余角度按 sin 连续过渡, 越过每条轴时经由 0 换向。
+     * 它是 dx/dy 的连续函数(无分段、无扇区、无 Position 枚举), 因此把一张卡片
+     * 绕另一张转满 360° 得到的是连续变形, 不会出现每 90° 跳一次的切换感。
+     */
     const length = distance === 0 ? 1 : distance;
-    const nx = -dy / length;
-    const ny = dx / length;
+    const sway = amount * ((2 * dx * dy) / (length * length));
+    // 弦的法向(顺时针 90°): 让曲线先沿卡片边缘方向离开, 再拐向对面
+    const nx = dy / length;
+    const ny = -dx / length;
     c1 = {
-      x: from.x + dx / 3 + nx * amount * 0.5,
-      y: from.y + dy / 3 + ny * amount * 0.5,
+      x: from.x + dx / 3 + nx * sway,
+      y: from.y + dy / 3 + ny * sway,
     };
     c2 = {
-      x: to.x - dx / 3 + nx * amount * 0.5,
-      y: to.y - dy / 3 + ny * amount * 0.5,
+      x: to.x - dx / 3 - nx * sway,
+      y: to.y - dy / 3 - ny * sway,
     };
   }
 

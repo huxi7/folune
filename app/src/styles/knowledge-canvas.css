@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖 workspace.css 的全屏 Stage 与独立浮层 Panel、note-paper.css 的共享纸面 variant、Quiet Editorial 语义 token、@xyflow/react 定位层与 Canvas V2 交互组件
- * [OUTPUT]: 对外提供全视口 Canvas 壳、由 --canvas-chrome-* 单一坐标系定位的四块顶层分区（左上开关+安静标题／右上 AI 开关／底部中央命令条／右下保存状态）、点阵舞台、280x360 纵向笔记卡与同心嵌套纸张、编辑无框且选中边界等距贴合的空间文字、中心射线求交且随拖拽换边的浮动关系与可展开理由检查器、Picker、纸外工具列 + A4 浮纸的 Preview 及窄屏降级
+ * [INPUT]: 依赖 workspace.css 的全屏 Stage、独立浮层 Panel、--workspace-panel-inset 与 Panel Header 中心线公式、note-paper.css 的共享纸面 variant、Quiet Editorial 语义 token、@xyflow/react 定位层与 Canvas V2 交互组件
+ * [OUTPUT]: 对外提供全视口 Canvas 壳、由 --canvas-chrome-* 单一坐标系定位、且顶栏与 Panel Header 共面的四块顶层分区（左上开关+安静标题／右上 AI 开关／底部中央命令条／右下保存状态）、点阵舞台、280x360 纵向笔记卡与同心嵌套纸张、编辑无框且选中边界等距贴合的空间文字、中心射线求交、随拖拽换边且弯度随角度 360° 连续的浮动关系与整线可指向的理由检查器、Picker、纸外工具列 + A4 浮纸的 Preview 及窄屏降级
  * [POS]: app/src/styles 的 Canvas V2 视觉边界；桌面保留空间画布，窄屏保留可达操作，不覆盖 React Flow 的业务状态
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -9,12 +9,23 @@
   .canvas-workspace {
     /*
      * 顶层控件的唯一坐标系。四块分区（左上开关+标题、右上 AI 开关、底部中央
-     * 命令条、右下保存状态）全部只用这三个变量定位，因此侧栏预留安全区、浏览
-     * 器缩放、窄屏与长标题都只需要改这里，而不是让每个浮层各自记一串 top/left。
+     * 命令条、右下保存状态）全部只用下面这组变量定位，因此浏览器缩放、窄屏与
+     * 长标题都只需要改这里，而不是让每个浮层各自记一串 top/left。
      */
-    --canvas-chrome-inset: var(--space-4);
+    /* 浮层之间共用同一视口间距: 直接取 Panel 的 inset, 断点变化只在 workspace.css 说一次 */
+    --canvas-chrome-inset: var(--workspace-panel-inset);
     --canvas-chrome-size: var(--control-height-compact);
     --canvas-chrome-gap: var(--space-2);
+    /*
+     * 顶部一行必须与 Panel Header 共面: Panel 从 inset 起算, 加 1px 边框, 再让
+     * 32px 控件在 48px Header 里居中。关闭态开关、画布标题与打开后住在 Header
+     * 里的收起命令因此落在同一条水平中心线上, 开合不会让这排东西上下跳。
+     * 这与 workspace.css 的 .workspace-stage-control 是同一个公式。
+     */
+    --canvas-chrome-top: calc(
+      var(--workspace-panel-inset) + 1px
+      + (var(--panel-header-height) - var(--canvas-chrome-size)) / 2
+    );
     /* 命令条外高 = 控件 + 上下 4px 内边距 + 上下 1px 边框 */
     --canvas-dock-height: calc(var(--canvas-chrome-size) + var(--space-2) + 2px);
     position: fixed;
@@ -36,7 +47,7 @@
   }
 
   /* 顶层不再有包裹整组内容的卡片: 开关与标题直接活在画布上 */
-  .canvas-chrome { position: absolute; z-index: 12; top: var(--canvas-chrome-inset); display: flex; min-width: 0; align-items: center; gap: var(--canvas-chrome-gap); }
+  .canvas-chrome { position: absolute; z-index: 12; top: var(--canvas-chrome-top); display: flex; min-width: 0; align-items: center; gap: var(--canvas-chrome-gap); }
   /* 标题永远给右上的 AI 开关留出通行宽度, 长标题只截断自己 */
   .canvas-chrome-start { left: var(--canvas-chrome-inset); max-width: calc(100% - var(--canvas-chrome-inset) * 3 - var(--canvas-chrome-size) - var(--canvas-chrome-gap)); }
   .canvas-chrome-end { right: var(--canvas-chrome-inset); }
@@ -184,7 +195,7 @@
   .canvas-save-state[data-status="recovery_error"] { border-color: color-mix(in srgb, var(--destructive) 35%, var(--border)); color: var(--foreground); }
   .canvas-save-state small { overflow: hidden; max-width: 13rem; text-overflow: ellipsis; white-space: nowrap; }
   .canvas-save-state .ds-button { min-height: var(--control-height-compact); }
-  .canvas-ai-state { top: var(--canvas-chrome-inset); left: 50%; padding: var(--space-2) var(--space-3); transform: translateX(-50%); }
+  .canvas-ai-state { top: var(--canvas-chrome-top); left: 50%; padding: var(--space-2) var(--space-3); transform: translateX(-50%); }
 
   /* 遮罩中央只允许出现真实纸张; 全部动作活在纸外工具列, 与纸保持 16px 间距 */
   .canvas-preview-shell { display: flex; min-width: 0; min-height: 0; max-width: 100%; max-height: 100%; align-items: flex-start; gap: var(--space-4); }
@@ -227,12 +238,11 @@
 
 @media (max-width: 767px) {
   @layer components {
-    .canvas-workspace { --canvas-chrome-inset: 0.75rem; }
     .canvas-mode-notice { width: max-content; max-width: calc(100vw - 1.5rem); }
     /* 保存状态在窄屏独占一行, 因此命令条与它上下相让 */
     .canvas-save-state { right: var(--canvas-chrome-inset); bottom: var(--canvas-chrome-inset); left: var(--canvas-chrome-inset); max-width: none; justify-content: space-between; }
     .knowledge-canvas .react-flow__panel.canvas-controls { margin-bottom: calc(var(--canvas-chrome-inset) * 2 + var(--control-height-large)); }
-    .canvas-ai-state { top: calc(var(--canvas-chrome-inset) * 2 + var(--canvas-chrome-size)); }
+    .canvas-ai-state { top: calc(var(--canvas-chrome-top) + var(--canvas-chrome-size) + var(--canvas-chrome-gap)); }
     /* 窄屏没有纸外空间: 工具列回到视口右上角横排, 纸张占满可用宽度 */
     .canvas-preview-shell { gap: 0; }
     .canvas-preview-tools { position: fixed; z-index: 2; top: 0.75rem; right: 0.75rem; flex-direction: row-reverse; }
