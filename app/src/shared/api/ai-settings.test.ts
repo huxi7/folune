@@ -1,11 +1,14 @@
 /**
- * [INPUT]: 依赖 Bun test、shared/api/ai settings client 与可替换 global fetch
+ * [INPUT]: 依赖 Bun test、src/testEnv 的公开占位配置、shared/api/ai settings client 与可替换 global fetch
  * [OUTPUT]: 覆盖 GET/PATCH /ai-settings 的 Bearer/body/响应，以及失败响应不会伪装为成功
  * [POS]: shared/api 的审批设置 HTTP 契约回归测试，不访问真实 Supabase 或浏览器会话
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
 import { afterEach, beforeAll, describe, expect, test } from "bun:test";
+
+import "../../testEnv";
+
 import type { AiPermissionMode, AiUserSettings } from "./ai";
 
 let getAiSettings: (accessToken: string) => Promise<AiUserSettings>;
@@ -17,8 +20,6 @@ let updateAiSettings: (
 const originalFetch = globalThis.fetch;
 
 beforeAll(async () => {
-  process.env.VITE_SUPABASE_URL ??= "https://example.supabase.co";
-  process.env.VITE_SUPABASE_PUBLISHABLE_KEY ??= "sb_publishable_test";
   ({ getAiSettings, updateAiSettings } = await import("./ai"));
 });
 

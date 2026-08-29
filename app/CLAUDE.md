@@ -14,7 +14,9 @@ AUTH_SETUP.md: Supabase 邮箱确认模板、URL allow list、自定义 SMTP 限
 UI_REFINEMENT.md: UI-only 工作台账，记录 V1 Classic Blueprint 基线、约束、验收进度与决策
 brand-spec.md: SuperNote 品牌真相源，记录已选 Soft Ink Light/Dark 轴、Saving Processing 状态、8/10/12/16/20px 同心曲率、Button 微雾材质及历史候选
 vite.config.ts: Vite 配置，从 app/.env.local 加载浏览器环境，将开发服务器严格固定到 10000，连接 React/Tailwind 插件，并用 Rolldown 按 React 封装、Markdown、View、State、Language、Features 拆分 CodeMirror chunk
+bunfig.toml: bun test 配置，声明 preload 在任何测试文件之前补齐浏览器公开环境变量，使裸跑 `bun test` 即为真实结果
 src/main.tsx: React 挂载入口，以 MotionConfig reducedMotion=user 包围 ThemeProvider/ToastProvider/RouterProvider 并加载全局样式
+src/testEnv.ts: 测试期浏览器公开配置的唯一兜底，只补立刻拒连的回环 Supabase 占位值且不覆盖已注入的真实值；产品代码永不导入
 src/index.css: Kumo/Tailwind v4 入口与唯一语义 Token 源，冻结 Quiet Editorial Color/Type/Spacing/Radius/Elevation/Motion、Paper 宽度上限、Paper First 中性画布/纯净纸张及 light/dark 同轴语义，并隔离声明不写入生产主题的 Color Lab 蓝色终选候选、导入职责样式模块；浏览器元素基础规则下沉 global-base.css
 src/styles/: UI 样式实现层，以 global-base.css 收口文档根与 reduced-motion、landing.css 隔离营销页、workspace.css 隔离 Paper/Panel/共享业务布局、note-paper.css 收口 Canvas 卡片缩略纸与全尺寸阅读纸共用的唯一纸面、knowledge-canvas.css 隔离 Canvas V2 Workspace 并收敛 React Flow 默认视觉，其余模块分别维护 design system、AI 消息、连线、认证、菜单与 CodeMirror；跨样式颜色插值统一使用 sRGB
 src/app/: 应用装配层，承载 OAuth 回调、Profile/access token 登录守卫、`/app` 共享 Dashboard 生命周期及仅 DEV 的无状态 Color Lab 入口
@@ -63,7 +65,7 @@ Kumo Toast 约束: 全局瞬时反馈必须经本地 Toast API 适配 Kumo Toast
 
 Paper First V1.1 / Quiet Editorial 覆盖约束: 本节覆盖上文遗留的 V1 Classic Blueprint App 材质描述；Landing Blueprint 保持独立。APP/DEV Design System 只消费 `src/index.css` 的 Stage/Paper/Ink/Muted/Hairline/Soft Ink/Danger 语义轴，Button 仅允许轻微可触内外影，Paper 仍是唯一明显的非对称多层阴影，只有悬浮在遮罩之上的纸改用 --paper-float-shadow 的四周均匀柔影。Paper 固定 51rem/816px 上限与 12px 曲率，标题/Markdown 标题/引用/阅读态使用 Editorial 字体。关闭状态的 Library/AI 是桌面 32px、窄屏 44px 的纯 Ghost Panel Toggle；打开后 Stage Toggle 消失，文件库收起命令进入自身 Header 最右，AI 收起命令进入其 Header 最右，二者不做共享变形。整理 succeeded/undone 由 react-archer 5.1 把 Paper Archive Port 持久连接到真实目录/备忘录 Target Port，直到切换笔记、新整理或撤销；resize、Panel resize、树滚动/展开必须刷新几何，小屏覆盖模式只保留目标高亮。基础动效时间轴保留 Fast 160ms、Normal 260ms、Spatial 320ms、Quiet 600ms；Panel 进入/退出与工作区布局使用 220/170/240ms 专用无弹跳 Tween，reduced-motion 直接呈现静态结果。
 
-本地环境约束: Vite 默认读取 app/.env.local/.env；Thread/Message/Reference/Run 等业务请求只允许经 src/shared/api/client.ts 使用 VITE_API_BASE_URL，默认指向 http://localhost:10001。AI 对话和整理规划由 AgentPanel transport/client 使用 VITE_CHAT_BASE_URL，默认指向 http://localhost:10002，并在请求期从 Supabase Auth 读取 access token；不传 userId，不直连 Supabase 业务数据。浏览器只接收 VITE_ 前缀的公开配置，api/chat 服务端密钥不得写入 app。
+本地环境约束: Vite 默认读取 app/.env.local/.env；Thread/Message/Reference/Run 等业务请求只允许经 src/shared/api/client.ts 使用 VITE_API_BASE_URL，默认指向 http://localhost:10001。AI 对话和整理规划由 AgentPanel transport/client 使用 VITE_CHAT_BASE_URL，默认指向 http://localhost:10002，并在请求期从 Supabase Auth 读取 access token；不传 userId，不直连 Supabase 业务数据。浏览器只接收 VITE_ 前缀的公开配置，api/chat 服务端密钥不得写入 app。测试期是另一条路径：`bun test` 把 NODE_ENV 设为 test，Bun 因此不读 `.env.local`，公开配置一律由 bunfig.toml 的 preload 加载 `src/testEnv.ts` 补齐，测试文件不得各自私藏第二份兜底；占位 Supabase 地址必须是立刻拒连的回环地址，换成可解析域名会让会话请求真的去做 DNS/TLS 并把测试拖过超时，制造与被测代码无关的假红。
 
 底部导航例外: Design System 与回收站的选中态表达“当前位置”而不是“可执行按钮”；两者继续复用 SidebarButton 的结构与尺寸，但选中时只使用 primary 前景色，禁止背景、边框、阴影和按压位移。此例外优先于上文通用 SidebarButton 选中材质规则。
 
