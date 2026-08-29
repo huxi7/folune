@@ -38,7 +38,7 @@ MVP 完成后必须新开 Plan 会话，读取真实代码、最新 GEB、MVP �
 
 - 在 MVP 已有可发现入口之上补充连接、聚焦、删除、预览、文字等高频加速器。
 - 所有快捷键进入操作说明，并处理输入框、正文编辑、浏览器保留键和 reduced-motion 冲突。
-- 全局 `⌘K` 的 Enter=打开语义不可改变；Canvas 添加继续使用显式 `＋` 或上下文关联入口。
+- 全局 `⌘K` 的 Enter=打开语义不可改变；Canvas 添加继续使用显式 `＋` 或上下文关联入口。**（已成立：统一 Command Palette 于第 ③ 段交付，语义由 WorkspaceCommandPalette.test 锁定；本条从待办约束变为需要守住的既有事实。）**
 
 ## 4. 整理画布
 
@@ -59,12 +59,12 @@ MVP 完成后必须新开 Plan 会话，读取真实代码、最新 GEB、MVP �
 
 ## 6. 视觉与动效打磨
 
-- 笔记卡片的纸张感、摘要渐隐、选择细描边、Hover 预览和 Context Toolbar 层级。
+- 笔记卡片的纸张感、摘要渐隐、选择细描边、Hover 预览和 Context Toolbar 层级。**（纸张感与摘要渐隐已由第 ① 段的共享 NotePaper 交付；选择细描边、Hover 预览与 Toolbar 层级仍未做。）**
 - 推荐理由靠近目标节点的排版、多关系列表、关系 hover 与缩放阈值。
 - AI 节点物化、连线生长、局部布局碰撞和大图缩放时的性能。
 - 浮动边缘在多线重叠、近距离、节点换侧和自适应曲率下的可读性。
 - 自由文字的缩放、换行、最小/最大尺寸和编辑/拖动手感。
-- Canvas Controls、MiniMap、Panel 与 Preview Overlay 的 Quiet Editorial 同轴视觉。
+- Canvas Controls、MiniMap、Panel 与 Preview Overlay 的 Quiet Editorial 同轴视觉。**（Preview Overlay 已由第 ① 段交付并与 Paper 共用同一 NotePaper；MiniMap 尚不存在，Controls 与 Panel 的同轴收口在第 ② 段只做到顶层四块分区。）**
 - 全部视觉调整继续复用现有 token 与 Design System，不创建 Canvas 专属第二套按钮、菜单或反馈系统。
 
 ## 7. 可访问性、设备与性能

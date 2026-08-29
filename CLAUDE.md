@@ -44,8 +44,8 @@ Canvas V2 是一级持久知识 Workspace：memo 的默认 Canvas 与 standalone
 ## 根配置
 | 文件 | 职责 |
 | --- | --- |
-| CANVAS_V2_CONTRACT.md | Canvas V2 产品目标真相源；冻结一级持久 Workspace、同构画布、显式 AI、增量图、添加/连接/自由文字、自动保存及 MVP 边界，并明确目标态不冒充当前实现 |
-| CANVAS_V2_PHASE2_BACKLOG.md | MVP 后增强方向清单；记录 MiniMap、文件库拖入、整理/Undo、导航与视觉打磨，但明确不是 Plan 2，须待 MVP 验收后基于真实代码重新规划 |
+| CANVAS_V2_CONTRACT.md | Canvas V2 产品目标真相源与常驻门禁；冻结一级持久 Workspace、同构画布、显式 AI、增量图、添加/连接/自由文字、自动保存及 MVP 边界，并以第 16 节十条宪法级验收问题约束后续任何改动。状态已收口为 MVP 已落地，Phase 2 未开始 |
+| CANVAS_V2_PHASE2_BACKLOG.md | MVP 后增强方向清单；记录 MiniMap、文件库拖入、整理/Undo、导航与视觉打磨，其中被 MVP 顺带交付的部分已就地标注段次。它明确不是 Plan 2，条目的保留/删除/合并须待新 Plan 会话基于真实代码与验收结果裁决 |
 | .dockerignore | 收窄 api/chat 开发镜像的仓库根构建上下文，排除源码、缓存、密钥与无关模块 |
 | .env.example | app/api/chat 无密钥变量总览与根 Compose 可选覆盖模板；服务默认使用各自本地环境文件 |
 | .gitignore | 根级本地环境、构建缓存与系统文件忽略规则 |
