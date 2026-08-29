@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun test、轻量 MemoTreeNode fixtures 与 commandResults 排序纯函数
- * [OUTPUT]: 锁定六档固定排序、默认画布去重成来源笔记的次级动作、独立画布是独立结果、文件夹可导航，以及最近打开整档提前与稳定 tie-break
+ * [OUTPUT]: 锁定六档固定排序、两种画布都独立成行、同名时笔记恒先于它的画布、画布行携带血缘、文件夹可导航，以及最近打开整档提前与稳定 tie-break
  * [POS]: app/src/widgets 的全局搜索排序门禁；排序只有这一处实现，任何组件都不得再排一遍，因此这里是唯一需要维护的排序契约
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -86,6 +86,8 @@ describe("Command Palette 排序", () => {
 
     expect(results.map((result) => [result.id, result.match])).toEqual([
       ["memo-exact", "title-exact"],
+      // 默认画布出生时抄了笔记标题, 因此同档同名; 本体先于派生物
+      ["canvas-default", "title-exact"],
       ["memo-prefix", "title-prefix"],
       ["memo-contains", "recent"],
       // 同档内标题更短的在前
@@ -102,16 +104,22 @@ describe("Command Palette 排序", () => {
     }).map((result) => result.match)).toEqual(["title-contains"]);
   });
 
-  test("默认画布不是独立结果，而是来源笔记行上的次级动作", () => {
+  test("两种画布都是独立结果，同名时笔记恒排在它的画布之前", () => {
     const results = buildCommandResults({ query: "少则得", tree });
+    const ordered = results.map((result) => result.id);
+    const at = (id: string) => results.find((result) => result.id === id);
 
-    expect(results.map((result) => result.id)).not.toContain("canvas-default");
-    expect(results.find((result) => result.id === "memo-exact")?.defaultCanvasId)
-      .toBe("canvas-default");
-    // 独立画布仍然是独立结果
-    expect(results.map((result) => result.id)).toContain("canvas-standalone");
-    expect(results.find((result) => result.id === "canvas-standalone")?.kind)
-      .toBe("canvas");
+    // 搜不到的东西等于不存在: 默认画布与独立画布一样占一行
+    expect(ordered).toContain("canvas-default");
+    expect(ordered).toContain("canvas-standalone");
+    expect(ordered.indexOf("memo-exact"))
+      .toBeLessThan(ordered.indexOf("canvas-default"));
+    // 两行同名靠血缘分辨, 而不是靠把画布藏起来
+    expect(at("canvas-default")?.originTitle).toBe("少则得");
+    expect(at("canvas-standalone")?.originTitle).toBeNull();
+    // 笔记行仍然带着 Tab 要去的那张画布, 画布行自己没有次级动作
+    expect(at("memo-exact")?.defaultCanvasId).toBe("canvas-default");
+    expect(at("canvas-default")?.defaultCanvasId).toBeNull();
   });
 
   test("文件夹可导航，路径命中排在最后一档", () => {
@@ -121,12 +129,11 @@ describe("Command Palette 排序", () => {
     expect(results[0]).toMatchObject({ id: "folder-1", kind: "folder", match: "title-exact" });
     expect(results.slice(1).every((result) => result.match === "path")).toBe(true);
     expect(results.slice(1).map((result) => result.id).sort()).toEqual([
+      "canvas-default",
       "memo-contains",
       "memo-exact",
       "memo-prefix",
     ]);
-    // 默认画布即便路径命中也不出现
-    expect(results.map((result) => result.id)).not.toContain("canvas-default");
   });
 
   test("同档内的顺序确定：最近顺序 → 标题更短 → 字典序 → id", () => {
@@ -151,14 +158,15 @@ describe("Command Palette 排序", () => {
     expect(buildCommandResults({ query: "   ", tree })).toEqual([]);
   });
 
-  test("空查询列最近打开的笔记与独立画布，跳过文件夹与默认画布", () => {
+  test("空查询列最近打开的笔记与两种画布，只跳过文件夹", () => {
     const results = recentCommandResults({
       recentIds: ["canvas-default", "folder-1", "canvas-standalone", "memo-exact", "ghost"],
       tree,
     });
 
+    // 在默认画布上做了一小时事之后, 它必须是"刚打开过的东西"
     expect(results.map((result) => result.id))
-      .toEqual(["canvas-standalone", "memo-exact"]);
+      .toEqual(["canvas-default", "canvas-standalone", "memo-exact"]);
     expect(results.every((result) => result.match === "recent")).toBe(true);
   });
 });

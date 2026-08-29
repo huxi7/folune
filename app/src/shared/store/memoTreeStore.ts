@@ -39,7 +39,6 @@ import {
 } from "./memoTree";
 import { summarizeMemoDetail } from "../api/memo.mapper";
 import { useMemoDocumentStore } from "./memoDocumentStore";
-import { withDefaultCanvasTitles } from "./memoTitleRules";
 import { reconcileAiRunTree } from "./aiRunTree";
 import { reconcileAiCommandTree } from "./aiCommandTree";
 import {
@@ -459,12 +458,11 @@ export const useMemoTreeStore = create<MemoTreeState>()((set, get) => ({
       throw new Error("要重命名的节点不存在。");
     }
 
-    // 默认 Canvas 的标题跟随来源笔记：数据库触发器在同一事务里改，本地树同步镜像
     set({
-      nodes: withDefaultCanvasTitles(updateNode(previousNodes, nodeId, (node) => ({
+      nodes: updateNode(previousNodes, nodeId, (node) => ({
         ...node,
         title: normalizedTitle,
-      }))),
+      })),
     });
 
     try {
@@ -484,10 +482,8 @@ export const useMemoTreeStore = create<MemoTreeState>()((set, get) => ({
       ) {
         const targetNodeId = resolveMemoId(nodeId);
         set((state) => ({
-          nodes: withDefaultCanvasTitles(
-            updateNode(state.nodes, targetNodeId, (currentNode) =>
-              mergeServerNode(currentNode, updated)),
-          ),
+          nodes: updateNode(state.nodes, targetNodeId, (currentNode) =>
+            mergeServerNode(currentNode, updated)),
         }));
       }
 
@@ -499,12 +495,10 @@ export const useMemoTreeStore = create<MemoTreeState>()((set, get) => ({
       ) {
         const targetNodeId = resolveMemoId(nodeId);
         set((state) => ({
-          nodes: withDefaultCanvasTitles(
-            updateNode(state.nodes, targetNodeId, (node) => ({
-              ...node,
-              title: previousTitle,
-            })),
-          ),
+          nodes: updateNode(state.nodes, targetNodeId, (node) => ({
+            ...node,
+            title: previousTitle,
+          })),
         }));
       }
 
@@ -591,22 +585,22 @@ export const useMemoTreeStore = create<MemoTreeState>()((set, get) => ({
   updateMemoTitleLocal(nodeId, title) {
     const targetNodeId = resolveMemoId(nodeId);
     set((state) => ({
-      nodes: withDefaultCanvasTitles(updateNode(state.nodes, targetNodeId, (node) => ({
+      nodes: updateNode(state.nodes, targetNodeId, (node) => ({
         ...node,
         title,
-      }))),
+      })),
     }));
   },
 
   mergeMemoDetail(detail) {
     const summary = summarizeMemoDetail(detail);
     set((state) => ({
-      nodes: withDefaultCanvasTitles(updateNode(state.nodes, detail.id, (current) => ({
+      nodes: updateNode(state.nodes, detail.id, (current) => ({
         ...current,
         ...summary,
         children: current.children,
         title: current.title === detail.title ? detail.title : current.title,
-      }))),
+      })),
     }));
   },
 
@@ -647,10 +641,8 @@ export const useMemoTreeStore = create<MemoTreeState>()((set, get) => ({
     } catch (error) {
       if (input.title !== undefined && previousTitle !== undefined) {
         set((state) => ({
-          nodes: withDefaultCanvasTitles(
-            updateNode(state.nodes, targetNodeId, (node) =>
-              node.title === input.title ? { ...node, title: previousTitle } : node),
-          ),
+          nodes: updateNode(state.nodes, targetNodeId, (node) =>
+            node.title === input.title ? { ...node, title: previousTitle } : node),
         }));
       }
       throw error;
@@ -670,7 +662,7 @@ export const useMemoTreeStore = create<MemoTreeState>()((set, get) => ({
 
   reconcileAiRun(run) {
     set((state) => ({
-      nodes: withDefaultCanvasTitles(reconcileAiRunTree(state.nodes, run)),
+      nodes: reconcileAiRunTree(state.nodes, run),
     }));
   },
 
@@ -689,9 +681,7 @@ export const useMemoTreeStore = create<MemoTreeState>()((set, get) => ({
             : removeNode(state.nodes, projection.optimisticId)
           : rollbackAiCommandProjection(state.nodes, projection);
       return {
-        nodes: withDefaultCanvasTitles(
-          reconcileAiCommandTree(withoutProjection, command),
-        ),
+        nodes: reconcileAiCommandTree(withoutProjection, command),
       };
     });
   },
@@ -726,12 +716,10 @@ export const useMemoTreeStore = create<MemoTreeState>()((set, get) => ({
     if (operation === "rename_node" && typeof input.title === "string") {
       aiProjections.set(toolCallId, { before, operation, optimisticId: null, projected: { title: input.title } });
       set({
-        nodes: withDefaultCanvasTitles(
-          updateNode(currentNodes, before.id, (node) => ({
-            ...node,
-            title: input.title as string,
-          })),
-        ),
+        nodes: updateNode(currentNodes, before.id, (node) => ({
+          ...node,
+          title: input.title as string,
+        })),
       });
       return;
     }
@@ -776,9 +764,7 @@ export const useMemoTreeStore = create<MemoTreeState>()((set, get) => ({
     if (projection === undefined) return;
     aiProjections.delete(toolCallId);
     set((state) => ({
-      nodes: withDefaultCanvasTitles(
-        rollbackAiCommandProjection(state.nodes, projection),
-      ),
+      nodes: rollbackAiCommandProjection(state.nodes, projection),
     }));
   },
 

@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 @xyflow/react v12 的 Pane 指针/坐标协议、Canvas Chat、useCanvasSessionCoordinator、canvasWorkspaceStore、空间文字几何、纯投影/增量布局、memo document Store 与本地设计系统
- * [OUTPUT]: 对外提供始终挂载真实 React Flow 的 Canvas V2：受控节点/边/视口、空白 Pane 双击空间文字、清空已有文字即删除、向全局 Command Palette 登记"加入当前画布"、连接、Preview、AI 增量拓展和可靠保存状态
- * [POS]: KnowledgeCanvas 的会话内容根；UI 只产生 intent，人工与 AI 都经同一个协调器/RPC，正文只在 Preview 按 ID 加载
+ * [OUTPUT]: 对外提供始终挂载真实 React Flow 的 Canvas V2：受控节点/边/视口、空白 Pane 双击空间文字、清空已有文字即删除、向全局 Command Palette 登记"加入当前画布"、连接、Preview、框选与全程可见的成组外接框、整组坐标原子回写、AI 增量拓展和可靠保存状态
+ * [POS]: KnowledgeCanvas 的会话内容根；节点几何只跟随文档、选择只有 React Flow 一个所有者而 Store 是它的镜像，UI 只产生 intent，人工与 AI 都经同一个协调器/RPC，正文只在 Preview 按 ID 加载
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -31,8 +31,9 @@ import {
 } from "../../pages/canvasIncrementalLayout";
 import {
   CANVAS_DEFAULT_VIEWPORT,
+  canExpandFromNode,
   canvasNodesBounds,
-  canvasPositionOperation,
+  canvasPositionOperations,
   canvasViewportShowsNodes,
   shouldRestoreCanvasViewport,
   toCanvasFlow,
@@ -56,6 +57,7 @@ import { CanvasControls } from "./CanvasControls";
 import { CanvasCordEdge } from "./CanvasCordEdge";
 import { CanvasPersistenceStatus } from "./CanvasPersistenceStatus";
 import { CanvasPreviewOverlay } from "./CanvasPreviewOverlay";
+import { CanvasSelectionBounds } from "./CanvasSelectionBounds";
 import {
   useCanvasSessionCoordinator,
   type CanvasSessionControls,
@@ -92,6 +94,17 @@ type TransientTextNode = {
   x: number;
   y: number;
 };
+
+/*
+ * 键盘加速器落在输入框或空间文字编辑态里时必须让路: 那时用户在打字, Delete 是
+ * 删字符、⌘E 不该拓展。
+ */
+const typingInto = (target: EventTarget | null): boolean =>
+  target instanceof HTMLElement && (
+    target.isContentEditable
+    || target instanceof HTMLInputElement
+    || target instanceof HTMLTextAreaElement
+  );
 
 const directPair = (sourceId: string, targetId: string): string =>
   sourceId < targetId ? `${sourceId}:${targetId}` : `${targetId}:${sourceId}`;
@@ -150,6 +163,7 @@ export function KnowledgeCanvas({
   const instanceRef = useRef<ReactFlowInstance<CanvasFlowNode, Edge> | null>(null);
   const flowRef = useRef<HTMLDivElement>(null);
   const initialViewportAppliedRef = useRef(false);
+  const entryFocusAppliedRef = useRef(false);
   const latestDocumentRef = useRef(document);
   latestDocumentRef.current = document;
   const getViewport = useCallback(
@@ -167,33 +181,48 @@ export function KnowledgeCanvas({
     userId,
   });
 
-  useEffect(() => {
-    initialViewportAppliedRef.current = false;
-  }, [canvasId]);
+  const flow = useMemo(
+    () => document === null
+      ? { edges: [], nodes: [], viewport: CANVAS_DEFAULT_VIEWPORT }
+      : toCanvasFlow(document),
+    [document],
+  );
 
   useEffect(() => {
-    const flow = document === null
-      ? { edges: [], nodes: [], viewport: CANVAS_DEFAULT_VIEWPORT }
-      : toCanvasFlow(document);
-    const selected = new Set(selectedNodeIds);
-    const nextNodes = flow.nodes.map((node) => ({
-      ...node,
-      selected: selected.has(node.id),
-    }));
-    if (transientText !== null) {
-      nextNodes.push({
-        ...flowNodeFromTransient(transientText),
-        selected: selected.has(transientText.id),
-      });
-    }
-    setNodes(nextNodes);
-    setEdges(flow.edges.map((edge) => ({
-      ...edge,
-      className: selectedNodeIds.length === 1
-        && (edge.source === selectedNodeIds[0] || edge.target === selectedNodeIds[0])
-        ? "canvas-edge-direct"
-        : "canvas-edge-muted",
-    })));
+    initialViewportAppliedRef.current = false;
+    entryFocusAppliedRef.current = false;
+  }, [canvasId]);
+
+  /*
+   * 节点几何只跟随文档, 选择不参与这条推导。
+   *
+   * 选择必须只有一个所有者, 而那个所有者是 React Flow: 指针真正拨动的是它的
+   * node.selected, 框选、⌘ 加选与点空白取消都是它算出来的。本地 Store 只是它的
+   * 镜像。两边互为输入会在挂载那一刻就开始一帧一帧互相纠正: Store 已经拿着入口
+   * 聚焦节点, React Flow 的 store 这一帧还是空的, 于是它报"没有选中"擦掉镜像,
+   * 下一帧镜像又把上一帧的选择塞回去, 永不收敛(React 会直接抛 Maximum update
+   * depth exceeded)。因此这里只把 React Flow 现有的选择带过新一批节点对象。
+   *
+   * 顺带解决的是拖动: 坐标不再随选择变化重算, 一次选择变化不会把正在拖的整组
+   * 弹回旧文档坐标。
+   */
+  useEffect(() => {
+    setNodes((current) => {
+      const selected = new Set(
+        current.filter((node) => node.selected === true).map((node) => node.id),
+      );
+      const nextNodes = flow.nodes.map((node) => ({
+        ...node,
+        selected: selected.has(node.id),
+      }));
+      if (transientText !== null) {
+        nextNodes.push({
+          ...flowNodeFromTransient(transientText),
+          selected: selected.has(transientText.id),
+        });
+      }
+      return nextNodes;
+    });
 
     const instance = instanceRef.current;
     if (
@@ -222,11 +251,26 @@ export function KnowledgeCanvas({
         }
       });
     }
-  }, [canvasId, document, restore, selectedNodeIds, setEdges, setNodes, transientText]);
+  }, [canvasId, document, flow, restore, setNodes, transientText]);
 
-  const enqueue = useCallback(async (intent: CanvasIntent) => {
+  /* 关系的强调是选择的函数, 与坐标无关, 因此自己一条推导 */
+  useEffect(() => {
+    setEdges(flow.edges.map((edge) => ({
+      ...edge,
+      className: selectedNodeIds.length === 1
+        && (edge.source === selectedNodeIds[0] || edge.target === selectedNodeIds[0])
+        ? "canvas-edge-direct"
+        : "canvas-edge-muted",
+    })));
+  }, [flow, selectedNodeIds, setEdges]);
+
+  /*
+   * 入队的原子单位是"一次手势", 因此这里只有一个真实实现: 单个 intent 只是长度
+   * 为 1 的手势。本机恢复不可用是同一件事, 只在这一处报给用户。
+   */
+  const enqueueMany = useCallback(async (intents: readonly CanvasIntent[]) => {
     try {
-      await coordinatorRef.current?.enqueue(intent);
+      await coordinatorRef.current?.enqueueMany(intents);
     } catch (error) {
       toast({
         description: error instanceof Error ? error.message : undefined,
@@ -236,6 +280,11 @@ export function KnowledgeCanvas({
       throw error;
     }
   }, [toast]);
+
+  const enqueue = useCallback(
+    async (intent: CanvasIntent) => { await enqueueMany([intent]); },
+    [enqueueMany],
+  );
 
   const persistViewport = useCallback(() => {
     const viewport = instanceRef.current?.getViewport();
@@ -264,19 +313,54 @@ export function KnowledgeCanvas({
     }).catch(() => undefined);
   }, [enqueue]);
 
-  const handleNodeDragStop = useCallback((
-    _: MouseEvent | TouchEvent,
-    node: CanvasFlowNode,
+  /*
+   * 一次拖拽手势的收尾。React Flow 把整组的最终坐标放在第三个参数里, 无论用户是
+   * 抓着组里的某张卡片拖, 还是抓着成组外接框拖, 这里拿到的都是完整的一组; 只回
+   * 写指针下那一个, 乐观投影会把其余节点按旧文档弹回原处, 组内相对位置就在松手
+   * 那一刻散掉。整组共用一条 WAL 记录, 因此这组坐标要么一起幸存要么一起不存在。
+   */
+  const handleNodesDragStop = useCallback((
+    dragged: readonly CanvasFlowNode[],
   ) => {
-    const operation = canvasPositionOperation(node);
-    if (operation !== null) void enqueue({ operation }).catch(() => undefined);
-  }, [enqueue]);
+    const operations = canvasPositionOperations(dragged);
+    if (operations.length === 0) return;
+    void enqueueMany(
+      operations.map((operation) => ({ operation })),
+    ).catch(() => undefined);
+  }, [enqueueMany]);
 
+  /* React Flow -> 镜像。这是选择唯一的常规流向 */
   const handleSelectionChange = useCallback(({
     nodes: selectedNodes,
   }: { nodes: CanvasFlowNode[] }) => {
     selectNodes(selectedNodes.map((node) => node.id));
   }, [selectNodes]);
+
+  /*
+   * 逆流而上的程序化选择(取消、加入后定位、连接完成后回到来源)。既然选择归
+   * React Flow, 外部想改它就必须写进它的节点; 只改镜像会让卡片的描边和事实脱节。
+   * 镜像随后由 onSelectionChange 自己追上, 因此这里不需要两边都算一遍。
+   */
+  const selectOnly = useCallback((nodeIds: readonly string[]) => {
+    const next = new Set(nodeIds);
+    setNodes((current) => current.map((node) => {
+      const selected = next.has(node.id);
+      return node.selected === selected ? node : { ...node, selected };
+    }));
+    selectNodes(nodeIds);
+  }, [selectNodes, setNodes]);
+
+  /*
+   * 唯一一次由外部写入选择: 进入这张画布时的聚焦节点(默认 Canvas 的来源笔记卡,
+   * 或从预览返回时记住的那一个)。只在这张画布的第一份文档到达时交给 React Flow
+   * 一次, 此后选择归它。
+   */
+  useEffect(() => {
+    if (entryFocusAppliedRef.current || document === null) return;
+    entryFocusAppliedRef.current = true;
+    if (selectedNodeIds.length === 0) return;
+    selectOnly(selectedNodeIds);
+  }, [document, selectOnly, selectedNodeIds]);
 
   const handlePaneDoubleClick = useCallback((event: ReactMouseEvent) => {
     if (event.button !== 0) return;
@@ -361,13 +445,13 @@ export function KnowledgeCanvas({
           },
         });
       }
-      selectNodes([existing.id]);
+      selectOnly([existing.id]);
       startConnection(null);
       return;
     }
 
     if (existing !== undefined) {
-      selectNodes([existing.id]);
+      selectOnly([existing.id]);
       instanceRef.current?.fitView({
         duration: 220,
         nodes: [{ id: existing.id }],
@@ -404,12 +488,12 @@ export function KnowledgeCanvas({
         y: position.y,
       },
     });
-    selectNodes([nodeId]);
+    selectOnly([nodeId]);
     startConnection(null);
   }, [
     connectionSourceId,
     enqueue,
-    selectNodes,
+    selectOnly,
     startConnection,
     toast,
     viewportCenter,
@@ -541,7 +625,7 @@ export function KnowledgeCanvas({
           setTransientText(null);
         } else {
           await enqueue({ operation: { node_id: nodeId, type: "remove_node" } });
-          selectNodes([]);
+          selectOnly([]);
         }
         editText(null);
         return;
@@ -605,7 +689,7 @@ export function KnowledgeCanvas({
     },
     async onRemove(nodeId: string) {
       await enqueue({ operation: { node_id: nodeId, type: "remove_node" } });
-      selectNodes([]);
+      selectOnly([]);
     },
     async onRemoveEdge(edgeId: string) {
       await enqueue({ operation: { edge_id: edgeId, type: "remove_edge" } });
@@ -631,7 +715,7 @@ export function KnowledgeCanvas({
     expandFromNode,
     navigateToMemo,
     openPreview,
-    selectNodes,
+    selectOnly,
     selectedNodeIds,
     startConnection,
     transientText,
@@ -639,6 +723,29 @@ export function KnowledgeCanvas({
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      /*
+       * ⌘E 在 Paper 里是「进入这篇笔记的画布」, 在这里是「从选中节点继续拓展」。
+       * 同一个键在两个互斥的 Workspace 里表达同一件事——往前推进一步——所以不需要
+       * 第二个键位, 也不会打架。无选择时按宪法 8.1 只给轻提示, 绝不发请求。
+       */
+      if (
+        (event.metaKey || event.ctrlKey)
+        && event.key.toLowerCase() === "e"
+        && !typingInto(event.target)
+      ) {
+        event.preventDefault();
+        const node = selectedNodeIds.length === 1
+          ? latestDocumentRef.current?.nodes.find(
+            (candidate) => candidate.id === selectedNodeIds[0],
+          )
+          : undefined;
+        if (node === undefined || !canExpandFromNode(node)) {
+          toast({ title: "先选择一篇笔记", variant: "info" });
+          return;
+        }
+        void expandFromNode(node.id).catch(() => undefined);
+        return;
+      }
       if (event.key === "Enter" && selectedNodeIds.length === 1) {
         const node = latestDocumentRef.current?.nodes.find(
           (candidate) => candidate.id === selectedNodeIds[0],
@@ -652,18 +759,14 @@ export function KnowledgeCanvas({
       if (
         (event.key === "Delete" || event.key === "Backspace")
         && selectedNodeIds.length > 0
-        && !(event.target instanceof HTMLElement && (
-          event.target.isContentEditable
-          || event.target instanceof HTMLInputElement
-          || event.target instanceof HTMLTextAreaElement
-        ))
+        && !typingInto(event.target)
       ) {
         event.preventDefault();
         for (const nodeId of selectedNodeIds) {
           void enqueue({ operation: { node_id: nodeId, type: "remove_node" } })
             .catch(() => undefined);
         }
-        selectNodes([]);
+        selectOnly([]);
         return;
       }
       if (event.key !== "Escape" || event.defaultPrevented) return;
@@ -675,7 +778,7 @@ export function KnowledgeCanvas({
         startConnection(null);
       } else if (selectedNodeIds.length > 0) {
         event.preventDefault();
-        selectNodes([]);
+        selectOnly([]);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -683,11 +786,14 @@ export function KnowledgeCanvas({
   }, [
     connectionSourceId,
     enqueue,
+    expandFromNode,
+    expandFromNode,
     openPreview,
     previewNodeId,
-    selectNodes,
+    selectOnly,
     selectedNodeIds,
     startConnection,
+    toast,
   ]);
 
   /*
@@ -746,7 +852,7 @@ export function KnowledgeCanvas({
               .then(() => startConnection(null))
               .catch(() => undefined);
           }}
-          onNodeDragStop={handleNodeDragStop}
+          onNodeDragStop={(_, __, dragged) => handleNodesDragStop(dragged)}
           onNodesChange={onNodesChange}
           onSelectionChange={handleSelectionChange}
           panActivationKeyCode="Space"
@@ -756,6 +862,7 @@ export function KnowledgeCanvas({
           zoomOnDoubleClick={false}
         >
           <Background gap={26} size={1} variant={BackgroundVariant.Dots} />
+          <CanvasSelectionBounds nodes={nodes} />
           <CanvasControls
             onAdd={openPalette}
             onFit={fitView}

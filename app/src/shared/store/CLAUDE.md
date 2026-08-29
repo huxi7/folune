@@ -16,8 +16,8 @@ aiRunTree.test.ts: 覆盖 apply/undo 局部归并、摘要与 children 保真和
 aiCommandTree.ts: 通用 AI Command 无副作用对账器，把 succeeded/undone 的 server node/正文摘要/软删除事实局部归并 active tree，stale/failed 不改变真相
 aiCommandTree.test.ts: 覆盖命令改名、软删除、stale 不变、创建撤销与恢复节点归并
 aiCommandProjection.ts: AI 写工具乐观逆投影纯函数，以字段 CAS 精确撤销未获批/失败意图，不覆盖用户在途编辑
-memoTitleRules.ts: 命名规则纯策略，与 api/supabase/memo-naming.sql 的 memo_title_norm 同语义；提供规范化、同父同类型重名判据、默认 Canvas 不可改名判据、服务端 MEMO_TITLE_CONFLICT 识别与默认画布标题跟随来源笔记的树投影。它只负责即时反馈，重名的最终真相永远是数据库唯一索引
-memoTitleRules.test.ts: 命名规则门禁，覆盖空白/大小写折叠、跨类型与笔记-默认画布同名合法、根节点作用域、默认画布不可改名，以及标题跟随在无变化时保持原引用
+memoTitleRules.ts: 命名规则纯策略，与 api/supabase/memo-naming.sql 的 memo_title_norm 同语义；提供规范化、同父同类型重名判据与服务端 MEMO_TITLE_CONFLICT 识别。它只负责即时反馈，重名的最终真相永远是数据库唯一索引；命名零特例，因此这里不再有「谁不可改名」与「谁的标题跟随谁」两类判据
+memoTitleRules.test.ts: 命名规则门禁，覆盖空白/大小写折叠、跨类型与笔记-默认画布同名合法、根节点作用域与 parent 缺失时不误报冲突
 memoTree.ts: 备忘录树的不可变领域算法，统一递归查找、同级定位、插入、移除、替换、更新、移动、防环与稀疏 sort_order 排序
 memoTree.test.ts: 树算法回归测试，覆盖无限嵌套、根/文件夹移动、首尾/中间排序、子树保留与自己/后代防环
 memoTreeStore.ts: Zustand 轻量 active tree 唯一数据源；mergeServerNode 让服务端已建成的节点（保存的画布、晋升出的笔记）就地落位而不刷新整棵树；只保存结构与摘要，除真人 CRUD 乐观事务外接收 Worker plan 转换后的结构命令并按 tool_call_id 只投影一次，最终以 command_id+status 对账服务端事实
@@ -28,8 +28,8 @@ canvasDocument.ts: Canvas intent 的纯领域内核；归一连续编辑、空�
 canvasDocument.test.ts: 锁定稳定 UUID 合并、空间文字尺寸与 text_scale、create+remove 由数据库判定 no-op、默认根移除清边、alias 对账与 dropped 不固化
 canvasWal.ts: 按 user_id+canvas_id 隔离的 IndexedDB WAL；原子保存 draft/queued mutation 与发送状态，不保存 JWT、access token 或组件实例，并提供内存实现供测试
 canvasWorkspaceStore.ts: Canvas Workspace 唯一客户端状态源；把服务端文档、交互会话和持久化状态分组三个 slice，不持有网络计时器或 memo 正文
-CanvasSaveCoordinator.ts: 单 Canvas 单标签页保存协调器；600ms 封装、100 操作/48KiB 限额、WAL-first、人工先于随后 AI 的严格顺序、稳定 mutation_id、串行重试、receipt 重放、单次 409 rebase、AI stale 丢弃与 pagehide 首批发送均在此收口
-CanvasSaveCoordinator.test.ts: 锁定空 WAL 恢复、WAL 失败不伪成功、空间文字 mutation 幂等、人工/AI 版本顺序、响应丢失幂等、409 保留远端事实、pagehide 有界与 source revision 漂移不留 AI 幽灵节点
+CanvasSaveCoordinator.ts: 单 Canvas 单标签页保存协调器；enqueueMany 让「一次手势」成为原子入账单位（整组拖动共用一条 WAL 记录，要么整组幸存要么整组不存在，enqueue 只是长度为 1 的它），600ms 封装、100 操作/48KiB 限额、WAL-first、人工先于随后 AI 的严格顺序、稳定 mutation_id、串行重试、receipt 重放、单次 409 rebase、AI stale 丢弃与 pagehide 首批发送均在此收口
+CanvasSaveCoordinator.test.ts: 锁定空 WAL 恢复、WAL 失败不伪成功、整组拖动只写一条 WAL 记录且一次 mutation 带上每个被移动的节点、空间文字 mutation 幂等、人工/AI 版本顺序、响应丢失幂等、409 保留远端事实、pagehide 有界与 source revision 漂移不留 AI 幽灵节点
 commandPaletteStore.ts: 全局 Command Palette 唯一状态所有者，只保存开合与 Canvas 会话登记的「加入当前画布」适配器；Sidebar/Paper/Canvas 都只是同一个面板的入口
 recentNodesStore.ts: 按用户持久化的最近打开顺序，只保存节点 id；Palette 用它列空查询最近项并为排序提供最近打开档位
 canvasReturnStore.ts: 标签页内 Canvas→原文→Canvas 返回描述，只保存路由/视口/选择/临时 Panel，不持久化业务图或 WAL；它是唯一优先于进入策略的语境，因此往返回来看到的是离开前那一刻的样子

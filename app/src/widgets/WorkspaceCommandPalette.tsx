@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 commandPaletteStore 的唯一开合与 Canvas 次级动作、memoTreeStore 轻量树、recentNodesStore 最近顺序、useMemoSearch 正文命中与 commandResults 排序纯函数
- * [OUTPUT]: 对外提供全局唯一 Command Palette：⌘K 双向开合、稳定 id 作为 active 身份、六档排序结果、默认画布降级为次级动作、Canvas 语境下 ⌘Enter 连续加入
+ * [OUTPUT]: 对外提供全局唯一 Command Palette：⌘K 双向开合、稳定 id 作为 active 身份、六档排序结果、Tab 打开笔记的画布、Canvas 语境下 ⌘Enter 连续加入，并以底部提示条声明此刻真能按的键
  * [POS]: widgets 的唯一 Command Surface，由 AppDashboard 挂载一次即覆盖 Paper 与 Canvas；Sidebar/Paper/Canvas 只是入口，排序归 commandResults，模态行为归 Dialog
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -35,6 +35,20 @@ type WorkspaceCommandPaletteProps = {
 
 const LISTBOX_ID = "workspace-command-results";
 const optionDomId = (id: string): string => `workspace-command-option-${id}`;
+
+/*
+ * 提示条要写用户键盘上真实存在的那个键。navigator.platform 已废弃但仍是判断
+ * Mac 最省事且到处可用的一条: 判错的代价只是提示条上写了 Ctrl 而不是 ⌘, 而
+ * 按键处理本身对 metaKey/ctrlKey 一视同仁, 功能不受影响。
+ */
+const MODIFIER = /mac/iu.test(globalThis.navigator?.platform ?? "") ? "⌘" : "Ctrl";
+
+/** 提示条条目；muted 表示这个键此刻按不动，但位置保留以免列表左右抖动 */
+type PaletteHint = {
+  keys: string;
+  label: string;
+  muted: boolean;
+};
 
 const kindIcon = {
   canvas: CanvasIcon,
@@ -178,6 +192,27 @@ export function WorkspaceCommandPalette({
           ? `没有与“${trimmed}”匹配的对象。`
           : `${results.length} 个结果`;
 
+  /*
+   * 提示条只声明此刻真能按的键: 语境决定条目在不在（不在画布里就没有"加入当前
+   * 画布"这回事）, 当前行决定条目灰不灰。两级分开之后位置恒定——上下移动选中行
+   * 时提示条不左右跳动, 而灰掉的那条仍然让用户知道这个键存在。
+   */
+  const hints: PaletteHint[] = [
+    { keys: "↑↓", label: "导航", muted: results.length === 0 },
+    { keys: "↵", label: "打开", muted: active === null },
+    {
+      keys: "⇥",
+      label: "打开画布",
+      muted: (active?.defaultCanvasId ?? null) === null,
+    },
+    ...canvas === null ? [] : [{
+      keys: `${MODIFIER}↵`,
+      label: "加入当前画布",
+      muted: active === null || !addable(active),
+    }],
+    { keys: "esc", label: "关闭", muted: false },
+  ];
+
   return (
     <Dialog
       align="top"
@@ -224,7 +259,19 @@ export function WorkspaceCommandPalette({
                 move(-1);
                 return;
               }
-              if (event.key !== "Enter" || composingRef.current) return;
+              if (composingRef.current) return;
+              /*
+               * Palette 内除了这个输入框没有第二个可聚焦元素（结果行按钮全是
+               * tabIndex=-1）, 原生 Tab 只是在焦点陷阱里原地循环, 这一格键位
+               * 本来就是空的——交给"打开这一行的画布"。Shift+Tab 不接管, 留作
+               * 键盘用户穿出弹窗的逃生口。
+               */
+              if (event.key === "Tab" && !event.shiftKey) {
+                event.preventDefault();
+                if (active !== null) openAsCanvas(active);
+                return;
+              }
+              if (event.key !== "Enter") return;
               event.preventDefault();
               if (active === null) return;
               if ((event.metaKey || event.ctrlKey) && addable(active)) {
@@ -280,43 +327,69 @@ export function WorkspaceCommandPalette({
                     <strong>{result.title}</strong>
                     <small>
                       {result.path}
+                      {result.originTitle === null ? null : (
+                        <span className="command-row-origin">
+                          {`由《${result.originTitle}》展开`}
+                        </span>
+                      )}
                       {tag === undefined ? null : (
                         <span className="command-row-tag">{tag}</span>
                       )}
                     </small>
                   </span>
                 </button>
-                {result.defaultCanvasId === null ? null : (
-                  <button
-                    aria-label={`以画布打开${result.title}`}
-                    className="command-row-action"
-                    onClick={() => openAsCanvas(result)}
-                    onMouseDown={(event) => event.preventDefault()}
-                    tabIndex={-1}
-                    title="以画布打开"
-                    type="button"
-                  >
-                    <CanvasIcon aria-hidden size={16} />
-                  </button>
-                )}
-                {!addable(result) ? null : (
-                  <button
-                    aria-label={`加入当前画布：${result.title}`}
-                    className="command-row-action"
-                    disabled={addingId !== null}
-                    onClick={() => void addToCanvas(result)}
-                    onMouseDown={(event) => event.preventDefault()}
-                    tabIndex={-1}
-                    title="加入当前画布（⌘/Ctrl + Enter）"
-                    type="button"
-                  >
-                    <PlusIcon aria-hidden size={16} />
-                  </button>
-                )}
+                {/*
+                  * 动作装在一个靠右收口的容器里, 而不是各占一条 grid 轨道:
+                  * 空轨道宽度塌成 0 但 gap 还在, 于是"有画布徽标"和"没有"两种
+                  * 行的加号会差几个像素, 上下扫的时候整列看着是歪的。
+                  */}
+                <span className="command-row-actions">
+                  {result.defaultCanvasId === null ? null : (
+                    <button
+                      aria-keyshortcuts="Tab"
+                      aria-label={`以画布打开${result.title}`}
+                      className="command-row-action"
+                      onClick={() => openAsCanvas(result)}
+                      onMouseDown={(event) => event.preventDefault()}
+                      tabIndex={-1}
+                      title="以画布打开（Tab）"
+                      type="button"
+                    >
+                      <CanvasIcon aria-hidden size={16} />
+                    </button>
+                  )}
+                  {!addable(result) ? null : (
+                    <button
+                      aria-label={`加入当前画布：${result.title}`}
+                      className="command-row-action"
+                      disabled={addingId !== null}
+                      onClick={() => void addToCanvas(result)}
+                      onMouseDown={(event) => event.preventDefault()}
+                      tabIndex={-1}
+                      title="加入当前画布（⌘/Ctrl + Enter）"
+                      type="button"
+                    >
+                      <PlusIcon aria-hidden size={16} />
+                    </button>
+                  )}
+                </span>
               </div>
             );
           })}
         </div>
+
+        <footer className="command-palette-hints">
+          {hints.map((hint) => (
+            <span
+              className="command-palette-hint"
+              data-muted={hint.muted}
+              key={hint.label}
+            >
+              <kbd>{hint.keys}</kbd>
+              {hint.label}
+            </span>
+          ))}
+        </footer>
       </div>
     </Dialog>
   );

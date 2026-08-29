@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Canvas V2 API、canvasDocument 纯投影、canvasWal 持久存储与可注入 transport/sink/clock
- * [OUTPUT]: 对外提供单 Canvas 单标签页保存协调器：600ms 封装、稳定 mutation、串行发送、0.5/1/2s 重试、receipt 重放、一次 409 rebase 与 48KiB pagehide 上限
+ * [OUTPUT]: 对外提供单 Canvas 单标签页保存协调器：手势级原子入账、600ms 封装、稳定 mutation、串行发送、0.5/1/2s 重试、receipt 重放、一次 409 rebase 与 48KiB pagehide 上限
  * [POS]: shared/store 的 CanvasSaveCoordinator；计时器、网络与 IndexedDB 生命周期只住这里，React 组件只产生 intent 并消费状态
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -241,7 +241,17 @@ export class CanvasSaveCoordinator {
   }
 
   async enqueue(intent: CanvasIntent): Promise<void> {
+    await this.enqueueMany([intent]);
+  }
+
+  /**
+   * 一次手势产生的多个 intent 原子入账。整组拖动只写一条 WAL 记录: 要么整组幸
+   * 存, 要么整组不存在, 本机恢复里不会留下"只挪动了一半"的画布。逐个 enqueue
+   * 除了打开这个缺口, 还要为同一次手势反复取锁与写 IndexedDB。
+   */
+  async enqueueMany(intents: readonly CanvasIntent[]): Promise<void> {
     if (this.disposed) throw new Error("Canvas 保存会话已经结束。");
+    if (intents.length === 0) return;
 
     await this.withWalLock(async () => {
       const draft: CanvasWalDraft = this.draft ?? {
@@ -253,7 +263,7 @@ export class CanvasSaveCoordinator {
         scope: canvasWalScopeKey(this.scope),
         user_id: this.scope.userId,
       };
-      const next = { ...draft, intents: [...draft.intents, intent] };
+      const next = { ...draft, intents: [...draft.intents, ...intents] };
 
       try {
         await this.storage.put(next);
@@ -267,7 +277,7 @@ export class CanvasSaveCoordinator {
       }
 
       this.draft = next;
-      this.sink.applyLocal(intent);
+      for (const intent of intents) this.sink.applyLocal(intent);
       this.updateStatus(this.processing === null ? "idle" : "saving");
       this.scheduleSeal();
     });

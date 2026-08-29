@@ -14,10 +14,10 @@ LandingSections.tsx: Landing 扩展模块，包含 CountUp 行为指标、问题
 LandingFooter.tsx: Landing 无 BlueprintFrame 的全宽深蓝 Fat Footer，品牌锁定只显示 SuperNote 主名称并移除 Write first 副标题，上层用无位移 hover 的独立分栏网格承载品牌/导航/元信息，下层以大块留白呈现与分栏线同色的 1.5px 描边、3% 偏白浅蓝填充、400 字重和负字距的大尺寸 SuperNote SVG 幽灵字
 LandingMotion/: Landing 克制反馈模块，只提供 CountUp 与一次性 reveal；磁吸、指针聚光与装饰点阵已移除，当前页面只保留有信息价值的计数与 3–4px 入场反馈
 NotebookPreview.tsx: Landing 的真实工作台预览，以工具轨、单栏文件 tree、文档纸面和 Agent 归档面板呈现核心体验
-AppSidebar.tsx: /app 与 Canvas 共用的文件库内容；以紧凑 BrandMark、固定操作行（中性搜索按钮 + 96px 新建 split）承载 memo/Canvas/folder 创建，搜索只负责打开全局 Command Palette 而不再拥有本地输入框或独立结果树，并承载真实树展开/rename（默认 Canvas 不开放，撞名不提交也不收起）/HTML5 拖拽/回收站命令、整理目标定位高亮与 Palette 的文件夹定位
+AppSidebar.tsx: /app 与 Canvas 共用的文件库内容；以紧凑 BrandMark、固定操作行（中性搜索按钮 + 96px 新建 split）承载 memo/Canvas/folder 创建，搜索只负责打开全局 Command Palette 而不再拥有本地输入框或独立结果树，并承载真实树展开/rename（任何节点都可改名，撞名不提交也不收起）/HTML5 拖拽/回收站命令、整理目标定位高亮与 Palette 的文件夹定位
 SidebarCreateMenu.tsx: 文件库创建入口；96px smooth-corner split 控件的 64px 主区（图标 + 「新建」）默认新建 memo，32px 下拉区显式选择 memo/standalone Canvas/folder，菜单支持方向键/Home/End 与外部点击关闭，不持有树事务或路由
 AppMainToolbar.tsx: Paper 顶部 48px 文档命令条，呈现低对比完整路径、32px Canvas 入口、整理、阅读/编辑与更多菜单；进入默认 Canvas 前由页面层完成 required flush，命令条不直接发业务请求
-MemoTreeBranch.tsx: 无限递归树渲染器；画布与笔记只靠叶子图标区分（星图 vs 纸张）且永不暴露扩展名，Folder/FolderOpen 单图标承担开合，同层共享固定图标槽；双击/F2 原地重命名（默认 Canvas 除外，它的名字跟随来源笔记），撞名时行内提示且提交挂起，folder/memo 使用固定 DnD 落点，并接收本次整理 folder/memo id 绘制短期归档高亮
+MemoTreeBranch.tsx: 无限递归树渲染器；画布与笔记只靠叶子图标区分（星图 vs 纸张）且永不暴露扩展名，Folder/FolderOpen 单图标承担开合，同层共享固定图标槽；双击/F2/右键三个入口一律进入同一个原地重命名（画布不再是例外），撞名时行内提示且提交挂起，folder/memo 使用固定 DnD 落点，并接收本次整理 folder/memo id 绘制短期归档高亮
 MemoTreeSkeleton.tsx: 文件库首次加载的真实行结构占位组件，只组合共享 Skeleton 并由调用方控制延迟显隐
 MemoNodeDialog.tsx: 文件树命名弹窗，以设计系统 Dialog/Input/Button 承载新建文件夹，负责非空校验、同级重名即时提示与提交拦截、提交锁与 API 错误展示（服务端 MEMO_TITLE_CONFLICT 也说人话），不使用浏览器 prompt 或直接访问 API
 memoLibrary.ts: 后端轻量文件树的纯视图模型工具，复用 shared/store/memoTree 算法提供首个 memo、祖先/路径、标题/路径与服务端正文命中 ID 搜索，以及 before/after/inside/root-end 防环计划；folder inside 固定计算第一个子节点 sort_order
@@ -52,10 +52,10 @@ PaperWorkspaceShell.tsx: Paper First 四层空间壳；以 AnimatePresence 编�
 useMemoAutosave.ts: 单 memo 编辑会话状态机；支持 required flush、删除期 pause/resume、AI 标题接纳，并只在没有本地草稿时采纳同一 memo 的迟到服务端初值，避免刷新空白或覆盖输入。标题与正文是两条独立提交路径：同级重名（本地预检查或服务端 409）只挂起 title 并点亮原位提示，正文永远继续保存，确定性冲突也不进入退避重试
 useMemoAutosave.test.ts: 覆盖迟到服务端正文接纳门禁、插入/删除/等长替换字符计数、三次有界指数退避，以及驱动真实 Hook 证明标题冲突只挂起 title 而正文照常落库
 WorkspaceAuxViews.tsx: 纸内辅助视图挂载点；订阅、回收站、Design System 住在 Paper 内部且彼此互斥。已保存画布属于独立空间语境，明确由 CanvasWorkspace 承载，不得重新并入此分支
-WorkspaceCommandPalette.tsx: 全局唯一 Command Surface；680px 顶部对齐面板、⌘K 双向开合、稳定 id 作为 active 身份、六档排序结果、默认画布降级为笔记行的次级动作，Canvas 语境下只对笔记提供 ⌘Enter 连续加入
-WorkspaceCommandPalette.test.tsx: 键盘状态机门禁，覆盖双向开合、焦点稳定、首项选中、方向键/Enter/Esc、IME 合成期不跳转、⌘Enter 加入后保持打开、正文结果补入时 active 不跳走与 loading/empty/error 状态
-commandResults.ts: 全局搜索唯一排序与去重纯函数；六档命中顺序、同档内确定性 tie-break，默认画布永不作为独立结果出现
-commandResults.test.ts: 排序契约门禁，锁定六档顺序、默认画布去重、独立画布独立成行、文件夹可导航与空查询最近项
+WorkspaceCommandPalette.tsx: 全局唯一 Command Surface；680px 顶部对齐面板、⌘K 双向开合、稳定 id 作为 active 身份、六档排序结果、笔记行以 Tab 直达自己的画布，Canvas 语境下只对笔记提供 ⌘Enter 连续加入；底部提示条按「语境决定条目在不在、当前行决定条目灰不灰」两级解释，因此换行选中不会让它左右抖动；行尾动作靠右收口成一个整体，有无画布徽标都不改变加号的横坐标
+WorkspaceCommandPalette.test.tsx: 键盘状态机门禁，覆盖双向开合、焦点稳定、首项选中、方向键/Enter/Tab/Esc、Shift+Tab 与 IME 合成期都不接管、⌘Enter 加入后保持打开、正文结果补入时 active 不跳走、提示条按行灰掉与 loading/empty/error 状态；第一个 test 显式给出加载预算，因为 Bun 把本文件的模块加载记在它头上
+commandResults.ts: 全局搜索唯一排序纯函数；六档命中顺序与同档内确定性 tie-break，两种画布都独立成行且画布行携带来源笔记标题，同档同名时按「本体先于派生物」让笔记恒排在它的画布之前
+commandResults.test.ts: 排序契约门禁，锁定六档顺序、两种画布都独立成行、同名时笔记先于画布、画布行的血缘、文件夹可导航与空查询最近项
 TrashWorkspace.tsx: /app 回收站控制器，读取真实顶层删除根并编排重试、恢复、永久删除和当前用户原子清空，结果统一进入根级 Toast
 TrashWorkspaceView.tsx: 无网络纯视图，复用 ui-page、Button/Dialog/Skeleton 与语义 token，区分 Folder/Memo 并覆盖 loading/empty/error/list/危险确认/提交锁
 TrashWorkspace.test.tsx: 回收站纯视图回归测试，覆盖状态页、Folder 根不展开、永久删除/清空确认文案与防重复提交

@@ -284,7 +284,10 @@
   .command-palette-results { display: grid; max-height: min(24rem, 52vh); overflow-y: auto; overscroll-behavior: contain; gap: 2px; padding: 0 var(--space-2) var(--space-2); }
   .command-palette-results:empty { display: none; }
   /* 48px 结果行; 选中态只用中性表面, 不用大面积品牌蓝 */
-  .command-row { display: grid; min-width: 0; height: var(--space-12); grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: var(--space-1); border-radius: var(--radius-control); padding-right: var(--space-1); }
+  /* 两条轨道: 内容 + 靠右收口的动作区。动作区不能拆成两条 auto 轨道——空轨道
+     宽度是 0 但 gap 仍占位, 那会让有徽标与没徽标的行的加号错开几个像素 */
+  .command-row { display: grid; min-width: 0; height: var(--space-12); grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--space-1); border-radius: var(--radius-control); padding-right: var(--space-1); }
+  .command-row-actions { display: flex; align-items: center; justify-content: flex-end; gap: var(--space-1); }
   .command-row[data-active="true"] { background: var(--interactive-hover); }
   .command-row-open { display: flex; height: 100%; min-width: 0; align-items: center; gap: var(--space-3); border-radius: inherit; padding-inline: var(--space-3); color: var(--muted-foreground); cursor: pointer; text-align: left; }
   .command-row-copy { display: grid; min-width: 0; gap: 1px; }
@@ -292,10 +295,17 @@
   .command-row-copy small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .command-row-copy strong { color: var(--foreground); font-size: var(--type-ui); font-weight: var(--weight-ui); line-height: var(--leading-label); }
   .command-row-copy small { color: var(--muted-foreground); font-size: var(--type-caption); line-height: var(--leading-caption); }
+  /* 血缘先于命中标签: 用户更需要知道"这张画布从哪篇笔记长出来" */
+  .command-row-origin,
   .command-row-tag { margin-left: var(--space-2); }
   .command-row-action { display: inline-flex; width: var(--control-height-compact); height: var(--control-height-compact); align-items: center; justify-content: center; border-radius: var(--radius-compact); color: var(--muted-foreground); cursor: pointer; transition: background var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard); }
   .command-row-action:hover:not(:disabled) { background: var(--card); color: var(--foreground); }
   .command-row-action:disabled { opacity: 0.5; cursor: progress; }
+  /* 底部提示条: 条目位置恒定, 按不动的只降对比度, 因此换行选中不会左右抖动 */
+  .command-palette-hints { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-4); border-top: 1px solid var(--border); padding: var(--space-2) var(--space-4); color: var(--muted-foreground); font-size: var(--type-caption); line-height: var(--leading-caption); }
+  .command-palette-hint { display: inline-flex; align-items: center; gap: var(--space-2); transition: opacity var(--motion-fast) var(--ease-standard); }
+  .command-palette-hint[data-muted="true"] { opacity: 0.42; }
+  .command-palette-hints kbd { color: var(--foreground); font-family: var(--font-mono); font-size: 0.625rem; font-weight: 560; }
 
   .sidebar-search-trigger { min-width: 0; }
   .toolbar-icon-button:focus-visible { outline: 2px solid color-mix(in srgb, var(--ring) 45%, transparent); outline-offset: -2px; }
@@ -603,6 +613,7 @@
 @media (prefers-reduced-motion: reduce) {
   @layer components {
     .archive-cord-path-draw { stroke-dasharray: none; stroke-dashoffset: 0; animation: none; }
+    .command-palette-hint,
     .edge-dock { transition: none; }
   }
 }

@@ -22,7 +22,6 @@ import {
 
 import type { MemoTreeNode } from "../shared/api/memo";
 import { SidebarButton } from "../shared/design-system/components";
-import { canRenameMemoNode } from "../shared/store/memoTitleRules";
 import { ArchiveTargetPort } from "./ArchiveCord";
 import type { MemoDropTarget } from "./memoLibrary";
 
@@ -288,8 +287,6 @@ export function MemoTreeBranch(props: MemoTreeBranchProps) {
         const LeafComponent = node.node_type === "canvas"
           ? CanvasIcon
           : FileTextIcon;
-        // 默认 Canvas 的名字跟随来源笔记, 三个重命名入口都对它关闭
-        const renameable = canRenameMemoNode(node);
         const icon = isFolder ? (
           <FolderComponent size={14} />
         ) : (
@@ -321,7 +318,7 @@ export function MemoTreeBranch(props: MemoTreeBranchProps) {
               <SidebarButton
                 active={isActive}
                 aria-current={!isFolder && isActive ? "page" : undefined}
-                aria-keyshortcuts={renameable ? "F2" : undefined}
+                aria-keyshortcuts="F2"
                 className={[
                   "sidebar-tree-row",
                   isFolder ? "sidebar-folder-row" : "sidebar-document-row",
@@ -364,14 +361,14 @@ export function MemoTreeBranch(props: MemoTreeBranchProps) {
                 }}
                 onContextMenu={(event) => onContextMenu(event, node)}
                 onDoubleClick={(event) => {
-                  if (!mutating && renameable) {
+                  if (!mutating) {
                     event.preventDefault();
                     event.stopPropagation();
                     onBeginRename(node);
                   }
                 }}
                 onKeyDown={(event) => {
-                  if (event.key === "F2" && !mutating && renameable) {
+                  if (event.key === "F2" && !mutating) {
                     event.preventDefault();
                     event.stopPropagation();
                     onBeginRename(node);

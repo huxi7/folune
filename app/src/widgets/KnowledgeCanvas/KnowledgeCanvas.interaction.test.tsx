@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 happy-dom、Testing Library、真实 KnowledgeCanvas/React Flow 节点层与可观测 Canvas 协调器替身
- * [OUTPUT]: 覆盖 Pane 双击到 textarea、内容边界提交、再次编辑不跳变、清空已有文字即删除、四角等比缩放、关系注册与理由的键盘/保持查看、统一持久化，以及新建空白和 Esc 取消不入队的交互回归测试
+ * [OUTPUT]: 覆盖 Pane 双击到 textarea、内容边界提交、再次编辑不跳变、清空已有文字即删除、四角等比缩放、多选立刻成框且与 React Flow 自带框互斥、关系注册与理由的键盘/保持查看、统一持久化，以及新建空白和 Esc 取消不入队的交互回归测试
  * [POS]: KnowledgeCanvas 的浏览器 DOM 纵向交互测试；不绕过组件去单测 reducer/RPC，专门锁定 selectionOnDrag 下空间文字从入口到 WAL/协调器/mutation 的完整链路
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -294,6 +294,56 @@ describe("KnowledgeCanvas 自由文字纵向交互", () => {
 
     expect(trigger?.getAttribute("aria-expanded")).toBe("true");
     expect(document.body.textContent).toContain("AI 关联理由");
+  });
+
+  /*
+   * 选择只能有一个所有者。本地 Store 与 React Flow 互为输入时, 进入默认 Canvas
+   * 的那一刻两边就会开始一帧一帧互相纠正(Store 已有聚焦节点, React Flow 这一帧
+   * 还是空的), React 直接抛 Maximum update depth exceeded。这条测试因此既锁定
+   * "入口聚焦确实到达画布", 也锁定"它到达之后一切静止"。
+   */
+  test("带聚焦节点进入画布，聚焦卡片选中且镜像静止在同一个答案", async () => {
+    useCanvasWorkspaceStore.getState().beginSession({
+      assistantOpen: false,
+      canvasId: "test-canvas",
+      detail: relationCanvas(),
+      focusNodeId: "memo-card-a",
+      libraryOpen: false,
+      userId: "test-user",
+    });
+    renderCanvas();
+
+    await waitFor(() => expect(document.querySelectorAll(
+      '.canvas-card[data-selected="true"]',
+    )).toHaveLength(1));
+    expect(useCanvasWorkspaceStore.getState().selectedNodeIds).toEqual([
+      "memo-card-a",
+    ]);
+    // 静止单选交给卡片自己的描边, 不额外套一个只贴着它的成组框
+    expect(document.querySelector(".canvas-selection-bounds-rect")).toBeNull();
+  });
+
+  /*
+   * 用户看到的框必须在选中的那一刻就在, 而不是等 React Flow 的 NodesSelection
+   * 在框选松手后短暂出现一下; 两个框也不能同时存在, 否则松手时会看到框叠一层。
+   */
+  test("多选立刻出现成组外接框，矩形是两张卡片的并集且不与自带框并存", async () => {
+    useCanvasWorkspaceStore.getState().replaceServer(relationCanvas(), []);
+    useCanvasWorkspaceStore.getState().selectNodes(["memo-card-a", "memo-card-b"]);
+    renderCanvas();
+
+    const rect = await waitFor(() => {
+      const element = document.querySelector<HTMLElement>(
+        ".canvas-selection-bounds-rect",
+      );
+      expect(element).not.toBeNull();
+      return element!;
+    });
+    // memo 卡片固定 280x360, b 在 (420, 220): 并集是落在原点的 700x580
+    expect(rect.style.width).toBe("700px");
+    expect(rect.style.height).toBe("580px");
+    expect(rect.style.transform).toBe("translate(0px,0px)");
+    expect(document.querySelector(".react-flow__nodesselection")).toBeNull();
   });
 
   test("Pane 双击创建 textarea，失焦后进入协调器并成为唯一节点", async () => {

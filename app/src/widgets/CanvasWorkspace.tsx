@@ -196,18 +196,6 @@ export function CanvasWorkspace({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [anyPanelOpen, assistantOpen, closeAssistant, closeLibrary]);
 
-  /*
-   * 默认 Canvas 的标题就是它的来源笔记，点它等于"回到原文"。走的是和卡片打开
-   * 笔记完全相同的一条路: 先 flush，再带着返回描述导航，因此回来时视口、选择
-   * 与临时 Panel 状态都还在——旧的伪返回按钮只会清掉这些。
-   */
-  const openOrigin = async (memoId: string) => {
-    const result = await controlsRef.current?.flush();
-    if (result?.persisted === false) return;
-    const descriptor = controlsRef.current?.getReturnDescriptor(title);
-    if (descriptor !== undefined) onNavigateMemo(memoId, descriptor);
-  };
-
   return (
     <ArchiveCordStage active={false} refreshKey={`canvas:${canvasId}`}>
       <main
@@ -266,11 +254,7 @@ export function CanvasWorkspace({
               ) : null}
             </AnimatePresence>
           </span>
-          <CanvasTitle
-            onOpenOrigin={(memoId) => void openOrigin(memoId)}
-            onRename={onRename}
-            title={title}
-          />
+          <CanvasTitle onRename={onRename} title={title} />
         </div>
 
         <div className="canvas-chrome canvas-chrome-end">

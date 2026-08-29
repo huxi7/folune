@@ -30,22 +30,22 @@ AI 是用户的备忘录协作伙伴与智能档案管理员。
 app 跑在本机 Bun/Vite 固定 10000；api 与 chat 由根 Compose 编排为 api-dev(10001)/chat-dev(10002)，各自持有独立健康探针与被 Git 忽略的私有 `.env`。chat 依赖 api 健康后启动，容器内经 `http://api:10001` 访问业务 API；浏览器只接收 `VITE_` 前缀的公开配置。
 
 ## Canvas V2
-Canvas V2 是一级持久知识 Workspace：memo 的默认 Canvas 与 standalone Canvas 从创建、增量拓展、自动保存到重开始终使用同一 `memo_nodes.id === canvases.node_id` 身份。人工编辑与 AI expansion 共用带 version、mutation_id 和 receipt 的唯一原子 mutation 内核；浏览器先把 intent 写入 IndexedDB WAL，再串行提交并在冲突时保留意图重放。旧 Explore 生产入口和旧 HTTP 写路径已经移除，旧 SQL 函数只作为显式代码回滚面保留且 V2 运行期无执行权。目标契约见 [CANVAS_V2_CONTRACT.md](CANVAS_V2_CONTRACT.md)，MVP 外方向见 [CANVAS_V2_PHASE2_BACKLOG.md](CANVAS_V2_PHASE2_BACKLOG.md)。
+Canvas V2 是一级持久知识 Workspace：memo 的默认 Canvas 与 standalone Canvas 从创建、增量拓展、自动保存到重开始终使用同一 `memo_nodes.id === canvases.node_id` 身份。人工编辑与 AI expansion 共用带 version、mutation_id 和 receipt 的唯一原子 mutation 内核；浏览器先把 intent 写入 IndexedDB WAL，再串行提交并在冲突时保留意图重放。旧 Explore 生产入口和旧 HTTP 写路径已经移除，旧 SQL 函数只作为显式代码回滚面保留且 V2 运行期无执行权。产品定律见 [CANVAS_CONSTITUTION.md](CANVAS_CONSTITUTION.md)，尚未开工的增强方向见 [CANVAS_V2_PHASE2_BACKLOG.md](CANVAS_V2_PHASE2_BACKLOG.md)。
 
 ## 模块地图
 | 模块 | 职责 | 文档 |
 | --- | --- | --- |
-| app | 用户端，以 Paper First 舞台承载写作与共享左右工具；Canvas 路由切换到始终挂载同一 React Flow 实例的独立 Workspace，支持 memo Picker、预览/返回、自由文字、连接/删除/拖拽/缩放、显式 AI 增量拓展与可靠自动保存；服务端文档、交互会话、WAL/传输状态分别收口且正文只按 memo ID 读取 | [app/CLAUDE.md](app/CLAUDE.md) |
+| app | 用户端，以 Paper First 舞台承载写作与共享左右工具；Canvas 路由切换到始终挂载同一 React Flow 实例的独立 Workspace，支持 memo Picker、预览/返回、自由文字、连接/删除/框选/整组移动/缩放、显式 AI 增量拓展与可靠自动保存；服务端文档、交互会话、WAL/传输状态分别收口，选择只有 React Flow 一个所有者，正文只按 memo ID 读取 | [app/CLAUDE.md](app/CLAUDE.md) |
 | chat | AI 能力服务，冻结消息上下文；对话、审批、整理与逐篇关联判断职责分离；Canvas expansion 只从 api 重取可信 context/正文/语料版本，复用 Explore 判断和逐字引文复核后返回候选，最终写入仍由浏览器经 api 统一 mutation 提交 | [chat/CLAUDE.md](chat/CLAUDE.md) |
-| api | 业务接口服务，承载 profile、memo、回收站、AI 状态机与 Canvas V2 默认/空白入口、无正文图读取、expansion context、人工/AI 共用 mutation；owner-only RLS、行锁、version、稳定 intent digest、receipt、原子 checkpoint 与同父同类型标题唯一索引共同构成唯一持久化边界，重名与默认画布标题跟随都由数据库裁决 | [api/CLAUDE.md](api/CLAUDE.md) |
+| api | 业务接口服务，承载 profile、memo、回收站、AI 状态机与 Canvas V2 默认/空白入口、无正文图读取、expansion context、人工/AI 共用 mutation；owner-only RLS、行锁、version、稳定 intent digest、receipt、原子 checkpoint 与同父同类型标题唯一索引共同构成唯一持久化边界，重名由数据库裁决；两种 Canvas 共用一条命名规则，标题不跟随任何东西 | [api/CLAUDE.md](api/CLAUDE.md) |
 | deploy | 本地部署基础设施，提供 api/chat 的 Bun 开发镜像、固定容器命名与密钥分离契约 | [deploy/CLAUDE.md](deploy/CLAUDE.md) |
 | scripts | 本地开发运维入口，统一启动、停止与查看 api-dev/chat-dev 双服务 Docker 日志 | [scripts/CLAUDE.md](scripts/CLAUDE.md) |
 
 ## 根配置
 | 文件 | 职责 |
 | --- | --- |
-| CANVAS_V2_CONTRACT.md | Canvas V2 产品目标真相源与常驻门禁；冻结一级持久 Workspace、同构画布、显式 AI、增量图、添加/连接/自由文字、自动保存及 MVP 边界，并以第 16 节十条宪法级验收问题约束后续任何改动。状态已收口为 MVP 已落地，Phase 2 未开始 |
-| CANVAS_V2_PHASE2_BACKLOG.md | MVP 后增强方向清单；记录 MiniMap、文件库拖入、整理/Undo、导航与视觉打磨，其中被 MVP 顺带交付的部分已就地标注段次。它明确不是 Plan 2，条目的保留/删除/合并须待新 Plan 会话基于真实代码与验收结果裁决 |
+| CANVAS_CONSTITUTION.md | Canvas 产品宪法与常驻门禁，回答「为什么不能」而不是「现在是什么」；冻结一级持久 Workspace、同构画布、显式 AI、增量图、添加/连接/自由文字、自动保存与产品边界，并以第 14 节十一条验收问题约束后续任何改动。它与 CLAUDE.md 职责相反：CLAUDE.md 必须跟随代码，本文件绝不跟随代码，因此只有它能指出实现走偏了。不含进度、不含实施计划 |
+| CANVAS_V2_PHASE2_BACKLOG.md | 已确认但尚未开工的增强方向清单；记录 MiniMap、文件库拖入、整理/Undo、导航与视觉打磨，其中被 MVP 顺带交付的部分已就地标注段次。与宪法相反，它是过程性文档，因此带进度；它不是 Plan 2，条目的保留/删除/合并须待新 Plan 会话基于真实代码裁决 |
 | .dockerignore | 收窄 api/chat 开发镜像的仓库根构建上下文，排除源码、缓存、密钥与无关模块 |
 | .env.example | app/api/chat 无密钥变量总览与根 Compose 可选覆盖模板；服务默认使用各自本地环境文件 |
 | .gitignore | 根级本地环境、构建缓存与系统文件忽略规则 |

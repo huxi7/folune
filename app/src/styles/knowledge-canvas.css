@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 workspace.css 的全屏 Stage、独立浮层 Panel、--workspace-panel-inset 与 Panel Header 中心线公式、note-paper.css 的共享纸面 variant、Quiet Editorial 语义 token、@xyflow/react 定位层与 Canvas V2 交互组件
- * [OUTPUT]: 对外提供全视口 Canvas 壳、由 --canvas-chrome-* 单一坐标系定位、且顶栏与 Panel Header 共面的四块顶层分区（左上开关+安静标题／右上 AI 开关／底部中央命令条／右下保存状态）、点阵舞台、280x360 纵向笔记卡与同心嵌套纸张、编辑无框且选中边界等距贴合的空间文字、中心射线求交、随拖拽换边且弯度随角度 360° 连续的浮动关系与整线可指向的理由检查器、Picker、纸外工具列 + A4 浮纸的 Preview 及窄屏降级
+ * [OUTPUT]: 对外提供全视口 Canvas 壳、由 --canvas-chrome-* 单一坐标系定位、且顶栏与 Panel Header 共面的四块顶层分区（左上开关+安静标题／右上 AI 开关／底部中央命令条／右下保存状态）、点阵舞台、280x360 纵向笔记卡与同心嵌套纸张、编辑无框且选中边界等距贴合的空间文字、罩空地故带 6% 极淡底的外层框选框与罩内容故只留线、且框选途中与松手后完全同形的内层成组外接框、中心射线求交、随拖拽换边且弯度随角度 360° 连续的浮动关系与整线可指向的理由检查器、Picker、纸外工具列 + A4 浮纸的 Preview 及窄屏降级
  * [POS]: app/src/styles 的 Canvas V2 视觉边界；桌面保留空间画布，窄屏保留可达操作，不覆盖 React Flow 的业务状态
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -81,7 +81,37 @@
 
   .canvas-workspace-loading { display: flex; width: 100%; height: 100%; align-items: center; justify-content: center; color: var(--muted-foreground); font-size: var(--type-label); }
 
-  .knowledge-canvas { position: relative; width: 100%; height: 100%; min-height: 0; }
+  .knowledge-canvas {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    /*
+     * 选择反馈的唯一一条线。框选框、React Flow 自带的成组外接框与我们补画的那
+     * 一段全部读它, 三者因此不可能走形; 墨色与节点自身的选中描边同族, 让"框住
+     * 了谁"和"选中了谁"看起来是同一件事。
+     */
+    --canvas-selection-line: 1px solid color-mix(in srgb, var(--primary) 62%, var(--border));
+    /*
+     * 两个框不对称, 因为它们说的是两件事。
+     *
+     * 外层框选框是手势: 只活在按住的那一两秒, 罩住的是空地。它要回答"这块地算
+     * 不算我的", 而一条 1px 的线得让眼睛描一圈才知道边界在哪; 因此给它极淡一层
+     * 底, 让"里面"一眼成为一整块。弱到不该被读成一个蓝方块, 只是那块地亮了一下。
+     *
+     * 内层成组外接框是状态: 罩住的是卡片与文字, 也就是用户要读的内容。给它底色
+     * 等于给内容蒙一层纱, 因此它只留线 —— 这与宪法 §6.3 的"选中不改变背景"是同
+     * 一条, 见下面 .react-flow__nodesselection 把这个变量改回透明。
+     *
+     * 改的都是 React Flow 自己读的变量, 而不是压过它的规则: 它的 style.css 未进
+     * @layer, 分层规则本就压不过它, 走变量因此不需要 !important, 也不争层序。
+     */
+    --canvas-marquee-fill: color-mix(in srgb, var(--primary) 6%, transparent);
+    --xy-selection-background-color: var(--canvas-marquee-fill);
+    --xy-selection-border: var(--canvas-selection-line);
+  }
+  /* 内层框罩住内容, 必须干净: 同一个变量在这一层改回透明, 只留线 */
+  .knowledge-canvas .react-flow__nodesselection { --xy-selection-background-color: transparent; }
   .knowledge-canvas .react-flow { background: transparent; }
   .knowledge-canvas .react-flow__handle { opacity: 0; pointer-events: none; }
   /* Handle 只负责向 React Flow 登记 source/target；CanvasCordEdge 直接读取两个
@@ -132,6 +162,15 @@
   .canvas-card-action:hover:not(:disabled) { background: var(--interactive-hover); color: var(--foreground); }
   .canvas-card-action:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
   .canvas-card-action:disabled { opacity: 0.5; cursor: progress; }
+
+  /*
+   * 框选进行中、以及多选静止但 React Flow 已经放手时补画的成组外接框。位于
+   * renderer 同层而 DOM 在其后, 因此盖在被抬高 z-index 的选中卡片之上, 又留在
+   * 每个 Panel 之下; 它是纯反馈, 不接收指针, 拖动仍然由节点和 React Flow 自己
+   * 的框承担。锐角矩形: 贴着圆角卡片的直线边界正是 Excalidraw/tldraw 的样子。
+   */
+  .canvas-selection-bounds { position: absolute; z-index: 4; top: 0; left: 0; transform-origin: left top; pointer-events: none; }
+  .canvas-selection-bounds-rect { position: absolute; top: 0; left: 0; box-sizing: border-box; border: var(--canvas-selection-line); }
 
   .canvas-text-node { min-width: 0; min-height: 0; overflow: visible; border: 0; border-radius: 0; background: transparent; padding: 0; box-shadow: none; }
   .canvas-text-node[data-selected="true"]:not([data-editing="true"]) { outline: 1px solid color-mix(in srgb, var(--primary) 62%, var(--border)); outline-offset: 0; }

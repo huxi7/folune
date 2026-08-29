@@ -375,6 +375,27 @@ export function AppDashboard() {
     );
   }, [profile.id, selectedMemo, treeStatus]);
 
+  /*
+   * ⌘E 在两个 Workspace 里表达同一件事——往前推进一步: Paper 里进入这篇笔记的
+   * 画布, Canvas 里从选中节点继续 AI 拓展（见 KnowledgeCanvas 的 handleKeyDown）。
+   * 两个空间互斥, 所以同一个键位不会打架。AppMainToolbar 的画布按钮一直在 title
+   * 与 aria-keyshortcuts 里宣传这个快捷键, 这里才是真正兑现它的地方。
+   */
+  useEffect(() => {
+    if (canvasNodeId !== null || activeView !== "note" || selectedMemoId === null) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (!(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== "e") return;
+      event.preventDefault();
+      void memoCanvasEntry.enterCanvas(selectedMemoId);
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [activeView, canvasNodeId, memoCanvasEntry, selectedMemoId]);
+
   const accountDialogOpen = accountDialog !== null;
   useAccountProfileRefresh({
     accessToken,

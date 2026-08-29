@@ -1,6 +1,6 @@
 -- [INPUT]: 依赖 canvas-v2-schema.sql 扩展后的 Canvas 表、memo tree/RLS、extensions.pgcrypto 与 auth.uid()
 -- [OUTPUT]: 提供默认/空白 Canvas 创建、含空间文字 text_scale 的 V2 读取与可信 expansion context 四个 SECURITY INVOKER RPC
--- [POS]: api/supabase 的 Canvas V2 会话入口与只读投影层；创建只建立持久身份，后续人工/AI 修改统一交给 canvas-v2-mutation-rpc.sql。默认 Canvas 的标题严格等于来源笔记名，跟随与只读由 memo-naming.sql 的触发器保证
+-- [POS]: api/supabase 的 Canvas V2 会话入口与只读投影层；创建只建立持久身份，后续人工/AI 修改统一交给 canvas-v2-mutation-rpc.sql。默认 Canvas 的标题只在出生这一刻抄一份来源笔记名作初值，此后由用户自由改名（见 memo-naming.sql 第三节）
 -- [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 
 set local lock_timeout = '5s';
@@ -98,9 +98,10 @@ begin
       p_user_id,
       source.parent_id,
       'canvas',
-      -- 默认 Canvas 是来源笔记的空间视图, 不是第二份独立作品: 标题严格等于
-      -- 笔记名, 禁止追加 ' · 画布' 一类后缀。此后由 memo-naming.sql 的
-      -- anchor/sync 触发器保证它永远跟随来源笔记且不可独立编辑。
+      -- 出生初值抄一份来源笔记名, 禁止追加 ' · 画布' 一类系统后缀: 那是软件
+      -- 替用户命名。此后这个名字归用户, 不跟随来源笔记（memo-naming.sql 第三
+      -- 节收走了跟随/锚定两个触发器）; 血缘由 origin_node_id 与画布上那张
+      -- memo_ref 卡片表达, 与标题无关。
       source.title,
       next_order
     )

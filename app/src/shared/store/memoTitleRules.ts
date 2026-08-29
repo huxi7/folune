@@ -1,13 +1,12 @@
 /**
- * [INPUT]: 依赖 shared/api 的轻量 MemoTreeNode（含画布身份）与 ApiError，以及 memoTree 的 updateNode 路径克隆
- * [OUTPUT]: 对外提供 normalizeMemoTitle 规范化、findMemoTitleConflict 与 memoNodeTitleTaken 同级重名判据、canRenameMemoNode 可改名判据、isMemoTitleConflictError 服务端冲突识别与 withDefaultCanvasTitles 默认画布标题跟随
+ * [INPUT]: 依赖 shared/api 的轻量 MemoTreeNode 与 ApiError
+ * [OUTPUT]: 对外提供 normalizeMemoTitle 规范化、findMemoTitleConflict 与 memoNodeTitleTaken 同级重名判据、isMemoTitleConflictError 服务端冲突识别
  * [POS]: shared/store 的命名规则纯策略，与 api/supabase/memo-naming.sql 的 memo_title_norm 同语义；它只负责即时反馈，并发下的最终真相永远是数据库唯一索引，因此各入口必须同时接住服务端冲突
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
 import { ApiError } from "../api/client";
 import type { MemoTreeNode } from "../api/memo";
-import { updateNode } from "./memoTree";
 
 /**
  * 规范化是 memo_title_norm(text) 的镜像：首尾空白、连续空白折叠、拉丁大小写。
@@ -85,55 +84,6 @@ export const memoNodeTitleTaken = (
     title,
   }) !== null;
 
-/**
- * 默认 Canvas 是来源笔记的空间视图，名称跟随笔记且不可独立编辑，所以文件树的
- * 三个重命名入口（双击 / F2 / 右键）都不对它开放。数据层的 anchor 触发器同样
- * 会把改名回落回来源标题——UI 只是不去做注定被驳回的事。
- */
-export const canRenameMemoNode = (node: MemoTreeNode): boolean =>
-  node.canvas?.kind !== "memo_default";
-
 /** 服务端唯一约束拒绝的稳定业务错误码 */
 export const isMemoTitleConflictError = (error: unknown): boolean =>
   error instanceof ApiError && error.code === "MEMO_TITLE_CONFLICT";
-
-/**
- * 数据库 memo_nodes_sync_default_canvas_title 触发器的客户端镜像：默认 Canvas 的
- * 标题永远等于来源笔记的标题。服务端已经在同一事务里改好了，这一层只让本地树
- * 立刻显示同一个事实，而不是等下一次整树读取才追上。
- *
- * 只有真的存在不一致时才动树：命中的画布逐个走 updateNode（只克隆祖先路径），
- * 其余引用保持不变——标题输入是逐字符调用的，全树重建会让打字变卡。
- */
-export const withDefaultCanvasTitles = (
-  nodes: readonly MemoTreeNode[],
-): MemoTreeNode[] => {
-  const memoTitles = new Map<string, string>();
-  const defaultCanvases: MemoTreeNode[] = [];
-
-  const visit = (list: readonly MemoTreeNode[]): void => {
-    for (const node of list) {
-      if (node.node_type === "memo") {
-        memoTitles.set(node.id, node.title);
-      } else if (node.canvas?.kind === "memo_default") {
-        defaultCanvases.push(node);
-      }
-
-      visit(node.children);
-    }
-  };
-
-  visit(nodes);
-
-  return defaultCanvases.reduce((current, canvas) => {
-    const originId = canvas.canvas?.origin_node_id ?? null;
-    const originTitle = originId === null ? undefined : memoTitles.get(originId);
-
-    return originTitle === undefined || originTitle === canvas.title
-      ? current
-      : updateNode(current, canvas.id, (node) => ({
-        ...node,
-        title: originTitle,
-      }));
-  }, nodes as MemoTreeNode[]);
-};

@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 happy-dom、Testing Library、真实 WorkspaceCommandPalette/Dialog、memoTreeStore/recentNodesStore 与被替身接管的 /memo-search 响应
- * [OUTPUT]: 覆盖 ⌘K 双向开合、焦点稳定在输入框、查询变化后首项选中、方向键/Enter/Esc、IME 合成期 Enter 不跳转、Canvas 语境 ⌘Enter 连续加入、正文结果补入时 active 稳定与五种状态
+ * [OUTPUT]: 覆盖 ⌘K 双向开合、焦点稳定在输入框、查询变化后首项选中、方向键/Enter/Tab/Esc、IME 合成期不接管、Canvas 语境 ⌘Enter 连续加入、正文结果补入时 active 稳定、提示条按行灰掉与五种状态
  * [POS]: widgets 的全局搜索键盘状态机门禁；只驱动真实组件与真实 Store，不绕过组件去单测排序（排序归 commandResults.test）
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -139,6 +139,17 @@ const rowIds = (): string[] =>
   [...document.querySelectorAll("[role=option]")]
     .map((row) => row.id.replace("workspace-command-option-", ""));
 
+const hints = (): HTMLElement[] =>
+  [...document.querySelectorAll<HTMLElement>(".command-palette-hint")];
+
+/** 提示条的文字紧跟在 kbd 之后, 因此取最后一个子节点而不是切 textContent */
+const hintLabel = (hint: HTMLElement): string => hint.lastChild?.textContent ?? "";
+
+const hintLabels = (): string[] => hints().map(hintLabel);
+
+const mutedHintLabels = (): string[] =>
+  hints().filter((hint) => hint.dataset.muted === "true").map(hintLabel);
+
 const activeRowId = (): string | null =>
   document.querySelector('[role=option][data-active="true"]')
     ?.id.replace("workspace-command-option-", "") ?? null;
@@ -168,6 +179,11 @@ afterEach(() => {
 });
 
 describe("Command Palette 键盘状态机", () => {
+  /*
+   * 本文件的模块加载（happy-dom Window + React + 真实组件树与 Store）要几秒,
+   * 而 Bun 把它记在第一个 test 的耗时里, 于是这一条会贴着默认 5s 超时抖动——
+   * 抖动的是加载, 不是被测逻辑。显式给它加载预算, 其余 test 仍受默认超时约束。
+   */
   test("⌘K 打开并聚焦输入框，再按一次关闭", async () => {
     renderPalette();
     openPalette();
@@ -182,7 +198,7 @@ describe("Command Palette 键盘状态机", () => {
     await waitFor(() => {
       expect(document.querySelector(".command-palette-input")).toBeNull();
     });
-  });
+  }, 20_000);
 
   test("查询变化后首项自动选中，方向键循环移动", async () => {
     renderPalette();
@@ -191,11 +207,11 @@ describe("Command Palette 键盘状态机", () => {
 
     fireEvent.change(input(), { target: { value: "少则得" } });
     await waitFor(() => expect(activeRowId()).toBe("memo-a"));
-    // 默认画布不作为独立结果出现
-    expect(rowIds()).not.toContain("canvas-default");
+    // 默认画布与来源笔记同名, 两行都在, 笔记在前
+    expect(rowIds().slice(0, 2)).toEqual(["memo-a", "canvas-default"]);
 
     fireEvent.keyDown(input(), { key: "ArrowDown" });
-    expect(activeRowId()).toBe("memo-b");
+    expect(activeRowId()).toBe("canvas-default");
     fireEvent.keyDown(input(), { key: "ArrowUp" });
     expect(activeRowId()).toBe("memo-a");
     // 输入框始终持有焦点
@@ -219,6 +235,61 @@ describe("Command Palette 键盘状态机", () => {
     await waitFor(() => {
       expect(document.querySelector(".command-palette-input")).toBeNull();
     });
+  });
+
+  test("Tab 打开这一行笔记的画布；没有画布的行按 Tab 什么也不做", async () => {
+    renderPalette();
+    openPalette();
+    await waitFor(() => expect(input()).toBeTruthy());
+    fireEvent.change(input(), { target: { value: "少则得" } });
+    await waitFor(() => expect(activeRowId()).toBe("memo-a"));
+
+    // Enter 与 Tab 去两个地方: 一个是笔记, 一个是这篇笔记的画布
+    fireEvent.keyDown(input(), { key: "Tab" });
+    expect(openedCanvas).toEqual(["memo-a"]);
+    expect(opened).toEqual([]);
+    await waitFor(() => {
+      expect(document.querySelector(".command-palette-input")).toBeNull();
+    });
+  });
+
+  test("没有默认画布的行、Shift+Tab 与 IME 合成期都不触发画布跳转", async () => {
+    renderPalette();
+    openPalette();
+    await waitFor(() => expect(input()).toBeTruthy());
+
+    fireEvent.change(input(), { target: { value: "熵与妄作" } });
+    await waitFor(() => expect(activeRowId()).toBe("memo-body"));
+    fireEvent.keyDown(input(), { key: "Tab" });
+    expect(openedCanvas).toEqual([]);
+    // 面板不关: 按不动的键不该有任何后果
+    expect(document.querySelector(".command-palette-input")).not.toBeNull();
+
+    fireEvent.change(input(), { target: { value: "少则得" } });
+    await waitFor(() => expect(activeRowId()).toBe("memo-a"));
+    // Shift+Tab 留给焦点逃生, 合成期的 Tab 属于候选词
+    fireEvent.keyDown(input(), { key: "Tab", shiftKey: true });
+    fireEvent.compositionStart(input());
+    fireEvent.keyDown(input(), { key: "Tab" });
+    expect(openedCanvas).toEqual([]);
+  });
+
+  test("提示条只声明此刻能按的键：位置恒定，按不动的只灰掉", async () => {
+    renderPalette();
+    openPalette();
+    await waitFor(() => expect(input()).toBeTruthy());
+    fireEvent.change(input(), { target: { value: "少则得" } });
+    await waitFor(() => expect(activeRowId()).toBe("memo-a"));
+
+    // 非 Canvas 语境里"加入当前画布"这件事不存在, 于是条目也不存在
+    expect(hintLabels()).toEqual(["导航", "打开", "打开画布", "关闭"]);
+    expect(mutedHintLabels()).toEqual([]);
+
+    fireEvent.change(input(), { target: { value: "熵与妄作" } });
+    await waitFor(() => expect(activeRowId()).toBe("memo-body"));
+    // 这一行没有画布: ⇥ 灰掉但位置不变, 列表不因换行左右抖动
+    expect(hintLabels()).toEqual(["导航", "打开", "打开画布", "关闭"]);
+    expect(mutedHintLabels()).toEqual(["打开画布"]);
   });
 
   test("Esc 关闭，且没有结果时 Enter 无副作用", async () => {
@@ -253,11 +324,11 @@ describe("Command Palette 键盘状态机", () => {
     fireEvent.change(input(), { target: { value: "少则得" } });
     await waitFor(() => expect(activeRowId()).toBe("memo-a"));
     fireEvent.keyDown(input(), { key: "ArrowDown" });
-    expect(activeRowId()).toBe("memo-b");
+    expect(activeRowId()).toBe("canvas-default");
 
-    // 正文命中把 memo-body 追加进列表；选中项必须仍是 memo-b
+    // 正文命中把 memo-body 追加进列表；选中项必须仍是 canvas-default
     await waitFor(() => expect(rowIds()).toContain("memo-body"));
-    expect(activeRowId()).toBe("memo-b");
+    expect(activeRowId()).toBe("canvas-default");
   });
 
   test("Canvas 语境：Enter 打开笔记，⌘Enter 加入且面板保持打开", async () => {

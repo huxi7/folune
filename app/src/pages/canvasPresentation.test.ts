@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun test 与 canvasPresentation 的 Canvas V2 纯投影函数
- * [OUTPUT]: 覆盖节点取名、memo 固定纵向尺寸与 native 持久几何不被改写、视口容错与跨设备恢复判据、快照漂移/墓碑、含人工或 AI 来源的边投影、坐标操作与路由身份
+ * [OUTPUT]: 覆盖节点取名、memo 固定纵向尺寸与 native 持久几何不被改写、视口容错与跨设备恢复判据、快照漂移/墓碑、可拓展判据、含人工或 AI 来源的边投影、成组外接框的出现时机与矩形、整组坐标回写与路由身份
  * [POS]: pages 的 Canvas V2 表现回归门禁；锁定服务端投影到 React Flow 的含义，不测试 React 或网络
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -12,9 +12,12 @@ import {
   CANVAS_DEFAULT_VIEWPORT,
   CANVAS_MEMO_HEIGHT,
   CANVAS_MEMO_WIDTH,
+  canExpandFromNode,
+  canvasGroupSelectionBounds,
   canvasNodeTitle,
   canvasNodesBounds,
   canvasPositionOperation,
+  canvasPositionOperations,
   canvasViewportShowsNodes,
   resolveCanvasNodeId,
   shouldRestoreCanvasViewport,
@@ -250,5 +253,121 @@ describe("Canvas route and persistence helpers", () => {
       id: "n1",
       position: { x: Number.NaN, y: 0 },
     })).toBeNull();
+  });
+});
+
+describe("Canvas group selection bounds", () => {
+  const card = (
+    id: string,
+    x: number,
+    y: number,
+    selected: boolean,
+  ) => ({
+    ...toCanvasFlowNode(node({ id, x, y })),
+    selected,
+  });
+  const two = [card("a", 0, 0, true), card("b", 420, 220, true)];
+
+  test("多选静止时成框，矩形恰好是被选节点的并集", () => {
+    expect(canvasGroupSelectionBounds(two, {
+      marqueeActive: false,
+      ownGroupBoxVisible: false,
+    })).toEqual({
+      height: 220 + CANVAS_MEMO_HEIGHT,
+      width: 420 + CANVAS_MEMO_WIDTH,
+      x: 0,
+      y: 0,
+    });
+  });
+
+  test("未选中的节点不参与外接框", () => {
+    expect(canvasGroupSelectionBounds(
+      [...two, card("c", -600, -600, false)],
+      { marqueeActive: false, ownGroupBoxVisible: false },
+    )).toMatchObject({ x: 0, y: 0 });
+  });
+
+  /*
+   * 这两条互补的判据合起来才是"框全程可见": 框选途中第一张被框住就成框, 松手后
+   * React Flow 接手同一个矩形; 反过来静止单选交给卡片自己的描边, 不套多余的框。
+   */
+  test("框选途中一张就成框，静止单选不成框", () => {
+    const one = [two[0]!, { ...two[1]!, selected: false }];
+    expect(canvasGroupSelectionBounds(one, {
+      marqueeActive: true,
+      ownGroupBoxVisible: false,
+    })).toEqual({
+      height: CANVAS_MEMO_HEIGHT,
+      width: CANVAS_MEMO_WIDTH,
+      x: 0,
+      y: 0,
+    });
+    expect(canvasGroupSelectionBounds(one, {
+      marqueeActive: false,
+      ownGroupBoxVisible: false,
+    })).toBeNull();
+  });
+
+  test("React Flow 自己画框时让位，同一时刻只有一个框", () => {
+    expect(canvasGroupSelectionBounds(two, {
+      marqueeActive: false,
+      ownGroupBoxVisible: true,
+    })).toBeNull();
+    expect(canvasGroupSelectionBounds(two, {
+      marqueeActive: true,
+      ownGroupBoxVisible: true,
+    })).toBeNull();
+  });
+
+  test("没有选中就没有框", () => {
+    expect(canvasGroupSelectionBounds([], {
+      marqueeActive: true,
+      ownGroupBoxVisible: false,
+    })).toBeNull();
+  });
+});
+
+describe("Canvas gesture position write-back", () => {
+  /*
+   * 整组拖动的回写单位是手势: 少写一个节点, 乐观投影就把它弹回旧坐标, 用户看到
+   * 的是组内相对位置在松手那一刻散掉。
+   */
+  test("一次手势移动的每个节点都回写，非有限坐标只丢自己", () => {
+    expect(canvasPositionOperations([
+      { id: "a", position: { x: 1.234, y: 2 } },
+      { id: "b", position: { x: Number.POSITIVE_INFINITY, y: 2 } },
+      { id: "c", position: { x: -3, y: 4.996 } },
+    ])).toEqual([
+      { node_id: "a", type: "update_node", x: 1.23, y: 2 },
+      { node_id: "c", type: "update_node", x: -3, y: 5 },
+    ]);
+    expect(canvasPositionOperations([])).toEqual([]);
+  });
+});
+
+describe("可拓展判据", () => {
+  test("只有目标仍读得出正文的 memo_ref 能拓展", () => {
+    // ⌘E 与卡片上的魔杖共用这一个判据, 因此它的边界只在这里定义一次
+    expect(canExpandFromNode(node())).toBe(true);
+    // 墓碑: 原笔记已永久删除, 只剩快照
+    expect(canExpandFromNode(node({ target: null, target_node_id: null })))
+      .toBe(false);
+    // 回收站里的笔记读不出正文, 不能作为拓展来源
+    expect(canExpandFromNode(node({
+      target: {
+        deleted_at: "2026-08-29T00:00:00.000Z",
+        excerpt: null,
+        node_id: "memo-1",
+        revision: 3,
+        title: "少则得",
+      },
+    }))).toBe(false);
+    // 自由文字不是笔记, 永远不触发模型
+    expect(canExpandFromNode(node({
+      kind: "native",
+      target: null,
+      target_node_id: null,
+      text: "一段想法",
+    }))).toBe(false);
   });
 });

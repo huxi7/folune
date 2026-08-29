@@ -240,29 +240,6 @@ export class MockSupabase {
       && this.normalizeTitle(node.title) === normalized);
   }
 
-  /*
-   * 忠实复刻 memo_nodes_sync_default_canvas_title 触发器：笔记标题一变，它的
-   * 默认画布节点标题在同一次写入里跟着变。这是数据库侧的原子性，mock 复刻它
-   * 才能让"改名与默认画布同步"这条契约在无远端依赖下被测出来。
-   */
-  private syncDefaultCanvasTitles(memo: MemoNode): void {
-    if (memo.node_type !== "memo") return;
-
-    for (const canvas of this.canvases.values()) {
-      if (
-        canvas.canvas_kind !== "memo_default"
-        || canvas.origin_node_id !== memo.id
-        || canvas.user_id !== memo.user_id
-      ) {
-        continue;
-      }
-
-      const node = this.nodes.get(canvas.node_id);
-      if (node === undefined || node.title === memo.title) continue;
-      this.nodes.set(node.id, { ...node, title: memo.title });
-    }
-  }
-
   /** PostgREST 把 SQLSTATE 原样放在 code 里，api 靠它认出结构性拒绝 */
   private uniqueViolation(): Response {
     return jsonResponse(
@@ -373,7 +350,6 @@ export class MockSupabase {
       }
 
       this.nodes.set(id, updated);
-      this.syncDefaultCanvasTitles(updated);
       return jsonResponse([updated]);
     }
 

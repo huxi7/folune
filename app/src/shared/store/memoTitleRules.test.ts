@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun test、memoTitleRules 纯策略与真实 MemoTreeNode 形状（含画布身份）
- * [OUTPUT]: 锁定规范化语义、同父同类型重名判据、跨类型/笔记与默认画布同名合法、根节点作用域、默认画布不可改名与默认画布标题跟随来源笔记（含无变化时保持引用）
+ * [OUTPUT]: 锁定规范化语义、同父同类型重名判据、跨类型/笔记与默认画布同名合法、根节点作用域
  * [POS]: shared/store 的命名规则门禁；只测纯函数，服务端并发下的最终真相由 api/test 与真实数据库检查分别覆盖
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -9,11 +9,9 @@ import { describe, expect, test } from "bun:test";
 
 import type { MemoTreeNode } from "../api/memo";
 import {
-  canRenameMemoNode,
   findMemoTitleConflict,
   memoNodeTitleTaken,
   normalizeMemoTitle,
-  withDefaultCanvasTitles,
 } from "./memoTitleRules";
 
 const TIME = "2026-08-29T00:00:00.000Z";
@@ -133,43 +131,5 @@ describe("memoNodeTitleTaken", () => {
     expect(memoNodeTitleTaken(tree, memoB, "熵与妄作")).toBe(true);
     expect(memoNodeTitleTaken(tree, memoB, "少则得")).toBe(false);
     expect(memoNodeTitleTaken(tree, null, "熵与妄作")).toBe(false);
-  });
-});
-
-describe("canRenameMemoNode", () => {
-  test("默认 Canvas 不可改名，独立 Canvas 与笔记可以", () => {
-    expect(canRenameMemoNode(folder.children[2]!)).toBe(false);
-    expect(canRenameMemoNode(folder.children[3]!)).toBe(true);
-    expect(canRenameMemoNode(folder.children[0]!)).toBe(true);
-    expect(canRenameMemoNode(folder)).toBe(true);
-  });
-});
-
-describe("withDefaultCanvasTitles", () => {
-  test("来源笔记改名后，默认画布标题跟着改，独立画布不受影响", () => {
-    const renamed = withDefaultCanvasTitles([
-      { ...folder, children: folder.children.map((child) =>
-        child.id === "memo-a" ? { ...child, title: "熵与妄作 新" } : child) },
-    ]);
-    const children = renamed[0]!.children;
-
-    expect(children.find((node) => node.id === "canvas-default")?.title)
-      .toBe("熵与妄作 新");
-    expect(children.find((node) => node.id === "canvas-alone")?.title)
-      .toBe("空间草稿");
-  });
-
-  test("已经一致时保持原引用：标题是逐字符输入的，不能每次都重建整棵树", () => {
-    expect(withDefaultCanvasTitles(tree)).toBe(tree);
-  });
-
-  test("来源笔记不在当前树里时不猜测，保持画布现有标题", () => {
-    const orphan = [
-      node("canvas-orphan", "旧名", "canvas", {
-        canvas: { kind: "memo_default", origin_node_id: "memo-missing" },
-      }),
-    ];
-
-    expect(withDefaultCanvasTitles(orphan)[0]!.title).toBe("旧名");
   });
 });

@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun test、内存 WAL、ApiError、CanvasSaveCoordinator 与 canvasDocument 投影
- * [OUTPUT]: 覆盖空恢复归闲、WAL 先于 UI、人工/AI 顺序、稳定 ID 重试、单次 409 rebase、串行回执清理和 48KiB pagehide 有界发送
+ * [OUTPUT]: 覆盖空恢复归闲、WAL 先于 UI、手势级原子入账、人工/AI 顺序、稳定 ID 重试、单次 409 rebase、串行回执清理和 48KiB pagehide 有界发送
  * [POS]: shared/store 的 Canvas persistenceSlice/协调器回归门禁；断网与响应丢失不能复制或丢弃用户意图
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -165,6 +165,61 @@ describe("CanvasSaveCoordinator", () => {
     })).rejects.toThrow("quota full");
     expect(sinkState.view.nodes).toHaveLength(1);
     expect(sinkState.statuses.at(-1)).toBe("local_recovery_unavailable");
+  });
+
+  test("整组拖动只写一条 WAL 记录，一次 mutation 带上每个被移动的节点", async () => {
+    const memory = createMemoryCanvasWalStorage();
+    const secondId = "55555555-5555-4555-8555-555555555555";
+    const thirdId = "66666666-6666-4666-8666-666666666666";
+    const base = detail();
+    base.nodes.push(
+      { ...base.nodes[0]!, id: secondId, x: 100 },
+      { ...base.nodes[0]!, id: thirdId, x: 200 },
+    );
+    const sinkState = createSink(base);
+    const requests: CanvasMutationRequest[] = [];
+    const coordinator = new CanvasSaveCoordinator({
+      scope: { canvasId: CANVAS_ID, userId: USER_ID },
+      sink: sinkState.sink,
+      storage: memory,
+      transport: {
+        async commitExpansion(request) { return resultFor(request); },
+        async getCanvas() { return base; },
+        keepalive() { return false; },
+        async mutate(request) {
+          requests.push(request);
+          return resultFor(request);
+        },
+      },
+    });
+    await coordinator.recover(base);
+
+    await coordinator.enqueueMany(
+      [ROOT_ID, secondId, thirdId].map((nodeId, index) => ({
+        operation: {
+          node_id: nodeId,
+          type: "update_node" as const,
+          x: 40 + index * 100,
+          y: 60,
+        },
+      })),
+    );
+
+    // 一次手势一条记录: 断电时不会留下"只挪动了一半"的画布
+    expect(memory.records.size).toBe(1);
+    // 整组立刻本地生效, 组内相对位置与拖动时逐字一致
+    expect(sinkState.view.nodes.map((node) => [node.x, node.y])).toEqual([
+      [40, 60],
+      [140, 60],
+      [240, 60],
+    ]);
+
+    expect(await coordinator.flush()).toEqual({ persisted: true, synced: true });
+    expect(requests).toHaveLength(1);
+    expect(requests[0]!.operations).toHaveLength(3);
+    expect(sinkState.server.nodes.map((node) => node.x)).toEqual([40, 140, 240]);
+    expect(memory.records.size).toBe(0);
+    coordinator.dispose();
   });
 
   test("响应丢失后复用同一 mutation_id 重试，自由文字只出现一次", async () => {

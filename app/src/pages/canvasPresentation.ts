@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 @xyflow/react 的 Edge/Node 类型（仅类型）与 shared/api/canvas 的 Canvas V2 投影
- * [OUTPUT]: 对外提供固定 280x360 纵向 memo 卡片尺寸、含持久 text_scale 的空间文字投影、携带人工/AI 来源的关系投影、标题/视口容错、恢复视口可用性判据、最近空位、路由类型解析与坐标回写纯函数
+ * [OUTPUT]: 对外提供固定 280x360 纵向 memo 卡片尺寸、含持久 text_scale 的空间文字投影、携带人工/AI 来源的关系投影、标题/视口容错、恢复视口可用性判据、可拓展节点判据、成组外接框判据、最近空位、路由类型解析与手势级坐标回写纯函数
  * [POS]: app/src/pages 的 Canvas 表现策略边界；服务端快照在此翻译为受控 React Flow 形状，组件不再猜测墓碑、漂移或几何默认值
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -47,6 +47,16 @@ export type CanvasFlowEdgeData = {
 export type CanvasFlowEdge = Edge<CanvasFlowEdgeData, "cord">;
 
 const FALLBACK_TEXT_TITLE = "自由文字";
+
+/*
+ * 「这个节点还能不能拓展」只有这一处定义。卡片上的 available 是它在 flow data
+ * 形状上的同一判据（读得出正文才提供阅读/AI/关联），键盘加速器读的是服务端文档
+ * 形状, 所以判据必须在这里有名字, 而不是两边各写一遍三个与条件。
+ */
+export const canExpandFromNode = (node: CanvasNode): boolean =>
+  node.kind === "memo_ref"
+  && node.target_node_id !== null
+  && (node.target?.deleted_at ?? null) === null;
 
 export const canvasNodeTitle = (node: CanvasNode): string => {
   if (node.kind === "memo_ref") {
@@ -146,7 +156,7 @@ export const toCanvasFlow = (
   viewport: toCanvasViewport(detail.canvas.viewport),
 });
 
-type CanvasBounds = { height: number; width: number; x: number; y: number };
+export type CanvasBounds = { height: number; width: number; x: number; y: number };
 
 /** 节点包围盒；尺寸只来自本文件写入的 style，不依赖 React Flow 的测量时机 */
 export const canvasNodesBounds = (
@@ -168,6 +178,28 @@ export const canvasNodesBounds = (
   }
 
   return { height: bottom - top, width: right - left, x: left, y: top };
+};
+
+/**
+ * 成组外接框该占的矩形，null 表示这一刻不该有框。
+ *
+ * React Flow 自带的 NodesSelection 只活在"框选手势已结束、且还没有人碰过节点"
+ * 这一小段时间里：框选途中它不画，抓住组里任意一张卡片开始拖它也立刻消失。于是
+ * 用户看到的框忽明忽暗，只有松手那一瞬间才知道自己框住了谁。这里补上它缺席的
+ * 两段——框选进行中，以及多选静止但 React Flow 已经放手——并在它自己画框时让
+ * 位，因此同一时刻永远只有一个框，交接也不会看到框跳一下。
+ *
+ * 静止时的单选不成框：那时卡片自身的描边已经说清了命令对象，再套一个只贴着它的
+ * 框只是噪音。框选途中相反，第一张被框住就要立刻成框，否则松手时框会凭空出现。
+ */
+export const canvasGroupSelectionBounds = (
+  nodes: readonly CanvasFlowNode[],
+  flow: { marqueeActive: boolean; ownGroupBoxVisible: boolean },
+): CanvasBounds | null => {
+  if (flow.ownGroupBoxVisible) return null;
+  const selected = nodes.filter((node) => node.selected === true);
+  if (selected.length < (flow.marqueeActive ? 1 : 2)) return null;
+  return canvasNodesBounds(selected);
 };
 
 /**
@@ -201,14 +233,18 @@ export const resolveCanvasNodeId = (
   node: { id: string; node_type: string } | null,
 ): string | null => (node?.node_type === "canvas" ? node.id : null);
 
-export const canvasPositionOperation = (
-  node: { id: string; position: { x: number; y: number } },
-): {
+export type CanvasPositionOperation = {
   type: "update_node";
   node_id: string;
   x: number;
   y: number;
-} | null => {
+};
+
+type CanvasDraggedNode = { id: string; position: { x: number; y: number } };
+
+export const canvasPositionOperation = (
+  node: CanvasDraggedNode,
+): CanvasPositionOperation | null => {
   if (!Number.isFinite(node.position.x) || !Number.isFinite(node.position.y)) {
     return null;
   }
@@ -219,3 +255,16 @@ export const canvasPositionOperation = (
     y: Math.round(node.position.y * 100) / 100,
   };
 };
+
+/**
+ * 坐标回写的单位是一次手势，不是一个节点。
+ *
+ * React Flow 的多选拖动只在指针下那一个节点上报事件，整组的最终坐标在同一次
+ * 回调的第三个参数里。只回写其中一个，乐观投影随即把其余节点按旧文档弹回原处，
+ * 用户看到的就是"松手那一刻组内相对位置散掉"。
+ */
+export const canvasPositionOperations = (
+  nodes: readonly CanvasDraggedNode[],
+): CanvasPositionOperation[] => nodes
+  .map(canvasPositionOperation)
+  .filter((operation): operation is CanvasPositionOperation => operation !== null);

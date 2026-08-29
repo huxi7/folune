@@ -33,10 +33,7 @@ import {
   SidebarButton,
   UserMenu,
 } from "../shared/design-system/components";
-import {
-  canRenameMemoNode,
-  memoNodeTitleTaken,
-} from "../shared/store/memoTitleRules";
+import { memoNodeTitleTaken } from "../shared/store/memoTitleRules";
 import {
   createMemoMovePlan,
   getAncestorFolderIds,
@@ -398,11 +395,6 @@ export function AppSidebar({
   function beginRename(node: MemoTreeNode) {
     setContextMenu(null);
 
-    // 默认 Canvas 的名称跟随来源笔记, 不可独立编辑
-    if (!canRenameMemoNode(node)) {
-      return;
-    }
-
     setRenamingNodeId(node.id);
     setRenameValue(node.title);
     renameOriginalRef.current = node.title;
@@ -714,18 +706,16 @@ export function AppSidebar({
           {contextMenuNode ? (
             <>
               <span className="memo-context-menu-separator" />
-              {canRenameMemoNode(contextMenuNode) ? (
-                <button
-                  disabled={mutating}
-                  onClick={() => beginRename(contextMenuNode)}
-                  role="menuitem"
-                  type="button"
-                >
-                  <PencilSimpleIcon size={14} />
-                  <span className="memo-context-menu-label">重命名</span>
-                  <kbd className="memo-context-menu-shortcut">F2</kbd>
-                </button>
-              ) : null}
+              <button
+                disabled={mutating}
+                onClick={() => beginRename(contextMenuNode)}
+                role="menuitem"
+                type="button"
+              >
+                <PencilSimpleIcon size={14} />
+                <span className="memo-context-menu-label">重命名</span>
+                <kbd className="memo-context-menu-shortcut">F2</kbd>
+              </button>
               <button
                 className="memo-context-menu-danger"
                 disabled={mutating}

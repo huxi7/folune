@@ -7,7 +7,7 @@ CLAUDE.md: 记录页面层职责与文档协议
 LandingPage.tsx: / 路由页面，组合顶边贴视口且背景全宽的粘性 Header、紧贴其下并约为 Header 2/3 高的全宽随页 Announcement、与正文 1088px 主轨对齐且仅在 1200px+ 精细指针桌面按边缘到主轨距离 1/5 补充外轨的开放横向骨架、正文 BlueprintFrame RailLayer、显式 14px/贴边 Divider、纯白 Hero、懒加载 LandingSections，并让无末端节点的正文竖轨直接承接无导轨的全宽深蓝 Fat Footer
 ColorLabPage.tsx: 仅 DEV `/color-lab` 色彩决策实验页，以同一静态 Paper First/Library/AI DOM、共享生产组件与候选选择、Light/Dark 控制公平比较现有蓝、02 灰蓝、04 标准墨蓝与 05 柔和墨蓝 scoped token，不读取鉴权、业务数据或主题持久化
 AuthCallbackPage.tsx: /auth/callback 路由页面，交换 Google OAuth PKCE code，成功进入 /app，失败提供返回登录入口；会话 Spinner 在 reduced-motion 下静止
-AppDashboard.tsx: 消费路由 Profile/access token 的 /app 编排层；只建立轻量目录、按 ID 正文、人工/Agent/整理 flush 与业务工作区的跨域生命周期，把标题重名判据下传给写作列，并依据 node_type 把共享左右工具插入 Paper 或 Canvas；Canvas 内部会话、返回与保存、以及软删编排都不再堆入 Dashboard
+AppDashboard.tsx: 消费路由 Profile/access token 的 /app 编排层；只建立轻量目录、按 ID 正文、人工/Agent/整理 flush 与业务工作区的跨域生命周期，并在 Paper 语境下兑现 ⌘E（进入当前笔记的画布；Canvas 语境的同一键位归 KnowledgeCanvas 的 AI 拓展），把标题重名判据下传给写作列，并依据 node_type 把共享左右工具插入 Paper 或 Canvas；Canvas 内部会话、返回与保存、以及软删编排都不再堆入 Dashboard
 CanvasRouteCoordinator.tsx: `/app/notes/:id` 的 Canvas 路由协调器；从 URL 确定 Canvas，统一 Canvas→原文→Canvas 返回描述、画布重命名下传与共享 Panel 插槽，不持有图数据或保存队列
 DashboardDialogs.tsx: Dashboard 账户与新建文件夹覆盖层组合，只适配受控状态、回调与新文件夹落点，避免主编排重复展开 Dialog 生命周期
 appDashboardTypes.ts: Dashboard 私有状态类型边界，集中定义 loader、账户/文件夹弹窗、标题草稿与树加载状态，不承载运行时逻辑
@@ -23,8 +23,8 @@ useMemoCanvasEntry.ts: memo→默认 Canvas 路由协调器；先 required flush
 useStandaloneCanvasCreation.ts: standalone Canvas 创建协调器；重复提交门禁后只接受服务器事务返回的真实身份，再局部并入 tree、登记 standalone 进入语境并导航
 canvasIncrementalLayout.ts: Canvas 候选增量布局纯策略；复用既有分支向外生长并以确定性角度/半径寻找无碰撞位置，人工加入和 AI expansion 共用且永不移动旧节点
 canvasIncrementalLayout.test.ts: 锁定候选稳定排序、分支外向生长、无碰撞与旧节点对象/坐标不变
-canvasPresentation.ts: Canvas V2 图投影纯决策；把服务端 memo_ref/native/墓碑、尺寸、text_scale、含人工/AI 来源的边与 user_moved 视口翻译成 React Flow 数据，过滤非有限坐标，并判定跨设备恢复的视口是否还看得见节点
-canvasPresentation.test.ts: 锁定 memo 快照/墓碑/native 空间文字尺寸与 text_scale、revision 漂移、视口钳制、用户视口恢复与跨设备可用性判据、V2 路由识别
+canvasPresentation.ts: Canvas V2 图投影纯决策；把服务端 memo_ref/native/墓碑、尺寸、text_scale、含人工/AI 来源的边与 user_moved 视口翻译成 React Flow 数据，过滤非有限坐标，判定跨设备恢复的视口是否还看得见节点，以 canExpandFromNode 单点定义「这个节点还能不能拓展」——卡片魔杖与 ⌘E 共用它，不许两边各写一遍三个与条件；另以 canvasGroupSelectionBounds 判定成组外接框此刻该占哪个矩形（React Flow 自带的框只活在框选松手后那一小段，这里补上它缺席的两段并在它画框时让位），并以 canvasPositionOperations 把坐标回写的单位定为「一次手势」而不是「一个节点」
+canvasPresentation.test.ts: 锁定 memo 快照/墓碑/native 空间文字尺寸与 text_scale、revision 漂移、视口钳制、用户视口恢复与跨设备可用性判据、成组外接框的出现时机与并集矩形（框选途中一张即成框、静止单选不成框、自带框在场即让位）、整组坐标回写与 V2 路由识别
 organizePresentation.ts: 整理 Run 到 Workspace 工具唤醒及归档展示快照的无副作用策略；成功使用服务端目标路径，撤销使用当前树恢复路径
 workspaceLayout.ts: Paper First 浮层几何与宽度持久化边界，集中维护文件库/AI 尺寸约束、CSS 变量类型和 localStorage 校验
 workspaceMotion.ts: 工作台唯一 Motion 配置，冻结 Panel 220ms 进入/170ms 退出、240ms 工作区布局与 180ms 淡入淡出 Tween，供 Paper/Panel/回执统一消费并避免弹簧回摆
