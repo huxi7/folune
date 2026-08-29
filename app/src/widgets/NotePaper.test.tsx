@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 Bun test、react-dom/server 与共享 NotePaper 原语
- * [OUTPUT]: 锁定 thumbnail/reader 共用同一纸面骨架、摘录与空正文占位、reader 承载任意正文并声明 Dialog autofocus 契约
- * [POS]: app/src/widgets 的纸张原语回归门禁；纸张视觉只有一处实现，两个 variant 的差异必须留在 CSS 而不是 DOM 结构
+ * [INPUT]: 依赖 Bun test、react-dom/server、共享 NotePaper 原语与唯一 note-paper.css 样式源
+ * [OUTPUT]: 锁定 thumbnail/reader 共用同一纸面骨架、摘录与空正文占位、thumbnail 连续文字 mask + 无填色模糊层，以及 reader 的 Dialog autofocus 契约
+ * [POS]: app/src/widgets 的纸张原语回归门禁；纸张视觉只有一处实现，并阻止 thumbnail 再退化成不透明横向毛玻璃色带
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -14,6 +14,15 @@ const classNames = (html: string): string[] =>
   [...html.matchAll(/class="([^"]*)"/g)].map((match) => match[1] ?? "");
 
 describe("NotePaper", () => {
+  test("thumbnail 由文字 mask 渐隐，模糊层不填纸色横带", async () => {
+    const css = await Bun.file(new URL("../styles/note-paper.css", import.meta.url)).text();
+
+    expect(css).toContain("--thumbnail-fade-depth: 4rem");
+    expect(css).toContain("rgb(0 0 0 / 72%) calc(100% - 2.15rem)");
+    expect(css).toContain("background: transparent");
+    expect(css).not.toContain("color-mix(in srgb, var(--paper-surface) 94%, transparent)");
+  });
+
   test("两个 variant 共用同一纸面骨架，只有 data-variant 不同", () => {
     const thumbnail = renderToStaticMarkup(
       <NotePaper excerpt="少则得，多则惑。" title="少则得" variant="thumbnail" />,

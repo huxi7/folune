@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun test、react-dom/server、@xyflow/react 的 ReactFlowProvider、canvasActions Context 与真实 CanvasCardNode
- * [OUTPUT]: 锁定 memo_ref 纵向卡片的中心重合关系锚点、嵌套纸张结构、渐隐摘录、常驻展开入口、固定高度元信息行，以及空/超长/墓碑/回收站/漂移五种数据下的结构稳定
+ * [OUTPUT]: 锁定 memo_ref 纵向卡片的中心重合关系注册 Handle、嵌套纸张结构、渐隐摘录、常驻展开入口、固定高度元信息行，以及空/超长/墓碑/回收站/漂移五种数据下的结构稳定
  * [POS]: KnowledgeCanvas 的卡片结构回归门禁；只断言真实组件产出的 DOM 契约，hover/焦点浮现由 CSS 承担并在浏览器验收
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */

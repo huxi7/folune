@@ -1,21 +1,90 @@
 /**
- * [INPUT]: 依赖 @xyflow/react EdgeProps/EdgeLabelRenderer、CanvasFlowEdge 人工/AI 来源、共享 Cord/几何、设计系统图标与 canvasActions
- * [OUTPUT]: 对外提供 CanvasCordEdge 中心连心 Cord/宽命中区，以及可独立验证、支持悬浮预览/点击保持/键盘聚焦的 CanvasEdgeReasonInspector 完整理由检查器与删除入口
- * [POS]: KnowledgeCanvas 的关系交互层；可见线继续复用 Cord Signature，节点中心间的内部线段由卡片表面遮住，关系中点以安静圆点保证人工与 AI 理由始终可发现且可读
+ * [INPUT]: 依赖 @xyflow/react EdgeProps/EdgeLabelRenderer/useInternalNode、CanvasFlowEdge/CanvasFlowNode、共享 Cord/矩形射线几何、设计系统图标与 canvasActions
+ * [OUTPUT]: 对外提供 CanvasCordEdge 动态浮动 Cord/宽命中区、canvasFloatingCurve 纯几何适配器，以及支持悬浮预览/点击保持/键盘聚焦的 CanvasEdgeReasonInspector 完整理由检查器与删除入口
+ * [POS]: KnowledgeCanvas 的关系交互层；每次节点移动都从两张卡片的真实中心连线求边界交点，彻底绕过固定左右 Handle 坐标，关系中点以安静圆点保证人工与 AI 理由始终可发现且可读
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
-import { EdgeLabelRenderer, type EdgeProps } from "@xyflow/react";
+import {
+  EdgeLabelRenderer,
+  useInternalNode,
+  type EdgeProps,
+} from "@xyflow/react";
 import { useId, useState, type CSSProperties } from "react";
 
-import type { CanvasFlowEdge } from "../../pages/canvasPresentation";
+import type {
+  CanvasFlowEdge,
+  CanvasFlowNode,
+} from "../../pages/canvasPresentation";
 import { InfoIcon, TrashIcon } from "../../shared/design-system/icons";
 import { Cord } from "../Cord";
-import { cordCurveBetween } from "../cordGeometry";
+import {
+  cordCurveBetween,
+  type CordBox,
+  type CordCurve,
+} from "../cordGeometry";
 import { useCanvasActions } from "./canvasActions";
 
 /** 端点是坐标而非矩形，故给 Cord 一个零尺寸盒: 边缘锚点退化为该点本身 */
 const pointBox = (x: number, y: number) => ({ height: 0, width: 0, x, y });
+
+type CanvasNodeGeometry = {
+  height?: number;
+  internals: { positionAbsolute: { x: number; y: number } };
+  measured: { height?: number; width?: number };
+  width?: number;
+};
+
+type CanvasEdgeFallback = {
+  sourceX: number;
+  sourceY: number;
+  targetX: number;
+  targetY: number;
+};
+
+const canvasNodeBox = (
+  node: CanvasNodeGeometry | undefined,
+): CordBox | null => {
+  const width = node?.measured.width ?? node?.width;
+  const height = node?.measured.height ?? node?.height;
+  const x = node?.internals.positionAbsolute.x;
+  const y = node?.internals.positionAbsolute.y;
+  if (
+    width === undefined
+    || height === undefined
+    || x === undefined
+    || y === undefined
+    || !Number.isFinite(width)
+    || !Number.isFinite(height)
+    || !Number.isFinite(x)
+    || !Number.isFinite(y)
+    || width <= 0
+    || height <= 0
+  ) {
+    return null;
+  }
+  return { height, width, x, y };
+};
+
+/**
+ * React Flow 的 Handle 只保留图关系注册职责，真实端点由两个节点中心的射线与
+ * 各自矩形边界求交。节点拖到任意象限时，端点因此会自然切换到上/右/下/左边。
+ */
+export const canvasFloatingCurve = (
+  sourceNode: CanvasNodeGeometry | undefined,
+  targetNode: CanvasNodeGeometry | undefined,
+  fallback: CanvasEdgeFallback,
+): CordCurve => {
+  const sourceBox = canvasNodeBox(sourceNode);
+  const targetBox = canvasNodeBox(targetNode);
+  return sourceBox !== null && targetBox !== null
+    ? cordCurveBetween(sourceBox, targetBox, { mode: "radial" })
+    : cordCurveBetween(
+      pointBox(fallback.sourceX, fallback.sourceY),
+      pointBox(fallback.targetX, fallback.targetY),
+      { mode: "radial" },
+    );
+};
 
 type CanvasEdgeReasonInspectorProps = {
   createdBy: "ai" | "user";
@@ -103,27 +172,32 @@ export function CanvasCordEdge({
   data,
   id,
   selected,
+  source,
   sourceX,
   sourceY,
+  target,
   targetX,
   targetY,
 }: EdgeProps<CanvasFlowEdge>) {
   const actions = useCanvasActions();
+  const sourceNode = useInternalNode<CanvasFlowNode>(source);
+  const targetNode = useInternalNode<CanvasFlowNode>(target);
   const rationale = data?.rationale?.trim() ?? "";
   const createdBy = data?.createdBy ?? "user";
-  const curve = cordCurveBetween(
-    pointBox(sourceX, sourceY),
-    pointBox(targetX, targetY),
-    { mode: "radial" },
-  );
+  const curve = canvasFloatingCurve(sourceNode, targetNode, {
+    sourceX,
+    sourceY,
+    targetX,
+    targetY,
+  });
 
   return (
     <>
       <Cord
-        from={pointBox(sourceX, sourceY)}
+        from={pointBox(curve.from.x, curve.from.y)}
         mode="radial"
         taper="both"
-        to={pointBox(targetX, targetY)}
+        to={pointBox(curve.to.x, curve.to.y)}
         tone="relation"
         variant="solid"
       />

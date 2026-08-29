@@ -4,18 +4,19 @@
 成员清单
 CLAUDE.md: 记录 Canvas V2 交互子域成员、职责边界与 GEB 回环协议
 KnowledgeCanvas.tsx: Canvas V2 会话内容根；始终挂载受控 React Flow，协调空间文字、连接/删除、拖拽/缩放、Preview、显式 AI 增量拓展与保存状态，已有自由文字清空后复用 remove_node intent 删除而新建空白仍仅取消，并把「加入当前画布」登记给全局 Command Palette 而不自持第二套 Picker
-CanvasCardNode.tsx: 280x360 纵向 memo_ref 笔记卡与无表面的 native 空间文字节点；关系 source/target Handle 在卡片中心重合并由卡片表面遮住内部线段，卡片内嵌共享 NotePaper thumbnail、只读快照标题/摘录并以短距离模糊渐隐过渡到固定高度元信息行，展开与上下文操作常驻 DOM 只靠透明度浮现；自由文字编辑态稳定聚焦且完全无边框，点出后经同一提交函数保存，选中才以等距紧贴内容的四角边界按 text_scale 缩放
-CanvasCardNode.test.tsx: 卡片结构回归门禁，锁定中心重合关系锚点、嵌套纸张骨架、常驻展开入口、空/超长/墓碑/回收站/漂移五种数据下骨架逐字一致
+CanvasCardNode.tsx: 280x360 纵向 memo_ref 笔记卡与无表面的 native 空间文字节点；source/target Handle 只登记关系身份，真实端点交给 CanvasCordEdge 读取节点矩形求解；卡片内嵌共享 NotePaper thumbnail、只读快照标题/摘录并以连续透明度与失焦渐隐过渡到固定高度元信息行，展开与上下文操作常驻 DOM 只靠透明度浮现；自由文字编辑态稳定聚焦且完全无边框，点出后经同一提交函数保存，选中才以等距紧贴内容的四角边界按 text_scale 缩放
+CanvasCardNode.test.tsx: 卡片结构回归门禁，锁定中心重合关系注册 Handle、嵌套纸张骨架、常驻展开入口、空/超长/墓碑/回收站/漂移五种数据下骨架逐字一致
 CanvasTitle.tsx: Canvas 顶层安静标题；默认 Canvas 的标题只读跟随来源笔记，并且它本身就是回到原文的入口，独立 Canvas 才能在此原地重命名，长标题截断并以 tooltip 给出全名
 CanvasControls.tsx: React Flow 底部中央无状态命令条，提供加入、fit、缩放与操作说明，不读写图数据
 CanvasPersistenceStatus.tsx: 显示保存、恢复、冲突和显式重试状态，只解释协调器事实，不参与排队
 CanvasPreviewOverlay.tsx: 不卸载 Canvas 的小开本 Paper 预览层；复用 Dialog bare 表面获得 Esc/遮罩/滚动锁定/焦点归还，中央只出现一张比写作区更小、以均匀柔影悬浮的 NotePaper reader，纸内只有正文；关闭与“编辑原文”住在与纸顶右角对齐的纸外 32px 圆形工具列（窄屏 44px 横排），因此正文再长也不会把任何入口推出视野；用户明确预览时才按 ID 读正文，“编辑原文”由外层 flush 后导航
 CanvasPreviewOverlay.test.tsx: 预览结构回归门禁，锁定 bare 表面、单一 reader 纸，以及关闭/编辑原文一律不在纸内
-CanvasCordEdge.tsx: 关系交互层；CanvasCordEdge 复用 Cord Signature 并以节点中心为端点，CanvasEdgeReasonInspector 在曲线中点常驻安静查看圆点，人工/AI 来源分别标注，hover、选中、点击保持与键盘聚焦均可完整查看理由及删除关系
+CanvasCordEdge.tsx: 关系交互层；CanvasCordEdge 通过 useInternalNode 持续读取两张卡片的绝对矩形，以中心射线求随拖拽换边的浮动端点并复用 Cord Signature，CanvasEdgeReasonInspector 在曲线中点常驻安静查看圆点，人工/AI 来源分别标注，hover、选中、点击保持与键盘聚焦均可完整查看理由及删除关系
+CanvasCordEdge.test.ts: 浮动端点纯几何回归门禁，锁定目标跨象限拖动时端点从左右边切换到上下边，并覆盖节点尚未测量时的安全兜底
 canvasActions.tsx: Preview、AI、连接、自由文字编辑/缩放和移除的稳定 Context 通道，使 React Flow data 保持纯可序列化事实
 spatialTextGeometry.ts: 空间文字宽高、内容基准尺寸与 text_scale（0.25–8）的约束及等比缩放纯函数，隔离对象自身缩放和 Canvas viewport zoom
 spatialTextGeometry.test.ts: 空间文字几何不变量测试，覆盖基准边界、拖拽等比换算和缩放上下限
-KnowledgeCanvas.interaction.test.tsx: 真实组件纵向交互测试；覆盖 Pane 双击、textarea 聚焦/点出提交、WAL/协调器/mutation、再次编辑、已有文字清空删除、四角边界、中心关系锚点与理由的键盘/保持查看，以及新建空白/Esc 取消
+KnowledgeCanvas.interaction.test.tsx: 真实组件纵向交互测试；覆盖 Pane 双击、textarea 聚焦/点出提交、WAL/协调器/mutation、再次编辑、已有文字清空删除、四角边界、关系注册与理由的键盘/保持查看，以及新建空白/Esc 取消；浮动端点几何由 CanvasCordEdge.test.ts 单独锁定
 useCanvasSessionCoordinator.ts: 读取 Canvas、建立 Store 会话、恢复 IndexedDB WAL、注册 pagehide 与 flush 控制的基础设施 Hook，隔离网络/计时器和交互组件
 index.ts: 模块稳定出口，隔离 WorkspaceAuxViews 与内部文件布局
 

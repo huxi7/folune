@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 React ReactNode 与 styles/note-paper.css 的 .note-paper thumbnail/reader 纸面契约
- * [OUTPUT]: 对外提供共享 NotePaper 纸面原语、NotePaperVariant 类型；thumbnail 用纯文本摘录渐隐，reader 承载完整正文并自身滚动
+ * [OUTPUT]: 对外提供共享 NotePaper 纸面原语、NotePaperVariant 类型；thumbnail 用纯文本摘录配合 CSS 连续失焦渐隐，reader 承载完整正文并自身滚动
  * [POS]: app/src/widgets 的纸张视觉单一入口；Canvas 卡片缩略与全尺寸预览共用同一纸面，任何新的纸张表现都必须扩展 variant 而不是另写一套样式
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */

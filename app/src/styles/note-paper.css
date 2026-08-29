@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 index.css 的 Paper 语义 token（paper-surface/paper-edge/paper-foreground/paper-shadow/paper-float-shadow/paper-max-width）、font-serif、4px 空间基线与同心曲率阶梯
- * [OUTPUT]: 对外提供唯一共享纸面 .note-paper 及 thumbnail/reader 两个 variant；thumbnail 以短距离透明度与背景模糊双层收尾且不提前吞字，reader 是按 ISO 216 的 1:√2 立起的 A4 开本、以渐变柔影悬浮，纸面静止而正文在纸内滚动
+ * [OUTPUT]: 对外提供唯一共享纸面 .note-paper 及 thumbnail/reader 两个 variant；thumbnail 以文字透明度连续衰减叠加无填色渐进失焦且不形成横向色带，reader 是按 ISO 216 的 1:√2 立起的 A4 开本、以渐变柔影悬浮，纸面静止而正文在纸内滚动
  * [POS]: app/src/styles 的纸张视觉单一真相；Canvas 卡片缩略与全尺寸阅读共用同一套纸面规则，禁止任何组件再复制近似 Paper 样式
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -76,35 +76,65 @@
     line-height: 1.34;
   }
   .note-paper[data-variant="thumbnail"] .note-paper-body {
+    --thumbnail-fade-depth: 4rem;
     position: relative;
     min-height: 0;
     flex: 1;
     overflow: hidden;
     font-size: var(--type-label);
     line-height: 1.75;
+    /* 透明度直接作用于文字本身：连续五段衰减，不再靠白色覆盖层假装渐隐。 */
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      #000 0,
+      #000 calc(100% - var(--thumbnail-fade-depth)),
+      rgb(0 0 0 / 94%) calc(100% - 3.1rem),
+      rgb(0 0 0 / 72%) calc(100% - 2.15rem),
+      rgb(0 0 0 / 34%) calc(100% - 0.9rem),
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      #000 0,
+      #000 calc(100% - var(--thumbnail-fade-depth)),
+      rgb(0 0 0 / 94%) calc(100% - 3.1rem),
+      rgb(0 0 0 / 72%) calc(100% - 2.15rem),
+      rgb(0 0 0 / 34%) calc(100% - 0.9rem),
+      transparent 100%
+    );
   }
   /*
-   * 只在最后约两行叠一层渐变磨砂：正文仍然排到纸张底部，再逐步失焦并融进纸色。
-   * 旧实现把整个 body 做 alpha mask，会让最后两行直接消失，视觉上反而像正文提前断掉。
+   * 失焦层完全不填纸色，只借透明遮罩把 blur 从 0 连续混到终点。这样它不会再
+   * 形成截图里那条可见的白色横带；即使浏览器不支持 backdrop-filter，上面的文字
+   * mask 仍提供完整的平滑渐隐。
    */
   .note-paper[data-variant="thumbnail"] .note-paper-body::after {
     position: absolute;
     right: 0;
     bottom: 0;
     left: 0;
-    height: 2.85rem;
-    background: linear-gradient(
-      to bottom,
-      transparent 0%,
-      color-mix(in srgb, var(--paper-surface) 22%, transparent) 42%,
-      color-mix(in srgb, var(--paper-surface) 94%, transparent) 100%
-    );
+    height: var(--thumbnail-fade-depth);
+    background: transparent;
     content: "";
     pointer-events: none;
-    -webkit-backdrop-filter: blur(1.8px);
-    backdrop-filter: blur(1.8px);
-    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 56%);
-    mask-image: linear-gradient(to bottom, transparent 0%, #000 56%);
+    -webkit-backdrop-filter: blur(1.35px);
+    backdrop-filter: blur(1.35px);
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      rgb(0 0 0 / 8%) 22%,
+      rgb(0 0 0 / 28%) 46%,
+      rgb(0 0 0 / 58%) 70%,
+      #000 100%
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      rgb(0 0 0 / 8%) 22%,
+      rgb(0 0 0 / 28%) 46%,
+      rgb(0 0 0 / 58%) 70%,
+      #000 100%
+    );
   }
 
   /* ------------------------------------------------------------------------ */

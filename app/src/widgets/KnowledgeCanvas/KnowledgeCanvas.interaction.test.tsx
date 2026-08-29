@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 happy-dom、Testing Library、真实 KnowledgeCanvas/React Flow 节点层与可观测 Canvas 协调器替身
- * [OUTPUT]: 覆盖 Pane 双击到 textarea、内容边界提交、再次编辑不跳变、清空已有文字即删除、四角等比缩放、中心关系锚点与理由的键盘/保持查看、统一持久化，以及新建空白和 Esc 取消不入队的交互回归测试
+ * [OUTPUT]: 覆盖 Pane 双击到 textarea、内容边界提交、再次编辑不跳变、清空已有文字即删除、四角等比缩放、关系注册与理由的键盘/保持查看、统一持久化，以及新建空白和 Esc 取消不入队的交互回归测试
  * [POS]: KnowledgeCanvas 的浏览器 DOM 纵向交互测试；不绕过组件去单测 reducer/RPC，专门锁定 selectionOnDrag 下空间文字从入口到 WAL/协调器/mutation 的完整链路
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -266,7 +266,7 @@ const setMeasuredTextSize = (width: number, height: number) => {
 };
 
 describe("KnowledgeCanvas 自由文字纵向交互", () => {
-  test("关系从卡片中心锚定，AI 理由可聚焦查看并点击保持", async () => {
+  test("两张卡片保留关系注册，AI 理由可聚焦查看并点击保持", async () => {
     useCanvasWorkspaceStore.getState().replaceServer(relationCanvas(), []);
     renderCanvas();
 
