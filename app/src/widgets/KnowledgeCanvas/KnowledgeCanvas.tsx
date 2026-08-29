@@ -445,7 +445,18 @@ export function KnowledgeCanvas({
           },
         });
       }
+      /*
+       * 连接落在一张已经在画布上的笔记上时, 要给用户看的是刚刚建立的这条关系,
+       * 因此来源与目标一起进视野 —— 只居中目标会把来源推出屏幕, 而宪法 §10 要求
+       * 这条流程里来源节点必须清楚可见。两张卡片可能离得很远, 不重新取景的话
+       * 关系建好了却在屏幕外, 用户看到的是"什么也没发生"。
+       */
       selectOnly([existing.id]);
+      instanceRef.current?.fitView({
+        duration: 220,
+        nodes: [{ id: source.id }, { id: existing.id }],
+        padding: 0.8,
+      });
       startConnection(null);
       return;
     }

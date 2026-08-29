@@ -3,7 +3,7 @@
 
 成员清单
 CLAUDE.md: 记录 Canvas V2 交互子域成员、职责边界与 GEB 回环协议
-KnowledgeCanvas.tsx: Canvas V2 会话内容根；始终挂载受控 React Flow，协调空间文字、连接/删除、拖拽/缩放、Preview、显式 AI 增量拓展与保存状态。键盘加速器在此收口：Enter 预览、Delete 移除、Escape 逐层收束、⌘E 从选中节点拓展（无选择只给轻提示，绝不发请求），全部先让路给输入框与自由文字编辑态，已有自由文字清空后复用 remove_node intent 删除而新建空白仍仅取消，并把「加入当前画布」登记给全局 Command Palette 而不自持第二套 Picker。选择与几何在此彻底分家：节点几何只跟随文档，选择只有 React Flow 一个所有者、canvasWorkspaceStore 只是它的镜像，程序化改选择一律经 selectOnly 写进它的节点；入口聚焦节点是唯一一次外部写入，每张画布只交一次。一次拖拽手势的整组最终坐标经 enqueueMany 原子回写，抓卡片拖和抓成组框拖都走这一条
+KnowledgeCanvas.tsx: Canvas V2 会话内容根；始终挂载受控 React Flow，协调空间文字、连接/删除、拖拽/缩放、Preview、显式 AI 增量拓展与保存状态。键盘加速器在此收口：Enter 预览、Delete 移除、Escape 逐层收束、⌘E 从选中节点拓展（无选择只给轻提示，绝不发请求），全部先让路给输入框与自由文字编辑态，已有自由文字清空后复用 remove_node intent 删除而新建空白仍仅取消，并把「加入当前画布」登记给全局 Command Palette 而不自持第二套 Picker；连接进行中加入一张已在画布上的笔记时，来源与目标一起重新取景，否则关系建好了却在屏幕外（宪法 §10 要求这条流程里来源清楚可见）。选择与几何在此彻底分家：节点几何只跟随文档，选择只有 React Flow 一个所有者、canvasWorkspaceStore 只是它的镜像，程序化改选择一律经 selectOnly 写进它的节点；入口聚焦节点是唯一一次外部写入，每张画布只交一次。一次拖拽手势的整组最终坐标经 enqueueMany 原子回写，抓卡片拖和抓成组框拖都走这一条
 CanvasCardNode.tsx: 280x360 纵向 memo_ref 笔记卡与无表面的 native 空间文字节点；source/target Handle 只登记关系身份，真实端点交给 CanvasCordEdge 读取节点矩形求解；卡片内嵌共享 NotePaper thumbnail、只读快照标题/摘录并以连续透明度与失焦渐隐过渡到固定高度元信息行，展开与上下文操作常驻 DOM 只靠透明度浮现；自由文字编辑态稳定聚焦且完全无边框，点出后经同一提交函数保存，选中才以等距紧贴内容的四角边界按 text_scale 缩放
 CanvasCardNode.test.tsx: 卡片结构回归门禁，锁定中心重合关系注册 Handle、嵌套纸张骨架、常驻展开入口、空/超长/墓碑/回收站/漂移五种数据下骨架逐字一致
 CanvasTitle.tsx: Canvas 顶层安静标题；两种画布共用同一个可改名分支，零特例，长标题截断并以 tooltip 给出全名。回到来源笔记不在这里——它是画布上那张 memo_ref 卡片的职责，摘掉那张卡片画布就自动转为 standalone
