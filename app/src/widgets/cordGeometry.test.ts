@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 bun:test 与 widgets/cordGeometry 的纯几何导出
- * [OUTPUT]: 对外提供 cordBow/cordAnchor/cordSide/cordCurve/cordCurveBetween 的回归断言，含以独立三次贝塞尔求值反证 De Casteljau 中点切分，以及绕行 360° 证明 radial 弯度连续、轴向归零、对角成 S
+ * [OUTPUT]: 对外提供 cordBow/cordAnchor/cordSide/cordCurve/cordCurveBetween 的回归断言，含以独立三次贝塞尔求值反证 De Casteljau 中点切分，以及绕行 360° 证明 radial 弯度连续、轴向归零、对角成 S，与圆角锚点落在弧上且滑动无跳变
  * [POS]: app/src/widgets 的 Cord 几何回归测试，不启动 DOM、SVG 或 Motion；连线的正确性在此定型，渲染层只消费其结果
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -101,6 +101,62 @@ describe("cordAnchor / cordSide", () => {
     const anchor = cordAnchor(box, { x: 50, y: 20 });
     expect(anchor).toEqual({ x: 50, y: 20 });
     expect(Number.isNaN(anchor.x)).toBe(false);
+  });
+});
+
+describe("cordAnchor 圆角边界", () => {
+  const CARD = { height: 360, radius: 16, width: 280, x: 0, y: 0 };
+  const center = { x: 140, y: 180 };
+  const at = (degrees: number) => {
+    const radians = (degrees * Math.PI) / 180;
+    return cordAnchor(CARD, {
+      x: center.x + Math.cos(radians) * 900,
+      y: center.y + Math.sin(radians) * 900,
+    });
+  };
+
+  test("平直边上的锚点与尖角矩形完全一致", () => {
+    // 四正方向由 cos/sin 生成, 会带浮点尾巴, 因此比较到 6 位
+    for (const [degrees, expected] of [
+      [0, { x: 280, y: 180 }],
+      [90, { x: 140, y: 360 }],
+      [180, { x: 0, y: 180 }],
+      [270, { x: 140, y: 0 }],
+    ] as const) {
+      const anchor = at(degrees);
+      expect(anchor.x).toBeCloseTo(expected.x, 6);
+      expect(anchor.y).toBeCloseTo(expected.y, 6);
+    }
+  });
+
+  test("正对着角的方向落在圆角的弧上，而不是被削掉的尖角上", () => {
+    // 卡片右下角: 尖角在 (280,360)，圆心在 (264,344)
+    const corner = at((Math.atan2(180, 140) * 180) / Math.PI);
+    expect(Math.hypot(corner.x - 264, corner.y - 344)).toBeCloseTo(16, 6);
+    // 因此端点比尖角更靠里，不会悬在可见轮廓之外
+    expect(corner.x).toBeLessThan(280);
+    expect(corner.y).toBeLessThan(360);
+  });
+
+  test("省略 radius 时仍然是尖角矩形，行为不变", () => {
+    const sharp = cordAnchor(
+      { height: 360, width: 280, x: 0, y: 0 },
+      { x: center.x + 900, y: center.y + 1157.14 },
+    );
+    expect(sharp.x).toBeCloseTo(280, 1);
+    expect(sharp.y).toBeCloseTo(360, 1);
+  });
+
+  test("绕行 360°：锚点沿边界连续滑动，没有任何一步跳", () => {
+    let previous = at(0);
+    let worst = 0;
+    for (let degrees = 1; degrees <= 360; degrees += 1) {
+      const current = at(degrees);
+      worst = Math.max(worst, Math.hypot(current.x - previous.x, current.y - previous.y));
+      previous = current;
+    }
+    // 角落附近本来就走得快(约 6px/度)；把锚点夹在边中段那种做法会在此跳 ~68px
+    expect(worst).toBeLessThan(10);
   });
 });
 

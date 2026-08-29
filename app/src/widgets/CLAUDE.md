@@ -29,8 +29,8 @@ PanelResizeHandle.tsx: 左右分栏拖拽手柄，支持 Pointer 拖拽、方向
 ArchiveCord.tsx: react-archer 5.1 几何适配层；提供稳定隔离源 ID、Paper/树 DOM 锚点、一次绘制后静止曲线，以及 resize/scroll/目录 Mutation 的刷新闭环
 archiveCordPolicy.ts: Archive Cord 目标解析与宽屏可见性纯策略，优先目录、根级回退 memo，并在覆盖模式禁止假连线
 archiveCordPolicy.test.ts: 覆盖成功/撤销目标、根级回退、文件库关闭与小屏覆盖门禁
-cordGeometry.ts: Cord 连线几何内核；提供边缘锚点、距离自适应弯度、三次贝塞尔与 De Casteljau 中点切分，两段子曲线同以中点为起点以支撑「光自中间淌向两端」。radial 模式的弯度是 bow·sin(2θ) 的反对称法向偏移（展开即 2·dx·dy/L²，无三角函数、无扇区分支）：水平/垂直对齐时归零成直线，四条 45° 对角线最弯且是两个弯的 S，绕行 360° 只有连续变形
-cordGeometry.test.ts: 以独立三次贝塞尔求值反证中点切分，并覆盖四向边缘锚点、重合端点不产 NaN 与两位小数收敛；另以「相对自身弦的有符号法向偏移」为形状描述子绕行 360°，逐度证明弯度无跳变（1° 内形变 < 2px）且恰好在四条轴上取直
+cordGeometry.ts: Cord 连线几何内核；提供边缘锚点（CordBox 声明 radius 即按圆角矩形求交：射线落在四角那一段时改与该角的圆相交，与平直边在切点处同解，因此绕卡片一圈连续滑动）、距离自适应弯度、三次贝塞尔与 De Casteljau 中点切分，两段子曲线同以中点为起点以支撑「光自中间淌向两端」。radial 模式的弯度是 bow·sin(2θ) 的反对称法向偏移（展开即 2·dx·dy/L²，无三角函数、无扇区分支）：水平/垂直对齐时归零成直线，四条 45° 对角线最弯且是两个弯的 S，绕行 360° 只有连续变形
+cordGeometry.test.ts: 以独立三次贝塞尔求值反证中点切分，并覆盖四向边缘锚点、圆角锚点确实落在弧上且绕行 360° 每度位移有界（夹到边中段那种做法会在角上跳 ~68px）、重合端点不产 NaN 与两位小数收敛；另以「相对自身弦的有符号法向偏移」为形状描述子绕行 360°，逐度证明弯度无跳变（1° 内形变 < 2px）且恰好在四条轴上取直
 Cord.tsx: 共享连线 Signature 渲染层；粗细沿路径恒定是 SVG 硬限制，两头收细由 Cord 生成的沿线透明度渐变承担，虚线表 AI 临时推荐、实线表已确认关联，出场自绘与流光下沉 CSS 以避免每帧 React 更新
 EdgeDock.tsx: 文件库/AI 共用的 Stage 关闭态 Ghost 图标入口，桌面 32px、窄屏 44px，静止无背景/描边/文字且不使用共享 layoutId；Panel 关闭入口由各自 Header 内部拥有
 PaperSurface.tsx: 816px Paper Signature 边界，拥有非对称 Paper 阴影、Archive Port 与只替换内容不重挂载编辑会话的内部过渡

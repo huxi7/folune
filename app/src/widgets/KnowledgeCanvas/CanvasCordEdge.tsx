@@ -28,7 +28,15 @@ import { useCanvasActions } from "./canvasActions";
 /** 端点是坐标而非矩形，故给 Cord 一个零尺寸盒: 边缘锚点退化为该点本身 */
 const pointBox = (x: number, y: number) => ({ height: 0, width: 0, x, y });
 
+/*
+ * 卡片的可见圆角 = knowledge-canvas.css 里 .canvas-card 的 --radius-panel(16px)。
+ * 端点必须按这个圆角求交, 否则朝对角方向时它会落在被圆角削掉的那个尖角上, 露出
+ * 悬空的一小截。native 空间文字没有表面, 保持尖角 bbox。
+ */
+const MEMO_CARD_CORNER_RADIUS = 16;
+
 type CanvasNodeGeometry = {
+  data?: { kind?: string };
   height?: number;
   internals: { positionAbsolute: { x: number; y: number } };
   measured: { height?: number; width?: number };
@@ -63,7 +71,13 @@ const canvasNodeBox = (
   ) {
     return null;
   }
-  return { height, width, x, y };
+  return {
+    height,
+    radius: node?.data?.kind === "memo_ref" ? MEMO_CARD_CORNER_RADIUS : 0,
+    width,
+    x,
+    y,
+  };
 };
 
 /**

@@ -11,8 +11,8 @@ CanvasControls.tsx: React Flow 底部中央无状态命令条，提供加入、f
 CanvasPersistenceStatus.tsx: 显示保存、恢复、冲突和显式重试状态，只解释协调器事实，不参与排队
 CanvasPreviewOverlay.tsx: 不卸载 Canvas 的小开本 Paper 预览层；复用 Dialog bare 表面获得 Esc/遮罩/滚动锁定/焦点归还，中央只出现一张比写作区更小、以均匀柔影悬浮的 NotePaper reader，纸内只有正文；关闭与“编辑原文”住在与纸顶右角对齐的纸外 32px 圆形工具列（窄屏 44px 横排），因此正文再长也不会把任何入口推出视野；用户明确预览时才按 ID 读正文，“编辑原文”由外层 flush 后导航
 CanvasPreviewOverlay.test.tsx: 预览结构回归门禁，锁定 bare 表面、单一 reader 纸，以及关闭/编辑原文一律不在纸内
-CanvasCordEdge.tsx: 关系交互层；CanvasCordEdge 通过 useInternalNode 持续读取两张卡片的绝对矩形，以中心射线求随拖拽换边的浮动端点并复用 Cord Signature 的 radial 弯度律，CanvasEdgeReasonInspector 在曲线中点常驻安静查看圆点。线本身就是理由的指向面：18px 宽命中区接管整线 hover，指针移向中点标记时不熄灭（交接不闪），中点标记只是它常驻可见的把手与键盘入口；人工/AI 来源分别标注，整线 hover、中点 hover、选中、点击保持与键盘聚焦均可完整查看理由及删除关系
-CanvasCordEdge.test.ts: 浮动端点纯几何回归门禁，锁定目标跨象限拖动时端点从左右边切换到上下边、轴向对齐取直而对角线两个控制点分居弦两侧（S），并覆盖节点尚未测量时的安全兜底
+CanvasCordEdge.tsx: 关系交互层；CanvasCordEdge 通过 useInternalNode 持续读取两张卡片的绝对矩形，以中心射线求随拖拽换边的浮动端点并复用 Cord Signature 的 radial 弯度律，memo_ref 另外带上与 .canvas-card 一致的 16px 圆角（native 空间文字没有表面故不带），使端点不再落在被圆角削掉的尖角上悬空，CanvasEdgeReasonInspector 在曲线中点常驻安静查看圆点。线本身就是理由的指向面：18px 宽命中区接管整线 hover，指针移向中点标记时不熄灭（交接不闪），中点标记只是它常驻可见的把手与键盘入口；人工/AI 来源分别标注，整线 hover、中点 hover、选中、点击保持与键盘聚焦均可完整查看理由及删除关系
+CanvasCordEdge.test.ts: 浮动端点纯几何回归门禁，锁定目标跨象限拖动时端点从左右边切换到上下边、轴向对齐取直而对角线两个控制点分居弦两侧（S）、卡片朝对角方向的端点收进圆角弧上，并覆盖节点尚未测量时的安全兜底
 canvasActions.tsx: Preview、AI、连接、自由文字编辑/缩放和移除的稳定 Context 通道，使 React Flow data 保持纯可序列化事实
 spatialTextGeometry.ts: 空间文字宽高、内容基准尺寸与 text_scale（0.25–8）的约束及等比缩放纯函数，隔离对象自身缩放和 Canvas viewport zoom
 spatialTextGeometry.test.ts: 空间文字几何不变量测试，覆盖基准边界、拖拽等比换算和缩放上下限

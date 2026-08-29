@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 无外部依赖的纯几何计算，不访问 DOM、React 或 Motion
- * [OUTPUT]: 对外提供 CordPoint/CordBox/CordCurve 类型、cordAnchor 边缘锚点、cordCurve 三次贝塞尔与中点切分、cordBow 距离自适应弯度；radial 模式的弯度按 sin(2θ) 反对称分布，轴向对齐即直线、对角线最弯且随角度 360° 连续
+ * [OUTPUT]: 对外提供 CordPoint/CordBox/CordCurve 类型、cordAnchor 边缘锚点（声明 radius 即按圆角矩形求交）、cordCurve 三次贝塞尔与中点切分、cordBow 距离自适应弯度；radial 模式的弯度按 sin(2θ) 反对称分布，轴向对齐即直线、对角线最弯且随角度 360° 连续
  * [POS]: app/src/widgets 的 Cord Signature 连线几何内核；Cord.tsx 只负责渲染与动效，一切坐标与路径字符串在此确定，因此可脱离浏览器单测
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -12,6 +12,11 @@ export type CordBox = {
   width: number;
   x: number;
   y: number;
+  /**
+   * 这张盒子可见的圆角半径（px），省略即按尖角矩形求交。
+   * 卡片是平滑圆角，尖角矩形的角落在可见轮廓之外，端点会因此悬空一小截。
+   */
+  radius?: number;
 };
 
 export type CordSide = "bottom" | "left" | "right" | "top";
@@ -75,7 +80,13 @@ export const cordBow = (
   return bow * ratio;
 };
 
-/** 取 box 面向 toward 的那条边的中点；用于让线从卡片边缘而不是中心出发 */
+/**
+ * 取 box 边界上朝向 toward 的那个点；用于让线从卡片边缘而不是中心出发。
+ * 声明了 radius 就按圆角矩形求交：射线落在四个角的那一段时改与该角的圆相交。
+ *
+ * 两个分支在切点处给出同一个点（角上的圆与两条边相切），所以端点绕卡片一圈是
+ * 连续滑动的，没有任何角度会跳——只是经过圆角那段时滑得快一些。
+ */
 export const cordAnchor = (box: CordBox, toward: CordPoint): CordPoint => {
   const center = {
     x: box.x + box.width / 2,
@@ -93,14 +104,42 @@ export const cordAnchor = (box: CordBox, toward: CordPoint): CordPoint => {
   // 归一化到单位方块后比较，等价于判断射线先穿出竖边还是横边
   const horizontalDominant = halfHeight === 0
     || (halfWidth !== 0 && Math.abs(dx) / halfWidth >= Math.abs(dy) / halfHeight);
+  const scale = horizontalDominant
+    ? halfWidth / Math.abs(dx)
+    : halfHeight / Math.abs(dy);
+  const localX = horizontalDominant && dx === 0 ? 0 : dx * scale;
+  const localY = dy * scale;
 
-  if (horizontalDominant) {
-    const scale = halfWidth / Math.abs(dx);
-    return { x: center.x + dx * (dx === 0 ? 0 : scale), y: center.y + dy * scale };
+  const radius = Math.max(0, Math.min(box.radius ?? 0, halfWidth, halfHeight));
+  // 越过两条切线即落在圆角那一段；否则命中的是平直边，与尖角矩形完全一致
+  const onCorner = radius > 0
+    && Math.abs(localX) > halfWidth - radius
+    && Math.abs(localY) > halfHeight - radius;
+
+  if (onCorner) {
+    /*
+     * 与该角的圆求交: |t·d − c| = r 的较大根。中心一定在这个圆之外, 而圆角那段
+     * 弧的两端正是上面那两条切线, 所以落在这段扇形里的射线必然命中弧, 判别式
+     * 不会为负(仍夹一次 max(0) 防浮点)。
+     *
+     * 平滑圆角比正圆更“饱满”, 真实轮廓落在圆弧与尖角之间, 所以这里算出的端点
+     * 略微进到卡片底下。这是刻意的: 边层画在卡片之下, 进去看不见, 露在外面才
+     * 会留下悬空的一小截。
+     */
+    const cornerX = Math.sign(localX) * (halfWidth - radius);
+    const cornerY = Math.sign(localY) * (halfHeight - radius);
+    const squared = dx * dx + dy * dy;
+    const projection = dx * cornerX + dy * cornerY;
+    const discriminant = Math.max(
+      0,
+      projection * projection
+        - squared * (cornerX * cornerX + cornerY * cornerY - radius * radius),
+    );
+    const t = (projection + Math.sqrt(discriminant)) / squared;
+    return { x: center.x + dx * t, y: center.y + dy * t };
   }
 
-  const scale = halfHeight / Math.abs(dy);
-  return { x: center.x + dx * scale, y: center.y + dy * scale };
+  return { x: center.x + localX, y: center.y + localY };
 };
 
 export const cordSide = (box: CordBox, toward: CordPoint): CordSide => {

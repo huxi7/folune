@@ -16,6 +16,9 @@ const nodeAt = (x: number, y: number) => ({
   width: 280,
 });
 
+/** memo_ref 才有可见表面, 因此才带圆角; native 空间文字保持尖角 bbox */
+const cardAt = (x: number, y: number) => ({ ...nodeAt(x, y), data: { kind: "memo_ref" } });
+
 const fallback = {
   sourceX: 10,
   sourceY: 20,
@@ -70,5 +73,18 @@ describe("canvasFloatingCurve", () => {
     const [head, tail] = controlPointsOf(diagonal.d) as [number, number];
     expect(Math.abs(head)).toBeGreaterThan(3);
     expect(Math.sign(head)).not.toBe(Math.sign(tail));
+  });
+
+  test("卡片朝对角方向的端点收进圆角，不再落在被削掉的尖角上", () => {
+    // 正对着右下角的方向: 位移与半宽半高同比(140:180), 尖角矩形恰好命中角点
+    const diagonal = { x: 560, y: 720 };
+    const sharp = canvasFloatingCurve(nodeAt(0, 0), nodeAt(diagonal.x, diagonal.y), fallback);
+    const rounded = canvasFloatingCurve(cardAt(0, 0), cardAt(diagonal.x, diagonal.y), fallback);
+
+    // 尖角矩形把端点放在角点上; 圆角把它拉回弧上, 于是不会露在可见轮廓之外
+    expect(sharp.from).toEqual({ x: 280, y: 360 });
+    expect(rounded.from.x).toBeLessThan(280);
+    expect(rounded.from.y).toBeLessThan(360);
+    expect(Math.hypot(rounded.from.x - 264, rounded.from.y - 344)).toBeCloseTo(16, 6);
   });
 });
