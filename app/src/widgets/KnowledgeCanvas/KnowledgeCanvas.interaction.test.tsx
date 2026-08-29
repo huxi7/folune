@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 happy-dom、Testing Library、真实 KnowledgeCanvas/React Flow 节点层与可观测 Canvas 协调器替身
- * [OUTPUT]: 覆盖 Pane 双击到 textarea、内容边界提交、再次编辑不跳变、四角等比缩放、统一持久化，以及空白和 Esc 取消不入队的交互回归测试
+ * [OUTPUT]: 覆盖 Pane 双击到 textarea、内容边界提交、再次编辑不跳变、清空已有文字即删除、四角等比缩放、统一持久化，以及新建空白和 Esc 取消不入队的交互回归测试
  * [POS]: KnowledgeCanvas 的浏览器 DOM 纵向交互测试；不绕过组件去单测 reducer/RPC，专门锁定 selectionOnDrag 下空间文字从入口到 WAL/协调器/mutation 的完整链路
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -279,6 +279,50 @@ describe("KnowledgeCanvas 自由文字纵向交互", () => {
     expect(useCanvasWorkspaceStore.getState().document?.nodes).toHaveLength(1);
     expect(useCanvasWorkspaceStore.getState().document?.nodes[0]?.text)
       .toBe("修改后的正文");
+  });
+
+  test("已有自由文字清空后点击 Pane，经统一 mutation 删除节点", async () => {
+    const firstEditor = await openTextEditorFromPane();
+    fireEvent.change(firstEditor, { target: { value: "待删除文字" } });
+    setMeasuredTextSize(120, 48);
+    fireEvent.blur(firstEditor);
+    await coordinatorRef.current?.flush();
+    const nodeId = useCanvasWorkspaceStore.getState().document?.nodes[0]?.id;
+    if (nodeId === undefined) throw new Error("测试前置自由文字创建失败");
+
+    const textNode = await waitFor(() => {
+      const element = document.querySelector<HTMLElement>(".canvas-text-node");
+      expect(element).not.toBeNull();
+      return element!;
+    });
+    fireEvent.doubleClick(textNode, { button: 0 });
+    const editor = await waitFor(() => {
+      const element = document.querySelector<HTMLTextAreaElement>(
+        'textarea[aria-label="自由文字"]',
+      );
+      expect(element).not.toBeNull();
+      return element!;
+    });
+    fireEvent.change(editor, { target: { value: "" } });
+    const pane = document.querySelector<HTMLElement>(".react-flow__pane")!;
+    fireEvent.pointerDown(pane, { button: 0 });
+
+    await waitFor(() => expect(textNode.isConnected).toBe(false));
+    await waitFor(() => expect(walStorage.records.size).toBe(1));
+    expect([...walStorage.records.values()][0]?.intents[0]?.operation).toEqual({
+      node_id: nodeId,
+      type: "remove_node",
+    });
+    expect(await coordinatorRef.current?.flush()).toEqual({
+      persisted: true,
+      synced: true,
+    });
+    expect(mutationRequests).toHaveLength(2);
+    expect(mutationRequests[1]?.operations).toEqual([{
+      node_id: nodeId,
+      type: "remove_node",
+    }]);
+    expect(useCanvasWorkspaceStore.getState().document?.nodes).toHaveLength(0);
   });
 
   test("选中自由文字只渲染四个角点，不产生侧边缩放控件", async () => {

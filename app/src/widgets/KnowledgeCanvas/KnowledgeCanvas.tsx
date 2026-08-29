@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 @xyflow/react v12 的 Pane 指针/坐标协议、Canvas Chat、useCanvasSessionCoordinator、canvasWorkspaceStore、空间文字几何、纯投影/增量布局、memo document Store 与本地设计系统
- * [OUTPUT]: 对外提供始终挂载真实 React Flow 的 Canvas V2：受控节点/边/视口、空白 Pane 双击空间文字、向全局 Command Palette 登记"加入当前画布"、连接、Preview、AI 增量拓展和可靠保存状态
+ * [OUTPUT]: 对外提供始终挂载真实 React Flow 的 Canvas V2：受控节点/边/视口、空白 Pane 双击空间文字、清空已有文字即删除、向全局 Command Palette 登记"加入当前画布"、连接、Preview、AI 增量拓展和可靠保存状态
  * [POS]: KnowledgeCanvas 的会话内容根；UI 只产生 intent，人工与 AI 都经同一个协调器/RPC，正文只在 Preview 按 ID 加载
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -537,7 +537,12 @@ export function KnowledgeCanvas({
       geometry: SpatialTextGeometry,
     ) {
       if (text.trim().length === 0) {
-        if (transientText?.id === nodeId) setTransientText(null);
+        if (transientText?.id === nodeId) {
+          setTransientText(null);
+        } else {
+          await enqueue({ operation: { node_id: nodeId, type: "remove_node" } });
+          selectNodes([]);
+        }
         editText(null);
         return;
       }
