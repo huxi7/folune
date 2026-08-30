@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖 @xyflow/react v12 的 Pane 指针/坐标协议、Canvas Chat、useCanvasSessionCoordinator、canvasWorkspaceStore 的来源卡片统一判据、空间文字几何、纯投影/增量布局、memo document Store 与本地 Dialog/Toast/Button
- * [OUTPUT]: 对外提供始终挂载真实 React Flow 的 Canvas V2：受控节点/边/视口、空白 Pane 双击空间文字、向全局 Command Palette 登记"加入当前画布"、连接、Preview、框选、整组坐标原子回写、带完整关系快照的移除回执/撤销、来源卡片单删/批量事前确认、AI 增量拓展和可靠保存状态
+ * [INPUT]: 依赖 @xyflow/react v12 坐标协议、Canvas Chat、会话协调器、canvasWorkspaceStore、空间文字几何、增量布局、文件树笔记拖拽载荷与本地反馈组件
+ * [OUTPUT]: 对外提供始终挂载真实 React Flow 的 Canvas：受控图、延迟加载占位、文件树精准落点、空间文字、统一加入/连接/Preview/移除/AI 拓展及可靠保存状态
  * [POS]: KnowledgeCanvas 的会话内容根；节点几何只跟随文档、选择只有 React Flow 一个所有者而 Store 是它的镜像，UI 只产生可由协调器/WAL 原子重放的 intent；来源血缘解除先由最内层 Dialog 收束，混合批量只允许撤销普通节点，正文只在 Preview 按 ID 加载
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -22,6 +22,7 @@ import {
   useState,
   type MouseEvent as ReactMouseEvent,
 } from "react";
+import { flushSync } from "react-dom";
 
 import "@xyflow/react/dist/style.css";
 
@@ -49,6 +50,7 @@ import {
   Dialog,
   Skeleton,
   SkeletonGroup,
+  useDelayedSkeleton,
   useToast,
 } from "../../shared/design-system/components";
 import {
@@ -63,12 +65,17 @@ import {
 import { useCanvasWorkspaceStore } from "../../shared/store/canvasWorkspaceStore";
 import type { CanvasReturnDescriptor } from "../../shared/store/canvasReturnStore";
 import { expandCanvas } from "../AgentPanel/canvasExpandClient";
+import {
+  parseMemoCanvasDrag,
+  SUPERNOTE_MEMO_DRAG_MIME,
+} from "../memoLibrary";
 import { CanvasActionsProvider } from "./canvasActions";
 import { CanvasCardNode } from "./CanvasCardNode";
 import { CanvasControls } from "./CanvasControls";
 import { CanvasCordEdge } from "./CanvasCordEdge";
 import { CanvasPersistenceStatus } from "./CanvasPersistenceStatus";
 import { CanvasPreviewOverlay } from "./CanvasPreviewOverlay";
+import { canvasPreviewTransitionName } from "./canvasPreviewTransition";
 import { CanvasSelectionBounds } from "./CanvasSelectionBounds";
 import {
   useCanvasSessionCoordinator,
@@ -326,7 +333,6 @@ export function KnowledgeCanvas({
   const selectNodes = useCanvasWorkspaceStore((state) => state.selectNodes);
   const previewNodeId = useCanvasWorkspaceStore((state) => state.previewNodeId);
   const openPreview = useCanvasWorkspaceStore((state) => state.openPreview);
-  const editingTextNodeId = useCanvasWorkspaceStore((state) => state.editingTextNodeId);
   const editText = useCanvasWorkspaceStore((state) => state.editText);
   const connectionSourceId = useCanvasWorkspaceStore((state) => state.connectionSourceId);
   const startConnection = useCanvasWorkspaceStore((state) => state.startConnection);
@@ -340,6 +346,7 @@ export function KnowledgeCanvas({
   const [pendingOriginRemoval, setPendingOriginRemoval] =
     useState<CanvasRemovalSnapshot | null>(null);
   const [originRemovalBusy, setOriginRemovalBusy] = useState(false);
+  const [memoDropActive, setMemoDropActive] = useState(false);
   const [nodes, setNodes, onNodesChange] = useNodesState<CanvasFlowNode>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const instanceRef = useRef<ReactFlowInstance<CanvasFlowNode, Edge> | null>(null);
@@ -364,6 +371,46 @@ export function KnowledgeCanvas({
     toast,
     userId,
   });
+  const canvasSkeletonVisible = useDelayedSkeleton(loadStatus === "loading", {
+    delayMs: 220,
+    minimumVisibleMs: 240,
+  });
+  const changePreview = useCallback((nodeId: string | null) => {
+    const transitionNodeId = nodeId ?? previewNodeId;
+    const startViewTransition = (
+      window.document as Document & {
+        startViewTransition?: (update: () => void) => {
+          finished: Promise<void>;
+        };
+      }
+    ).startViewTransition;
+    if (
+      transitionNodeId === null
+      || startViewTransition === undefined
+      || window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      openPreview(nodeId);
+      return;
+    }
+    const source = window.document.querySelector<HTMLElement>(
+      `[data-canvas-card-id="${CSS.escape(transitionNodeId)}"]`,
+    );
+    if (source === null) {
+      openPreview(nodeId);
+      return;
+    }
+    const transitionName = canvasPreviewTransitionName(transitionNodeId);
+    if (nodeId !== null) source.style.viewTransitionName = transitionName;
+    const transition = startViewTransition.call(window.document, () => {
+      source.style.viewTransitionName = nodeId === null
+        ? transitionName
+        : "none";
+      flushSync(() => openPreview(nodeId));
+    });
+    void transition.finished.finally(() => {
+      source.style.viewTransitionName = "none";
+    });
+  }, [openPreview, previewNodeId]);
 
   const flow = useMemo(
     () => document === null
@@ -732,7 +779,10 @@ export function KnowledgeCanvas({
     });
   }, []);
 
-  const addMemo = useCallback(async (memo: CommandAddTarget) => {
+  const addMemo = useCallback(async (
+    memo: CommandAddTarget,
+    droppedAt?: { x: number; y: number },
+  ) => {
     const current = latestDocumentRef.current;
     if (current === null) return;
     const existing = current.nodes.find(
@@ -782,13 +832,13 @@ export function KnowledgeCanvas({
       return;
     }
 
-    const position = source === null
+    const position = droppedAt ?? (source === null
       ? nearestCanvasPlacement(current.nodes, viewportCenter())
       : layoutCanvasCandidates(
         current.nodes,
         source.id,
         [{ confidence: 1, memoId: memo.id }],
-      )[0] ?? nearestCanvasPlacement(current.nodes, viewportCenter());
+      )[0] ?? nearestCanvasPlacement(current.nodes, viewportCenter()));
     const nodeId = crypto.randomUUID();
     await enqueue({
       hint: { revision: memo.revision, title: memo.title },
@@ -924,9 +974,6 @@ export function KnowledgeCanvas({
   }, [aiLoading, canvasId, coordinatorRef, setAiLoading, toast]);
 
   const actions = useMemo(() => ({
-    aiLoading,
-    editingTextNodeId,
-    selectedNodeIds,
     onCancelText(nodeId: string) {
       if (transientText?.id === nodeId) setTransientText(null);
       editText(null);
@@ -1001,7 +1048,7 @@ export function KnowledgeCanvas({
       void navigateToMemo(nodeId);
     },
     onPreview(nodeId: string) {
-      openPreview(nodeId);
+      changePreview(nodeId);
     },
     async onRemove(nodeId: string) {
       await requestNodeRemoval([nodeId]);
@@ -1022,18 +1069,15 @@ export function KnowledgeCanvas({
       });
     },
   }), [
-    aiLoading,
-    editingTextNodeId,
     enqueue,
     expandFromNode,
     navigateToMemo,
-    openPreview,
+    changePreview,
     openPalette,
     editText,
     removeEdge,
     requestNodeRemoval,
     selectOnly,
-    selectedNodeIds,
     startConnection,
     transientText,
   ]);
@@ -1069,7 +1113,7 @@ export function KnowledgeCanvas({
         );
         if (node?.kind === "memo_ref" && node.target_node_id !== null) {
           event.preventDefault();
-          openPreview(node.id);
+          changePreview(node.id);
         }
         return;
       }
@@ -1085,7 +1129,7 @@ export function KnowledgeCanvas({
       if (event.key !== "Escape" || event.defaultPrevented) return;
       if (previewNodeId !== null) {
         event.preventDefault();
-        openPreview(null);
+        changePreview(null);
       } else if (connectionSourceId !== null) {
         event.preventDefault();
         startConnection(null);
@@ -1099,7 +1143,7 @@ export function KnowledgeCanvas({
   }, [
     connectionSourceId,
     expandFromNode,
-    openPreview,
+    changePreview,
     previewNodeId,
     requestNodeRemoval,
     selectOnly,
@@ -1127,6 +1171,31 @@ export function KnowledgeCanvas({
     <CanvasActionsProvider actions={actions}>
       <div
         className="knowledge-canvas"
+        data-memo-drop-active={memoDropActive || undefined}
+        onDragLeave={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+            setMemoDropActive(false);
+          }
+        }}
+        onDragOver={(event) => {
+          if (!event.dataTransfer.types.includes(SUPERNOTE_MEMO_DRAG_MIME)) return;
+          event.preventDefault();
+          event.dataTransfer.dropEffect = "copy";
+          setMemoDropActive(true);
+        }}
+        onDrop={(event) => {
+          const payload = parseMemoCanvasDrag(
+            event.dataTransfer.getData(SUPERNOTE_MEMO_DRAG_MIME),
+          );
+          setMemoDropActive(false);
+          if (payload === null || instanceRef.current === null) return;
+          event.preventDefault();
+          const position = instanceRef.current.screenToFlowPosition({
+            x: event.clientX,
+            y: event.clientY,
+          });
+          void addMemo(payload, position).catch(() => undefined);
+        }}
         ref={flowRef}
       >
         <ReactFlow
@@ -1185,10 +1254,10 @@ export function KnowledgeCanvas({
           />
         </ReactFlow>
 
-        {loadStatus === "loading" ? (
-          <SkeletonGroup className="canvas-loading" label="正在加载 Canvas">
-            <Skeleton className="canvas-loading-card" />
-            <Skeleton className="canvas-loading-card" />
+        {canvasSkeletonVisible ? (
+          <SkeletonGroup className="canvas-loading" label="正在加载 Canvas" visible>
+            <Skeleton className="canvas-loading-card canvas-loading-card-primary" />
+            <Skeleton className="canvas-loading-card canvas-loading-card-secondary" />
           </SkeletonGroup>
         ) : null}
         {loadStatus === "error" ? (
@@ -1210,6 +1279,10 @@ export function KnowledgeCanvas({
           </div>
         ) : null}
 
+        {memoDropActive ? (
+          <div className="canvas-drop-hint">松开以在这里加入笔记</div>
+        ) : null}
+
         <CanvasPersistenceStatus coordinatorRef={coordinatorRef} />
 
         {aiLoading ? (
@@ -1217,11 +1290,12 @@ export function KnowledgeCanvas({
         ) : null}
       </div>
 
-      {previewMemoId === null ? null : (
+      {previewMemoId === null || previewNode === null ? null : (
         <CanvasPreviewOverlay
           accessToken={accessToken}
           memoId={previewMemoId}
-          onClose={() => openPreview(null)}
+          nodeId={previewNode.id}
+          onClose={() => changePreview(null)}
           onEditOriginal={async () => {
             await navigateToMemo(previewMemoId, true);
           }}

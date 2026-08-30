@@ -30,7 +30,7 @@ AI 是用户的备忘录协作伙伴与智能档案管理员。
 app 跑在本机 Bun/Vite 固定 10000；api 与 chat 由根 Compose 编排为 api-dev(10001)/chat-dev(10002)，各自持有独立健康探针与被 Git 忽略的私有 `.env`。chat 依赖 api 健康后启动，容器内经 `http://api:10001` 访问业务 API；浏览器只接收 `VITE_` 前缀的公开配置。
 
 ## Canvas V2
-Canvas V2 是一级持久知识 Workspace：memo 的默认 Canvas 与 standalone Canvas 从创建、增量拓展、自动保存到重开始终使用同一 `memo_nodes.id === canvases.node_id` 身份。人工编辑与 AI expansion 共用带 version、mutation_id 和 receipt 的唯一原子 mutation 内核；浏览器先把 intent 写入 IndexedDB WAL，再串行提交并在冲突时保留意图重放。旧 Explore 生产入口和旧 HTTP 写路径已经移除，旧 SQL 函数只作为显式代码回滚面保留且 V2 运行期无执行权。产品定律见 [CANVAS_CONSTITUTION.md](CANVAS_CONSTITUTION.md)，尚未开工的增强方向见 [CANVAS_V2_PHASE2_BACKLOG.md](CANVAS_V2_PHASE2_BACKLOG.md)。
+Canvas V2 是一级持久知识 Workspace：memo 默认 Canvas 与 standalone Canvas 使用同一身份和唯一原子 mutation 内核，浏览器先写 IndexedDB WAL，再串行提交并在冲突时重放。产品定律见 [CANVAS_CONSTITUTION.md](CANVAS_CONSTITUTION.md)；旧阶段规划只保留历史，不构成当前需求来源。
 
 ## 模块地图
 | 模块 | 职责 | 文档 |
@@ -44,8 +44,9 @@ Canvas V2 是一级持久知识 Workspace：memo 的默认 Canvas 与 standalone
 ## 根配置
 | 文件 | 职责 |
 | --- | --- |
+| AGENT_TASK.md | 本轮成熟产品性能/流畅度打磨的原始任务锚点；发生上下文压缩时必须重新读取，优先级高于历史规划 |
 | CANVAS_CONSTITUTION.md | Canvas 产品宪法与常驻门禁，回答「为什么不能」而不是「现在是什么」；冻结一级持久 Workspace、同构画布、显式 AI、增量图、添加/连接/自由文字、自动保存与产品边界，并以第 14 节十一条验收问题约束后续任何改动。它与 CLAUDE.md 职责相反：CLAUDE.md 必须跟随代码，本文件绝不跟随代码，因此只有它能指出实现走偏了。不含进度、不含实施计划 |
-| CANVAS_V2_PHASE2_BACKLOG.md | 已确认但尚未开工的增强方向清单；记录 MiniMap、文件库拖入、整理/Undo、导航与视觉打磨，其中被 MVP 顺带交付的部分已就地标注段次。与宪法相反，它是过程性文档，因此带进度；它不是 Plan 2，条目的保留/删除/合并须待新 Plan 会话基于真实代码裁决 |
+| CANVAS_V2_PHASE2_BACKLOG.md | 历史阶段清单，仅用于追溯当时取舍；已完成项与主动放弃项都不得被后续 Agent 自动还原成需求 |
 | .dockerignore | 收窄 api/chat 开发镜像的仓库根构建上下文，排除源码、缓存、密钥与无关模块 |
 | .env.example | app/api/chat 无密钥变量总览与根 Compose 可选覆盖模板；服务默认使用各自本地环境文件 |
 | .gitignore | 根级本地环境、构建缓存与系统文件忽略规则 |

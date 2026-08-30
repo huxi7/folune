@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 Bun test、react-dom/server、@xyflow/react 的 ReactFlowProvider、canvasActions Context 与真实 CanvasCardNode
+ * [INPUT]: 依赖 Bun test、react-dom/server、ReactFlowProvider、稳定 canvasActions、canvasWorkspaceStore 与真实 CanvasCardNode
  * [OUTPUT]: 锁定 memo_ref 纵向卡片的中心重合关系注册 Handle、嵌套纸张结构、渐隐摘录、常驻展开入口、固定高度元信息行，以及普通/墓碑/回收站都只把唯一移除命令交给会话层处理的结构边界
  * [POS]: KnowledgeCanvas 的卡片结构回归门禁；只断言真实组件产出的 DOM 契约，hover/焦点浮现由 CSS 承担并在浏览器验收
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -14,9 +14,6 @@ import { CanvasActionsProvider, type CanvasActions } from "./canvasActions";
 import { CanvasCardNode } from "./CanvasCardNode";
 
 const actions: CanvasActions = {
-  aiLoading: false,
-  editingTextNodeId: null,
-  selectedNodeIds: [],
   onCancelText: () => undefined,
   onCommitText: async () => undefined,
   onConnect: () => undefined,

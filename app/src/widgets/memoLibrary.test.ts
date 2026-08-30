@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖 Bun test、snake_case MemoTreeNode 与 memoLibrary 路径/搜索/四类拖拽计划
- * [OUTPUT]: 验证无限嵌套检索、folder 首位放入、根级末尾移动、混合排序及自己/后代防环
+ * [INPUT]: 依赖 Bun test、snake_case MemoTreeNode 与 memoLibrary 路径/搜索/树内及跨视图拖拽协议
+ * [OUTPUT]: 验证无限嵌套检索、稀疏移动、防环与仅 memo 可生成/解析 Canvas 拖拽载荷
  * [POS]: app/src/widgets 的拖拽视图模型回归测试，不访问浏览器、Supabase、Store 或远端 API
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -18,8 +18,10 @@ import {
   findMemoNode,
   getAncestorFolderIds,
   getMemoFolderPath,
+  parseMemoCanvasDrag,
   replaceNodeInMemoTree,
   searchMemoTree,
+  serializeMemoCanvasDrag,
   updateNodeInMemoTree,
 } from "./memoLibrary";
 
@@ -97,6 +99,20 @@ const tree: MemoTreeNode[] = [
 ];
 
 describe("memo tree view model", () => {
+  test("only serializes memo leaves for Canvas and rejects malformed payloads", () => {
+    const serialized = serializeMemoCanvasDrag(nestedMemo);
+    expect(serialized).not.toBeNull();
+    expect(parseMemoCanvasDrag(serialized ?? "")).toEqual({
+      id: "memo-nested",
+      kind: "memo",
+      revision: 1,
+      title: "会议记录",
+    });
+    expect(serializeMemoCanvasDrag(tree[0]!)).toBeNull();
+    expect(parseMemoCanvasDrag('{"kind":"memo","id":"memo-a"}')).toBeNull();
+    expect(parseMemoCanvasDrag("not-json")).toBeNull();
+  });
+
   test("finds nested nodes and the first memo deterministically", () => {
     expect(findMemoNode(tree, "memo-nested")?.title).toBe("会议记录");
     expect(findFirstMemoId(tree)).toBe("memo-nested");

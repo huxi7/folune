@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖 design-system Dialog（bare 表面）/Skeleton、共享 NotePaper reader 纸面、memoDocumentStore 的按 ID 正文缓存与 MarkdownReadingView
- * [OUTPUT]: 对外提供不卸载 Canvas 的小开本 Paper 预览层，并以一次请求生命周期避免 loading 状态反向中止正文加载
+ * [INPUT]: 依赖 design-system Dialog/Skeleton、NotePaper reader、正文缓存、MarkdownReadingView 与共享空间过渡名称
+ * [OUTPUT]: 对外提供不卸载 Canvas、与来源卡片共享视觉身份的小开本 Paper 预览层
  * [POS]: KnowledgeCanvas 的正文阅读边界；Canvas API 永不携带 content_mdx，只有用户明确预览时才按目标 memo ID 加载正文；纸内只有正文，动作一律在纸外，因此正文长度不影响任何入口的可达性；Esc/遮罩/焦点归还统一复用 Dialog 的模态行为，不另造第二套弹窗
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -16,10 +16,12 @@ import { PencilSimpleIcon, XIcon } from "../../shared/design-system/icons";
 import { useMemoDocumentStore } from "../../shared/store/memoDocumentStore";
 import { MarkdownReadingView } from "../MarkdownReadingView";
 import { NotePaper } from "../NotePaper";
+import { canvasPreviewTransitionName } from "./canvasPreviewTransition";
 
 type CanvasPreviewOverlayProps = {
   accessToken: string;
   memoId: string;
+  nodeId: string;
   onClose: () => void;
   onEditOriginal: () => Promise<void>;
   title: string;
@@ -28,6 +30,7 @@ type CanvasPreviewOverlayProps = {
 export function CanvasPreviewOverlay({
   accessToken,
   memoId,
+  nodeId,
   onClose,
   onEditOriginal,
   title,
@@ -57,7 +60,10 @@ export function CanvasPreviewOverlay({
       surface="bare"
       title={title}
     >
-      <div className="canvas-preview-shell">
+      <div
+        className="canvas-preview-shell"
+        style={{ viewTransitionName: canvasPreviewTransitionName(nodeId) }}
+      >
         <NotePaper autoFocus title={title} variant="reader">
           {document === undefined && status !== "error" ? (
             <SkeletonGroup label="正在读取原文">

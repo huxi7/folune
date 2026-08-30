@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 MemoTreeBranch/Skeleton、SidebarCreateMenu、memoLibrary 拖拽/祖先计划、memoTitleRules 的重名与可改名判据、持久化展开偏好、整理定位意图、Profile 与上层事务命令
- * [OUTPUT]: 对外提供文件库 Header、搜索入口、笔记优先的分流新建入口、可聚焦真实文件树、重命名/拖拽、按结构语义定位展开、底部导航及节点回收站命令
+ * [OUTPUT]: 对外提供文件库 Header、搜索入口、笔记优先的分流新建入口、可聚焦真实文件树、正文意图预热、树内重排/跨视图笔记拖拽、底部导航及节点回收站命令
  * [POS]: app/src/widgets 的按需文件库内容层；拥有文件库内部信息层级与关闭入口，只收集业务意图，事务与路由切换由 Dashboard 编排
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -39,6 +39,8 @@ import {
   getAncestorFolderIds,
   getFolderIds,
   findMemoNode,
+  serializeMemoCanvasDrag,
+  SUPERNOTE_MEMO_DRAG_MIME,
   type MemoDropTarget,
   type MemoMovePlan,
 } from "./memoLibrary";
@@ -66,6 +68,7 @@ type AppSidebarProps = {
   onCreateCanvas: (parentId: string | null) => void;
   onClose: () => void;
   onMoveNode: (nodeId: string, input: MemoMovePlan) => Promise<boolean>;
+  onPrefetchMemo: (memoId: string) => void;
   onOpenDesignSystem: () => void;
   onOpenProfile: () => void;
   onOpenSettings: () => void;
@@ -169,6 +172,7 @@ export function AppSidebar({
   onCreateCanvas,
   onClose,
   onMoveNode,
+  onPrefetchMemo,
   onOpenDesignSystem,
   onOpenProfile,
   onOpenSettings,
@@ -468,8 +472,12 @@ export function AppSidebar({
     cancelRename();
     setDraggedNodeId(node.id);
     setDropTarget(null);
-    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.effectAllowed = node.node_type === "memo" ? "copyMove" : "move";
     event.dataTransfer.setData("text/plain", node.id);
+    const canvasPayload = serializeMemoCanvasDrag(node);
+    if (canvasPayload !== null) {
+      event.dataTransfer.setData(SUPERNOTE_MEMO_DRAG_MIME, canvasPayload);
+    }
     setMemoDragImage(event, node);
   }
 
@@ -616,6 +624,7 @@ export function AppSidebar({
               onDragStart={handleDragStart}
               onDropTarget={handleDropTarget}
               onRenameValueChange={setRenameValue}
+              onPrefetchMemo={onPrefetchMemo}
               onSelectMemo={onSelectMemo}
               onToggleFolder={toggleFolder}
               parentId={null}

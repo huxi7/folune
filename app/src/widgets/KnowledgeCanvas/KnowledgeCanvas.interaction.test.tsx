@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 happy-dom、Testing Library、真实 KnowledgeCanvas/React Flow 节点层与可观测 Canvas 协调器替身
- * [OUTPUT]: 覆盖 Pane 双击到 textarea、内容边界提交、空间文字编辑/缩放、多选成框、普通节点与关系的可撤销移除、Delete 批量原子入队、墓碑诚实回执、来源卡片单删/批量确认与 Esc 最内层收束
+ * [OUTPUT]: 覆盖 Pane 双击/空间文字、文件树 memo 精准落入统一 WAL、框选、移除/撤销、来源确认与 Esc 收束
  * [POS]: KnowledgeCanvas 的浏览器 DOM 纵向交互测试；不绕过组件去单测 reducer/RPC，锁定 selectionOnDrag 下空间文字、来源确认与移除回执从真实 DOM 到 WAL/协调器/mutation 的完整链路
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -13,6 +13,7 @@ import type {
   CanvasMutationResult,
 } from "../../shared/api/canvas";
 import type { CanvasIntent } from "../../shared/store/canvasDocument";
+import { SUPERNOTE_MEMO_DRAG_MIME } from "../memoLibrary";
 import {
   CanvasSaveCoordinator,
   type CanvasCoordinatorSink,
@@ -305,6 +306,42 @@ const buttonWithText = async (text: string) => await waitFor(() => {
     .find((candidate) => candidate.textContent?.trim() === text);
   expect(button).not.toBeUndefined();
   return button!;
+});
+
+describe("KnowledgeCanvas 文件树拖入", () => {
+  test("memo 拖到画布后复用 add_memo 意图并进入 WAL", async () => {
+    useCanvasWorkspaceStore.getState().replaceServer(emptyCanvas(), []);
+    renderCanvas();
+    const surface = await waitFor(() => {
+      const element = document.querySelector<HTMLElement>(".knowledge-canvas");
+      expect(element).not.toBeNull();
+      return element!;
+    });
+    const payload = JSON.stringify({
+      id: "memo-dropped",
+      kind: "memo",
+      revision: 4,
+      title: "拖入的笔记",
+    });
+    const dataTransfer = {
+      dropEffect: "none",
+      getData: (type: string) => type === SUPERNOTE_MEMO_DRAG_MIME ? payload : "",
+      types: [SUPERNOTE_MEMO_DRAG_MIME],
+    };
+
+    fireEvent.dragOver(surface, { dataTransfer });
+    expect(surface.dataset["memoDropActive"]).toBe("true");
+    fireEvent.drop(surface, { clientX: 260, clientY: 180, dataTransfer });
+
+    await waitFor(() => expect(
+      useCanvasWorkspaceStore.getState().document?.nodes[0]?.target_node_id,
+    ).toBe("memo-dropped"));
+    const record = [...walStorage.records.values()][0];
+    expect(record?.intents[0]?.operation).toMatchObject({
+      target_node_id: "memo-dropped",
+      type: "add_memo",
+    });
+  });
 });
 
 describe("KnowledgeCanvas 移除回执", () => {

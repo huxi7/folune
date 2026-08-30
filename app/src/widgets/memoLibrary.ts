@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 shared/api/memo 的后端树类型与 shared/store/memoTree 的唯一树算法
- * [OUTPUT]: 对外提供首个 memo、祖先/路径、全文搜索、统一 DropTarget 校验与 before/after/inside/root-end 稀疏排序计划
+ * [OUTPUT]: 对外提供首个 memo、祖先/路径、全文搜索、跨视图笔记拖拽载荷与统一 DropTarget 校验/稀疏排序计划
  * [POS]: app/src/widgets 的 memo tree 视图模型，只解释可见路径和拖拽意图；实际树变更、乐观事务与回滚归 Zustand Store
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -36,6 +36,52 @@ export type MemoDropTarget = {
 };
 
 export type MemoMovePlan = MoveMemoNodeInput;
+
+export const SUPERNOTE_MEMO_DRAG_MIME = "application/x-supernote-memo";
+
+export type MemoCanvasDragPayload = {
+  id: string;
+  kind: "memo";
+  revision: number;
+  title: string;
+};
+
+export const serializeMemoCanvasDrag = (
+  node: MemoTreeNode,
+): string | null => node.node_type === "memo"
+  ? JSON.stringify({
+      id: node.id,
+      kind: "memo",
+      revision: node.revision,
+      title: node.title,
+    } satisfies MemoCanvasDragPayload)
+  : null;
+
+export const parseMemoCanvasDrag = (
+  value: string,
+): MemoCanvasDragPayload | null => {
+  try {
+    const parsed: unknown = JSON.parse(value);
+    if (
+      typeof parsed !== "object"
+      || parsed === null
+      || !("kind" in parsed)
+      || parsed.kind !== "memo"
+      || !("id" in parsed)
+      || typeof parsed.id !== "string"
+      || parsed.id.length === 0
+      || !("title" in parsed)
+      || typeof parsed.title !== "string"
+      || !("revision" in parsed)
+      || typeof parsed.revision !== "number"
+      || !Number.isInteger(parsed.revision)
+      || parsed.revision < 0
+    ) return null;
+    return parsed as MemoCanvasDragPayload;
+  } catch {
+    return null;
+  }
+};
 
 export const findMemoNode = findNode;
 

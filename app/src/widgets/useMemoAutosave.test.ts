@@ -153,7 +153,6 @@ describe("标题冲突不连坐正文", () => {
       initialContent: "原正文",
       initialTitle: "草稿",
       memoId: "memo-1",
-      onContentChange: () => undefined,
       onFailure: (error) => failures.push(error),
       onSave: async (_memoId, draft) => {
         saves.push({ draft });

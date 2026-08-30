@@ -1,11 +1,11 @@
 /**
- * [INPUT]: 依赖 React Router Profile/token、轻量 tree/按需正文/WorkspaceChrome Store、memoTitleRules 重名判据、useMemoNodeDeletion 删除编排、AI Run、PaperWorkspaceShell/CanvasWorkspace 与业务工作区
- * [OUTPUT]: 对外提供互斥的 Paper First 写作舞台/全屏知识画布、目录轻载/单篇正文路由、以稳定 client key 初始化首篇笔记、草稿 flush 后业务分流及账户/视图编排
+ * [INPUT]: 依赖 React Router Profile/token、轻量 tree/意图预热正文/WorkspaceChrome Store、memoTitleRules、删除编排、惰性 AI、Paper/Canvas Workspace 与业务工作区
+ * [OUTPUT]: 对外提供互斥 Paper/Canvas 舞台、细粒度正文订阅、编辑器本地草稿、Canvas 离场 flush、惰性工具预载及账户/视图编排
  * [POS]: app/src/pages 的 /app 编排层；目录、正文、编辑器、Run、浮动工具与 Trash 的跨域生命周期只在此建立一次等待边界，并依据路由节点类型在 Paper 与 Canvas 两种空间壳之间切换；深链刷新时先确认节点类型再挂载空间壳，避免画布前闪出 Paper/Panel
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import {
   useLoaderData,
   useMatch,
@@ -27,7 +27,6 @@ import { useCanvasWorkspaceStore } from "../shared/store/canvasWorkspaceStore";
 import { useCanvasReturnStore } from "../shared/store/canvasReturnStore";
 import { signOutAuthenticatedUser } from "../shared/supabase/auth";
 import type { AccountSection } from "../widgets/AccountDialog";
-import { AgentPanel } from "../widgets/AgentPanel";
 import { AppSidebar, type SidebarView } from "../widgets/AppSidebar";
 import { AppMainToolbar } from "../widgets/AppMainToolbar";
 import {
@@ -46,6 +45,8 @@ import {
 } from "../widgets/NotesWorkspace";
 import { PanelResizeHandle } from "../widgets/PanelResizeHandle";
 import { PaperWorkspaceShell } from "../widgets/PaperWorkspaceShell";
+import { preloadKnowledgeCanvas } from "../widgets/CanvasWorkspace";
+import type { CanvasSessionControls } from "../widgets/KnowledgeCanvas/useCanvasSessionCoordinator";
 import type { WorkspaceOrganizePresentation } from "../widgets/archiveCordPolicy";
 import { WorkspaceAuxViews, type WorkspaceAuxView } from "../widgets/WorkspaceAuxViews";
 import { WorkspaceCommandPalette } from "../widgets/WorkspaceCommandPalette";
@@ -55,6 +56,7 @@ import { DashboardDialogs } from "./DashboardDialogs";
 import { buildWorkspaceOrganizePresentation } from "./organizePresentation";
 import { useOptimisticMemoCreation } from "./useOptimisticMemoCreation";
 import { useMemoDocumentLoad } from "./useMemoDocumentLoad";
+import { useMemoDocumentPreload } from "./useMemoDocumentPreload";
 import { useMemoCanvasEntry } from "./useMemoCanvasEntry";
 import { useMemoNodeDeletion } from "./useMemoNodeDeletion";
 import { useStandaloneCanvasCreation } from "./useStandaloneCanvasCreation";
@@ -80,6 +82,20 @@ const lastMemoStorageKey = (userId: string): string =>
   `${LAST_MEMO_KEY_PREFIX}${userId}`;
 const isMemo = (node: MemoTreeNode | null): node is MemoTreeNode =>
   node?.node_type === "memo" && node.memo !== null;
+
+const loadAgentPanel = () => import("../widgets/AgentPanel");
+const AgentPanel = lazy(() => loadAgentPanel().then((module) => ({
+  default: module.AgentPanel,
+})));
+
+const scheduleIdle = (work: () => void): (() => void) => {
+  if (window.requestIdleCallback !== undefined) {
+    const idleId = window.requestIdleCallback(work, { timeout: 1_200 });
+    return () => window.cancelIdleCallback(idleId);
+  }
+  const timerId = window.setTimeout(work, 180);
+  return () => window.clearTimeout(timerId);
+};
 
 export function AppDashboard() {
   const { accessToken, profile: initialProfile } =
@@ -119,9 +135,7 @@ export function AppDashboard() {
   const mergeServerNode = useMemoTreeStore((state) => state.mergeServerNode);
   const waitForMemoId = useMemoTreeStore((state) => state.waitForMemoId);
   const resetMemoTree = useMemoTreeStore((state) => state.reset);
-  const memoDocuments = useMemoDocumentStore((state) => state.documents);
-  const memoDocumentStatuses = useMemoDocumentStore((state) => state.statuses);
-  const updateMemoContentLocal = useMemoDocumentStore((state) => state.updateContentLocal);
+  const preloadMemo = useMemoDocumentStore((state) => state.preloadMemo);
   const saveMemoDocument = useMemoDocumentStore((state) => state.saveMemoDraft);
   const [profile, setProfile] = useState(initialProfile);
   const [activeView, setActiveView] = useState<SidebarView>("note");
@@ -140,6 +154,13 @@ export function AppDashboard() {
     { nodeId: string; seq: number } | null
   >(null);
   const notesWorkspaceRef = useRef<NotesWorkspaceHandle>(null);
+  const canvasControlsRef = useRef<CanvasSessionControls | null>(null);
+  const handleCanvasSessionReady = useCallback(
+    (controls: CanvasSessionControls | null) => {
+      canvasControlsRef.current = controls;
+    },
+    [],
+  );
   const initialTreeHandledRef = useRef<string | null>(null);
   const treePlaceholderWasActiveRef = useRef(false);
   const [revealInitialTreeContent, setRevealInitialTreeContent] = useState(false);
@@ -161,12 +182,10 @@ export function AppDashboard() {
     ? null
     : findNode(memoTree, resolveMemoId(routeMemoId));
   const selectedMemoId = isMemo(selectedMemo) ? selectedMemo.id : null;
-  const selectedMemoDocument = selectedMemoId === null
-    ? null
-    : memoDocuments[selectedMemoId] ?? null;
-  const selectedMemoDocumentStatus = selectedMemoId === null
-    ? "idle"
-    : memoDocumentStatuses[selectedMemoId] ?? "idle";
+  const selectedMemoDocument = useMemoDocumentStore((state) =>
+    selectedMemoId === null ? null : state.documents[selectedMemoId] ?? null);
+  const selectedMemoDocumentStatus = useMemoDocumentStore((state) =>
+    selectedMemoId === null ? "idle" : state.statuses[selectedMemoId] ?? "idle");
   const workspaceStyle: WorkspaceStyle = {
     "--workspace-agent-track": `${agentWidth}px`,
     "--workspace-sidebar-track": `${sidebarWidth}px`,
@@ -221,6 +240,17 @@ export function AppDashboard() {
     memo: selectedMemoDocument,
     memoId: selectedMemoId,
   });
+  useMemoDocumentPreload({
+    accessToken,
+    enabled: treeStatus === "ready",
+    memoId: selectedMemoId,
+    tree: memoTree,
+  });
+
+  useEffect(() => scheduleIdle(() => {
+    void loadAgentPanel();
+    preloadKnowledgeCanvas();
+  }), []);
 
   useEffect(() => {
     hydrateWorkspaceChrome(profile.id);
@@ -398,32 +428,65 @@ export function AppDashboard() {
     setRefreshing: setAccountProfileRefreshing,
     toast,
   });
-  function handleSelectMemo(memoId: string) {
-    clearCanvasReturn();
-    setFocusMemoClientKey(null);
-    setActiveView("note");
-    rememberRecentNode(memoId);
-    // 从文件树切到已有 Canvas 是普通对象切换: 把当前布局作为"保持现状"的依据,
-    // 在导航发生的这一刻捕获，而不是等新会话去猜上一个空间留下了什么。
-    const target = findNode(useMemoTreeStore.getState().nodes, resolveMemoId(memoId));
-    if (resolveCanvasNodeId(target) !== null) {
-      const canvasSession = useCanvasWorkspaceStore.getState();
-      const paperChrome = useWorkspaceChromeStore.getState();
-      const onCanvas = canvasSession.canvasId !== null;
-      rememberCanvasEntry({
-        canvasId: memoId,
-        inherited: {
-          assistantOpen: onCanvas
-            ? canvasSession.assistantOpen
-            : paperChrome.assistantOpen,
-          libraryOpen: onCanvas
-            ? canvasSession.libraryOpen
-            : paperChrome.libraryOpen,
-        },
-        intent: "tree",
+  const leaveCanvasSafely = useCallback(async (): Promise<boolean> => {
+    const controls = canvasControlsRef.current;
+    if (controls === null) return true;
+    const result = await controls.flush();
+    if (!result.persisted) {
+      toast({
+        title: "画布尚未安全保存",
+        description: "本地恢复与服务器同步都未完成，已留在当前画布。",
+        variant: "error",
+      });
+      return false;
+    }
+    if (!result.synced) {
+      toast({
+        title: "画布已保存在本地",
+        description: "网络恢复后会继续同步。",
+        variant: "info",
       });
     }
-    navigate(`/app/notes/${encodeURIComponent(memoId)}`);
+    return true;
+  }, [toast]);
+
+  function handleSelectMemo(memoId: string) {
+    void (async () => {
+      if (!(await leaveCanvasSafely())) return;
+      clearCanvasReturn();
+      setFocusMemoClientKey(null);
+      setActiveView("note");
+      rememberRecentNode(memoId);
+      // 从文件树切到已有 Canvas 是普通对象切换: 把当前布局作为"保持现状"的依据,
+      // 在导航发生的这一刻捕获，而不是等新会话去猜上一个空间留下了什么。
+      const target = findNode(useMemoTreeStore.getState().nodes, resolveMemoId(memoId));
+      if (resolveCanvasNodeId(target) !== null) {
+        const canvasSession = useCanvasWorkspaceStore.getState();
+        const paperChrome = useWorkspaceChromeStore.getState();
+        const onCanvas = canvasSession.canvasId !== null;
+        rememberCanvasEntry({
+          canvasId: memoId,
+          inherited: {
+            assistantOpen: onCanvas
+              ? canvasSession.assistantOpen
+              : paperChrome.assistantOpen,
+            libraryOpen: onCanvas
+              ? canvasSession.libraryOpen
+              : paperChrome.libraryOpen,
+          },
+          intent: "tree",
+        });
+      }
+      navigate(`/app/notes/${encodeURIComponent(memoId)}`);
+    })();
+  }
+
+  function handleSelectAuxView(view: SidebarView) {
+    void (async () => {
+      if (!(await leaveCanvasSafely())) return;
+      setActiveView(view);
+      if (canvasNodeId !== null) navigate("/app");
+    })();
   }
 
   function handleOpenAccountDialog(section: AccountSection) {
@@ -498,6 +561,9 @@ export function AppDashboard() {
     }
 
     const targetMemoId = await waitForMemoId(memoId);
+    if (contentChanged) {
+      useMemoDocumentStore.getState().updateContentLocal(targetMemoId, content);
+    }
     const updated = await saveMemoDocument(
       accessToken,
       targetMemoId,
@@ -592,18 +658,21 @@ export function AppDashboard() {
           onCreateCanvas={canvasCreation.createCanvas}
           onClose={closeActiveLibrary}
           onMoveNode={handleMoveNode}
-          onOpenDesignSystem={() => setActiveView("design-system")}
+          onOpenDesignSystem={() => handleSelectAuxView("design-system")}
+          onPrefetchMemo={(memoId) => {
+            void preloadMemo(accessToken, memoId).catch(() => undefined);
+          }}
           onOpenProfile={() => handleOpenAccountDialog("account")}
           onOpenSearch={openCommandPalette}
           onOpenSettings={() => handleOpenAccountDialog("appearance")}
-          onOpenSubscription={() => setActiveView("subscription")}
+          onOpenSubscription={() => handleSelectAuxView("subscription")}
           onRenameNode={handleRenameNode}
           onSoftDeleteNode={async (nodeId) => {
             await memoDeletion.deleteNode(nodeId);
           }}
           onRequestCreateFolder={(parentId) => setMemoDialog({ parentId })}
           onSelectMemo={handleSelectMemo}
-          onSelectView={setActiveView}
+          onSelectView={handleSelectAuxView}
           onSignOut={handleSignOut}
           profile={profile}
           reveal={revealTarget}
@@ -667,11 +736,6 @@ export function AppDashboard() {
               hasTitleConflict={(title) =>
                 memoNodeTitleTaken(memoTree, selectedMemo, title)}
               memo={selectedMemoDocument}
-              onContentChange={(content) => {
-                if (routeMemoId !== null) {
-                  updateMemoContentLocal(resolveMemoId(routeMemoId), content);
-                }
-              }}
               onSave={handleSaveMemo}
               onTitleChange={(nextTitle) => {
                 if (!isMemo(selectedMemo)) {
@@ -716,21 +780,25 @@ export function AppDashboard() {
           side="left"
           size={agentWidth}
         />
-        <AgentPanel
-          accessToken={accessToken}
-          currentMemo={isMemo(selectedMemo) ? selectedMemo : null}
-          memoTree={memoTree}
-          onApplyOrganize={memoOrganize.apply}
-          onClose={closeActiveAssistant}
-          onPrepareMutation={async () => {
-            await notesWorkspaceRef.current?.flushCurrentDraft();
-          }}
-          onRejectOrganize={memoOrganize.reject}
-          onSelectedThreadChange={memoOrganize.setThreadId}
-          organizeBusy={memoOrganize.organizing}
-          organizeRun={memoOrganize.run}
-          userId={profile.id}
-        />
+        <Suspense
+          fallback={<div className="app-agent-loading" role="status">正在准备 AI</div>}
+        >
+          <AgentPanel
+            accessToken={accessToken}
+            currentMemo={isMemo(selectedMemo) ? selectedMemo : null}
+            memoTree={memoTree}
+            onApplyOrganize={memoOrganize.apply}
+            onClose={closeActiveAssistant}
+            onPrepareMutation={async () => {
+              await notesWorkspaceRef.current?.flushCurrentDraft();
+            }}
+            onRejectOrganize={memoOrganize.reject}
+            onSelectedThreadChange={memoOrganize.setThreadId}
+            organizeBusy={memoOrganize.organizing}
+            organizeRun={memoOrganize.run}
+            userId={profile.id}
+          />
+        </Suspense>
     </>
   );
 
@@ -743,7 +811,8 @@ export function AppDashboard() {
           className="canvas-workspace"
         >
           <div className="canvas-workspace-loading" role="status">
-            正在打开内容…
+            <span className="canvas-loading-dot" />
+            <span>正在打开内容</span>
           </div>
         </main>
       ) : canvasNodeId === null ? (
@@ -772,6 +841,7 @@ export function AppDashboard() {
           key={canvasNodeId}
           library={library}
           onRename={handleRenameNode}
+          onSessionReady={handleCanvasSessionReady}
           style={workspaceStyle}
           title={selectedMemo?.title ?? "知识画布"}
           userId={profile.id}

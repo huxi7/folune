@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖后端 MemoTreeNode、memoLibrary 落点、紧凑 SidebarButton、ArchiveTargetPort 与上层展开/拖拽/原地重命名命令
- * [OUTPUT]: 对外提供递归树、folder/memo 落点、归档目标端口、拖拽状态、原地重命名（默认 Canvas 除外）、重名原位提示及本次归档语义标记
+ * [OUTPUT]: 对外提供递归树、folder/memo 落点、笔记正文意图预热、归档目标端口、拖拽状态、原地重命名、重名提示及归档语义标记
  * [POS]: app/src/widgets 的纯树交互渲染器；只表达可见层级、HTML5 DnD 几何与归档锚点，不拥有树数据、连线生命周期或 API
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -61,6 +61,7 @@ type MemoTreeBranchProps = {
     target: MemoDropTarget,
   ) => void;
   onRenameValueChange: (value: string) => void;
+  onPrefetchMemo: (memoId: string) => void;
   onSelectMemo: (memoId: string) => void;
   onToggleFolder: (folderId: string) => void;
   selectedMemoId: string | null;
@@ -243,6 +244,7 @@ export function MemoTreeBranch(props: MemoTreeBranchProps) {
     onDragStart,
     onDropTarget,
     onRenameValueChange,
+    onPrefetchMemo,
     onSelectMemo,
     onToggleFolder,
     selectedMemoId,
@@ -373,6 +375,12 @@ export function MemoTreeBranch(props: MemoTreeBranchProps) {
                     event.stopPropagation();
                     onBeginRename(node);
                   }
+                }}
+                onFocus={() => {
+                  if (node.node_type === "memo") onPrefetchMemo(node.id);
+                }}
+                onPointerEnter={() => {
+                  if (node.node_type === "memo") onPrefetchMemo(node.id);
                 }}
                 onDragEnd={onDragEnd}
                 onDragOver={(event) =>

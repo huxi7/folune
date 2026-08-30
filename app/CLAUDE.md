@@ -5,7 +5,7 @@
 
 技术栈: Bun + Vite + React 19 + React Router + Zustand + Motion for React (`motion/react`) + @xyflow/react 12 + react-archer 5.1 + Vercel AI SDK/useChat + @mastra/client-js + canvas-confetti + Kumo UI + Tailwind CSS v4 + 本地 design system + Supabase Auth SDK + system/light/dark 全局主题偏好 + Lucide React + CodeMirror 6/Lezer Markdown GFM + react-markdown/remark-gfm/remark-breaks/rehype-sanitize + TypeScript。
 
-Canvas V2 已落地为一级持久 Workspace。memo 默认 Canvas 与 standalone Canvas 都直接进入同一 React Flow 会话；用户可添加已有 memo、预览/编辑原文、创建自由文字、连接/删除/拖拽/缩放，并显式触发 AI 增量拓展。Canvas 不设节点硬上限；AI 拓展只读取明确源节点的一篇正文，不把整图塞进模型上下文。普通节点与关系移除保留完整快照并给局部撤销回执，批量移除/恢复各自原子入队；来源卡片先确认再解除血缘，永久删除墓碑只给真实不可撤销回执。所有 UI intent 先进入 IndexedDB WAL，再由单一保存协调器提交；页面重开、冲突、响应丢失和 pagehide 都沿同一恢复协议处理。旧 ExploreStage 生产路径与开发实验页已经移除。
+Canvas 已落地为一级持久 Workspace。memo 默认 Canvas 与 standalone Canvas 共用 React Flow 会话、WAL 与单一保存协调器；用户可从命令面板或文件树拖入 memo，预览/编辑原文、创建自由文字、连接/删除/拖拽/缩放并显式 AI 拓展。路由离场先 flush，本地已持久但未同步时允许继续并诚实提示；页面重开、冲突、响应丢失和 pagehide 沿同一恢复协议处理。
 
 成员清单
 index.html: Vite HTML 宿主页面，声明 V1 Classic Blueprint 默认画布、同步解析 App 的 system/light/dark 与 Landing 浅色画布 pre-paint bootstrap、提供 root 挂载点并内联折角笔记页 favicon

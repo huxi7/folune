@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 workspace.css 的全屏 Stage、独立浮层 Panel、--workspace-panel-inset 与 Panel Header 中心线公式、note-paper.css 的共享纸面 variant、Quiet Editorial 语义 token、@xyflow/react 定位层与 Canvas V2 交互组件
- * [OUTPUT]: 对外提供全视口 Canvas 壳、由 --canvas-chrome-* 单一坐标系定位、且顶栏与 Panel Header 共面的四块顶层分区（左上开关+安静标题／右上 AI 开关／底部中央命令条／右下保存状态）、点阵舞台、280x360 纵向笔记卡与同心嵌套纸张、编辑无框且选中边界等距贴合的空间文字、罩空地故带 6% 极淡底的外层框选框与罩内容故只留线、且框选途中与松手后完全同形的内层成组外接框、中心射线求交、随拖拽换边且弯度随角度 360° 连续的浮动关系与整线可指向的理由检查器、Picker、纸外工具列 + A4 浮纸的 Preview 及窄屏降级
+ * [OUTPUT]: 对外提供全视口 Canvas 壳、统一顶层坐标、点阵舞台、真实比例延迟占位、文件拖入反馈、280x360 笔记卡/空间文字、动态关系、命令与具备空间连续性的 Preview
  * [POS]: app/src/styles 的 Canvas V2 视觉边界；桌面保留空间画布，窄屏保留可达操作，不覆盖 React Flow 的业务状态
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -79,7 +79,8 @@
   .canvas-control:focus-visible,
   .canvas-edge-delete:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
 
-  .canvas-workspace-loading { display: flex; width: 100%; height: 100%; align-items: center; justify-content: center; color: var(--muted-foreground); font-size: var(--type-label); }
+  .canvas-workspace-loading { display: flex; width: 100%; height: 100%; align-items: center; justify-content: center; gap: var(--space-2); color: var(--muted-foreground); font-size: var(--type-label); }
+  .canvas-loading-dot { width: 0.4rem; height: 0.4rem; border-radius: 50%; background: currentColor; animation: canvas-loading-breathe 900ms var(--ease-standard) infinite alternate; }
 
   .knowledge-canvas {
     position: relative;
@@ -110,6 +111,7 @@
     --xy-selection-background-color: var(--canvas-marquee-fill);
     --xy-selection-border: var(--canvas-selection-line);
   }
+  .knowledge-canvas[data-memo-drop-active]::after { content: ""; position: absolute; z-index: 7; inset: var(--space-3); border: 1px solid color-mix(in srgb, var(--primary) 42%, transparent); border-radius: var(--radius-panel); background: color-mix(in srgb, var(--primary) 3%, transparent); pointer-events: none; }
   /* 内层框罩住内容, 必须干净: 同一个变量在这一层改回透明, 只留线 */
   .knowledge-canvas .react-flow__nodesselection { --xy-selection-background-color: transparent; }
   .knowledge-canvas .react-flow { background: transparent; }
@@ -213,19 +215,21 @@
   /* Overlay and state                                                        */
   /* ------------------------------------------------------------------------ */
 
-  .canvas-loading { position: absolute; z-index: 5; inset: 0; display: grid; align-content: center; gap: var(--space-4); padding: var(--space-10); background: var(--workspace-stage); }
-  .canvas-loading-card { width: 16.25rem; height: 7rem; border-radius: var(--radius-panel); }
-  .canvas-loading-card:nth-child(2) { margin-left: auto; }
+  .canvas-loading { position: absolute; z-index: 5; inset: 0; display: grid; grid-template-columns: repeat(2, 17.5rem); align-content: center; justify-content: center; gap: clamp(2rem, 8vw, 8rem); padding: var(--space-10); background: var(--workspace-stage); opacity: 0.72; }
+  .canvas-loading-card { width: 17.5rem; height: 22.5rem; border-radius: var(--radius-panel); }
+  .canvas-loading-card-secondary { transform: translateY(2.5rem); opacity: 0.66; }
   .canvas-state { position: absolute; z-index: 6; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-2); background: var(--workspace-stage); color: var(--muted-foreground); text-align: center; }
   .canvas-state strong { color: var(--foreground); font-size: var(--type-ui); }
   .canvas-state span { max-width: 24rem; font-size: var(--type-label); line-height: 1.6; }
   .canvas-empty-hint,
   .canvas-mode-notice,
+  .canvas-drop-hint,
   .canvas-save-state,
   .canvas-ai-state { position: absolute; z-index: 8; border: 1px solid var(--border); border-radius: var(--radius-menu); background: color-mix(in srgb, var(--card) 95%, transparent); box-shadow: var(--shadow-xs); color: var(--muted-foreground); font-size: var(--type-label); backdrop-filter: blur(12px); }
   .canvas-empty-hint { top: 50%; left: 50%; padding: var(--space-3) var(--space-4); transform: translate(-50%, -50%); pointer-events: none; }
   /* 连接提示落在命令条正上方而不是压住它 */
   .canvas-mode-notice { bottom: calc(var(--canvas-chrome-inset) * 2 + var(--canvas-dock-height)); left: 50%; display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-3); transform: translateX(-50%); }
+  .canvas-drop-hint { top: 50%; left: 50%; padding: var(--space-2) var(--space-3); transform: translate(-50%, -50%); pointer-events: none; }
   .canvas-mode-notice button { color: var(--foreground); font-weight: var(--weight-ui); }
   .canvas-save-state { right: var(--canvas-chrome-inset); bottom: var(--canvas-chrome-inset); display: flex; max-width: min(24rem, calc(100% - var(--canvas-chrome-inset) * 2)); align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-3); }
   .canvas-save-state[data-status="unsaved"],
@@ -268,12 +272,26 @@
     .canvas-loading-card,
     .canvas-empty-hint,
     .canvas-mode-notice,
+    .canvas-drop-hint,
     .canvas-save-state,
     .canvas-ai-state {
       corner-shape: var(--corner-shape-smooth);
     }
   }
 }
+
+@keyframes canvas-loading-breathe {
+  from { opacity: 0.28; transform: scale(0.88); }
+  to { opacity: 0.8; transform: scale(1); }
+}
+
+/* 同一个节点身份从 Card 移到 Preview，再在关闭时回到原位；其余 Dialog 动效仍走既有系统。 */
+::view-transition-group(*) {
+  animation-duration: 240ms;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+::view-transition-old(root),
+::view-transition-new(root) { animation: none; }
 
 @media (max-width: 767px) {
   @layer components {
@@ -304,5 +322,7 @@
     .canvas-control,
     .canvas-title { transition-duration: 1ms; }
     .canvas-card-expand { transition-duration: 1ms; transform: none; }
+    .canvas-loading-dot { animation: none; }
   }
+  ::view-transition-group(*) { animation-duration: 1ms; }
 }

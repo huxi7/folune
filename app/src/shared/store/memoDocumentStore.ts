@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Zustand、单篇 memo API、AiCommand 输出与 MemoDetailNode
- * [OUTPUT]: 对外提供按 ID 加载/缓存正文、按提交值判定的临时 ID 对账（接纳服务端顺位让开的默认名而不覆盖用户在途输入）、本地草稿、保存与 AI 正文投影状态
+ * [OUTPUT]: 对外提供按 ID 加载/缓存、意图预取与请求合并，及按提交值判定的临时 ID 对账、本地草稿、保存与 AI 正文投影状态
  * [POS]: shared/store 的正文唯一客户端状态源；目录树只持有摘要，本 Store 不复制树结构或自行导航
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -30,6 +30,7 @@ type MemoDocumentState = {
   errors: Record<string, string | undefined>;
   statuses: Record<string, MemoDocumentStatus>;
   loadMemo(accessToken: string, nodeId: string, signal?: AbortSignal): Promise<MemoDetailNode>;
+  preloadMemo(accessToken: string, nodeId: string): Promise<MemoDetailNode>;
   primeMemo(detail: MemoDetailNode): void;
   rekeyMemo(
     optimisticId: string,
@@ -53,6 +54,7 @@ type MemoDocumentState = {
 
 let loadGeneration = 0;
 const requestVersions = new Map<string, number>();
+const pendingPreloads = new Map<string, Promise<MemoDetailNode>>();
 const aiProjections = new Map<string, AiDocumentProjection>();
 
 const nextRequestVersion = (nodeId: string): number => {
@@ -94,7 +96,10 @@ export const useMemoDocumentStore = create<MemoDocumentState>()((set, get) => ({
       statuses: { ...state.statuses, [nodeId]: "loading" },
     }));
     try {
-      const detail = await getMemo(accessToken, nodeId, signal);
+      // 指针/键盘意图已经启动的预取不应在真正点击后再发第二份正文请求。
+      // 预取不绑定当前路由 AbortSignal，因此快速切换也不会浪费已经在途的结果。
+      const detail = await (pendingPreloads.get(nodeId)
+        ?? getMemo(accessToken, nodeId, signal));
       if (generation === loadGeneration && requestVersions.get(nodeId) === version) {
         set((state) => ({
           documents: { ...state.documents, [nodeId]: detail },
@@ -114,6 +119,29 @@ export const useMemoDocumentStore = create<MemoDocumentState>()((set, get) => ({
       }
       throw error;
     }
+  },
+
+  async preloadMemo(accessToken, nodeId) {
+    const cached = get().documents[nodeId];
+    if (cached !== undefined) return cached;
+    const existing = pendingPreloads.get(nodeId);
+    if (existing !== undefined) return existing;
+
+    const generation = loadGeneration;
+    const request = getMemo(accessToken, nodeId)
+      .then((detail) => {
+        if (generation === loadGeneration && get().documents[nodeId] === undefined) {
+          get().primeMemo(detail);
+        }
+        return detail;
+      })
+      .finally(() => {
+        if (pendingPreloads.get(nodeId) === request) {
+          pendingPreloads.delete(nodeId);
+        }
+      });
+    pendingPreloads.set(nodeId, request);
+    return request;
   },
 
   primeMemo(detail) {
@@ -246,6 +274,7 @@ export const useMemoDocumentStore = create<MemoDocumentState>()((set, get) => ({
   reset() {
     loadGeneration += 1;
     requestVersions.clear();
+    pendingPreloads.clear();
     aiProjections.clear();
     set({ documents: {}, errors: {}, statuses: {} });
   },

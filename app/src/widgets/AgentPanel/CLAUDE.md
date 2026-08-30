@@ -21,7 +21,9 @@ canvasExpandClient.ts: 浏览器到 Chat `/v1/canvas-expand` 的最小 authentic
 canvasExpandClient.test.ts: Canvas expansion 响应契约门禁，锁定身份/版本、最多五项、0..1 confidence 与两种完成状态，畸形 Chat 输出不得进入 Canvas intent
 threadSelection.ts: 按用户 localStorage key 选择合法历史 thread，失效偏好回退服务端最近会话
 threadSelection.test.ts: 覆盖用户偏好隔离、合法恢复和失效 ID 回退
-useAiThreads.ts: 会话控制器，服务端持有 Thread/Message/Reference 真相；负责首次空会话、统一列表/detail/messages 加载、选择偏好与标题/删除 CRUD，并在删除当前会话后选择最近项或创建空白项
+aiThreadCache.ts: 按用户隔离的 30 秒进程内 AI 会话快照；允许陈旧读取以立即恢复最后可用画面，只服务 stale-while-revalidate，不替代服务端真相
+aiThreadCache.test.ts: 锁定 AI 快照用户隔离、TTL 后仍可陈旧读取与局部更新不清空其余内容
+useAiThreads.ts: 会话控制器；首次并发初始化合并，面板重挂载先显示进程内快照，新鲜命中不请求、陈旧命中后台校准，CRUD 后同步修正快照
 AgentProcessDisclosure.tsx: 单条 assistant 回复的处理过程显隐边界，入口固定在所有过程文字与工具之前；生成期以 ThinkingMark + 真实状态强制展开，完成后保留“思考过程”顶部入口供手动收起/展开，容器永不包裹最终正文
 ChatMessage.tsx: SuperNoteUIMessage 适配层；冻结上下文只参与请求而不渲染到用户/assistant 对话，assistant 保持单一过程区且不承载审批控件，同轮成功命令只在最终回复末尾提供一个整轮撤销
 ChatMessage.test.tsx: 完整回复 DOM 契约测试，锁定单一过程区、审批条非模态且与消息解耦、单一整轮撤销、最终正文边界、冻结来源不污染消息与敏感 ID 屏蔽

@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun test、react-dom/server、memoDocumentStore 初始状态与真实 CanvasPreviewOverlay
- * [OUTPUT]: 锁定"纸内只有正文、动作一律在纸外"的 DOM 契约：关闭与编辑原文都不在 .note-paper 内，因此正文长度永不影响入口可达性
+ * [OUTPUT]: 锁定 Preview 视觉身份、bare reader 纸与纸外关闭/编辑动作的 DOM 契约
  * [POS]: KnowledgeCanvas 的预览结构回归门禁；只断言结构归属，模态行为与几何由 Dialog/note-paper.css 拥有并在浏览器验收
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -14,6 +14,7 @@ const html = renderToStaticMarkup(
   <CanvasPreviewOverlay
     accessToken="test-token"
     memoId="memo-1"
+    nodeId="canvas-node-1"
     onClose={() => undefined}
     onEditOriginal={async () => undefined}
     title="少则得"

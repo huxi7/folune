@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 @xyflow/react 的关系注册 Handle/NodeProps/四角 NodeResizeControl、CanvasFlowNode 数据、共享 NotePaper thumbnail 纸面、空间文字几何、设计系统图标与 canvasActions Context
+ * [INPUT]: 依赖 @xyflow/react、CanvasFlowNode、NotePaper、空间文字几何、设计系统图标、稳定 canvasActions 与细粒度 canvasWorkspaceStore 状态
  * [OUTPUT]: 对外提供 280x360 纵向 memo_ref 笔记预览卡与静止无表面、按持久化基础宽高测量、编辑态稳定聚焦且四角等比缩放的 native 空间文字节点
  * [POS]: KnowledgeCanvas 的节点表现层；Handle 只登记关系身份，真实浮动端点由 CanvasCordEdge 读取节点矩形求解；卡片只读快照标题/摘录，正文只经 Preview Overlay 按 ID 读取，空间文字把自身 scale 与视口 zoom 分离，全部持久修改仍交给统一协调器
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -13,6 +13,7 @@ import {
   type NodeProps,
 } from "@xyflow/react";
 import {
+  memo,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -28,6 +29,7 @@ import {
   PlusIcon,
   TrashIcon,
 } from "../../shared/design-system/icons";
+import { useCanvasWorkspaceStore } from "../../shared/store/canvasWorkspaceStore";
 import { NotePaper } from "../NotePaper";
 import { useCanvasActions } from "./canvasActions";
 import {
@@ -77,7 +79,7 @@ const measuredTextBase = (
   };
 };
 
-export function CanvasCardNode({
+export const CanvasCardNode = memo(function CanvasCardNode({
   data,
   height,
   id,
@@ -85,7 +87,10 @@ export function CanvasCardNode({
   width,
 }: NodeProps<CanvasFlowNode>) {
   const actions = useCanvasActions();
-  const editing = actions.editingTextNodeId === id;
+  const editing = useCanvasWorkspaceStore(
+    (state) => state.editingTextNodeId === id,
+  );
+  const aiLoading = useCanvasWorkspaceStore((state) => state.aiLoading);
   const [text, setText] = useState(data.body ?? "");
   const [resizingScale, setResizingScale] = useState<number | null>(null);
   const [draftBaseGeometry, setDraftBaseGeometry] = useState<{
@@ -303,6 +308,7 @@ export function CanvasCardNode({
   return (
     <article
       className="canvas-card"
+      data-canvas-card-id={id}
       data-kind={data.kind}
       data-selected={selected}
       data-tombstone={data.tombstone}
@@ -310,6 +316,7 @@ export function CanvasCardNode({
         event.stopPropagation();
         if (available) actions.onPreview(id);
       }}
+      style={{ viewTransitionName: "none" }}
     >
       <Handle
         className="canvas-card-center-handle"
@@ -348,7 +355,7 @@ export function CanvasCardNode({
             <button
               aria-label="AI 拓展这条分支"
               className="canvas-card-action"
-              disabled={actions.aiLoading}
+              disabled={aiLoading}
               onClick={() => void actions.onExpand(id)}
               title="AI 拓展"
               type="button"
@@ -387,4 +394,4 @@ export function CanvasCardNode({
       />
     </article>
   );
-}
+});

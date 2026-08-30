@@ -14,14 +14,14 @@ LandingSections.tsx: Landing 扩展模块，包含 CountUp 行为指标、问题
 LandingFooter.tsx: Landing 无 BlueprintFrame 的全宽深蓝 Fat Footer，品牌锁定只显示 SuperNote 主名称并移除 Write first 副标题，上层用无位移 hover 的独立分栏网格承载品牌/导航/元信息，下层以大块留白呈现与分栏线同色的 1.5px 描边、3% 偏白浅蓝填充、400 字重和负字距的大尺寸 SuperNote SVG 幽灵字
 LandingMotion/: Landing 克制反馈模块，只提供 CountUp 与一次性 reveal；磁吸、指针聚光与装饰点阵已移除，当前页面只保留有信息价值的计数与 3–4px 入场反馈
 NotebookPreview.tsx: Landing 的真实工作台预览，以工具轨、单栏文件 tree、文档纸面和 Agent 归档面板呈现核心体验
-AppSidebar.tsx: /app 与 Canvas 共用的文件库内容；folder id 直接由 memoTree 派生，定位展开只以结构/目标语义键触发，避免标题刷新抢占展开状态；真实 tree 容器可进入键盘焦点，并承载新建、rename、拖拽、回收站与定位命令
+AppSidebar.tsx: /app 与 Canvas 共用的文件库内容；定位展开只以结构/目标语义键触发，memo 指针/焦点会预热正文；树内重排与跨视图拖入 Canvas 共享一次原生拖拽会话，辅助导航只上报意图给 Dashboard
 SidebarCreateMenu.tsx: 文件库创建入口；96px split 控件默认新建 memo，下拉显式选择 memo/standalone Canvas/folder；menu 容器可聚焦并支持方向键/Home/End 与外部关闭，不持有树事务或路由
 AppMainToolbar.tsx: Paper 顶部 48px 文档命令条，呈现低对比完整路径、32px Canvas 入口、整理、阅读/编辑与更多菜单；进入默认 Canvas 前由页面层完成 required flush，命令条不直接发业务请求
-MemoTreeBranch.tsx: 无限递归树渲染器；画布与笔记只靠叶子图标区分（星图 vs 纸张）且永不暴露扩展名，Folder/FolderOpen 单图标承担开合，同层共享固定图标槽；双击/F2/右键三个入口一律进入同一个原地重命名（画布不再是例外），撞名时行内提示且提交挂起，folder/memo 使用固定 DnD 落点，并接收本次整理 folder/memo id 绘制短期归档高亮
+MemoTreeBranch.tsx: 无限递归树渲染器；叶子指针/键盘焦点上报 memo 预取意图，folder/memo 使用固定 DnD 落点，画布与笔记靠图标区分；双击/F2/右键共用原地重命名，撞名时挂起提交
 MemoTreeSkeleton.tsx: 文件库首次加载的真实行结构占位组件，只组合共享 Skeleton 并由调用方控制延迟显隐
 MemoNodeDialog.tsx: 文件树命名弹窗，以设计系统 Dialog/Input/Button 承载新建文件夹，负责非空校验、同级重名即时提示与提交拦截、提交锁与 API 错误展示（服务端 MEMO_TITLE_CONFLICT 也说人话），不使用浏览器 prompt 或直接访问 API
-memoLibrary.ts: 后端轻量文件树的纯视图模型工具，复用 shared/store/memoTree 算法提供首个 memo、祖先/路径、标题/路径与服务端正文命中 ID 搜索，以及 before/after/inside/root-end 防环计划；folder inside 固定计算第一个子节点 sort_order
-memoLibrary.test.ts: Bun 拖拽视图回归测试，覆盖无限嵌套查找、搜索/路径、根末尾、folder 首位放入、混合排序及自己/后代防环
+memoLibrary.ts: 后端轻量文件树的纯视图模型工具，提供路径/搜索、树内稀疏移动计划，以及仅 memo 可生成和解析的 `application/x-supernote-memo` Canvas 拖拽协议
+memoLibrary.test.ts: Bun 视图模型测试，覆盖嵌套查找、搜索/路径、稀疏移动、防环与跨视图拖拽载荷校验
 useMemoTreeExpansion.ts: 文件树展开偏好的设备级持久化边界；水合只由用户存储身份/ready 驱动，folderIds 用序列化语义键独立对账，避免数组身份或树刷新重置用户展开状态
 useMemoTreeExpansion.test.ts: 覆盖展开快照缺失与明确全折叠的区分、损坏/旧版本容错，以及删除清理和新 folder 自动展开规则
 useMemoSearch.ts: Command Palette 与 @菜单共用的正文关键词命中 hook，180ms 防抖、切换中止旧请求，只把仍存在于 active tree 的命中 ID 与 idle/loading/ready/error 状态交给调用方
@@ -33,8 +33,8 @@ cordGeometry.ts: Cord 连线几何内核；提供边缘锚点（CordBox 声明 r
 cordGeometry.test.ts: 以独立三次贝塞尔求值反证中点切分，并覆盖四向边缘锚点、圆角锚点确实落在弧上且绕行 360° 每度位移有界（夹到边中段那种做法会在角上跳 ~68px）、重合端点不产 NaN 与两位小数收敛；另以「相对自身弦的有符号法向偏移」为形状描述子绕行 360°，逐度证明弯度无跳变（1° 内形变 < 2px）且恰好在四条轴上取直
 Cord.tsx: 共享连线 Signature 渲染层；粗细沿路径恒定是 SVG 硬限制，两头收细由 Cord 生成的沿线透明度渐变承担，虚线表 AI 临时推荐、实线表已确认关联，出场自绘与流光下沉 CSS 以避免每帧 React 更新
 EdgeDock.tsx: 文件库/AI 共用的 Stage 关闭态 Ghost 图标入口，桌面 32px、窄屏 44px，静止无背景/描边/文字且不使用共享 layoutId；Panel 关闭入口由各自 Header 内部拥有
-PaperSurface.tsx: 816px Paper Signature 边界，拥有非对称 Paper 阴影、Archive Port 与只替换内容不重挂载编辑会话的内部过渡
-CanvasWorkspace.tsx: Canvas V2 全视口会话壳；与 Paper 互斥但复用只在自身边框内遮盖 Stage 的左右文件库/AI Panel 和 ArchiveCord 上下文，Panel/Preview 开合既不改变 Canvas 几何也不卸载中央 React Flow；进入状态只在挂载那一刻由返回描述或 canvasChromeStore 解释一次，之后每次开关都记进该画布的最近布局，顶层只保留左上开关+标题与右上 AI 开关两块无卡片分区
+PaperSurface.tsx: 816px Paper Signature 边界，拥有非对称 Paper 阴影、Archive Port 与无退出等待的即时内容切换，避免缓存命中仍人为制造空白
+CanvasWorkspace.tsx: Canvas 全视口会话壳；可空闲预载 KnowledgeCanvas，并向路由暴露 flush 控制；Panel/Preview 开合不改变几何或卸载中央 React Flow，进入状态由返回描述或 canvasChromeStore 解释一次
 CanvasWorkspace.test.tsx: Canvas 会话壳回归测试，锁定中央 Canvas、共享 Panel、Paper 互斥关系，以及伪返回按钮/Canvas 文字标识/厚重标题卡片确已消失
 KnowledgeCanvas/: Canvas V2 交互内容根，以受控 React Flow 承载持久视口、memo/native 节点、连接、带撤销回执/来源确认的移除、拖拽/缩放、Picker、Preview、显式 AI expansion、WAL 恢复与保存状态
 DesignSystemWorkspace/: 开发态 Quiet Editorial Design System 工作区，按 Foundations/Primitives/Navigation & Overlays/Editorial/AI & Organize 五层直接陈列生产 Token、Lucide Iconography、完整 Markdown/Reading/Quote/Code 与四种 Signature Components；通过 lazy import 只在 import.meta.env.DEV 下暴露
@@ -47,9 +47,9 @@ MarkdownReadingView.tsx: react-markdown + remark-gfm + 可选 remark-breaks + re
 MarkdownReadingView.test.tsx: 阅读换行、安全、常数尾部动画节点与文件边界测试；正则按真实 HTML 属性匹配，不保留无意义的 quote 转义
 MarkdownViewMenu.tsx: 中央 Toolbar 的 editing/reading 切换与 More 菜单；menu 容器可聚焦，分隔符具备名称，支持键盘/焦点恢复，并在导出文件名时显式过滤 ASCII 控制字符
 markdownViewTypes.ts: DocumentView editing/reading 与 EditingMode live/source 的共享状态协议，阅读状态不占用编辑模式槽位
-NotesWorkspace.tsx: /app Paper 内部写作列，以 memoClientKey 作为唯一编辑会话/自动聚焦身份；保存回包导致 memo 对象刷新时不重新聚焦或全选，contentEditable h1 的名称由 aria-label 与运行时正文共同提供
+NotesWorkspace.tsx: /app Paper 内部写作列，以 memoClientKey 作为唯一编辑会话/自动聚焦身份；逐键正文只更新本地草稿，保存/flush 才跨越 Dashboard 共享状态边界
 PaperWorkspaceShell.tsx: Paper First 四层空间壳；响应式覆盖判据以 assistant/library 状态稳定闭包驱动 resize effect，文件库/AI 独立浮层开合不改变 Paper/Stage 几何
-useMemoAutosave.ts: 单 memo 编辑会话状态机；递归 required flush 使用具名 callback，session 只以 memoId 建立/销毁，initial title/content 的晚到刷新由独立采纳门禁处理，避免服务端刷新中断在途保存
+useMemoAutosave.ts: 单 memo 本地草稿状态机；递归 required flush 使用具名 callback，session 只以 memoId 建立/销毁，逐键输入不写全局 Store，晚到初值由独立门禁接纳
 useMemoAutosave.test.ts: 覆盖迟到服务端正文接纳门禁、插入/删除/等长替换字符计数、三次有界指数退避，以及驱动真实 Hook 证明标题冲突只挂起 title 而正文照常落库
 WorkspaceAuxViews.tsx: 纸内辅助视图挂载点；订阅、回收站、Design System 住在 Paper 内部且彼此互斥。已保存画布属于独立空间语境，明确由 CanvasWorkspace 承载，不得重新并入此分支
 WorkspaceCommandPalette.tsx: 全局唯一 Command Surface；listbox 结果行是可聚焦 option，以稳定 id 承担 active 身份，并支持六档排序、Tab 进入画布与 Canvas 语境连续加入

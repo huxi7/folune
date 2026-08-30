@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun mock/test、可控单篇 memo API Promise 与 memoDocumentStore
- * [OUTPUT]: 验证正文按 ID 缓存、切换隔离、reset 后旧响应不得回填新会话，以及临时 ID 对账时服务端顺位让开的默认名被接纳而用户在途输入不被覆盖
+ * [OUTPUT]: 验证正文按 ID 缓存、意图预取与点击请求合并、切换隔离、reset 门禁，以及临时 ID 对账语义
  * [POS]: shared/store 的正文生命周期回归测试，保护目录轻载后只读取被打开笔记这一核心边界
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -80,6 +80,19 @@ describe("memoDocumentStore", () => {
     expect(getMemoCalls).toEqual(["memo-a", "memo-b"]);
     expect(cached).toBe(first);
     expect(second.memo.content_mdx).toBe("正文-memo-b");
+  });
+
+  test("预取与随后打开共用同一份在途正文请求", async () => {
+    const pending = deferred<MemoDetailNode>();
+    getMemoHandler = () => pending.promise;
+
+    const preload = useMemoDocumentStore.getState().preloadMemo("token", "memo-a");
+    const opened = useMemoDocumentStore.getState().loadMemo("token", "memo-a");
+    pending.resolve(makeDetail("memo-a", "预热正文"));
+
+    expect(await opened).toBe(await preload);
+    expect(getMemoCalls).toEqual(["memo-a"]);
+    expect(useMemoDocumentStore.getState().statuses["memo-a"]).toBe("ready");
   });
 
   test("reset 后忽略旧会话尚未完成的正文响应", async () => {

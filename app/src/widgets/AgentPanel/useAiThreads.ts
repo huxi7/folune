@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 React 状态/effect、shared/api/ai thread/message/reference API、用户 access token 与 threadSelection 偏好策略
- * [OUTPUT]: 对外提供统一会话列表、所选 thread/detail/messages、初始化与 CRUD/reference 命令
- * [POS]: AgentPanel 会话控制器；服务端是 thread/message 真相源，Hook 只维护当前视图缓存并在切换时重建 useChat
+ * [INPUT]: 依赖 React、shared/api/ai、按用户短时快照缓存、访问令牌与 threadSelection 偏好策略
+ * [OUTPUT]: 对外提供立即恢复旧内容、后台校准的会话列表/detail/messages 与 CRUD/reference 命令
+ * [POS]: AgentPanel 会话控制器；服务端是真相源，进程内快照只跨面板挂载保留最后可用画面并合并初始化请求
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -23,6 +23,12 @@ import {
   chooseSelectedThreadId,
   selectedThreadStorageKey,
 } from "./threadSelection";
+import {
+  patchAiThreadSnapshot,
+  readAiThreadSnapshot,
+  writeAiThreadSnapshot,
+  type AiThreadSnapshot,
+} from "./aiThreadCache";
 
 type UseAiThreadsInput = {
   accessToken: string;
@@ -30,6 +36,7 @@ type UseAiThreadsInput = {
 };
 
 const pendingInitialThreads = new Map<string, Promise<AiThread>>();
+const pendingHydrations = new Map<string, Promise<AiThreadSnapshot>>();
 
 const ensureInitialThread = (
   accessToken: string,
@@ -46,11 +53,39 @@ const ensureInitialThread = (
   return creation;
 };
 
+const hydrateAiThreads = (
+  accessToken: string,
+  userId: string,
+): Promise<AiThreadSnapshot> => {
+  const existing = pendingHydrations.get(userId);
+  if (existing !== undefined) return existing;
+  const hydration = (async () => {
+    let threads = await listAiThreads(accessToken);
+    let threadId = chooseSelectedThreadId(
+      threads,
+      window.localStorage.getItem(selectedThreadStorageKey(userId)),
+    );
+    if (threadId === null) {
+      const created = await ensureInitialThread(accessToken, userId, threads);
+      threads = [created];
+      threadId = created.id;
+    }
+    const [selectedThread, messages] = await Promise.all([
+      getAiThread(accessToken, threadId),
+      listAiMessages(accessToken, threadId),
+    ]);
+    return { messages, selectedThread, storedAt: Date.now(), threads };
+  })().finally(() => pendingHydrations.delete(userId));
+  pendingHydrations.set(userId, hydration);
+  return hydration;
+};
+
 export function useAiThreads({ accessToken, userId }: UseAiThreadsInput) {
-  const [threads, setThreads] = useState<AiThread[]>([]);
-  const [selectedThread, setSelectedThread] = useState<AiThreadDetail | null>(null);
-  const [messages, setMessages] = useState<AiMessage[]>([]);
-  const [loading, setLoading] = useState(true);
+  const initialSnapshot = useRef(readAiThreadSnapshot(userId));
+  const [threads, setThreads] = useState<AiThread[]>(() => initialSnapshot.current?.snapshot.threads ?? []);
+  const [selectedThread, setSelectedThread] = useState<AiThreadDetail | null>(() => initialSnapshot.current?.snapshot.selectedThread ?? null);
+  const [messages, setMessages] = useState<AiMessage[]>(() => initialSnapshot.current?.snapshot.messages ?? []);
+  const [loading, setLoading] = useState(initialSnapshot.current === null);
   const [mutating, setMutating] = useState(false);
   const selectedIdRef = useRef<string | null>(null);
 
@@ -59,7 +94,10 @@ export function useAiThreads({ accessToken, userId }: UseAiThreadsInput) {
     window.localStorage.setItem(selectedThreadStorageKey(userId), threadId);
   }, [userId]);
 
-  const loadSelected = useCallback(async (threadId: string) => {
+  const loadSelected = useCallback(async (
+    threadId: string,
+    knownThreads?: AiThread[],
+  ) => {
     persistSelection(threadId);
     const [detail, storedMessages] = await Promise.all([
       getAiThread(accessToken, threadId),
@@ -68,47 +106,57 @@ export function useAiThreads({ accessToken, userId }: UseAiThreadsInput) {
     if (selectedIdRef.current === threadId) {
       setSelectedThread(detail);
       setMessages(storedMessages);
+      const cachedThreads = knownThreads
+        ?? readAiThreadSnapshot(userId)?.snapshot.threads
+        ?? threads;
+      writeAiThreadSnapshot(userId, {
+        messages: storedMessages,
+        selectedThread: detail,
+        threads: cachedThreads,
+      });
     }
     return detail;
-  }, [accessToken, persistSelection]);
+  }, [accessToken, persistSelection, threads, userId]);
 
   const refreshLists = useCallback(async () => {
     const refreshedThreads = await listAiThreads(accessToken);
     setThreads(refreshedThreads);
+    patchAiThreadSnapshot(userId, { threads: refreshedThreads });
     return refreshedThreads;
-  }, [accessToken]);
+  }, [accessToken, userId]);
 
   useEffect(() => {
     let cancelled = false;
-    selectedIdRef.current = null;
-    setLoading(true);
-    setSelectedThread(null);
-    setMessages([]);
+    const cached = readAiThreadSnapshot(userId);
+    selectedIdRef.current = cached?.snapshot.selectedThread.id ?? null;
+    if (cached !== null) {
+      persistSelection(cached.snapshot.selectedThread.id);
+      setLoading(false);
+      if (cached.fresh) return;
+    } else {
+      setLoading(true);
+    }
 
     const initialize = async () => {
-      const refreshedThreads = await refreshLists();
+      const snapshot = await hydrateAiThreads(accessToken, userId);
       if (cancelled) return;
-      let threadId = chooseSelectedThreadId(
-        refreshedThreads,
-        window.localStorage.getItem(selectedThreadStorageKey(userId)),
-      );
-      if (threadId === null) {
-        const created = await ensureInitialThread(accessToken, userId, refreshedThreads);
-        if (cancelled) return;
-        setThreads([created]);
-        threadId = created.id;
-      }
-      await loadSelected(threadId);
+      writeAiThreadSnapshot(userId, snapshot);
+      persistSelection(snapshot.selectedThread.id);
+      setThreads(snapshot.threads);
+      setSelectedThread(snapshot.selectedThread);
+      setMessages(snapshot.messages);
     };
 
-    void initialize().finally(() => {
-      if (!cancelled) setLoading(false);
-    });
+    void initialize()
+      .catch(() => undefined)
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
 
     return () => {
       cancelled = true;
     };
-  }, [accessToken, loadSelected, refreshLists, userId]);
+  }, [accessToken, persistSelection, userId]);
 
   const runMutation = useCallback(async <T,>(operation: () => Promise<T>) => {
     setMutating(true);
@@ -121,9 +169,10 @@ export function useAiThreads({ accessToken, userId }: UseAiThreadsInput) {
 
   const createThread = useCallback(() => runMutation(async () => {
     const created = await createAiThread(accessToken);
-    setThreads((current) => [created, ...current]);
-    await loadSelected(created.id);
-  }), [accessToken, loadSelected, runMutation]);
+    const nextThreads = [created, ...threads];
+    setThreads(nextThreads);
+    await loadSelected(created.id, nextThreads);
+  }), [accessToken, loadSelected, runMutation, threads]);
 
   const selectThread = useCallback((threadId: string) =>
     runMutation(() => loadSelected(threadId)), [loadSelected, runMutation]);
@@ -131,10 +180,15 @@ export function useAiThreads({ accessToken, userId }: UseAiThreadsInput) {
   const refreshSelected = useCallback(async () => {
     const threadId = selectedIdRef.current;
     if (threadId === null) return;
-    const detail = await getAiThread(accessToken, threadId);
+    const [detail, storedMessages] = await Promise.all([
+      getAiThread(accessToken, threadId),
+      listAiMessages(accessToken, threadId),
+    ]);
     setSelectedThread(detail);
+    setMessages(storedMessages);
+    patchAiThreadSnapshot(userId, { messages: storedMessages, selectedThread: detail });
     await refreshLists();
-  }, [accessToken, refreshLists]);
+  }, [accessToken, refreshLists, userId]);
 
   const patchSelected = useCallback(async (
     input: Partial<Pick<AiThread, "title">>,
@@ -143,8 +197,9 @@ export function useAiThreads({ accessToken, userId }: UseAiThreadsInput) {
     if (current === null) return;
     const updated = await updateAiThread(accessToken, current.id, input);
     setSelectedThread((detail) => detail === null ? null : { ...detail, ...updated });
+    patchAiThreadSnapshot(userId, { selectedThread: { ...current, ...updated } });
     await refreshLists();
-  }), [accessToken, refreshLists, runMutation, selectedThread]);
+  }), [accessToken, refreshLists, runMutation, selectedThread, userId]);
 
   const patchThread = useCallback(async (
     threadId: string,
@@ -153,9 +208,15 @@ export function useAiThreads({ accessToken, userId }: UseAiThreadsInput) {
     const updated = await updateAiThread(accessToken, threadId, input);
     if (selectedIdRef.current === threadId) {
       setSelectedThread((detail) => detail === null ? null : { ...detail, ...updated });
+      const cached = readAiThreadSnapshot(userId)?.snapshot;
+      if (cached?.selectedThread.id === threadId) {
+        patchAiThreadSnapshot(userId, {
+          selectedThread: { ...cached.selectedThread, ...updated },
+        });
+      }
     }
     await refreshLists();
-  }), [accessToken, refreshLists, runMutation]);
+  }), [accessToken, refreshLists, runMutation, userId]);
 
   const replaceReferences = useCallback((memoIds: readonly string[]) =>
     runMutation(async () => {
@@ -167,7 +228,10 @@ export function useAiThreads({ accessToken, userId }: UseAiThreadsInput) {
         memoIds,
       );
       setSelectedThread((detail) => detail === null ? null : { ...detail, references });
-    }), [accessToken, runMutation, selectedThread]);
+      patchAiThreadSnapshot(userId, {
+        selectedThread: { ...current, references },
+      });
+    }), [accessToken, runMutation, selectedThread, userId]);
 
   const chooseNextOrCreate = useCallback(async (excludedId: string) => {
     const next = threads.find((thread) => thread.id !== excludedId);
@@ -177,7 +241,7 @@ export function useAiThreads({ accessToken, userId }: UseAiThreadsInput) {
     }
     const created = await createAiThread(accessToken);
     setThreads([created]);
-    await loadSelected(created.id);
+    await loadSelected(created.id, [created]);
   }, [accessToken, loadSelected, threads]);
 
   const removeThread = useCallback((threadId: string) => runMutation(async () => {

@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 motion/react、共享 EdgeDock/Panel 插槽、ArchiveCord 空闲上下文、canvasChromeStore 进入策略与每画布快照、canvasWorkspaceStore 会话 Chrome、KnowledgeCanvas 会话控制与 Quiet Editorial token
- * [OUTPUT]: 对外提供与 Paper 共用左右工具基础设施、但中央始终保持同一 React Flow 实例的全视口 CanvasWorkspace，以及左上开关+标题／右上 AI 开关的无卡片顶层分区
+ * [OUTPUT]: 对外提供可预载、可向路由暴露 flush 会话控制且中央始终保持同一 React Flow 实例的全视口 CanvasWorkspace
  * [POS]: widgets 的 Canvas V2 会话壳；负责返回 flush、Panel 会话状态、每画布布局记忆与空间布局，数据/交互/恢复归 KnowledgeCanvas；左右面板各自独立开关，永不共用一个布尔值
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -43,8 +43,14 @@ import { EdgeDock } from "./EdgeDock";
 import { CanvasTitle } from "./KnowledgeCanvas/CanvasTitle";
 import type { CanvasSessionControls } from "./KnowledgeCanvas/useCanvasSessionCoordinator";
 
+const loadKnowledgeCanvas = () => import("./KnowledgeCanvas");
+
+export const preloadKnowledgeCanvas = () => {
+  void loadKnowledgeCanvas();
+};
+
 const KnowledgeCanvas = lazy(() =>
-  import("./KnowledgeCanvas").then((module) => ({
+  loadKnowledgeCanvas().then((module) => ({
     default: module.KnowledgeCanvas,
   })),
 );
@@ -56,6 +62,7 @@ type CanvasWorkspaceProps = {
   library: ReactNode;
   onNavigateMemo: (nodeId: string, descriptor: CanvasReturnDescriptor) => void;
   onRename: (title: string) => Promise<void>;
+  onSessionReady?: (controls: CanvasSessionControls | null) => void;
   restore?: CanvasReturnDescriptor | null;
   style: CSSProperties;
   title: string;
@@ -69,6 +76,7 @@ export function CanvasWorkspace({
   library,
   onNavigateMemo,
   onRename,
+  onSessionReady,
   restore = null,
   style,
   title,
@@ -113,7 +121,8 @@ export function CanvasWorkspace({
 
   const registerControls = useCallback((controls: CanvasSessionControls | null) => {
     controlsRef.current = controls;
-  }, []);
+    onSessionReady?.(controls);
+  }, [onSessionReady]);
 
   const closeAssistant = useCallback(() => {
     setCanvasChrome({ assistantOpen: false });
@@ -281,8 +290,9 @@ export function CanvasWorkspace({
 
         <Suspense
           fallback={(
-            <div className="canvas-workspace-loading" role="status">
-              正在打开 Canvas…
+            <div className="canvas-workspace-loading canvas-workspace-chunk-loading" role="status">
+              <span className="canvas-loading-dot" />
+              <span>正在准备画布</span>
             </div>
           )}
         >

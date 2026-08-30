@@ -10,9 +10,6 @@ import { createContext, useContext, type ReactNode } from "react";
 import type { SpatialTextGeometry } from "./spatialTextGeometry";
 
 export type CanvasActions = {
-  aiLoading: boolean;
-  editingTextNodeId: string | null;
-  selectedNodeIds: readonly string[];
   onCancelText: (nodeId: string) => void;
   onCommitText: (
     nodeId: string,

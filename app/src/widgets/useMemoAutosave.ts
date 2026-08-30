@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖 React state/effect/ref、真实 MemoTreeNode、Store 正文本地更新命令与显式 memoId 的后台保存命令
- * [OUTPUT]: 对外提供以 memoId 为唯一 session 身份、具名递归 flush、晚到初值独立接纳、删除 pause/resume 与标题冲突隔离的 useMemoAutosave
+ * [INPUT]: 依赖 React state/effect/ref、真实 MemoTreeNode 与显式 memoId 的后台保存命令
+ * [OUTPUT]: 对外提供以 memoId 为唯一 session 身份、编辑器内本地草稿、具名递归 flush、晚到初值独立接纳、删除 pause/resume 与标题冲突隔离的 useMemoAutosave
  * [POS]: app/src/widgets 的编辑会话协调边界；删除前可证明保存完成并暂停卸载 flush，普通输入仍沿用单一自动保存状态机。标题与正文是两条独立提交路径：同级重名只挂起 title 字段并原位提示，正文永远继续自动保存
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -41,7 +41,6 @@ type UseMemoAutosaveInput = {
   initialContent: string;
   initialTitle: string;
   memoId: string;
-  onContentChange: (content: string) => void;
   onFailure: (error: unknown) => void;
   onSave: (
     memoId: string,
@@ -213,7 +212,6 @@ export function useMemoAutosave({
   initialContent,
   initialTitle,
   memoId,
-  onContentChange,
   onFailure,
   onSave,
 }: UseMemoAutosaveInput): UseMemoAutosaveResult {
@@ -221,7 +219,6 @@ export function useMemoAutosave({
   const [title, setTitle] = useState(initialTitle);
   const [titleConflict, setTitleConflict] = useState(false);
   const hasTitleConflictRef = useRef(hasTitleConflict);
-  const onContentChangeRef = useRef(onContentChange);
   const onFailureRef = useRef(onFailure);
   const onSaveRef = useRef(onSave);
   const sessionRef = useRef(
@@ -233,7 +230,6 @@ export function useMemoAutosave({
   ) => Promise<void>>(async () => undefined);
 
   hasTitleConflictRef.current = hasTitleConflict;
-  onContentChangeRef.current = onContentChange;
   onFailureRef.current = onFailure;
   onSaveRef.current = onSave;
 
@@ -542,7 +538,6 @@ export function useMemoAutosave({
     session.latestContent = nextContent;
     session.failedDraftKey = null;
     setContent(nextContent);
-    onContentChangeRef.current(nextContent);
     scheduleAutosave(session);
   }, [scheduleAutosave]);
 
