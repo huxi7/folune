@@ -12,6 +12,8 @@ composerSources.test.ts: 覆盖当前 memo 默认来源、删除抑制、切换�
 MentionMenu.tsx: Prompt Bar 与 Canvas Picker 共用的 memo 搜索纯函数；只投影 folder 导航下的 memo，显式排除 canvas，标题/路径本地匹配并合并正文命中，视图仍只显示文件图标与文件名
 MentionMenu.test.ts: 覆盖空 @候选、搜索排除、revision、Canvas 节点隔离及轻量渲染结构
 PermissionModeControl.tsx: Composer 左下角账号全局每次询问/智能审批实验/完全访问 32px 本地 Ghost Button；与右侧发送/停止同尺寸，菜单向上展开，以一句短描述区分模式，hover 与当前模式共享中性表面，只显示 API 已确认模式，加载/保存失败保持旧值并经全局 Toast 明示
+aiSettingsCache.ts: 按用户短时缓存已确认审批设置并合并在途读取；侧栏重复挂载直接复用新鲜值，改设置成功后同步写回，不替代服务端权限事实
+aiSettingsCache.test.ts: 锁定审批设置缓存的用户隔离、新鲜命中、过期重读、并发合并与成功写回语义
 ApprovalCard.tsx: 每次询问与智能审批回退的工具审批语义适配；把人话动作、最小影响说明和危险操作按钮映射到共享 ApprovalDock
 OrganizeReviewCard.tsx: AI 整理审批语义适配；只把当前 memo 的 awaiting_confirmation 标题/位置影响与确认/取消映射到共享 ApprovalDock，其他 Run 状态不在 AgentPanel 或 Paper 下方重复展示
 OrganizeReviewCard.test.tsx: AI 整理审批 DOM 同构测试，锁定 awaiting_confirmation 复用 agent-approval-dock 且 succeeded 输出为空
@@ -23,7 +25,7 @@ threadSelection.ts: 按用户 localStorage key 选择合法历史 thread，失�
 threadSelection.test.ts: 覆盖用户偏好隔离、合法恢复和失效 ID 回退
 aiThreadCache.ts: 按用户隔离的 30 秒进程内 AI 会话快照；允许陈旧读取以立即恢复最后可用画面，只服务 stale-while-revalidate，不替代服务端真相
 aiThreadCache.test.ts: 锁定 AI 快照用户隔离、TTL 后仍可陈旧读取与局部更新不清空其余内容
-useAiThreads.ts: 会话控制器；首次并发初始化合并，面板重挂载先显示进程内快照，新鲜命中不请求、陈旧命中后台校准，CRUD 后同步修正快照
+useAiThreads.ts: 会话控制器与显式只读数据预热入口；Workspace 空闲预热只缓存已有会话，空账号仍等用户真正打开面板才创建首个会话；预热与面板初始化共用同一在途请求，重挂载先显示进程内快照，新鲜命中不请求、陈旧命中后台校准，CRUD 后同步修正快照
 AgentProcessDisclosure.tsx: 单条 assistant 回复的处理过程显隐边界，入口固定在所有过程文字与工具之前；生成期以 ThinkingMark + 真实状态强制展开，完成后保留“思考过程”顶部入口供手动收起/展开，容器永不包裹最终正文
 ChatMessage.tsx: SuperNoteUIMessage 适配层；冻结上下文只参与请求而不渲染到用户/assistant 对话，assistant 保持单一过程区且不承载审批控件，同轮成功命令只在最终回复末尾提供一个整轮撤销
 ChatMessage.test.tsx: 完整回复 DOM 契约测试，锁定单一过程区、审批条非模态且与消息解耦、单一整轮撤销、最终正文边界、冻结来源不污染消息与敏感 ID 屏蔽
@@ -49,7 +51,7 @@ activityState.test.ts: Activity 状态回归测试，覆盖 submitted、首 toke
 chatFetch.ts: 可独立测试的 HTTP 策略层，每次调用 token provider 后注入 Bearer，并把非 2xx 扁平/嵌套信封归一为带 code 的 ChatRequestError
 chatTransport.ts: 按 thread 创建 DefaultChatTransport，只发送 thread_id 与携带冻结 metadata 的完整 SuperNoteUIMessage；工具续写不再重读当前页面 memo，并集中导出 chat、organize、canvas-expand 端点 URL
 chatTransport.test.ts: chatFetch 回归测试，覆盖最新 Bearer 注入、无会话短路及扁平/嵌套错误信封 code 归一
-index.ts: AgentPanel 模块稳定出口，隔离 AppDashboard 与内部文件布局
+index.ts: AgentPanel 模块稳定出口，隔离 AppDashboard 与内部文件布局，只额外暴露无 UI 副作用的会话数据预热入口
 
 职责: 承载冻结上下文、唯一 @Prompt Bar、纯净对话、可信工具过程、普通/整理同构的唯一人工裁决 Dock、刷新恢复、撤销和消息传输；当前 memo 只作为默认预选 @进入同一 sources 数组，来源只在发送前 Composer 中可见，发送后不重复进入消息视觉层。审批响应必须先持久化，UI 点击锁与 AI SDK part 状态共同阻止重复执行；已批准未完成工具刷新后可依赖 command/toolCall 幂等恢复。AI 整理只在待确认时占用 Dock，成功后消失，禁止在 Panel 或 Paper 下方重复结果卡。四个 memo 客户端工具经 Worker 纯规划，细分 command 仍由 api 安全执行。备忘录写输入可以乐观投影，但事实只能由 api command output 确认，同一 tool_call_id 只投影一次，失败/拒绝精确回滚，同一 command_id+status 只对账一次。
 

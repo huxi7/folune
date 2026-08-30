@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖可信 AuthUser、请求期 JWT、AI thread/message/reference DTO、AI repository 与 HttpError
- * [OUTPUT]: 对外提供无归档分支的会话 CRUD、完整消息幂等同步/自动标题和会话级引用原子替换用例
- * [POS]: service 层 AI 会话业务边界，保证 owner、默认标题一次性生成、parts 保真与最多五篇去重引用
+ * [OUTPUT]: 对外提供并发读取详情的无归档会话 CRUD、完整消息幂等同步/自动标题和会话级引用原子替换用例
+ * [POS]: service 层 AI 会话业务边界；详情与引用都按 owner 过滤并并发读取，保证默认标题一次性生成、parts 保真与最多五篇去重引用
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -175,12 +175,10 @@ export const aiThreadService = {
   },
 
   async getThread(authUser: AuthUser, accessToken: string, threadId: string) {
-    const thread = await requireThread(authUser, accessToken, threadId);
-    const references = await aiRepository.listReferences(
-      authUser.id,
-      threadId,
-      accessToken,
-    );
+    const [thread, references] = await Promise.all([
+      requireThread(authUser, accessToken, threadId),
+      aiRepository.listReferences(authUser.id, threadId, accessToken),
+    ]);
     return { ...thread, references };
   },
 

@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 @xyflow/react 的 Edge/Node 类型（仅类型）与 shared/api/canvas 的 Canvas V2 投影
- * [OUTPUT]: 对外提供固定 280x360 纵向 memo 卡片尺寸、含持久 text_scale 的空间文字投影、携带人工/AI 来源的关系投影、标题/视口容错、恢复视口可用性判据、可拓展节点判据、成组外接框判据、最近空位、路由类型解析与手势级坐标回写纯函数
- * [POS]: app/src/pages 的 Canvas 表现策略边界；服务端快照在此翻译为受控 React Flow 形状，组件不再猜测墓碑、漂移或几何默认值
+ * [OUTPUT]: 对外提供固定 280x360 纵向 memo 卡片尺寸、含持久 text_scale 的空间文字投影、节点/边对象身份对账、标题/视口容错、恢复视口可用性判据、可拓展节点判据、成组外接框判据、最近空位、路由类型解析与手势级坐标回写纯函数
+ * [POS]: app/src/pages 的 Canvas 表现策略边界；服务端快照在此翻译并增量对账为受控 React Flow 形状，未变化对象保持身份以兑现节点 memo，组件不再猜测墓碑、漂移或几何默认值
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -155,6 +155,104 @@ export const toCanvasFlow = (
   nodes: detail.nodes.map(toCanvasFlowNode),
   viewport: toCanvasViewport(detail.canvas.viewport),
 });
+
+const sameCanvasFlowNode = (
+  current: CanvasFlowNode,
+  projected: CanvasFlowNode,
+): boolean =>
+  current.id === projected.id
+  && current.type === projected.type
+  && current.position.x === projected.position.x
+  && current.position.y === projected.position.y
+  && current.style?.width === projected.style?.width
+  && current.style?.height === projected.style?.height
+  && current.data.body === projected.data.body
+  && current.data.createdBy === projected.data.createdBy
+  && current.data.discoveredFromId === projected.data.discoveredFromId
+  && current.data.drifted === projected.data.drifted
+  && current.data.kind === projected.data.kind
+  && current.data.snapshotRevision === projected.data.snapshotRevision
+  && current.data.targetDeleted === projected.data.targetDeleted
+  && current.data.targetNodeId === projected.data.targetNodeId
+  && current.data.textHeight === projected.data.textHeight
+  && current.data.textScale === projected.data.textScale
+  && current.data.textWidth === projected.data.textWidth
+  && current.data.title === projected.data.title
+  && current.data.tombstone === projected.data.tombstone;
+
+/**
+ * 文档每确认一次 mutation 都会产生新快照，但绝大多数卡片没有变化。保持这些节点
+ * 的对象身份，React.memo 才真的能跳过它们；正在拖动的节点还必须优先保留 React
+ * Flow 的瞬时坐标，避免无关回执把指针下的卡片弹回服务端旧位置。
+ */
+export const reconcileCanvasFlowNodes = (
+  current: readonly CanvasFlowNode[],
+  projected: readonly CanvasFlowNode[],
+): CanvasFlowNode[] => {
+  const currentById = new Map(current.map((node) => [node.id, node]));
+  return projected.map((node) => {
+    const previous = currentById.get(node.id);
+    if (previous === undefined) return node;
+    if (previous.dragging === true) {
+      const next = {
+        ...node,
+        dragging: true,
+        measured: previous.measured,
+        position: previous.position,
+        selected: previous.selected,
+      };
+      return sameCanvasFlowNode(previous, next) ? previous : next;
+    }
+    if (sameCanvasFlowNode(previous, node)) {
+      return previous;
+    }
+    return {
+      ...node,
+      measured: previous.measured,
+      selected: previous.selected,
+    };
+  });
+};
+
+const sameCanvasFlowEdge = (
+  current: CanvasFlowEdge,
+  projected: CanvasFlowEdge,
+): boolean =>
+  current.id === projected.id
+  && current.source === projected.source
+  && current.target === projected.target
+  && current.type === projected.type
+  && current.data?.createdBy === projected.data?.createdBy
+  && current.data?.rationale === projected.data?.rationale;
+
+/** 只替换关系事实或强调状态真正变化的边，选择一张卡片不再重建全部 Cord。 */
+export const reconcileCanvasFlowEdges = (
+  current: readonly CanvasFlowEdge[],
+  projected: readonly CanvasFlowEdge[],
+  selectedNodeIds: readonly string[],
+): CanvasFlowEdge[] => {
+  const selectedId = selectedNodeIds.length === 1 ? selectedNodeIds[0] : null;
+  const currentById = new Map(current.map((edge) => [edge.id, edge]));
+  return projected.map((edge) => {
+    const className = selectedId !== null
+      && (edge.source === selectedId || edge.target === selectedId)
+      ? "canvas-edge-direct"
+      : "canvas-edge-muted";
+    const previous = currentById.get(edge.id);
+    if (
+      previous !== undefined
+      && previous.className === className
+      && sameCanvasFlowEdge(previous, edge)
+    ) {
+      return previous;
+    }
+    return {
+      ...edge,
+      className,
+      selected: previous?.selected,
+    };
+  });
+};
 
 export type CanvasBounds = { height: number; width: number; x: number; y: number };
 

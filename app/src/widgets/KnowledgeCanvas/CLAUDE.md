@@ -3,9 +3,9 @@
 
 成员清单
 CLAUDE.md: 记录 Canvas V2 交互子域成员、职责边界与 GEB 回环协议
-KnowledgeCanvas.tsx: Canvas 会话内容根；始终挂载受控 React Flow，文件树 memo 按屏幕落点转换坐标并复用 add_memo/WAL，延迟显示真实比例占位；选择归 React Flow、Store 只镜像，图修改经统一协调器，Card→Preview 只为当前节点启动原生空间过渡；移除/撤销、空间文字、连接、AI 拓展与键盘收束沿既有唯一命令路径
-CanvasCardNode.tsx: memo 化的 280x360 memo_ref 卡与 native 空间文字；动作 Context 只含稳定命令，编辑/AI 状态按节点细粒度订阅 Store，避免一次选择重渲染所有卡片
-CanvasCardNode.test.tsx: 卡片结构回归门禁，锁定中心重合关系注册 Handle、嵌套纸张骨架、常驻展开入口，以及普通/墓碑/回收站都只向会话层发出唯一移除命令，恢复与来源确认不得泄漏进卡片表现层
+KnowledgeCanvas.tsx: Canvas 会话内容根；始终挂载受控 React Flow，服务端快照经 canvasPresentation 增量对账后只替换真实变化的节点/边，AI 拓展用 Store 快照作全局并发门禁且把提示隔离为独立订阅，动作 Context 不随 loading 改变；文件树 memo 按屏幕落点转换坐标并复用 add_memo/WAL，延迟显示真实比例占位；选择归 React Flow、Store 只镜像，图修改经统一协调器，Card→Preview 只为当前节点启动原生空间过渡；移除/撤销、空间文字、连接、AI 拓展与键盘收束沿既有唯一命令路径
+CanvasCardNode.tsx: memo 化的 280x360 memo_ref 卡与 native 空间文字；动作 Context 只含稳定命令，编辑状态按节点 ID 订阅，AI 状态选择器只让本次源卡片从 false 变 true，避免一次选择或拓展重渲染所有卡片
+CanvasCardNode.test.tsx: 卡片结构回归门禁，锁定中心重合关系注册 Handle、嵌套纸张骨架、常驻展开入口、源卡片 AI 忙碌选择器，以及普通/墓碑/回收站都只向会话层发出唯一移除命令，恢复与来源确认不得泄漏进卡片表现层
 CanvasTitle.tsx: Canvas 顶层安静标题；两种画布共用同一改名分支，只在 draft 从空进入编辑态时聚焦并全选，敲字本身不重复抢焦点；来源语义仍归 memo_ref 卡片
 CanvasControls.tsx: React Flow 底部中央无状态命令条，提供加入、fit、缩放与操作说明，不读写图数据
 CanvasPersistenceStatus.tsx: 显示保存、恢复、冲突和显式重试状态，只解释协调器事实，不参与排队

@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 React、shared/api/ai、按用户短时快照缓存、访问令牌与 threadSelection 偏好策略
- * [OUTPUT]: 对外提供立即恢复旧内容、后台校准的会话列表/detail/messages 与 CRUD/reference 命令
- * [POS]: AgentPanel 会话控制器；服务端是真相源，进程内快照只跨面板挂载保留最后可用画面并合并初始化请求
+ * [OUTPUT]: 对外提供可由 Workspace 只读预热、立即恢复旧内容、后台校准的会话列表/detail/messages 与 CRUD/reference 命令
+ * [POS]: AgentPanel 会话控制器；服务端是真相源，进程内快照只跨面板挂载保留最后可用画面并合并预热/初始化请求，空账号只在真正打开面板时创建首个会话
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -36,7 +36,7 @@ type UseAiThreadsInput = {
 };
 
 const pendingInitialThreads = new Map<string, Promise<AiThread>>();
-const pendingHydrations = new Map<string, Promise<AiThreadSnapshot>>();
+const pendingHydrations = new Map<string, Promise<AiThreadSnapshot | null>>();
 
 const ensureInitialThread = (
   accessToken: string,
@@ -56,7 +56,8 @@ const ensureInitialThread = (
 const hydrateAiThreads = (
   accessToken: string,
   userId: string,
-): Promise<AiThreadSnapshot> => {
+  createIfEmpty: boolean,
+): Promise<AiThreadSnapshot | null> => {
   const existing = pendingHydrations.get(userId);
   if (existing !== undefined) return existing;
   const hydration = (async () => {
@@ -66,6 +67,7 @@ const hydrateAiThreads = (
       window.localStorage.getItem(selectedThreadStorageKey(userId)),
     );
     if (threadId === null) {
+      if (!createIfEmpty) return null;
       const created = await ensureInitialThread(accessToken, userId, threads);
       threads = [created];
       threadId = created.id;
@@ -78,6 +80,20 @@ const hydrateAiThreads = (
   })().finally(() => pendingHydrations.delete(userId));
   pendingHydrations.set(userId, hydration);
   return hydration;
+};
+
+export const preloadAiThreads = async ({
+  accessToken,
+  userId,
+}: UseAiThreadsInput): Promise<AiThreadSnapshot | null> => {
+  const cached = readAiThreadSnapshot(userId);
+  if (cached?.fresh) return cached.snapshot;
+
+  // Workspace 空闲预热必须是纯读取，不能因为用户只是写笔记就替他创建 AI 会话。
+  const snapshot = await hydrateAiThreads(accessToken, userId, false);
+  if (snapshot === null) return null;
+  writeAiThreadSnapshot(userId, snapshot);
+  return snapshot;
 };
 
 export function useAiThreads({ accessToken, userId }: UseAiThreadsInput) {
@@ -138,9 +154,12 @@ export function useAiThreads({ accessToken, userId }: UseAiThreadsInput) {
     }
 
     const initialize = async () => {
-      const snapshot = await hydrateAiThreads(accessToken, userId);
-      if (cancelled) return;
+      const preloaded = await preloadAiThreads({ accessToken, userId });
+      const snapshot = preloaded
+        ?? await hydrateAiThreads(accessToken, userId, true);
+      if (snapshot === null) return;
       writeAiThreadSnapshot(userId, snapshot);
+      if (cancelled) return;
       persistSelection(snapshot.selectedThread.id);
       setThreads(snapshot.threads);
       setSelectedThread(snapshot.selectedThread);

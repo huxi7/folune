@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 @xyflow/react、CanvasFlowNode、NotePaper、空间文字几何、设计系统图标、稳定 canvasActions 与细粒度 canvasWorkspaceStore 状态
- * [OUTPUT]: 对外提供 280x360 纵向 memo_ref 笔记预览卡与静止无表面、按持久化基础宽高测量、编辑态稳定聚焦且四角等比缩放的 native 空间文字节点
+ * [OUTPUT]: 对外提供 280x360 纵向 memo_ref 笔记预览卡、源节点 AI 忙碌选择器，与静止无表面、按持久化基础宽高测量、编辑态稳定聚焦且四角等比缩放的 native 空间文字节点
  * [POS]: KnowledgeCanvas 的节点表现层；Handle 只登记关系身份，真实浮动端点由 CanvasCordEdge 读取节点矩形求解；卡片只读快照标题/摘录，正文只经 Preview Overlay 按 ID 读取，空间文字把自身 scale 与视口 zoom 分离，全部持久修改仍交给统一协调器
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -29,7 +29,10 @@ import {
   PlusIcon,
   TrashIcon,
 } from "../../shared/design-system/icons";
-import { useCanvasWorkspaceStore } from "../../shared/store/canvasWorkspaceStore";
+import {
+  useCanvasWorkspaceStore,
+  type CanvasWorkspaceState,
+} from "../../shared/store/canvasWorkspaceStore";
 import { NotePaper } from "../NotePaper";
 import { useCanvasActions } from "./canvasActions";
 import {
@@ -55,6 +58,11 @@ const textResizeCorners = [
 ] as const;
 
 const TEXT_WRAP_TOLERANCE = 1;
+
+export const isCanvasNodeAiLoading = (
+  state: Pick<CanvasWorkspaceState, "aiLoading" | "aiSourceNodeId">,
+  nodeId: string,
+): boolean => state.aiLoading && state.aiSourceNodeId === nodeId;
 
 const measuredTextBase = (
   element: HTMLElement | null,
@@ -90,7 +98,9 @@ export const CanvasCardNode = memo(function CanvasCardNode({
   const editing = useCanvasWorkspaceStore(
     (state) => state.editingTextNodeId === id,
   );
-  const aiLoading = useCanvasWorkspaceStore((state) => state.aiLoading);
+  const aiLoading = useCanvasWorkspaceStore(
+    (state) => isCanvasNodeAiLoading(state, id),
+  );
   const [text, setText] = useState(data.body ?? "");
   const [resizingScale, setResizingScale] = useState<number | null>(null);
   const [draftBaseGeometry, setDraftBaseGeometry] = useState<{

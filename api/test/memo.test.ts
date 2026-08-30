@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun test、Hono app、Web fetch 与 test/support 的内存 Supabase Auth/PostgREST mock
- * [OUTPUT]: 覆盖 memo API 的认证、轻量树/画布身份/关键词搜索、单篇正文、创建补偿、正文统计、owner 隔离、严格更新与防环移动
+ * [OUTPUT]: 覆盖 memo API 的认证、轻量树/画布身份/关键词搜索、单篇正文并发读取、创建补偿、正文统计、owner 隔离、严格更新与防环移动
  * [POS]: api/test 的备忘录树 HTTP 全链路契约测试，不连接远端服务且不保存或输出真实凭据；命名与重名边界另见 memo-naming.test.ts
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -452,6 +452,45 @@ describe("POST /memo-folders and POST /memos", () => {
 });
 
 describe("memo read and update", () => {
+  test("GET /memos/:nodeId 并发读取节点与正文，避免首次切换网络瀑布", async () => {
+    const memoId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+    mock.nodes.set(memoId, nodeFixture(memoId, { node_type: "memo" }));
+    mock.contents.set(memoId, contentFixture(memoId));
+
+    const originalMockFetch = mock.fetch;
+    let started = 0;
+    let overlapped = false;
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const fallbackTimer = setTimeout(release, 40);
+    globalThis.fetch = (async (input, init) => {
+      const url = new URL(input instanceof URL
+        ? input.href
+        : typeof input === "string"
+          ? input
+          : input.url);
+      const detailRead = url.pathname === "/rest/v1/memo_nodes"
+        || url.pathname === "/rest/v1/memos";
+      if (detailRead && new Request(input, init).method === "GET") {
+        started += 1;
+        if (started === 2) {
+          overlapped = true;
+          release();
+        }
+        await gate;
+      }
+      return await originalMockFetch(input, init);
+    }) as typeof fetch;
+
+    const response = await app.fetch(authenticatedRequest(`/memos/${memoId}`));
+    clearTimeout(fallbackTimer);
+
+    expect(response.status).toBe(200);
+    expect(overlapped).toBe(true);
+  });
+
   test("GET /memos/:nodeId 返回 node 与正文", async () => {
     const memoId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
     mock.nodes.set(

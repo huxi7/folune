@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖 React Router Profile/token、轻量 tree/意图预热正文/WorkspaceChrome Store、memoTitleRules、删除编排、惰性 AI、Paper/Canvas Workspace 与业务工作区
- * [OUTPUT]: 对外提供互斥 Paper/Canvas 舞台、细粒度正文订阅、编辑器本地草稿、Canvas 离场 flush、惰性工具预载及账户/视图编排
+ * [INPUT]: 依赖 React Router Profile/token、轻量 tree/意图预热正文/WorkspaceChrome Store、memoTitleRules、删除编排、可空闲只读预热数据的惰性 AI、Paper/Canvas Workspace 与业务工作区
+ * [OUTPUT]: 对外提供互斥 Paper/Canvas 舞台、细粒度正文订阅、编辑器本地草稿、Canvas 离场 flush、惰性工具与已有 AI 会话数据预载及账户/视图编排
  * [POS]: app/src/pages 的 /app 编排层；目录、正文、编辑器、Run、浮动工具与 Trash 的跨域生命周期只在此建立一次等待边界，并依据路由节点类型在 Paper 与 Canvas 两种空间壳之间切换；深链刷新时先确认节点类型再挂载空间壳，避免画布前闪出 Paper/Panel
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -248,9 +248,14 @@ export function AppDashboard() {
   });
 
   useEffect(() => scheduleIdle(() => {
-    void loadAgentPanel();
+    void loadAgentPanel()
+      .then((module) => module.preloadAiThreads({
+        accessToken,
+        userId: profile.id,
+      }))
+      .catch(() => undefined);
     preloadKnowledgeCanvas();
-  }), []);
+  }), [accessToken, profile.id]);
 
   useEffect(() => {
     hydrateWorkspaceChrome(profile.id);

@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 @xyflow/react v12 坐标协议、Canvas Chat、会话协调器、canvasWorkspaceStore、空间文字几何、增量布局、文件树笔记拖拽载荷与本地反馈组件
- * [OUTPUT]: 对外提供始终挂载真实 React Flow 的 Canvas：受控图、延迟加载占位、文件树精准落点、空间文字、统一加入/连接/Preview/移除/AI 拓展及可靠保存状态
- * [POS]: KnowledgeCanvas 的会话内容根；节点几何只跟随文档、选择只有 React Flow 一个所有者而 Store 是它的镜像，UI 只产生可由协调器/WAL 原子重放的 intent；来源血缘解除先由最内层 Dialog 收束，混合批量只允许撤销普通节点，正文只在 Preview 按 ID 加载
+ * [OUTPUT]: 对外提供始终挂载真实 React Flow 的 Canvas：对象身份稳定的受控图、延迟加载占位、文件树精准落点、空间文字、细粒度 AI 状态、统一加入/连接/Preview/移除/拓展及可靠保存状态
+ * [POS]: KnowledgeCanvas 的会话内容根；节点几何只跟随文档且按字段增量对账，选择只有 React Flow 一个所有者而 Store 是它的镜像，AI 全局门禁用命令式快照读取避免击穿动作 Context，UI 只产生可由协调器/WAL 原子重放的 intent；来源血缘解除先由最内层 Dialog 收束，混合批量只允许撤销普通节点，正文只在 Preview 按 ID 加载
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -11,7 +11,6 @@ import {
   ReactFlow,
   useEdgesState,
   useNodesState,
-  type Edge,
   type ReactFlowInstance,
 } from "@xyflow/react";
 import {
@@ -36,8 +35,11 @@ import {
   canvasNodesBounds,
   canvasPositionOperations,
   canvasViewportShowsNodes,
+  reconcileCanvasFlowEdges,
+  reconcileCanvasFlowNodes,
   shouldRestoreCanvasViewport,
   toCanvasFlow,
+  type CanvasFlowEdge,
   type CanvasFlowNode,
 } from "../../pages/canvasPresentation";
 import type {
@@ -92,6 +94,13 @@ const nodeTypes = { canvasNode: CanvasCardNode };
 const edgeTypes = { cord: CanvasCordEdge };
 const panOnDrag = [1, 2];
 const proOptions = { hideAttribution: true };
+
+function CanvasAiState() {
+  const aiLoading = useCanvasWorkspaceStore((state) => state.aiLoading);
+  return aiLoading
+    ? <div className="canvas-ai-state">正在拓展这条知识分支…</div>
+    : null;
+}
 
 type KnowledgeCanvasProps = {
   accessToken: string;
@@ -336,7 +345,6 @@ export function KnowledgeCanvas({
   const editText = useCanvasWorkspaceStore((state) => state.editText);
   const connectionSourceId = useCanvasWorkspaceStore((state) => state.connectionSourceId);
   const startConnection = useCanvasWorkspaceStore((state) => state.startConnection);
-  const aiLoading = useCanvasWorkspaceStore((state) => state.aiLoading);
   const setAiLoading = useCanvasWorkspaceStore((state) => state.setAiLoading);
   const openPalette = useCommandPaletteStore((state) => state.openPalette);
   const registerCanvasCommand = useCommandPaletteStore(
@@ -348,8 +356,8 @@ export function KnowledgeCanvas({
   const [originRemovalBusy, setOriginRemovalBusy] = useState(false);
   const [memoDropActive, setMemoDropActive] = useState(false);
   const [nodes, setNodes, onNodesChange] = useNodesState<CanvasFlowNode>([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
-  const instanceRef = useRef<ReactFlowInstance<CanvasFlowNode, Edge> | null>(null);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<CanvasFlowEdge>([]);
+  const instanceRef = useRef<ReactFlowInstance<CanvasFlowNode, CanvasFlowEdge> | null>(null);
   const flowRef = useRef<HTMLDivElement>(null);
   const initialViewportAppliedRef = useRef(false);
   const entryFocusAppliedRef = useRef(false);
@@ -439,20 +447,11 @@ export function KnowledgeCanvas({
    */
   useEffect(() => {
     setNodes((current) => {
-      const selected = new Set(
-        current.filter((node) => node.selected === true).map((node) => node.id),
-      );
-      const nextNodes = flow.nodes.map((node) => ({
-        ...node,
-        selected: selected.has(node.id),
-      }));
+      const nextNodes = [...flow.nodes];
       if (transientText !== null) {
-        nextNodes.push({
-          ...flowNodeFromTransient(transientText),
-          selected: selected.has(transientText.id),
-        });
+        nextNodes.push(flowNodeFromTransient(transientText));
       }
-      return nextNodes;
+      return reconcileCanvasFlowNodes(current, nextNodes);
     });
 
     const instance = instanceRef.current;
@@ -486,13 +485,8 @@ export function KnowledgeCanvas({
 
   /* 关系的强调是选择的函数, 与坐标无关, 因此自己一条推导 */
   useEffect(() => {
-    setEdges(flow.edges.map((edge) => ({
-      ...edge,
-      className: selectedNodeIds.length === 1
-        && (edge.source === selectedNodeIds[0] || edge.target === selectedNodeIds[0])
-        ? "canvas-edge-direct"
-        : "canvas-edge-muted",
-    })));
+    setEdges((current) =>
+      reconcileCanvasFlowEdges(current, flow.edges, selectedNodeIds));
   }, [flow, selectedNodeIds, setEdges]);
 
   /*
@@ -867,7 +861,7 @@ export function KnowledgeCanvas({
 
   const expandFromNode = useCallback(async (sourceNodeId: string) => {
     const coordinator = coordinatorRef.current;
-    if (coordinator === null || aiLoading) return;
+    if (coordinator === null || useCanvasWorkspaceStore.getState().aiLoading) return;
     const flushed = await coordinator.flush();
     if (!flushed.synced) {
       toast({ title: "请先恢复网络并保存当前修改", variant: "error" });
@@ -971,7 +965,7 @@ export function KnowledgeCanvas({
     } finally {
       setAiLoading(false);
     }
-  }, [aiLoading, canvasId, coordinatorRef, setAiLoading, toast]);
+  }, [canvasId, coordinatorRef, setAiLoading, toast]);
 
   const actions = useMemo(() => ({
     onCancelText(nodeId: string) {
@@ -1285,9 +1279,7 @@ export function KnowledgeCanvas({
 
         <CanvasPersistenceStatus coordinatorRef={coordinatorRef} />
 
-        {aiLoading ? (
-          <div className="canvas-ai-state">正在拓展这条知识分支…</div>
-        ) : null}
+        <CanvasAiState />
       </div>
 
       {previewMemoId === null || previewNode === null ? null : (

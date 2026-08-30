@@ -123,6 +123,7 @@ type ConversationProps = {
   organizeReviewBusy: boolean;
   organizeRun: AiRun | null;
   thread: AiThreadDetail;
+  userId: string;
 };
 
 const readCommandOutput = (value: unknown): AiCommand | null => {
@@ -154,6 +155,7 @@ function AgentConversation({
   organizeReviewBusy,
   organizeRun,
   thread,
+  userId,
 }: ConversationProps) {
   const [inputValue, setInputValue] = useState("");
   const [sources, setSources] = useState<ComposerSource[]>([]);
@@ -577,7 +579,7 @@ function AgentConversation({
         })}</div> : null}
         <MentionInput aria-label="输入消息" className="agent-chat-input" mentions={inlineMentions} onKeyDown={handleComposerKeyDown} onValueChange={handleInputChange} placeholder="输入消息，@ 引用笔记…" ref={composerRef} value={inputValue} />
         <div className="agent-composer-footer">
-          <PermissionModeControl accessToken={accessToken} busy={busy} compact />
+          <PermissionModeControl accessToken={accessToken} busy={busy} compact userId={userId} />
           {streamBusy ? (
             <Button aria-label="停止生成" className="agent-composer-action" icon={StopIcon} onClick={handleStop} size="square" type="button" variant="primary" />
           ) : (
@@ -625,7 +627,7 @@ export function AgentPanel(props: AgentPanelProps) {
       ) : thread === null ? (
         <div className="agent-panel-loading">{threads.loading ? "正在恢复会话…" : "会话加载失败，请重新打开面板。"}</div>
       ) : (
-        <AgentConversation accessToken={props.accessToken} currentMemo={props.currentMemo} initialMessages={threads.messages} key={thread.id} memoTree={props.memoTree} onApplyOrganize={props.onApplyOrganize} onBusyChange={setChatBusy} onPrepareMutation={props.onPrepareMutation} onReferencesChange={threads.replaceReferences} onRejectOrganize={props.onRejectOrganize} onThreadUpdated={threads.refreshSelected} organizeReviewBusy={actionBusy} organizeRun={visibleOrganizeRun} thread={thread} />
+        <AgentConversation accessToken={props.accessToken} currentMemo={props.currentMemo} initialMessages={threads.messages} key={thread.id} memoTree={props.memoTree} onApplyOrganize={props.onApplyOrganize} onBusyChange={setChatBusy} onPrepareMutation={props.onPrepareMutation} onReferencesChange={threads.replaceReferences} onRejectOrganize={props.onRejectOrganize} onThreadUpdated={threads.refreshSelected} organizeReviewBusy={actionBusy} organizeRun={visibleOrganizeRun} thread={thread} userId={props.userId} />
       )}
     </aside>
   );

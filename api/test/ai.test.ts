@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun test、Hono app、Web fetch 与内存 Supabase Auth/PostgREST/RPC mock
- * [OUTPUT]: 覆盖无归档状态的 AI thread/message/reference/context/run 认证、持久化、幂等、owner、废弃字段拒绝、失效引用与安全执行测试
+ * [OUTPUT]: 覆盖无归档状态的 AI thread/detail 并发读取、message/reference/context/run 认证、持久化、幂等、owner、废弃字段拒绝、失效引用与安全执行测试
  * [POS]: api/test 的 AI Native V1 HTTP 全链路契约测试，不连接模型或远端服务，不保存或输出真实凭据
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -491,6 +491,42 @@ describe("AI settings and commands", () => {
 });
 
 describe("AI threads and messages", () => {
+  test("GET thread 并发读取详情与引用，切换会话只等待一段存储往返", async () => {
+    mock.threads.set(THREAD_ID, threadFixture());
+    const originalMockFetch = mock.fetch;
+    let started = 0;
+    let overlapped = false;
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const fallbackTimer = setTimeout(release, 40);
+    globalThis.fetch = (async (input, init) => {
+      const url = new URL(input instanceof URL
+        ? input.href
+        : typeof input === "string"
+          ? input
+          : input.url);
+      const detailRead = url.pathname === "/rest/v1/ai_threads"
+        || url.pathname === "/rest/v1/ai_thread_refs";
+      if (detailRead && new Request(input, init).method === "GET") {
+        started += 1;
+        if (started === 2) {
+          overlapped = true;
+          release();
+        }
+        await gate;
+      }
+      return await originalMockFetch(input, init);
+    }) as typeof fetch;
+
+    const response = await request(`/ai-threads/${THREAD_ID}`);
+    clearTimeout(fallbackTimer);
+
+    expect(response.status).toBe(200);
+    expect(overlapped).toBe(true);
+  });
+
   test("creates, renames, lists and permanently deletes a thread", async () => {
     const created = await data<AiThread>(await request("/ai-threads", "POST", {}));
     expect(created.title).toBe("新会话");

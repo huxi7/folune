@@ -1,17 +1,18 @@
 /**
  * [INPUT]: 依赖 Bun test、react-dom/server、ReactFlowProvider、稳定 canvasActions、canvasWorkspaceStore 与真实 CanvasCardNode
- * [OUTPUT]: 锁定 memo_ref 纵向卡片的中心重合关系注册 Handle、嵌套纸张结构、渐隐摘录、常驻展开入口、固定高度元信息行，以及普通/墓碑/回收站都只把唯一移除命令交给会话层处理的结构边界
+ * [OUTPUT]: 锁定 memo_ref 纵向卡片的中心重合关系注册 Handle、嵌套纸张结构、渐隐摘录、常驻展开入口、源节点 AI 忙碌选择器，以及普通/墓碑/回收站都只把唯一移除命令交给会话层处理的结构边界
  * [POS]: KnowledgeCanvas 的卡片结构回归门禁；只断言真实组件产出的 DOM 契约，hover/焦点浮现由 CSS 承担并在浏览器验收
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
-import { describe, expect, test } from "bun:test";
+import { afterEach, describe, expect, test } from "bun:test";
 import { ReactFlowProvider } from "@xyflow/react";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import type { CanvasFlowNodeData } from "../../pages/canvasPresentation";
+import { useCanvasWorkspaceStore } from "../../shared/store/canvasWorkspaceStore";
 import { CanvasActionsProvider, type CanvasActions } from "./canvasActions";
-import { CanvasCardNode } from "./CanvasCardNode";
+import { CanvasCardNode, isCanvasNodeAiLoading } from "./CanvasCardNode";
 
 const actions: CanvasActions = {
   onCancelText: () => undefined,
@@ -48,6 +49,7 @@ const cardData = (
 const renderCard = (
   data: CanvasFlowNodeData,
   selected = false,
+  id = "card-1",
 ): string => renderToStaticMarkup(
   <ReactFlowProvider>
     <CanvasActionsProvider actions={actions}>
@@ -56,7 +58,7 @@ const renderCard = (
         deletable
         draggable
         dragging={false}
-        id="card-1"
+        id={id}
         isConnectable={false}
         selectable
         positionAbsoluteX={0}
@@ -68,6 +70,8 @@ const renderCard = (
     </CanvasActionsProvider>
   </ReactFlowProvider>,
 );
+
+afterEach(() => useCanvasWorkspaceStore.getState().reset());
 
 /**
  * 卡片骨架 = 纸张与卡片自身的类名序列。正文段落与空正文占位是同一个槽位的两种
@@ -151,5 +155,13 @@ describe("Canvas memo card", () => {
 
     expect(html).toContain('class="canvas-card-status">原文已更新');
     expect(html).toContain("canvas-card-expand");
+  });
+
+  test("AI 拓展选择器只命中源卡片，其他卡片保持稳定 false", () => {
+    useCanvasWorkspaceStore.getState().setAiLoading(true, "card-1");
+    const state = useCanvasWorkspaceStore.getState();
+
+    expect(isCanvasNodeAiLoading(state, "card-1")).toBe(true);
+    expect(isCanvasNodeAiLoading(state, "card-2")).toBe(false);
   });
 });

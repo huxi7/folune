@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun test 与 canvasPresentation 的 Canvas V2 纯投影函数
- * [OUTPUT]: 覆盖节点取名、memo 固定纵向尺寸与 native 持久几何不被改写、视口容错与跨设备恢复判据、快照漂移/墓碑、可拓展判据、含人工或 AI 来源的边投影、成组外接框的出现时机与矩形、整组坐标回写与路由身份
+ * [OUTPUT]: 覆盖节点取名、memo 固定纵向尺寸与 native 持久几何不被改写、节点/边对象身份对账、视口容错与跨设备恢复判据、快照漂移/墓碑、可拓展判据、含人工或 AI 来源的边投影、成组外接框的出现时机与矩形、整组坐标回写与路由身份
  * [POS]: pages 的 Canvas V2 表现回归门禁；锁定服务端投影到 React Flow 的含义，不测试 React 或网络
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -19,6 +19,8 @@ import {
   canvasPositionOperation,
   canvasPositionOperations,
   canvasViewportShowsNodes,
+  reconcileCanvasFlowEdges,
+  reconcileCanvasFlowNodes,
   resolveCanvasNodeId,
   shouldRestoreCanvasViewport,
   toCanvasFlow,
@@ -190,6 +192,78 @@ describe("toCanvasFlow", () => {
       target: "card-1",
       type: "cord",
     });
+  });
+});
+
+describe("Canvas Flow identity reconciliation", () => {
+  test("只替换真实变化的节点，并保护拖动中的瞬时坐标", () => {
+    const initial = toCanvasFlow(detail([
+      node(),
+      node({ id: "card-2", x: 500 }),
+      node({ id: "card-3", x: 900 }),
+    ])).nodes;
+    const current = [
+      initial[0]!,
+      { ...initial[1]!, selected: true },
+      {
+        ...initial[2]!,
+        dragging: true,
+        position: { x: 1_200, y: 80 },
+      },
+    ];
+    const projected = toCanvasFlow(detail([
+      node({ target: { ...node().target!, title: "已更新" } }),
+      node({ id: "card-2", x: 500 }),
+      node({
+        id: "card-3",
+        target: { ...node().target!, node_id: "memo-3", title: "拖动时也更新" },
+        target_node_id: "memo-3",
+        x: 900,
+      }),
+    ])).nodes;
+
+    const reconciled = reconcileCanvasFlowNodes(current, projected);
+
+    expect(reconciled[0]).not.toBe(current[0]);
+    expect(reconciled[0]?.data.title).toBe("已更新");
+    expect(reconciled[1]).toBe(current[1]);
+    expect(reconciled[1]?.selected).toBe(true);
+    expect(reconciled[2]).not.toBe(current[2]);
+    expect(reconciled[2]?.position.x).toBe(1_200);
+    expect(reconciled[2]?.data.title).toBe("拖动时也更新");
+  });
+
+  test("选择一张卡片只替换相连的边，无关 Cord 保持对象身份", () => {
+    const projected = [
+      {
+        data: { createdBy: "user" as const, rationale: null },
+        id: "edge-a",
+        source: "card-a",
+        target: "card-b",
+        type: "cord" as const,
+      },
+      {
+        data: { createdBy: "ai" as const, rationale: "另一条关系" },
+        id: "edge-b",
+        source: "card-c",
+        target: "card-d",
+        type: "cord" as const,
+      },
+    ];
+    const current = projected.map((edge) => ({
+      ...edge,
+      className: "canvas-edge-muted",
+    }));
+
+    const reconciled = reconcileCanvasFlowEdges(
+      current,
+      projected,
+      ["card-a"],
+    );
+
+    expect(reconciled[0]).not.toBe(current[0]);
+    expect(reconciled[0]?.className).toBe("canvas-edge-direct");
+    expect(reconciled[1]).toBe(current[1]);
   });
 });
 

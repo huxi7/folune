@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖可信 AuthUser、请求期 access token、memo DTO 输入、memo repository、领域模型与 HttpError
- * [OUTPUT]: 对外提供供画布层复用的 nextSortOrder/memoContentData 派生规则，以及轻量 active tree、单篇正文、关键词命中、带命中通道与名次的相似候选、folder/memo CRUD（系统默认名撞名顺位让开、用户输入撞名回 MEMO_TITLE_CONFLICT）、节点移动与恢复 subtree
- * [POS]: service 层 active 备忘录写入与读取编排边界；树组装委托 memo-tree.service，正文原样存储并派生摘要；检索 RPC 的失败在此收敛为稳定 HTTP 错误，且相似候选只出摘录不出正文。PATCH /memos 固定先写正文后写标题——标题会撞唯一约束、正文不会，先写正文才让重名只挂起 title 而不连坐正文，也就不再需要半写回滚
+ * [OUTPUT]: 对外提供供画布层复用的 nextSortOrder/memoContentData 派生规则，以及并发读取的轻量 active tree/单篇正文、关键词命中、带命中通道与名次的相似候选、folder/memo CRUD（系统默认名撞名顺位让开、用户输入撞名回 MEMO_TITLE_CONFLICT）、节点移动与恢复 subtree
+ * [POS]: service 层 active 备忘录写入与读取编排边界；独立的节点/正文读取并发启动以消除首开瀑布，树组装委托 memo-tree.service，正文原样存储并派生摘要；检索 RPC 的失败在此收敛为稳定 HTTP 错误，且相似候选只出摘录不出正文。PATCH /memos 固定先写正文后写标题——标题会撞唯一约束、正文不会，先写正文才让重名只挂起 title 而不连坐正文，也就不再需要半写回滚
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -98,7 +98,12 @@ const findOwnedMemo = async (
   accessToken: string,
   nodeId: string,
 ): Promise<{ node: MemoNode; content: MemoContent }> => {
-  const node = await findOwnedNode(authUser, accessToken, nodeId);
+  // 两条 PostgREST 读取都以 user_id + node_id 隔离，彼此没有数据依赖。
+  // 并发启动可把首次切换一篇未缓存笔记从两段网络往返收敛为一段。
+  const [node, content] = await Promise.all([
+    findOwnedNode(authUser, accessToken, nodeId),
+    memoRepository.findContentByNodeId(authUser.id, nodeId, accessToken),
+  ]);
 
   if (node.node_type !== "memo") {
     throw new HttpError(
@@ -107,12 +112,6 @@ const findOwnedMemo = async (
       "Memo was not found",
     );
   }
-
-  const content = await memoRepository.findContentByNodeId(
-    authUser.id,
-    node.id,
-    accessToken,
-  );
 
   if (content === null) {
     throw new HttpError(
@@ -332,14 +331,10 @@ const getTree = async (
   authUser: AuthUser,
   accessToken: string,
 ): Promise<MemoTreeNode[]> => {
-  const nodes = await memoRepository.listActiveNodes(
-    authUser.id,
-    accessToken,
-  );
-  const summaries = await memoRepository.listContentSummaries(
-    authUser.id,
-    accessToken,
-  );
+  const [nodes, summaries] = await Promise.all([
+    memoRepository.listActiveNodes(authUser.id, accessToken),
+    memoRepository.listContentSummaries(authUser.id, accessToken),
+  ]);
   // 画布身份是树结构的一部分（哪张画布是哪篇笔记的默认视图），不是图内容
   const identities = nodes.some((node) => node.node_type === "canvas")
     ? await canvasIdentities(authUser, accessToken)
