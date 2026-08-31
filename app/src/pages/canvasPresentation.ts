@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 @xyflow/react 的 Edge/Node 类型（仅类型）与 shared/api/canvas 的 Canvas V2 投影
- * [OUTPUT]: 对外提供固定 280x360 纵向 memo 卡片尺寸、含持久 text_scale 的空间文字投影、节点/边对象身份对账、标题/视口容错、恢复视口可用性判据、可拓展节点判据、成组外接框判据、最近空位、路由类型解析与手势级坐标回写纯函数
+ * [OUTPUT]: 对外提供固定 memo 卡片尺寸、空间文字投影、UI-only motionState、节点/边对象身份对账、视口/选择判据、路由解析与手势级坐标回写纯函数
  * [POS]: app/src/pages 的 Canvas 表现策略边界；服务端快照在此翻译并增量对账为受控 React Flow 形状，未变化对象保持身份以兑现节点 memo，组件不再猜测墓碑、漂移或几何默认值
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -24,12 +24,22 @@ export const CANVAS_TEXT_WIDTH = 240;
 export const CANVAS_TEXT_HEIGHT = 120;
 export const CANVAS_DEFAULT_VIEWPORT: CanvasViewport = { x: 0, y: 0, zoom: 1 };
 
+export type CanvasFlowMotionState = {
+  delayMs: number;
+  gestureId: string;
+  kind: "edge-draw" | "node-enter" | "source-confirm";
+  offsetX?: number;
+  offsetY?: number;
+};
+
 export type CanvasFlowNodeData = {
   body: string | null;
   createdBy: "ai" | "user";
   discoveredFromId: string | null;
   drifted: boolean;
   kind: CanvasNodeKind;
+  motionState?: CanvasFlowMotionState;
+  paperTransitionActive?: boolean;
   snapshotRevision: number | null;
   targetDeleted: boolean;
   targetNodeId: string | null;
@@ -42,6 +52,7 @@ export type CanvasFlowNodeData = {
 export type CanvasFlowNode = Node<CanvasFlowNodeData, "canvasNode">;
 export type CanvasFlowEdgeData = {
   createdBy: "ai" | "user";
+  motionState?: CanvasFlowMotionState;
   rationale: string | null;
 };
 export type CanvasFlowEdge = Edge<CanvasFlowEdgeData, "cord">;
@@ -122,6 +133,7 @@ export const toCanvasFlowNode = (node: CanvasNode): CanvasFlowNode => {
         && node.snapshot_revision !== null
         && node.target.revision !== node.snapshot_revision,
       kind: node.kind,
+      paperTransitionActive: false,
       snapshotRevision: node.snapshot_revision,
       targetDeleted: node.target?.deleted_at !== null
         && node.target?.deleted_at !== undefined,
@@ -171,6 +183,13 @@ const sameCanvasFlowNode = (
   && current.data.discoveredFromId === projected.data.discoveredFromId
   && current.data.drifted === projected.data.drifted
   && current.data.kind === projected.data.kind
+  && current.data.motionState?.gestureId === projected.data.motionState?.gestureId
+  && current.data.motionState?.kind === projected.data.motionState?.kind
+  && current.data.motionState?.delayMs === projected.data.motionState?.delayMs
+  && current.data.motionState?.offsetX === projected.data.motionState?.offsetX
+  && current.data.motionState?.offsetY === projected.data.motionState?.offsetY
+  && Boolean(current.data.paperTransitionActive)
+    === Boolean(projected.data.paperTransitionActive)
   && current.data.snapshotRevision === projected.data.snapshotRevision
   && current.data.targetDeleted === projected.data.targetDeleted
   && current.data.targetNodeId === projected.data.targetNodeId
@@ -223,6 +242,9 @@ const sameCanvasFlowEdge = (
   && current.target === projected.target
   && current.type === projected.type
   && current.data?.createdBy === projected.data?.createdBy
+  && current.data?.motionState?.gestureId === projected.data?.motionState?.gestureId
+  && current.data?.motionState?.kind === projected.data?.motionState?.kind
+  && current.data?.motionState?.delayMs === projected.data?.motionState?.delayMs
   && current.data?.rationale === projected.data?.rationale;
 
 /** 只替换关系事实或强调状态真正变化的边，选择一张卡片不再重建全部 Cord。 */

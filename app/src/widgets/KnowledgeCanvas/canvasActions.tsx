@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 react 的 createContext/useContext
- * [OUTPUT]: 对外提供 CanvasActionsProvider 与 useCanvasActions，传递预览、AI、关联、空间文字编辑/等比缩放和移除命令
+ * [OUTPUT]: 对外提供 CanvasActionsProvider 与 useCanvasActions，传递正文预取、预览、AI、关联、空间文字编辑/等比缩放和移除命令
  * [POS]: KnowledgeCanvas 的动作通道；React Flow data 只保存可序列化视图事实，回调与交互会话通过稳定 Context 下沉，避免每次状态变化重建全部节点
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -20,6 +20,7 @@ export type CanvasActions = {
   onEditText: (nodeId: string) => void;
   onExpand: (nodeId: string) => Promise<void>;
   onOpenMemo: (nodeId: string) => void;
+  onPrefetchMemo: (memoId: string) => void;
   onPreview: (nodeId: string) => void;
   onRemove: (nodeId: string) => Promise<void>;
   onRemoveEdge: (edgeId: string) => Promise<void>;

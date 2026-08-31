@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖 design-system Dialog/Skeleton、NotePaper reader、正文缓存、MarkdownReadingView 与共享空间过渡名称
- * [OUTPUT]: 对外提供不卸载 Canvas、与来源卡片共享视觉身份的小开本 Paper 预览层
+ * [INPUT]: 依赖 design-system motion=none Dialog/Skeleton、纸面视图过渡身份、NotePaper reader、卡片摘录快照、正文缓存与 MarkdownReadingView
+ * [OUTPUT]: 对外提供不卸载 Canvas、只有纸拥有过渡身份而遮罩随 root 一起换、正文未到时以卡片摘录保持同一段字的小开本 Preview
  * [POS]: KnowledgeCanvas 的正文阅读边界；Canvas API 永不携带 content_mdx，只有用户明确预览时才按目标 memo ID 加载正文；纸内只有正文，动作一律在纸外，因此正文长度不影响任何入口的可达性；Esc/遮罩/焦点归还统一复用 Dialog 的模态行为，不另造第二套弹窗
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -16,23 +16,23 @@ import { PencilSimpleIcon, XIcon } from "../../shared/design-system/icons";
 import { useMemoDocumentStore } from "../../shared/store/memoDocumentStore";
 import { MarkdownReadingView } from "../MarkdownReadingView";
 import { NotePaper } from "../NotePaper";
-import { canvasPreviewTransitionName } from "./canvasPreviewTransition";
 
 type CanvasPreviewOverlayProps = {
   accessToken: string;
   memoId: string;
-  nodeId: string;
   onClose: () => void;
   onEditOriginal: () => Promise<void>;
+  /** 卡片上的摘录快照：正文在路上时纸里先放它，放大的始终是同一段字 */
+  pendingExcerpt?: string | null;
   title: string;
 };
 
 export function CanvasPreviewOverlay({
   accessToken,
   memoId,
-  nodeId,
   onClose,
   onEditOriginal,
+  pendingExcerpt = null,
   title,
 }: CanvasPreviewOverlayProps) {
   const document = useMemoDocumentStore((state) => state.documents[memoId]);
@@ -53,6 +53,7 @@ export function CanvasPreviewOverlay({
   return (
     <Dialog
       description="预览不会改变画布位置或尺寸。"
+      motion="none"
       onOpenChange={(open) => {
         if (!open) onClose();
       }}
@@ -60,17 +61,27 @@ export function CanvasPreviewOverlay({
       surface="bare"
       title={title}
     >
-      <div
-        className="canvas-preview-shell"
-        style={{ viewTransitionName: canvasPreviewTransitionName(nodeId) }}
-      >
-        <NotePaper autoFocus title={title} variant="reader">
+      <div className="canvas-preview-shell">
+        <NotePaper
+          autoFocus
+          title={title}
+          transitionIdentity={memoId}
+          variant="reader"
+        >
+          {/*
+            正文在路上: 有摘录就先显示摘录 —— 那是同一篇笔记的开头, 用户放大的字因此
+            从头到尾没被换过一次。真的一个字都没有时才退回 Skeleton。
+          */}
           {document === undefined && status !== "error" ? (
-            <SkeletonGroup label="正在读取原文">
-              <Skeleton className="canvas-preview-line-skeleton" />
-              <Skeleton className="canvas-preview-line-skeleton" />
-              <Skeleton className="canvas-preview-line-skeleton" />
-            </SkeletonGroup>
+            pendingExcerpt !== null && pendingExcerpt.trim().length > 0 ? (
+              <p aria-busy="true" className="note-paper-excerpt">{pendingExcerpt}</p>
+            ) : (
+              <SkeletonGroup label="正在读取原文">
+                <Skeleton className="canvas-preview-line-skeleton" />
+                <Skeleton className="canvas-preview-line-skeleton" />
+                <Skeleton className="canvas-preview-line-skeleton" />
+              </SkeletonGroup>
+            )
           ) : status === "error" ? (
             <p className="canvas-preview-error">{error ?? "原文读取失败。"}</p>
           ) : (

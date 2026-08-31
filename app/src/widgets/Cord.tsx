@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 React useId、widgets/cordGeometry 的 CordBox/cordCurveBetween 与 styles/cord.css 的语义类
- * [OUTPUT]: 对外提供 CordLayer 承载容器、Cord 单条连线组件与 CordTone/CordTaper/CordProps 类型
+ * [OUTPUT]: 对外提供 CordLayer、Cord 单条连线与可延后启动的 draw 语义
  * [POS]: app/src/widgets 的 Cord Signature 渲染层；只把 cordGeometry 算好的 path 交给 SVG，粗细恒定而观感上的两头收细由沿线透明度渐变承担，动效与配色全部下沉到 CSS 以避免每帧 React 更新
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -21,6 +21,8 @@ export type CordTaper = "both" | "none" | "toTarget";
 export type CordProps = {
   /** 出场时自绘；reducedMotion 下自动降级为静态终态 */
   draw?: boolean;
+  /** 本地因果编排的启动延迟；只写 CSS animation-delay，不逐帧更新 React */
+  drawDelayMs?: number;
   /** 白光自中点淌向两端，表示「此刻正在发生」；建立完成后应关闭 */
   flow?: boolean;
   from: CordBox;
@@ -60,6 +62,7 @@ export function CordLayer({
 
 export function Cord({
   draw = false,
+  drawDelayMs = 0,
   flow = false,
   from,
   mode = "horizontal",
@@ -97,6 +100,7 @@ export function Cord({
         className={draw && animate ? "cord-line cord-line-draw" : "cord-line"}
         d={curve.d}
         pathLength="1"
+        style={drawDelayMs === 0 ? undefined : { animationDelay: `${drawDelayMs}ms` }}
         stroke={`url(#${gradientId})`}
         strokeWidth={width}
       />

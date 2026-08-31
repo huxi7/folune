@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 happy-dom、Testing Library、真实 KnowledgeCanvas/React Flow 节点层与可观测 Canvas 协调器替身
- * [OUTPUT]: 覆盖 Pane 双击/空间文字、文件树 memo 精准落入统一 WAL、框选、移除/撤销、来源确认与 Esc 收束
- * [POS]: KnowledgeCanvas 的浏览器 DOM 纵向交互测试；不绕过组件去单测 reducer/RPC，锁定 selectionOnDrag 下空间文字、来源确认与移除回执从真实 DOM 到 WAL/协调器/mutation 的完整链路
+ * [OUTPUT]: 覆盖 Pane 双击/空间文字、文件树 memo 精准落入统一 WAL、框选、移除/撤销、来源确认、Esc 收束与 Panel 开合不穿透画布
+ * [POS]: KnowledgeCanvas 的浏览器 DOM 纵向交互测试；不绕过组件去单测 reducer/RPC，锁定 selectionOnDrag 下空间文字、来源确认与移除回执从真实 DOM 到 WAL/协调器/mutation 的完整链路，并证明左右 Panel 只是 Stage 浮层、开合不进入画布状态
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -763,5 +763,80 @@ describe("KnowledgeCanvas 自由文字纵向交互", () => {
     expect(mutationRequests).toHaveLength(0);
     expect(walStorage.records.size).toBe(0);
     expect(useCanvasWorkspaceStore.getState().document?.nodes).toHaveLength(0);
+  });
+});
+
+/*
+ * 左右 Panel 是全屏 Stage 上的浮层, 父级轨道永远单列, 所以 Panel 开合在架构
+ * 上就不该穿进画布: KnowledgeCanvas 只在入场读一次 entryChrome, 之后
+ * setCanvasChrome 不在它的任何订阅里。这一组把这份「不订阅」钉死 —— 手势进行
+ * 中开合面板既不能重挂输入, 也不能挪动选择、外接框或提前入队。
+ */
+describe("KnowledgeCanvas 与左右 Panel 的边界", () => {
+  const panelToggles = [
+    { assistantOpen: true },
+    { libraryOpen: true },
+    { assistantOpen: false },
+    { libraryOpen: false },
+  ];
+
+  test("多选后反复开合 Panel，选择、坐标与外接框都不动，也不入队", async () => {
+    useCanvasWorkspaceStore.getState().replaceServer(relationCanvas(), []);
+    useCanvasWorkspaceStore.getState().selectNodes(["memo-card-a", "memo-card-b"]);
+    renderCanvas();
+
+    const readGeometry = () => {
+      const rect = document.querySelector<HTMLElement>(
+        ".canvas-selection-bounds-rect",
+      );
+      expect(rect).not.toBeNull();
+      return {
+        bounds: [rect!.style.transform, rect!.style.width, rect!.style.height].join(" "),
+        nodes: [...document.querySelectorAll<HTMLElement>(
+          ".react-flow__node[data-id]",
+        )]
+          .map((node) => `${node.dataset.id}@${node.style.transform}`)
+          .sort()
+          .join("|"),
+      };
+    };
+
+    const before = await waitFor(() => readGeometry());
+    // memo 卡片固定 280x360, b 在 (420, 220): 并集是落在原点的 700x580
+    expect(before).toEqual({
+      bounds: "translate(0px,0px) 700px 580px",
+      nodes: "memo-card-a@translate(0px,0px)|memo-card-b@translate(420px,220px)",
+    });
+
+    for (const toggle of panelToggles) {
+      useCanvasWorkspaceStore.getState().setCanvasChrome(toggle);
+      await waitFor(() => expect(readGeometry()).toEqual(before));
+    }
+
+    expect(useCanvasWorkspaceStore.getState().selectedNodeIds)
+      .toEqual(["memo-card-a", "memo-card-b"]);
+    expect(walStorage.records.size).toBe(0);
+    expect(mutationRequests).toHaveLength(0);
+  });
+
+  test("自由文字编辑进行中开合 Panel，输入框不重挂、内容不丢也不提前入队", async () => {
+    const editor = await openTextEditorFromPane();
+    fireEvent.change(editor, { target: { value: "手势进行中不该被面板打断" } });
+
+    for (const toggle of panelToggles) {
+      useCanvasWorkspaceStore.getState().setCanvasChrome(toggle);
+    }
+
+    const live = await waitFor(() => {
+      const element = document.querySelector<HTMLTextAreaElement>(
+        'textarea[aria-label="自由文字"]',
+      );
+      expect(element).not.toBeNull();
+      return element!;
+    });
+    expect(live).toBe(editor);
+    expect(live.value).toBe("手势进行中不该被面板打断");
+    expect(walStorage.records.size).toBe(0);
+    expect(mutationRequests).toHaveLength(0);
   });
 });

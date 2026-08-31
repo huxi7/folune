@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun test、react-dom/server、ReactFlowProvider、稳定 canvasActions、canvasWorkspaceStore 与真实 CanvasCardNode
- * [OUTPUT]: 锁定 memo_ref 纵向卡片的中心重合关系注册 Handle、嵌套纸张结构、渐隐摘录、常驻展开入口、源节点 AI 忙碌选择器，以及普通/墓碑/回收站都只把唯一移除命令交给会话层处理的结构边界
+ * [OUTPUT]: 锁定 memo_ref 纵向卡片的中心重合关系注册 Handle、嵌套纸张结构、spatialSpring 入场/正文延后、常驻展开入口、源节点 AI 忙碌选择器，以及普通/墓碑/回收站都只把唯一移除命令交给会话层处理的结构边界
  * [POS]: KnowledgeCanvas 的卡片结构回归门禁；只断言真实组件产出的 DOM 契约，hover/焦点浮现由 CSS 承担并在浏览器验收
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -20,7 +20,8 @@ const actions: CanvasActions = {
   onConnect: () => undefined,
   onEditText: () => undefined,
   onExpand: async () => undefined,
-  onOpenMemo: () => undefined,
+      onOpenMemo: () => undefined,
+      onPrefetchMemo: () => undefined,
   onPreview: () => undefined,
   onRemove: async () => undefined,
   onRemoveEdge: async () => undefined,
@@ -155,6 +156,23 @@ describe("Canvas memo card", () => {
 
     expect(html).toContain('class="canvas-card-status">原文已更新');
     expect(html).toContain("canvas-card-expand");
+  });
+
+  test("新节点先出现纸面，再延后正文且不动画 React Flow 外层", () => {
+    const html = renderCard(cardData({
+      motionState: {
+        delayMs: 100,
+        gestureId: "gesture-1",
+        kind: "node-enter",
+        offsetX: -12,
+        offsetY: 4,
+      },
+    }));
+
+    expect(html).toContain('data-motion-state="node-enter"');
+    expect(html).toContain("--canvas-motion-content-delay:220ms");
+    expect(html).toContain("opacity:0.68");
+    expect(html).toContain("translateX(-12px) translateY(4px)");
   });
 
   test("AI 拓展选择器只命中源卡片，其他卡片保持稳定 false", () => {

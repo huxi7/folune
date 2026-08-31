@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 index.css 的 Quiet Editorial 语义 Color/Type/Spacing/Radius/Elevation/Motion、统一中性 interactive-hover 与 Tailwind v4 layer
- * [OUTPUT]: 对外提供平面 Input/Select/Card、纯色 BrandMark、克制 Dialog panel/bare 两种模态表面、Skeleton/Thinking/loading 信息态；Select 临时指向状态与普通菜单共享中性 hover，Button 由 button.css 独立维护
+ * [OUTPUT]: 对外提供平面 Input/Select/Card、纯色 BrandMark、克制 Dialog panel/bare 与 default|none 入场（motion=none 交出入场编排给 root 视图过渡，因此磨砂玻璃得以保留）、Skeleton/Thinking/loading 信息态；Select 临时指向状态与普通菜单共享中性 hover，Button 由 button.css 独立维护
  * [POS]: app/src/styles 的组件视觉层，被 index.css 统一导入
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -331,6 +331,34 @@
     animation: ds-panel-in var(--motion-normal) var(--ease-standard);
   }
 
+  /*
+   * motion="none" 是一句真话: 这层遮罩不拥有自己的动效。
+   *
+   * 视图过渡在 update 返回后的下一帧就拍新截图, 那时遮罩自己的淡入才刚开到第 0 毫秒,
+   * 于是"新状态"里根本没有磨砂 —— 整段放大过程中画布上其他卡片仍然清清楚楚, 直到过渡
+   * 结束真实 DOM 接手, 磨砂才一下盖上来。世界后退因此变成一个与纸无关的独立事件。
+   * 交给 root 那对截图去带, 它天然与纸同拍。没有视图过渡的浏览器才需要自己淡入。
+   *
+   * 也正因为它属于 root 那张截图, 磨砂玻璃在这里是完整可用的: backdrop-filter 采样的
+   * 就是同一次绘制里它身后的画布。反过来若给遮罩单独一个 view-transition-name, 它会被
+   * 提到过渡层并排到兄弟末尾, 整段动画都盖在那张正在放大的纸之上 —— 那不是"材质不对",
+   * 而是把主角挡住了。
+   */
+  .ds-dialog-overlay[data-motion="none"] {
+    animation: none;
+  }
+
+  @supports not (view-transition-name: none) {
+    .ds-dialog-overlay[data-motion="none"] {
+      animation: ds-overlay-in 140ms var(--ease-standard);
+    }
+  }
+
+  .ds-dialog-overlay[data-motion="none"] .ds-dialog-panel,
+  .ds-dialog-overlay[data-motion="none"] .ds-dialog-shell {
+    animation: none;
+  }
+
   .ds-dialog-shell:focus {
     outline: none;
   }
@@ -599,6 +627,9 @@
 
 @media (prefers-reduced-motion: reduce) {
   @layer components {
+    /* motion="none" 本就没有动效可缩短, 这里只把没有视图过渡时的那次淡入收到 90ms */
+    .ds-dialog-overlay[data-motion="none"] { animation-duration: 90ms; }
+
     .ds-skeleton-group::after,
     .loading-content-reveal {
       animation: none !important;

@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 React Router Profile/token、轻量 tree/意图预热正文/WorkspaceChrome Store、memoTitleRules、删除编排、可空闲只读预热数据的惰性 AI、Paper/Canvas Workspace 与业务工作区
- * [OUTPUT]: 对外提供互斥 Paper/Canvas 舞台、细粒度正文订阅、编辑器本地草稿、Canvas 离场 flush、惰性工具与已有 AI 会话数据预载及账户/视图编排
- * [POS]: app/src/pages 的 /app 编排层；目录、正文、编辑器、Run、浮动工具与 Trash 的跨域生命周期只在此建立一次等待边界，并依据路由节点类型在 Paper 与 Canvas 两种空间壳之间切换；深链刷新时先确认节点类型再挂载空间壳，避免画布前闪出 Paper/Panel
+ * [INPUT]: 依赖 React Router Profile/token、Canvas bootstrap、轻量 tree/正文/Workspace Store、删除编排、惰性 AI、持久文件库宿主、归档连线上下文与 Paper/Canvas Workspace
+ * [OUTPUT]: 对外提供互斥 Paper/Canvas 舞台、跨路由不卸载的文件库 React 实例、细粒度正文订阅、Canvas 离场 flush、惰性工具预载及账户/视图编排
+ * [POS]: app/src/pages 的 /app 编排层；跨 Paper/Canvas 的数据与视觉交接只在此建立一次，深链刷新先确认节点类型，普通业务状态仍留在各自 Store/Workspace，文件库作为共享 Chrome 留在两种内容壳之外
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -29,6 +29,7 @@ import { signOutAuthenticatedUser } from "../shared/supabase/auth";
 import type { AccountSection } from "../widgets/AccountDialog";
 import { AppSidebar, type SidebarView } from "../widgets/AppSidebar";
 import { AppMainToolbar } from "../widgets/AppMainToolbar";
+import { ArchiveCordStage } from "../widgets/ArchiveCord";
 import {
   getMemoFolderPath,
   type MemoMovePlan,
@@ -46,10 +47,12 @@ import {
 import { PanelResizeHandle } from "../widgets/PanelResizeHandle";
 import { PaperWorkspaceShell } from "../widgets/PaperWorkspaceShell";
 import { preloadKnowledgeCanvas } from "../widgets/CanvasWorkspace";
+import { CanvasStageLoading } from "../widgets/CanvasStageLoading";
 import type { CanvasSessionControls } from "../widgets/KnowledgeCanvas/useCanvasSessionCoordinator";
 import type { WorkspaceOrganizePresentation } from "../widgets/archiveCordPolicy";
 import { WorkspaceAuxViews, type WorkspaceAuxView } from "../widgets/WorkspaceAuxViews";
 import { WorkspaceCommandPalette } from "../widgets/WorkspaceCommandPalette";
+import { WorkspaceLibraryLayer } from "../widgets/WorkspaceLibraryLayer";
 import { resolveCanvasNodeId } from "./canvasPresentation";
 import { CanvasRouteCoordinator } from "./CanvasRouteCoordinator";
 import { DashboardDialogs } from "./DashboardDialogs";
@@ -58,6 +61,7 @@ import { useOptimisticMemoCreation } from "./useOptimisticMemoCreation";
 import { useMemoDocumentLoad } from "./useMemoDocumentLoad";
 import { useMemoDocumentPreload } from "./useMemoDocumentPreload";
 import { useMemoCanvasEntry } from "./useMemoCanvasEntry";
+import { peekCanvasEntryBootstrap } from "./canvasEntryBootstrap";
 import { useMemoNodeDeletion } from "./useMemoNodeDeletion";
 import { useStandaloneCanvasCreation } from "./useStandaloneCanvasCreation";
 import { useAccountProfileRefresh } from "./useAccountProfileRefresh";
@@ -97,7 +101,7 @@ const scheduleIdle = (work: () => void): (() => void) => {
   return () => window.clearTimeout(timerId);
 };
 
-export function AppDashboard() {
+function AppDashboardContent() {
   const { accessToken, profile: initialProfile } =
     useLoaderData() as WorkspaceLoaderData;
   const navigate = useNavigate();
@@ -111,6 +115,7 @@ export function AppDashboard() {
   const closeLibrary = useWorkspaceChromeStore((state) => state.closeLibrary);
   const hydrateWorkspaceChrome = useWorkspaceChromeStore((state) => state.hydrate);
   const hydrateCanvasChrome = useCanvasChromeStore((state) => state.hydrate);
+  const peekCanvasEntryChrome = useCanvasChromeStore((state) => state.peekEntryChrome);
   const hydrateRecentNodes = useRecentNodesStore((state) => state.hydrate);
   const rememberRecentNode = useRecentNodesStore((state) => state.remember);
   const openCommandPalette = useCommandPaletteStore((state) => state.openPalette);
@@ -127,6 +132,8 @@ export function AppDashboard() {
   const getMemoClientKey = useMemoTreeStore(
     (state) => state.getMemoClientKey,
   );
+  const canvasSessionCanvasId = useCanvasWorkspaceStore((state) => state.canvasId);
+  const canvasSessionLibraryOpen = useCanvasWorkspaceStore((state) => state.libraryOpen);
   const resolveMemoId = useMemoTreeStore((state) => state.resolveMemoId);
   const updateMemoTitleLocal = useMemoTreeStore(
     (state) => state.updateMemoTitleLocal,
@@ -208,6 +215,21 @@ export function AppDashboard() {
     workspaceRef: notesWorkspaceRef,
   });
   const canvasNodeId = resolveCanvasNodeId(selectedMemo);
+  /*
+   * 文件库是跨 Paper/Canvas 的同一个 UI 实例，开合状态却仍由当前空间各自拥有。
+   * Canvas 会话尚未 beginSession 时，用只读 entry 预览让持久宿主先拿到正确终态；
+   * peek 不消费一次性意图，真正的 CanvasWorkspace 仍是唯一的进入解析者。
+   */
+  const activeLibraryOpen = canvasNodeId === null
+    ? libraryOpen
+    : canvasSessionCanvasId === canvasNodeId
+      ? canvasSessionLibraryOpen
+      : canvasReturn?.canvasId === canvasNodeId
+        ? canvasReturn.libraryOpen
+        : peekCanvasEntryChrome(
+          canvasNodeId,
+          typeof window === "undefined" ? 0 : window.innerWidth,
+        ).libraryOpen;
   const memoCanvasEntry = useMemoCanvasEntry({
     accessToken,
     mergeServerNode,
@@ -216,6 +238,7 @@ export function AppDashboard() {
       await notesWorkspaceRef.current?.flushCurrentDraft();
     },
     toast,
+    userId: profile.id,
   });
   const canvasCreation = useStandaloneCanvasCreation({ accessToken, mergeServerNode, navigate, toast });
   const memoDeletion = useMemoNodeDeletion({
@@ -714,10 +737,7 @@ export function AppDashboard() {
           onEditingModeChange={setEditingMode}
           onEnterCanvas={() => void memoCanvasEntry.enterCanvas(selectedMemoId)}
           onReturnCanvas={canvasReturn === null ? undefined : () => {
-            void (async () => {
-              await notesWorkspaceRef.current?.flushCurrentDraft();
-              navigate(`/app/notes/${encodeURIComponent(canvasReturn.canvasId)}`);
-            })();
+            void memoCanvasEntry.returnCanvas(canvasReturn.canvasId, selectedMemoId);
           }}
           onOrganize={memoOrganize.organize}
           organizing={memoOrganize.organizing}
@@ -810,48 +830,61 @@ export function AppDashboard() {
   const routeKindPending = routeMemoId !== null && treeStatus === "loading";
   return (
     <>
-      {routeKindPending ? (
-        <main
-          aria-label="正在打开内容"
-          className="canvas-workspace"
-        >
-          <div className="canvas-workspace-loading" role="status">
-            <span className="canvas-loading-dot" />
-            <span>正在打开内容</span>
-          </div>
-        </main>
-      ) : canvasNodeId === null ? (
-        <PaperWorkspaceShell
-          assistant={assistant}
-          assistantOpen={assistantOpen}
-          library={library}
-          libraryOpen={libraryOpen}
-          onCloseAssistant={closeAssistant}
-          onCloseLibrary={closeLibrary}
-          onToggleAssistant={toggleAssistant}
-          onToggleLibrary={toggleLibrary}
-          organizing={memoOrganize.organizing}
-          paper={paper}
-          paperIdentity={activeView === "note" && routeMemoId !== null
-            ? getMemoClientKey(resolveMemoId(routeMemoId))
-            : activeView}
-          presentation={organizePresentation}
-          style={workspaceStyle}
-        />
-      ) : (
-        <CanvasRouteCoordinator
-          accessToken={accessToken}
-          assistant={assistant}
-          canvasId={canvasNodeId}
-          key={canvasNodeId}
-          library={library}
-          onRename={handleRenameNode}
-          onSessionReady={handleCanvasSessionReady}
-          style={workspaceStyle}
-          title={selectedMemo?.title ?? "知识画布"}
-          userId={profile.id}
-        />
-      )}
+      <ArchiveCordStage
+        active={canvasNodeId === null}
+        refreshKey={[
+          "workspace",
+          routeMemoId ?? "root",
+          organizePresentation?.runId ?? "none",
+          organizePresentation?.status ?? "none",
+          organizePresentation?.targetFolderId ?? organizePresentation?.memoId ?? "none",
+          libraryOpen ? "library" : "closed",
+        ].join(":")}
+      >
+        {routeKindPending ? (
+          <main
+            aria-label="正在打开内容"
+            className="canvas-workspace"
+          >
+            <CanvasStageLoading label="正在打开内容" visible />
+          </main>
+        ) : canvasNodeId === null ? (
+          <PaperWorkspaceShell
+            assistant={assistant}
+            assistantOpen={assistantOpen}
+            libraryOpen={libraryOpen}
+            onCloseAssistant={closeAssistant}
+            onCloseLibrary={closeLibrary}
+            onToggleAssistant={toggleAssistant}
+            onToggleLibrary={toggleLibrary}
+            organizing={memoOrganize.organizing}
+            paper={paper}
+            paperIdentity={activeView === "note" && routeMemoId !== null
+              ? getMemoClientKey(resolveMemoId(routeMemoId))
+              : activeView}
+            presentation={organizePresentation}
+            paperTransitionIdentity={activeView === "note" ? selectedMemoId : null}
+            style={workspaceStyle}
+          />
+        ) : (
+          <CanvasRouteCoordinator
+            accessToken={accessToken}
+            assistant={assistant}
+            bootstrap={peekCanvasEntryBootstrap(canvasNodeId, profile.id)}
+            canvasId={canvasNodeId}
+            key={canvasNodeId}
+            onRename={handleRenameNode}
+            onSessionReady={handleCanvasSessionReady}
+            style={workspaceStyle}
+            title={selectedMemo?.title ?? "知识画布"}
+            userId={profile.id}
+          />
+        )}
+
+        <WorkspaceLibraryLayer open={activeLibraryOpen} style={workspaceStyle}>
+          {library}
+        </WorkspaceLibraryLayer>
+      </ArchiveCordStage>
 
       <DashboardDialogs
         accountDialog={accountDialog}
@@ -887,4 +920,8 @@ export function AppDashboard() {
       />
     </>
   );
+}
+
+export function AppDashboard() {
+  return <AppDashboardContent />;
 }

@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 @xyflow/react v12 坐标协议、Canvas Chat、会话协调器、canvasWorkspaceStore、空间文字几何、增量布局、文件树笔记拖拽载荷与本地反馈组件
- * [OUTPUT]: 对外提供始终挂载真实 React Flow 的 Canvas：对象身份稳定的受控图、延迟加载占位、文件树精准落点、空间文字、细粒度 AI 状态、统一加入/连接/Preview/移除/拓展及可靠保存状态
- * [POS]: KnowledgeCanvas 的会话内容根；节点几何只跟随文档且按字段增量对账，选择只有 React Flow 一个所有者而 Store 是它的镜像，AI 全局门禁用命令式快照读取避免击穿动作 Context，UI 只产生可由协调器/WAL 原子重放的 intent；来源血缘解除先由最内层 Dialog 收束，混合批量只允许撤销普通节点，正文只在 Preview 按 ID 加载
+ * [INPUT]: 依赖 @xyflow/react v12、同步首帧 Canvas bootstrap、纸面视图过渡、Canvas Chat/Coordinator/Store、瞬时 motion receipt、空间文字、增量布局与拖拽载荷
+ * [OUTPUT]: 对外提供始终挂载真实 React Flow 的 Canvas：首帧即有过渡落点、稳定受控图、单一 Stage loading、精准落点、只属于首次进入的因果节点/关系动效、Preview 纸面形变（正文未到时先用卡片摘录）、删除退场与可靠保存
+ * [POS]: KnowledgeCanvas 的会话内容根；几何/选择/WAL 仍由原系统负责，只有本地手势签发一次性 UI receipt，hydration/rebase/save/rerender 不得重播
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -48,10 +48,13 @@ import type {
   CanvasNode,
 } from "../../shared/api/canvas";
 import {
+  resolveCanvasRenderDetail,
+  storeCanvasEntryBootstrap,
+  type CanvasEntryBootstrap,
+} from "../../pages/canvasEntryBootstrap";
+import {
   Button,
   Dialog,
-  Skeleton,
-  SkeletonGroup,
   useDelayedSkeleton,
   useToast,
 } from "../../shared/design-system/components";
@@ -65,6 +68,7 @@ import {
   type CommandAddTarget,
 } from "../../shared/store/commandPaletteStore";
 import { useCanvasWorkspaceStore } from "../../shared/store/canvasWorkspaceStore";
+import { useMemoDocumentStore } from "../../shared/store/memoDocumentStore";
 import type { CanvasReturnDescriptor } from "../../shared/store/canvasReturnStore";
 import { expandCanvas } from "../AgentPanel/canvasExpandClient";
 import {
@@ -72,12 +76,20 @@ import {
   SUPERNOTE_MEMO_DRAG_MIME,
 } from "../memoLibrary";
 import { CanvasActionsProvider } from "./canvasActions";
+import { CanvasStageLoading } from "../CanvasStageLoading";
+import { NotePaper } from "../NotePaper";
 import { CanvasCardNode } from "./CanvasCardNode";
 import { CanvasControls } from "./CanvasControls";
 import { CanvasCordEdge } from "./CanvasCordEdge";
 import { CanvasPersistenceStatus } from "./CanvasPersistenceStatus";
 import { CanvasPreviewOverlay } from "./CanvasPreviewOverlay";
-import { canvasPreviewTransitionName } from "./canvasPreviewTransition";
+import {
+  applyCanvasMotionReceipt,
+  canvasMotionTargetsFromIntents,
+  captureCanvasRemovalSnapshots,
+  useCanvasMotionReceipts,
+} from "./canvasMotionReceipts";
+import { runViewTransition } from "../../pages/viewTransition";
 import { CanvasSelectionBounds } from "./CanvasSelectionBounds";
 import {
   useCanvasSessionCoordinator,
@@ -95,6 +107,16 @@ const edgeTypes = { cord: CanvasCordEdge };
 const panOnDrag = [1, 2];
 const proOptions = { hideAttribution: true };
 
+const withPaperTransitionIdentity = (
+  nodes: readonly CanvasFlowNode[],
+  memoId: string | null,
+): CanvasFlowNode[] => nodes.map((node) => {
+  const active = memoId !== null && node.data.targetNodeId === memoId;
+  return node.data.paperTransitionActive === active
+    ? node
+    : { ...node, data: { ...node.data, paperTransitionActive: active } };
+});
+
 function CanvasAiState() {
   const aiLoading = useCanvasWorkspaceStore((state) => state.aiLoading);
   return aiLoading
@@ -104,6 +126,7 @@ function CanvasAiState() {
 
 type KnowledgeCanvasProps = {
   accessToken: string;
+  bootstrap?: CanvasEntryBootstrap | null;
   canvasId: string;
   entryChrome: CanvasChromeState;
   onCoordinatorReady?: (controls: CanvasSessionControls | null) => void;
@@ -328,6 +351,7 @@ const flowNodeFromTransient = (node: TransientTextNode): CanvasFlowNode => ({
 
 export function KnowledgeCanvas({
   accessToken,
+  bootstrap = null,
   canvasId,
   entryChrome,
   onCoordinatorReady,
@@ -337,7 +361,15 @@ export function KnowledgeCanvas({
   userId,
 }: KnowledgeCanvasProps) {
   const { dismissToast, toast } = useToast();
+  const sessionCanvasId = useCanvasWorkspaceStore((state) => state.canvasId);
   const document = useCanvasWorkspaceStore((state) => state.document);
+  const renderDocument = resolveCanvasRenderDetail(
+    canvasId,
+    userId,
+    sessionCanvasId,
+    document,
+    bootstrap,
+  );
   const selectedNodeIds = useCanvasWorkspaceStore((state) => state.selectedNodeIds);
   const selectNodes = useCanvasWorkspaceStore((state) => state.selectNodes);
   const previewNodeId = useCanvasWorkspaceStore((state) => state.previewNodeId);
@@ -346,17 +378,49 @@ export function KnowledgeCanvas({
   const connectionSourceId = useCanvasWorkspaceStore((state) => state.connectionSourceId);
   const startConnection = useCanvasWorkspaceStore((state) => state.startConnection);
   const setAiLoading = useCanvasWorkspaceStore((state) => state.setAiLoading);
+  const preloadMemo = useMemoDocumentStore((state) => state.preloadMemo);
   const openPalette = useCommandPaletteStore((state) => state.openPalette);
   const registerCanvasCommand = useCommandPaletteStore(
     (state) => state.registerCanvas,
   );
+  const initialProjected = renderDocument === null
+    ? { edges: [], nodes: [], viewport: CANVAS_DEFAULT_VIEWPORT }
+    : toCanvasFlow(renderDocument);
+  const landingNode = bootstrap === null
+    ? null
+    : initialProjected.nodes.find(
+      (node) => node.data.targetNodeId === bootstrap.sourceMemoId,
+    ) ?? null;
+  const landingViewport = restore?.canvasId === canvasId ? restore.viewport : null;
+  const hasTransitionLanding = landingNode !== null && landingViewport !== null;
   const [transientText, setTransientText] = useState<TransientTextNode | null>(null);
+  const [paperTransitionMemoId, setPaperTransitionMemoId] = useState<string | null>(
+    hasTransitionLanding ? null : bootstrap?.sourceMemoId ?? null,
+  );
+  const [transitionLandingVisible, setTransitionLandingVisible] = useState(
+    hasTransitionLanding,
+  );
   const [pendingOriginRemoval, setPendingOriginRemoval] =
     useState<CanvasRemovalSnapshot | null>(null);
   const [originRemovalBusy, setOriginRemovalBusy] = useState(false);
   const [memoDropActive, setMemoDropActive] = useState(false);
-  const [nodes, setNodes, onNodesChange] = useNodesState<CanvasFlowNode>([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState<CanvasFlowEdge>([]);
+  /*
+   * useNodesState 的参数只在挂载时生效。这里直接以 bootstrap 投影初始化，目标卡片才会在
+   * Router 拍新页面的第一帧里存在；只在 effect 里 setNodes 已经太晚，只能得到整页淡换。
+   */
+  const initialFlow = {
+    ...initialProjected,
+    nodes: withPaperTransitionIdentity(
+      initialProjected.nodes,
+      hasTransitionLanding ? null : bootstrap?.sourceMemoId ?? null,
+    ),
+  };
+  const [nodes, setNodes, onNodesChange] = useNodesState<CanvasFlowNode>(
+    initialFlow.nodes,
+  );
+  const [edges, setEdges, onEdgesChange] = useEdgesState<CanvasFlowEdge>(
+    initialFlow.edges,
+  );
   const instanceRef = useRef<ReactFlowInstance<CanvasFlowNode, CanvasFlowEdge> | null>(null);
   const flowRef = useRef<HTMLDivElement>(null);
   const initialViewportAppliedRef = useRef(false);
@@ -365,12 +429,40 @@ export function KnowledgeCanvas({
   // oxlint 的 react/refs 在项目配置中关闭：事件回调必须同步读到本次 render 的文档，
   // 若改成 effect 更新会留出一帧旧快照窗口；这里不参与渲染，也不会触发状态回环。
   latestDocumentRef.current = document;
+
+  useEffect(() => {
+    if (!transitionLandingVisible || bootstrap === null) return;
+    /*
+     * React Flow 在挂载后才建立内部 viewport，Router 的新页面截图早于这一步。落点纸只
+     * 跨过原生形变的一帧生命周期；真实卡片稳定后再接过 identity，不产生第二张可见纸。
+     */
+    const timer = window.setTimeout(() => {
+      setTransitionLandingVisible(false);
+      setPaperTransitionMemoId(bootstrap.sourceMemoId);
+    }, 360);
+    return () => window.clearTimeout(timer);
+  }, [bootstrap, transitionLandingVisible]);
   const getViewport = useCallback(
     () => instanceRef.current?.getViewport() ?? CANVAS_DEFAULT_VIEWPORT,
     [],
   );
+  const {
+    consumeVisibleReceipt,
+    ensureNodesInSafeViewport,
+    issueMotionReceipt,
+    motionReceipt,
+    reducedMotion: reduceMotion,
+  } = useCanvasMotionReceipts({
+    bootstrap,
+    canvasDocument: renderDocument,
+    canvasId,
+    flowRef,
+    instanceRef,
+    returning: hasTransitionLanding,
+  });
   const { coordinatorRef, loadStatus } = useCanvasSessionCoordinator({
     accessToken,
+    bootstrap,
     canvasId,
     entryChrome,
     getViewport,
@@ -379,53 +471,59 @@ export function KnowledgeCanvas({
     toast,
     userId,
   });
-  const canvasSkeletonVisible = useDelayedSkeleton(loadStatus === "loading", {
-    delayMs: 220,
-    minimumVisibleMs: 240,
-  });
-  const changePreview = useCallback((nodeId: string | null) => {
-    const transitionNodeId = nodeId ?? previewNodeId;
-    const startViewTransition = (
-      window.document as Document & {
-        startViewTransition?: (update: () => void) => {
-          finished: Promise<void>;
-        };
-      }
-    ).startViewTransition;
-    if (
-      transitionNodeId === null
-      || startViewTransition === undefined
-      || window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    ) {
-      openPreview(nodeId);
-      return;
-    }
-    const source = window.document.querySelector<HTMLElement>(
-      `[data-canvas-card-id="${CSS.escape(transitionNodeId)}"]`,
-    );
-    if (source === null) {
-      openPreview(nodeId);
-      return;
-    }
-    const transitionName = canvasPreviewTransitionName(transitionNodeId);
-    if (nodeId !== null) source.style.viewTransitionName = transitionName;
-    const transition = startViewTransition.call(window.document, () => {
-      source.style.viewTransitionName = nodeId === null
-        ? transitionName
-        : "none";
-      flushSync(() => openPreview(nodeId));
-    });
-    void transition.finished.finally(() => {
-      source.style.viewTransitionName = "none";
-    });
-  }, [openPreview, previewNodeId]);
-
-  const flow = useMemo(
-    () => document === null
-      ? { edges: [], nodes: [], viewport: CANVAS_DEFAULT_VIEWPORT }
-      : toCanvasFlow(document),
-    [document],
+  const canvasSkeletonVisible = useDelayedSkeleton(
+    bootstrap === null && loadStatus === "loading",
+    {
+      delayMs: 180,
+      minimumVisibleMs: 180,
+    },
   );
+  /*
+   * 卡片 ↔ 预览的放大缩小交给浏览器: 两端截图与中间那段变形都由同一个渲染器完成, 所以
+   * 圆角形状、字形抗锯齿、阴影缩放、容器查询字号这些落点细节结构上就不可能对不上。
+   * 不支持视图过渡的浏览器直接换页, 不再自己画一张纸去追真纸。
+   *
+   * flushSync 是这条路的门槛: 浏览器在 update 返回后的下一个渲染时机就要拍新截图,
+   * 而 React 默认可以把这次更新排到之后的任务里 —— 那时拍到的还是旧 DOM, 于是整段
+   * 过渡退化成"什么都没变"。方向一并交出去, 收起因此可以比展开更短。
+   */
+  const primePaperTransition = useCallback((memoId: string) => {
+    /*
+     * 旧截图在 startViewTransition 调用时立刻拍下，所以不能等普通 effect 再删掉其他卡片
+     * 的名字。同步把唯一身份写进现有 React Flow nodes，随后两端截图才共享同一张纸。
+     */
+    flushSync(() => {
+      setPaperTransitionMemoId(memoId);
+      setNodes((current) => withPaperTransitionIdentity(current, memoId));
+    });
+  }, [setNodes]);
+
+  const changePreview = useCallback((nodeId: string | null) => {
+    if (nodeId !== null) {
+      const memoId = renderDocument?.nodes.find(
+        (node) => node.id === nodeId,
+      )?.target_node_id;
+      if (memoId !== null && memoId !== undefined) primePaperTransition(memoId);
+    }
+    const apply = () => flushSync(() => openPreview(nodeId));
+    if (!runViewTransition(apply, nodeId === null ? "collapse" : "expand")) apply();
+  }, [openPreview, primePaperTransition, renderDocument]);
+
+  const flow = useMemo(() => {
+    const projected = renderDocument === null
+      ? { edges: [], nodes: [], viewport: CANVAS_DEFAULT_VIEWPORT }
+      : toCanvasFlow(renderDocument);
+    const animated = applyCanvasMotionReceipt(
+      withPaperTransitionIdentity(projected.nodes, paperTransitionMemoId),
+      projected.edges,
+      motionReceipt,
+    );
+    return { ...projected, ...animated };
+  }, [motionReceipt, paperTransitionMemoId, renderDocument]);
+
+  useEffect(() => {
+    consumeVisibleReceipt(flow.nodes, flow.edges);
+  }, [consumeVisibleReceipt, flow.edges, flow.nodes]);
 
   useEffect(() => {
     initialViewportAppliedRef.current = false;
@@ -562,9 +660,17 @@ export function KnowledgeCanvas({
     snapshot: CanvasRemovalSnapshot,
   ) => {
     if (snapshot.nodes.length === 0) return;
-    await enqueueMany(snapshot.nodes.map((node) => ({
-      operation: { node_id: node.id, type: "remove_node" },
-    })));
+    const playRemoval = captureCanvasRemovalSnapshots(
+      snapshot.nodes.map((node) => node.id),
+      reduceMotion,
+    );
+    try {
+      await enqueueMany(snapshot.nodes.map((node) => ({
+        operation: { node_id: node.id, type: "remove_node" },
+      })));
+    } finally {
+      playRemoval();
+    }
     selectOnly([]);
 
     if (snapshot.includesOrigin) {
@@ -590,7 +696,7 @@ export function KnowledgeCanvas({
       return;
     }
     showUndoReceipt(snapshot);
-  }, [enqueueMany, selectOnly, showUndoReceipt, toast]);
+  }, [enqueueMany, reduceMotion, selectOnly, showUndoReceipt, toast]);
 
   const requestNodeRemoval = useCallback(async (nodeIds: readonly string[]) => {
     const current = latestDocumentRef.current;
@@ -754,14 +860,41 @@ export function KnowledgeCanvas({
     return result.persisted;
   }, [coordinatorRef, toast]);
 
+  /*
+   * 离开画布进写作区也是同一张纸换了个位置: 写作区那张纸与卡片/预览共用同一个纸面名字。
+   * 但这一次的 DOM 更新不归这里 —— 它归路由: 导航是异步的, 状态什么时候落地由 Router
+   * 说了算, 在这里包一层视图过渡只会拍到还没换的旧页面。所以画布只管发出跳转意图,
+   * 过渡由持有 navigate 的那一层用 viewTransition 起。
+   */
   const navigateToMemo = useCallback(async (
     memoId: string,
     editOriginal = false,
   ) => {
     if (!await flushBeforeNavigation()) return;
+    primePaperTransition(memoId);
+    const state = useCanvasWorkspaceStore.getState();
+    if (state.canvasId === canvasId && state.document !== null) {
+      /*
+       * 用户刚离开的画布就是返回时最准确、最快的目标。把这份短命快照留给下一次导航，
+       * 返回按钮无需再等网络，而且目标卡片能参与路由的第一张截图。
+       */
+      storeCanvasEntryBootstrap({
+        canvasId,
+        detail: state.document,
+        sourceMemoId: memoId,
+        userId,
+      });
+    }
     if (editOriginal) onEditMemo(memoId);
     else onSelectMemo(memoId);
-  }, [flushBeforeNavigation, onEditMemo, onSelectMemo]);
+  }, [
+    canvasId,
+    flushBeforeNavigation,
+    onEditMemo,
+    onSelectMemo,
+    primePaperTransition,
+    userId,
+  ]);
 
   const viewportCenter = useCallback(() => {
     const instance = instanceRef.current;
@@ -791,9 +924,16 @@ export function KnowledgeCanvas({
       if (!current.edges.some(
         (edge) => directPair(edge.source_id, edge.target_id) === pair,
       )) {
+        const edgeId = crypto.randomUUID();
+        issueMotionReceipt({
+          edgeIds: [edgeId],
+          kind: "connect",
+          nodeIds: [],
+          sourceNodeId: source.id,
+        });
         await enqueue({
           operation: {
-            edge_id: crypto.randomUUID(),
+            edge_id: edgeId,
             source_id: source.id,
             target_id: existing.id,
             type: "upsert_edge",
@@ -807,22 +947,14 @@ export function KnowledgeCanvas({
        * 关系建好了却在屏幕外, 用户看到的是"什么也没发生"。
        */
       selectOnly([existing.id]);
-      instanceRef.current?.fitView({
-        duration: 220,
-        nodes: [{ id: source.id }, { id: existing.id }],
-        padding: 0.8,
-      });
+      ensureNodesInSafeViewport([source.id, existing.id]);
       startConnection(null);
       return;
     }
 
     if (existing !== undefined) {
       selectOnly([existing.id]);
-      instanceRef.current?.fitView({
-        duration: 220,
-        nodes: [{ id: existing.id }],
-        padding: 0.8,
-      });
+      ensureNodesInSafeViewport([existing.id]);
       return;
     }
 
@@ -834,12 +966,19 @@ export function KnowledgeCanvas({
         [{ confidence: 1, memoId: memo.id }],
       )[0] ?? nearestCanvasPlacement(current.nodes, viewportCenter()));
     const nodeId = crypto.randomUUID();
+    const edgeId = source === null ? null : crypto.randomUUID();
+    issueMotionReceipt({
+      edgeIds: edgeId === null ? [] : [edgeId],
+      kind: "manual_add",
+      nodeIds: [nodeId],
+      sourceNodeId: source?.id ?? null,
+    });
     await enqueue({
       hint: { revision: memo.revision, title: memo.title },
       operation: {
         ...(source === null ? {} : {
           discovered_from_id: source.id,
-          edge_id: crypto.randomUUID(),
+          edge_id: edgeId!,
           source_node_id: source.id,
         }),
         node_id: nodeId,
@@ -850,10 +989,13 @@ export function KnowledgeCanvas({
       },
     });
     selectOnly([nodeId]);
+    ensureNodesInSafeViewport(source === null ? [nodeId] : [source.id, nodeId]);
     startConnection(null);
   }, [
     connectionSourceId,
     enqueue,
+    ensureNodesInSafeViewport,
+    issueMotionReceipt,
     selectOnly,
     startConnection,
     viewportCenter,
@@ -942,6 +1084,16 @@ export function KnowledgeCanvas({
         });
       }
 
+      const {
+        edgeIds: receiptEdgeIds,
+        nodeIds: receiptNodeIds,
+      } = canvasMotionTargetsFromIntents(intents);
+      issueMotionReceipt({
+        edgeIds: receiptEdgeIds,
+        kind: "ai_expand",
+        nodeIds: receiptNodeIds,
+        sourceNodeId,
+      });
       await coordinator.enqueueExpansion(intents, {
         candidate_revisions: result.candidates.map((candidate) => ({
           memo_id: candidate.memo_id,
@@ -953,6 +1105,7 @@ export function KnowledgeCanvas({
         source_canvas_node_id: sourceNodeId,
         source_revision: result.source_revision,
       });
+      ensureNodesInSafeViewport([sourceNodeId, ...receiptNodeIds]);
       if (result.candidates.length === 0) {
         toast({ title: "没有发现新的直接关联", variant: "info" });
       }
@@ -965,7 +1118,14 @@ export function KnowledgeCanvas({
     } finally {
       setAiLoading(false);
     }
-  }, [canvasId, coordinatorRef, setAiLoading, toast]);
+  }, [
+    canvasId,
+    coordinatorRef,
+    ensureNodesInSafeViewport,
+    issueMotionReceipt,
+    setAiLoading,
+    toast,
+  ]);
 
   const actions = useMemo(() => ({
     onCancelText(nodeId: string) {
@@ -1041,6 +1201,9 @@ export function KnowledgeCanvas({
     onOpenMemo(nodeId: string) {
       void navigateToMemo(nodeId);
     },
+    onPrefetchMemo(memoId: string) {
+      void preloadMemo(accessToken, memoId).catch(() => undefined);
+    },
     onPreview(nodeId: string) {
       changePreview(nodeId);
     },
@@ -1066,8 +1229,10 @@ export function KnowledgeCanvas({
     enqueue,
     expandFromNode,
     navigateToMemo,
+    accessToken,
     changePreview,
     openPalette,
+    preloadMemo,
     editText,
     removeEdge,
     requestNodeRemoval,
@@ -1156,15 +1321,26 @@ export function KnowledgeCanvas({
     return () => registerCanvasCommand(null);
   }, [addMemo, canvasId, registerCanvasCommand]);
 
-  const previewNode = document?.nodes.find((node) => node.id === previewNodeId) ?? null;
+  const previewNode = renderDocument?.nodes.find(
+    (node) => node.id === previewNodeId,
+  ) ?? null;
   const previewMemoId = previewNode?.target_node_id ?? null;
   const previewTitle = previewNode?.target?.title
     ?? previewNode?.snapshot_title
     ?? "笔记预览";
+  /*
+   * 卡片上那段摘录就是这篇笔记的开头, 所以正文在路上时先把它放进纸里, 而不是三条灰条:
+   * 放大的是同一段字, 从卡片长成一页纸, 中途没有一次内容被抽走再换上。
+   */
+  const previewExcerpt = previewNode?.target?.excerpt
+    ?? previewNode?.snapshot_excerpt
+    ?? null;
   return (
     <CanvasActionsProvider actions={actions}>
       <div
         className="knowledge-canvas"
+        data-entry-motion={bootstrap === null ? "crossfade" : "view-transition"}
+        data-load-status={loadStatus}
         data-memo-drop-active={memoDropActive || undefined}
         onDragLeave={(event) => {
           if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
@@ -1216,9 +1392,16 @@ export function KnowledgeCanvas({
             );
             const target = current?.nodes.find((candidate) => candidate.id === node.id);
             if (source?.kind !== "memo_ref" || target?.kind !== "memo_ref") return;
+            const edgeId = crypto.randomUUID();
+            issueMotionReceipt({
+              edgeIds: [edgeId],
+              kind: "connect",
+              nodeIds: [],
+              sourceNodeId: source.id,
+            });
             void enqueue({
               operation: {
-                edge_id: crypto.randomUUID(),
+                edge_id: edgeId,
                 source_id: source.id,
                 target_id: target.id,
                 type: "upsert_edge",
@@ -1248,19 +1431,37 @@ export function KnowledgeCanvas({
           />
         </ReactFlow>
 
-        {canvasSkeletonVisible ? (
-          <SkeletonGroup className="canvas-loading" label="正在加载 Canvas" visible>
-            <Skeleton className="canvas-loading-card canvas-loading-card-primary" />
-            <Skeleton className="canvas-loading-card canvas-loading-card-secondary" />
-          </SkeletonGroup>
-        ) : null}
+        {transitionLandingVisible
+          && landingNode !== null
+          && landingViewport !== null
+          && bootstrap !== null ? (
+            <div
+              aria-hidden="true"
+              className="canvas-transition-landing"
+              style={{
+                height: Number(landingNode.style?.height ?? 360),
+                transform: `translate(${landingViewport.x + landingNode.position.x * landingViewport.zoom}px, ${landingViewport.y + landingNode.position.y * landingViewport.zoom}px) scale(${landingViewport.zoom})`,
+                width: Number(landingNode.style?.width ?? 280),
+              }}
+            >
+              <NotePaper
+                className="canvas-card-paper"
+                excerpt={landingNode.data.body}
+                title={landingNode.data.title}
+                transitionIdentity={bootstrap.sourceMemoId}
+                variant="thumbnail"
+              />
+            </div>
+          ) : null}
+
+        <CanvasStageLoading visible={canvasSkeletonVisible} />
         {loadStatus === "error" ? (
           <div className="canvas-state">
             <strong>Canvas 打不开</strong>
             <span>它可能已被删除，或当前登录已失效。</span>
           </div>
         ) : null}
-        {loadStatus === "ready" && document?.nodes.length === 0 ? (
+        {loadStatus === "ready" && renderDocument?.nodes.length === 0 ? (
           <div className="canvas-empty-hint">
             双击空白写一段自由文字，或按 ⌘K 搜索并加入笔记
           </div>
@@ -1286,11 +1487,11 @@ export function KnowledgeCanvas({
         <CanvasPreviewOverlay
           accessToken={accessToken}
           memoId={previewMemoId}
-          nodeId={previewNode.id}
           onClose={() => changePreview(null)}
           onEditOriginal={async () => {
             await navigateToMemo(previewMemoId, true);
           }}
+          pendingExcerpt={previewExcerpt}
           title={previewTitle}
         />
       )}

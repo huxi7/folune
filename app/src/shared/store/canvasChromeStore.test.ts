@@ -53,6 +53,23 @@ describe("canvasChromeStore", () => {
     expect(state().pendingEntry).toBeNull();
   });
 
+  test("只读预览不消费一次性进入意图", () => {
+    const state = () => useCanvasChromeStore.getState();
+    state().hydrate("user-1");
+    state().rememberEntry({
+      canvasId: "canvas-1",
+      inherited: { assistantOpen: false, libraryOpen: true },
+      intent: "tree",
+    });
+
+    expect(state().peekEntryChrome("canvas-1", 1440)).toEqual({
+      assistantOpen: false,
+      libraryOpen: true,
+    });
+    expect(state().pendingEntry).not.toBeNull();
+    expect(state().entryChrome("canvas-1", 1440).libraryOpen).toBe(true);
+  });
+
   test("切到另一张画布重新解析，不复用上一张的答案", () => {
     const state = () => useCanvasChromeStore.getState();
     state().hydrate("user-1");

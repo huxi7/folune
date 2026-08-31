@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 motion/react、共享 EdgeDock/Panel 插槽、ArchiveCord 空闲上下文、canvasChromeStore 进入策略与每画布快照、canvasWorkspaceStore 会话 Chrome、KnowledgeCanvas 会话控制与 Quiet Editorial token
- * [OUTPUT]: 对外提供可预载、可向路由暴露 flush 会话控制且中央始终保持同一 React Flow 实例的全视口 CanvasWorkspace
- * [POS]: widgets 的 Canvas V2 会话壳；负责返回 flush、Panel 会话状态、每画布布局记忆与空间布局，数据/交互/恢复归 KnowledgeCanvas；左右面板各自独立开关，永不共用一个布尔值
+ * [INPUT]: 依赖 motion/react、可选 CanvasEntryBootstrap、共享 EdgeDock/Panel 插槽、ArchiveCord 空闲上下文、canvasChromeStore/canvasWorkspaceStore、KnowledgeCanvas 会话控制与 Quiet Editorial token；文件库由 Dashboard 持久宿主承载
+ * [OUTPUT]: 对外提供可预载、可消费一次性 detail、可向路由暴露 flush 且中央始终保持同一 React Flow 实例的全视口 CanvasWorkspace
+ * [POS]: widgets 的 Canvas V2 会话壳；负责返回 flush、Panel 会话状态、每画布布局记忆与空间布局，数据/交互/恢复归 KnowledgeCanvas；文件库宿主在路由壳外持久挂载，Canvas 只提供其开关语义，左右面板各自独立
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -33,12 +33,14 @@ import {
 } from "../shared/store/canvasChromePolicy";
 import { useCanvasWorkspaceStore } from "../shared/store/canvasWorkspaceStore";
 import type { CanvasReturnDescriptor } from "../shared/store/canvasReturnStore";
+import type { CanvasEntryBootstrap } from "../pages/canvasEntryBootstrap";
 import {
   fadeTransition,
   panelEnterTransition,
   panelExitTransition,
+  reducedFadeTransition,
 } from "../pages/workspaceMotion";
-import { ArchiveCordStage } from "./ArchiveCord";
+import { CanvasStageLoading } from "./CanvasStageLoading";
 import { EdgeDock } from "./EdgeDock";
 import { CanvasTitle } from "./KnowledgeCanvas/CanvasTitle";
 import type { CanvasSessionControls } from "./KnowledgeCanvas/useCanvasSessionCoordinator";
@@ -58,8 +60,8 @@ const KnowledgeCanvas = lazy(() =>
 type CanvasWorkspaceProps = {
   accessToken: string;
   assistant: ReactNode;
+  bootstrap?: CanvasEntryBootstrap | null;
   canvasId: string;
-  library: ReactNode;
   onNavigateMemo: (nodeId: string, descriptor: CanvasReturnDescriptor) => void;
   onRename: (title: string) => Promise<void>;
   onSessionReady?: (controls: CanvasSessionControls | null) => void;
@@ -72,8 +74,8 @@ type CanvasWorkspaceProps = {
 export function CanvasWorkspace({
   accessToken,
   assistant,
+  bootstrap = null,
   canvasId,
-  library,
   onNavigateMemo,
   onRename,
   onSessionReady,
@@ -206,35 +208,15 @@ export function CanvasWorkspace({
   }, [anyPanelOpen, assistantOpen, closeAssistant, closeLibrary]);
 
   return (
-    <ArchiveCordStage active={false} refreshKey={`canvas:${canvasId}`}>
       <main
         aria-label={`知识画布：${title}`}
         className="app-workspace canvas-workspace"
         data-assistant-open={assistantOpen}
+        data-entry-motion={bootstrap === null ? "crossfade" : "view-transition"}
         data-library-open={libraryOpen}
         data-overlay-panels={overlayPanels}
         style={style}
       >
-      <AnimatePresence initial={false}>
-        {libraryOpen ? (
-          <motion.div
-            animate={{ opacity: 1, x: 0 }}
-            className="app-sidebar-shell workspace-floating-panel"
-            exit={{
-              opacity: 0,
-              transition: reduceMotion ? fadeTransition : panelExitTransition,
-              x: reduceMotion ? 0 : -12,
-            }}
-            initial={{ opacity: 0, x: reduceMotion ? 0 : -12 }}
-            transition={reduceMotion ? fadeTransition : panelEnterTransition}
-          >
-            <div className="workspace-panel-content workspace-panel-content-library">
-              {library}
-            </div>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
-
       <section className="canvas-stage">
         {/*
           顶层分区只有四块: 左上开关+标题、右上 AI 开关、底部中央命令、右下保存
@@ -251,7 +233,7 @@ export function CanvasWorkspace({
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   initial={{ opacity: 0 }}
-                  transition={fadeTransition}
+                  transition={reduceMotion ? reducedFadeTransition : fadeTransition}
                 >
                   <EdgeDock
                     icon={<SidebarSimpleIcon size={16} />}
@@ -274,7 +256,7 @@ export function CanvasWorkspace({
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   initial={{ opacity: 0 }}
-                  transition={fadeTransition}
+                  transition={reduceMotion ? reducedFadeTransition : fadeTransition}
                 >
                   <EdgeDock
                     icon={<AssistantPanelOpenIcon size={16} />}
@@ -289,15 +271,11 @@ export function CanvasWorkspace({
         </div>
 
         <Suspense
-          fallback={(
-            <div className="canvas-workspace-loading canvas-workspace-chunk-loading" role="status">
-              <span className="canvas-loading-dot" />
-              <span>正在准备画布</span>
-            </div>
-          )}
+          fallback={<CanvasStageLoading visible />}
         >
           <KnowledgeCanvas
             accessToken={accessToken}
+            bootstrap={bootstrap}
             canvasId={canvasId}
             entryChrome={entryChrome}
             onCoordinatorReady={registerControls}
@@ -322,11 +300,11 @@ export function CanvasWorkspace({
             className="app-agent-shell workspace-floating-panel"
             exit={{
               opacity: 0,
-              transition: reduceMotion ? fadeTransition : panelExitTransition,
+              transition: reduceMotion ? reducedFadeTransition : panelExitTransition,
               x: reduceMotion ? 0 : 12,
             }}
             initial={{ opacity: 0, x: reduceMotion ? 0 : 12 }}
-            transition={reduceMotion ? fadeTransition : panelEnterTransition}
+            transition={reduceMotion ? reducedFadeTransition : panelEnterTransition}
           >
             <div className="workspace-panel-content workspace-panel-content-assistant">
               {assistant}
@@ -347,12 +325,11 @@ export function CanvasWorkspace({
               closeAssistant();
               closeLibrary();
             }}
-            transition={fadeTransition}
+            transition={reduceMotion ? reducedFadeTransition : fadeTransition}
             type="button"
           />
         ) : null}
       </AnimatePresence>
       </main>
-    </ArchiveCordStage>
   );
 }

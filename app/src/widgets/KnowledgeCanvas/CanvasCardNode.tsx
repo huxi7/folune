@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖 @xyflow/react、CanvasFlowNode、NotePaper、空间文字几何、设计系统图标、稳定 canvasActions 与细粒度 canvasWorkspaceStore 状态
- * [OUTPUT]: 对外提供 280x360 纵向 memo_ref 笔记预览卡、源节点 AI 忙碌选择器，与静止无表面、按持久化基础宽高测量、编辑态稳定聚焦且四角等比缩放的 native 空间文字节点
+ * [INPUT]: 依赖 @xyflow/react、motion/react、workspaceMotion spatialSpring、CanvasFlowNode UI-only motionState、NotePaper（纸面身份由它命名壳与正文）、空间文字几何、设计系统图标、稳定 canvasActions 与细粒度 Store
+ * [OUTPUT]: 对外提供可按本地 receipt 入场且纸面可飞向 Preview 的 memo_ref 卡、源节点确认反馈与 1:1 拖拽/等比缩放 native 文字
  * [POS]: KnowledgeCanvas 的节点表现层；Handle 只登记关系身份，真实浮动端点由 CanvasCordEdge 读取节点矩形求解；卡片只读快照标题/摘录，正文只经 Preview Overlay 按 ID 读取，空间文字把自身 scale 与视口 zoom 分离，全部持久修改仍交给统一协调器
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -12,6 +12,7 @@ import {
   ResizeControlVariant,
   type NodeProps,
 } from "@xyflow/react";
+import { motion, useReducedMotion } from "motion/react";
 import {
   memo,
   useCallback,
@@ -23,6 +24,10 @@ import {
 } from "react";
 
 import type { CanvasFlowNode } from "../../pages/canvasPresentation";
+import {
+  reducedFadeTransition,
+  spatialSpring,
+} from "../../pages/workspaceMotion";
 import {
   ExpandIcon,
   MagicWandIcon,
@@ -95,8 +100,16 @@ export const CanvasCardNode = memo(function CanvasCardNode({
   width,
 }: NodeProps<CanvasFlowNode>) {
   const actions = useCanvasActions();
+  const reduceMotion = Boolean(useReducedMotion());
   const editing = useCanvasWorkspaceStore(
     (state) => state.editingTextNodeId === id,
+  );
+  /*
+   * 预览打开的正是这张卡片时, 纸面身份让给预览那张纸。更重要的是只有本次手势涉及的
+   * 卡片拥有名字；若每张卡都命名，它们都会脱离 root 截图浮在遮罩上方。
+   */
+  const previewing = useCanvasWorkspaceStore(
+    (state) => state.previewNodeId === id,
   );
   const aiLoading = useCanvasWorkspaceStore(
     (state) => isCanvasNodeAiLoading(state, id),
@@ -313,20 +326,52 @@ export const CanvasCardNode = memo(function CanvasCardNode({
       ? "在回收站"
       : data.drifted
         ? "原文已更新"
-        : "";
+      : "";
+  const motionStyle = data.motionState === undefined
+    ? undefined
+    : {
+      "--canvas-motion-delay": `${data.motionState.delayMs}ms`,
+      "--canvas-motion-content-delay": `${data.motionState.delayMs + 120}ms`,
+    } as CSSProperties;
+  const nodeEntering = data.motionState?.kind === "node-enter";
 
   return (
-    <article
+    <motion.article
+      animate={nodeEntering ? { opacity: 1, x: 0, y: 0 } : undefined}
       className="canvas-card"
       data-canvas-card-id={id}
       data-kind={data.kind}
+      data-motion-state={data.motionState?.kind}
       data-selected={selected}
       data-tombstone={data.tombstone}
+      initial={nodeEntering
+        ? reduceMotion
+          ? { opacity: 0 }
+          : {
+            opacity: 0.68,
+            x: data.motionState?.offsetX ?? 0,
+            y: data.motionState?.offsetY ?? 0,
+          }
+        : false}
       onDoubleClick={(event) => {
         event.stopPropagation();
         if (available) actions.onPreview(id);
       }}
-      style={{ viewTransitionName: "none" }}
+      onFocus={() => {
+        if (data.targetNodeId !== null) actions.onPrefetchMemo(data.targetNodeId);
+      }}
+      onPointerEnter={() => {
+        if (data.targetNodeId !== null) actions.onPrefetchMemo(data.targetNodeId);
+      }}
+      style={motionStyle}
+      transition={nodeEntering
+        ? reduceMotion
+          ? reducedFadeTransition
+          : {
+            ...spatialSpring,
+            delay: (data.motionState?.delayMs ?? 0) / 1_000,
+          }
+        : undefined}
     >
       <Handle
         className="canvas-card-center-handle"
@@ -337,6 +382,12 @@ export const CanvasCardNode = memo(function CanvasCardNode({
 
       <NotePaper
         className="canvas-card-paper"
+        transitionIdentity={data.kind === "memo_ref"
+          && data.targetNodeId !== null
+          && data.paperTransitionActive
+          && !previewing
+          ? data.targetNodeId
+          : null}
         emptyLabel={data.tombstone ? "原文已不在库中" : "这页还没有正文"}
         excerpt={data.body}
         overlay={available ? (
@@ -402,6 +453,6 @@ export const CanvasCardNode = memo(function CanvasCardNode({
         position={Position.Right}
         type="source"
       />
-    </article>
+    </motion.article>
   );
 });

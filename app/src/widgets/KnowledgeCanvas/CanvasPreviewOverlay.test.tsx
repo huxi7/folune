@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun test、react-dom/server、memoDocumentStore 初始状态与真实 CanvasPreviewOverlay
- * [OUTPUT]: 锁定 Preview 视觉身份、bare reader 纸与纸外关闭/编辑动作的 DOM 契约
+ * [OUTPUT]: 锁定 Preview 的 motion=none Dialog、唯一 reader 纸与纸外关闭/编辑动作 DOM 契约
  * [POS]: KnowledgeCanvas 的预览结构回归门禁；只断言结构归属，模态行为与几何由 Dialog/note-paper.css 拥有并在浏览器验收
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -14,7 +14,6 @@ const html = renderToStaticMarkup(
   <CanvasPreviewOverlay
     accessToken="test-token"
     memoId="memo-1"
-    nodeId="canvas-node-1"
     onClose={() => undefined}
     onEditOriginal={async () => undefined}
     title="少则得"
@@ -33,6 +32,7 @@ const paperMarkup = (): string => {
 describe("Canvas preview overlay", () => {
   test("遮罩中央只有一张 reader 纸，且复用 Dialog 的 bare 表面", () => {
     expect(html).toContain('data-surface="bare"');
+    expect(html).toContain('data-motion="none"');
     expect(html).toContain("ds-dialog-shell");
     expect(html).toContain('data-variant="reader"');
     // bare 表面不得出现通用弹窗的可见标题栏与关闭按钮

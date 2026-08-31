@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 workspace.css 的全屏 Stage、独立浮层 Panel、--workspace-panel-inset 与 Panel Header 中心线公式、note-paper.css 的共享纸面 variant、Quiet Editorial 语义 token、@xyflow/react 定位层与 Canvas V2 交互组件
- * [OUTPUT]: 对外提供全视口 Canvas 壳、统一顶层坐标、点阵舞台、真实比例延迟占位、文件拖入反馈、280x360 笔记卡/空间文字、动态关系、命令与具备空间连续性的 Preview
+ * [OUTPUT]: 对外提供全视口 Canvas 壳、统一坐标、点阵舞台、单纸面延迟占位、文件拖入、因果节点/关系动效，以及四方向纸面视图过渡的唯一节奏源（只有纸与纸内正文命名、纸壳等比取景、正文永不缩放只被取景框裁切、交接严格互补、世界先落定、零过冲）
  * [POS]: app/src/styles 的 Canvas V2 视觉边界；桌面保留空间画布，窄屏保留可达操作，不覆盖 React Flow 的业务状态
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -111,6 +111,8 @@
     --xy-selection-background-color: var(--canvas-marquee-fill);
     --xy-selection-border: var(--canvas-selection-line);
   }
+  .knowledge-canvas[data-entry-motion="crossfade"][data-load-status="ready"] { animation: canvas-stage-in var(--motion-panel-enter) var(--ease-standard) both; }
+  /* view-transition 入场不需要自己的编排: 整页由浏览器的视图过渡一次带进来 */
   .knowledge-canvas[data-memo-drop-active]::after { content: ""; position: absolute; z-index: 7; inset: var(--space-3); border: 1px solid color-mix(in srgb, var(--primary) 42%, transparent); border-radius: var(--radius-panel); background: color-mix(in srgb, var(--primary) 3%, transparent); pointer-events: none; }
   /* 内层框罩住内容, 必须干净: 同一个变量在这一层改回透明, 只留线 */
   .knowledge-canvas .react-flow__nodesselection { --xy-selection-background-color: transparent; }
@@ -124,6 +126,19 @@
   .knowledge-canvas .react-flow__attribution { background: transparent; color: color-mix(in srgb, var(--muted-foreground) 55%, transparent); font-size: 0.625rem; }
   .knowledge-canvas .react-flow__attribution a { color: inherit; }
   .knowledge-canvas .react-flow__background-pattern circle { fill: color-mix(in srgb, var(--foreground) 9%, transparent); }
+  /*
+   * Router 截图早于 React Flow 首次挂载：这张短命落点纸按离场时保存的 viewport 精确落位，
+   * 只负责接住 Paper→Canvas 形变；360ms 后真实卡片接管，不参与交互也不改变布局。
+   */
+  .canvas-transition-landing {
+    position: absolute;
+    z-index: 4;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    transform-origin: top left;
+  }
+  .canvas-transition-landing > .note-paper { width: 100%; height: 100%; }
 
   /* ------------------------------------------------------------------------ */
   /* Nodes                                                                    */
@@ -141,6 +156,8 @@
   }
   /* 卡片 16px 外曲率与纸张 12px 内曲率靠 4px 内边距构成同心圆角 */
   .canvas-card { gap: var(--space-1); border: 1px solid var(--border); border-radius: var(--radius-panel); background: var(--card); padding: var(--space-1); box-shadow: var(--shadow-xs); transition: border-color var(--motion-fast) var(--ease-standard), box-shadow var(--motion-fast) var(--ease-standard); }
+  .canvas-card[data-motion-state="node-enter"] .note-paper-column { animation: canvas-node-content-in var(--motion-micro-exit) var(--ease-standard) var(--canvas-motion-content-delay, 0ms) both; }
+  .canvas-card[data-motion-state="source-confirm"] { animation: canvas-source-confirm 180ms var(--ease-standard) var(--canvas-motion-delay, 0ms) both; }
   .canvas-card[data-selected="true"] { border-color: color-mix(in srgb, var(--primary) 50%, var(--border)); box-shadow: var(--shadow-sm), 0 0 0 1px color-mix(in srgb, var(--primary) 10%, transparent); }
   .canvas-card[data-tombstone="true"] { opacity: 0.62; }
   .canvas-card-paper { flex: 1; }
@@ -215,9 +232,8 @@
   /* Overlay and state                                                        */
   /* ------------------------------------------------------------------------ */
 
-  .canvas-loading { position: absolute; z-index: 5; inset: 0; display: grid; grid-template-columns: repeat(2, 17.5rem); align-content: center; justify-content: center; gap: clamp(2rem, 8vw, 8rem); padding: var(--space-10); background: var(--workspace-stage); opacity: 0.72; }
-  .canvas-loading-card { width: 17.5rem; height: 22.5rem; border-radius: var(--radius-panel); }
-  .canvas-loading-card-secondary { transform: translateY(2.5rem); opacity: 0.66; }
+  .canvas-stage-loading { position: absolute; z-index: 5; inset: 0; display: grid; place-items: center; padding: var(--space-10); background-color: var(--workspace-stage); background-image: radial-gradient(circle, color-mix(in srgb, var(--foreground) 9%, transparent) 1px, transparent 1px); background-size: 26px 26px; }
+  .canvas-stage-loading-paper { width: min(17.5rem, calc(100vw - 3rem)); aspect-ratio: 7 / 9; border-radius: var(--radius-paper); }
   .canvas-state { position: absolute; z-index: 6; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-2); background: var(--workspace-stage); color: var(--muted-foreground); text-align: center; }
   .canvas-state strong { color: var(--foreground); font-size: var(--type-ui); }
   .canvas-state span { max-width: 24rem; font-size: var(--type-label); line-height: 1.6; }
@@ -244,6 +260,7 @@
   .canvas-preview-shell { display: flex; min-width: 0; min-height: 0; max-width: 100%; max-height: 100%; align-items: flex-start; gap: var(--space-4); }
   /* 工具列与纸顶右角对齐后向下排列, 命令间距沿用全局 4px */
   .canvas-preview-tools { display: flex; flex: 0 0 auto; flex-direction: column; gap: var(--control-cluster-gap); }
+  /* 工具列跟着整页一起被视图过渡带进来, 不需要自己的入场 */
   /* 纸外动作服从设计系统的图标命令规格: 桌面 32px 容器 + 16px 图标, 窄屏 44px */
   .canvas-preview-tool { display: inline-flex; width: var(--control-height-compact); height: var(--control-height-compact); flex: 0 0 auto; align-items: center; justify-content: center; border: 1px solid var(--border); border-radius: var(--radius-pill); corner-shape: round; background: var(--card); padding: 0; color: var(--muted-foreground); box-shadow: var(--shadow-xs); cursor: pointer; transition: background var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard); }
   .canvas-preview-tool:hover:not(:disabled) { background: var(--interactive-hover); color: var(--foreground); }
@@ -269,7 +286,7 @@
     .canvas-card,
     .canvas-card-expand,
     .canvas-card-action,
-    .canvas-loading-card,
+    .canvas-stage-loading-paper,
     .canvas-empty-hint,
     .canvas-mode-notice,
     .canvas-drop-hint,
@@ -285,13 +302,26 @@
   to { opacity: 0.8; transform: scale(1); }
 }
 
-/* 同一个节点身份从 Card 移到 Preview，再在关闭时回到原位；其余 Dialog 动效仍走既有系统。 */
-::view-transition-group(*) {
-  animation-duration: 240ms;
-  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+@keyframes canvas-stage-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
-::view-transition-old(root),
-::view-transition-new(root) { animation: none; }
+
+@keyframes canvas-node-content-in {
+  from { opacity: 0; transform: translateY(2px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes canvas-source-confirm {
+  0% { box-shadow: var(--shadow-xs); }
+  42% { border-color: color-mix(in srgb, var(--primary) 58%, var(--border)); box-shadow: var(--shadow-sm), 0 0 0 2px color-mix(in srgb, var(--primary) 12%, transparent); }
+  100% { box-shadow: var(--shadow-xs); }
+}
+
+@keyframes canvas-reduced-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
 
 @media (max-width: 767px) {
   @layer components {
@@ -324,5 +354,227 @@
     .canvas-card-expand { transition-duration: 1ms; transform: none; }
     .canvas-loading-dot { animation: none; }
   }
-  ::view-transition-group(*) { animation-duration: 1ms; }
+  .knowledge-canvas[data-entry-motion="crossfade"][data-load-status="ready"],
+  .canvas-preview-tools { animation: canvas-reduced-fade 90ms var(--ease-standard) both; }
+  .canvas-card[data-motion-state="node-enter"] .note-paper-column { animation: canvas-reduced-fade 90ms var(--ease-standard) both; }
+  .canvas-card[data-motion-state="source-confirm"] { animation-duration: 90ms; animation-delay: 0ms; }
+}
+
+/*
+ * 原生视图过渡: 卡片 ↔ 预览、笔记 ↔ 画布、预览 → 写作区的放大缩小全部由浏览器完成。
+ *
+ * 这里只调节奏, 不实现任何东西 —— 截图、变形、交叉淡换都是浏览器自己做的, 因此两端
+ * 的圆角形状、字形抗锯齿、阴影缩放、容器查询字号天然一致, 结构上不存在"落点对不上"
+ * 这回事。手写层再怎么修都要逐项复刻这些细节, 那张清单没有尽头。
+ *
+ * 这里不追求"更慢"，而追求视觉因果：世界先安静、纸再移动、正文只交接一次。
+ *
+ * 四条不许动的规矩:
+ *
+ * 1. 除了纸(与纸内正文), 谁都不许拥有 view-transition-name。这不是洁癖, 是层序:
+ *    过渡层的兄弟顺序由"被捕获的先后"决定, 与真实 DOM 的 z-index、嵌套关系完全无关 ——
+ *    先捕获旧状态的绘制序, 再把只在新状态出现的名字追加到末尾。于是一个只存在于新状态
+ *    的全屏遮罩会排在最后, 稳稳盖住那张正在放大的纸: 用户看到的是一整段空白, 过渡结束
+ *    才"跳"出结果。遮罩、面板、工具列一律留在 root 那张截图里, 它们本来就是环境。
+ * 2. 承载正文的表面不许过冲。控制点一律 ≤ 1, 纸只会减速落位, 绝不缩过头再弹回来。
+ *    过冲对刚体(旋钮、图标、徽标)是活力, 对一张写着字的纸是橡皮 —— 纸的边界就是正文的
+ *    边界, 边界回弹等于整段正文回弹, 眼睛只会读成"没对准, 又修了一下"。
+ * 3. 正文永不缩放, 只淡换。纸壳可以被拉伸(纯色圆角矩形拉伸看不出来), 正文不行 ——
+ *    位图化的字被放大就是"字在膨胀", 两套都在膨胀还要叠在一起, 就是用户说的"突然弹
+ *    出来"。所以正文自己成一个组, 两端都按原始尺寸绘制, 由纸壳的取景框裁切: 纸长大,
+ *    露出更多正文, 这才是"打开一页纸"。
+ * 4. 世界必须先落定, 不能陪着纸走完全程。遮罩是环境的状态改变, 不是与纸同行的物体;
+ *    把它摊到整段里, 画布上其他卡片就有大半段时间没被盖住, 还全程跟纸抢注意力。
+ *    Apple 与 Material 都是让遮罩快速进场, 随后那段位移在已经安静的背景上收尾。
+ */
+/*
+ * 一条规则只写一次, 四个方向只声明自己的节奏。
+ *
+ * 纸壳(.paper)是唯一被允许形变的东西; 纸内正文(.paper-body)与它同步但永不缩放;
+ * 其余一切 —— 遮罩、面板、工具列、画布 —— 都住在 root 那张截图里, 因为它们是环境。
+ */
+html {
+  --paper-morph: 300ms;
+  /*
+   * 全程可读的减速曲线, 零过冲。承载正文的表面绝不允许控制点 > 1。
+   *
+   * 这里刻意不用站点里那条 --ease-standard: 它是 easeOutQuint(起步斜率 4.5), 给 160ms
+   * 的微交互正好, 但用在一张纸放大 3.7 倍上, 92% 的位移会挤进前 40% 的时间 —— 眼睛读到
+   * 的是"啪"一下然后有个东西在慢慢飘, 也就是用户说的"突然弹出来"。这条(Material 的
+   * fast-out-slow-in)把行程摊开: 35% 的时间走一半, 70% 的时间走 94%, 最后一段安静落位。
+   */
+  --paper-morph-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --paper-world: 140ms;
+  --paper-world-old: canvas-world-old-crossfade;
+  --paper-world-new: canvas-world-new-crossfade;
+}
+
+/* ------------------------------------------------------------------------- */
+/* 纸壳: 一张没有字的纸, 因此可以放心拉伸                                   */
+/* ------------------------------------------------------------------------- */
+
+::view-transition-group(.paper),
+::view-transition-group(.paper-body) {
+  animation-duration: var(--paper-morph);
+  animation-timing-function: var(--paper-morph-ease);
+}
+
+/*
+ * 命名的后代会被提出祖先的截图, 所以 .paper 那张图里本来就没有正文 —— 拉伸一个纯色
+ * 圆角矩形看不出任何东西。cover 而不是默认的 fill: 等比缩放才能让圆角保持圆, 非等比
+ * 会把它拉成椭圆; 溢出的部分裁掉, 顶边对齐, 一页纸本该如此。
+ */
+::view-transition-old(.paper),
+::view-transition-new(.paper) {
+  block-size: 100%;
+  object-fit: cover;
+  object-position: top center;
+}
+
+/* ------------------------------------------------------------------------- */
+/* 纸内正文: 永不缩放, 只被取景框裁切                                       */
+/* ------------------------------------------------------------------------- */
+
+/*
+ * 这两条是"字不膨胀"的全部实现。
+ *
+ * object-fit: none 让两端都按自己的原始尺寸绘制 —— 一个字都不缩放, 因此不存在位图被
+ * 放大的模糊与"字在膨胀"。overflow: clip 把它交给取景框: 取景框跟着纸长大, 于是新排
+ * 版是被逐渐"露出来"的, 而不是被拉大的。这正是打开一页纸时眼睛期待的因果。
+ *
+ * image-pair 才是那个取景框: 它 inset:0 于所在的组, 尺寸恰好是这一帧的正文矩形。
+ */
+::view-transition-image-pair(.paper-body) {
+  overflow: clip;
+}
+::view-transition-old(.paper-body),
+::view-transition-new(.paper-body) {
+  block-size: 100%;
+  object-fit: none;
+  /*
+   * 左上角, 不是居中。取景框是从小长到大的, 居中意味着两侧同时被裁 —— 用户看到的是每
+   * 一行都缺了开头(标题变成"妄作"), 像渲染坏了。文字从左边读起, 所以左边缘必须钉住,
+   * 由右侧逐渐揭开; 两端排版也因此共用同一条左页边, 淡换发生在眼睛正在看的地方。
+   */
+  object-position: top left;
+}
+
+/*
+ * 两端排版的交接: 严格互补, 因此任何时刻两张图的总不透明度恰好是 1 —— 浏览器用
+ * plus-lighter 混合它们, 互补是"中途不发灰、不叠字"的唯一写法。
+ *
+ * 窗口刻意靠前: 落点排版越早到位, 后面那段长大就越像"露出真正的页面"。但不能从第 0
+ * 帧就换 —— 那是一次闪, 不是一次交接。
+ */
+@keyframes paper-handoff-out {
+  0%, 10% { opacity: 1; }
+  28%, 100% { opacity: 0; }
+}
+@keyframes paper-handoff-in {
+  0%, 10% { opacity: 0; }
+  28%, 100% { opacity: 1; }
+}
+
+::view-transition-old(.paper),
+::view-transition-old(.paper-body) {
+  animation-duration: var(--paper-morph);
+  animation-timing-function: linear;
+  animation-name: paper-handoff-out;
+}
+::view-transition-new(.paper),
+::view-transition-new(.paper-body) {
+  animation-duration: var(--paper-morph);
+  animation-timing-function: linear;
+  animation-name: paper-handoff-in;
+}
+
+/* ------------------------------------------------------------------------- */
+/* 世界: 只有 root, 一张截图换一张截图                                      */
+/* ------------------------------------------------------------------------- */
+
+@keyframes canvas-world-old-immediate {
+  0% { opacity: 1; }
+  18%, 100% { opacity: 0; }
+}
+@keyframes canvas-world-new-immediate {
+  0% { opacity: 0; }
+  18%, 100% { opacity: 1; }
+}
+@keyframes canvas-world-old-crossfade {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+@keyframes canvas-world-new-crossfade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+/*
+ * 路由形变期间 PaperSurface 自己的 motion 入场会被拍在 opacity .82 / y 2 的中间态，
+ * View Transition 结束后真实 DOM 再跳一次。路由已经拥有这次过渡，纸内不应再叠第二层。
+ */
+html[data-paper-transition] .paper-content-transition {
+  opacity: 1 !important;
+  transform: translateY(0) !important;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-group(root),
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: var(--paper-world);
+    animation-timing-function: linear;
+  }
+  ::view-transition-old(root) { animation-name: var(--paper-world-old); }
+  ::view-transition-new(root) { animation-name: var(--paper-world-new); }
+
+  /* 展开: 世界一帧内退到磨砂玻璃后面, 纸随后在已经安静的背景上长大。 */
+  html[data-paper-transition="expand"] {
+    --paper-world: 72ms;
+    --paper-world-old: canvas-world-old-immediate;
+    --paper-world-new: canvas-world-new-immediate;
+  }
+
+  /*
+   * 收起: 只是揭掉磨砂 —— 两端是同一张画布, 因此让它在前小半段换完, 纸随后在真实的
+   * 画布上缩回它自己的位置。收起比展开短: 打开是想看东西, 关闭是已经看完, 该让路。
+   *
+   * 落点那张卡片有名字, 所以它不在新世界的截图里 —— 卡片的位置在纸落位前是空的。那不是
+   * 瑕疵而是事实: 这张卡片正被拿在手上。反过来把世界留到最后才揭开, 用户会有 200ms
+   * 盯着一张纸在空无一物的灰底上缩小, 那才是"没有动效"的观感。
+   */
+  html[data-paper-transition="collapse"] {
+    --paper-morph: 240ms;
+    --paper-world: 140ms;
+  }
+
+  /*
+   * 返回画布: 落点世界必须一开始就在, 用户要看见纸回到哪里去 —— 这是关窗回桌面, 不是
+   * 关灯。这里连空位都没有: 真实卡片本来就画在 root 里, 首帧那张短命落点纸只是叠在它
+   * 上面接住形变(见 .canvas-transition-landing)。稍长一点是因为落点是一张热闹的画布。
+   */
+  html[data-paper-transition="to-canvas"] {
+    --paper-world: 160ms;
+  }
+
+  /*
+   * 预览 → 写作区: 两端的世界(磨砂画布 / 写作舞台)都安静, 因此让它在前小半段就换完,
+   * 剩下的形变发生在落点的背景上。写作区那张纸的空位落在中性灰舞台上, 与舞台同色。
+   */
+  html[data-paper-transition="to-editor"] {
+    --paper-world: 140ms;
+  }
+}
+
+/*
+ * reduced-motion 下方向不再有意义: 上面那些覆盖都住在 no-preference 里, 因此这里只需
+ * 压住基线。root 必须单独写一条 —— 带名字的选择器算作类型选择器, 通配那条压不过它。
+ */
+@media (prefers-reduced-motion: reduce) {
+  html { --paper-morph: 90ms; --paper-morph-ease: var(--ease-standard); }
+  ::view-transition-group(root),
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 90ms;
+    animation-timing-function: var(--ease-standard);
+  }
 }

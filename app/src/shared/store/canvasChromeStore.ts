@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Zustand、canvasChromePolicy 的纯策略与浏览器 localStorage
- * [OUTPUT]: 对外提供按用户持久化的每画布侧栏快照、一次性进入意图登记与幂等的 entryChrome 解析
+ * [OUTPUT]: 对外提供按用户持久化的每画布侧栏快照、一次性进入意图登记、只读 peekEntryChrome 预览与幂等的 entryChrome 解析
  * [POS]: shared/store 的 Canvas 侧栏状态唯一所有者；与 workspaceChromeStore（Paper 的用户级偏好）完全隔离，Canvas 进入策略不得读写 Paper 偏好，Paper 也不因画布开关而改变
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -37,6 +37,7 @@ type CanvasChromeStore = {
   /** 已解析结果的缓存：StrictMode 双渲染与重复调用必须得到同一个答案 */
   resolvedEntry: { canvasId: string; chrome: CanvasChromeState } | null;
   snapshots: Record<string, CanvasChromeState>;
+  peekEntryChrome(canvasId: string, viewportWidth: number): CanvasChromeState;
   entryChrome(canvasId: string, viewportWidth: number): CanvasChromeState;
   hydrate(userId: string): void;
   remember(canvasId: string, chrome: CanvasChromeState): void;
@@ -50,6 +51,27 @@ type CanvasChromeStore = {
 
 export const canvasChromeStorageKey = (userId: string): string =>
   `${CANVAS_CHROME_KEY_PREFIX}${userId}`;
+
+const resolveEntryChrome = (
+  state: Pick<CanvasChromeStore, "pendingEntry" | "resolvedEntry" | "snapshots">,
+  canvasId: string,
+  viewportWidth: number,
+): CanvasChromeState => {
+  const cached = state.resolvedEntry;
+  if (cached !== null && cached.canvasId === canvasId) {
+    return cached.chrome;
+  }
+
+  const pending = state.pendingEntry?.canvasId === canvasId
+    ? state.pendingEntry
+    : null;
+  return resolveCanvasEntryChrome({
+    inherited: pending?.inherited ?? null,
+    intent: pending?.intent ?? "direct",
+    snapshot: state.snapshots[canvasId] ?? null,
+    viewportWidth,
+  });
+};
 
 const isChromeState = (value: unknown): value is CanvasChromeState =>
   value !== null
@@ -117,22 +139,13 @@ export const useCanvasChromeStore = create<CanvasChromeStore>((set, get) => ({
   resolvedEntry: null,
   snapshots: {},
 
+  peekEntryChrome(canvasId, viewportWidth) {
+    return resolveEntryChrome(get(), canvasId, viewportWidth);
+  },
+
   entryChrome(canvasId, viewportWidth) {
     const state = get();
-    const cached = state.resolvedEntry;
-    if (cached !== null && cached.canvasId === canvasId) {
-      return cached.chrome;
-    }
-
-    const pending = state.pendingEntry?.canvasId === canvasId
-      ? state.pendingEntry
-      : null;
-    const chrome = resolveCanvasEntryChrome({
-      inherited: pending?.inherited ?? null,
-      intent: pending?.intent ?? "direct",
-      snapshot: state.snapshots[canvasId] ?? null,
-      viewportWidth,
-    });
+    const chrome = resolveEntryChrome(state, canvasId, viewportWidth);
 
     set({ pendingEntry: null, resolvedEntry: { canvasId, chrome } });
     return chrome;

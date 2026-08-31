@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖 @xyflow/react EdgeProps/EdgeLabelRenderer/useInternalNode、CanvasFlowEdge/CanvasFlowNode、共享 Cord/矩形射线几何、设计系统图标与 canvasActions
- * [OUTPUT]: 对外提供 CanvasCordEdge 动态浮动 Cord/承担整线 hover 的宽命中区、canvasFloatingCurve 纯几何适配器，以及支持整线悬浮/中点悬浮/点击保持/键盘聚焦的 CanvasEdgeReasonInspector 完整理由检查器与删除入口
+ * [INPUT]: 依赖 @xyflow/react、CanvasFlowEdge UI-only motionState、共享 Cord draw/矩形射线几何、设计系统图标与 canvasActions
+ * [OUTPUT]: 对外提供可由本地 receipt 单次绘制的动态浮动 Cord、整线命中区、几何适配器与理由检查/删除入口
  * [POS]: KnowledgeCanvas 的关系交互层；每次节点移动都从两张卡片的真实中心连线求边界交点，彻底绕过固定左右 Handle 坐标；线本身是指向面，中点标记只是它常驻可见的把手与键盘入口
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -212,6 +212,8 @@ export function CanvasCordEdge({
   return (
     <>
       <Cord
+        draw={data?.motionState?.kind === "edge-draw"}
+        drawDelayMs={data?.motionState?.delayMs ?? 0}
         from={pointBox(curve.from.x, curve.from.y)}
         mode="radial"
         taper="both"

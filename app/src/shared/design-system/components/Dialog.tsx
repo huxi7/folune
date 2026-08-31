@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 React 的 effect/id/ref 与 ReactNode，依赖 共享 Lucide XIcon，依赖 Button 与 design-system.css 暴露的 ds-dialog-overlay/ds-dialog-panel/ds-dialog-shell 模态材质类
- * [OUTPUT]: 对外提供 default/compact 密度、default/account/command 宽度、center/top 对齐、panel/bare 表面、default/embedded 标题模式、标题描述关联、Esc 关闭、完整表单焦点循环与滚动锁定的 Dialog 受控弹窗组件
- * [POS]: app/src/shared/design-system/components 的唯一模态基础件；Esc、焦点循环、滚动锁定与焦点归还只在此实现一次，bare 表面让 Canvas 全尺寸预览直接把纸张当作模态内容而无需第二套 Dialog
+ * [OUTPUT]: 对外提供密度/宽度/对齐/表面/标题、default|none 入场模式、标题描述关联、Esc、焦点循环、滚动锁定的 Dialog
+ * [POS]: app/src/shared/design-system/components 的唯一模态基础件；motion=none 交出入场编排让遮罩随 root 视图过渡一起换（遮罩绝不自带过渡身份，否则会盖住正在放大的纸），模态行为仍由此统一
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { XIcon } from "../icons";
@@ -16,6 +16,7 @@ type DialogProps = {
   density?: DialogDensity;
   description?: string;
   headerMode?: DialogHeaderMode;
+  motion?: DialogMotion;
   onOpenChange: (open: boolean) => void;
   open: boolean;
   /** bare 表面不提供任何弹窗外壳，只保留遮罩与模态行为，由 children 自己拥有视觉 */
@@ -27,6 +28,7 @@ type DialogProps = {
 export type DialogAlign = "center" | "top";
 export type DialogDensity = "compact" | "default";
 export type DialogHeaderMode = "default" | "embedded";
+export type DialogMotion = "default" | "none";
 export type DialogSurface = "bare" | "panel";
 export type DialogWidth = "account" | "command" | "default";
 
@@ -36,6 +38,7 @@ export function Dialog({
   density = "default",
   description,
   headerMode = "default",
+  motion = "default",
   onOpenChange,
   open,
   surface = "panel",
@@ -140,6 +143,7 @@ export function Dialog({
       aria-modal="true"
       className="ds-dialog-overlay fixed inset-0 flex justify-center p-4"
       data-align={align}
+      data-motion={motion}
       data-surface={surface}
       role="dialog"
     >

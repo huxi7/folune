@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 react-archer 5.1 的 DOM 锚点/曲线/refreshScreen、React effect/ref 与 Paper First 整理展示状态
- * [OUTPUT]: 对外提供 ArchiveCordStage、Paper ArchivePort、文件树 TargetPort 与稳定 target id 映射
- * [POS]: app/src/widgets 的 Paper First Signature 连线层；react-archer 只负责几何，Run 生命周期、成功门禁与撤销语义仍由 pages 层拥有
+ * [OUTPUT]: 对外提供跨 Paper/持久文件库共享的 ArchiveCordStage、Paper ArchivePort、文件树 TargetPort 与稳定 target id 映射
+ * [POS]: app/src/widgets 的 Signature 连线上下文与锚点层；AppDashboard 持有唯一跨路由容器，react-archer 只负责几何，Run 生命周期、成功门禁与撤销语义仍由 pages 层拥有
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 

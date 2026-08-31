@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun test、react-dom/server、共享 NotePaper 原语与唯一 note-paper.css 样式源
- * [OUTPUT]: 锁定 thumbnail/reader 共用同一纸面骨架、摘录与空正文占位、thumbnail 连续文字 mask + 无填色模糊层，以及 reader 的 Dialog autofocus 契约
+ * [OUTPUT]: 锁定 thumbnail/reader 共用同一纸面骨架、摘录与空正文占位、thumbnail 连续文字 mask + 无填色模糊层、一个身份同时命名纸壳与正文，以及 reader 的 Dialog autofocus 契约
  * [POS]: app/src/widgets 的纸张原语回归门禁；纸张视觉只有一处实现，并阻止 thumbnail 再退化成不透明横向毛玻璃色带
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -60,6 +60,28 @@ describe("NotePaper", () => {
     expect(html).toContain("真实正文");
     expect(html).not.toContain("不该出现的摘录");
     expect(html.indexOf("note-paper-body")).toBeLessThan(html.indexOf("<button"));
+  });
+
+  /*
+   * 纸壳与纸内正文必须是两个名字。壳被拉伸看不出来(命名后代已被提出它的截图, 那张图里
+   * 没有字), 字被拉伸就是"字在膨胀" —— 两端同时膨胀再叠起来正是"突然弹出来"的来源。
+   * 这条规矩住在 NotePaper 而不是每个调用方: 漏一处就是一次字被拉伸的过渡。
+   */
+  test("一个身份同时命名纸壳与纸内正文, 不给身份就一个名字都不留", () => {
+    const named = renderToStaticMarkup(
+      <NotePaper
+        excerpt="少则得"
+        title="少则得"
+        transitionIdentity="8ac0-42"
+        variant="reader"
+      />,
+    );
+    expect(named).toContain("view-transition-name:paper-8ac0-42");
+    expect(named).toContain("view-transition-name:paper-body-8ac0-42");
+    const plain = renderToStaticMarkup(
+      <NotePaper excerpt="少则得" title="少则得" variant="reader" />,
+    );
+    expect(plain).not.toContain("view-transition-name");
   });
 
   test("autoFocus 只在需要时声明 Dialog 的初始焦点契约", () => {

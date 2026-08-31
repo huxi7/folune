@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 读取 workspace.css 与 knowledge-canvas.css 的工作区布局与选择反馈契约
- * [OUTPUT]: 锁定左右 Panel 开合不创建侧边轨道、Paper/Canvas 始终占据唯一全屏 Stage，以及两个选择框的不对称（外层框选框带极淡底，内层成组框只留线）
- * [POS]: styles 的浮层 Sidebar 回归测试；防止视觉上独立的 Panel 再次通过父网格挤压背景
+ * [OUTPUT]: 锁定左右 Panel 开合不创建侧边轨道、跨路由文件库使用固定持久宿主、Paper/Canvas 始终占据唯一全屏 Stage，以及两个选择框的不对称（外层框选框带极淡底，内层成组框只留线）
+ * [POS]: styles 的浮层 Sidebar 回归测试；防止视觉上独立的 Panel 再次通过父网格挤压背景或被路由壳重新挂载
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -40,6 +40,14 @@ describe("Workspace 浮层 Sidebar 布局", () => {
       .toContain("grid-column: 1");
     expect(declarationsFor(canvasCss, ".canvas-stage").join("\n"))
       .toContain("grid-column: 1");
+  });
+
+  test("跨路由文件库宿主固定在更高层且不依赖内容壳定位", () => {
+    const persistentPanel = declarationsFor(workspaceCss, ".workspace-persistent-panel")
+      .join("\n");
+    expect(persistentPanel).toContain("--workspace-panel-inset: 1rem");
+    expect(persistentPanel).toContain("position: fixed");
+    expect(persistentPanel).toContain("z-index: 80");
   });
 });
 

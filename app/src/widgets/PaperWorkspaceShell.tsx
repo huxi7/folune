@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖 motion/react、EdgeDock/PaperSurface/ArchiveCord、左右工具插槽、稳定 paperIdentity 与整理结果定位信息
- * [OUTPUT]: 对外提供 Paper First 共享 Workspace Chrome、由面板状态闭包稳定驱动的响应式遮罩、Escape 收束与持久归档连线
+ * [INPUT]: 依赖 motion/react、EdgeDock/PaperSurface/ArchiveCord、右侧工具插槽、稳定 paperIdentity/纸面过渡身份与整理结果定位信息；文件库由外部持久宿主承载
+ * [OUTPUT]: 对外提供 Paper First 共享 Workspace Chrome、由面板状态闭包稳定驱动的响应式遮罩、Escape 收束与持久归档连线，并只保留文件库的开关语义
  * [POS]: widgets 的写作工作台空间壳；Canvas 已成为独立持久 Workspace，旧临时探索舞台不再进入生产壳
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -28,21 +28,16 @@ import {
   fadeTransition,
   panelEnterTransition,
   panelExitTransition,
+  reducedFadeTransition,
   workspaceLayoutTransition,
 } from "../pages/workspaceMotion";
-import { ArchiveCordStage } from "./ArchiveCord";
-import {
-  resolveArchiveTargetNodeId,
-  shouldShowArchiveCord,
-  type WorkspaceOrganizePresentation,
-} from "./archiveCordPolicy";
+import { resolveArchiveTargetNodeId, shouldShowArchiveCord, type WorkspaceOrganizePresentation } from "./archiveCordPolicy";
 import { EdgeDock } from "./EdgeDock";
 import { PaperSurface } from "./PaperSurface";
 
 type PaperWorkspaceShellProps = {
   assistant: ReactNode;
   assistantOpen: boolean;
-  library: ReactNode;
   libraryOpen: boolean;
   onCloseAssistant: () => void;
   onCloseLibrary: () => void;
@@ -52,6 +47,7 @@ type PaperWorkspaceShellProps = {
   paper: ReactNode;
   paperIdentity: string;
   presentation: WorkspaceOrganizePresentation | null;
+  paperTransitionIdentity?: string | null;
   style: CSSProperties;
 };
 
@@ -61,7 +57,6 @@ const DUAL_PANEL_SAFE_BREAKPOINT = 1400;
 export function PaperWorkspaceShell({
   assistant,
   assistantOpen,
-  library,
   libraryOpen,
   onCloseAssistant,
   onCloseLibrary,
@@ -71,6 +66,7 @@ export function PaperWorkspaceShell({
   paper,
   paperIdentity,
   presentation,
+  paperTransitionIdentity = null,
   style,
 }: PaperWorkspaceShellProps) {
   const reduceMotion = useReducedMotion();
@@ -154,15 +150,7 @@ export function PaperWorkspaceShell({
     overlayPanels,
     presentation,
   });
-  const archiveRefreshKey = [
-    presentation?.runId ?? "none",
-    presentation?.status ?? "none",
-    archiveTargetNodeId ?? "none",
-    libraryOpen ? "library" : "closed",
-  ].join(":");
-
   return (
-    <ArchiveCordStage active={archiveCordVisible} refreshKey={archiveRefreshKey}>
       <div
         className="app-workspace"
         data-assistant-open={assistantOpen}
@@ -179,7 +167,7 @@ export function PaperWorkspaceShell({
               className="workspace-stage-control workspace-library-control"
               exit={{ opacity: 0 }}
               initial={{ opacity: 0 }}
-              transition={fadeTransition}
+              transition={reduceMotion ? reducedFadeTransition : fadeTransition}
             >
               <EdgeDock
                 icon={<SidebarSimpleIcon size={16} />}
@@ -198,7 +186,7 @@ export function PaperWorkspaceShell({
               className="workspace-stage-control workspace-assistant-control"
               exit={{ opacity: 0 }}
               initial={{ opacity: 0 }}
-              transition={fadeTransition}
+              transition={reduceMotion ? reducedFadeTransition : fadeTransition}
             >
               <EdgeDock
                 icon={<AssistantPanelOpenIcon size={16} />}
@@ -206,26 +194,6 @@ export function PaperWorkspaceShell({
                 onClick={onToggleAssistant}
                 side="right"
               />
-            </motion.div>
-          ) : null}
-        </AnimatePresence>
-
-        <AnimatePresence initial={false}>
-          {libraryOpen ? (
-            <motion.div
-              animate={{ opacity: 1, x: 0 }}
-              className="app-sidebar-shell workspace-floating-panel"
-              exit={{
-                opacity: 0,
-                transition: reduceMotion ? fadeTransition : panelExitTransition,
-                x: reduceMotion ? 0 : -12,
-              }}
-              initial={{ opacity: 0, x: reduceMotion ? 0 : -12 }}
-              transition={reduceMotion ? fadeTransition : panelEnterTransition}
-            >
-              <div className="workspace-panel-content workspace-panel-content-library">
-                {library}
-              </div>
             </motion.div>
           ) : null}
         </AnimatePresence>
@@ -244,6 +212,7 @@ export function PaperWorkspaceShell({
               organizing={organizing}
               paperIdentity={paperIdentity}
               reducedMotion={Boolean(reduceMotion)}
+              paperTransitionIdentity={paperTransitionIdentity}
             >
               {paper}
             </PaperSurface>
@@ -257,11 +226,11 @@ export function PaperWorkspaceShell({
               className="app-agent-shell workspace-floating-panel"
               exit={{
                 opacity: 0,
-                transition: reduceMotion ? fadeTransition : panelExitTransition,
+                transition: reduceMotion ? reducedFadeTransition : panelExitTransition,
                 x: reduceMotion ? 0 : 12,
               }}
               initial={{ opacity: 0, x: reduceMotion ? 0 : 12 }}
-              transition={reduceMotion ? fadeTransition : panelEnterTransition}
+              transition={reduceMotion ? reducedFadeTransition : panelEnterTransition}
             >
               <div className="workspace-panel-content workspace-panel-content-assistant">
                 {assistant}
@@ -279,12 +248,11 @@ export function PaperWorkspaceShell({
               exit={{ opacity: 0 }}
               initial={{ opacity: 0 }}
               onClick={closeOverlay}
-              transition={fadeTransition}
+              transition={reduceMotion ? reducedFadeTransition : fadeTransition}
               type="button"
             />
           ) : null}
         </AnimatePresence>
       </div>
-    </ArchiveCordStage>
   );
 }

@@ -227,9 +227,14 @@
   --layout-page-gutter: clamp(1rem, 3vw, 2rem);
   --layout-hero-y: clamp(4.5rem, 9vw, 8rem);
   --layout-section-bottom: clamp(5rem, 10vw, 9rem);
-  --motion-fast: 160ms;
-  --motion-normal: 260ms;
-  --motion-spatial: 320ms;
+  --motion-press: 90ms;
+  --motion-micro-enter: 160ms;
+  --motion-micro-exit: 130ms;
+  --motion-panel-enter: 220ms;
+  --motion-panel-exit: 170ms;
+  --motion-spatial: 360ms;
+  --motion-fast: var(--motion-micro-enter);
+  --motion-normal: var(--motion-panel-enter);
   --motion-quiet: 600ms;
   --motion-slow: var(--motion-quiet);
   --ease-standard: cubic-bezier(0.22, 1, 0.36, 1);

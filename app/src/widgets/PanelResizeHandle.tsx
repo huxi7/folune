@@ -1,10 +1,10 @@
 /**
- * [INPUT]: 依赖 React pointer/keyboard 事件与父层提供的面板尺寸边界
- * [OUTPUT]: 对外提供支持拖拽、方向键调整与双击复位的 PanelResizeHandle
+ * [INPUT]: 依赖 React pointer/keyboard/effect 与父层提供的面板尺寸边界
+ * [OUTPUT]: 对外提供支持拖拽、方向键、双击复位且拖拽期间声明全局 resize 状态的 PanelResizeHandle
  * [POS]: app/src/widgets 的工作台分隔栏，被 AppDashboard 用于 Sidebar 与 AgentPanel 宽度调整
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
-import { useRef, type KeyboardEvent, type PointerEvent } from "react";
+import { useEffect, useRef, type KeyboardEvent, type PointerEvent } from "react";
 
 type PanelResizeHandleProps = {
   ariaLabel: string;
@@ -33,8 +33,13 @@ export function PanelResizeHandle({
 }: PanelResizeHandleProps) {
   const dragStartRef = useRef<{ size: number; x: number } | null>(null);
 
+  useEffect(() => () => {
+    delete document.documentElement.dataset.panelResizing;
+  }, []);
+
   function handlePointerDown(event: PointerEvent<HTMLDivElement>) {
     dragStartRef.current = { size, x: event.clientX };
+    document.documentElement.dataset.panelResizing = "true";
     event.currentTarget.setPointerCapture(event.pointerId);
   }
 
@@ -51,6 +56,7 @@ export function PanelResizeHandle({
 
   function handlePointerEnd(event: PointerEvent<HTMLDivElement>) {
     dragStartRef.current = null;
+    delete document.documentElement.dataset.panelResizing;
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
