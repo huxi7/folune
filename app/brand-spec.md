@@ -100,6 +100,18 @@ Moving the 36px Button family to `999px` was evaluated and rejected. The Compose
 - The card's single connect handle uses a grip glyph, rides the lower-right card corner and replaces the former `关联` icon. It appears with the metadata actions on hover/focus/selection, disappears when dragging starts, and is a grab handle rather than the persisted edge endpoint.
 - The braided elastic cord exists only while the connection gesture is active. Releasing destroys it and lets the existing static `CanvasCordEdge` appear through its current draw receipt without geometry rebound, width normalization or visual inheritance from the temporary cord.
 
+## Do not invent
+
+Two families are deliberately absent, and their absence is load-bearing:
+
+- **No generic status pill or badge family.** In-flight actions use Button loading, operation results use Toast, and durable information uses contextual text or structure. A badge family looks harmless and then becomes the place every unresolved hierarchy question gets dumped.
+- **No outline variant, Textarea primitive, Token Override layer, theme generator or runtime contrast tool.** Each of these turns a decided system back into a configurable one.
+
+One axis is deliberately singular:
+
+- **The token axis is light/dark only.** `system` may resolve the device preference, but it must never produce a third token set, a preset selector, a version storage key or an alternate visual system. Semantic values stay centralized in `src/index.css`; responsibility-specific CSS modules consume tokens and never hold raw color.
+- Loading is an orthogonal interaction state, not a new color variant.
+
 ## Iconography
 
 - Product icons use the shared `Lucide React` registry in `src/shared/design-system/icons.tsx`, not direct third-party imports in business files.
