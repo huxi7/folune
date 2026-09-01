@@ -47,6 +47,7 @@ Canvas V2 是一级持久知识 Workspace：memo 默认 Canvas 与 standalone Ca
 | AGENT_TASK.md | 本轮成熟产品性能/流畅度打磨的原始任务锚点；发生上下文压缩时必须重新读取，优先级高于历史规划 |
 | CANVAS_CONSTITUTION.md | Canvas 产品宪法与常驻门禁，回答「为什么不能」而不是「现在是什么」；冻结一级持久 Workspace、同构画布、显式 AI、增量图、添加/连接/自由文字、自动保存与产品边界，并以第 14 节十一条验收问题约束后续任何改动。它与 CLAUDE.md 职责相反：CLAUDE.md 必须跟随代码，本文件绝不跟随代码，因此只有它能指出实现走偏了。不含进度、不含实施计划 |
 | CANVAS_V2_PHASE2_BACKLOG.md | 历史阶段清单，仅用于追溯当时取舍；已完成项与主动放弃项都不得被后续 Agent 自动还原成需求 |
+| PAPER_CONSTITUTION.md | Paper 产品宪法与常驻门禁，与 CANVAS_CONSTITUTION.md 并列且同样绝不跟随代码。冻结写作纸的开本比例、sticky 顶栏、整理作为唯一 Primary AI 动作、状态与动作分离，以及归档线「是上下文而非通知」的生命周期与渲染边界，并以第 8 节十条验收问题约束后续改动。视觉数值归 app/brand-spec.md，产品定律归本文件 |
 | .dockerignore | 收窄 api/chat 开发镜像的仓库根构建上下文，排除源码、缓存、密钥与无关模块 |
 | .env.example | app/api/chat 无密钥变量总览与根 Compose 可选覆盖模板；服务默认使用各自本地环境文件 |
 | .gitignore | 根级本地环境、构建缓存与系统文件忽略规则 |
