@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 读取 workspace.css 与 knowledge-canvas.css 的工作区布局与选择反馈契约
- * [OUTPUT]: 锁定左右 Panel 开合不创建侧边轨道、跨路由文件库使用固定持久宿主、Paper/Canvas 始终占据唯一全屏 Stage，以及两个选择框的不对称（外层框选框带极淡底，内层成组框只留线）
+ * [OUTPUT]: 锁定左右 Panel 开合不创建侧边轨道、Canvas 对侧 Dock 可越过窄屏 backdrop 直接切换互斥 Panel、跨路由文件库使用固定持久宿主、Paper/Canvas 始终占据唯一全屏 Stage、容器<归档线<弹层的层序，以及两个选择框的不对称（外层框选框带极淡底，内层成组框只留线）
  * [POS]: styles 的浮层 Sidebar 回归测试；防止视觉上独立的 Panel 再次通过父网格挤压背景或被路由壳重新挂载
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -22,6 +22,15 @@ function rulesFor(css: string, selectorFragment: string) {
 
 function declarationsFor(css: string, selectorFragment: string) {
   return rulesFor(css, selectorFragment).map((rule) => rule.declarations);
+}
+
+/** 精确选择器: 层序断言必须钉在那一条规则上, 不能被派生选择器的声明混进来 */
+function ruleFor(css: string, selector: string): string {
+  // 选择器前面常有注释块, 而注释与选择器之间没有 { } 分界, 因此先整体剥注释
+  return rulesFor(css.replaceAll(/\/\*[\s\S]*?\*\//g, ""), selector)
+    .filter((rule) => rule.selector.trim() === selector)
+    .map((rule) => rule.declarations)
+    .join("\n");
 }
 
 describe("Workspace 浮层 Sidebar 布局", () => {
@@ -49,6 +58,51 @@ describe("Workspace 浮层 Sidebar 布局", () => {
     expect(persistentPanel).toContain("position: fixed");
     expect(persistentPanel).toContain("z-index: 80");
   });
+
+  test("层序是容器 < 归档线 < 弹层: 线跨两个容器, 因此必须高过它们", () => {
+    const zOf = (selector: string): number => {
+      const match = /z-index:\s*(\d+)/.exec(ruleFor(workspaceCss, selector));
+      return match === null ? Number.NaN : Number(match[1]);
+    };
+    const cord = zOf(".archive-cord-overlay");
+    expect(cord).toBeGreaterThan(0);
+    // 归档线的两端分别住在 Paper 与文件库里, 被任一容器盖住就等于没画
+    expect(cord).toBeGreaterThan(zOf(".workspace-persistent-panel"));
+    expect(cord).toBeGreaterThan(zOf(".workspace-floating-panel"));
+    expect(cord).toBeGreaterThan(zOf(".workspace-stage-control"));
+    // 弹层仍在最上: 菜单永远压得住线
+    expect(cord).toBeLessThan(zOf(".sidebar-create-menu"));
+    expect(cord).toBeLessThan(zOf(".note-more-menu"));
+  });
+
+  test("侧栏三段显式排序: header/footer 的弹层压得住中间那棵树", () => {
+    /*
+     * 三段各带一条 fill: both 的 opacity 动画, 因此都是 z-index: auto 的层叠上下文,
+     * 顺序若交给 DOM, 树会把 header 里的新建菜单整块吞掉(看起来像菜单透明)。
+     */
+    const header = ruleFor(workspaceCss, ".app-sidebar-header");
+    const tree = ruleFor(workspaceCss, ".app-sidebar-tree");
+    const footer = ruleFor(workspaceCss, ".app-sidebar-footer");
+    for (const declarations of [header, tree, footer]) {
+      expect(declarations).toContain("position: relative");
+    }
+    expect(header).toContain("z-index: 2");
+    expect(footer).toContain("z-index: 2");
+    expect(tree).toContain("z-index: 1");
+  });
+
+  test("Canvas 窄屏 backdrop 不吞掉对侧 Dock，标题仍留在遮罩下", () => {
+    const chrome = declarationsFor(canvasCss, ".canvas-chrome").join("\n");
+    const dockSlot = declarationsFor(canvasCss, ".canvas-chrome-slot").join("\n");
+    const title = declarationsFor(canvasCss, ".canvas-title").join("\n");
+
+    expect(chrome).toContain("z-index: auto");
+    expect(dockSlot).toContain("z-index: 70");
+    expect(title).toContain("z-index: 12");
+    expect(declarationsFor(workspaceCss, ".workspace-panel-backdrop").join("\n"))
+      .toContain("z-index: 50");
+  });
+
 });
 
 /*

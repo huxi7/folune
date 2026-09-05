@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun test、react-dom/server、ReactFlowProvider、稳定 canvasActions、canvasWorkspaceStore 与真实 CanvasCardNode
- * [OUTPUT]: 锁定 memo_ref 纵向卡片的中心重合关系注册 Handle、嵌套纸张结构、spatialSpring 入场/正文延后、常驻展开入口、源节点 AI 忙碌选择器，以及普通/墓碑/回收站都只把唯一移除命令交给会话层处理的结构边界
+ * [OUTPUT]: 锁定 memo_ref 纵向卡片的中心正式 Handle、右下连接抓手/整卡 target、两项元信息动作、嵌套纸张结构、spatialSpring 与失效卡片边界
  * [POS]: KnowledgeCanvas 的卡片结构回归门禁；只断言真实组件产出的 DOM 契约，hover/焦点浮现由 CSS 承担并在浏览器验收
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -34,9 +34,7 @@ const cardData = (
   body: "少则得，多则惑。",
   createdBy: "user",
   discoveredFromId: null,
-  drifted: false,
   kind: "memo_ref",
-  snapshotRevision: 3,
   targetDeleted: false,
   targetNodeId: "memo-1",
   textHeight: null,
@@ -97,6 +95,17 @@ describe("Canvas memo card", () => {
     expect(html).toContain('class="note-paper-excerpt">少则得，多则惑。');
     expect(html).toContain('class="canvas-card-meta nodrag"');
     expect(html.match(/canvas-card-center-handle/g)).toHaveLength(2);
+    expect(html).toContain("canvas-card-whole-target");
+    expect(html).toContain("canvas-card-connect-handle nodrag");
+    // 抓手必须在底栏之内: 挂在卡片外的右下角会破坏这张纸完整的轮廓
+    const meta = /class="canvas-card-meta nodrag"[\s\S]*?<\/footer>/.exec(html)?.[0] ?? "";
+    expect(meta).toContain("canvas-card-connect-handle");
+    expect(meta.indexOf("canvas-card-actions"))
+      .toBeLessThan(meta.indexOf("canvas-card-connect-handle"));
+    expect(html).toContain('aria-label="从这张卡片建立关系"');
+    expect(html).toContain('tabindex="0"');
+    expect(html).not.toContain('aria-label="关联另一篇笔记"');
+    expect(html.match(/class="canvas-card-action"/g)).toHaveLength(2);
     // 纸张只读快照，不在 Canvas 里渲染完整 Markdown 正文
     expect(html).not.toContain("markdown-reading-view");
   });
@@ -139,10 +148,13 @@ describe("Canvas memo card", () => {
     const trashed = renderCard(cardData({ targetDeleted: true }));
 
     expect(available.match(/aria-label="从画布移除"/g)).toHaveLength(1);
+    expect(available).toContain('aria-label="从这张卡片建立关系"');
     for (const html of [tombstone, trashed]) {
       expect(html).not.toContain("canvas-card-expand");
       expect(html).not.toContain('aria-label="AI 拓展这条分支"');
       expect(html).not.toContain('aria-label="关联另一篇笔记"');
+      expect(html).not.toContain('aria-label="从这张卡片建立关系"');
+      expect(html).not.toContain("canvas-card-whole-target");
       expect(html).toContain('aria-label="从画布移除"');
       expect(html.match(/aria-label="从画布移除"/g)).toHaveLength(1);
     }
@@ -151,11 +163,16 @@ describe("Canvas memo card", () => {
     expect(trashed).toContain('class="canvas-card-status">在回收站');
   });
 
-  test("快照漂移在元信息行安静说明，不打断纸面阅读", () => {
-    const html = renderCard(cardData({ drifted: true }));
-
-    expect(html).toContain('class="canvas-card-status">原文已更新');
-    expect(html).toContain("canvas-card-expand");
+  test("元信息行只说「指向的东西不在了」，不再有消不掉的「原文已更新」", () => {
+    /*
+     * 卡片的标题与摘录读的是笔记最新内容, 所以"原文已更新"警告的那个不一致用户看不见;
+     * 而 revision 快照只在创建时写一次, 这行字一旦出现就永久消不掉。既验证不了又处理不掉
+     * 的警告只会被读成故障, 因此整条移除, 只留下真正需要用户知道且有出路的两种。
+     */
+    expect(renderCard(cardData())).toContain('class="canvas-card-status"></span>');
+    expect(renderCard(cardData())).not.toContain("原文已更新");
+    expect(renderCard(cardData({ targetDeleted: true })))
+      .toContain('class="canvas-card-status">在回收站');
   });
 
   test("新节点先出现纸面，再延后正文且不动画 React Flow 外层", () => {

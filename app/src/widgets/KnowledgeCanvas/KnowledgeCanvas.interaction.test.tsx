@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 happy-dom、Testing Library、真实 KnowledgeCanvas/React Flow 节点层与可观测 Canvas 协调器替身
  * [OUTPUT]: 覆盖 Pane 双击/空间文字、文件树 memo 精准落入统一 WAL、框选、移除/撤销、来源确认、Esc 收束与 Panel 开合不穿透画布
- * [POS]: KnowledgeCanvas 的浏览器 DOM 纵向交互测试；不绕过组件去单测 reducer/RPC，锁定 selectionOnDrag 下空间文字、来源确认与移除回执从真实 DOM 到 WAL/协调器/mutation 的完整链路，并证明左右 Panel 只是 Stage 浮层、开合不进入画布状态
+ * [POS]: KnowledgeCanvas 的浏览器 DOM 纵向交互测试；不绕过组件去单测 reducer/RPC，锁定 selectionOnDrag 下空间文字、来源确认与移除回执从真实 DOM 到 WAL/协调器/mutation 的完整链路，并证明左右 Panel 只是 Stage 浮层、开合不进入画布状态。键盘事件一律从 document.body 派发而不是 window：真实浏览器里 keydown 落在焦点元素上再冒泡 document → window，直接打在 window 上会跳过 document 这一层，而 Escape 的层级仲裁恰恰依赖这一层先于壳层
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -392,7 +392,7 @@ describe("KnowledgeCanvas 移除回执", () => {
     useCanvasWorkspaceStore.getState().selectNodes(["memo-card-a", "memo-card-b"]);
     renderCanvas();
 
-    fireEvent.keyDown(window, { key: "Delete" });
+    fireEvent.keyDown(document.body, { key: "Delete" });
     await waitFor(() => expect(walStorage.records.size).toBe(1));
     const record = [...walStorage.records.values()][0];
     expect(record?.intents.map((intent) => intent.operation)).toEqual([
@@ -460,7 +460,7 @@ describe("KnowledgeCanvas 移除回执", () => {
     useCanvasWorkspaceStore.getState().selectNodes(["memo-card-a", "memo-card-b"]);
     renderCanvas();
 
-    fireEvent.keyDown(window, { key: "Delete" });
+    fireEvent.keyDown(document.body, { key: "Delete" });
     await waitFor(() => expect(document.querySelector('[role="dialog"]')).not.toBeNull());
     expect(document.body.textContent).toContain("所选 2 个节点中包含源笔记卡片");
     expect(walStorage.records.size).toBe(0);
@@ -488,7 +488,7 @@ describe("KnowledgeCanvas 移除回执", () => {
     useCanvasWorkspaceStore.getState().selectNodes(["memo-card-a"]);
     renderCanvas();
 
-    fireEvent.keyDown(window, { key: "Backspace" });
+    fireEvent.keyDown(document.body, { key: "Backspace" });
     const confirmButton = await buttonWithText("解除并移除");
     fireEvent.keyDown(confirmButton, { key: "Escape" });
 

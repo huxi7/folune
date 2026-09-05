@@ -154,7 +154,7 @@ export function MarkdownViewMenu({
   const reading = documentView === "reading";
 
   return (
-    <div className="note-view-actions">
+    <div className="markdown-view-menu" data-document-view={documentView} data-editing-mode={editingMode}>
       <Button
         aria-label={reading ? "返回编辑" : "进入阅读模式"}
         className="note-view-icon-button"

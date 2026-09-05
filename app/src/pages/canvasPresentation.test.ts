@@ -170,7 +170,7 @@ describe("toCanvasFlow", () => {
     }
   });
 
-  test("revision 漂移、回收站和永久删除墓碑各自成立", () => {
+  test("回收站与永久删除墓碑各自成立, revision 漂移不再进入视图模型", () => {
     const flow = toCanvasFlow(detail([
       node({ target: { ...node().target!, revision: 9 } }),
       node({
@@ -180,7 +180,9 @@ describe("toCanvasFlow", () => {
       node({ id: "card-3", target: null, target_node_id: null }),
     ]));
 
-    expect(flow.nodes[0]!.data.drifted).toBe(true);
+    // 标题与摘录本来就读最新内容, 快照 revision 因此不再被投影, 也不再有卡片状态消费它
+    expect("drifted" in flow.nodes[0]!.data).toBe(false);
+    expect("snapshotRevision" in flow.nodes[0]!.data).toBe(false);
     expect(flow.nodes[1]!.data.targetDeleted).toBe(true);
     expect(flow.nodes[2]!.data.tombstone).toBe(true);
     expect(flow.edges[0]).toMatchObject({

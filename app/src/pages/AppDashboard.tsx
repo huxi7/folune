@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 React Router Profile/token、Canvas bootstrap、轻量 tree/正文/Workspace Store、删除编排、惰性 AI、持久文件库宿主、归档连线上下文与 Paper/Canvas Workspace
- * [OUTPUT]: 对外提供互斥 Paper/Canvas 舞台、跨路由不卸载的文件库 React 实例、细粒度正文订阅、Canvas 离场 flush、惰性工具预载及账户/视图编排
- * [POS]: app/src/pages 的 /app 编排层；跨 Paper/Canvas 的数据与视觉交接只在此建立一次，深链刷新先确认节点类型，普通业务状态仍留在各自 Store/Workspace，文件库作为共享 Chrome 留在两种内容壳之外
+ * [INPUT]: 依赖 React Router Profile/token、Canvas bootstrap、轻量 tree/正文/Workspace Store、删除编排、惰性 AI、持久文件库宿主、按当前树重算的归档 presentation、useOverlayPanels 响应式判据与 Paper/Canvas Workspace
+ * [OUTPUT]: 对外提供互斥 Paper/Canvas 舞台、跨路由不卸载的文件库 React 实例、细粒度正文订阅、Canvas 离场 flush、惰性工具预载、归档 canonical 目标下传与账户/视图编排
+ * [POS]: app/src/pages 的 /app 编排层；跨 Paper/Canvas 的数据与视觉交接只在此建立一次，深链刷新先确认节点类型，普通业务状态仍留在各自 Store/Workspace，文件库作为共享 Chrome 留在两种内容壳之外。它是「现在是不是覆盖式布局」的唯一持有者并下传给 Paper 壳与归档 Overlay：同一个断点算两遍就会出现两个都自称正确的布局；归档只交出 canonical memo，屏幕上由谁代表它归 AppSidebar
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -29,11 +29,8 @@ import { signOutAuthenticatedUser } from "../shared/supabase/auth";
 import type { AccountSection } from "../widgets/AccountDialog";
 import { AppSidebar, type SidebarView } from "../widgets/AppSidebar";
 import { AppMainToolbar } from "../widgets/AppMainToolbar";
-import { ArchiveCordStage } from "../widgets/ArchiveCord";
-import {
-  getMemoFolderPath,
-  type MemoMovePlan,
-} from "../widgets/memoLibrary";
+import { ArchiveCordOverlay } from "../widgets/ArchiveCord";
+import type { MemoMovePlan } from "../widgets/memoLibrary";
 import type {
   DocumentView,
   EditingMode,
@@ -77,6 +74,7 @@ import {
   SIDEBAR_MIN_WIDTH,
   SIDEBAR_WIDTH_KEY,
   type WorkspaceStyle,
+  useOverlayPanels,
   usePersistedPanelWidth,
 } from "./workspaceLayout";
 
@@ -634,19 +632,10 @@ function AppDashboardContent() {
       viewTitleDraft?.memoId === selectedMemo.id
     ? viewTitleDraft.title
     : selectedMemo?.title ?? "备忘录";
-  const toolbarTitle = activeView === "note"
-    ? isMemo(selectedMemo)
-      ? `${getMemoFolderPath(memoTree, selectedMemo.id)} / ${currentMemoTitle}`
-      : currentMemoTitle
-    : {
-        "design-system": "Design System",
-        subscription: "订阅",
-        trash: "回收站",
-      }[activeView];
   const organizePresentation: WorkspaceOrganizePresentation | null =
     buildWorkspaceOrganizePresentation({
-      resolveMemoPath: (memoId) => getMemoFolderPath(memoTree, memoId),
-      run: memoOrganize.presentationRun,
+      memoTree,
+      presentation: memoOrganize.presentationRun,
       selectedMemoId: selectedMemo?.id ?? null,
     });
   const memoDialogDescription = memoDialog === null
@@ -667,19 +656,32 @@ function AppDashboardContent() {
         { assistantOpen: false, libraryOpen: true },
         window.innerWidth,
       ));
+  /*
+   * 定位永远指向 canonical memo: 用户点「归档于〈目录〉」想去的是那篇笔记,
+   * 而不是那个容器。reveal 会连带展开它的祖先, 于是代表自然回到 memo 本身。
+   */
+  const locateArchive = () => {
+    if (organizePresentation === null) return;
+    openActiveLibrary();
+    setRevealTarget((current) => ({
+      nodeId: organizePresentation.memoId,
+      seq: (current?.seq ?? 0) + 1,
+    }));
+  };
   const closeActiveAssistant = canvasNodeId === null
     ? closeAssistant
     : () => useCanvasWorkspaceStore.getState()
       .setCanvasChrome({ assistantOpen: false });
+  const paperViewport = useOverlayPanels(assistantOpen, libraryOpen);
   const library = (
     <>
         <AppSidebar
           activeView={activeView}
           memoTree={memoTree}
           mutating={treeMutating || canvasCreation.creatingCanvas}
-          organizeTarget={organizePresentation === null ? null : {
-            folderId: organizePresentation.targetFolderId,
+          archiveTarget={organizePresentation === null ? null : {
             memoId: organizePresentation.memoId,
+            origin: organizePresentation.origin,
             runId: organizePresentation.runId,
           }}
           onCreateMemo={handleCreateMemo}
@@ -740,8 +742,9 @@ function AppDashboardContent() {
             void memoCanvasEntry.returnCanvas(canvasReturn.canvasId, selectedMemoId);
           }}
           onOrganize={memoOrganize.organize}
+          onLocateArchive={locateArchive}
+          organizePresentation={organizePresentation}
           organizing={memoOrganize.organizing}
-          toolbarTitle={toolbarTitle}
         />
 
         <div className="app-main-content">
@@ -830,61 +833,56 @@ function AppDashboardContent() {
   const routeKindPending = routeMemoId !== null && treeStatus === "loading";
   return (
     <>
-      <ArchiveCordStage
-        active={canvasNodeId === null}
-        refreshKey={[
-          "workspace",
-          routeMemoId ?? "root",
-          organizePresentation?.runId ?? "none",
-          organizePresentation?.status ?? "none",
-          organizePresentation?.targetFolderId ?? organizePresentation?.memoId ?? "none",
-          libraryOpen ? "library" : "closed",
-        ].join(":")}
-      >
-        {routeKindPending ? (
-          <main
-            aria-label="正在打开内容"
-            className="canvas-workspace"
-          >
-            <CanvasStageLoading label="正在打开内容" visible />
-          </main>
-        ) : canvasNodeId === null ? (
-          <PaperWorkspaceShell
-            assistant={assistant}
-            assistantOpen={assistantOpen}
-            libraryOpen={libraryOpen}
-            onCloseAssistant={closeAssistant}
-            onCloseLibrary={closeLibrary}
-            onToggleAssistant={toggleAssistant}
-            onToggleLibrary={toggleLibrary}
-            organizing={memoOrganize.organizing}
-            paper={paper}
-            paperIdentity={activeView === "note" && routeMemoId !== null
-              ? getMemoClientKey(resolveMemoId(routeMemoId))
-              : activeView}
-            presentation={organizePresentation}
-            paperTransitionIdentity={activeView === "note" ? selectedMemoId : null}
-            style={workspaceStyle}
-          />
-        ) : (
-          <CanvasRouteCoordinator
-            accessToken={accessToken}
-            assistant={assistant}
-            bootstrap={peekCanvasEntryBootstrap(canvasNodeId, profile.id)}
-            canvasId={canvasNodeId}
-            key={canvasNodeId}
-            onRename={handleRenameNode}
-            onSessionReady={handleCanvasSessionReady}
-            style={workspaceStyle}
-            title={selectedMemo?.title ?? "知识画布"}
-            userId={profile.id}
-          />
-        )}
+      {routeKindPending ? (
+        <main
+          aria-label="正在打开内容"
+          className="canvas-workspace"
+        >
+          <CanvasStageLoading label="正在打开内容" visible />
+        </main>
+      ) : canvasNodeId === null ? (
+        <PaperWorkspaceShell
+          assistant={assistant}
+          assistantOpen={assistantOpen}
+          compactViewport={paperViewport.compact}
+          libraryOpen={libraryOpen}
+          onCloseAssistant={closeAssistant}
+          onCloseLibrary={closeLibrary}
+          onToggleAssistant={toggleAssistant}
+          onToggleLibrary={toggleLibrary}
+          organizing={memoOrganize.organizing}
+          overlayPanels={paperViewport.overlayPanels}
+          paper={paper}
+          paperIdentity={activeView === "note" && routeMemoId !== null
+            ? getMemoClientKey(resolveMemoId(routeMemoId))
+            : activeView}
+          paperTransitionIdentity={activeView === "note" ? selectedMemoId : null}
+          style={workspaceStyle}
+        />
+      ) : (
+        <CanvasRouteCoordinator
+          accessToken={accessToken}
+          assistant={assistant}
+          bootstrap={peekCanvasEntryBootstrap(canvasNodeId, profile.id)}
+          canvasId={canvasNodeId}
+          key={canvasNodeId}
+          onRename={handleRenameNode}
+          onSessionReady={handleCanvasSessionReady}
+          style={workspaceStyle}
+          title={selectedMemo?.title ?? "知识画布"}
+          userId={profile.id}
+        />
+      )}
 
-        <WorkspaceLibraryLayer open={activeLibraryOpen} style={workspaceStyle}>
-          {library}
-        </WorkspaceLibraryLayer>
-      </ArchiveCordStage>
+      <WorkspaceLibraryLayer open={activeLibraryOpen} style={workspaceStyle}>
+        {library}
+      </WorkspaceLibraryLayer>
+      <ArchiveCordOverlay
+        libraryOpen={canvasNodeId === null && libraryOpen}
+        onLocate={locateArchive}
+        overlayPanels={paperViewport.overlayPanels}
+        presentation={canvasNodeId === null && activeView === "note" ? organizePresentation : null}
+      />
 
       <DashboardDialogs
         accountDialog={accountDialog}

@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 workspace.css 的全屏 Stage、独立浮层 Panel、--workspace-panel-inset 与 Panel Header 中心线公式、note-paper.css 的共享纸面 variant、Quiet Editorial 语义 token、@xyflow/react 定位层与 Canvas V2 交互组件
- * [OUTPUT]: 对外提供全视口 Canvas 壳、统一坐标、点阵舞台、单纸面延迟占位、文件拖入、因果节点/关系动效，以及四方向纸面视图过渡的唯一节奏源（只有纸与纸内正文命名、纸壳等比取景、正文永不缩放只被取景框裁切、交接严格互补、世界先落定、零过冲）
+ * [OUTPUT]: 对外提供全视口 Canvas 壳、可越过窄屏 backdrop 切换互斥 Panel 的顶部 Dock、统一坐标、点阵舞台、同材质但以留白分组的图标内容动作/视口动作双 surface、单纸面延迟占位、文件拖入、融入卡片底栏行尾且仍压住整卡 target 的连接抓手、候选/预连上两档只改轮廓的目标反馈、因果节点/关系动效，以及四方向纸面视图过渡的唯一节奏源（只有纸与纸内正文命名、纸壳等比取景、正文永不缩放只被取景框裁切、交接严格互补、世界先落定、零过冲）
  * [POS]: app/src/styles 的 Canvas V2 视觉边界；桌面保留空间画布，窄屏保留可达操作，不覆盖 React Flow 的业务状态
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -47,16 +47,18 @@
   }
 
   /* 顶层不再有包裹整组内容的卡片: 开关与标题直接活在画布上 */
-  .canvas-chrome { position: absolute; z-index: 12; top: var(--canvas-chrome-top); display: flex; min-width: 0; align-items: center; gap: var(--canvas-chrome-gap); }
+  .canvas-chrome { position: absolute; z-index: auto; top: var(--canvas-chrome-top); display: flex; min-width: 0; align-items: center; gap: var(--canvas-chrome-gap); }
   /* 标题永远给右上的 AI 开关留出通行宽度, 长标题只截断自己 */
   .canvas-chrome-start { left: var(--canvas-chrome-inset); max-width: calc(100% - var(--canvas-chrome-inset) * 3 - var(--canvas-chrome-size) - var(--canvas-chrome-gap)); }
   .canvas-chrome-end { right: var(--canvas-chrome-inset); }
   /* 槽位常驻: Panel 打开后按钮移入 Panel Header, 标题的横坐标不得因此移动 */
-  .canvas-chrome-slot { display: inline-flex; width: var(--canvas-chrome-size); height: var(--canvas-chrome-size); flex: 0 0 auto; align-items: center; justify-content: center; }
+  /* Dock 与 Paper 的 workspace-stage-control 同层：窄屏 backdrop 可关闭当前 Panel，
+     对侧 Dock 仍能直接切换到另一 Panel；标题继续留在普通画布层，不穿过遮罩。 */
+  .canvas-chrome-slot { position: relative; z-index: 70; display: inline-flex; width: var(--canvas-chrome-size); height: var(--canvas-chrome-size); flex: 0 0 auto; align-items: center; justify-content: center; }
 
   .canvas-title,
   .canvas-title-input { min-width: 0; max-width: 100%; border-radius: var(--radius-control); padding: var(--space-1) var(--space-2); font-size: var(--type-ui); font-weight: var(--weight-ui); line-height: var(--leading-ui); }
-  .canvas-title { overflow: hidden; border: 0; background: transparent; color: var(--foreground); cursor: pointer; text-align: left; text-overflow: ellipsis; white-space: nowrap; transition: background var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard); }
+  .canvas-title { position: relative; z-index: 12; overflow: hidden; border: 0; background: transparent; color: var(--foreground); cursor: pointer; text-align: left; text-overflow: ellipsis; white-space: nowrap; transition: background var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard); }
   .canvas-title:hover { background: var(--interactive-hover); }
   .canvas-title:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
   .canvas-title-input { width: min(24rem, 100%); border: 1px solid color-mix(in srgb, var(--primary) 42%, var(--border)); background: var(--card); color: var(--foreground); outline: none; }
@@ -121,6 +123,9 @@
   /* Handle 只负责向 React Flow 登记 source/target；CanvasCordEdge 直接读取两个
      节点矩形，以中心射线求动态边界端点，因此这里的位置不会再决定可见线。 */
   .knowledge-canvas .react-flow__handle.canvas-card-center-handle { top: 50%; right: auto; bottom: auto; left: 50%; transform: translate(-50%, -50%); }
+  /* whole-card target 只在 React Flow 连接会话里接收命中，静止时不可能遮住正文动作 */
+  .knowledge-canvas .react-flow__handle.canvas-card-whole-target { z-index: 4; top: 0; right: 0; bottom: 0; left: 0; width: 100%; height: 100%; border: 0; border-radius: var(--radius-panel); background: transparent; transform: none; }
+  .knowledge-canvas .react-flow__handle.canvas-card-whole-target.connectionindicator { opacity: 0; pointer-events: all; }
   .knowledge-canvas .react-flow__node { cursor: grab; }
   .knowledge-canvas .react-flow__node:active { cursor: grabbing; }
   .knowledge-canvas .react-flow__attribution { background: transparent; color: color-mix(in srgb, var(--muted-foreground) 55%, transparent); font-size: 0.625rem; }
@@ -159,6 +164,13 @@
   .canvas-card[data-motion-state="node-enter"] .note-paper-column { animation: canvas-node-content-in var(--motion-micro-exit) var(--ease-standard) var(--canvas-motion-content-delay, 0ms) both; }
   .canvas-card[data-motion-state="source-confirm"] { animation: canvas-source-confirm 180ms var(--ease-standard) var(--canvas-motion-delay, 0ms) both; }
   .canvas-card[data-selected="true"] { border-color: color-mix(in srgb, var(--primary) 50%, var(--border)); box-shadow: var(--shadow-sm), 0 0 0 1px color-mix(in srgb, var(--primary) 10%, transparent); }
+  .canvas-card[data-connection-target="valid"] { border-color: color-mix(in srgb, var(--primary) 46%, var(--border)); box-shadow: var(--shadow-xs), 0 0 0 1px color-mix(in srgb, var(--primary) 8%, transparent); }
+  /*
+   * 两档是两句话: [data-connection-target] 说"这些都能接", 指针正下方这一张说"松手就是它"。
+   * 后者由 React Flow 自己写在 handle 上的 connectingto/valid 驱动, 因此与提交判据同源, 不会
+   * 出现"亮着却连不上"。仍然只加一圈轮廓 —— 卡片背景是正文的纸, 给它上色等于蒙一层纱。
+   */
+  .canvas-card:has(> .canvas-card-whole-target.connectingto.valid) { border-color: color-mix(in srgb, var(--primary) 78%, var(--border)); box-shadow: var(--shadow-sm), 0 0 0 1px color-mix(in srgb, var(--primary) 22%, transparent); }
   .canvas-card[data-tombstone="true"] { opacity: 0.62; }
   .canvas-card-paper { flex: 1; }
 
@@ -171,9 +183,16 @@
   .canvas-card-expand:hover { background: var(--paper-surface); color: var(--paper-foreground); }
   .canvas-card-expand:focus-visible { opacity: 1; outline: 2px solid var(--primary); outline-offset: 1px; transform: none; }
 
-  .canvas-card-meta { display: flex; height: var(--control-height-compact); flex: 0 0 auto; align-items: center; justify-content: space-between; gap: var(--space-2); padding-inline: var(--space-2); }
-  .canvas-card-status { min-width: 0; overflow: hidden; color: var(--muted-foreground); font-size: var(--type-caption); line-height: var(--leading-caption); text-overflow: ellipsis; white-space: nowrap; }
-  .canvas-card-actions { display: flex; flex: 0 0 auto; align-items: center; gap: 2px; opacity: 0; transition: opacity 140ms var(--ease-standard); }
+  /*
+   * 底栏三个入口必须等距。行内与簇内共用同一个 --canvas-card-action-gap, 所以"等距"这件事
+   * 由代码保证而不是靠两处数字碰巧相同。曾经给抓手额外留过一道 8px 想表达"它和另两个不同族",
+   * 但一个 vs 两个的间距差读不出分组、只读出没对齐 —— 而抓手不同族已经由点阵图标、grab 光标
+   * 与 hover 变 primary 说过三遍了, 间距是会被误读的第四遍。
+   */
+  .canvas-card-meta { --canvas-card-action-gap: 2px; display: flex; height: var(--control-height-compact); flex: 0 0 auto; align-items: center; justify-content: space-between; gap: var(--canvas-card-action-gap); padding-inline: var(--space-2); }
+  /* flex: 1 让状态吃掉空档, 于是动作簇与抓手一起靠右收口, 而不是被 space-between 摊开 */
+  .canvas-card-status { min-width: 0; flex: 1; overflow: hidden; color: var(--muted-foreground); font-size: var(--type-caption); line-height: var(--leading-caption); text-overflow: ellipsis; white-space: nowrap; }
+  .canvas-card-actions { display: flex; flex: 0 0 auto; align-items: center; gap: var(--canvas-card-action-gap); opacity: 0; transition: opacity 140ms var(--ease-standard); }
   .canvas-card:hover .canvas-card-actions,
   .canvas-card:focus-within .canvas-card-actions,
   .canvas-card[data-selected="true"] .canvas-card-actions { opacity: 1; }
@@ -209,6 +228,21 @@
   /* ------------------------------------------------------------------------ */
 
   .canvas-edge-hit { cursor: pointer; pointer-events: stroke; }
+  .canvas-elastic-connection-line { color: var(--primary); pointer-events: none; }
+  .canvas-elastic-connection-strand { fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+  /* 由深到淡三档, 与 strandSpeeds 同序: 越淡的跑得越快, 深的读作绳身, 淡的读作外缠的丝 */
+  .canvas-elastic-connection-strand[data-strand="0"] { opacity: 0.88; }
+  .canvas-elastic-connection-strand[data-strand="1"] { opacity: 0.5; }
+  .canvas-elastic-connection-strand[data-strand="2"] { opacity: 0.26; }
+  /*
+   * 珠子: 实心小圆 + 一圈画布色白边。paint-order: stroke 让描边整圈长在外面而不吃掉实心部分,
+   * 于是它能压住从底下绕过的三股线 —— 这正是「三线戏珠」的关键: 线绕着珠子转, 不是从珠子
+   * 里发射出来(线的终点包络刻意留了残余, 见 elasticCordEnvelope)。小才有珠子感, 大就成了洞。
+   */
+  .canvas-elastic-drop-cursor { fill: currentColor; stroke: var(--workspace-stage); stroke-width: 2.2; paint-order: stroke; vector-effect: non-scaling-stroke; }
+  .canvas-elastic-connection-line[data-status="valid"] { color: var(--primary); }
+  .canvas-elastic-connection-line[data-status="invalid"] { color: var(--destructive); }
+  .canvas-elastic-connection-line[data-status="invalid"] .canvas-elastic-connection-strand { opacity: 0.34; }
   .canvas-edge-muted { opacity: 0.34; }
   .canvas-edge-direct { opacity: 1; }
   .canvas-edge-inspector { position: absolute; display: grid; place-items: center; pointer-events: all; }
@@ -223,9 +257,10 @@
   .canvas-edge-reason-copy > span { overflow-wrap: anywhere; text-wrap: pretty; }
   .canvas-edge-delete { width: 1.75rem; height: 1.75rem; flex: 0 0 auto; }
 
-  /* React Flow 的 Panel 只负责贴边, 间距统一由 --canvas-chrome-inset 说话 */
+  /* React Flow 的 Panel 只负责贴边与排布；内容动作、视口动作各自拥有独立 surface */
   .knowledge-canvas .react-flow__panel.canvas-controls { margin: var(--canvas-chrome-inset); }
-  .canvas-controls { display: flex; gap: 2px; border: 1px solid var(--border); border-radius: var(--radius-menu); background: color-mix(in srgb, var(--card) 94%, transparent); padding: var(--space-1); box-shadow: var(--shadow-xs); backdrop-filter: blur(12px); }
+  .canvas-controls { display: flex; align-items: center; gap: var(--space-2); }
+  .canvas-control-group { display: flex; height: var(--canvas-dock-height); align-items: center; border: 1px solid var(--border); border-radius: var(--radius-control); background: color-mix(in srgb, var(--card) 94%, transparent); padding: var(--space-1); box-shadow: var(--shadow-xs); backdrop-filter: blur(12px); }
   .canvas-control { width: var(--canvas-chrome-size); height: var(--canvas-chrome-size); }
 
   /* ------------------------------------------------------------------------ */
@@ -272,6 +307,102 @@
   .canvas-help-list { display: grid; gap: var(--space-3); padding-left: var(--space-5); color: var(--muted-foreground); font-size: var(--type-label); line-height: 1.6; }
 }
 
+/*
+ * 临时绳沉到卡片之下, 和松手后那条正式关系线同一层(React Flow 的 __edges 也在这一档,
+ * 且 DOM 在它之前, 因此临时绳仍压在已有关系线之上)。三个理由:
+ *   ① 它就是那条边的前一秒。同一个对象不该在松手那一刻从卡片上面掉到下面 —— 而那一帧
+ *      恰好是用户最需要"成了"这个确定感的时候。React Flow 默认给它 z-index: 1001, 是因为
+ *      它自己的把手长在节点边框上、线天生就在节点外面; 那是它那套布局的默认值, 不是主张。
+ *   ② 线的信息全在两端与走向, 卡片里是要读的字。让线盖住字是拿主要换次要。
+ *   ③ 被卡片挡住 ≠ 被冻住。线仍严格跟指针, 只是钻到纸底下, 运动连续; 而"停在卡片边缘"
+ *      会被读成卡顿。落点感由目标卡片自己亮一圈承担, 不由线去挤到最上层争。
+ * 必须写在未分层边界: React Flow 的 style.css 不在 cascade layer 里, @layer 压不过它。
+ */
+.knowledge-canvas svg.react-flow__connectionline {
+  z-index: 0;
+}
+
+/* React Flow 的 Handle 基础样式不在 cascade layer 中；交互命中与几何必须在同一
+   未分层边界覆盖，不能让第三方 .connectionindicator 把隐藏 target 提前变成热区。 */
+.knowledge-canvas .react-flow__handle.canvas-card-whole-target {
+  z-index: 4;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: var(--radius-panel);
+  background: transparent;
+  opacity: 0;
+  pointer-events: none;
+  transform: none;
+}
+.knowledge-canvas .react-flow__handle.canvas-card-whole-target.connectionindicator {
+  pointer-events: all;
+}
+/*
+ * 抓手是底栏最右端的一个流内格子, 不再是挂在卡片右下角外面的小凸起: 卡片的轮廓因此
+ * 保持完整。position: relative 不为定位, 只为让它成为定位元素继续压在 z-index: 4 的
+ * whole-card target 之上 —— "拖到别人的抓手上等于取消"依赖 elementFromPoint 命中它。
+ */
+/*
+ * 抓手不暗示出线方向: 端点由两张卡片的中心射线求交得到(见 CanvasCordEdge), 与柄无关。
+ * 行尾这个槽位只是"最不干扰"的那一格, 且与另两个入口严格等距 —— 它不同族这件事由点阵
+ * 图标、grab 光标和 hover 变 primary 表达, 不由间距表达。
+ */
+.knowledge-canvas .react-flow__handle.canvas-card-connect-handle {
+  position: relative;
+  z-index: 5;
+  top: auto;
+  right: auto;
+  bottom: auto;
+  left: auto;
+  display: grid;
+  width: var(--space-6);
+  height: var(--space-6);
+  flex: 0 0 auto;
+  place-items: center;
+  border: 0;
+  border-radius: var(--radius-compact);
+  corner-shape: var(--corner-shape-smooth);
+  background: transparent;
+  color: var(--muted-foreground);
+  box-shadow: none;
+  opacity: 0;
+  cursor: grab;
+  pointer-events: none;
+  transform: none;
+  transition: opacity 140ms var(--ease-standard), background var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard);
+}
+.canvas-card:hover .canvas-card-connect-handle,
+.canvas-card:focus-within .canvas-card-connect-handle,
+.canvas-card[data-selected="true"] .canvas-card-connect-handle,
+.canvas-card[data-connection-source="true"] .canvas-card-connect-handle {
+  opacity: 1;
+  pointer-events: all;
+  transform: none;
+}
+.knowledge-canvas .react-flow__handle.canvas-card-connect-handle:focus-visible {
+  opacity: 1;
+  outline: 2px solid var(--primary);
+  outline-offset: -1px;
+  pointer-events: all;
+  transform: none;
+}
+.knowledge-canvas .react-flow__handle.canvas-card-connect-handle:hover {
+  background: var(--interactive-hover);
+  color: var(--primary);
+}
+.knowledge-canvas .react-flow__handle.canvas-card-connect-handle:active {
+  cursor: grabbing;
+}
+.knowledge-canvas .react-flow__handle.canvas-card-connect-handle.connectingfrom {
+  opacity: 0;
+  pointer-events: none;
+}
+
 /* 全站平滑圆角同样适用于 Canvas: 卡片外壳与其中的纸张、按钮必须是同一种曲率,
    否则嵌套表面会出现"外圆内方"的形状冲突。圆形入口显式退回 round。 */
 @supports (corner-shape: squircle) {
@@ -279,7 +410,7 @@
     .canvas-title,
     .canvas-title-input,
     .canvas-control,
-    .canvas-controls,
+    .canvas-control-group,
     .canvas-edge-delete,
     .canvas-edge-reason-trigger,
     .canvas-edge-reason,
@@ -328,7 +459,7 @@
     .canvas-mode-notice { width: max-content; max-width: calc(100vw - 1.5rem); }
     /* 保存状态在窄屏独占一行, 因此命令条与它上下相让 */
     .canvas-save-state { right: var(--canvas-chrome-inset); bottom: var(--canvas-chrome-inset); left: var(--canvas-chrome-inset); max-width: none; justify-content: space-between; }
-    .knowledge-canvas .react-flow__panel.canvas-controls { margin-bottom: calc(var(--canvas-chrome-inset) * 2 + var(--control-height-large)); }
+    .knowledge-canvas .react-flow__panel.canvas-controls { margin-bottom: calc(var(--canvas-chrome-inset) * 2 + var(--canvas-dock-height)); }
     .canvas-ai-state { top: calc(var(--canvas-chrome-top) + var(--canvas-chrome-size) + var(--canvas-chrome-gap)); }
     /* 窄屏没有纸外空间: 工具列回到视口右上角横排, 纸张占满可用宽度 */
     .canvas-preview-shell { gap: 0; }

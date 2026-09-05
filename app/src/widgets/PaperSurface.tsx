@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖 motion/react、纸面名字、工作台统一 Motion、ArchivePort 与稳定 paperIdentity/编辑器内容；路由纸面过渡期间由 CSS 接管内层入场
- * [OUTPUT]: 对外提供纸壳与纸内正文各自命名的 816px Paper Surface、常规即时内容切换与不叠加路由动画的左侧 Archive Port
+ * [INPUT]: 依赖 motion/react、纸面名字、工作台统一 Motion 与稳定 paperIdentity/编辑器内容；路由纸面过渡期间由 CSS 接管内层入场
+ * [OUTPUT]: 对外提供纸壳与纸内正文各自命名、由 CSS 以「Panel 内缩线高度 → 7:9 反推宽度」立开本并允许长文增长的 Paper Surface；归档 source 由 Toolbar/Overlay 独立拥有
  * [POS]: app/src/widgets 的 Paper First Signature 纸面层；只拥有纸的视觉边界，NotesWorkspace 编辑会话仍由 Dashboard 以 memoClientKey 保持稳定
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -16,13 +16,8 @@ import {
   paperBodyViewTransitionName,
   paperViewTransitionName,
 } from "../pages/viewTransition";
-import { ArchivePort } from "./ArchiveCord";
 
 type PaperSurfaceProps = {
-  archiveActive: boolean;
-  archiveDrawKey: string;
-  archiveSourceId: string;
-  archiveTargetNodeId: string | null;
   children: ReactNode;
   organizing: boolean;
   paperIdentity: string;
@@ -31,10 +26,6 @@ type PaperSurfaceProps = {
 };
 
 export function PaperSurface({
-  archiveActive,
-  archiveDrawKey,
-  archiveSourceId,
-  archiveTargetNodeId,
   children,
   organizing,
   paperIdentity,
@@ -55,13 +46,6 @@ export function PaperSurface({
         : { viewTransitionName: paperViewTransitionName(paperTransitionIdentity) }}
       transition={workspaceLayoutTransition}
     >
-      <ArchivePort
-        active={archiveActive}
-        drawKey={archiveDrawKey}
-        reducedMotion={reducedMotion}
-        sourceId={archiveSourceId}
-        targetNodeId={archiveTargetNodeId}
-      />
       <motion.div
         animate={{ opacity: 1, y: 0 }}
         className="paper-content-transition"

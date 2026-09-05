@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Kumo Tailwind 样式源、Tailwind v4，并导入 AI 消息与 Design System 等生产样式模块消费本文件语义 token
- * [OUTPUT]: 对外提供 Kumo 基础样式、Landing Light、Quiet Editorial Instrument 与隔离 Color Lab 蓝色终选候选：唯一语义 Color/Type/Spacing/Radius/Elevation/Motion、Paper First Stage/Paper/Panel Toggle/Archive Cord/Cord、Tailwind 映射及样式模块入口
+ * [OUTPUT]: 对外提供 Kumo 基础样式、Landing Light、Quiet Editorial Instrument 与隔离 Color Lab 蓝色终选候选：唯一语义 Color/Type/Spacing/Radius/Elevation/Motion、全站命令控件共读的单一 press 收紧比例（Reduced Motion 在此归 1）、可组合 Primary Button 材质、Paper First Stage/Paper/Panel Toggle/Archive Cord/Cord、Tailwind 映射及样式模块入口
  * [POS]: app/src 的主题入口，被 main.tsx 引入并约束 Kumo 与本地设计系统共享同一全局视觉来源
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -95,8 +95,8 @@
   --paper-edge: #e3e1dc;
   --paper-shadow:
     0 1px 2px rgb(42 40 36 / 4%),
-    -0.3rem 1.3rem 2.6rem -1.9rem rgb(42 40 36 / 20%),
-    0.7rem 2.8rem 5.5rem -3.6rem rgb(42 40 36 / 26%);
+    -0.15rem 0.35rem 0.7rem -0.45rem rgb(42 40 36 / 18%),
+    0.2rem 0.7rem 1rem -0.7rem rgb(42 40 36 / 22%);
   /*
    * 纸悬浮在遮罩之上时的材质。不是一层大模糊, 而是一条渐变斜坡: 0 偏移的
    * 「环」层从 3px 模糊一路扩到 60px, 透明度同步从 6% 降到 3% —— 所以贴着纸
@@ -220,14 +220,17 @@
   --panel-header-gap: var(--space-2);
   --control-cluster-gap: var(--space-1);
 
-  /* Paper 宽度上限；探索态的退后包裹必须与纸等宽，故此值不能散落在两处 */
-  --paper-max-width: 51rem;
-
   --layout-page-max: 68rem;
   --layout-page-gutter: clamp(1rem, 3vw, 2rem);
   --layout-hero-y: clamp(4.5rem, 9vw, 8rem);
   --layout-section-bottom: clamp(5rem, 10vw, 9rem);
-  --motion-press: 90ms;
+  /*
+   * 按下只有一种触感, 因此只有一个数值: 收紧的比例与它的时长都住在这里。
+   * 从前 button.css 与 workspace.css 各写一遍 70ms、各写一遍位移量, 于是
+   * "按下是什么感觉"有四五个答案; 而 90ms 这个 token 从来没有人消费。
+   */
+  --press-scale: 0.98;
+  --motion-press: 70ms;
   --motion-micro-enter: 160ms;
   --motion-micro-exit: 130ms;
   --motion-panel-enter: 220ms;
@@ -239,13 +242,13 @@
   --motion-slow: var(--motion-quiet);
   --ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
   --radius-compact: 0.5rem;
-  --radius-control: 0.625rem;
+  --radius-control: 0.75rem;
   --radius-paper: 0.75rem;
   --radius-menu: 0.75rem;
   --radius-panel: 1rem;
   --radius-dialog: 1.25rem;
   --radius-pill: 999px;
-  --radius-inner-control: calc(var(--radius-control) - 0.1875rem);
+  --radius-inner-control: 0.5625rem;
   --radius-inner-panel: calc(var(--radius-panel) - var(--space-1));
   --corner-shape-smooth: squircle;
   --ds-radius-smooth: var(--radius-panel);
@@ -257,6 +260,38 @@
   --button-content-gap: 0.375rem;
   --button-font-size: var(--type-ui);
   --button-line-height: var(--leading-ui);
+  --button-primary-border-rest: color-mix(in srgb, var(--primary) 82%, var(--button-depth));
+  --button-primary-border-hover: color-mix(in srgb, var(--primary-hover) 82%, var(--button-depth));
+  --button-primary-border-active: color-mix(in srgb, var(--primary-active) 82%, var(--button-depth));
+  --button-primary-face-top-rest: color-mix(in srgb, var(--primary) 96%, white);
+  --button-primary-face-bottom-rest: color-mix(in srgb, var(--primary) 97%, var(--button-depth));
+  --button-primary-face-top-hover: color-mix(in srgb, var(--primary-hover) 95%, white);
+  --button-primary-face-bottom-hover: color-mix(in srgb, var(--primary-hover) 97%, var(--button-depth));
+  --button-primary-face-top-active: color-mix(in srgb, var(--primary-active) 98%, white);
+  --button-primary-face-bottom-active: color-mix(in srgb, var(--primary-active) 98%, var(--button-depth));
+  --button-primary-inner-ring-rest: rgb(255 255 255 / 38%);
+  --button-primary-inner-ring-hover: rgb(255 255 255 / 46%);
+  --button-primary-inner-ring-active: rgb(255 255 255 / 24%);
+  --button-primary-inner-glow-rest: rgb(255 255 255 / 11%);
+  --button-primary-inner-glow-hover: rgb(255 255 255 / 15%);
+  --button-primary-inner-glow-active: rgb(255 255 255 / 6%);
+  --button-primary-mist-rest: color-mix(in srgb, var(--primary) 34%, transparent);
+  --button-primary-mist-hover: color-mix(in srgb, var(--primary-hover) 42%, transparent);
+  --button-primary-mist-active: color-mix(in srgb, var(--primary-active) 24%, transparent);
+  --button-primary-press-depth: color-mix(in srgb, var(--button-depth) 18%, transparent);
+  --button-primary-shadow-rest:
+    inset 0 0 0 1px var(--button-primary-inner-ring-rest),
+    inset 0 0 0.22rem var(--button-primary-inner-glow-rest),
+    0 0 0.7rem -0.34rem var(--button-primary-mist-rest);
+  --button-primary-shadow-hover:
+    inset 0 0 0 1px var(--button-primary-inner-ring-hover),
+    inset 0 0 0.26rem var(--button-primary-inner-glow-hover),
+    0 0 0.82rem -0.31rem var(--button-primary-mist-hover);
+  --button-primary-shadow-pressed:
+    inset 0 0 0 1px var(--button-primary-inner-ring-active),
+    inset 0 0 0.16rem var(--button-primary-inner-glow-active),
+    inset 0 0 0.22rem var(--button-primary-press-depth),
+    0 0 0.45rem -0.3rem var(--button-primary-mist-active);
   --button-danger-hover-background: #b84b55;
   --button-danger-active-background: #a33f49;
   --processing-surface: #dde6ed;
@@ -351,8 +386,8 @@
   --paper-edge: #373833;
   --paper-shadow:
     0 1px 2px rgb(0 0 0 / 18%),
-    0 18px 38px -22px rgb(0 0 0 / 48%),
-    0 36px 80px -42px rgb(0 0 0 / 62%);
+    0 4px 10px -6px rgb(0 0 0 / 38%),
+    0 10px 18px -12px rgb(0 0 0 / 48%);
   --paper-float-shadow:
     0 1px 1px rgb(0 0 0 / 40%),
     0 0 3px rgb(0 0 0 / 34%),
@@ -463,6 +498,17 @@
   --archive-cord: #d4d2ca;
 }
 
+/*
+ * Reduced Motion 只取消"动"的那一项: 把收紧比例归 1, 于是四处命令控件同时失去缩放,
+ * 而 active 的颜色、边界与阴影压缩一个不少 —— 这正是"无动效"与"无反馈"的分界。
+ * 放在 token 上而不是各写一条 @media, 是因为这条规则必须与 --press-scale 同一个地方。
+ */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --press-scale: 1;
+  }
+}
+
 .color-lab-system {
   --background: #ffffff;
   --foreground: #232321;
@@ -472,8 +518,8 @@
   --paper-edge: #e3e1dc;
   --paper-shadow:
     0 1px 2px rgb(42 40 36 / 4%),
-    -0.3rem 1.3rem 2.6rem -1.9rem rgb(42 40 36 / 20%),
-    0.7rem 2.8rem 5.5rem -3.6rem rgb(42 40 36 / 26%);
+    -0.15rem 0.35rem 0.7rem -0.45rem rgb(42 40 36 / 18%),
+    0.2rem 0.7rem 1rem -0.7rem rgb(42 40 36 / 22%);
   --card: #ffffff;
   --card-foreground: #232321;
   --muted: #f6f5f2;
@@ -596,8 +642,8 @@
   --paper-edge: #373833;
   --paper-shadow:
     0 1px 2px rgb(0 0 0 / 18%),
-    0 18px 38px -22px rgb(0 0 0 / 48%),
-    0 36px 80px -42px rgb(0 0 0 / 62%);
+    0 4px 10px -6px rgb(0 0 0 / 38%),
+    0 10px 18px -12px rgb(0 0 0 / 48%);
   --card: #222320;
   --card-foreground: #efeee9;
   --muted: #292a27;

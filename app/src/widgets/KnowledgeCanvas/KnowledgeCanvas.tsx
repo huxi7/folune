@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 @xyflow/react v12、同步首帧 Canvas bootstrap、纸面视图过渡、Canvas Chat/Coordinator/Store、瞬时 motion receipt、空间文字、增量布局与拖拽载荷
- * [OUTPUT]: 对外提供始终挂载真实 React Flow 的 Canvas：首帧即有过渡落点、稳定受控图、单一 Stage loading、精准落点、只属于首次进入的因果节点/关系动效、Preview 纸面形变（正文未到时先用卡片摘录）、删除退场与可靠保存
- * [POS]: KnowledgeCanvas 的会话内容根；几何/选择/WAL 仍由原系统负责，只有本地手势签发一次性 UI receipt，hydration/rebase/save/rerender 不得重播
+ * [OUTPUT]: 对外提供始终挂载真实 React Flow 的 Canvas：首帧过渡落点、稳定受控图、尺寸变化时不随节点拖动重建 observer 的响应式视口校准、拖/点等效直接连接、单一 Stage loading、Preview 纸面形变、删除退场与可靠保存
+ * [POS]: KnowledgeCanvas 的会话内容根；连接手势只经 useCanvasConnectionSession 产生一次 upsert_edge，响应式校准只读 latest nodes 并保持 observer 稳定，几何/选择/WAL 仍由原系统负责，hydration/rebase/save/rerender 不得重播 UI receipt
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -11,6 +11,7 @@ import {
   ReactFlow,
   useEdgesState,
   useNodesState,
+  type Connection,
   type ReactFlowInstance,
 } from "@xyflow/react";
 import {
@@ -81,6 +82,7 @@ import { NotePaper } from "../NotePaper";
 import { CanvasCardNode } from "./CanvasCardNode";
 import { CanvasControls } from "./CanvasControls";
 import { CanvasCordEdge } from "./CanvasCordEdge";
+import { CanvasElasticConnectionLine } from "./CanvasElasticConnectionLine";
 import { CanvasPersistenceStatus } from "./CanvasPersistenceStatus";
 import { CanvasPreviewOverlay } from "./CanvasPreviewOverlay";
 import {
@@ -101,6 +103,7 @@ import {
   normalizeTextGeometry,
   type SpatialTextGeometry,
 } from "./spatialTextGeometry";
+import { useCanvasConnectionSession } from "./useCanvasConnectionSession";
 
 const nodeTypes = { canvasNode: CanvasCardNode };
 const edgeTypes = { cord: CanvasCordEdge };
@@ -332,9 +335,7 @@ const flowNodeFromTransient = (node: TransientTextNode): CanvasFlowNode => ({
     body: node.text,
     createdBy: "user",
     discoveredFromId: null,
-    drifted: false,
     kind: "native",
-    snapshotRevision: null,
     targetDeleted: false,
     targetNodeId: null,
     textHeight: node.height,
@@ -520,6 +521,9 @@ export function KnowledgeCanvas({
     );
     return { ...projected, ...animated };
   }, [motionReceipt, paperTransitionMemoId, renderDocument]);
+  const latestFlowNodesRef = useRef(flow.nodes);
+  latestFlowNodesRef.current = flow.nodes;
+  const hasFlowNodes = flow.nodes.length > 0;
 
   useEffect(() => {
     consumeVisibleReceipt(flow.nodes, flow.edges);
@@ -581,6 +585,36 @@ export function KnowledgeCanvas({
     }
   }, [canvasId, document, flow, restore, setNodes, transientText]);
 
+  useEffect(() => {
+    if (!hasFlowNodes) return;
+    let frame: number | null = null;
+    const fitIfNodesLeaveViewport = () => {
+      if (frame !== null) window.cancelAnimationFrame(frame);
+      frame = window.requestAnimationFrame(() => {
+        frame = null;
+        const instance = instanceRef.current;
+        const stage = flowRef.current;
+        if (instance === null || stage === null) return;
+        const viewport = instance.getViewport();
+        const rect = stage.getBoundingClientRect();
+        if (canvasViewportShowsNodes(
+          canvasNodesBounds(latestFlowNodesRef.current),
+          viewport,
+          { height: rect.height, width: rect.width },
+        )) return;
+        void instance.fitView({ duration: 0, padding: 0.18 });
+      });
+    };
+    window.addEventListener("resize", fitIfNodesLeaveViewport);
+    const observer = new ResizeObserver(fitIfNodesLeaveViewport);
+    if (flowRef.current !== null) observer.observe(flowRef.current);
+    return () => {
+      window.removeEventListener("resize", fitIfNodesLeaveViewport);
+      observer.disconnect();
+      if (frame !== null) window.cancelAnimationFrame(frame);
+    };
+  }, [hasFlowNodes]);
+
   /* 关系的强调是选择的函数, 与坐标无关, 因此自己一条推导 */
   useEffect(() => {
     setEdges((current) =>
@@ -622,6 +656,23 @@ export function KnowledgeCanvas({
     }));
     selectNodes(nodeIds);
   }, [selectNodes, setNodes]);
+
+  const {
+    armClick: armConnectionClick,
+    dragging: connectionDragging,
+    isValidConnection,
+    onConnect: handleConnect,
+    onConnectEnd: handleConnectEnd,
+    onConnectStart: handleConnectStart,
+    onNodeClick: handleConnectionNodeClick,
+  } = useCanvasConnectionSession({
+    connectionSourceId,
+    detail: document,
+    enqueue,
+    issueMotionReceipt,
+    selectOnly,
+    startConnection,
+  });
 
   const showUndoReceipt = useCallback((
     snapshot: CanvasRemovalSnapshot,
@@ -1191,8 +1242,7 @@ export function KnowledgeCanvas({
       editText(null);
     },
     onConnect(nodeId: string) {
-      startConnection(nodeId);
-      openPalette();
+      armConnectionClick(nodeId);
     },
     onEditText(nodeId: string) {
       editText(nodeId);
@@ -1230,14 +1280,13 @@ export function KnowledgeCanvas({
     expandFromNode,
     navigateToMemo,
     accessToken,
+    armConnectionClick,
     changePreview,
-    openPalette,
     preloadMemo,
     editText,
     removeEdge,
     requestNodeRemoval,
     selectOnly,
-    startConnection,
     transientText,
   ]);
 
@@ -1297,6 +1346,12 @@ export function KnowledgeCanvas({
         selectOnly([]);
       }
     };
+    /*
+     * 这一层必须留在 window。Escape 有三层要分先后: Dialog/弹层(挂 document) > 画布内容
+     * (这里) > CanvasWorkspace 的壳层 Panel 守卫。冒泡链只给出 document 先于 window 两档,
+     * 所以画布内容与壳层同挂 window、靠 defaultPrevented 让行; 把这一层也搬到 document,
+     * 就会和 Dialog 抢同一档 —— 确认框里按 Esc 会连带把节点选择一起清掉。
+     */
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [
@@ -1368,7 +1423,9 @@ export function KnowledgeCanvas({
         }}
         ref={flowRef}
       >
-        <ReactFlow
+        <ReactFlow<CanvasFlowNode, CanvasFlowEdge>
+          connectOnClick={false}
+          connectionLineComponent={CanvasElasticConnectionLine}
           edgeTypes={edgeTypes}
           edges={edges}
           elementsSelectable
@@ -1376,40 +1433,19 @@ export function KnowledgeCanvas({
           minZoom={0.2}
           nodeTypes={nodeTypes}
           nodes={nodes}
-          nodesConnectable={false}
+          isValidConnection={isValidConnection}
+          nodesConnectable
           nodesDraggable
+          onConnect={(connection: Connection) => handleConnect(connection)}
+          onConnectEnd={handleConnectEnd}
+          onConnectStart={handleConnectStart}
           onEdgesChange={onEdgesChange}
           onDoubleClick={handlePaneDoubleClick}
           onInit={(instance) => {
             instanceRef.current = instance;
           }}
           onMoveEnd={handleMoveEnd}
-          onNodeClick={(_, node) => {
-            if (connectionSourceId === null || node.id === connectionSourceId) return;
-            const current = latestDocumentRef.current;
-            const source = current?.nodes.find(
-              (candidate) => candidate.id === connectionSourceId,
-            );
-            const target = current?.nodes.find((candidate) => candidate.id === node.id);
-            if (source?.kind !== "memo_ref" || target?.kind !== "memo_ref") return;
-            const edgeId = crypto.randomUUID();
-            issueMotionReceipt({
-              edgeIds: [edgeId],
-              kind: "connect",
-              nodeIds: [],
-              sourceNodeId: source.id,
-            });
-            void enqueue({
-              operation: {
-                edge_id: edgeId,
-                source_id: source.id,
-                target_id: target.id,
-                type: "upsert_edge",
-              },
-            })
-              .then(() => startConnection(null))
-              .catch(() => undefined);
-          }}
+          onNodeClick={(_, node) => handleConnectionNodeClick(node.id)}
           onNodeDragStop={(_, __, dragged) => handleNodesDragStop(dragged)}
           onNodesChange={onNodesChange}
           onSelectionChange={handleSelectionChange}
@@ -1463,11 +1499,11 @@ export function KnowledgeCanvas({
         ) : null}
         {loadStatus === "ready" && renderDocument?.nodes.length === 0 ? (
           <div className="canvas-empty-hint">
-            双击空白写一段自由文字，或按 ⌘K 搜索并加入笔记
+            双击空白写一段自由文字，或使用下方「加入笔记」搜索并加入已有笔记
           </div>
         ) : null}
 
-        {connectionSourceId !== null ? (
+        {connectionSourceId !== null && !connectionDragging ? (
           <div className="canvas-mode-notice">
             选择另一张笔记卡片建立关系
             <button onClick={() => startConnection(null)} type="button">取消</button>

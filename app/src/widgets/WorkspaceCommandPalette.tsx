@@ -9,11 +9,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Dialog } from "../shared/design-system/components";
 import {
+  AddNoteIcon,
   CanvasIcon,
   FileTextIcon,
   FolderIcon,
   MagnifyingGlassIcon,
-  PlusIcon,
 } from "../shared/design-system/icons";
 import { useCommandPaletteStore } from "../shared/store/commandPaletteStore";
 import { useMemoTreeStore } from "../shared/store/memoTreeStore";
@@ -370,7 +370,7 @@ export function WorkspaceCommandPalette({
                       title="加入当前画布（⌘/Ctrl + Enter）"
                       type="button"
                     >
-                      <PlusIcon aria-hidden size={16} />
+                      <AddNoteIcon aria-hidden size={16} />
                     </button>
                   )}
                 </span>

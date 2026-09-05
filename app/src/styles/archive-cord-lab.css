@@ -1,0 +1,16 @@
+/**
+ * [INPUT]: 依赖 index.css 的语义 token 与 Tailwind v4 layer；归档线、Paper、文件库的一切视觉仍来自 workspace.css
+ * [OUTPUT]: 只提供仅开发态 `/archive-cord-lab` 的说明正文与验收控制条样式
+ * [POS]: app/src/styles 的验收台隔离样式；它刻意不含任何归档线、代表行或 source 的规则——那些必须由生产 CSS 提供，否则 fixture 验的就不是线上那条线
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+@layer components {
+  .archive-cord-lab-body { display: flex; width: 100%; max-width: 45rem; flex-direction: column; gap: var(--space-4); margin-inline: auto; padding: var(--space-6) var(--space-8); color: var(--muted-foreground); font-size: var(--type-ui); line-height: 1.7; }
+  .archive-cord-lab-body ol { display: flex; flex-direction: column; gap: var(--space-2); padding-left: 1.25rem; list-style: decimal; }
+
+  /* 验收控制条是开发工具, 不是产品的一部分: 它坐在纸外, 也不参与任何归档语义 */
+  .archive-cord-lab-bar { position: fixed; bottom: var(--workspace-panel-inset); left: 50%; z-index: 95; display: flex; max-width: calc(100vw - 2 * var(--workspace-panel-inset)); flex-wrap: wrap; align-items: center; gap: var(--space-2); border: 1px solid var(--border); border-radius: var(--radius-panel); background: var(--card); padding: var(--space-2) var(--space-3); box-shadow: var(--shadow-md); transform: translateX(-50%); }
+  .archive-cord-lab-bar button { height: var(--control-height-compact); border: 1px solid var(--border); border-radius: var(--button-radius); background: var(--secondary); padding: 0 var(--space-3); color: var(--foreground); font-size: var(--type-label); font-weight: 560; cursor: pointer; }
+  .archive-cord-lab-bar button:hover { background: var(--interactive-hover); }
+  .archive-cord-lab-bar [data-lab="readout"] { color: var(--muted-foreground); font-size: var(--type-caption); font-variant-numeric: tabular-nums; }
+}

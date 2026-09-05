@@ -1,11 +1,11 @@
 /**
  * [INPUT]: 依赖 AI Run api/chat organize、轻量当前节点与按需正文、NotesWorkspace flush/标题接纳、Memo Store 局部归并、WorkspaceChrome 与 Toast
- * [OUTPUT]: 对外提供当前/最近 Organize Run、整理中状态、触发/确认/拒绝/撤销命令及 ⌘/Ctrl+Enter 快捷键
- * [POS]: pages 层 AI 整理生命周期 Hook；成功/撤销只唤醒文件库、待确认只唤醒 AI，stale/失败不强迫打开工具
+ * [OUTPUT]: 对外提供当前/最近 Organize Run、待展示 presentation（区分 fresh 与 restored）、整理中状态、触发/确认/拒绝/撤销命令及 ⌘/Ctrl+Enter 快捷键
+ * [POS]: pages 层 AI 整理生命周期 Hook；成功/撤销只唤醒文件库、待确认只唤醒 AI，stale/失败不强迫打开工具。刷新取回的最近 succeeded/undone 以 restored 恢复展示——刷新不是语义事件，不得因此重播成功，也不得因此强行展开文件库
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
-import { useCallback, useEffect, useState, type RefObject } from "react";
+import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
 
 import {
   applyAiRun,
@@ -24,6 +24,7 @@ import type { NotesWorkspaceHandle } from "../widgets/NotesWorkspace";
 import {
   getOrganizeWakeTarget,
   shouldPresentOrganizeResult,
+  type OrganizePresentationRun,
 } from "./organizePresentation";
 
 const LAST_RUN_KEY_PREFIX = "supernote:last-organize-run:";
@@ -57,10 +58,17 @@ export function useMemoOrganize({
   const openLibrary = useWorkspaceChromeStore((state) => state.openLibrary);
   const reconcileAiRun = useMemoTreeStore((state) => state.reconcileAiRun);
   const [run, setRun] = useState<AiRun | null>(null);
-  const [presentationRun, setPresentationRun] = useState<AiRun | null>(null);
+  const [presentationRun, setPresentationRun] =
+    useState<OrganizePresentationRun | null>(null);
   const [organizing, setOrganizing] = useState(false);
   const [threadId, setThreadId] = useState<string | null>(null);
 
+  /*
+   * 刷新恢复。归档关系是否仍然为真, 与页面是否重载无关: 若最近一次 run 是
+   * succeeded/undone, 就把它作为 restored presentation 交回去, 由 Dashboard 用
+   * 当前树与当前 memo 决定它现在还成不成立。这里刻意不 openLibrary、不展开祖先、
+   * 不重播 fresh —— 那三件事都属于「刚刚发生」, 而这不是。
+   */
   useEffect(() => {
     const runId = window.localStorage.getItem(lastRunStorageKey(userId));
     if (runId === null) {
@@ -69,7 +77,13 @@ export function useMemoOrganize({
     }
     let cancelled = false;
     void getAiRun(accessToken, runId)
-      .then((storedRun) => !cancelled && setRun(storedRun))
+      .then((storedRun) => {
+        if (cancelled) return;
+        setRun(storedRun);
+        if (shouldPresentOrganizeResult(storedRun.status)) {
+          setPresentationRun({ origin: "restored", run: storedRun });
+        }
+      })
       .catch(() => window.localStorage.removeItem(lastRunStorageKey(userId)));
     return () => {
       cancelled = true;
@@ -95,7 +109,7 @@ export function useMemoOrganize({
         workspaceRef.current?.acceptOrganizedTitle(resultMemo.title);
         onCommittedTitle();
       }
-      setPresentationRun(nextRun);
+      setPresentationRun({ origin: "fresh", run: nextRun });
       openLibrary();
       return;
     }
@@ -103,7 +117,17 @@ export function useMemoOrganize({
     setPresentationRun(null);
   }, [currentMemo?.id, onCommittedTitle, openAssistant, openLibrary, reconcileAiRun, userId, workspaceRef]);
 
+  /*
+   * 切换到另一篇笔记才清除。首次从 null 落定成当前 memo 不是切换 —— 恢复请求是异步的,
+   * 把「首帧还没有 currentMemo」也当成切换, 会在树刚到达时把刚恢复的 presentation 抹掉。
+   */
+  const presentedMemoIdRef = useRef<string | null>(null);
   useEffect(() => {
+    const nextMemoId = currentMemo?.id ?? null;
+    const previousMemoId = presentedMemoIdRef.current;
+    if (previousMemoId === nextMemoId) return;
+    presentedMemoIdRef.current = nextMemoId;
+    if (previousMemoId === null) return;
     setPresentationRun(null);
   }, [currentMemo?.id]);
 

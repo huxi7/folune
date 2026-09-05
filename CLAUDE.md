@@ -22,12 +22,14 @@ AI 是用户的备忘录协作伙伴与智能档案管理员。
 ## 技术栈
 全栈 TypeScript，顶层由三个业务模块组成。
 
-- app: 用户端，Bun + Vite 8 + React 19 + React Router 7 + Zustand 5 + Motion for React 12 + @xyflow/react 12 + CodeMirror 6/Lezer Markdown + react-markdown/remark/rehype-sanitize + Vercel AI SDK 6 (`@ai-sdk/react`) + `@mastra/client-js` + react-archer 5.1 + canvas-confetti + Kumo UI 2 + Tailwind CSS v4 + 本地 design system + Lucide React + Supabase Auth SDK
+- app: 用户端，Bun + Vite 8 + React 19 + React Router 7 + Zustand 5 + Motion for React 12 + @xyflow/react 12 + CodeMirror 6/Lezer Markdown + react-markdown/remark/rehype-sanitize + Vercel AI SDK 6 (`@ai-sdk/react`) + `@mastra/client-js` + canvas-confetti + Kumo UI 2 + Tailwind CSS v4 + 本地 design system + Lucide React + Supabase Auth SDK
 - chat: AI 能力服务，Bun + Mastra 1.57 + `@mastra/ai-sdk` + Vercel AI SDK 6 + zod 4；模型白名单只含 DeepSeek V4 Flash 且拒绝任何切换；对话/审批/整理三个 Agent 分离，模型只见 read_tree/read_memo/edit_memo/edit_node 四个胖笔记工具与 celebration
 - api: 业务接口服务，Bun + Hono 4 + zod 4 + Supabase REST/PostgREST/Storage HTTP API；只以用户 JWT 访问数据，禁止 service role、连接串与 ORM
 
 ## 运行形态
 app 跑在本机 Bun/Vite 固定 10000；api 与 chat 由根 Compose 编排为 api-dev(10001)/chat-dev(10002)，各自持有独立健康探针与被 Git 忽略的私有 `.env`。chat 依赖 api 健康后启动，容器内经 `http://api:10001` 访问业务 API；浏览器只接收 `VITE_` 前缀的公开配置。
+
+2026-09-02 app 形制投影：Paper 归档线由 fixed `ArchiveCordOverlay` 承载，不再依赖 react-archer；Canvas 连接临时绳与 Paper 归档 Overlay 都是 UI 层，正式持久化仍只经既有 app WAL/Coordinator/API 边界。
 
 ## Canvas V2
 Canvas V2 是一级持久知识 Workspace：memo 默认 Canvas 与 standalone Canvas 使用同一身份和唯一原子 mutation 内核，浏览器先写 IndexedDB WAL，再串行提交并在冲突时重放。产品定律见 [CANVAS_CONSTITUTION.md](CANVAS_CONSTITUTION.md)；旧阶段规划只保留历史，不构成当前需求来源。
@@ -46,7 +48,9 @@ Canvas V2 是一级持久知识 Workspace：memo 默认 Canvas 与 standalone Ca
 | --- | --- |
 | CANVAS_CONSTITUTION.md | Canvas 产品宪法与常驻门禁，回答「为什么不能」而不是「现在是什么」；冻结一级持久 Workspace、同构画布、显式 AI、增量图、添加/连接/自由文字、自动保存与产品边界，并以第 14 节十一条验收问题约束后续任何改动。它与 CLAUDE.md 职责相反：CLAUDE.md 必须跟随代码，本文件绝不跟随代码，因此只有它能指出实现走偏了。不含进度、不含实施计划 |
 | CANVAS_V2_PHASE2_BACKLOG.md | 历史阶段清单，仅用于追溯当时取舍；已完成项与主动放弃项都不得被后续 Agent 自动还原成需求 |
-| PAPER_CONSTITUTION.md | Paper 产品宪法与常驻门禁，与 CANVAS_CONSTITUTION.md 并列且同样绝不跟随代码。冻结写作纸的开本比例、sticky 顶栏、整理作为唯一 Primary AI 动作、状态与动作分离，以及归档线「是上下文而非通知」的生命周期与渲染边界，并以第 8 节十条验收问题约束后续改动。视觉数值归 app/brand-spec.md，产品定律归本文件 |
+| PAPER_CONSTITUTION.md | Paper 产品宪法与常驻门禁，与 CANVAS_CONSTITUTION.md 并列且同样绝不跟随代码。冻结 Stage/Paper/Panel 的三层关系（Panel 压在 Paper 上，因此 Paper 不参照 Panel 的顶部边界）、写作纸的开本比例与「短内容与 Panel 同构、长文只向下生长」、与纸同表面且不画底边线的 sticky 顶栏、整理作为唯一核心 AI 动作但使用 Quiet Accent、状态与动作分离，以及归档线「真实 memo → 结构可见代表 → viewport 边缘投影」的生命周期与渲染边界，并以第 8 节验收问题约束后续改动。视觉数值归 app/brand-spec.md，产品定律归本文件 |
+| PAPER_REFINEMENT_PLAN.md | 2026-09-02 Paper 二次形制收口的 coding-agent 决策交接：先同步 Paper 宪法/brand spec/总纲，再按全局 press → 高度优先开本 → Quiet Accent Toolbar → sticky 线性凝结 → 归档线回归完成实现；任务闭环后归档或删除，不成为永久需求源 |
+| ARCHIVE_CORD_REFACTOR_PLAN.md | 2026-09-03 Archive Cord 专项重构总纲；把真实目标、结构可见代表、viewport 投影和 fresh/settled/emphasized 视觉状态分层，按决策校准 → 纯策略 → 树集成 → 单一几何调度 → 视觉语法 → Ego Lite 真实 fixture 验收推进；完成后归档或删除，不成为永久需求源 |
 | REFINEMENT_PLAN.md | 本轮形制收口的实施总纲，只划四批、依赖顺序与每批最易失手处，不含执行步骤。它把三份决策文档走到代码，自身绝不产生需求；实施完成即失效并应删除或归档，不得被后续 Agent 当作需求来源 |
 | .dockerignore | 收窄 api/chat 开发镜像的仓库根构建上下文，排除源码、缓存、密钥与无关模块 |
 | .env.example | app/api/chat 无密钥变量总览与根 Compose 可选覆盖模板；服务默认使用各自本地环境文件 |

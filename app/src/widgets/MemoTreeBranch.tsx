@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖后端 MemoTreeNode、memoLibrary 落点、紧凑 SidebarButton、ArchiveTargetPort 与上层展开/拖拽/原地重命名命令
- * [OUTPUT]: 对外提供递归树、folder/memo 落点、笔记正文意图预热、归档目标端口、拖拽状态、原地重命名、重名提示及归档语义标记
- * [POS]: app/src/widgets 的纯树交互渲染器；只表达可见层级、HTML5 DnD 几何与归档锚点，不拥有树数据、连线生命周期或 API
+ * [INPUT]: 依赖后端 MemoTreeNode、memoLibrary 落点、紧凑 SidebarButton、archiveCordPolicy 的 ArchiveRepresentative 与上层展开/拖拽/原地重命名命令
+ * [OUTPUT]: 对外提供递归树、folder/memo 落点、笔记正文意图预热、稳定 tree row、至多一个 data-archive-representative 标记、拖拽状态、原地重命名与重名提示
+ * [POS]: app/src/widgets 的纯树交互渲染器；只表达可见层级、HTML5 DnD 几何与真实目标 DOM，不解析代表、不拥有树数据、连线生命周期或 API
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -22,7 +22,7 @@ import {
 
 import type { MemoTreeNode } from "../shared/api/memo";
 import { SidebarButton } from "../shared/design-system/components";
-import { ArchiveTargetPort } from "./ArchiveCord";
+import type { ArchiveRepresentative } from "./archiveCordPolicy";
 import type { MemoDropTarget } from "./memoLibrary";
 
 type TreeRowStyle = CSSProperties & {
@@ -30,12 +30,16 @@ type TreeRowStyle = CSSProperties & {
 };
 
 type MemoTreeBranchProps = {
+  /**
+   * 当前展开状态下代表 canonical memo 的那个对象，由 AppSidebar 解析。
+   * 树只负责在对应的真实行上落一个标记 —— 它不知道 canonical 目标是谁，
+   * 也不再同时点亮 memo 与 folder 两个高亮。
+   */
+  archiveRepresentative: ArchiveRepresentative | null;
   depth: number;
   draggedNodeId: string | null;
   dropTarget: MemoDropTarget | null;
   expandedFolders: ReadonlySet<string>;
-  highlightedFolderId: string | null;
-  highlightedMemoId: string | null;
   mutating: boolean;
   nodes: readonly MemoTreeNode[];
   notesActive: boolean;
@@ -222,12 +226,11 @@ function InlineRename({
 
 export function MemoTreeBranch(props: MemoTreeBranchProps) {
   const {
+    archiveRepresentative,
     depth,
     draggedNodeId,
     dropTarget,
     expandedFolders,
-    highlightedFolderId,
-    highlightedMemoId,
     mutating,
     nodes,
     notesActive,
@@ -333,22 +336,14 @@ export function MemoTreeBranch(props: MemoTreeBranchProps) {
                 }
                 data-drag-source={draggedNodeId === node.id}
                 data-memo-tree-row-id={node.id}
-                data-organize-target={
-                  node.id === highlightedFolderId
-                    ? "folder"
-                    : node.id === highlightedMemoId
-                      ? "memo"
-                      : undefined
+                data-archive-representative={
+                  archiveRepresentative?.nodeId === node.id
+                    ? archiveRepresentative.kind
+                    : undefined
                 }
                 draggable={!mutating}
                 label={node.title}
                 leading={icon}
-                trailing={(
-                  <ArchiveTargetPort
-                    active={node.id === highlightedFolderId || node.id === highlightedMemoId}
-                    nodeId={node.id}
-                  />
-                )}
                 onClick={(event) => {
                   if (event.detail > 1) {
                     return;

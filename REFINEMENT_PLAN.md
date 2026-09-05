@@ -10,6 +10,7 @@
 | [CANVAS_CONSTITUTION.md](CANVAS_CONSTITUTION.md) · [PAPER_CONSTITUTION.md](PAPER_CONSTITUTION.md) | 为什么不能。**唯一的需求来源** |
 | [app/brand-spec.md](app/brand-spec.md) | 已选的视觉规格与被否决的候选 |
 | 各级 `CLAUDE.md` · L3 头部 | 现在是什么 |
+| [PAPER_REFINEMENT_PLAN.md](PAPER_REFINEMENT_PLAN.md) | 2026-09-02 Paper 二次形制收口的新决策交接：开本高度优先、Quiet Accent、Toolbar 顺序、sticky 线性凝结、全局 press。它已按自身第 0 批把结论写回上面三份决策文档，因此本文件第一批与 6.1/6.2 以它为准 |
 | **本文件** | 这一轮从上面三者走到代码，分几批走、每批最容易在哪失手 |
 
 本文件不新增任何产品语义。若实施中发现需要一条三份决策文档里没有的规则，那是一次新的产品决策：先回去改那三份，再回来改这里，顺序不得倒置。倒置一次，宪法就退化成事后追认。
@@ -79,11 +80,11 @@
 
 一批只有同时满足下面四项才算完成：代码事实成立、测试锁住回归、真实界面可见、文档投影与代码同构。只完成其中三项不得进入下一批。
 
-## 3. 第一批 · 设计系统的两条公理
+## 3. 第一批 · 设计系统的三条公理
 
-**解什么**：一个 token 只说一件事，一个字形只说一件事。
+**解什么**：一个 token 只说一件事，一个字形只说一件事，一次按下只有一种触感。
 
-**触及面**：语义 token 层与图标注册表；不触碰任何交互。
+**触及面**：语义 token 层、图标注册表与全局命令按钮的 press 状态；不触碰任何交互逻辑。
 
 ### 可直接执行的步骤
 
@@ -95,9 +96,21 @@
 6. **全局视觉巡检。** 至少检查 Library 搜索/新建同排、账户表单、Select、Dialog 按钮、AI Composer、Canvas 控件、Design System Radius specimen。Composer 的发送/停止圆键必须仍显得是唯一几何圆形，不能被 12px Control 稀释。
 7. **冻结证明。** 更新或新增 Radius/组件 CSS 契约测试，确认 Control 为 12px、Button 没有私有半径、Composer 仍显式 `corner-shape: round`，并让 Icon Catalog 覆盖所有新增语义出口。
 
+### 第三条公理 · 全局 press 收口（2026-09-02 追加）
+
+按钮看起来必须在原地「收紧」，不是向下掉一格。`translateY(1px)` 在 32px 控件上读作掉格，而且每个组合控件各写一遍，于是「按下是什么感觉」有四五个答案。
+
+1. 先做消费者清单：搜索 `translateY(1px)`、`translateY(0.0625rem)` 与孤立 `scale(0.94)`，只登记真正的命令控件（`.ds-button`、Sidebar create split、EdgeDock、Toolbar icon button）。Panel、拖拽预览与布局动效不属于本批。
+2. 在 `app/src/index.css` 暴露一个统一的 press 缩放 token，让四处共读一个值；不允许任何控件私藏第二个数值，也不新增 bounce/overshoot 曲线。
+3. Active 以中心为原点缩放、约 70ms，释放走现有 fast/standard token 回位；hover 永远 `transform: none`。
+4. pressed shadow 继续使用现有压缩态，各变体消费自己的表面 token，不复制色值。
+5. split 必须整个外壳一起缩放，不能左右两半分别动；loading、disabled 不缩放；键盘 Space 按住得到等效 pressed 反馈，focus ring 始终可见。
+6. Reduced Motion 取消缩放，保留 active 色、边界与阴影压缩。
+7. 用静态契约锁住：命令控件不再出现按压位移，四处共读同一个 token，Reduced Motion 有静态替代。
+
 ### 文件落点
 
-- Token 与视觉：`app/src/index.css`、`app/src/styles/button.css`、`app/src/styles/sidebar-button.css`、必要时 `app/src/styles/design-system.css`。
+- Token 与视觉：`app/src/index.css`、`app/src/styles/button.css`、`app/src/styles/sidebar-button.css`、`app/src/styles/workspace.css`、必要时 `app/src/styles/design-system.css`。
 - 图标真相：`app/src/shared/design-system/icons.tsx`、`app/src/widgets/DesignSystemWorkspace/iconCatalog.ts`、`app/src/styles/design-system-workspace.css`。
 - 投影：`app/src/styles/CLAUDE.md`、`app/src/shared/design-system/CLAUDE.md`、`app/src/widgets/DesignSystemWorkspace/CLAUDE.md` 及上述文件 L3。
 
@@ -223,40 +236,44 @@
 
 **内部顺序不可打乱**：开本 → 顶栏与命令层级 → 归档线。
 
-### 6.1 开本
+### 6.1 开本（2026-09-02 改为高度优先）
 
 #### 可直接执行的步骤
 
-1. 在 `workspace.css` 让 `.paper-surface` 拥有 `aspect-ratio: 7 / 9`，移除桌面端以 `100vh` 推导纸高的规则；保留 51rem/816px 宽度上限与现有 Paper border/shadow/radius。
-2. 顺着 flex/grid 向内检查 `.paper-content-transition`、`.notes-workspace`、`.note-editor-canvas` 的 viewport `min-height`。初始整页高度只能由 Paper 的 7:9 决定，子元素不得用另一条 `vh` 公式把它重新撑回正方形；正文超过初始页高时由外层 `.paper-stage-scroll` 自然增长。
-3. 保持正文列宽与 padding 原值，禁止为了填满更高的纸拉宽编辑列。标题、CodeMirror、阅读态继续共享既有排版宽度。
-4. `NotePaper reader` 的 `1:√2`、内部滚动、40rem约束一个字不改；Canvas memo 的 280×360 也不改。只让主 Paper 与已经存在的卡片比例同构。
-5. 在窄屏 media query 显式取消固定比例，继续使用可用视口与现有紧凑 padding；不能让 7:9 在手机上制造双重滚动。
-6. 检查 Paper↔Canvas/Card↔Preview 视图过渡：比例改变只能改变纸壳取景，正文仍按原尺寸淡换，不能重新引入文字缩放或重叠。
+1. 在 `workspace.css` 让 Paper 的几何所有者变成高度优先：`paperHeight = 100vh - 2 × --workspace-panel-inset`，`paperWidth = paperHeight × 7 / 9`，**移除 816px/51rem 宽度上限**。7:9 仍是 CSS 里唯一那份形状真相，短文由重叠比例基线立成纸，长文由真实正文撑长同一条 grid track。
+2. 舞台上下留白改为与 Panel 同一条内缩线，使初始状态下 `padding-top + paperHeight + padding-bottom` 恰好等于视口高：空/短笔记的 `scrollHeight` 不得超过 `clientHeight + 1px`。
+3. 顺着 flex/grid 向内检查 `.paper-content-transition`、`.notes-workspace`、`.note-editor-canvas`，不得出现第二条 viewport 公式把纸重新撑高；正文列宽与 padding 保持原值，绝不为了填满更宽的纸拉长行长。
+4. `--paper-max-width` 若已无真实消费者，就连同 token 一起收走；留着它等于给主 Paper 留了一条随时会回来的暗中钳制。
+5. compact fallback 由容器几何触发：`min()` 让可用宽度在装不下时自动接管，放弃精确底边对齐但绝不横向裁纸；不得用断点数字近似这个条件。
+6. 窄屏 media query 显式取消固定比例并继续使用可用视口与现有紧凑 padding，不制造 Paper 与 stage 双重滚动。
+7. `NotePaper reader` 的 `1:√2`、内部滚动、40rem 约束一个字不改；Canvas memo 的 280×360 也不改。
+8. 检查 Paper↔Canvas/Card↔Preview 视图过渡：比例改变只能改变纸壳取景，正文仍按原尺寸淡换，不能重新引入文字缩放或重叠。
 
 #### 验证
 
-- 增加 CSS 契约：桌面主 Paper 是 7:9、没有 viewport-derived min-height；reader 仍为 1:√2；窄屏覆盖取消比例。
-- 浏览器在 1280×720、1440×900、窄屏三档读取 Paper 实际 rect；短笔记应是完整立姿，长笔记应增长且只有 `.paper-stage-scroll` 滚动。
+- 增加 CSS 契约：桌面主 Paper 由高度反推 7:9、没有宽度上限、比例基线不参与列定宽；reader 仍为 1:√2；窄屏覆盖取消比例。
+- 浏览器在 1280×720、1440×900、1920×1080 与窄屏读取 Paper 实际 rect，对照 `PAPER_REFINEMENT_PLAN.md` 2.5 的表（±1px）；短笔记 `scrollHeight ≈ clientHeight` 且滚轮不改变 `scrollTop`，长笔记只有 `.paper-stage-scroll` 滚动。
 - 用短/长/空三种 fixture 检查标题、正文列宽、自动保存与编辑器选择不因几何改动重挂载。
 
 **最容易做错的地方**
 
 1. **把纸宽与行长绑在一起。** 两者独立：纸的比例服务美感，正文列宽服务可读。绑在一起会让「纸好看」和「字好读」互相勒索。
-2. **为了统一比例把阅读预览也改掉。** 两者的高度约束方向相反——预览由视口高反推宽度，写作纸由宽度正推高度。同一个更瘦长的开本在预览上没有代价，在写作纸上会让一张空笔记就需要滚动才能看到纸的底边。
+2. **高度优先还留着 816px 上限。** 较高视口会因此重新失去底边对齐，等于同时维护两条互相冲突的几何真相。
+3. **用 React/resize state 每帧算宽高。** 这是 CSS 能表达的东西；交给 JS 就等于把一份几何真相拆成两份。
+4. **为了统一比例把阅读预览也改掉。** 两者现在都由高度定形，但不是同一个对象：写作纸与 Canvas 卡片必须同比例，阅读纸是临时的模态 ISO 纸。
 
 ### 6.2 顶栏与命令层级
 
 #### 可直接执行的步骤
 
 1. **先重排数据，不先做视觉。** 在 `AppDashboard` 停止为 Paper 拼接文件夹路径；把 `currentMemoTitle`、`organizePresentation`、进入 Canvas/返回 Canvas/整理回调作为明确 props 传给 Paper 工具栏。辅助页面仍保留自己的标题，不套用 memo 的 sticky 逻辑。
-2. **改造 `AppMainToolbar` 为稳定四区。** 左侧只保留真实返回 Canvas 与滚动后出现的 memo 标题；右侧依次承载阅读/编辑状态、32px Secondary「进入 Canvas」、Quiet 归档状态、带文字的 Primary「整理笔记」。动作按钮 DOM 位置固定，状态元素只在有 presentation 时占自己的槽位，不替换整理按钮。
+2. **改造 `AppMainToolbar` 为稳定四区。** 左侧只保留真实返回 Canvas、归档落点与滚动后出现的 memo 标题；右侧命令区顺序冻结为 `整理笔记 → Canvas → 阅读/编辑 → 更多`，四个相邻命令统一使用 8px 留白。动作按钮 DOM 槽位固定，loading、标题淡入、归档状态出现都不得让右侧换位。`[2026-09-04 决策]`
 3. **新增归档状态元素。** 建议独立为小组件，输入只接受 `presentation.path/targetFolderId/memoId/status` 与定位回调；显示末级落点，完整路径进 tooltip/accessible name；点击时打开文件库、展开路径并聚焦真实目标行。它同时暴露稳定 source ref/data attribute 给 6.3，自己不画线。
 4. **编辑不清状态。** 状态继续消费 `organizePresentation`，不订阅逐键正文；内容 revision 变化最多把动作文案改为「重新整理」，不能删除 presentation、自动启动模型或改变线的起点。下一次真实 AI run 开始时再由既有 run status 清掉旧 presentation。
-5. **整理按钮升为唯一 Primary。** 从 square/icon-only Secondary 改为带语义图标与文字的 default/compact Primary，继续复用 Processing/loading 状态和 `⌘/Ctrl+Enter`；「进入 Canvas」保持 Secondary 且永不顺带调用拓展 API。两者不能同尺寸、同变体、同形状成为双胞胎。
+5. **整理按钮升为唯一核心动作，材质是 Quiet Accent。** 带语义图标与文字、36px hit geometry，静止无背景/边框/外影，hover 只浮出极淡 `primary-soft`，loading 才允许凝结成 Processing 实体；继续复用 `⌘/Ctrl+Enter`。**不使用 Filled Primary，也不新增通用 Button variant**——在 `.note-organize-button` 上消费现有 primary/primary-soft/Processing token。「进入 Canvas」收成 32px 无标签 Ghost 图标，与视图开关同重量且永不顺带调用拓展 API。`[2026-09-02 决策]`
 6. **阅读/编辑只表达状态。** 复用 `MarkdownViewMenu` 既有状态源与菜单焦点合同，为当前阅读/编辑入口增加 neutral hover 与 Soft Ink 模糊下划线；More、复制、导出仍住原菜单，不新增第二份 documentView/editingMode 状态。
-7. **做 sticky 而非 fixed。** `.app-main-toolbar` 在 `.paper-stage-scroll` 内 `position: sticky; top: 0`，层级高于正文但低于 Dialog/Panel；静止阶段透明、无边无影。滚动前 40–64px 用原生 scroll timeline 逐步显出 Paper 背景、hairline 与左侧标题；Reduced Motion 下直接切换终态或只保留短淡入。
-8. **防正文穿透。** 凝结后的背景必须使用不透明 `paper-surface`，不能用会让字透出的玻璃；hairline 只在滚动后出现。工具栏高度固定，切换状态、loading、路径长短都不得改变纸内正文起点。
+7. **做 sticky 而非 fixed，且钉在 Panel 内缩线上。** `.app-main-toolbar` 在 `.paper-stage-scroll` 内 `position: sticky`，`top` 是 `--workspace-panel-inset` 而不是 `0`，层级高于正文但低于 Dialog/Panel；静止阶段透明、无边无影。原生 scroll timeline 在 24–80px 严格 `linear` 地显出不透明 Paper 实底（锚在顶栏下沿向上长满「顶栏 + 一条 inset」，因此顶栏上方那条留白里只有纸），36–80px 只淡入标题、不做位移；回顶沿同一路径融回。本条原写 40–96/52–96 且要求出现 hairline，两者均已由 PAPER_CONSTITUTION.md §4.2/§4.3 废弃——那个终点晚于正文抵达顶栏下沿的时刻，而那条底边线会把顶栏读成一个随滚动变宽的物体。不支持 scroll timeline 时只用一个 sentinel + `IntersectionObserver` 软切 `data-condensed`。Reduced Motion 取消位移但保留与滚动对应的浓淡。`[2026-09-02 决策]`
+8. **防正文穿透。** 凝结后的背景必须使用不透明 `paper-surface`，不能用会让字透出的玻璃；不画 hairline（§4.2），边界只由下缘软边表达。工具栏高度固定，切换状态、loading、路径长短都不得改变纸内正文起点。
 9. **移除旧路径 props 与样式。** 删除 `toolbarTitle` 的 memo 路径拼接、`/` 装饰及不再使用的 class；保留辅助页面自身标题路径，避免一次重构波及 Trash/Subscription/Design System。
 
 #### 验证
@@ -269,9 +286,10 @@
 **最容易做错的地方**
 
 1. **静止时就画出那条底边线。** 静止时顶栏不该是一个物体。能在不需要时不存在，是它相对于浮层的唯一决定性优势；一画线就把这个优势丢了。
+2. **sticky 贴到 `y=0`。** 那一刻顶栏已经爬出纸面贴住窗口边缘，不再是「纸的上边距」，而是宪法第 7 节明文不做的浮层。
 2. **sticky 忘了背景。** 现在这一行是透明的，钉住之后会直接透出正文。
 3. **把状态与动作合成一颗会变形的按钮。** 动作按钮的位置永不移动，那是可预测性的全部来源；归档状态是另一个安静的元素。
-4. **让进入画布与整理继续做双胞胎。** 一个是导航（名词），一个是命令（动词）。同尺寸、同变体、同形状并排，正是「名词与动词分离」在视觉层的反面。
+4. **让进入画布与整理继续做双胞胎。** 一个是导航（名词），一个是命令（动词）。同尺寸、同标签、同色调并排，正是「名词与动词分离」在视觉层的反面；共用一个无填色底座只是实现复用，不是同一个材质层级。
 5. **把柔光下划线用在命令上。** 那道指示只给当前态。
 
 ### 6.3 归档线
@@ -337,7 +355,7 @@
 
 | 批次 | 同批必须更新 |
 | --- | --- |
-| 一 | `app/src/styles/CLAUDE.md`、`index.css` 与 `button.css` 的 L3、图标注册表 L3；摘掉 `brand-spec.md` 里对应的「已批准待实施」标注 |
+| 一 | `app/src/styles/CLAUDE.md`、`index.css`/`button.css`/`sidebar-button.css`/`workspace.css` 的 L3、图标注册表 L3；摘掉 `brand-spec.md` 里对应的「已批准待实施」标注，并让 Button material 一节与统一 press 一致 |
 | 二 | 侧栏与 Canvas 控制条相关组件的 L3、`app/src/widgets/CLAUDE.md`、`KnowledgeCanvas/CLAUDE.md` |
 | 三 | `KnowledgeCanvas/CLAUDE.md`（连接交互从 Picker 改为柄 + 两条路径）、卡片与新渲染层的 L3 |
 | 四 | `workspace.css` / `note-paper.css` 的 L3、Paper 相关 widget 的 L3、`app/CLAUDE.md`（**技术栈移除 react-archer**）、根 `CLAUDE.md` 的 app 模块描述 |
@@ -354,7 +372,7 @@
 
 | 批次 | 最窄门禁 | 批次门禁 |
 | --- | --- | --- |
-| 一 | Radius/Iconography 静态契约与 Design System 组件测试 | `bun run typecheck`、`bun run lint` |
+| 一 | Radius/Iconography/press 静态契约与 Design System 组件测试 | `bun run typecheck`、`bun run lint` |
 | 二 | `SidebarCreateMenu`、`CanvasControls`、`WorkspaceCommandPalette` 定向测试 | `bun run typecheck`、`bun run lint` |
 | 三 | elastic geometry、CanvasCardNode、KnowledgeCanvas interaction、CanvasCordEdge 回归 | `bun run typecheck`、`bun run lint` |
 | 四 | Paper CSS/toolbar、archive policy/geometry、workspace motion 回归 | `bun run typecheck`、`bun run lint` |

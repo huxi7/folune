@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 React useId、widgets/cordGeometry 的 CordBox/cordCurveBetween 与 styles/cord.css 的语义类
- * [OUTPUT]: 对外提供 CordLayer、Cord 单条连线与可延后启动的 draw 语义
+ * [OUTPUT]: 对外提供可配置坐标系的 CordLayer、Cord 单条连线与可延后启动的 draw 语义
  * [POS]: app/src/widgets 的 Cord Signature 渲染层；只把 cordGeometry 算好的 path 交给 SVG，粗细恒定而观感上的两头收细由沿线透明度渐变承担，动效与配色全部下沉到 CSS 以避免每帧 React 更新
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -45,15 +45,21 @@ const TAPER_STOPS: Record<CordTaper, readonly [number, number, number]> = {
 export function CordLayer({
   children,
   className,
+  preserveAspectRatio,
+  viewBox,
 }: {
   children: ReactNode;
   className?: string;
+  preserveAspectRatio?: string;
+  viewBox?: string;
 }) {
   return (
     <svg
       aria-hidden="true"
       className={className === undefined ? "cord-layer" : `cord-layer ${className}`}
       focusable="false"
+      preserveAspectRatio={preserveAspectRatio}
+      viewBox={viewBox}
     >
       {children}
     </svg>

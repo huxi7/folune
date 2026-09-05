@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖设计系统图标、文件库当前目录语境与上层 memo/canvas/folder 创建意图
- * [OUTPUT]: 对外提供 96px split 新建控件及可聚焦菜单容器，支持笔记/Canvas/文件夹选择、方向键/Home/End 与外部关闭
+ * [OUTPUT]: 对外提供约 80px split 新建控件及只含 Canvas/文件夹的可聚焦菜单，支持方向键/Home/End/Escape、外部关闭与焦点归还
  * [POS]: AppSidebar 的创建入口；只管理菜单焦点和选择，不持有树事务或路由状态
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -10,9 +10,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   CanvasIcon,
   CaretDownIcon,
-  FileTextIcon,
   FolderIcon,
-  NotePencilIcon,
 } from "../shared/design-system/icons";
 
 type SidebarCreateMenuProps = {
@@ -31,6 +29,7 @@ export function SidebarCreateMenu({
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -38,20 +37,16 @@ export function SidebarCreateMenu({
       if (event.target instanceof Node && rootRef.current?.contains(event.target)) return;
       setOpen(false);
     };
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
-    };
     menuRef.current?.querySelector<HTMLButtonElement>("button")?.focus();
     window.addEventListener("pointerdown", dismiss);
-    window.addEventListener("keydown", handleKeyDown);
     return () => {
       window.removeEventListener("pointerdown", dismiss);
-      window.removeEventListener("keydown", handleKeyDown);
     };
   }, [open]);
 
   const choose = (action: () => void) => {
     setOpen(false);
+    triggerRef.current?.focus();
     action();
   };
 
@@ -65,7 +60,6 @@ export function SidebarCreateMenu({
         title="新建备忘录"
         type="button"
       >
-        <NotePencilIcon aria-hidden size={16} />
         <span>新建</span>
       </button>
       <button
@@ -81,6 +75,7 @@ export function SidebarCreateMenu({
             setOpen(true);
           }
         }}
+        ref={triggerRef}
         title="更多新建选项"
         type="button"
       >
@@ -96,7 +91,12 @@ export function SidebarCreateMenu({
             const index = items.indexOf(
               document.activeElement as HTMLButtonElement,
             );
-            if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+            if (event.key === "Escape") {
+              event.preventDefault();
+              event.stopPropagation();
+              setOpen(false);
+              triggerRef.current?.focus();
+            } else if (event.key === "ArrowDown" || event.key === "ArrowUp") {
               event.preventDefault();
               const next = index === -1
                 ? 0
@@ -115,9 +115,6 @@ export function SidebarCreateMenu({
           role="menu"
           tabIndex={-1}
         >
-          <button onClick={() => choose(onCreateMemo)} role="menuitem" type="button">
-            <FileTextIcon size={14} />新建备忘录
-          </button>
           <button onClick={() => choose(onCreateCanvas)} role="menuitem" type="button">
             <CanvasIcon size={14} />新建 Canvas
           </button>

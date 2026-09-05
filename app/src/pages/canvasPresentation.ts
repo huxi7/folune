@@ -36,11 +36,9 @@ export type CanvasFlowNodeData = {
   body: string | null;
   createdBy: "ai" | "user";
   discoveredFromId: string | null;
-  drifted: boolean;
   kind: CanvasNodeKind;
   motionState?: CanvasFlowMotionState;
   paperTransitionActive?: boolean;
-  snapshotRevision: number | null;
   targetDeleted: boolean;
   targetNodeId: string | null;
   textHeight: number | null;
@@ -128,13 +126,8 @@ export const toCanvasFlowNode = (node: CanvasNode): CanvasFlowNode => {
         : node.text,
       createdBy: node.created_by,
       discoveredFromId: node.discovered_from_id,
-      drifted: node.kind === "memo_ref"
-        && node.target !== null
-        && node.snapshot_revision !== null
-        && node.target.revision !== node.snapshot_revision,
       kind: node.kind,
       paperTransitionActive: false,
-      snapshotRevision: node.snapshot_revision,
       targetDeleted: node.target?.deleted_at !== null
         && node.target?.deleted_at !== undefined,
       targetNodeId: node.target_node_id,
@@ -181,7 +174,6 @@ const sameCanvasFlowNode = (
   && current.data.body === projected.data.body
   && current.data.createdBy === projected.data.createdBy
   && current.data.discoveredFromId === projected.data.discoveredFromId
-  && current.data.drifted === projected.data.drifted
   && current.data.kind === projected.data.kind
   && current.data.motionState?.gestureId === projected.data.motionState?.gestureId
   && current.data.motionState?.kind === projected.data.motionState?.kind
@@ -190,7 +182,6 @@ const sameCanvasFlowNode = (
   && current.data.motionState?.offsetY === projected.data.motionState?.offsetY
   && Boolean(current.data.paperTransitionActive)
     === Boolean(projected.data.paperTransitionActive)
-  && current.data.snapshotRevision === projected.data.snapshotRevision
   && current.data.targetDeleted === projected.data.targetDeleted
   && current.data.targetNodeId === projected.data.targetNodeId
   && current.data.textHeight === projected.data.textHeight

@@ -61,10 +61,10 @@ export const designSystemSections: DesignSystemCategory[] = [
 export const designSystemSamples: DesignSystemSample[] = [
   { category: "Foundations", id: "Color", name: "Color", summary: "Stage、Paper、Ink、Soft Ink Primary 交互轴、Saving Processing、Focus 与 Danger 的唯一语义颜色系统。" },
   { category: "Foundations", id: "Typography", name: "Typography", summary: "Interface、Editorial、Mono 三类字族与八级角色；36px Button 使用 14/18px，32px 文件树使用 12/16px 高密度文字。" },
-  { category: "Foundations", id: "Iconography", name: "Iconography", summary: "Lucide React 圆角描边语言、14/16/20/24px 尺寸阶梯，以及生产环境全部语义图标与真实用途。" },
+  { category: "Foundations", id: "Iconography", name: "Iconography", summary: "Lucide React 圆角描边语言、14/16/20/24px 尺寸阶梯，以及少量真实生产例子和加入/缩放/连接/整理/拓展互不混用的语义出口。" },
   { category: "Foundations", id: "SpatialRhythm", name: "Spacing", summary: "4px 基线与 4/8/12/16/24/32/48/64/96 主节奏，32/36/48px 固定界面尺寸。" },
-  { category: "Foundations", id: "RadiusElevationMotion", name: "Radius · Elevation · Motion", summary: "8/10/12/16/20px 配套曲率、嵌套同心原则与 160/260/320/600ms 时间层级。" },
-  { category: "Primitives", id: "Button", name: "Button", summary: "Soft Ink Primary、Paper Secondary、Ghost 与唯一实心红色 Danger；微雾内外影，press 只下压 1px。" },
+  { category: "Foundations", id: "RadiusElevationMotion", name: "Radius · Elevation · Motion", summary: "8/12/12/16/20px 配套曲率、12px Control 与冻结的 9px inner 同心样板，以及 160/260/320/600ms 时间层级。" },
+  { category: "Primitives", id: "Button", name: "Button", summary: "Soft Ink Primary、Paper Secondary、Ghost 与唯一实心红色 Danger；微雾内外影，press 原地收紧 scale(0.98)。" },
   { category: "Primitives", id: "Input", name: "Input", summary: "纯 Paper、Hairline 和清晰 focus ring；无 inset shadow。" },
   { category: "Primitives", id: "Select", name: "Select", summary: "键盘可达选择器，菜单使用 12px 曲率和克制浮层层级。" },
   { category: "Primitives", id: "SegmentedControl", name: "Segmented Control", summary: "平整轨道，选中项只依靠 Paper 与文字对比。" },

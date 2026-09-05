@@ -46,17 +46,15 @@ SuperNote is a quiet editorial instrument that lets users write first and allows
 
 ### Control moved 10px to 12px (2026-09-01)
 
-> Approved decision, implementation pending. `--radius-control` still ships `0.625rem` until the corresponding change lands; this section states the target, not the current build.
-
 - The whole Control step moves together; Button never gets a private radius token. Button and Input sit on the same row — the Library header places the search Input beside the new-memo Button — and a 2px difference between adjacent controls reads as "something is off" without being nameable. That unnameable wrongness is exactly the complaint this step answers.
-- Control and Paper/Menu now hold the same 12px on purpose. Roundness is relative: 12px on a 36px control reads generous, 12px on an 816px Paper reads nearly square, so one value cannot be confused across those two scales. If Paper later needs more curve, raise the whole Paper step — do not reopen a Button exception.
+- Control and Paper/Menu now hold the same 12px on purpose. Roundness is relative: 12px on a 36px control reads generous, 12px on an 800px-wide Paper reads nearly square, so one value cannot be confused across those two scales. If Paper later needs more curve, raise the whole Paper step — do not reopen a Button exception.
 - SuperNote compared the existing 10px Control, a 12px squircle and full capsule geometry, then selected 12px for the 32/36px Control family. In this product's dense desktop layout, 12px supplies the intended softness without making controls read as swollen pills; this is a frozen SuperNote decision, not a universal law for every 36px control.
 
 ### corner-shape is not a softener
 
 - `corner-shape: squircle` is `superellipse(2)` — a convex curve **between** `round` (`superellipse(1)`) and `square` (`superellipse(infinity)`). At an identical `border-radius` a squircle therefore reads *squarer* than the default arc, and larger superellipse values approach a right angle.
 - The squircle earns its keep at larger radii, where continuous curvature becomes legible; at small radii it only spends the radius. So when a surface still reads too square after this step, the next move is the radius step, never a higher superellipse.
-- Nested concentricity: inner radius starts from outer radius minus the full inset gap, padding and border both, but that subtraction is only a candidate under `corner-shape`, not the final truth. Implementation must optically calibrate the real Button/Input/Select nests in Light and Dark, then freeze the accepted result as explicit inner-radius tokens and Design System specimens; visual judgment selects the number once, it does not remain an unwritten runtime rule.
+- Nested concentricity: inner radius starts from outer radius minus the full inset gap, padding and border both, but that subtraction is only a candidate under `corner-shape`, not the final truth. The 2026-09-01 implementation compared Button/Input/Select/composite nests in Light and Dark at 100% and 125%, then froze `--radius-inner-control` as an explicit `9px`; visual judgment selected the number once, it is not an unwritten runtime rule.
 
 ### Rejected: capsule buttons (2026-09-01)
 
@@ -65,39 +63,87 @@ Moving the 36px Button family to `999px` was evaluated and rejected. The Compose
 ## Workspace panel controls
 
 - A closed Library or AI surface is represented by one fixed Ghost icon at the corresponding canvas edge: no resting background, border, shadow, visible label or width expansion. Expanded Panels own their close command inside the Header instead of reusing an overlaid EdgeDock.
-- The Library Header keeps the compact BrandMark on the left and its close control at the far right. Search and a 32px Primary split create action share the next row; the target split is approximately 80px wide (`48px + 32px`), its main region carries only the label `新建` and creates a memo, and its menu lists only `Canvas` and `文件夹`. The removed NotePencil glyph must not return as decoration. (Approved 2026-09-01, implementation pending.)
+- The Library Header keeps the compact BrandMark on the left and its close control at the far right. Search and a 32px Primary split create action share the next row; the split is approximately 80px wide (`48px + 32px`), its main region carries only the label `新建` and creates a memo, and its menu lists only `Canvas` and `文件夹`. The removed NotePencil glyph must not return as decoration.
 - The AI Header is one quiet 48px row: a 16px history menu, one truncated conversation title, a 16px MessageCirclePlus new-conversation action and a matched PanelRightClose trailing command. The closed Canvas state uses the paired PanelRightOpen glyph; it never shows a ChatCircleDots substitute. It never shows a ThinkingMark, product subtitle or permission pill; the empty conversation body remains blank until a future evidence-backed welcome surface is designed.
 - AI permission remains available as a 32px/16px Ghost shield in the Composer footer, with its readable mode exposed through tooltip, accessible name and the upward menu rather than permanent Header text.
 - The Composer's right-side send/stop action is a 32px geometric circle using the Primary Button material; it explicitly uses `corner-shape: round` instead of inheriting the global Button squircle, and both states keep identical geometry so streaming never shifts the footer silhouette.
-- Paper's AI organize command is the single Primary on the Paper toolbar and carries a text label; its hierarchy, placement and state behaviour are frozen in [PAPER_CONSTITUTION.md](../PAPER_CONSTITUTION.md). It may not share the icon-only Secondary treatment used by view switches. (Approved 2026-09-01, implementation pending — it currently ships as a 32px icon-only Secondary, which this clause supersedes.)
+- Paper's AI organize command is the single core action on the Paper toolbar and carries a text label, but it is **not** a Filled Primary — see `Paper toolbar` below. Its hierarchy, placement and state behaviour are frozen in [PAPER_CONSTITUTION.md](../PAPER_CONSTITUTION.md). The Library's create split keeps the Filled Primary material: it is the creation anchor of a separate Panel context, and "one high-emphasis Primary per screen" is counted per view/context, not per application.
 - The Library search trigger only opens the single global Command Palette. The `[搜索] [新建 │⌄]` row remains mounted, keeps its geometry and never transforms into a local input, hides the create control or jumps layout while search is open. File-library code must not introduce a second search owner or local result tree.
 - Panel entry/exit uses restrained x/opacity Tween motion. Controls do not fly across the panel through shared layout identity, and panel contents are never compressed with scaleX.
 
 ## Paper toolbar
 
-> Approved decision, implementation pending. The shipping toolbar is still a non-sticky row inside the Paper with a resident path on the left; this section states the target.
-
-- The Paper toolbar is sticky **inside** the Paper, not a floating layer above it. At rest it carries no bottom rule, no background and no shadow: the controls simply sit in the Paper's top padding and read as part of the sheet.
-- Once the body title scrolls out of view the bar condenses — Paper-surface background, one very light hairline, and the note title fading in on the left, the same large-title-to-inline-title move Apple uses. It is driven by `animation-timeline: scroll()`, so nothing runs per frame in JS.
+- The Paper toolbar is sticky **inside** the Paper, not a floating layer above it. It **never** carries a bottom rule, a background of its own or a shadow — at rest or condensed: the controls simply sit in the Paper's top padding and read as part of the sheet.
+- The toolbar belongs to the Paper, so it uses the Paper's surface and the Paper's colour. There is no such thing as "the toolbar's background": what condensation spreads is the sheet itself, drawn from the same one `--paper-surface` token. The moment a second surface appears, the toolbar has become a floating layer, which §7 of the constitution forbids.
+- Sticky top is `--workspace-panel-inset` (16px desktop), never `0`. The bar shares one horizontal rail with the left/right Panel headers; pinning it to the browser edge takes it off the sheet.
+- Trailing command order is frozen as `整理笔记` → `Canvas` → `阅读/编辑` → `更多`; organize is separated from the icon cluster by `12px`, while adjacent controls inside the cluster use `4px`. Hierarchy comes from the organize label/32px hit geometry, the 32px icon controls, current-state feedback and More's right-aligned menu — not from a divider. `更多` is always last because its menu drops right-aligned into the sheet.
+- Once the body title scrolls out of view the bar condenses. Scroll `24→80px` drives exactly one animated value — `--toolbar-condense-progress`, a registered `<number>` — and every other quantity is multiplied out from it where it is consumed: the opaque `paper-surface` sheet is anchored to the bar's **bottom** and grows upward to `--toolbar-condense-cover` (`--panel-header-height + --workspace-panel-inset`, 64px desktop), and the soft lower edge starts at that constant bottom line and grows to `--toolbar-edge-max` 16px. **No hairline is drawn — not at any progress.** A rule under the commands makes the eye read everything from the window's top edge down to it as one 64px object, which is exactly the toolbar becoming a thing that widens as you scroll; the boundary is stated by the soft edge alone. Scroll `36→80px` fades the note title in with no spatial displacement.
+- `24 / 80` are constrained, not chosen. The sheet must cover the strip above the sticky rail before body text can reach it, and text reaches the bar's bottom at `1px sheet border + the body column's top padding` — as little as 33px on the ≤767px layout where that padding drops to `2rem`. So the range must start no later than that and be no longer than the sheet's travel. Changing `.note-editor-canvas` top padding re-opens this arithmetic; see PAPER_CONSTITUTION.md §4.3. Scrolling back to the top melts along the same path. Driven by `animation-timeline: scroll(nearest block)` with explicit `linear` and `animation-duration: auto` (progress-based timelines ignore a time duration), so nothing runs per frame in JS; browsers without scroll timelines get one sentinel plus `IntersectionObserver` transitioning the same single progress.
+- The soft lower edge carries the only blur in the bar. Its `backdrop-filter` radius is `--toolbar-edge-blur` 6px times the same progress, so at rest it is `blur(0)` on a zero-height band — there is no resident frosted strip. Inside the band the paper gradient answers "how much is covered" and the mask answers "how far the blur reaches"; the mask outlasts the paper veil, so body text goes soft before the sheet eats it. Both gradients use relative stops, so their shape grows with the 16px rather than being stretched across a fixed length. The paper gradient must be fully opaque at `0%` so the band meets the sheet with no seam — anything less ghosts a line of text right where the sheet is supposed to end.
+- The condensed **surface** is the whole sheet, not glass: no `backdrop-filter`, no shadow, no per-button floating material. A translucent bar would let body text read through the commands. Blur exists only in the soft lower edge described above, and only as a function of scroll progress.
+- Above the bar there is only sheet. The strip between the sticky rail and the top of the scroll viewport becomes sheet interior as soon as the page scrolls, and a half-line of body text clipped there is the loudest possible version of "the body went behind the bar". Bottom anchoring is what makes this hold — and because the cover is the same sheet in the same colour, covering that strip states nothing new: it does not become a top edge.
 - Commands sit right, never on the Paper's centre axis. The left side is identity ("where you are"), the sides are capability ("what you can do") — a centred command bar belongs to tools that act on every line of the body, which none of these do.
-- No resident folder path. The archive location is stated by the archive-status element on the right, which has cause, timing and interaction; a resident path has none of the three.
-- Hover uses the shared neutral `interactive-hover` surface. The blurred Soft Ink underline marks **current state only** (reading/editing) and is never applied to a command.
+- No resident folder path. The archive location is stated by the archive-status element in the left identity group, which has cause, timing and interaction; a resident path has none of the three. Its visible copy is `归档于〈末级目录〉`; the complete path belongs to tooltip and accessible name.
+- Hover uses the shared neutral `interactive-hover` surface — the three ghost icon commands override the Button ghost default `--muted` to reach it, so the icons and the archive-status element next to them cannot answer "what happens when I point at this" two different ways. Press is the shared `--press-scale` / `--motion-press` in-place tightening on every control including archive-status. Organize is the single exception and only on hover, where `primary-soft` expresses Quiet Accent hierarchy rather than neutral feedback.
+- The blurred Soft Ink underline marks **current state only** (reading/editing) and is never applied to a command.
+
+### Quiet Accent — the organize action's material (2026-09-02)
+
+The organize command keeps its `32px` hit geometry (see the 2026-09-04 refinement below — the toolbar owns that height, not the control), `16px` semantic glyph, existing `14/18px` Button typography and `12px` Control curvature. Only its material level changes, and it consumes existing `primary` / `primary-soft` / Processing tokens on `.note-organize-button` rather than introducing a global Button variant or a raw color.
+
+| State | Spec |
+| --- | --- |
+| Rest | Background, border and outer shadow all transparent; icon + `整理笔记` always present; foreground is the existing Soft Ink `primary` |
+| Hover | Faint `primary-soft` surface, foreground moves to `primary-hover`; no stroke, no displacement, no outer shadow |
+| Focus | Global focus ring retained — color alone never carries focus |
+| Active | `scale(--press-scale)` with a slightly deeper soft surface, ~70ms; no `translateY`, no rebound |
+| Loading | The shared Processing surface, spinner and `aria-busy`; it may condense into a solid **while the task runs**, because there the solid expresses state |
+| Success / Failure | Returns to Rest; the archive-status element, archive cord or a Toast states the result — the button is not a result display |
+| Reduced Motion | Scale removed; color, surface and focus feedback stay |
+
+Hiding here means hiding the container's body only. Icon, label, hit area and shortcut are never hidden, and nothing is hidden in response to typing, focus or pointer idle.
+
+### Paper toolbar spacing refinement (2026-09-04)
+
+The Paper command row uses a 12px gap between the text-labeled organize action and the compact icon cluster. Canvas, reading/editing and More remain one cluster with 4px gaps between adjacent controls. All four command hit areas, including organize, share the 32px compact height, as does the archive-status element on the left — and that height is declared once for the toolbar rather than on each control, so a control added later is aligned by construction. The three square commands add only the second dimension, which puts container, hit area and the 16px glyph on one centre. The organize label keeps its existing typography and Quiet Accent material.
+
+## Archive Cord signature
+
+- Archive Cord is a spatial explanation of one durable fact — where AI placed the current memo — not a notification, progress indicator or decorative flourish.
+- The semantic source is the quiet archive-status text in Paper's left identity group. It has no standalone port, permanent status dot, badge body or ornamental terminal.
+- The canonical target is always the memo. Rendering resolves the nearest representation currently available in the tree: the memo row when its ancestry is expanded, otherwise the nearest visible ancestor folder, and only then the top/bottom edge of the tree viewport when that representative is off-screen.
+- A visible row is anchored on its Paper-facing edge, never its centre. A viewport-edge projection communicates direction through the curve's tangent and restrained fade/taper; it does not add an arrow, centre marker, text label or floating hint.
+- Fresh success draws once with one extremely light flow, then settles into a persistent low-contrast hairline. Restoring the page, reopening Library, resizing, scrolling or changing the visible representative does not replay fresh motion.
+- Hovering the archive status, the current representative row or the transparent path hit area raises one shared emphasis state. The row never receives a permanent saturated fill; settled context uses only a restrained hairline/ink change, and narrow overlay layouts retain that same quiet row emphasis without drawing a cross-layer cord.
+- Geometry follows scrolling, Panel motion and tree FLIP every frame while those surfaces move, but the cord itself never oscillates, springs, overshoots or lags. Its life comes from continuous spatial truth, not autonomous animation.
+- Reduced Motion skips fresh draw/flow and representative interpolation, presenting the correct settled endpoint immediately.
 
 ## Paper geometry
 
-> Approved decision, implementation pending. The shipping main Paper still derives its minimum height from the viewport; this section states the target.
+- Main writing Paper: fixed **7:9** opening, **height first** at desktop sizes. `paperHeight = viewportHeight - 2 × --workspace-panel-inset`, `paperWidth = paperHeight × 7 / 9`; there is no width cap. Content may extend the sheet downward without creating an inner paper scroller.
+- Paper and the Panels are not a row of sibling containers — they are **three layers**: Stage background, the Paper resting on it, and the Panels floating on top of the Paper. A floating layer's edges say nothing about the edges of the sheet beneath it, so the Paper does not take its top padding or its top boundary from the Panels.
+- **At its minimum opening the sheet is geometrically congruent with the Panels**: its top and bottom edges land on the same inset rail (16px desktop), so an empty or short note produces no stage scrolling at all.
+- **Past that minimum page height the sheet leaves the Panels' height behind and only grows downward.** The single `paper-stage-scroll` still owns the scrolling; the sheet never gains an inner scroller.
+- **The sheet's top is never given an artificial boundary.** While scrolling it keeps extending above the window — that is one continuous sheet leaving the frame, not a sheet ending on a line. Nothing may be introduced above the toolbar to mark a new top edge: no rule, no colour band, no stage gap, no second surface. See PAPER_CONSTITUTION.md §4.2.
 
-- Main writing Paper: fixed **7:9** opening at desktop widths, up to approximately `816×1049px`; content may extend the sheet downward without creating an inner paper scroller.
+  | Viewport | Panel/Paper height | Paper width |
+  | --- | ---: | ---: |
+  | 1280×720 | 688px | 535px |
+  | 1440×900 | 868px | 675px |
+  | 1920×1080 | 1048px | 815px |
+
+  Borders may shift these by ±1px.
+- Compact fallback: when `paperWidth + 2 × inline safe area > viewport width`, available width wins and exact bottom alignment is abandoned — the sheet is never cropped horizontally. The fallback is triggered by real viewport/container geometry, not by a breakpoint number.
+- Body column width stays independently controlled, so a wider sheet never lengthens the measure.
 - Canvas memo card: the same **7:9** projection, retaining the `280×360` baseline.
 - Canvas reader overlay: ISO 216 **1:√2**, because its height-constrained modal geometry is different from the width-constrained writing sheet.
 - Narrow screens abandon the fixed opening and use the available viewport. Paper proportion never outranks operability.
 
 ## Canvas controls
 
-> Approved decision, implementation pending. The shipping control strip still mixes add and viewport actions in one container.
-
-- Bottom controls use two separate surfaces with whitespace between them: a stable Tonal `加入笔记` action (`FilePlus` + label), and one Ghost viewport group for fit, `ZoomOut`, `ZoomIn` and help. The add action never changes material after the first node or according to node count.
-- The card's single connect handle uses a grip glyph, rides the lower-right card corner and replaces the former `关联` icon. It appears with the metadata actions on hover/focus/selection, disappears when dragging starts, and is a grab handle rather than the persisted edge endpoint.
+- Bottom controls use two separate neutral surfaces with whitespace between them: one icon-only `加入笔记` content action using the semantic `FilePlus` glyph, and one viewport group for fit, `ZoomOut`, `ZoomIn` and help. Both groups share the same Ghost control material; separation expresses the semantic boundary without a persistent accent fill. The add action keeps an explicit accessible name/tooltip and never changes material according to node count.
+- The card's single connect handle uses a grip glyph, sits in the last slot of the metadata row — equidistant from the two content actions, since the corner-riding bump broke the sheet's outline — and replaces the former `关联` icon. It appears with the metadata actions on hover/focus/selection, disappears when dragging starts, and is a grab handle rather than the persisted edge endpoint.
+- The braided elastic cord is a spring, not a hemp rope: its coil count is constant, so pulling only stretches the same coils flat and `coiled` versus `pulled straight` are two states of one object. A fixed wavelength that grows the coil count reads as slack instead of tension, and clamping the count switches behaviour mid-drag. Distant cords stay visibly wavy through the amplitude floor. Its tail fan around the drop bead is a phase-independent constant, because the wave and strand-gap terms cancel at the frozen Reduced Motion phase.
 - The braided elastic cord exists only while the connection gesture is active. Releasing destroys it and lets the existing static `CanvasCordEdge` appear through its current draw receipt without geometry rebound, width normalization or visual inheritance from the temporary cord.
 
 ## Do not invent
@@ -124,7 +170,7 @@ One axis is deliberately singular:
 
 - Solid surfaces only; no static background gradients.
 - A restrained vertical face light, one crisp `1px` inset ring, a thin inner halo and zero-offset short soft outer mist provide a light tactile quality; the highlight must wrap evenly rather than read as a top-only shine.
-- Hover stays in place, press moves down only `1px`, and pressed shadow contracts.
+- Hover stays in place; press tightens in place with `transform: scale(var(--press-scale))` (`0.98`, ~70ms, center origin) and the pressed shadow contracts. No `translateY` drop, no bounce or overshoot curve. Split controls scale as one shell, loading and disabled never scale, and Reduced Motion keeps the active color, border and shadow compression without the scale.
 - Saving uses the same radius, a low-frequency narrow shimmer swept on a subtle diagonal, and the specimen label stays simply `Saving` without trailing dots.
 
 ## Historical reference — Current Blue

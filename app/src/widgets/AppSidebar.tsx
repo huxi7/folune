@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 MemoTreeBranch/Skeleton、SidebarCreateMenu、memoLibrary 拖拽/祖先计划、memoTitleRules 的重名与可改名判据、持久化展开偏好、整理定位意图、Profile 与上层事务命令
- * [OUTPUT]: 对外提供文件库 Header、搜索入口、笔记优先的分流新建入口、可聚焦真实文件树、正文意图预热、树内重排/跨视图笔记拖拽、底部导航及节点回收站命令
- * [POS]: app/src/widgets 的按需文件库内容层；拥有文件库内部信息层级与关闭入口，只收集业务意图，事务与路由切换由 Dashboard 编排
+ * [INPUT]: 依赖 MemoTreeBranch/Skeleton、SidebarCreateMenu、memoLibrary 拖拽/祖先计划、memoTitleRules 的重名与可改名判据、持久化展开偏好、archiveCordPolicy 的代表解析、共享 tree FLIP 时间轴与归档运动租约、Profile 与上层事务命令
+ * [OUTPUT]: 对外提供文件库 Header、搜索入口、笔记优先的分流新建入口、可聚焦真实文件树、正文意图预热、树内重排/跨视图笔记拖拽、底部导航、节点回收站命令，以及树内唯一的归档可见代表标记
+ * [POS]: app/src/widgets 的按需文件库内容层；它是 expandedFolders 的所有者，因此也是「当前谁代表那篇被整理的笔记」唯一有资格回答的一层；事务与路由切换由 Dashboard 编排
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -35,6 +35,18 @@ import {
 } from "../shared/design-system/components";
 import { memoNodeTitleTaken } from "../shared/store/memoTitleRules";
 import {
+  treeFlipDurationMs,
+  treeFlipEasing,
+} from "../pages/workspaceMotion";
+import {
+  resolveArchiveRepresentative,
+  type ArchiveRepresentative,
+} from "./archiveCordPolicy";
+import {
+  beginArchiveMotion,
+  endArchiveMotion,
+} from "./archiveCordMotion";
+import {
   createMemoMovePlan,
   getAncestorFolderIds,
   getFolderIds,
@@ -57,13 +69,19 @@ export type SidebarView =
 
 type AppSidebarProps = {
   activeView: SidebarView;
-  memoTree: MemoTreeNode[];
-  mutating: boolean;
-  organizeTarget: {
-    folderId: string | null;
+  /**
+   * 归档展示的 canonical 事实：哪一篇 memo、由哪次 run 证明、是刚发生还是本来就为真。
+   * 目录 ID 不在其中 —— 屏幕上由谁代表它，是这一层按 expandedFolders 推导出来的结果，
+   * 不是上层能替它决定的输入。origin 只用来决定要不要「带用户过去」：fresh 展开祖先并
+   * 滚动定位，restored 一律尊重用户持久化的展开状态。
+   */
+  archiveTarget: {
     memoId: string;
+    origin: "fresh" | "restored";
     runId: string;
   } | null;
+  memoTree: MemoTreeNode[];
+  mutating: boolean;
   onCreateMemo: (parentId: string | null) => void;
   onCreateCanvas: (parentId: string | null) => void;
   onClose: () => void;
@@ -104,8 +122,6 @@ type ContextMenuStyle = CSSProperties & {
 const CONTEXT_MENU_WIDTH = 196;
 const CONTEXT_MENU_HEIGHT = 172;
 const CONTEXT_MENU_VIEWPORT_GAP = 8;
-const FLIP_DURATION_MS = 210;
-const FLIP_EASING = "cubic-bezier(0.2, 0.8, 0.2, 1)";
 const ROOT_END_TARGET: MemoDropTarget = {
   nodeId: null,
   parentId: null,
@@ -165,9 +181,9 @@ const setMemoDragImage = (
 
 export function AppSidebar({
   activeView,
+  archiveTarget,
   memoTree,
   mutating,
-  organizeTarget,
   onCreateMemo,
   onCreateCanvas,
   onClose,
@@ -217,9 +233,24 @@ export function AppSidebar({
     ready: treeStatus === "ready",
     userId: profile.id,
   });
+  /*
+   * 代表解析在这一层, 因为 expandedFolders 只住在这一层。让 Overlay 隔着 DOM 再猜一次
+   * 父级, 就会出现两个都自称正确的答案 —— 折叠的那一刻它们必然分叉。
+   */
+  const archiveRepresentative: ArchiveRepresentative | null = archiveTarget === null
+    ? null
+    : resolveArchiveRepresentative({
+      expandedFolders,
+      memoId: archiveTarget.memoId,
+      tree: memoTree,
+      treeReady: treeStatus === "ready",
+    });
+  // 只有刚发生的整理才把用户带过去; 恢复的事实不许撑开他自己收起的目录
+  const freshArchiveMemoId = archiveTarget?.origin === "fresh"
+    ? archiveTarget.memoId
+    : null;
   const focusNodeId = reveal?.nodeId
-    ?? organizeTarget?.folderId
-    ?? organizeTarget?.memoId
+    ?? freshArchiveMemoId
     ?? selectedMemoId;
   const selectedNode = selectedMemoId === null
     ? null
@@ -228,24 +259,25 @@ export function AppSidebar({
     ? selectedNode.id
     : selectedNode?.parent_id ?? null;
   const focusKey = reveal === null
-    ? organizeTarget?.runId ?? layoutKey
+    ? (freshArchiveMemoId === null ? layoutKey : archiveTarget?.runId ?? layoutKey)
     : `reveal:${reveal.seq}`;
 
-  // focusKey/layoutKey 是定位与树结构的语义触发器；标题等 memoTree 身份变化不应反复抢占展开状态。
-  // oxlint-disable react-hooks/exhaustive-deps -- setter 稳定，organizeTarget 已折叠进 focusNodeId/focusKey
+  /*
+   * focusKey/layoutKey 是定位与树结构的语义触发器；标题等 memoTree 身份变化不应反复抢占
+   * 展开状态。展开的只有目标 memo 的祖先 —— canonical 目标是 memo, 没有第二个「目标目录」
+   * 需要额外撑开。用户随后手动收起时 focusKey 不变, 因此这个 effect 不会把它再撑回来。
+   */
+  // oxlint-disable react-hooks/exhaustive-deps -- setter 稳定，archiveTarget 已折叠进 focusNodeId/focusKey
   useEffect(() => {
     if (focusNodeId === null) {
       return;
     }
 
     const ancestorIds = getAncestorFolderIds(memoTree, focusNodeId);
-    const folderIdsToOpen = organizeTarget?.folderId === null || organizeTarget === null
-      ? ancestorIds
-      : [...ancestorIds, organizeTarget.folderId];
 
-    if (folderIdsToOpen.length > 0) {
+    if (ancestorIds.length > 0) {
       setExpandedFolders((currentFolders) =>
-        new Set([...currentFolders, ...folderIdsToOpen]),
+        new Set([...currentFolders, ...ancestorIds]),
       );
     }
   }, [focusKey, focusNodeId, layoutKey]);
@@ -295,6 +327,8 @@ export function AppSidebar({
       return;
     }
 
+    const animations: Animation[] = [];
+
     rows.forEach((row) => {
       const nodeId = row.dataset["memoTreeRowId"];
       const previous = nodeId === undefined ? undefined : snapshot.get(nodeId);
@@ -316,17 +350,38 @@ export function AppSidebar({
         return;
       }
 
-      row.animate(
+      animations.push(row.animate(
         [
           { transform: `translate(${deltaX}px, ${deltaY}px)` },
           { transform: "translate(0, 0)" },
         ],
         {
-          duration: FLIP_DURATION_MS,
-          easing: FLIP_EASING,
+          duration: treeFlipDurationMs,
+          easing: treeFlipEasing,
         },
-      );
+      ));
     });
+
+    if (animations.length === 0) {
+      return;
+    }
+
+    /*
+     * FLIP 是 transform 动画: ResizeObserver 看不见它, 也没有 transitionend。
+     * 归档线要在这段时间里逐帧读到行的真实 transform 后 rect, 只能由发起动画的这一方
+     * 明确交出一段租约, 并在真的结束时归还 —— 猜结尾等于让线晚一帧到位。
+     */
+    beginArchiveMotion("tree-flip");
+    let released = false;
+    const release = () => {
+      if (released) return;
+      released = true;
+      endArchiveMotion("tree-flip");
+    };
+    void Promise.allSettled(animations.map((animation) => animation.finished))
+      .then(release);
+
+    return release;
   }, [layoutKey]);
 
   useEffect(() => {
@@ -355,13 +410,19 @@ export function AppSidebar({
 
     const dismissForViewportChange = () => setContextMenu(null);
     window.addEventListener("pointerdown", dismissContextMenu);
-    window.addEventListener("keydown", handleKeyDown);
+    /*
+     * keydown 必须挂在 document 而不是 window: PaperWorkspaceShell 的壳层守卫也在
+     * window 上, 同一目标同一阶段只按注册顺序触发, 而它注册得更早 —— 于是一次 Escape
+     * 会先关掉文件库, 再关掉这个菜单, 用户按一下丢两层。document 在冒泡链上先于
+     * window, preventDefault 因此赶在壳层之前生效; 这正是 useDismissable 那半边协议。
+     */
+    document.addEventListener("keydown", handleKeyDown);
     window.addEventListener("resize", dismissForViewportChange);
     window.addEventListener("scroll", dismissForViewportChange, true);
 
     return () => {
       window.removeEventListener("pointerdown", dismissContextMenu);
-      window.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("resize", dismissForViewportChange);
       window.removeEventListener("scroll", dismissForViewportChange, true);
     };
@@ -606,12 +667,11 @@ export function AppSidebar({
             <div className="sidebar-tree-empty">右键空白处，创建第一个备忘录或文件夹。</div>
           ) : (
             <MemoTreeBranch
+              archiveRepresentative={archiveRepresentative}
               depth={0}
               draggedNodeId={draggedNodeId}
               dropTarget={dropTarget}
               expandedFolders={expandedFolders}
-              highlightedFolderId={organizeTarget?.folderId ?? null}
-              highlightedMemoId={organizeTarget?.memoId ?? null}
               mutating={mutating}
               nodes={memoTree}
               notesActive={activeView === "note"}

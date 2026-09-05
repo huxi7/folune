@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖 React、生产 Design System/Lucide 图标边界、真实 MarkdownEditor/MarkdownReadingView 与 PaperSurface/EdgeDock/ArchiveCord/Cord Signature Components
- * [OUTPUT]: 对外提供 Color/Type/Iconography、Primitives、Editorial 与 AI 状态样板；自定义 Input 家族由包裹 label 提供可见名称
+ * [INPUT]: 依赖 React、生产 Design System/Lucide 图标边界、FoundationSpecimens、真实 MarkdownEditor/MarkdownReadingView 与 PaperSurface/EdgeDock/ArchiveCord/Cord Signature Components
+ * [OUTPUT]: 对外提供 Color/Type/Iconography、Control 内外同心曲率、Primitives、Editorial 与 AI 状态样板；自定义 Input 家族由包裹 label 提供可见名称
  * [POS]: app/src/widgets/DesignSystemWorkspace 的预览层；所有样板只读取生产 Token/API，不建立展示专用视觉系统
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -44,11 +44,7 @@ import {
   type SegmentedControlOption,
 } from "../../shared/design-system/components";
 import { MentionMenu, type MentionResult } from "../AgentPanel/MentionMenu";
-import {
-  ArchiveCordStage,
-  ArchivePort,
-  ArchiveTargetPort,
-} from "../ArchiveCord";
+import { ArchiveCordOverlay } from "../ArchiveCord";
 import { Cord, CordLayer } from "../Cord";
 import { EdgeDock } from "../EdgeDock";
 import { MarkdownEditor } from "../MarkdownEditor";
@@ -56,10 +52,8 @@ import { MarkdownReadingView } from "../MarkdownReadingView";
 import { PaperSurface } from "../PaperSurface";
 import { useTheme } from "../../shared/theme/ThemeProvider";
 import type { DesignSystemSampleId } from "./componentCatalog";
-import {
-  iconographyCatalog,
-  type IconographyGroup,
-} from "./iconCatalog";
+import { iconographyCatalog } from "./iconCatalog";
+import { ControlRadiusInnerPreview, SemanticIconComparison } from "./FoundationSpecimens";
 
 type ComponentPreviewProps = {
   sampleId: DesignSystemSampleId;
@@ -92,15 +86,6 @@ const typographyRoles = [
   { key: "caption", role: "辅助 Caption", token: "--type-caption", size: "11px", leading: "16px", weight: "560", family: "Interface", usage: "时间 / 状态 / 辅助说明", sample: "最后保存于 14:32" },
   { key: "mono", role: "系统 Mono", token: "--type-mono", size: "11px", leading: "16px", weight: "500", family: "Mono", usage: "Token / 路径 / 技术标识", sample: "--primary · memo_2026_08" },
 ] as const;
-
-const iconographyGroups: readonly IconographyGroup[] = [
-  "Navigation",
-  "Content",
-  "Actions",
-  "Status",
-  "AI & Communication",
-  "Account & System",
-];
 
 function ColorPreview() {
   return (
@@ -191,11 +176,11 @@ function TypographyPreview() {
 
 function IconographyPreview() {
   return (
-    <div className="ds-iconography-preview">
+    <div className="ds-iconography-preview" data-icon-count={iconographyCatalog.length}>
       <header className="ds-iconography-intro">
         <div>
           <strong>Lucide React</strong>
-          <span>Rounded outline language</span>
+          <span>生产图标统一从 shared/design-system/icons.tsx 取语义别名</span>
         </div>
         <p>24×24 Grid · 2px Stroke · Round cap/join · currentColor</p>
       </header>
@@ -208,30 +193,24 @@ function IconographyPreview() {
         ))}
       </div>
       <p className="ds-iconography-rule">
-        默认使用描边图标；Primary、选中态与状态色只改变 currentColor，不切换另一套填充图形。BrandMark、ThinkingMark 与 Archive Cord 属于 SuperNote Signature，不纳入通用图标库。
+        这里只列最常用的生产例子；完整导出不在此重复铺开。默认使用描边图标，Primary、选中态与状态色只改变 currentColor；BrandMark、ThinkingMark 与 Archive Cord 属于 Signature 例外。
       </p>
-      <div className="ds-iconography-groups">
-        {iconographyGroups.map((group) => (
-          <section className="ds-iconography-group" key={group}>
-            <h4>{group}</h4>
-            <div className="ds-iconography-grid">
-              {iconographyCatalog.filter((item) => item.group === group).map((item) => {
-                const IconComponent = item.icon;
+      <SemanticIconComparison />
+      <div className="ds-iconography-grid" aria-label="生产图标示例">
+        {iconographyCatalog.map((item) => {
+          const IconComponent = item.icon;
 
-                return (
-                  <div className="ds-iconography-item" key={item.exportName}>
-                    <span aria-hidden="true"><IconComponent size={16} /></span>
-                    <div>
-                      <strong>{item.label}</strong>
-                      <code>{item.exportName}</code>
-                      <small>{item.usage}</small>
-                    </div>
-                  </div>
-                );
-              })}
+          return (
+            <div className="ds-iconography-item" key={item.exportName}>
+              <span aria-hidden="true"><IconComponent size={16} /></span>
+              <div>
+                <strong>{item.label}</strong>
+                <code>{item.exportName}</code>
+                <small>{item.usage}</small>
+              </div>
             </div>
-          </section>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -242,11 +221,12 @@ function RadiusElevationMotionPreview() {
     <div className="ds-foundation-material-preview">
       <div className="ds-radius-preview">
         <span data-radius="compact"><strong>8</strong><small>Compact</small></span>
-        <span data-radius="control"><strong>10</strong><small>Control</small></span>
+        <span data-radius="control"><strong>12</strong><small>Control</small></span>
         <span data-radius="paper"><strong>12</strong><small>Paper · Menu</small></span>
         <span data-radius="panel"><strong>16</strong><small>Panel</small></span>
         <span data-radius="dialog"><strong>20</strong><small>Dialog</small></span>
       </div>
+      <ControlRadiusInnerPreview />
       <div className="ds-elevation-preview">
         <span data-elevation="paper">Paper</span>
         <span data-elevation="panel">Panel</span>
@@ -628,10 +608,6 @@ function PaperSurfacePreview() {
   return (
     <div className="ds-paper-surface-preview">
       <PaperSurface
-        archiveActive={false}
-        archiveDrawKey="design-system-paper"
-        archiveSourceId="design-system-paper"
-        archiveTargetNodeId={null}
         organizing={false}
         paperIdentity="design-system-paper"
         reducedMotion={false}
@@ -653,19 +629,29 @@ function EdgeDockPreview() {
 }
 
 function ArchiveCordPreview() {
+  /*
+   * 样板消费的就是生产 Overlay 与生产标记: source 是 data-archive-source, 终点是树上
+   * 那个唯一的 data-archive-representative。样板不复制第二条展示专用线, 因此指向样板
+   * 目标时提亮的是真实的那套 emphasis 规则。origin 用 restored, 于是它稳定停在 settled,
+   * 不会每次切到这一页都重播一次「刚刚发生」。
+   */
   return (
-    <ArchiveCordStage active refreshKey="design-system-archive-cord">
-      <div className="ds-archive-cord-preview">
-        <div className="ds-archive-cord-paper">
-          <ArchivePort active drawKey="design-system" reducedMotion={false} sourceId="design-system-cord" targetNodeId="design-system-target" />
-          <strong>Paper</strong>
-        </div>
-        <div className="ds-archive-cord-target">
-          <span>Product thinking</span>
-          <ArchiveTargetPort active nodeId="design-system-target" />
-        </div>
+    <div className="ds-archive-cord-preview" data-archive-cord-scope="design-system">
+      <div className="ds-archive-cord-paper" data-archive-source="true"><strong>归档于 Product thinking</strong></div>
+      <div
+        className="ds-archive-cord-target"
+        data-archive-representative="memo"
+        data-memo-tree-row-id="design-system-target"
+      >
+        <span>Product thinking</span>
       </div>
-    </ArchiveCordStage>
+      <ArchiveCordOverlay
+        libraryOpen
+        overlayPanels={false}
+        presentation={{ memoId: "design-system-target", origin: "restored", path: "Product / Product thinking", runId: "design-system", status: "succeeded" }}
+        scopeSelector='[data-archive-cord-scope="design-system"]'
+      />
+    </div>
   );
 }
 
@@ -676,17 +662,17 @@ function CordPreview() {
 
   return (
     <div className="ds-cord-preview">
-      <CordLayer>
+      <CordLayer preserveAspectRatio="none" viewBox="0 0 448 190">
         <Cord draw from={paper} mode="radial" to={near} tone="explore" variant="dashed" />
         <Cord draw from={paper} mode="radial" to={far} tone="relation" variant="solid" />
       </CordLayer>
-      <div className="ds-cord-preview-paper" style={{ height: paper.height, left: paper.x, top: paper.y, width: paper.width }}>
+      <div className="ds-cord-preview-paper" style={{ height: "50.5%", left: "5.4%", top: "27.4%", width: "29.5%" }}>
         <strong>Paper</strong>
       </div>
-      <div className="ds-cord-preview-card" style={{ height: near.height, left: near.x, top: near.y, width: near.width }}>
+      <div className="ds-cord-preview-card" style={{ height: "23.2%", left: "65.2%", top: "9.5%", width: "29.5%" }}>
         虚线 · AI 临时推荐
       </div>
-      <div className="ds-cord-preview-card" style={{ height: far.height, left: far.x, top: far.y, width: far.width }}>
+      <div className="ds-cord-preview-card" style={{ height: "23.2%", left: "65.2%", top: "68.4%", width: "29.5%" }}>
         实线 · 已确认关联
       </div>
     </div>

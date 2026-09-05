@@ -1,0 +1,211 @@
+<!--
+  连接绳形制决策现场 · 2026-09-02
+  五档 = 两个问题的组合(波跑不跑 x 两端怎么收), 空格或点按钮切换, 移动鼠标即拖拽。
+  A 档是 src/widgets/KnowledgeCanvas/elasticCordGeometry.ts 当时的真实输出(下方内联了那次的打包);
+  B-E 档是同一套数学换开关, 只为对照。这是决策证据快照, 不随后续代码更新 —— 要看当前线上行为请开 app 真拖一次。
+-->
+<!doctype html><meta charset="utf-8"><title>连接绳 · 现场</title>
+<style>
+  :root { --stage:#f2f1ee; --card:#fff; --primary:#395875; --ink:#3d3a35; --hairline:#e3e1dc; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--stage); font:13px/1.5 -apple-system,system-ui; color:var(--ink); overflow:hidden; cursor:crosshair; }
+  #bar { position:fixed; inset:12px 12px auto 12px; display:flex; gap:8px; align-items:center; z-index:9; }
+  button { height:32px; padding:0 14px; border:1px solid var(--hairline); border-radius:12px; background:var(--card); font:600 13px -apple-system,system-ui; color:var(--ink); cursor:pointer; }
+  button[data-on="1"] { background:var(--primary); border-color:var(--primary); color:#fff; }
+  #read { margin-left:auto; font-variant-numeric:tabular-nums; color:#8b857c; background:var(--card); border:1px solid var(--hairline); border-radius:12px; padding:6px 12px; }
+  svg { position:fixed; inset:0; width:100vw; height:100vh; }
+  .card { fill:var(--card); stroke:var(--hairline); }
+  .cardtext { fill:#c9c5bd; font:600 12px -apple-system,system-ui; }
+  .strand { fill:none; stroke:var(--primary); stroke-linecap:round; stroke-linejoin:round; }
+  .grip { fill:var(--primary); opacity:.5; }
+  #hint { position:fixed; left:12px; bottom:12px; color:#a8a29a; z-index:9; }
+</style>
+<div id="bar">
+  <button id="mode" data-on="0">A · 新方案：只在尾端 14px 收进珠子（点我换）</button>
+  <div id="read"></div>
+</div>
+<div id="hint">移动鼠标就是拖拽。空格或点按钮切换五档：A 新方案 / B 圈不动+两端全松 / C 旧纺锤 / D 波在跑+两端全松 / E 波在跑+两端都收成点。</div>
+<svg id="svg">
+  <g id="cordlayer">
+    <path class="strand" data-s="0" style="opacity:.88"/>
+    <path class="strand" data-s="1" style="opacity:.5"/>
+    <path class="strand" data-s="2" style="opacity:.26"/>
+  </g>
+  <g id="cards">
+    <rect class="card" x="80" y="240" width="280" height="180" rx="12"/>
+    <text class="cardtext" x="100" y="270">来源卡片</text>
+    <rect class="card" x="620" y="420" width="280" height="180" rx="12"/>
+    <text class="cardtext" x="640" y="450">另一张卡片（绳会钻到它底下）</text>
+  </g>
+  <circle class="grip" id="gripdot" cx="336" cy="396" r="3"/>
+  <circle id="bead" r="3.2" fill="var(--primary)" stroke="var(--stage)" stroke-width="2.2" style="paint-order:stroke"/>
+</svg>
+<script>
+(() => {
+  // src/widgets/KnowledgeCanvas/elasticCordGeometry.ts
+  var ELASTIC_CORD_PARAMETERS = {
+    farDistance: 1040,
+    ferrule: 14,
+    harmonic: 1,
+    maxAmplitude: 10,
+    maxStrandGap: 5.4,
+    maxWidth: 2.4,
+    minAmplitude: 4.2,
+    minStrandGap: 2.8,
+    minWidth: 1.5,
+    nearDistance: 80,
+    phaseSpeed: 0.0015,
+    samples: 144,
+    strands: 3,
+    strandSpeeds: [1, 1.42, 2.05],
+    waves: 3
+  };
+  var elasticCordEnvelope = (progress, length) => {
+    const safeLength = Number.isFinite(length) ? Math.max(0, length) : 0;
+    return Math.min(1, (1 - progress) * safeLength / ELASTIC_CORD_PARAMETERS.ferrule);
+  };
+  var clamp01 = (value) => Math.min(1, Math.max(0, value));
+  var lerp = (from, to, amount) => from + (to - from) * amount;
+  var format = (value) => {
+    const rounded = Math.round(value * 100) / 100;
+    return Object.is(rounded, -0) ? "0" : String(rounded);
+  };
+  function elasticCordMetrics(distance) {
+    const safeDistance = Number.isFinite(distance) ? Math.max(0, distance) : 0;
+    const tension = clamp01((safeDistance - ELASTIC_CORD_PARAMETERS.nearDistance) / (ELASTIC_CORD_PARAMETERS.farDistance - ELASTIC_CORD_PARAMETERS.nearDistance));
+    return {
+      amplitude: lerp(ELASTIC_CORD_PARAMETERS.maxAmplitude, ELASTIC_CORD_PARAMETERS.minAmplitude, tension),
+      strandGap: lerp(ELASTIC_CORD_PARAMETERS.maxStrandGap, ELASTIC_CORD_PARAMETERS.minStrandGap, tension),
+      tension,
+      width: lerp(ELASTIC_CORD_PARAMETERS.maxWidth, ELASTIC_CORD_PARAMETERS.minWidth, tension)
+    };
+  }
+  var waveform = (theta) => Math.sin(theta) + ELASTIC_CORD_PARAMETERS.harmonic * Math.sin(3 * theta);
+  var strandPath = (from, to, amplitude, strandGap, phase, strandIndex) => {
+    const dx = to.x - from.x;
+    const dy = to.y - from.y;
+    const length = Math.hypot(dx, dy);
+    const normal = length === 0 ? { x: 0, y: 0 } : { x: -dy / length, y: dx / length };
+    const lay = strandIndex * Math.PI * 2 / 3;
+    const helix = phase * (ELASTIC_CORD_PARAMETERS.strandSpeeds[strandIndex] ?? 1) + lay;
+    const peak = 1 + ELASTIC_CORD_PARAMETERS.harmonic;
+    const commands = [];
+    for (let index = 0;index <= ELASTIC_CORD_PARAMETERS.samples; index += 1) {
+      const progress = index / ELASTIC_CORD_PARAMETERS.samples;
+      const envelope = elasticCordEnvelope(progress, length);
+      const wave = waveform(progress * Math.PI * 2 * ELASTIC_CORD_PARAMETERS.waves + lay) / peak;
+      const braid = strandGap * Math.cos(progress * Math.PI * 2 + helix);
+      const offset = envelope * (wave * amplitude + braid);
+      const x = from.x + dx * progress + normal.x * offset;
+      const y = from.y + dy * progress + normal.y * offset;
+      commands.push(`${index === 0 ? "M" : "L"}${format(x)},${format(y)}`);
+    }
+    return commands.join(" ");
+  };
+  function elasticCordGeometry({
+    from: grip,
+    phase = 0,
+    pointer
+  }) {
+    const from = {
+      x: Number.isFinite(grip.x) ? grip.x : 0,
+      y: Number.isFinite(grip.y) ? grip.y : 0
+    };
+    const to = {
+      x: Number.isFinite(pointer.x) ? pointer.x : from.x,
+      y: Number.isFinite(pointer.y) ? pointer.y : from.y
+    };
+    const distance = Math.hypot(to.x - from.x, to.y - from.y);
+    const metrics = elasticCordMetrics(distance);
+    return {
+      ...metrics,
+      distance,
+      from,
+      strands: [0, 1, 2].map((strandIndex) => strandPath(from, to, metrics.amplitude, metrics.strandGap, Number.isFinite(phase) ? phase : 0, strandIndex)),
+      to
+    };
+  }
+
+  // ../../../../../private/tmp/sn-verify/lab-entry.ts
+  globalThis.CORD = {
+    ELASTIC_CORD_PARAMETERS,
+    elasticCordEnvelope,
+    elasticCordGeometry,
+    elasticCordMetrics
+  };
+})();
+
+</script>
+<script>
+const { ELASTIC_CORD_PARAMETERS: P, elasticCordGeometry, elasticCordMetrics } = window.CORD;
+const GRIP = { x: 336, y: 396 };
+let pointer = { x: 900, y: 300 }, mode = 0;
+
+/* 五档 = 两个问题的组合: 波跑不跑 × 两端怎么收
+   travel: 波沿着绳往前跑（旧）/ 圈钉在绳上只有三股互绕（新）
+   env:    ferrule 只在尾端 14px 收 | none 两端全不收 | spindle 旧的(起点收成点+尾端扇开) | both 两端对称收成点 */
+const MODES = [
+  { label: 'A · 新方案：圈不动 ＋ 只在尾端 14px 收进珠子（线上代码）', travel: false, env: 'ferrule', on: '0' },
+  { label: 'B · 圈不动 ＋ 两端全不收束', travel: false, env: 'none', on: '1' },
+  { label: 'C · 波在跑 ＋ 旧的纺锤（起点收成点、尾端扇开）', travel: true, env: 'spindle', on: '1' },
+  { label: 'D · 波在跑 ＋ 两端全不收束', travel: true, env: 'none', on: '1' },
+  { label: 'E · 波在跑 ＋ 两端都收成一个点（对称）', travel: true, env: 'both', on: '1' },
+];
+
+addEventListener('pointermove', (e) => { pointer = { x: e.clientX, y: e.clientY }; });
+const modeBtn = document.getElementById('mode');
+const setLabel = () => { modeBtn.textContent = MODES[mode].label + '　（点我换）'; modeBtn.dataset.on = MODES[mode].on; };
+modeBtn.onclick = () => { mode = (mode + 1) % MODES.length; setLabel(); };
+addEventListener('keydown', (e) => { if (e.key === ' ') { e.preventDefault(); modeBtn.onclick(); } });
+setLabel();
+
+const envelope = (kind, p, L) => {
+  if (kind === 'none') return 1;
+  if (kind === 'ferrule') return Math.min(1, ((1 - p) * L) / P.ferrule);
+  if (kind === 'both') return Math.sin(Math.PI * p);
+  return Math.sin(Math.PI * p) + 0.34 * p * p; // spindle
+};
+
+const build = (from, to, phase, opt) => {
+  const dx = to.x - from.x, dy = to.y - from.y, L = Math.hypot(dx, dy);
+  const { amplitude, strandGap } = elasticCordMetrics(L);
+  const nx = L === 0 ? 0 : -dy / L, ny = L === 0 ? 0 : dx / L;
+  return [0, 1, 2].map((i) => {
+    const speed = P.strandSpeeds[i];
+    // 旧的把同一个相位同时喂给波和股距, 且股距只作用在外侧两股((i-1)); 新的把两件事分开
+    const lay = opt.travel ? ((i - 1) * Math.PI * 2) / 3 : (i * Math.PI * 2) / 3;
+    const out = [];
+    for (let k = 0; k <= P.samples; k++) {
+      const p = k / P.samples;
+      const wavePhase = (opt.travel ? phase * speed : 0) + lay;
+      const th = p * Math.PI * 2 * P.waves + wavePhase;
+      const w = (Math.sin(th) + Math.sin(3 * th)) / 2;
+      const braid = opt.travel
+        ? (i - 1) * strandGap * Math.cos(p * Math.PI * 2 + phase * speed + lay)
+        : strandGap * Math.cos(p * Math.PI * 2 + phase * speed + lay);
+      const fan = opt.env === 'spindle' ? (i - 1) * 3.4 * p * p : 0;
+      const off = envelope(opt.env, p, L) * (w * amplitude + braid) + fan;
+      out.push(`${k === 0 ? 'M' : 'L'}${(from.x + dx * p + nx * off).toFixed(2)},${(from.y + dy * p + ny * off).toFixed(2)}`);
+    }
+    return out.join(' ');
+  });
+};
+
+const paths = [...document.querySelectorAll('.strand')];
+const bead = document.getElementById('bead'), read = document.getElementById('read');
+const countExtrema = (d) => { let n = 0; const ys = d.split(' ').map((t) => +t.slice(1).split(',')[1]);
+  for (let i = 1; i < ys.length - 1; i++) if ((ys[i] > ys[i-1] && ys[i] >= ys[i+1]) || (ys[i] < ys[i-1] && ys[i] <= ys[i+1])) n++; return n; };
+
+const frame = (t) => {
+  const phase = t * P.phaseSpeed;
+  const g = elasticCordGeometry({ from: GRIP, phase, pointer });
+  const opt = MODES[mode];
+  // A 直接用线上模块的输出, 其余四档是同一套数学换开关, 只为对照
+  const ds = mode === 0 ? g.strands : build(GRIP, g.to, phase, opt);
+  paths.forEach((el, i) => { el.setAttribute('d', ds[i]); el.setAttribute('stroke-width', g.width); });
+  bead.setAttribute('cx', g.to.x); bead.setAttribute('cy', g.to.y);
+  read.textContent = `距离 ${Math.round(g.distance)}px · 圈数 ${P.waves} · 波长 ${Math.round(g.distance / P.waves)}px · 振幅 ${g.amplitude.toFixed(1)}px · 极值 ${countExtrema(ds[0])}`;
+  requestAnimationFrame(frame);
+};
+requestAnimationFrame(frame);
+</script>

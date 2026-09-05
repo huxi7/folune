@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 @xyflow/react、motion/react、workspaceMotion spatialSpring、CanvasFlowNode UI-only motionState、NotePaper（纸面身份由它命名壳与正文）、空间文字几何、设计系统图标、稳定 canvasActions 与细粒度 Store
- * [OUTPUT]: 对外提供可按本地 receipt 入场且纸面可飞向 Preview 的 memo_ref 卡、源节点确认反馈与 1:1 拖拽/等比缩放 native 文字
- * [POS]: KnowledgeCanvas 的节点表现层；Handle 只登记关系身份，真实浮动端点由 CanvasCordEdge 读取节点矩形求解；卡片只读快照标题/摘录，正文只经 Preview Overlay 按 ID 读取，空间文字把自身 scale 与视口 zoom 分离，全部持久修改仍交给统一协调器
+ * [OUTPUT]: 对外提供可按本地 receipt 入场且纸面可飞向 Preview 的 memo_ref 卡、底栏行尾连接抓手/整卡 target、源节点确认反馈与 1:1 拖拽/等比缩放 native 文字
+ * [POS]: KnowledgeCanvas 的节点表现层；正式中心 Handle 仍只登记关系身份，底栏抓手与会话期 whole-card target 只承载直接操纵，真实正式端点继续由 CanvasCordEdge 读取节点矩形求解
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -29,9 +29,9 @@ import {
   spatialSpring,
 } from "../../pages/workspaceMotion";
 import {
+  ConnectionHandleIcon,
   ExpandIcon,
-  MagicWandIcon,
-  PlusIcon,
+  ExpandFromNoteIcon,
   TrashIcon,
 } from "../../shared/design-system/icons";
 import {
@@ -40,6 +40,7 @@ import {
 } from "../../shared/store/canvasWorkspaceStore";
 import { NotePaper } from "../NotePaper";
 import { useCanvasActions } from "./canvasActions";
+import { canvasConnectionEligibility } from "./canvasConnectionEligibility";
 import {
   CANVAS_TEXT_DEFAULT_HEIGHT,
   CANVAS_TEXT_DEFAULT_WIDTH,
@@ -113,6 +114,13 @@ export const CanvasCardNode = memo(function CanvasCardNode({
   );
   const aiLoading = useCanvasWorkspaceStore(
     (state) => isCanvasNodeAiLoading(state, id),
+  );
+  const connectionSourceId = useCanvasWorkspaceStore(
+    (state) => state.connectionSourceId,
+  );
+  const validConnectionTarget = useCanvasWorkspaceStore((state) =>
+    state.connectionSourceId !== null
+    && canvasConnectionEligibility(state.document, state.connectionSourceId, id).valid,
   );
   const [text, setText] = useState(data.body ?? "");
   const [resizingScale, setResizingScale] = useState<number | null>(null);
@@ -320,12 +328,17 @@ export const CanvasCardNode = memo(function CanvasCardNode({
   const available = data.targetNodeId !== null
     && !data.tombstone
     && !data.targetDeleted;
+  /*
+   * 只剩两种状态, 而且两种都是"这张卡片指向的东西不在库里了"——用户必须知道, 也有出路
+   * (移除, 或去回收站恢复)。曾经这里还有第三条「原文已更新」: 它比的是入画布那天存下的
+   * revision 快照, 但卡片的标题与摘录本来就读笔记的最新内容, 所以它警告的那个不一致
+   * 用户根本看不见; 又因为快照只在创建时写一次, 这行字一旦出现就永久消不掉。
+   * 一个既验证不了、也处理不掉的警告只会让人以为出了故障。
+   */
   const status = data.tombstone
     ? "原笔记已被永久删除"
     : data.targetDeleted
       ? "在回收站"
-      : data.drifted
-        ? "原文已更新"
       : "";
   const motionStyle = data.motionState === undefined
     ? undefined
@@ -341,6 +354,8 @@ export const CanvasCardNode = memo(function CanvasCardNode({
       className="canvas-card"
       data-canvas-card-id={id}
       data-kind={data.kind}
+      data-connection-source={connectionSourceId === id ? "true" : undefined}
+      data-connection-target={validConnectionTarget ? "valid" : undefined}
       data-motion-state={data.motionState?.kind}
       data-selected={selected}
       data-tombstone={data.tombstone}
@@ -379,6 +394,17 @@ export const CanvasCardNode = memo(function CanvasCardNode({
         position={Position.Left}
         type="target"
       />
+      {available ? (
+        <Handle
+          aria-hidden="true"
+          className="canvas-card-whole-target"
+          id="connection-target"
+          isConnectable
+          isConnectableStart={false}
+          position={Position.Left}
+          type="target"
+        />
+      ) : null}
 
       <NotePaper
         className="canvas-card-paper"
@@ -408,7 +434,13 @@ export const CanvasCardNode = memo(function CanvasCardNode({
         variant="thumbnail"
       />
 
-      {/* 元信息行高度固定: 上下文操作只改变透明度, 出现与消失都不移动纸张 */}
+      {/*
+        * 元信息行高度固定: 三个入口只改变透明度。抓手住在这一行的最右端而不是卡片外的
+        * 右下角 —— 宪法 10.3 说柄的位置"只服从最不干扰", 而挂在角外的小凸起恰恰最干扰:
+        * 它破坏这张纸完整的轮廓。行尾这个槽位不暗示任何出线方向(端点由两张卡片的中心
+        * 射线求得, 与柄无关), 三个入口严格等距: 抓手不同族由点阵图标、grab 光标与 hover
+        * 变 primary 表达, 用间距表达只会被读成没对齐。
+        */}
       <footer className="canvas-card-meta nodrag">
         <span className="canvas-card-status">{status}</span>
         <span className="canvas-card-actions">
@@ -421,18 +453,7 @@ export const CanvasCardNode = memo(function CanvasCardNode({
               title="AI 拓展"
               type="button"
             >
-              <MagicWandIcon size={14} />
-            </button>
-          ) : null}
-          {available ? (
-            <button
-              aria-label="关联另一篇笔记"
-              className="canvas-card-action"
-              onClick={() => actions.onConnect(id)}
-              title="关联"
-              type="button"
-            >
-              <PlusIcon size={14} />
+              <ExpandFromNoteIcon size={14} />
             </button>
           ) : null}
           <button
@@ -445,6 +466,38 @@ export const CanvasCardNode = memo(function CanvasCardNode({
             <TrashIcon size={14} />
           </button>
         </span>
+        {available ? (
+          <Handle
+            aria-label="从这张卡片建立关系"
+            className="canvas-card-connect-handle nodrag"
+            id="connection-source"
+            isConnectable
+            isConnectableEnd={false}
+            onClick={(event) => {
+              event.stopPropagation();
+              actions.onConnect(id);
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "Escape") {
+                event.preventDefault();
+                event.stopPropagation();
+                actions.onConnect(id);
+                return;
+              }
+              if (event.key !== "Enter" && event.key !== " ") return;
+              event.preventDefault();
+              event.stopPropagation();
+              actions.onConnect(id);
+            }}
+            position={Position.Right}
+            role="button"
+            tabIndex={0}
+            title="拖到另一张卡片，或点击后再选择目标"
+            type="source"
+          >
+            <ConnectionHandleIcon aria-hidden size={14} />
+          </Handle>
+        ) : null}
       </footer>
 
       <Handle

@@ -1,10 +1,59 @@
 /**
  * [INPUT]: 依赖 index.css 的 Paper First 画布/纸张 token、4px 空间基线、32/36/48px 控件阶梯、统一中性 interactive-hover、全局颜色 token 及 Tailwind v4 layer
- * [OUTPUT]: 对外提供设置/订阅/回收站、816px Editorial Paper、Ghost Panel Toggle、独立浮动文件库/AI、删除快照固定层、窄屏抽屉、Archive Cord 及业务内容布局
- * [POS]: app/src/styles 的产品工作区布局层；中性 Stage 只衬托唯一 Paper，写作区纸壳与纸内正文分属 .paper/.paper-body 两个视图过渡分类（节奏见 knowledge-canvas.css），Panel 开合不改变 Stage/Paper/Canvas 几何，resize 期间禁用布局动画，删除快照只占视觉层且不接收指针
+ * [OUTPUT]: 对外提供设置/订阅/回收站、桌面由 Panel 内缩线高度反推 7:9 且长文自然增长的无上限 Editorial Paper、约 80px Primary 创建 split、Ghost Panel Toggle、独立浮动文件库/AI、窄屏抽屉与业务布局
+ * [POS]: app/src/styles 的产品工作区布局层；中性 Stage 只衬托唯一 Paper，写作区纸壳与纸内正文分属 .paper/.paper-body 两个视图过渡分类（节奏见 knowledge-canvas.css），Panel 开合不改变 Stage/Paper/Canvas 几何，resize 期间禁用布局动画，删除快照只占视觉层且不接收指针。层序在此显式声明而不交给 DOM 顺序：容器（Panel 60/80、Stage 角标 70）< 归档线 84 < 弹层（85/90+），侧栏 header/footer 2 > 树 1；纸的比例基线与顶栏都不得建立滚动容器或参与列定宽；顶栏凝结只有一个被动画的量（`--toolbar-condense-progress`），实底与下缘软边的高度/模糊/遮罩都在消费点乘它算出来，因此不存在两个能各自被改坏的几何值；铺开的是同一个 `--paper-surface` 而不是第二种表面，且**不画任何 hairline**；实底锚在顶栏下沿向上长满「顶栏 + 一条 inset」，因此顶栏上方那条留白里只有纸而没有正文，软边起点恒为常量
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
+/*
+ * 凝结只有一个被动画的量: 滚动进度本身。实底高度、软边高度、模糊半径与遮罩强度全部
+ * 在消费点由它 calc 出来 —— 于是"同一个 scroll progress 连续驱动"是结构事实, 不是
+ * 两条时间线恰好对齐的巧合: 少一个能被单独改坏的量, 就少一种真空。
+ * 必须注册: 未注册的自定义属性不参与插值, 会在关键帧之间直接跳变。
+ */
+@property --toolbar-condense-progress {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
 @layer components {
+  /*
+   * 归档线跨过 Stage 与文件库两个容器，因此它的层必须高于所有容器、低于所有弹层：
+   * 浮动/常驻 Panel 60/80、Stage 角标 70 都在它之下，Explore 面板 85 与各菜单 90 在它之上。
+   * 65 会被 z-index: 80 的常驻文件库整块盖掉——线画对了也看不见。
+   */
+  .archive-cord-overlay { position: fixed; z-index: 84; inset: 0; width: 100vw; height: 100vh; overflow: visible; opacity: 1; pointer-events: none; transition: opacity var(--motion-fast) var(--ease-standard); }
+  /* 隐藏只是隐藏渲染: presentation 与代表 ID 都还在, 文件库一开线就回来 */
+  .archive-cord-overlay[data-visible="false"] { opacity: 0; }
+  /* 代表 DOM 暂时不在（树未 ready / 行尚未挂载）: 保留上一帧几何但不宣称它仍然正确 */
+  .archive-cord-overlay[data-target="holding"] { opacity: 0; }
+  /*
+   * settled 是一根接近 hairline 的实线。它必须能被正文压过去 —— 一条随时抢眼的线
+   * 不是上下文而是通知; 需要确认落点时用 hover 提亮, 那才是渐进披露。
+   */
+  .archive-cord-overlay-path { fill: none; stroke: var(--archive-cord); stroke-linecap: round; stroke-linejoin: round; stroke-width: 1; stroke-dasharray: 1; stroke-dashoffset: 0; opacity: 0.42; vector-effect: non-scaling-stroke; transition: opacity var(--motion-fast) var(--ease-standard), stroke-width var(--motion-fast) var(--ease-standard); }
+  /* 极轻流光只在 fresh 出现一次, 静止时是彻底透明的一条同路径 */
+  .archive-cord-overlay-flow { fill: none; stroke: var(--archive-cord); stroke-linecap: round; stroke-linejoin: round; stroke-width: 1; stroke-dasharray: 0.08 0.92; stroke-dashoffset: 0.08; opacity: 0; vector-effect: non-scaling-stroke; }
+  .archive-cord-overlay-hit { fill: none; stroke: transparent; stroke-linecap: round; stroke-width: 12; cursor: pointer; pointer-events: stroke; }
+  /*
+   * fresh 由 pathLength=1 归一化后自绘一次, 因此与曲线实际长度无关; both 让它停在
+   * settled 的终值上, 于是"刚刚发生"结束靠 CSS fill state 降档, 不需要 timer,
+   * 关系也不会因为时间流逝而消失。
+   */
+  .archive-cord-overlay[data-phase="fresh"] .archive-cord-overlay-path { animation: archive-cord-draw 620ms var(--ease-standard) both; }
+  .archive-cord-overlay[data-phase="fresh"] .archive-cord-overlay-flow { animation: archive-cord-flow 900ms var(--ease-standard) both; }
+  /* 离屏方向由末段切线、收细与降调表达: 一个明确箭头是在重复解释空间本身已说清的事 */
+  .archive-cord-overlay:is([data-projection="above"], [data-projection="below"]) .archive-cord-overlay-path { stroke-width: 0.9; opacity: 0.3; }
+  /*
+   * emphasized 是一个共享状态: 指向归档落点、指向当前代表行、指向线本身, 三处提亮
+   * 同一条线与同一行。用 :has 而不是 React state 表达它 —— 这三个元素住在三棵不同
+   * 的子树里, 靠状态同步只会多出一个可能与真实 hover 不一致的答案。
+   */
+  html:has(.archive-status:hover) .archive-cord-overlay-path,
+  html:has(.archive-status:focus-visible) .archive-cord-overlay-path,
+  html:has([data-archive-representative]:hover) .archive-cord-overlay-path,
+  html:has([data-archive-representative]:focus-visible) .archive-cord-overlay-path,
+  html:has(.archive-cord-overlay-hit:hover) .archive-cord-overlay-path { stroke-width: 1.35; opacity: 0.92; }
   /* -------------------------------------------------------------------------- */
   /* Product pages                                                              */
   /* -------------------------------------------------------------------------- */
@@ -122,7 +171,7 @@
   .notes-workspace-state { display: flex; min-height: 16rem; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem; padding: 2rem; background: transparent; color: var(--muted-foreground); text-align: center; }
   .notes-workspace-state strong { color: var(--foreground); font-family: var(--font-sans); font-size: 0.875rem; font-weight: 650; }
   .notes-workspace-state span { max-width: 30rem; font-size: 0.75rem; line-height: 1.65; }
-  .note-editor-canvas { display: grid; width: min(100%, 45rem); min-height: calc(100vh - 10rem); grid-template-rows: auto minmax(24rem, 1fr); align-content: start; margin-inline: auto; border: 0; border-radius: 0; background: transparent; padding: clamp(2.4rem, 6vh, 3.8rem) clamp(1.5rem, 6cqw, 3rem) 4rem; box-shadow: none; }
+  .note-editor-canvas { display: grid; width: min(100%, 45rem); min-height: 0; grid-template-rows: auto minmax(24rem, 1fr); align-content: start; margin-inline: auto; border: 0; border-radius: 0; background: transparent; padding: clamp(2.4rem, 6vh, 3.8rem) clamp(1.5rem, 6cqw, 3rem) 4rem; box-shadow: none; }
   .note-editor-skeleton { overflow: hidden; }
   .note-skeleton-title { width: min(58%, 22rem); height: 1.75rem; margin-bottom: 1.25rem; }
   .note-skeleton-body { display: grid; align-content: start; gap: 0.82rem; }
@@ -214,8 +263,6 @@
   .workspace-route-agent-line { width: 88%; height: 0.65rem; margin-inline: auto; }
   .workspace-route-agent-line-short { width: 64%; margin-top: 0.65rem; }
   .workspace-route-agent-composer { width: 100%; height: var(--control-height-large); margin-top: auto; }
-  .archive-cord-stage { position: relative; width: 100%; height: 100%; }
-  .archive-cord-stage > svg { overflow: visible !important; }
   .workspace-stage-control { position: fixed; top: calc(var(--workspace-panel-inset) + 1px + (var(--panel-header-height) - var(--workspace-stage-control-size)) / 2); z-index: 70; }
   .workspace-library-control { left: var(--workspace-panel-inset); }
   .workspace-assistant-control { right: var(--workspace-panel-inset); }
@@ -223,7 +270,7 @@
   .edge-dock:hover,
   .edge-dock:focus-visible { background: var(--interactive-hover); color: var(--foreground); outline: none; }
   .edge-dock:focus-visible { box-shadow: 0 0 0 2px color-mix(in srgb, var(--ring) 42%, transparent); }
-  .edge-dock:active { transform: translateY(1px); }
+  .edge-dock:active { transform: scale(var(--press-scale)); transition-duration: var(--motion-press); }
   .edge-dock-icon { display: inline-flex; width: var(--icon-size-control); height: var(--icon-size-control); flex: 0 0 var(--icon-size-control); align-items: center; justify-content: center; }
   .workspace-floating-panel { position: absolute; top: var(--workspace-panel-inset); bottom: var(--workspace-panel-inset); z-index: 60; min-width: 0; min-height: 0; overflow: hidden; border: 1px solid var(--border); border-radius: var(--radius-panel); background: var(--card); box-shadow: var(--shadow-lg); }
   .workspace-floating-panel .app-sidebar-header,
@@ -241,22 +288,49 @@
   .workspace-persistent-panel { --workspace-panel-inset: 1rem; position: fixed; top: var(--workspace-panel-inset); bottom: var(--workspace-panel-inset); left: var(--workspace-panel-inset); z-index: 80; }
   .app-workspace[data-overlay-panels="true"] .workspace-floating-panel { position: fixed; }
   .paper-stage-scroll { grid-column: 1; min-width: 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; }
-  .paper-stage-layout { width: 100%; min-width: 0; padding: 2rem clamp(0.75rem, 2vw, 2rem) 4rem; }
+  /*
+   * 上下留白必须正好等于 Panel 的内缩线, 否则「纸高 = 视口 - 2×inset」这条公式会被
+   * 舞台自己的第二套边距顶出视口 —— 那正是一张没写满的短笔记也会滚动的原因。
+   * 左右仍是独立的安全边距: 它只决定纸在装不下时从哪一刻改以宽度为先。
+   */
+  .paper-stage-layout { width: 100%; min-width: 0; padding: var(--workspace-panel-inset) clamp(0.75rem, 2vw, 2rem); }
+  /*
+   * 凝结区间那三个数不是手感调出来的, 它们受一条不等式约束, 违反了就会漏字:
+   *
+   *   顶栏上方那条留白从 sticky 那一刻起就变成了纸的内部, 正文正好从那里穿过并被滚动
+   *   容器上边缘切断。要它永远只有纸, 实底的上沿就必须始终跑在正文前面。正文抵达顶栏
+   *   下沿的时刻是 scrollTop = 1px(纸边) + 正文上边距, 桌面 ≈39px、窄屏(≤767px 时上边距
+   *   收到 2rem) = 33px —— 所以 from 必须 ≤33，而 96px 那个终点根本来不及。
+   *   同时实底的上沿每滚 1px 要至少追上 1px, 即区间长度 ≤ 实底要走的 48px+inset。
+   *
+   * 24 → 80 同时满足两条: 窄屏最紧处仍留约 9px 余量, 而顶部仍有 24px 什么都不发生的
+   * 静止区。若日后有人改小 .note-editor-canvas 的上边距, 这三个数必须跟着重算。
+   */
   /* 写作区那张纸的壳: 与 Canvas 卡片/预览纸同一个视图过渡分类, 因此三处共用同一套节奏 */
-  .app-main-panel.paper-surface { view-transition-class: paper; position: relative; display: flex; width: min(var(--paper-max-width), 100%); min-height: calc(100vh - 5rem); container-name: note-panel; container-type: inline-size; flex-direction: column; overflow: visible; margin-inline: auto; border: 1px solid var(--paper-edge); border-radius: var(--radius-paper); background: var(--paper-surface); color: var(--paper-foreground); box-shadow: var(--paper-shadow); transition: border-color var(--motion-fast) var(--ease-standard), box-shadow var(--motion-spatial) var(--ease-standard); }
+  .app-main-panel.paper-surface { view-transition-class: paper; --paper-opening-height: calc(100vh - 2 * var(--workspace-panel-inset)); --toolbar-condense-from: 24px; --toolbar-condense-to: 80px; --toolbar-title-from: 36px; --toolbar-edge-max: 16px; --toolbar-edge-blur: 6px; --toolbar-condense-cover: calc(var(--panel-header-height) + var(--workspace-panel-inset)); position: relative; display: grid; width: min(calc(var(--paper-opening-height) * 7 / 9), 100%); min-height: 0; grid-template-areas: "paper"; container-name: note-panel; container-type: inline-size; overflow: visible; margin-inline: auto; border: 1px solid var(--paper-edge); border-radius: var(--radius-paper); background: var(--paper-surface); color: var(--paper-foreground); box-shadow: var(--paper-shadow); transition: border-color var(--motion-fast) var(--ease-standard), box-shadow var(--motion-spatial) var(--ease-standard); }
+  /*
+   * 高度优先的两半: 纸宽由 --paper-opening-height 按 7:9 反算(在上面那条规则里),
+   * 纸高由这块与正文重叠的 7:9 基线给出。于是短文由基线立成整开本, 长文由真实内容
+   * 把同一条 grid track 撑长 —— 同一张纸既有确定的形状, 又能自然向下续页。
+   * 没有宽度上限: 留一个 816px cap 会让较高视口重新失去底边对齐, 等于同时维护两条
+   * 互相冲突的几何真相。横向装不下时由上面那个 min() 交给可用宽度, 绝不横向裁纸。
+   * min-width: 0 是这条基线能成立的前提，不是防御性写法：auto 最小尺寸会让这块比例盒
+   * 把「行高 × 7/9」当成自己的 min-content 宽度贡献，于是纸越长，唯一那条列轨道越宽
+   * —— 正文与 sticky 顶栏会被一起推到纸的右边之外。它只负责撑高度，绝不参与定宽。
+   */
+  .app-main-panel.paper-surface::before { width: 100%; min-width: 0; aspect-ratio: 7 / 9; grid-area: paper; content: ""; pointer-events: none; }
   .app-main-panel.paper-surface[data-organizing="true"] { border-color: color-mix(in srgb, var(--primary) 28%, var(--paper-edge)); box-shadow: var(--paper-shadow), 0 0 0 1px color-mix(in srgb, var(--primary) 7%, transparent); }
   /* 纸壳与纸内正文分属两个视图过渡组: 壳形变, 正文只淡换, 见 knowledge-canvas.css */
-  .paper-content-transition { view-transition-class: paper-body; display: flex; min-height: 100%; flex: 1; flex-direction: column; overflow: hidden; border-radius: inherit; }
-  .paper-archive-port { position: absolute; top: 4.35rem; left: -0.8rem; z-index: 68; display: inline-flex; width: 1.65rem; height: 1.65rem; align-items: center; justify-content: center; border: 1px solid var(--paper-edge); border-radius: var(--radius-pill); background: var(--paper-surface); color: var(--muted-foreground); box-shadow: var(--shadow-xs); transition: border-color var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard); }
-  .paper-archive-port[data-active="true"] { border-color: color-mix(in srgb, var(--archive-cord) 42%, var(--paper-edge)); color: var(--archive-cord); }
-  .archive-target-port { display: inline-block; width: 0.45rem; height: 0.45rem; border: 1px solid var(--border-strong); border-radius: var(--radius-pill); background: var(--sidebar); opacity: 0; transition: opacity var(--motion-fast) var(--ease-standard), border-color var(--motion-fast) var(--ease-standard), background var(--motion-fast) var(--ease-standard); }
-  .sidebar-tree-row:hover .archive-target-port,
-  .archive-target-port[data-active="true"] { opacity: 1; }
-  .archive-target-port[data-active="true"] { border-color: var(--archive-cord); background: var(--archive-cord); }
-  .archive-cord-path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
-  .archive-cord-path-draw { stroke-dasharray: 1000; stroke-dashoffset: 1000; animation: archive-cord-draw 480ms var(--ease-standard) forwards; }
+  .paper-content-transition { view-transition-class: paper-body; display: flex; width: 100%; min-width: 0; min-height: 0; grid-area: paper; flex-direction: column; overflow: visible; border-radius: inherit; }
   .app-sidebar { container-name: app-sidebar; container-type: inline-size; display: flex; height: 100%; min-height: 0; flex-direction: column; overflow: hidden; border-radius: inherit; background: var(--sidebar); padding: 0 0.6rem 0.6rem; color: var(--sidebar-foreground); }
-  .app-sidebar-header { flex-shrink: 0; padding-bottom: var(--space-1); }
+  /*
+   * header / tree / footer 三段各自带一条 workspace-panel-part-in 的 opacity 动画,
+   * 且 fill: both —— 动画播完仍在生效, 于是三个兄弟都成了 z-index: auto 的层叠上下
+   * 文, 谁盖谁只由 DOM 顺序决定: 树在后面, 就把 header 里那个 z-index: 90 的新建
+   * 菜单整块压住(菜单底色是实心的, 于是看起来像"透明", 实际是树画在了它上面, 而且
+   * 菜单项根本点不中)。header 与 footer 各拥有一个弹层, 因此它们显式站在树之上。
+   */
+  .app-sidebar-header { position: relative; z-index: 2; flex-shrink: 0; padding-bottom: var(--space-1); }
   .app-sidebar-heading { display: flex; height: var(--panel-header-height); min-height: var(--panel-header-height); align-items: center; justify-content: space-between; gap: var(--panel-header-gap); padding-inline: 0.15rem; }
   .app-sidebar-heading .ds-brand-mark + div > p { font-size: 0.8125rem; font-weight: 620; }
   .sidebar-collapse-button.ds-button.ds-button-size-square,
@@ -266,11 +340,20 @@
   .edge-dock-icon > svg,
   .agent-panel-header-button .ds-button-content > svg { width: var(--icon-size-control); height: var(--icon-size-control); stroke-width: 2; }
   .sidebar-primary-actions { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--control-cluster-gap); padding-inline: 0.15rem; }
-  /* 96px = 64px 主区(图标+「新建」) + 32px 下拉区, 两区共享同一外轮廓 */
-  .sidebar-create-split { position: relative; display: grid; height: var(--control-height-compact); grid-template-columns: 4rem var(--control-height-compact); border-radius: var(--button-radius); background: var(--primary); color: var(--primary-foreground); box-shadow: var(--shadow-xs); }
+  /* 80px = 48px 文字主区 + 32px 下拉区；外壳复用 Primary Button 的边界、面光与 press 材质 */
+  .sidebar-create-split { position: relative; display: grid; height: var(--control-height-compact); grid-template-columns: var(--space-12) var(--control-height-compact); border: 1px solid var(--button-primary-border-rest); border-radius: var(--button-radius); background: linear-gradient(180deg, var(--button-primary-face-top-rest), var(--button-primary-face-bottom-rest)); color: var(--primary-foreground); box-shadow: var(--button-primary-shadow-rest); transform: translateY(0); transition: border-color var(--motion-fast) var(--ease-standard), background var(--motion-fast) var(--ease-standard), box-shadow var(--motion-fast) var(--ease-standard), transform var(--motion-fast) var(--ease-standard); }
+  .sidebar-create-split:has(button:hover:not(:disabled)) { border-color: var(--button-primary-border-hover); background: linear-gradient(180deg, var(--button-primary-face-top-hover), var(--button-primary-face-bottom-hover)); box-shadow: var(--button-primary-shadow-hover); }
+  /*
+   * press 只认外壳那两半: `button:active` 会连菜单项一起算进来, 于是点「Canvas」时
+   * 整个 split 连菜单一起收紧 —— 按下的反馈跑到了没被按下的控件上。缩放留在外壳,
+   * 左右两半因此永远一起动; 比例与时长共读 index.css 的同一份 press 真相。
+   * (hover 那一条仍是宽 `button:hover`, 属于同类但不同批的问题, 不在本批一并改。)
+   */
+  .sidebar-create-split:has(.sidebar-create-main:active:not(:disabled)),
+  .sidebar-create-split:has(.sidebar-create-more:active:not(:disabled)) { border-color: var(--button-primary-border-active); background: linear-gradient(180deg, var(--button-primary-face-top-active), var(--button-primary-face-bottom-active)); box-shadow: var(--button-primary-shadow-pressed); transform: scale(var(--press-scale)); transition-duration: var(--motion-press); }
   .sidebar-create-main,
   .sidebar-create-more { display: inline-flex; min-width: 0; align-items: center; justify-content: center; color: inherit; transition: background var(--motion-fast) var(--ease-standard); }
-  .sidebar-create-main { gap: var(--space-1); border-radius: var(--button-radius) 0 0 var(--button-radius); font-size: var(--type-label); font-weight: var(--weight-label); line-height: var(--leading-label); }
+  .sidebar-create-main { border-radius: var(--button-radius) 0 0 var(--button-radius); font-size: var(--type-label); font-weight: var(--weight-label); line-height: var(--leading-label); }
   .sidebar-create-more { border-left: 1px solid color-mix(in srgb, var(--primary-foreground) 24%, transparent); border-radius: 0 var(--button-radius) var(--button-radius) 0; }
   .sidebar-create-main:hover:not(:disabled),
   .sidebar-create-more:hover:not(:disabled) { background: color-mix(in srgb, var(--primary-foreground) 12%, transparent); }
@@ -321,7 +404,7 @@
 
   .sidebar-search-trigger { min-width: 0; }
   .toolbar-icon-button:focus-visible { outline: 2px solid color-mix(in srgb, var(--ring) 45%, transparent); outline-offset: -2px; }
-  .app-sidebar-tree { min-height: 0; flex: 1; overflow-y: auto; margin-top: 0.75rem; padding-inline: 0.15rem; scrollbar-width: thin; }
+  .app-sidebar-tree { position: relative; z-index: 1; min-height: 0; flex: 1; overflow-y: auto; margin-top: 0.75rem; padding-inline: 0.15rem; scrollbar-width: thin; }
   .memo-tree-scroll-area { display: flex; flex-direction: column; }
   .sidebar-tree-skeleton { display: grid; flex-shrink: 0; gap: 0; padding-inline: 0.05rem 0.35rem; }
   .sidebar-tree-skeleton-row { display: flex; height: var(--control-height-compact); min-height: var(--control-height-compact); align-items: center; gap: 0.375rem; padding-inline: 0.4rem; }
@@ -355,6 +438,19 @@
   .sidebar-document-row { color: var(--muted-foreground); }
   .sidebar-tree-row[data-drag-source="true"] { opacity: 0.4; }
   .sidebar-tree-row[data-drop-placement="inside"] { outline: 1px solid color-mix(in srgb, var(--primary) 42%, transparent); outline-offset: -1px; background: var(--sidebar-accent); color: var(--primary); }
+  /*
+   * 当前归档代表行。它刻意不使用 Soft Ink 蓝底: 那会和当前选中、拖放落点、搜索命中
+   * 争同一种语义。只有一条 Cord 同色的极淡 inset hairline —— 窄屏没有跨层线时,
+   * 它就是唯一的落点反馈。三个 selector 是为了压过树行自己那条 box-shadow: none:
+   * 行高、padding 与树布局一律不变, 只换这一圈线的浓度。
+   */
+  .ds-sidebar-button.sidebar-tree-row[data-archive-representative],
+  .ds-sidebar-button.sidebar-tree-row[data-archive-representative]:hover:not(:disabled),
+  .ds-sidebar-button.sidebar-tree-row[data-archive-representative]:active:not(:disabled) { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--archive-cord) 20%, transparent); }
+  html:has(.archive-status:hover) .ds-sidebar-button.sidebar-tree-row[data-archive-representative],
+  html:has(.archive-status:focus-visible) .ds-sidebar-button.sidebar-tree-row[data-archive-representative],
+  html:has(.archive-cord-overlay-hit:hover) .ds-sidebar-button.sidebar-tree-row[data-archive-representative],
+  .ds-sidebar-button.sidebar-tree-row[data-archive-representative]:hover:not(:disabled) { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--archive-cord) 46%, transparent); color: var(--foreground); }
   .memo-tree-drag-preview { position: fixed; top: 0; left: 0; z-index: 1000; isolation: isolate; display: inline-flex; width: 1.75rem; height: 1.75rem; align-items: center; justify-content: center; border: 0; background: transparent; padding: 0; color: var(--sidebar-foreground); box-shadow: none; pointer-events: none; }
   .memo-tree-drag-preview::before { content: ""; position: absolute; inset: 0.4rem; z-index: -1; border-radius: var(--radius-pill); background: color-mix(in srgb, var(--primary) 10%, transparent); filter: blur(0.32rem); opacity: 0.72; }
   .memo-tree-drag-preview svg { width: 1.0625rem; height: 1.0625rem; filter: drop-shadow(0 0.0625rem 0.12rem color-mix(in srgb, var(--shadow-color) 14%, transparent)); }
@@ -383,24 +479,211 @@
   .memo-node-dialog-form .ds-input { width: 100%; }
   .memo-node-dialog-error { margin-top: 0.4rem; color: var(--destructive); font-size: 0.6875rem; line-height: 1.5; }
   .memo-node-dialog-actions { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1rem; }
-  .app-sidebar-footer { flex-shrink: 0; padding: 0.45rem 0.15rem 0.15rem; }
+  .app-sidebar-footer { position: relative; z-index: 2; flex-shrink: 0; padding: 0.45rem 0.15rem 0.15rem; }
   .sidebar-utility-list { display: grid; gap: 0.2rem; margin-bottom: 0.55rem; }
   .sidebar-utility-button { font-size: var(--type-label); font-weight: 560; line-height: var(--leading-label); }
   .toolbar-icon-button { display: inline-flex; width: var(--control-height-compact); height: var(--control-height-compact); flex-shrink: 0; align-items: center; justify-content: center; border-radius: var(--button-radius); color: var(--muted-foreground); transition: background var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard), transform var(--motion-fast) var(--ease-standard); }
   .toolbar-icon-button:hover,
   .toolbar-icon-button[data-active="true"] { background: var(--sidebar-accent); color: var(--primary); }
-  .toolbar-icon-button:active { transform: scale(0.94); }
+  .toolbar-icon-button:active { transform: scale(var(--press-scale)); transition-duration: var(--motion-press); }
   .app-sidebar .ds-user-menu-shell { width: 100%; }
   .app-sidebar .ds-user-menu-popover { width: 100%; }
   .app-sidebar .ds-user-button { min-height: var(--control-height-default); border-color: transparent; background: transparent; padding: var(--space-2); box-shadow: none; }
   .app-sidebar .ds-user-button:hover,
   .app-sidebar .ds-user-button[data-open="true"] { border-color: transparent; background: var(--sidebar-accent); box-shadow: none; transform: none; }
   .app-sidebar .ds-user-avatar { width: 1.75rem; height: 1.75rem; border-radius: var(--radius-pill); box-shadow: none; }
-  .app-main-toolbar { display: flex; height: var(--panel-header-height); flex-shrink: 0; align-items: center; justify-content: space-between; gap: var(--panel-header-gap); padding-inline: var(--space-6); background: transparent; }
-  .app-main-toolbar-copy { min-width: 0; flex: 1; }
-  .note-view-actions { display: flex; flex-shrink: 0; align-items: center; gap: var(--control-cluster-gap); }
-  .note-organize-button.ds-button.ds-button-size-square { width: var(--control-height-compact); min-width: var(--control-height-compact); height: var(--control-height-compact); min-height: var(--control-height-compact); border-radius: var(--button-radius); }
-  .note-explore-button.ds-button.ds-button-size-square { width: var(--control-height-compact); min-width: var(--control-height-compact); height: var(--control-height-compact); min-height: var(--control-height-compact); border-radius: var(--button-radius); }
+  /*
+   * 顶栏一个字都不能裁: 它自己只有 48px 高, 而"更多"菜单是从它里面垂下去的 ——
+   * overflow: hidden 会把那 157px 的菜单整块切掉(四个菜单项连命中都没有)。
+   * 同一个 hidden 还有第二个代价: 它会让顶栏成为滚动容器, scroll(nearest block) 因此
+   * 找到的是这个永不滚动的盒子, 凝结时间线始终 inactive —— 长文的正文直接从按钮底下
+   * 穿过去。所以这里不裁剪, 需要裁的只有标题, 由 .app-main-toolbar-leading 用 clip 承担
+   * (clip 只裁剪、不建立滚动容器, 于是标题淡入那条时间线仍能找到 .paper-stage-scroll)。
+   */
+  /*
+   * sticky 的上限是 Panel 那条内缩线, 不是 y=0: 顶栏与左右 Panel 的表头共用同一条横线,
+   * 钉到浏览器顶边它就爬出了纸面, 那一刻它已经不是"纸的上边距"而是一层浮在纸外的栏。
+   */
+  .app-main-toolbar { position: sticky; z-index: 30; top: var(--workspace-panel-inset); display: flex; width: 100%; min-width: 0; box-sizing: border-box; height: var(--panel-header-height); flex-shrink: 0; align-items: center; justify-content: space-between; gap: var(--panel-header-gap); padding-inline: var(--space-6); overflow: visible; background: transparent; }
+  /*
+   * 凝结铺开的是**纸本身**, 不是给顶栏找的一块底: 同一个 --paper-surface, 因此顶栏与纸
+   * 之间不存在第二种表面, 也不存在"顶栏的背景"这种东西。它与软边是同一次凝结的两段,
+   * 两者都由 --toolbar-condense-progress 在这里乘出来。
+   *
+   * 这里**没有 border-bottom**, 而那是一条产品法而不是省一行 CSS: 纸在滚动中继续往窗口
+   * 上方延伸, 所以顶栏上方那一片本来就是纸; 一旦在下缘画一条线, 眼睛立刻把「窗口上边 →
+   * 那条线」整段圈成一个物体, 顶栏于是从 48px 读成一整条又高又笨的 chrome —— 用户滚的是
+   * 内容, 界面框架却跟着长胖了。宽窄是物体才有的属性: 线删掉, 顶栏就不是物体, 也就没有
+   * 东西可以变宽。边界交给下缘软边独自表达, 它已经在说同一句话了。
+   *
+   * 实底从顶栏下沿**向上**长, 这一条比它长多高更重要: sticky 停在 Panel 那条内缩线上
+   * (不是 y=0), 于是顶栏上方永远留着一条 inset 高的带子。静止时那里是舞台, 可纸一往上滚,
+   * 那条带子就变成了纸的内部 —— 正文正好从那里穿过去, 并被滚动容器的上边缘一刀切断。
+   * 用户看到的就是「字钻到顶栏后面又从上面露出半行」, 那是「正文穿过 Toolbar」最刺眼的
+   * 版本。因此凝结要盖住的是 48px 顶栏**加**它上面那条 inset; 因为铺的是同一张纸、同一个
+   * 颜色, 盖住它并不等于给纸造了一条顶部边界。而唯一能让这件事恒成立的锚点是下沿: 从下沿
+   * 往上长, 实底的下边界永远就是顶栏下边界, 软边的起点因此是常量 100%, 连算都不用算。
+   */
+  .app-main-toolbar { --toolbar-condense-progress: 0; }
+  .app-main-toolbar::before { position: absolute; z-index: 0; right: 0; bottom: 0; left: 0; height: calc(var(--toolbar-condense-progress) * var(--toolbar-condense-cover)); background: var(--paper-surface); content: ""; pointer-events: none; }
+  /*
+   * 软边不是实底下面一条固定的模糊带: 高度、纸色覆盖、模糊半径与遮罩同乘一个进度, 因此
+   * 它从 0 长出来、随凝结一起变浓, 回顶时沿同一条路径退回 0 —— 静止时这条顶栏连一层
+   * 模糊都不存在。两条梯度都用相对百分比, 所以形状跟着那 16px 一起生长, 而不是在一条
+   * 固定长度上被拉伸。
+   * 它的起点不需要跟着算: 实底从下沿往上长, 于是实底的下边界恒等于顶栏下边界, 软边的
+   * top 因此是常量 100% —— 真空段不是被调没的, 是没有地方可以出现。
+   * 分工: 纸色梯度回答"被盖掉多少", 遮罩回答"模糊到哪儿为止"。遮罩比纸色多留一小段尾巴,
+   * 于是正文是先变软、再被纸吃掉; 反过来会让字走到某条线上突然消失, 那就是断层。
+   * 纸色不透明的那一端必须留在软边最顶上, 它要与实底严丝合缝: 顶端只要低于 100%,
+   * 纸该结束的那一处就会透出一行鬼影, 那是缺陷而不是材质 —— 而且现在没有 hairline 替它
+   * 遮丑了, 这条只会更严。
+   */
+  .app-main-toolbar::after {
+    position: absolute;
+    z-index: 0;
+    top: 100%;
+    right: 0;
+    left: 0;
+    height: calc(var(--toolbar-condense-progress) * var(--toolbar-edge-max));
+    background: linear-gradient(
+      to bottom,
+      var(--paper-surface) 0%,
+      color-mix(in srgb, var(--paper-surface) 92%, transparent) 30%,
+      color-mix(in srgb, var(--paper-surface) 56%, transparent) 58%,
+      color-mix(in srgb, var(--paper-surface) 16%, transparent) 82%,
+      transparent 100%
+    );
+    content: "";
+    pointer-events: none;
+    -webkit-backdrop-filter: blur(calc(var(--toolbar-condense-progress) * var(--toolbar-edge-blur)));
+    backdrop-filter: blur(calc(var(--toolbar-condense-progress) * var(--toolbar-edge-blur)));
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      #000 0%,
+      rgb(0 0 0 / 90%) 32%,
+      rgb(0 0 0 / 60%) 62%,
+      rgb(0 0 0 / 24%) 84%,
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      #000 0%,
+      rgb(0 0 0 / 90%) 32%,
+      rgb(0 0 0 / 60%) 62%,
+      rgb(0 0 0 / 24%) 84%,
+      transparent 100%
+    );
+  }
+  .app-main-toolbar > * { position: relative; z-index: 1; }
+  .app-main-toolbar-leading { display: flex; min-width: 0; flex: 1 1 0; align-items: center; gap: var(--control-cluster-gap); overflow: clip; }
+  /* 标题只淡入, 不做空间位移: 位移会让"它是同一个标题挪上来了"这句话变成假的 */
+  .app-main-toolbar-title { min-width: 0; overflow: hidden; color: var(--foreground); font-size: var(--type-label); font-weight: var(--weight-label); opacity: 0; text-overflow: ellipsis; white-space: nowrap; }
+  /*
+   * fallback 哨兵: 只在浏览器没有 scroll timeline 时挂载。它从纸顶往下占
+   * (96px - inset), 于是它完全越过 sticky 那条线的时刻恰好是 scrollTop = 96px ——
+   * 与上面那条 animation-range 的终点是同一个数, 不需要在 JS 里再写一遍。
+   */
+  .app-main-toolbar-sentinel { position: absolute; top: 0; left: 0; width: 1px; height: calc(var(--toolbar-condense-to) - var(--workspace-panel-inset)); pointer-events: none; }
+  /*
+   * 顶栏 control 的高度只有一个答案, 而且不住在任何一个控件身上: 整理、三枚图标与归档
+   * 落点都是 32px。高度是这条顶栏的属性, 不是每个控件各自申报一遍的属性 —— 以后往这里
+   * 加控件, 它天生就已经对齐了, 而不是等谁想起来再补一行。
+   */
+  .app-main-toolbar .ds-button,
+  .app-main-toolbar .archive-status { height: var(--control-height-compact); min-height: var(--control-height-compact); }
+  /*
+   * 顶栏所有无标签图标共用同一份 32px 几何: 返回来路、进入 Canvas、阅读切换、更多。
+   * 三处曾各写一遍, 于是"顶栏图标多大"有三个答案; 圆角本就由 .ds-button 基类给出。
+   * 高度由上面那条统一给, 这里只补正方形另一维: 于是容器、hit area 与那个 16px 图标
+   * 是同一个中心, 图标居中是算出来的, 不是看着差不多。
+   */
+  .toolbar-return-canvas.ds-button.ds-button-size-square,
+  .note-explore-button.ds-button.ds-button-size-square,
+  .note-view-icon-button.ds-button.ds-button-size-square { width: var(--control-height-compact); min-width: var(--control-height-compact); }
+  /*
+   * 中性反馈也只有一个答案: ghost 基类的 hover 表面是 --muted, 归档落点是
+   * --interactive-hover, 而这两个控件就挨在一起 —— 同一条顶栏上"指向一个控件会怎样"
+   * 于是有两个答案。整理不在其中: 它的 hover 是品牌 primary-soft, 那是 Quiet Accent
+   * 的层级表达而不是中性反馈。时长与按下的缩放全部留在 .ds-button 基类与唯一那份
+   * press token 里, 这里一个数值都不新增。
+   */
+  .toolbar-return-canvas.ds-button,
+  .note-explore-button.ds-button,
+  .note-view-icon-button.ds-button { --button-surface-hover: var(--interactive-hover); --button-face-top-hover: var(--interactive-hover); --button-face-bottom-hover: var(--interactive-hover); --button-surface-active: var(--border); --button-face-top-active: var(--border); --button-face-bottom-active: var(--border); }
+  /*
+   * Toolbar 的尾部命令簇与纸上视图菜单是两层, 曾经共用同一个类名: 于是"选中下划线"
+   * 那条规则按后代匹配, 同时命中视图切换与更多两个图标, 在阅读和编辑两态都亮着 ——
+   * 它没有指示任何状态, 只是装饰。当前态由图标字形与 title 本身表达, 因此整条删除。
+   */
+  /*
+   * 间距只保留两层真相: 整理与图标簇 12px, 簇内 Canvas/阅读/更多 4px。
+   * 语义区别交给整理的文字/32px hit area、其余命令的 32px geometry 与状态反馈,
+   * 顶栏不需要用一条竖线或一段额外留白来补解释。
+   */
+  .note-view-actions { display: flex; flex-shrink: 0; align-items: center; gap: var(--space-3); }
+  .note-view-cluster { display: flex; flex-shrink: 0; align-items: center; gap: var(--space-1); }
+  .markdown-view-menu { display: flex; flex-shrink: 0; align-items: center; gap: var(--space-1); }
+  /*
+   * Quiet Accent: 整理是纸上唯一的核心动作, 但层级由尺寸(32px)、文字与 Soft Ink 色调表达,
+   * 不由填色表达。静止时没有背景、没有边框、没有外影 —— 纸上安静得看不出这个容器, 而图标、
+   * 文字、点击区与快捷键一个都不少; 所谓"隐藏"只隐藏容器的身体, 不隐藏它是什么。
+   * 只在 loading 时才凝结成 Processing 实体, 因为那一刻实体表达的是状态而不是层级
+   * (实体来自 .ds-button-loading, 这里不重复一遍)。
+   */
+  .note-organize-button.ds-button {
+    min-width: 0;
+    padding-inline: var(--space-2);
+    --button-foreground-rest: var(--primary);
+    --button-surface-hover: var(--primary-soft);
+    --button-face-top-hover: var(--primary-soft);
+    --button-face-bottom-hover: var(--primary-soft);
+    --button-surface-active: color-mix(in srgb, var(--primary) 10%, var(--primary-soft));
+    --button-face-top-active: color-mix(in srgb, var(--primary) 10%, var(--primary-soft));
+    --button-face-bottom-active: color-mix(in srgb, var(--primary) 10%, var(--primary-soft));
+  }
+  /* ghost 基类把 hover 前景直接写成 --foreground, 因此这里必须同样直接写, 只是换成品牌色 */
+  .note-organize-button.ds-button:not(:disabled):hover { color: var(--primary-hover); }
+  /* 落点先于标题: 标题在静止时是透明的, 因此让它先让位, 归档状态的位置才稳定 */
+  /*
+   * 归档落点是 contextual text button, 不是 Badge/Pill: 静止时没有填充、没有描边、
+   * 没有外影, 也没有状态圆点 —— 给一条线找个出发点而在纸边摆一颗常驻圆珠, 等于给
+   * 一个不存在的对象造了个身体。线从这段文字靠文件库那一侧自然长出。
+   */
+  .archive-status { display: inline-flex; min-width: 0; max-width: 10rem; flex: 0 0 auto; align-items: center; overflow: hidden; border: 0; border-radius: var(--button-radius); background: transparent; padding: 0 var(--space-2); color: var(--muted-foreground); font-size: var(--type-caption); text-overflow: ellipsis; white-space: nowrap; cursor: pointer; transition: background var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard), transform var(--motion-fast) var(--ease-standard); }
+  .archive-status:hover { background: var(--interactive-hover); color: var(--foreground); }
+  /* 它和它右边那些命令都是按钮, 因此按下也必须是同一份"原地收紧": 顶栏里唯一一个按下去没反应的控件, 读起来就像它其实不能点 */
+  .archive-status:active { background: var(--border); transform: scale(var(--press-scale)); transition-duration: var(--motion-press); }
+  /*
+   * 凝结是滚动位置的函数, 不是一段被触发的动画: linear 必须显式写出来(CSS animation
+   * 默认 ease, 那会让"滚了一半"看起来不是一半), 于是回顶时沿同一条路径线性融回。
+   * 实底/软边共用一条几何进度关键帧, 标题晚 12px 起步, 因为它出现的理由是
+   * "正文标题已经看不见了", 早于那一刻出现就只是重复。
+   */
+  @supports (animation-timeline: scroll()) {
+    .app-main-toolbar { animation-name: app-toolbar-condense; animation-duration: auto; animation-fill-mode: both; animation-timing-function: linear; animation-timeline: scroll(nearest block); animation-range: var(--toolbar-condense-from) var(--toolbar-condense-to); }
+    .app-main-toolbar-title { animation-name: app-toolbar-fade-in; animation-duration: auto; animation-fill-mode: both; animation-timing-function: linear; animation-timeline: scroll(nearest block); animation-range: var(--toolbar-title-from) var(--toolbar-condense-to); }
+  }
+  /*
+   * 进度型时间线会忽略时间 duration, 因此这里写 auto 而不是某个毫秒数: 写 1ms 只是让
+   * 代码说了一句浏览器不听、读代码的人却会当真的话 —— "凝结要多久"这个问题在滚动驱动
+   * 下不存在, 唯一的答案是 animation-range 那段距离。
+   */
+  @keyframes app-toolbar-condense {
+    from { --toolbar-condense-progress: 0; }
+    to { --toolbar-condense-progress: 1; }
+  }
+  @keyframes app-toolbar-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  /* 没有 scroll timeline 的浏览器: 一个哨兵换一次软切, 不引入连续 JS 测量 */
+  @supports not (animation-timeline: scroll()) {
+    .app-main-toolbar { transition: --toolbar-condense-progress var(--motion-fast) linear; }
+    .app-main-toolbar-title { transition: opacity var(--motion-fast) linear; }
+    .app-main-toolbar[data-condensed="true"] { --toolbar-condense-progress: 1; }
+    .app-main-toolbar[data-condensed="true"] .app-main-toolbar-title { opacity: 1; }
+  }
   .explore-result-panel { position: absolute; top: calc(var(--panel-header-height) + var(--space-2)); right: var(--space-6); z-index: 85; display: flex; width: min(22rem, calc(100% - var(--space-12))); max-height: min(32rem, calc(100% - var(--panel-header-height) - var(--space-8))); flex-direction: column; overflow: hidden; border: 1px solid var(--border); border-radius: var(--radius-menu); background: var(--popover); color: var(--popover-foreground); box-shadow: var(--shadow-sm); }
   .explore-result-panel-header { display: flex; flex-shrink: 0; align-items: center; justify-content: space-between; gap: var(--space-2); border-bottom: 1px solid var(--border); padding: var(--space-3) var(--space-3) var(--space-3) var(--space-4); }
   .explore-result-panel-title { display: flex; align-items: center; gap: var(--space-1); color: var(--foreground); font-size: 0.8125rem; font-weight: 600; }
@@ -416,7 +699,6 @@
   .explore-result-item-confidence { flex-shrink: 0; color: var(--muted-foreground); font-size: 0.6875rem; font-variant-numeric: tabular-nums; }
   .explore-result-item-reason { color: var(--muted-foreground); font-size: 0.75rem; line-height: 1.4; }
   .explore-result-item-excerpt { overflow: hidden; border-left: 2px solid var(--border); margin: 0; padding-left: var(--space-2); color: var(--muted-foreground); font-size: 0.75rem; font-style: normal; line-height: 1.45; text-overflow: ellipsis; white-space: nowrap; }
-  .note-view-icon-button.ds-button.ds-button-size-square { width: var(--control-height-compact); min-width: var(--control-height-compact); height: var(--control-height-compact); min-height: var(--control-height-compact); border-radius: var(--button-radius); }
   .note-more-menu-shell { position: relative; }
   .note-more-menu { position: absolute; top: calc(100% + 0.4rem); right: 0; z-index: 90; display: grid; width: 12.5rem; gap: 0.15rem; border: 1px solid var(--border); border-radius: var(--radius-menu); background: var(--popover); padding: 0.3rem; color: var(--popover-foreground); box-shadow: var(--shadow-sm); }
   .note-more-menu-item { display: flex; width: 100%; min-height: 2rem; align-items: center; gap: 0.55rem; border-radius: var(--button-radius); padding-inline: 0.55rem; color: inherit; font-size: 0.75rem; text-align: left; transition: background var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard); }
@@ -516,10 +798,6 @@
   .panel-resize-handle-left { left: -3px; }
   .panel-resize-handle-right { right: -3px; }
   .workspace-panel-backdrop { position: fixed; inset: 0; z-index: 50; border: 0; background: var(--overlay); }
-  .organize-connection-layer { position: fixed; inset: 0; z-index: 65; overflow: visible; pointer-events: none; }
-  .organize-connection-layer path { fill: none; stroke: color-mix(in srgb, var(--primary) 72%, var(--foreground)); stroke-width: 1.5; stroke-linecap: round; }
-  .sidebar-tree-row[data-organize-target="folder"],
-  .sidebar-tree-row[data-organize-target="memo"] { background: color-mix(in srgb, var(--primary) 13%, var(--sidebar)); color: var(--primary); outline: 1px solid color-mix(in srgb, var(--primary) 24%, transparent); outline-offset: -1px; }
 
 }
 
@@ -564,8 +842,16 @@ html[data-panel-resizing="true"] .paper-surface { animation: none !important; tr
   }
 }
 
+/* pathLength=1 已把长度归一化, 因此这两条与曲线实际长短无关 */
 @keyframes archive-cord-draw {
+  from { stroke-dashoffset: 1; }
   to { stroke-dashoffset: 0; }
+}
+
+@keyframes archive-cord-flow {
+  from { stroke-dashoffset: 0.08; opacity: 0; }
+  30% { opacity: 0.55; }
+  to { stroke-dashoffset: -0.92; opacity: 0; }
 }
 
 @container app-sidebar (max-width: 13.75rem) {
@@ -588,7 +874,6 @@ html[data-panel-resizing="true"] .paper-surface { animation: none !important; tr
     .app-workspace { --workspace-panel-inset: 0.75rem; }
     .workspace-persistent-panel { --workspace-panel-inset: 0.75rem; }
     .workspace-floating-panel { position: fixed; }
-    .paper-archive-port { display: none; }
   }
 }
 
@@ -613,8 +898,10 @@ html[data-panel-resizing="true"] .paper-surface { animation: none !important; tr
     .trash-item-meta { min-width: 0; grid-column: 2; align-items: flex-start; }
     .trash-item-actions { flex-wrap: wrap; }
     .note-editor-canvas { padding: 2rem 1.25rem 4rem; }
-    .paper-stage-layout { padding: 0.75rem 0.75rem 4rem; }
-    .app-main-panel.paper-surface { min-height: calc(100vh - 1.5rem); border-radius: var(--radius-paper); box-shadow: var(--shadow-xs); }
+    .paper-stage-layout { padding: var(--workspace-panel-inset); }
+    /* 窄屏显式放弃固定比例: 宽度取可用视口, 高度只保留一个不小于可用视口的下限 */
+    .app-main-panel.paper-surface { width: 100%; min-height: var(--paper-opening-height); border-radius: var(--radius-paper); box-shadow: var(--shadow-xs); }
+    .app-main-panel.paper-surface::before { display: none; }
     .workspace-floating-panel { top: 0.75rem; bottom: 0.75rem; width: min(88vw, 22.5rem); }
     .app-main-toolbar { padding-inline: var(--space-12); }
     .app-main-toolbar-copy { max-width: 44%; }
@@ -626,7 +913,15 @@ html[data-panel-resizing="true"] .paper-surface { animation: none !important; tr
     .app-workspace { --workspace-stage-control-size: 2.75rem; }
     .edge-dock[data-mode="stage"] { width: 2.75rem; min-width: 2.75rem; height: 2.75rem; }
     .paper-stage-layout { padding-inline: var(--space-3); }
-    .app-main-toolbar { padding-inline: 3rem; }
+    .app-main-toolbar { padding-inline: var(--space-3); }
+    .app-main-toolbar-leading { min-width: 0; }
+    /* 窄屏没有横穿的余量, 归档线本就收束成目标高亮, 落点只留末级两三个字 */
+    .archive-status { max-width: 6rem; }
+    .app-main-toolbar .note-view-actions { min-width: 0; gap: var(--space-2); }
+    .app-main-toolbar .note-view-cluster { min-width: 0; gap: var(--space-1); }
+    .app-main-toolbar .markdown-view-menu { min-width: 0; gap: var(--space-1); }
+    /* 顶栏只剩整理还带文字, 因此只有它需要在窄屏收紧内边距 */
+    .app-main-toolbar .note-organize-button { padding-inline: var(--space-1); }
   }
 }
 
@@ -639,7 +934,11 @@ html[data-panel-resizing="true"] .paper-surface { animation: none !important; tr
 
 @media (prefers-reduced-motion: reduce) {
   @layer components {
-    .archive-cord-path-draw { stroke-dasharray: none; stroke-dashoffset: 0; animation: none; }
+    /* 不插值也不自绘, 直接呈现正确终态: 「无动效」不是丢掉信息的借口 */
+    .archive-cord-overlay { transition: none; }
+    .archive-cord-overlay-path { transition: none; }
+    .archive-cord-overlay[data-phase="fresh"] .archive-cord-overlay-path,
+    .archive-cord-overlay[data-phase="fresh"] .archive-cord-overlay-flow { animation: none; }
     .command-palette-hint,
     .edge-dock { transition: none; }
     .workspace-floating-panel .app-sidebar-header,

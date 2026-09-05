@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 motion/react、EdgeDock/PaperSurface/ArchiveCord、右侧工具插槽、稳定 paperIdentity/纸面过渡身份与整理结果定位信息；文件库由外部持久宿主承载
- * [OUTPUT]: 对外提供 Paper First 共享 Workspace Chrome、由面板状态闭包稳定驱动的响应式遮罩、Escape 收束与持久归档连线，并只保留文件库的开关语义
- * [POS]: widgets 的写作工作台空间壳；Canvas 已成为独立持久 Workspace，旧临时探索舞台不再进入生产壳
+ * [INPUT]: 依赖 motion/react、EdgeDock/PaperSurface、右侧工具插槽与稳定 paperIdentity/纸面过渡身份；文件库与 fixed 归档 Overlay 由外部持久宿主承载
+ * [OUTPUT]: 对外提供 Paper First 共享 Workspace Chrome、遮罩布局的消费与 Escape 收束，并只保留文件库的开关语义
+ * [POS]: widgets 的写作工作台空间壳；Canvas 已成为独立持久 Workspace，旧临时探索舞台不再进入生产壳。响应式判据不在此处再算一遍——它由 Dashboard 的 useOverlayPanels 持有并下传，壳只消费；同一个断点算两遍就会出现两个都自称正确的布局
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -11,10 +11,8 @@ import {
   useReducedMotion,
 } from "motion/react";
 import {
-  useCallback,
   useEffect,
   useRef,
-  useState,
   type CSSProperties,
   type MouseEvent,
   type ReactNode,
@@ -31,41 +29,41 @@ import {
   reducedFadeTransition,
   workspaceLayoutTransition,
 } from "../pages/workspaceMotion";
-import { resolveArchiveTargetNodeId, shouldShowArchiveCord, type WorkspaceOrganizePresentation } from "./archiveCordPolicy";
 import { EdgeDock } from "./EdgeDock";
 import { PaperSurface } from "./PaperSurface";
 
 type PaperWorkspaceShellProps = {
   assistant: ReactNode;
   assistantOpen: boolean;
+  /** 单 Panel 已无法并列：抽屉 + 遮罩。判据由 Dashboard 唯一持有 */
+  compactViewport: boolean;
   libraryOpen: boolean;
   onCloseAssistant: () => void;
   onCloseLibrary: () => void;
   onToggleAssistant: () => void;
   onToggleLibrary: () => void;
   organizing: boolean;
+  /** 覆盖式布局（compact，或双开且宽度不足）。同样只由 Dashboard 计算 */
+  overlayPanels: boolean;
   paper: ReactNode;
   paperIdentity: string;
-  presentation: WorkspaceOrganizePresentation | null;
   paperTransitionIdentity?: string | null;
   style: CSSProperties;
 };
 
-const PANEL_BREAKPOINT = 1200;
-const DUAL_PANEL_SAFE_BREAKPOINT = 1400;
-
 export function PaperWorkspaceShell({
   assistant,
   assistantOpen,
+  compactViewport,
   libraryOpen,
   onCloseAssistant,
   onCloseLibrary,
   onToggleAssistant,
   onToggleLibrary,
   organizing,
+  overlayPanels,
   paper,
   paperIdentity,
-  presentation,
   paperTransitionIdentity = null,
   style,
 }: PaperWorkspaceShellProps) {
@@ -73,27 +71,12 @@ export function PaperWorkspaceShell({
   const paperScrollRef = useRef<HTMLDivElement>(null);
   const workspaceRef = useRef<HTMLDivElement>(null);
   const paperIdentityRef = useRef(paperIdentity);
-  const shouldOverlayPanels = useCallback(() => window.innerWidth < PANEL_BREAKPOINT || (
-    libraryOpen && assistantOpen && window.innerWidth < DUAL_PANEL_SAFE_BREAKPOINT
-  ), [assistantOpen, libraryOpen]);
-  const [overlayPanels, setOverlayPanels] = useState(shouldOverlayPanels);
   const anyPanelOpen = libraryOpen || assistantOpen;
 
+  // 窄到放不下并列的两块面板时，右侧 AI 让位：这是对已下传判据的反应，不是第二次测量
   useEffect(() => {
-    const handleResize = () => {
-      setOverlayPanels(shouldOverlayPanels());
-      if (
-        window.innerWidth < PANEL_BREAKPOINT
-        && libraryOpen
-        && assistantOpen
-      ) {
-        onCloseAssistant();
-      }
-    };
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, [assistantOpen, libraryOpen, onCloseAssistant, shouldOverlayPanels]);
+    if (compactViewport && libraryOpen && assistantOpen) onCloseAssistant();
+  }, [assistantOpen, compactViewport, libraryOpen, onCloseAssistant]);
 
   useEffect(() => {
     if (paperIdentityRef.current === paperIdentity) return;
@@ -144,12 +127,6 @@ export function PaperWorkspaceShell({
     closeOverlay();
   };
 
-  const archiveTargetNodeId = resolveArchiveTargetNodeId(presentation);
-  const archiveCordVisible = shouldShowArchiveCord({
-    libraryOpen,
-    overlayPanels,
-    presentation,
-  });
   return (
       <div
         className="app-workspace"
@@ -205,10 +182,6 @@ export function PaperWorkspaceShell({
             transition={workspaceLayoutTransition}
           >
             <PaperSurface
-              archiveActive={archiveCordVisible}
-              archiveDrawKey={`${presentation?.runId ?? "none"}-${presentation?.status ?? "none"}`}
-              archiveSourceId="workspace"
-              archiveTargetNodeId={archiveTargetNodeId}
               organizing={organizing}
               paperIdentity={paperIdentity}
               reducedMotion={Boolean(reduceMotion)}

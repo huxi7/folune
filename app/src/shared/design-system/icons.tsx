@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 lucide-react 的圆角描边图标与 LucideIcon/LucideProps 类型
- * [OUTPUT]: 对外提供 SuperNote 稳定语义图标别名、14/16/20/24 四档尺寸契约、统一 Icon 类型与本地 Google 品牌标记
+ * [OUTPUT]: 对外提供含加入/缩放/连接/整理/拓展独立出口的 SuperNote 稳定语义图标别名、14/16/20/24 四档尺寸契约、统一 Icon 类型与本地 Google 品牌标记
  * [POS]: app/src/shared/design-system 的图标语言边界；业务层只依赖领域名称，第三方图形选择与品牌例外在此收口
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -27,12 +27,15 @@ import {
   Expand,
   Eye,
   EyeOff,
+  FilePlus,
   FileText,
   Focus,
   Folder,
   FolderOpen,
+  Grip,
   Image,
   Info,
+  ListCollapse,
   ListTree,
   LoaderCircle,
   LogOut,
@@ -71,6 +74,8 @@ import {
   Waypoints,
   Wrench,
   X,
+  ZoomIn,
+  ZoomOut,
 } from "lucide-react";
 import {
   forwardRef,
@@ -116,8 +121,14 @@ export const DownloadSimpleIcon = defineIcon(Download);
 export const ExpandIcon = defineIcon(Expand);
 export const EyeIcon = defineIcon(Eye);
 export const EyeSlashIcon = defineIcon(EyeOff);
+/** 将已有备忘录加入 Canvas；不承担通用新建或缩放语义 */
+export const AddNoteIcon = defineIcon(FilePlus);
 /** 已保存画布在文件树里的身份: 一张关系星图，与纸张明确区分，且永不暴露扩展名 */
 export const CanvasIcon = defineIcon(Waypoints);
+/** Canvas 卡片右下角的连接抓手；它表达拖拽关系，不是新增命令 */
+export const ConnectionHandleIcon = defineIcon(Grip);
+/** 从一张真实笔记向外发散候选关系；与收拢到文件树的整理语义分离 */
+export const ExpandFromNoteIcon = defineIcon(Sparkles);
 export const FileTextIcon = defineIcon(FileText);
 export const FitViewIcon = defineIcon(Focus);
 export const FolderIcon = defineIcon(Folder);
@@ -132,6 +143,8 @@ export const MinusIcon = defineIcon(Minus);
 export const MoonIcon = defineIcon(Moon);
 export const MoonStarsIcon = defineIcon(MoonStar);
 export const NotePencilIcon = defineIcon(SquarePen);
+/** 将一篇笔记收拢为文件树落点；与向外发散节点的拓展语义分离 */
+export const OrganizeNoteIcon = defineIcon(ListCollapse);
 export const PaletteIcon = defineIcon(Palette);
 export const PaperPlaneRightIcon = defineIcon(SendHorizontal);
 export const PencilSimpleIcon = defineIcon(Pencil);
@@ -152,6 +165,10 @@ export const UserCircleIcon = defineIcon(CircleUserRound);
 export const WarningCircleIcon = defineIcon(CircleAlert);
 export const XCircleIcon = defineIcon(CircleX);
 export const XIcon = defineIcon(X);
+/** Canvas 视口放大；禁止回退为裸 Plus */
+export const ZoomInIcon = defineIcon(ZoomIn);
+/** Canvas 视口缩小；禁止回退为裸 Minus */
+export const ZoomOutIcon = defineIcon(ZoomOut);
 
 export const GoogleLogoIcon = forwardRef<SVGSVGElement, IconProps>(function GoogleLogoIcon({
   color = "currentColor",
