@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 读取 index.css、button.css、sidebar-button.css 与 workspace.css 的 Control radius、Button 共享别名、Composer 圆形例外与统一 press
- * [OUTPUT]: 锁定 12px Control、显式 9px inner、Button 不建立私有半径、Composer 继续显式使用 round，以及四处命令控件共读同一份 press 缩放并在 Reduced Motion 下归 1
+ * [OUTPUT]: 锁定 12px Control、显式 9px inner、Button 不建立私有半径、Composer 继续显式使用 round，以及四处命令控件共读同一份 press 缩放并在 Reduced Motion 下归 1、创建 split 的 hover 与 press 只认外壳那两半而不认展开的菜单项
  * [POS]: app/src/styles 的设计系统静态契约测试；在浏览器视觉验收之外阻止 Radius 与 press 两条公理被局部覆盖
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -71,9 +71,19 @@ describe("press 公理", () => {
     }
   });
 
-  test("split 整个外壳一起缩放, 但菜单项的 active 不算按下这颗 split", () => {
-    expect(workspaceCss).toContain(".sidebar-create-split:has(.sidebar-create-main:active:not(:disabled)),");
-    expect(workspaceCss).not.toContain(".sidebar-create-split:has(button:active:not(:disabled))");
+  test("split 整个外壳一起反馈, 但菜单项的 hover/active 都不算落在这颗 split 上", () => {
+    /*
+     * 两条都必须点名外壳那两半。宽 `button` 会把展开的菜单项算成这颗 split 的一部分:
+     * active 那份让点「Canvas」时整颗按钮连菜单一起收紧, hover 那份让指向菜单项时亮起
+     * 上面那颗新建 —— 反馈都跑到了指针根本不在的控件上。
+     */
+    for (const state of ["hover", "active"]) {
+      expect(workspaceCss)
+        .toContain(`.sidebar-create-split:has(.sidebar-create-main:${state}:not(:disabled)),`);
+      expect(workspaceCss)
+        .toContain(`.sidebar-create-split:has(.sidebar-create-more:${state}:not(:disabled))`);
+      expect(workspaceCss).not.toContain(`.sidebar-create-split:has(button:${state}:not(:disabled))`);
+    }
   });
 
   test("hover 永远留在原地: 只有 active 那一条碰 transform", () => {

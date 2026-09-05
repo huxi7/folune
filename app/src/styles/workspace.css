@@ -342,12 +342,17 @@
   .sidebar-primary-actions { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--control-cluster-gap); padding-inline: 0.15rem; }
   /* 80px = 48px 文字主区 + 32px 下拉区；外壳复用 Primary Button 的边界、面光与 press 材质 */
   .sidebar-create-split { position: relative; display: grid; height: var(--control-height-compact); grid-template-columns: var(--space-12) var(--control-height-compact); border: 1px solid var(--button-primary-border-rest); border-radius: var(--button-radius); background: linear-gradient(180deg, var(--button-primary-face-top-rest), var(--button-primary-face-bottom-rest)); color: var(--primary-foreground); box-shadow: var(--button-primary-shadow-rest); transform: translateY(0); transition: border-color var(--motion-fast) var(--ease-standard), background var(--motion-fast) var(--ease-standard), box-shadow var(--motion-fast) var(--ease-standard), transform var(--motion-fast) var(--ease-standard); }
-  .sidebar-create-split:has(button:hover:not(:disabled)) { border-color: var(--button-primary-border-hover); background: linear-gradient(180deg, var(--button-primary-face-top-hover), var(--button-primary-face-bottom-hover)); box-shadow: var(--button-primary-shadow-hover); }
+  /*
+   * hover 与 press 同理, 只认外壳那两半: 宽 `button:hover` 会把展开的菜单项也算成
+   * "有人指着这颗 split", 于是指向菜单里的「Canvas」时亮起来的是上面那颗新建 ——
+   * 指针在菜单里, 反馈却跑到没被指的控件上。
+   */
+  .sidebar-create-split:has(.sidebar-create-main:hover:not(:disabled)),
+  .sidebar-create-split:has(.sidebar-create-more:hover:not(:disabled)) { border-color: var(--button-primary-border-hover); background: linear-gradient(180deg, var(--button-primary-face-top-hover), var(--button-primary-face-bottom-hover)); box-shadow: var(--button-primary-shadow-hover); }
   /*
    * press 只认外壳那两半: `button:active` 会连菜单项一起算进来, 于是点「Canvas」时
    * 整个 split 连菜单一起收紧 —— 按下的反馈跑到了没被按下的控件上。缩放留在外壳,
    * 左右两半因此永远一起动; 比例与时长共读 index.css 的同一份 press 真相。
-   * (hover 那一条仍是宽 `button:hover`, 属于同类但不同批的问题, 不在本批一并改。)
    */
   .sidebar-create-split:has(.sidebar-create-main:active:not(:disabled)),
   .sidebar-create-split:has(.sidebar-create-more:active:not(:disabled)) { border-color: var(--button-primary-border-active); background: linear-gradient(180deg, var(--button-primary-face-top-active), var(--button-primary-face-bottom-active)); box-shadow: var(--button-primary-shadow-pressed); transform: scale(var(--press-scale)); transition-duration: var(--motion-press); }
