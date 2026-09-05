@@ -9,7 +9,7 @@ SuperNote is a quiet editorial instrument that lets users write first and allows
 ## Protected assets
 
 - Brand asset: `src/shared/design-system/components/BrandMark.tsx`
-- Product evidence: `docs/design-system/paper-first-v1-1/*.png`
+- Product evidence: re-captured from the running app when a judgement needs it; no screenshot set is kept, and the DEV `/design-system` route is the one place the whole system is on screen at once
 - Typography: Avenir Next for interface, Iowan Old Style/Palatino/Noto Serif SC/Songti SC for editorial Paper, SF Mono family for system labels
 - Spatial system: 4px baseline; 32px compact navigation / 36px standard command and form / 48px header ladder
 - Type system: Interface `14/18px` for 36px commands, `14/20px` for 36px fields, compact tree navigation and sidebar utilities `12/16px` inside 32px rows, `15/27px` for Paper body, `18px` for section headings, `24–30px` for Paper titles, and `32–56px` only for editorial/display titles

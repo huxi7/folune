@@ -4,7 +4,7 @@
 成员清单
 CLAUDE.md: 记录 UI 验收文档目录职责与文档协议
 cord-lab.html: 连接绳形制的决策现场，五档是「波跑不跑 × 两端怎么收」两个问题的组合，可用鼠标真拖对照；内联了 2026-09-02 当时 elasticCordGeometry 的打包，故意不随后续代码更新
-design-system/: Design System 语义基线、computed Token、Paper First V1.1 确定性验收证据与隔离 Color Lab 决策快照目录
+design-system/: Design System 语义基线、computed Token 快照与隔离 Color Lab 终选决策目录
 
 职责: 保存可复核的 UI 语义基线、computed Token 快照与验收记录；历史截图不作为当前视觉事实，视觉判断必须重新读取当前运行界面；不得承载运行时代码或真实用户数据。
 
