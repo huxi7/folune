@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun test 与 elasticCordGeometry/elasticCordMetrics/elasticCordEnvelope 纯几何
- * [OUTPUT]: 锁定三股严格自抓手出发、终点在任意相位都绕珠而不收成一点、W 与 M 交替的谐波波形、圈数恒定如弹簧、距离增加时收敛有下限、极端输入有限及静态相位稳定
+ * [OUTPUT]: 锁定三股严格自抓手那一点出发且不随指针滑动、终点在任意相位都绕珠而不收成一点、W 与 M 交替的谐波波形、圈数恒定如弹簧、波沿绳前进时中股摆幅恰等于波的整条带宽而两侧股只多出股距那一份、距离增加时收敛有下限、极端输入有限及静态相位稳定
  * [POS]: KnowledgeCanvas 瞬态连接绳的数学回归门禁；不挂载 React，不测正式 CanvasCordEdge
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -20,6 +20,10 @@ const grip = { x: 372, y: 428 };
 describe("elasticCordGeometry", () => {
   const lastPoint = (path: string): { x: number; y: number } => {
     const [x, y] = (path.split(" ").at(-1) ?? "").slice(1).split(",").map(Number);
+    return { x: x ?? Number.NaN, y: y ?? Number.NaN };
+  };
+  const firstPoint = (path: string): { x: number; y: number } => {
+    const [x, y] = (path.split(" ")[0] ?? "").slice(1).split(",").map(Number);
     return { x: x ?? Number.NaN, y: y ?? Number.NaN };
   };
 
@@ -125,44 +129,70 @@ describe("elasticCordGeometry", () => {
     expect(counts[0]).toBeGreaterThanOrEqual(3 * 6 - 2);
   });
 
-  test("圈的位置不随相位改变: 波不沿着绳往前跑, 动的只有三股互绕", () => {
+  /*
+   * 波形自己的峰值: |sin θ + h·sin 3θ| 的最大值, 再除掉实现里那个 (1 + h) 的归一化。
+   * 数值扫出来而不写死, 因为它是 harmonic 的函数 —— 改 harmonic 时这条判据自己跟着走。
+   */
+  const normalizedWavePeak = (() => {
+    let peak = 0;
+    for (let theta = 0; theta < Math.PI * 2; theta += 0.0001) {
+      peak = Math.max(
+        peak,
+        Math.abs(Math.sin(theta)
+          + ELASTIC_CORD_PARAMETERS.harmonic * Math.sin(3 * theta)),
+      );
+    }
+    return peak / (1 + ELASTIC_CORD_PARAMETERS.harmonic);
+  })();
+
+  test("波沿着绳往前跑, 而摆动只由波与股距这两项供能", () => {
     /*
-     * 拖拽本来就已经在动了。若波再沿着绳跑, 每个内点都要把整个 ±振幅扫一遍(旧实现
-     * 中段来回 24px), 那份摆动跟指针抢同一条视觉通道, 读作线跟不上手。所以时间只进到
-     * 「三股互绕」这一项: 圈钉在绳上, 三股彼此滑动。判据是绳中段的摆幅必须落在股距
-     * 这个量级里, 而不是振幅那个量级。
+     * [决策: 所有者 · 2026-09-05] 三股就按这一版, 波在跑。曾经反过来试图把波钉在绳上、
+     * 只留三股互绕, 那一版没有被接受, 不要再装回来。
+     *
+     * 判据不是一个宽上界(那种上界谁都能糊过去), 而是一条恒等式: 中间那股的股距项系数
+     * 是 (strandIndex - 1) = 0, 尾端扇开又与相位无关, 于是它在任意固定点上扫过的正是波
+     * 自己的整条带宽 —— 2 × 包络 × 波峰 × 振幅, 一分不多一分不少。波一旦被钉回绳上,
+     * 中股在固定点上根本不动, swing 立刻掉到 0; 若有第三个带相位的项被塞进来, 它立刻
+     * 超出。两侧股在此之上多出来的那份, 只能来自股距, 上界就是股距自己的带宽。
      */
-    const distance = 340;
-    const at = (phase: number, progress: number): number[] => elasticCordGeometry({
-      from: { x: 0, y: 0 },
-      phase,
-      pointer: { x: distance, y: 0 },
-    }).strands.map((path) =>
-      Number((path.split(" ")[Math.round(progress * ELASTIC_CORD_PARAMETERS.samples)] ?? "")
-        .slice(1).split(",")[1]));
-    const { amplitude, strandGap } = elasticCordMetrics(distance);
-    for (const progress of [0.25, 0.5, 0.75]) {
-      const samples = Array.from({ length: 200 }, (_, index) => at(index * 0.1, progress));
-      for (let strand = 0; strand < 3; strand += 1) {
-        const values = samples.map((row) => row[strand]!);
-        const swing = Math.max(...values) - Math.min(...values);
-        // 摆幅由互绕这一项独占: 上界就是 2×股距, 波再也不贡献一分
-        expect(swing).toBeLessThanOrEqual(2 * strandGap + 0.05);
-        // 仍然在动: 完全不动就不是缠绕了
-        expect(swing).toBeGreaterThan(strandGap);
-        // 波在跑的旧实现同一点来回 24px, 那是整个 ±振幅
-        expect(swing).toBeLessThan(2 * amplitude - 4);
+    for (const distance of [140, 340, 900]) {
+      const { amplitude, strandGap } = elasticCordMetrics(distance);
+      for (const progress of [0.25, 0.5, 0.75]) {
+        const sampleIndex = Math.round(progress * ELASTIC_CORD_PARAMETERS.samples);
+        const swings = [0, 1, 2].map((strand) => {
+          const values = Array.from({ length: 400 }, (_, index) =>
+            Number((elasticCordGeometry({
+              from: { x: 0, y: 0 },
+              phase: index * 0.05,
+              pointer: { x: distance, y: 0 },
+            }).strands[strand]!.split(" ")[sampleIndex] ?? "").slice(1).split(",")[1]));
+          return Math.max(...values) - Math.min(...values);
+        });
+        const envelope = elasticCordEnvelope(progress);
+        const waveBand = 2 * envelope * normalizedWavePeak * amplitude;
+        const braidBand = 2 * envelope * strandGap;
+        // 中股: 波的整条带宽, 误差只来自相位步长与坐标两位小数
+        expect(swings[1]! / waveBand).toBeGreaterThan(0.995);
+        expect(swings[1]! / waveBand).toBeLessThan(1.005);
+        for (const strand of [0, 2]) {
+          const braided = (swings[strand]! - swings[1]!) / braidBand;
+          // 互绕真的在动, 但它一分也不能超出股距给的那条带宽
+          expect(braided).toBeGreaterThan(0.5);
+          expect(braided).toBeLessThanOrEqual(1);
+        }
       }
     }
-    expect(amplitude).toBeGreaterThan(0);
   });
 
-  test("起点只由抓手决定: 指针绕着走一圈, 三股始终贴着抓手", () => {
+  test("起点严格是抓手那一个点: 指针绕着走一圈也不滑动", () => {
     /*
-     * 起点不再是同一个点(那一头不收束了), 但它必须始终由抓手决定: 绕行一圈, 三股离
-     * 抓手的距离恒定有界, 且那个界只由振幅与股距给出。旧实现对来源卡片求边界锚点,
-     * 起点会随指针沿着卡片边缘滑动几十像素 —— 那正是"线不是从我按住的地方出来的"。
+     * 三股在起点重合于抓手, 且这不是凑出来的: 包络在 0 处归零, 尾端扇开又带 progress²,
+     * 起点的法向偏移被这两项同时压成 0。绕一圈钉的是"它不随指针滑动" —— 旧实现对来源
+     * 卡片求边界锚点, 起点会沿卡片边缘滑几十像素, 那正是"线不是从我按住的地方出来的";
+     * 而卡片边到抓手中心只有约 16px, 一滑就露到卡片外面。
      */
+    expect(elasticCordEnvelope(0)).toBe(0);
     let worst = 0;
     for (let degree = 0; degree < 360; degree += 15) {
       const radian = (degree * Math.PI) / 180;
@@ -177,12 +207,7 @@ describe("elasticCordGeometry", () => {
         worst = Math.max(worst, Math.hypot(start.x - grip.x, start.y - grip.y));
       }
     }
-    const { amplitude, strandGap } = elasticCordMetrics(240);
-    expect(worst).toBeLessThanOrEqual(
-      amplitude / (1 + ELASTIC_CORD_PARAMETERS.harmonic) + strandGap,
-    );
-    // 卡片边到抓手中心约 16px: 断口必须留在卡片底下
-    expect(worst).toBeLessThan(16);
+    expect(worst).toBe(0);
   });
 
   test("拉远时振幅、股距与线宽单调收敛, 但都收不到零", () => {
