@@ -170,6 +170,7 @@ One axis is deliberately singular:
 
 - Solid surfaces only; no static background gradients.
 - A restrained vertical face light, one crisp `1px` inset ring, a thin inner halo and zero-offset short soft outer mist provide a light tactile quality; the highlight must wrap evenly rather than read as a top-only shine.
+- Button faces render as solid semantic surfaces; the former `face-top/face-bottom` names remain compatibility aliases for local overrides but are not a gradient rendering path.
 - Hover stays in place; press tightens in place with `transform: scale(var(--press-scale))` (`0.98`, ~70ms, center origin) and the pressed shadow contracts. No `translateY` drop, no bounce or overshoot curve. Split controls scale as one shell, loading and disabled never scale, and Reduced Motion keeps the active color, border and shadow compression without the scale.
 - Saving uses the same radius, a low-frequency narrow shimmer swept on a subtle diagonal, and the specimen label stays simply `Saving` without trailing dots.
 

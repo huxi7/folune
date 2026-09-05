@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 读取 index.css、button.css、sidebar-button.css 与 workspace.css 的 Control radius、Button 共享别名、Composer 圆形例外与统一 press
- * [OUTPUT]: 锁定 12px Control、显式 9px inner、Button 不建立私有半径、Composer 继续显式使用 round，以及四处命令控件共读同一份 press 缩放并在 Reduced Motion 下归 1、创建 split 的 hover 与 press 只认外壳那两半而不认展开的菜单项
+ * [OUTPUT]: 锁定 12px Control、显式 9px inner、Button 不建立私有半径、Button 使用纯色 surface 与环绕阴影而不使用静态面渐变、Composer 继续显式使用 round，以及四处命令控件共读同一份 press 缩放并在 Reduced Motion 下归 1、创建 split 的 hover 与 press 只认外壳那两半而不认展开的菜单项
  * [POS]: app/src/styles 的设计系统静态契约测试；在浏览器视觉验收之外阻止 Radius 与 press 两条公理被局部覆盖
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -39,6 +39,22 @@ describe("Control radius 公理", () => {
     const composerAction = declarationsFor(workspaceCss, ".agent-composer-action");
     expect(composerAction).toContain("border-radius: var(--radius-pill)");
     expect(composerAction).toContain("corner-shape: round");
+  });
+});
+
+describe("Button material 公理", () => {
+  test("Button 与 Processing 使用纯色 surface, 立体感只来自环绕阴影", () => {
+    expect(buttonCss).toContain("background: var(--button-surface-rest);");
+    expect(buttonCss).toContain("background: var(--button-surface-hover);");
+    expect(buttonCss).toContain("background: var(--button-surface-active);");
+    expect(buttonCss).toContain("background: var(--processing-surface);");
+    expect(buttonCss).not.toMatch(/background:\s*linear-gradient\(180deg, var\(--button-/);
+    expect(buttonCss).not.toContain("filter: saturate(");
+  });
+
+  test("按压只收紧中心, split 外壳也不保留零位移 transform", () => {
+    expect(workspaceCss).not.toContain("transform: translateY(0)");
+    expect(workspaceCss).not.toMatch(/background:\s*linear-gradient\(180deg, var\(--button-primary-face/);
   });
 });
 

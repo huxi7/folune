@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 index.css 的 Soft Ink Primary、可组合 Primary 材质、Processing、Type/Spacing/Radius/Motion token 与唯一的 --press-scale/--motion-press
- * [OUTPUT]: 对外提供 36px 标准 Button 的 primary/secondary/ghost/danger、square、loading、disabled、focus 与 reduced-motion 视觉状态；按下为原地 scale 收紧而非向下位移
- * [POS]: app/src/styles 的命令按钮专用视觉层，以 14/18px 文字比例、14px 横向留白、6px 图文间距和均匀环绕光影统一全站 Button
+ * [INPUT]: 依赖 index.css 的 Soft Ink Primary、solid surface 材质、Processing、Type/Spacing/Radius/Motion token 与唯一的 --press-scale/--motion-press
+ * [OUTPUT]: 对外提供 36px 标准 Button 的 primary/secondary/ghost/danger、square、loading、disabled、focus 与 reduced-motion 视觉状态；按下为原地 scale 收紧而非向下位移，实体面保持纯色
+ * [POS]: app/src/styles 的命令按钮专用视觉层，以 14/18px 文字比例、14px 横向留白、6px 图文间距和均匀环绕光影统一全站 Button；面光由纯色 surface 与环绕阴影表达，不制造静态背景渐变
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 @layer components {
@@ -30,6 +30,19 @@
     --button-mist-hover: transparent;
     --button-mist-active: transparent;
     --button-press-depth: transparent;
+    --button-shadow:
+      inset 0 0 0 1px var(--button-inner-ring-rest),
+      inset 0 0 var(--button-shadow-inner-blur-rest) var(--button-inner-glow-rest),
+      0 0 var(--button-shadow-mist-blur-rest) var(--button-shadow-mist-spread-rest) var(--button-mist-rest);
+    --button-shadow-hover:
+      inset 0 0 0 1px var(--button-inner-ring-hover),
+      inset 0 0 var(--button-shadow-inner-blur-hover) var(--button-inner-glow-hover),
+      0 0 var(--button-shadow-mist-blur-hover) var(--button-shadow-mist-spread-hover) var(--button-mist-hover);
+    --button-shadow-pressed:
+      inset 0 0 0 1px var(--button-inner-ring-active),
+      inset 0 0 var(--button-shadow-inner-blur-active) var(--button-inner-glow-active),
+      inset 0 0 var(--button-shadow-press-depth-blur) var(--button-press-depth),
+      0 0 var(--button-shadow-mist-blur-active) var(--button-shadow-mist-spread-active) var(--button-mist-active);
     position: relative;
     isolation: isolate;
     overflow: hidden;
@@ -39,7 +52,7 @@
     justify-content: center;
     border: 1px solid var(--button-border-rest);
     border-radius: var(--button-radius);
-    background: linear-gradient(180deg, var(--button-face-top-rest), var(--button-face-bottom-rest));
+    background: var(--button-surface-rest);
     color: var(--button-foreground-rest);
     font-size: var(--button-font-size);
     font-weight: 650;
@@ -70,7 +83,7 @@
   /* hover 不碰 transform: 按钮指向时留在原地, 唯一会动的那一下是按下 */
   .ds-button:not(:disabled):hover {
     border-color: var(--button-border-hover);
-    background: linear-gradient(180deg, var(--button-face-top-hover), var(--button-face-bottom-hover));
+    background: var(--button-surface-hover);
     box-shadow: var(--button-state-shadow-hover, none);
   }
 
@@ -81,7 +94,7 @@
    */
   .ds-button:not(:disabled):active {
     border-color: var(--button-border-active);
-    background: linear-gradient(180deg, var(--button-face-top-active), var(--button-face-bottom-active));
+    background: var(--button-surface-active);
     box-shadow: var(--button-state-shadow-pressed, none);
     transform: scale(var(--press-scale));
     transition-duration: var(--motion-press);
@@ -98,7 +111,6 @@
 
   .ds-button:disabled:not(.ds-button-loading) {
     box-shadow: none;
-    filter: saturate(0.52);
     opacity: 0.58;
     transform: none;
   }
@@ -111,7 +123,7 @@
 
   .ds-button.ds-button-loading:not(.ds-button-danger) {
     border-color: var(--button-loading-border);
-    background: linear-gradient(180deg, var(--processing-surface-top), var(--processing-surface-bottom));
+    background: var(--processing-surface);
     color: var(--button-loading-foreground);
     box-shadow: var(--button-loading-shadow);
   }
@@ -259,12 +271,12 @@
     --button-face-top-active: color-mix(in srgb, var(--button-danger-active-background) 98%, white);
     --button-face-bottom-active: color-mix(in srgb, var(--button-danger-active-background) 98%, var(--button-depth));
     --button-foreground-rest: var(--destructive-foreground);
-    --button-inner-ring-rest: rgb(255 255 255 / 38%);
-    --button-inner-ring-hover: rgb(255 255 255 / 46%);
-    --button-inner-ring-active: rgb(255 255 255 / 24%);
-    --button-inner-glow-rest: rgb(255 255 255 / 11%);
-    --button-inner-glow-hover: rgb(255 255 255 / 15%);
-    --button-inner-glow-active: rgb(255 255 255 / 6%);
+    --button-inner-ring-rest: var(--button-danger-inner-ring-rest);
+    --button-inner-ring-hover: var(--button-danger-inner-ring-hover);
+    --button-inner-ring-active: var(--button-danger-inner-ring-active);
+    --button-inner-glow-rest: var(--button-danger-inner-glow-rest);
+    --button-inner-glow-hover: var(--button-danger-inner-glow-hover);
+    --button-inner-glow-active: var(--button-danger-inner-glow-active);
     --button-mist-rest: color-mix(in srgb, var(--destructive) 30%, transparent);
     --button-mist-hover: color-mix(in srgb, var(--button-danger-hover-background) 38%, transparent);
     --button-mist-active: color-mix(in srgb, var(--button-danger-active-background) 22%, transparent);
