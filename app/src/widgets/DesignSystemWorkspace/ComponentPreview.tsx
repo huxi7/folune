@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖 React、生产 Design System/Lucide 图标边界、FoundationSpecimens、真实 MarkdownEditor/MarkdownReadingView 与 PaperSurface/EdgeDock/ArchiveCord/Cord Signature Components
- * [OUTPUT]: 对外提供 Color/Type/Iconography、Control 内外同心曲率、Primitives、Editorial 与 AI 状态样板；自定义 Input 家族由包裹 label 提供可见名称
+ * [INPUT]: 依赖 React、Motion for React 真实 Spring 变体、生产 Design System/Lucide 图标边界、FoundationSpecimens、真实 MarkdownEditor/MarkdownReadingView 与 PaperSurface/EdgeDock/ArchiveCord/Cord Signature Components
+ * [OUTPUT]: 对外提供 Color/Type/Iconography、Control 内外同心曲率、可操作 Motion/Radius/Elevation、Primitives、Editorial 与 AI 状态样板；自定义 Input 家族由包裹 label 提供可见名称
  * [POS]: app/src/widgets/DesignSystemWorkspace 的预览层；所有样板只读取生产 Token/API，不建立展示专用视觉系统
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -19,6 +19,7 @@ import {
   SunIcon,
   TreeStructureIcon,
 } from "../../shared/design-system/icons";
+import { AnimatePresence, motion } from "motion/react";
 import { memo, useEffect, useState } from "react";
 
 import {
@@ -54,6 +55,7 @@ import { useTheme } from "../../shared/theme/ThemeProvider";
 import type { DesignSystemSampleId } from "./componentCatalog";
 import { iconographyCatalog } from "./iconCatalog";
 import { ControlRadiusInnerPreview, SemanticIconComparison } from "./FoundationSpecimens";
+import { contentSwitch, hoverLift, modalContent } from "../../lib/motion.js";
 
 type ComponentPreviewProps = {
   sampleId: DesignSystemSampleId;
@@ -217,6 +219,8 @@ function IconographyPreview() {
 }
 
 function RadiusElevationMotionPreview() {
+  const [showMotionState, setShowMotionState] = useState(false);
+
   return (
     <div className="ds-foundation-material-preview">
       <div className="ds-radius-preview">
@@ -236,6 +240,44 @@ function RadiusElevationMotionPreview() {
         {([["Fast", "160"], ["Normal", "260"], ["Spatial", "320"], ["Quiet", "600"]] as const).map(([label, value]) => (
           <span key={label}><i data-motion={label.toLowerCase()} /><small>{label} · {value}ms</small></span>
         ))}
+      </div>
+      <div className="ds-motion-interaction-preview">
+        <motion.div
+          className="ds-motion-interaction-card"
+          initial="rest"
+          variants={hoverLift}
+          whileHover="hover"
+          whileTap="pressed"
+        >
+          <strong>Hover Lift</strong>
+          <span>Spring 轻抬、阴影加深，离开时平稳回落。</span>
+        </motion.div>
+        <Button onClick={() => setShowMotionState((current) => !current)} variant="secondary">
+          {showMotionState ? "收起状态" : "展示状态"}
+        </Button>
+        <AnimatePresence initial={false}>
+          {showMotionState ? (
+            <motion.div
+              animate="visible"
+              className="ds-motion-interaction-state"
+              exit="exit"
+              initial="hidden"
+              key="motion-state"
+              variants={modalContent}
+            >
+              <span>Modal Spring</span>
+              <small>遮罩淡入，内容稳定展开，退场短而干净。</small>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
+        <motion.span
+          animate="visible"
+          className="ds-motion-content-switch"
+          initial="hidden"
+          variants={contentSwitch}
+        >
+          reduced-motion 由入口 MotionConfig 与系统偏好共同控制。
+        </motion.span>
       </div>
     </div>
   );

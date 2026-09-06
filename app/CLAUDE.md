@@ -14,11 +14,12 @@ AUTH_SETUP.md: Supabase 邮箱确认模板、URL allow list、自定义 SMTP 限
 brand-spec.md: SuperNote 品牌真相源，记录已选 Soft Ink Light/Dark 轴、Saving Processing 状态、8/10/12/16/20px 同心曲率、Button 微雾材质及历史候选
 vite.config.ts: Vite 配置，从 app/.env.local 加载浏览器环境，将开发服务器严格固定到 10000，连接 React/Tailwind 插件，并用 Rolldown 按 React 封装、Markdown、View、State、Language、Features 拆分 CodeMirror chunk
 bunfig.toml: bun test 配置，声明 preload 在任何测试文件之前补齐浏览器公开环境变量，使裸跑 `bun test` 即为真实结果
-src/main.tsx: React 挂载入口，以 MotionConfig reducedMotion=user 包围 ThemeProvider/ToastProvider/RouterProvider 并加载全局样式
+src/main.tsx: React 挂载入口，以 MotionConfig reducedMotion=user 包围 ThemeProvider/ToastProvider/RouterProvider 并加载全局样式；所有页面与共享组件动效从 src/lib/motion.js 消费统一 Spring/Apple easing 语义
 src/testEnv.ts: 测试期浏览器公开配置的唯一兜底，只补立刻拒连的回环 Supabase 占位值且不覆盖已注入的真实值；产品代码永不导入
 src/index.css: Kumo/Tailwind v4 入口与唯一语义 Token 源，冻结 Quiet Editorial Color/Type/Spacing/Radius/Elevation/Motion、Paper 宽度上限、Paper First 中性画布/纯净纸张及 light/dark 同轴语义，并隔离声明不写入生产主题的 Color Lab 蓝色终选候选、导入职责样式模块；浏览器元素基础规则下沉 global-base.css
 src/styles/: UI 样式实现层，以 global-base.css 收口文档根与 reduced-motion、landing.css 隔离营销页、workspace.css 隔离 Paper/Panel/共享业务布局、note-paper.css 收口 Canvas 卡片缩略纸与全尺寸阅读纸共用的唯一纸面、knowledge-canvas.css 隔离 Canvas V2 Workspace 并收敛 React Flow 默认视觉，其余模块分别维护 design system、AI 消息、连线、认证、菜单与 CodeMirror；跨样式颜色插值统一使用 sRGB
-src/app/: 应用装配层，承载 OAuth 回调、Profile/access token 登录守卫、`/app` 共享 Dashboard 生命周期及仅 DEV 的无状态 Color Lab / Archive Cord Lab 入口
+src/app/: 应用装配层，承载 OAuth 回调、Profile/access token 登录守卫、`/app` 共享 Dashboard 生命周期及仅 DEV 的无状态 Color Lab / Archive Cord Lab 入口；router 根布局以 AnimatePresence 编排页面级过渡
+src/lib/: 低层动效配置层，集中维护 Motion for React 的 Spring、Apple easing、页面/模态/交互变体；不触碰业务状态、Canvas WAL 或 API
 src/pages/: 页面层，承载 Landing、OAuth Callback、Paper/Canvas 路由协调与仅 DEV 的配色决策页、归档线验收台；编排 flush、删除、整理、默认/空白 Canvas 入口、增量布局和返回恢复
 src/widgets/: 业务组合组件层，承载 Landing、PaperWorkspaceShell/CanvasWorkspace、共享文件库/AI Panel、memo 编辑会话、账户/订阅/回收站、全局对象命令与 Canvas V2 React Flow 交互
 src/shared/: 前端共享层，承载 memo/AI/Canvas API、轻量 tree、按 ID 正文、Canvas document/WAL/Workspace Store/保存协调器、Paper 与 Canvas 各自独立的 Chrome 状态、design system、纯 Supabase Auth 与主题状态；前端禁止直连业务表或 Storage

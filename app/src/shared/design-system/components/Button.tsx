@@ -1,16 +1,27 @@
 /**
- * [INPUT]: 依赖 React 的 ButtonHTMLAttributes、../icons 的 Icon 类型与 index.css 暴露的柔和墨蓝、36px 标准高度、14px/18px 控件文字、垂直面光、均匀内外环影、Processing 状态及唯一那份 press 收紧比例 token
- * [OUTPUT]: 对外提供支持图标、spinner、低频窄光带、disabled 与 aria-busy 联动的 Button 组件，以及 ButtonVariant、ButtonSize 类型
+ * [INPUT]: 依赖 React 的 ButtonHTMLAttributes、Motion for React 与 ../icons 的 Icon 类型，以及 index.css 暴露的柔和墨蓝、36px 标准高度、14px/18px 控件文字、垂直面光、均匀内外环影、Processing 状态及唯一那份 press 收紧比例 token
+ * [OUTPUT]: 对外提供支持图标、spinner、低频窄光带、disabled、aria-busy 联动与 Spring 按压回弹的 Button 组件，以及 ButtonVariant、ButtonSize 类型
  * [POS]: app/src/shared/design-system/components 的核心命令基础件，以统一 12px 平滑圆角、硅谷包豪斯式轻薄实体层级和「原地收紧」的按压反馈统一全站操作质感
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import type { Icon } from "../icons";
-import type { ButtonHTMLAttributes, ReactNode } from "react";
+import { motion } from "motion/react";
+import type { ButtonHTMLAttributes, ComponentType, ReactNode } from "react";
+
+import { tapScale } from "../../../lib/motion.js";
+
+const MotionButton = motion.button as unknown as ComponentType<
+  ButtonHTMLAttributes<HTMLButtonElement> & {
+    initial?: string;
+    variants?: unknown;
+    whileTap?: string;
+  }
+>;
 
 export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 export type ButtonSize = "default" | "square";
 
-type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+type ButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, "onDrag" | "onDragStart" | "onDragEnd"> & {
   children?: ReactNode;
   icon?: Icon;
   loading?: boolean;
@@ -43,7 +54,7 @@ export function Button({
   ...props
 }: ButtonProps) {
   return (
-    <button
+    <MotionButton
       aria-busy={loading ? true : ariaBusy}
       className={[
         "ds-button",
@@ -53,6 +64,9 @@ export function Button({
         className,
       ].join(" ")}
       disabled={disabled || loading}
+      initial="rest"
+      whileTap="pressed"
+      variants={tapScale}
       type={type}
       {...props}
     >
@@ -64,6 +78,6 @@ export function Button({
         ) : null}
         {children}
       </span>
-    </button>
+    </MotionButton>
   );
 }

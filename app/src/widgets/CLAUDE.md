@@ -52,7 +52,7 @@ CanvasStageLoading.test.tsx: 锁定 visible=false 时完全卸载全屏容器，
 CanvasWorkspace.tsx: Canvas 全视口会话壳；可空闲预载 KnowledgeCanvas、消费可选一次性 detail，并向路由暴露 flush；Panel/Preview 开合不改变几何或卸载中央 React Flow，bootstrap 只决定进入语境（有 detail 即视图过渡带进来，无则自己淡入）
 CanvasWorkspace.test.tsx: Canvas 会话壳回归测试，锁定中央 Canvas、共享 Panel、Paper 互斥关系，以及伪返回按钮/Canvas 文字标识/厚重标题卡片确已消失
 KnowledgeCanvas/: Canvas V2 交互内容根，以受控 React Flow 承载持久视口、memo/native 节点、右下抓手的拖/点等效连接与纯 UI 临时编织绳、带撤销回执/来源确认的移除、拖拽/缩放、Picker、Preview、显式 AI expansion、WAL 恢复与保存状态
-DesignSystemWorkspace/: 开发态 Quiet Editorial Design System 工作区，按 Foundations/Primitives/Navigation & Overlays/Editorial/AI & Organize 五层直接陈列生产 Token、Lucide 精选图标示例、Markdown/Reading/Quote/Code 与四种 Signature Components；组件状态由真实预览交互表达，不再铺设重复状态轨；通过 lazy import 只在 import.meta.env.DEV 下暴露
+DesignSystemWorkspace/: 开发态 Quiet Editorial Design System 工作区，按 Foundations/Primitives/Navigation & Overlays/Editorial/AI & Organize 五层直接陈列生产 Token、Lucide 精选图标示例、统一 Motion Spring 变体、Markdown/Reading/Quote/Code 与四种 Signature Components；组件状态由真实预览交互表达，不再铺设重复状态轨；通过 lazy import 只在 import.meta.env.DEV 下暴露
 NotePaper.tsx: 共享纸面原语，以 thumbnail/reader 两个 variant 承载 Canvas 卡片缩略纸与小开本浮纸。transitionIdentity 一个入参同时命名纸壳与纸内正文（paper-/paper-body-），规矩因此住在纸里而不是每个调用方——漏一处就是一次字被当图片拉伸的过渡；不再交出真实 DOM，几何归浏览器，没人再测量这张纸。纸张曲率、纸边、墨色与 thumbnail 渐隐仍只实现一次，reader 纸面静止且正文在纸内滚动
 NotePaper.test.tsx: 纸面骨架与视觉契约回归测试，锁定两个 variant 的 DOM 同构、thumbnail 五段透明度且模糊层不填纸色、空摘录占位、children 覆盖摘录与 overlay 不进入正文流，以及一个 transitionIdentity 必须同时命名纸壳与正文、不给身份则一个名字都不留
 MarkdownEditor.tsx: Markdown 存储协议与 CodeMirror 显示协议之间的唯一 adapter；handle 只暴露 focus 与只读 readSelection（剥掉零宽标记后返回选中文字，不触碰选区/撤销/自动保存），GFM language 常驻，live/source 只通过 Compartment 重配显示扩展以共享 EditorState/选区/撤销历史，零宽空行标记和纯文本粘贴继续保证 content_mdx 无损往返
@@ -62,11 +62,11 @@ MarkdownReadingView.tsx: react-markdown + remark-gfm + 可选 remark-breaks + re
 MarkdownReadingView.test.tsx: 阅读换行、安全、常数尾部动画节点与文件边界测试；正则按真实 HTML 属性匹配，不保留无意义的 quote 转义
 MarkdownViewMenu.tsx: 中央 Toolbar 的 editing/reading 切换与 More 菜单；根节点用自己的 .markdown-view-menu 而不再与 Toolbar 尾部命令簇共用 .note-view-actions（重名让"选中下划线"那条后代规则同时亮在两个图标下、且两态都亮，等于装饰），当前态只由图标字形与 title 表达；menu 容器可聚焦，分隔符具备名称，支持键盘/焦点恢复，并在导出文件名时显式过滤 ASCII 控制字符
 markdownViewTypes.ts: DocumentView editing/reading 与 EditingMode live/source 的共享状态协议，阅读状态不占用编辑模式槽位
-NotesWorkspace.tsx: /app Paper 内部写作列，以 memoClientKey 作为唯一编辑会话/自动聚焦身份；逐键正文只更新本地草稿，保存/flush 才跨越 Dashboard 共享状态边界
+NotesWorkspace.tsx: /app Paper 内部写作列，以 memoClientKey 作为唯一编辑会话/自动聚焦身份；编辑/阅读切换使用不卸载 CodeMirror 的克制内容过渡，逐键正文只更新本地草稿，保存/flush 才跨越 Dashboard 共享状态边界
 PaperWorkspaceShell.tsx: Paper First 四层空间壳；向 PaperSurface 下传稳定 memo identity，文件库/AI 独立浮层开合不改变 Paper/Stage 几何。响应式判据不在此处再算一遍——它由 Dashboard 的 useOverlayPanels 持有并下传，壳只消费并在 compact 双开时让右侧 AI 让位；同一个断点算两遍就会出现两个都自称正确的布局
 useMemoAutosave.ts: 单 memo 本地草稿状态机；递归 required flush 使用具名 callback，session 只以 memoId 建立/销毁，逐键输入不写全局 Store，晚到初值由独立门禁接纳
 useMemoAutosave.test.ts: 覆盖迟到服务端正文接纳门禁、插入/删除/等长替换字符计数、三次有界指数退避，以及驱动真实 Hook 证明标题冲突只挂起 title 而正文照常落库
-WorkspaceAuxViews.tsx: 纸内辅助视图挂载点；订阅、回收站、Design System 住在 Paper 内部且彼此互斥。已保存画布属于独立空间语境，明确由 CanvasWorkspace 承载，不得重新并入此分支
+WorkspaceAuxViews.tsx: 纸内辅助视图挂载点；订阅、回收站、Design System 住在 Paper 内部且彼此互斥，并以统一内容 Spring 过渡切换。已保存画布属于独立空间语境，明确由 CanvasWorkspace 承载，不得重新并入此分支
 WorkspaceCommandPalette.tsx: 全局唯一 Command Surface；listbox 结果行是可聚焦 option，以稳定 id 承担 active 身份，并支持六档排序、Tab 进入画布与 Canvas 语境连续加入
 WorkspaceCommandPalette.test.tsx: 键盘状态机门禁，使用最小 Bun test 依赖覆盖开合、焦点、方向键/Enter/Tab/Esc、IME、Canvas 连续加入、正文补入稳定与提示条状态
 commandResults.ts: 全局搜索唯一排序纯函数；六档命中顺序与同档内确定性 tie-break，两种画布都独立成行且画布行携带来源笔记标题，同档同名时按「本体先于派生物」让笔记恒排在它的画布之前
@@ -78,7 +78,7 @@ AccountDialog.tsx: UserMenu 身份卡片与设置项共同打开的唯一设置�
 AccountProfilePanel.tsx: AccountDialog 的账户资料栏；后台 Profile 刷新只以 bio/username 字段合并草稿，头像/email 等无关身份变化不重跑文字合并；停止输入 800ms 后串行 PATCH，头像即时上传并经 Toast 回执
 AccountSettingsPanel.tsx: AccountDialog 的外观栏，在“主题”同一行消费 Design System SegmentedControl 提供系统/白天/黑夜偏好；system 实时跟随设备并仍只解析到同一套 light/dark token
 SubscriptionWorkspace.tsx: /app 订阅入口工作区，以纯白画布、三档可选方案、权益清单与选中回执展示 5/20/100 美金订阅
-AgentPanel/: Paper 与 Canvas 共用的右侧思考空间；AI SDK useChat 承载对话/工具/审批/撤销，organize client 服务 Paper，Canvas expansion client 只取可信候选并把最终 intent 交还统一 Canvas 保存协调器
+AgentPanel/: Paper 与 Canvas 共用的右侧思考空间；历史会话、加载态与当前对话以统一内容 Spring 过渡切换，AI SDK useChat 承载对话/工具/审批/撤销，organize client 服务 Paper，Canvas expansion client 只取可信候选并把最终 intent 交还统一 Canvas 保存协调器
 
 职责: 业务组合组件层，承载 Landing、Paper/Canvas 两个一级 Workspace、共享文件库与 AI 思考空间、认证、账户和业务视图；Canvas 组件只产生 intent，可靠写入归 Store/Coordinator，正文归 memoDocumentStore；业务组件禁止裸写 fetch 或直连 Supabase 业务数据，AgentPanel transport/client 只在请求期读取 Auth token 访问 chat。
 

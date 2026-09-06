@@ -12,6 +12,7 @@ import {
 } from "react-router-dom";
 
 import { LandingPage } from "../../pages/LandingPage";
+import { RouteMotionBoundary } from "./RouteMotionBoundary";
 import {
   Skeleton,
   SkeletonGroup,
@@ -156,48 +157,55 @@ async function requireWorkspace() {
 export const router = createBrowserRouter([
   {
     path: "/",
-    element: <LandingPage />,
-  },
-  {
-    path: "/auth/callback",
-    element: (
-      <RouteSuspense>
-        <AuthCallbackPage />
-      </RouteSuspense>
-    ),
-  },
-  ...(ColorLabPage === null
-    ? []
-    : [{
-      path: "/color-lab",
-      element: (
-        <RouteSuspense>
-          <ColorLabPage />
-        </RouteSuspense>
-      ),
-    }]),
-  ...(ArchiveCordLabPage === null
-    ? []
-    : [{
-      path: "/archive-cord-lab",
-      element: (
-        <RouteSuspense>
-          <ArchiveCordLabPage />
-        </RouteSuspense>
-      ),
-    }]),
-  {
-    path: "/app",
-    element: (
-      <RouteSuspense fallback={<WorkspaceRouteFallback />}>
-        <AppDashboard />
-      </RouteSuspense>
-    ),
-    hydrateFallbackElement: <WorkspaceRouteFallback />,
-    loader: requireWorkspace,
     children: [
-      { index: true, element: <WorkspaceRouteLeaf /> },
-      { path: "notes/:noteId", element: <WorkspaceRouteLeaf /> },
+      {
+        element: <RouteMotionBoundary />,
+        children: [
+          { index: true, element: <LandingPage /> },
+          {
+            path: "auth/callback",
+            element: (
+              <RouteSuspense>
+                <AuthCallbackPage />
+              </RouteSuspense>
+            ),
+          },
+          ...(ColorLabPage === null
+            ? []
+            : [{
+              path: "color-lab",
+              element: (
+                <RouteSuspense>
+                  <ColorLabPage />
+                </RouteSuspense>
+              ),
+            }]),
+          ...(ArchiveCordLabPage === null
+            ? []
+            : [{
+              path: "archive-cord-lab",
+              element: (
+                <RouteSuspense>
+                  <ArchiveCordLabPage />
+                </RouteSuspense>
+              ),
+            }]),
+          {
+            path: "app",
+            element: (
+              <RouteSuspense fallback={<WorkspaceRouteFallback />}>
+                <AppDashboard />
+              </RouteSuspense>
+            ),
+            hydrateFallbackElement: <WorkspaceRouteFallback />,
+            loader: requireWorkspace,
+            children: [
+              { index: true, element: <WorkspaceRouteLeaf /> },
+              { path: "notes/:noteId", element: <WorkspaceRouteLeaf /> },
+            ],
+          },
+        ],
+      },
     ],
   },
 ]);

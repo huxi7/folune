@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖按需加载的 MemoDetailNode、跨临时/真实 ID 保持不变的 memoClientKey、新建聚焦意图、正文加载状态、DocumentView/EditingMode、useMemoAutosave、MarkdownEditor/ReadingView、ThemeProvider 与 Toast
- * [OUTPUT]: 对外提供临时节点提交期间不重挂载的纸张内本地草稿写作/阅读列与 NotesWorkspaceHandle，并仅在笔记身份切换时聚焦新纸标题/编辑器
+ * [INPUT]: 依赖按需加载的 MemoDetailNode、跨临时/真实 ID 保持不变的 memoClientKey、新建聚焦意图、正文加载状态、DocumentView/EditingMode、Motion for React 内容切换、useMemoAutosave、MarkdownEditor/ReadingView、ThemeProvider 与 Toast
+ * [OUTPUT]: 对外提供临时节点提交期间不重挂载的纸张内本地草稿写作/阅读列与 NotesWorkspaceHandle，并以不破坏 CodeMirror 会话的淡入切换表达编辑/阅读视图，仅在笔记身份切换时聚焦新纸标题/编辑器
  * [POS]: app/src/widgets 的备忘录编辑会话边界；Paper 外壳不拥有编辑状态，客户端身份隔离后端 ID 置换，Dashboard 只能经显式 handle 跨越自动保存边界；按需正文未到达前绝不把空标题反写轻量树；同级重名在标题区原位提示且不阻断正文自动保存
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -16,6 +16,7 @@ import {
   type FormEvent,
   type KeyboardEvent,
 } from "react";
+import { AnimatePresence, motion } from "motion/react";
 
 import type { MemoDetailNode } from "../shared/api/memo";
 import {
@@ -30,6 +31,7 @@ import {
 } from "./MarkdownEditor";
 import { MarkdownReadingView } from "./MarkdownReadingView";
 import type { DocumentView, EditingMode } from "./markdownViewTypes";
+import { contentSwitch } from "../lib/motion.js";
 import {
   useMemoAutosave,
   type MemoDraftSnapshot,
@@ -323,10 +325,13 @@ export const NotesWorkspace = forwardRef<
             </p>
           ) : null}
         </div>
-        <div
+        <motion.div
           aria-hidden={documentView === "reading"}
           className="note-editor-content"
           hidden={documentView === "reading"}
+          animate={documentView === "editing" ? "visible" : "hidden"}
+          initial={false}
+          variants={contentSwitch}
         >
           <MarkdownEditor
             editingMode={editingMode}
@@ -337,12 +342,21 @@ export const NotesWorkspace = forwardRef<
             theme={resolvedTheme}
             value={content}
           />
-        </div>
-        {documentView === "reading" ? (
-          <div className="note-reading-surface">
-            <MarkdownReadingView content={content} preserveSoftBreaks />
-          </div>
-        ) : null}
+        </motion.div>
+        <AnimatePresence initial={false} mode="wait">
+          {documentView === "reading" ? (
+            <motion.div
+              animate="visible"
+              className="note-reading-surface"
+              exit="exit"
+              initial="hidden"
+              key="reading"
+              variants={contentSwitch}
+            >
+              <MarkdownReadingView content={content} preserveSoftBreaks />
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
       </article>
     </main>
   );

@@ -26,7 +26,7 @@ export { UserAvatar, UserButton } from "./UserButton";
 export { UserMenu } from "./UserMenu";
 export { UserMessageBubble } from "./UserMessageBubble";
 export type { ButtonSize, ButtonVariant } from "./Button";
-export type { CardTone } from "./Card";
+export type { CardMotion, CardTone } from "./Card";
 export type { DialogAlign, DialogDensity, DialogHeaderMode, DialogSurface, DialogWidth } from "./Dialog";
 export type { PasswordInputProps } from "./PasswordInput";
 export type { MentionInputProps, MentionInputSegment, MentionInputToken } from "./MentionInput";

@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖 React ref、本地 Button/Card/BrandMark/BlueprintDivider、共享 Lucide 图标、CountUp/轻量 reveal 与 React Router 导航
- * [OUTPUT]: 对外提供由唯一 Divider 分隔、无装饰 hover 填色/磁吸/聚光/浮动的指标、问题、流程、场景、定价、FAQ 与大图标/短标题/小按钮组成的无末端节点预页脚
+ * [INPUT]: 依赖 React ref、本地 Button/Card/BrandMark/BlueprintDivider、Motion for React Spring reveal、共享 Lucide 图标、CountUp/轻量 reveal 与 React Router 导航
+ * [OUTPUT]: 对外提供由唯一 Divider 分隔、带 whileInView Spring 与错开入场、无装饰 hover 填色/磁吸/聚光/浮动的指标、问题、流程、场景、定价、FAQ 与大图标/短标题/小按钮组成的无末端节点预页脚
  * [POS]: app/src/widgets 的 Landing 扩展模块，被 LandingPage 懒加载并保持工程骨架静止、内容独立入场，让正文竖轨无节点直达 Footer
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -10,9 +10,11 @@ import {
   CheckIcon,
   PlusIcon,
 } from "../shared/design-system/icons";
+import { motion } from "motion/react";
 import { useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { fadeInUp, staggerContainer, staggerItem } from "../lib/motion.js";
 import { BrandMark, Button, Card } from "../shared/design-system/components";
 import { BlueprintDivider } from "./BlueprintDivider";
 import { CountUp } from "./LandingMotion/CountUp";
@@ -119,28 +121,36 @@ export function LandingSections() {
         aria-label="产品行为指标"
         className="blueprint-section landing-metrics-section"
       >
-        <div
+        <motion.div
           className="landing-metrics-grid"
           data-landing-reveal
           data-reveal-stagger
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ amount: 0.2, once: true }}
+          variants={staggerContainer}
         >
           {behaviorMetrics.map((metric) => (
-            <div data-reveal-item key={metric.label}>
+            <motion.div data-reveal-item key={metric.label} variants={staggerItem}>
               <strong>
                 <CountUp suffix={metric.suffix} value={metric.value} />
               </strong>
               <span>{metric.label}</span>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       </section>
 
       <BlueprintDivider />
 
       <section className="blueprint-section landing-content-section">
-        <div
+        <motion.div
           className="landing-section-content landing-split-section"
           data-landing-reveal
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ amount: 0.18, once: true }}
+          variants={fadeInUp}
         >
           <div className="landing-sticky-copy">
             <p>The friction</p>
@@ -149,18 +159,18 @@ export function LandingSections() {
               文件夹、标签和链接本身没有错。问题在于，大多数笔记工具要求你在想法最脆弱的时候，同时完成记录与整理。
             </span>
           </div>
-          <div className="landing-index-list" data-reveal-stagger>
+          <motion.div className="landing-index-list" data-reveal-stagger variants={staggerContainer}>
             {problemItems.map((item, index) => (
-              <article data-reveal-item key={item.title}>
+              <motion.article data-reveal-item key={item.title} variants={staggerItem}>
                 <span>0{index + 1}</span>
                 <div>
                   <h3>{item.title}</h3>
                   <p>{item.body}</p>
                 </div>
-              </article>
+              </motion.article>
             ))}
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </section>
 
       <BlueprintDivider />
@@ -169,45 +179,56 @@ export function LandingSections() {
         className="blueprint-section landing-content-section"
         id="workflow"
       >
-        <div className="landing-section-content" data-landing-reveal>
+        <motion.div
+          className="landing-section-content"
+          data-landing-reveal
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ amount: 0.18, once: true }}
+          variants={fadeInUp}
+        >
           <SectionHeading
             body="整个过程发生在保存之后：不弹出分类选择，也不要求你停下来整理。"
             eyebrow="How it works"
             title="记录是一条直线。整理在后台完成。"
           />
-          <ol className="landing-workflow-grid" data-reveal-stagger>
+          <motion.ol className="landing-workflow-grid" data-reveal-stagger variants={staggerContainer}>
             {workflowSteps.map((step) => (
-              <li data-reveal-item key={step.label}>
+              <motion.li data-reveal-item key={step.label} variants={staggerItem}>
                 <span>{step.label}</span>
                 <h3>{step.title}</h3>
                 <p>{step.body}</p>
-              </li>
+              </motion.li>
             ))}
-          </ol>
-        </div>
+          </motion.ol>
+        </motion.div>
       </section>
 
       <BlueprintDivider />
 
       <section className="blueprint-section landing-content-section">
-        <div
+        <motion.div
           className="landing-section-content landing-use-cases"
           data-landing-reveal
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ amount: 0.18, once: true }}
+          variants={fadeInUp}
         >
           <div>
             <p>For real notes</p>
             <h2>重要的信息先被留下，结构可以晚一点出现。</h2>
             <span>会议结论、阅读摘录、产品想法和长期项目，都从同一个简单入口开始。</span>
           </div>
-          <div className="landing-use-case-list" data-reveal-stagger>
+          <motion.div className="landing-use-case-list" data-reveal-stagger variants={staggerContainer}>
             {useCases.map((item) => (
-              <div data-reveal-item key={item}>
+              <motion.div data-reveal-item key={item} variants={staggerItem}>
                 <CheckCircleIcon aria-hidden="true" size={16} />
                 {item}
-              </div>
+              </motion.div>
             ))}
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </section>
 
       <BlueprintDivider />
@@ -216,21 +237,27 @@ export function LandingSections() {
         className="blueprint-section landing-content-section"
         id="pricing"
       >
-        <div className="landing-section-content" data-landing-reveal>
+        <motion.div
+          className="landing-section-content"
+          data-landing-reveal
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ amount: 0.18, once: true }}
+          variants={fadeInUp}
+        >
           <SectionHeading
             body="每个方案都包含保存后自动归档；差别只在整理额度、协作方式与高级能力。"
             eyebrow="Plans"
             title="从个人记录，到一组人的知识结构。"
           />
-          <div className="landing-pricing-grid" data-reveal-stagger>
+          <motion.div className="landing-pricing-grid" data-reveal-stagger variants={staggerContainer}>
             {pricingPlans.map((plan) => (
-              <Card
+              <motion.div data-reveal-item key={plan.name} variants={staggerItem}>
+                <Card
                 className="landing-pricing-card"
                 data-featured={plan.highlighted || undefined}
-                data-reveal-item
-                key={plan.name}
                 tone={plan.highlighted ? "accent" : "default"}
-              >
+                >
                 <div className="landing-plan-heading">
                   <p>{plan.name}</p>
                   {plan.highlighted ? <span>Recommended</span> : null}
@@ -255,10 +282,11 @@ export function LandingSections() {
                 >
                   选择 {plan.name}
                 </Button>
-              </Card>
+                </Card>
+              </motion.div>
             ))}
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </section>
 
       <BlueprintDivider />
@@ -267,7 +295,14 @@ export function LandingSections() {
         className="blueprint-section landing-content-section"
         id="faq"
       >
-        <div className="landing-section-content" data-landing-reveal>
+        <motion.div
+          className="landing-section-content"
+          data-landing-reveal
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ amount: 0.18, once: true }}
+          variants={fadeInUp}
+        >
           <SectionHeading
             body="控制权、创建文件夹的边界，以及记录过程会不会被打断。"
             eyebrow="FAQ"
@@ -288,7 +323,7 @@ export function LandingSections() {
               </details>
             ))}
           </div>
-        </div>
+        </motion.div>
       </section>
 
       <BlueprintDivider />

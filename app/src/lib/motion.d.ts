@@ -1,0 +1,30 @@
+import type { TargetAndTransition, Transition, Variants } from "motion/react";
+
+export const snappy: Transition;
+export const gentle: Transition;
+export const bouncy: Transition;
+export const smooth: Transition;
+export const inertia: Transition;
+export const appleEase: readonly number[];
+export const appleEaseOut: readonly number[];
+export const appleDecelerate: readonly number[];
+export const fadeInUp: Variants;
+export const scaleIn: Variants;
+export const staggerContainer: Variants;
+export const staggerItem: Variants;
+export const hoverLift: Variants;
+export const tapScale: Variants;
+export const modalOverlay: Variants;
+export const modalContent: Variants;
+export const pageTransition: Variants;
+export const pageInitial: TargetAndTransition;
+export const pageAnimate: TargetAndTransition;
+export const pageExit: TargetAndTransition;
+export const iconWiggle: Variants;
+export const successPulse: Variants;
+export const errorShake: Variants;
+export const loadingTransition: {
+  opacity: TargetAndTransition;
+  scale: Transition;
+};
+export const contentSwitch: Variants;

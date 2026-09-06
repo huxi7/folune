@@ -74,6 +74,10 @@
     box-shadow: 0 0.55rem 1.8rem -1.5rem color-mix(in srgb, var(--foreground) 28%, transparent);
   }
 
+  .landing-blueprint .ds-card:hover {
+    box-shadow: var(--shadow-md);
+  }
+
   .marketing-header {
     background: color-mix(in srgb, var(--background) 94%, transparent);
     backdrop-filter: blur(1rem) saturate(112%);

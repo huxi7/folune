@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 index.css 的 Quiet Editorial Foundations 与 Design System/Signature Components 真实类
- * [OUTPUT]: 对外提供真实主题切换、五层展示页、Lucide 精选图标示例/语义对比、Control 内外同心样板、Editorial 样板及 Paper Surface/Edge Dock/Archive Cord 生产同源预览
- * [POS]: app/src/styles 的开发陈列专用视觉层，只可视化生产 token，不定义第二套颜色、曲率、阴影或 Motion
+ * [INPUT]: 依赖 index.css 的 Quiet Editorial Foundations、Motion 交互样板类与 Design System/Signature Components 真实类
+ * [OUTPUT]: 对外提供真实主题切换、五层展示页、Lucide 精选图标示例/语义对比、Control 内外同心样板、可操作 Motion 变体、Editorial 样板及 Paper Surface/Edge Dock/Archive Cord 生产同源预览
+ * [POS]: app/src/styles 的开发陈列专用视觉层，只可视化生产 token 与全站 Motion 语义，不定义第二套颜色、曲率或阴影
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 @layer components {
@@ -288,6 +288,15 @@
   .ds-motion-preview [data-motion="normal"] { animation-duration: var(--motion-normal); }
   .ds-motion-preview [data-motion="spatial"] { animation-duration: var(--motion-spatial); }
   .ds-motion-preview [data-motion="quiet"] { animation-duration: var(--motion-quiet); }
+
+  .ds-motion-interaction-preview { display: grid; max-width: 34rem; gap: var(--space-3); }
+  .ds-motion-interaction-card { display: grid; gap: var(--space-1); border: 1px solid var(--border); border-radius: var(--radius-paper); background: var(--card); padding: var(--space-4); color: var(--foreground); box-shadow: var(--shadow-sm); }
+  .ds-motion-interaction-card strong { font-size: var(--type-ui); }
+  .ds-motion-interaction-card span,
+  .ds-motion-content-switch,
+  .ds-motion-interaction-state small { color: var(--muted-foreground); font-size: var(--type-caption); line-height: 1.5; }
+  .ds-motion-interaction-state { display: grid; gap: var(--space-1); border-radius: var(--radius-control); background: var(--accent); padding: var(--space-3); color: var(--accent-foreground); }
+  .ds-motion-interaction-state span { font-size: var(--type-label); font-weight: var(--weight-label); }
 
   .ds-gallery-card[data-component="SpatialRhythm"] .design-system-preview {
     min-height: 0;
@@ -740,5 +749,8 @@
 @media (prefers-reduced-motion: reduce) {
   @layer components {
     .ds-motion-preview i { animation: none; }
+    .ds-motion-interaction-card,
+    .ds-motion-interaction-state,
+    .ds-motion-content-switch { transform: none !important; }
   }
 }

@@ -65,6 +65,7 @@ export function SubscriptionWorkspace() {
                 data-recommended={plan.recommended || undefined}
                 data-selected={isSelected}
                 key={plan.name}
+                motion="none"
                 tone={plan.recommended ? "accent" : "default"}
               >
                 <div className="subscription-plan-topline">

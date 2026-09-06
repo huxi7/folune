@@ -1,12 +1,14 @@
 /**
- * [INPUT]: 依赖 React 的 effect/id/ref 与 ReactNode，依赖 共享 Lucide XIcon，依赖 Button 与 design-system.css 暴露的 ds-dialog-overlay/ds-dialog-panel/ds-dialog-shell 模态材质类
- * [OUTPUT]: 对外提供密度/宽度/对齐/表面/标题、default|none 入场模式、标题描述关联、Esc、焦点循环、滚动锁定的 Dialog
+ * [INPUT]: 依赖 React 的 effect/id/ref 与 ReactNode、Motion for React AnimatePresence/motion，依赖共享 Lucide XIcon，依赖 Button 与 design-system.css 暴露的 ds-dialog-overlay/ds-dialog-panel/ds-dialog-shell 模态材质类
+ * [OUTPUT]: 对外提供密度/宽度/对齐/表面/标题、default|none Spring 入场模式、标题描述关联、Esc、焦点循环、滚动锁定的 Dialog
  * [POS]: app/src/shared/design-system/components 的唯一模态基础件；motion=none 交出入场编排让遮罩随 root 视图过渡一起换（遮罩绝不自带过渡身份，否则会盖住正在放大的纸），模态行为仍由此统一
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { XIcon } from "../icons";
+import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useId, useRef, type ReactNode } from "react";
 
+import { modalContent, modalOverlay } from "../../../lib/motion.js";
 import { Button } from "./Button";
 
 type DialogProps = {
@@ -38,7 +40,7 @@ export function Dialog({
   density = "default",
   description,
   headerMode = "default",
-  motion = "default",
+  motion: motionMode = "default",
   onOpenChange,
   open,
   surface = "panel",
@@ -132,96 +134,104 @@ export function Dialog({
     };
   }, [open]);
 
-  if (!open) {
-    return null;
-  }
-
   return (
-    <div
-      aria-describedby={description ? descriptionId : undefined}
-      aria-labelledby={titleId}
-      aria-modal="true"
-      className="ds-dialog-overlay fixed inset-0 flex justify-center p-4"
-      data-align={align}
-      data-motion={motion}
-      data-surface={surface}
-      role="dialog"
-    >
-      <button
-        aria-hidden="true"
-        className="absolute inset-0 cursor-default"
-        onClick={() => onOpenChange(false)}
-        tabIndex={-1}
-        type="button"
-      />
-      <div
-        className={[
-          "relative z-10",
-          surface === "bare" ? "ds-dialog-shell" : "ds-dialog-panel",
-          ...(surface === "bare" ? [] : [
-            width === "account"
-              ? "account-dialog-panel"
-              : width === "command"
-                ? "command-palette-panel"
-                : "w-full max-w-lg",
-            resolvedHeaderMode === "embedded"
-              ? "p-0"
-              : density === "compact"
-                ? "p-4"
-                : "p-5",
-          ]),
-        ].join(" ")}
-        data-density={density}
-        data-surface={surface}
-        data-width={width}
-        ref={panelRef}
-        tabIndex={-1}
-      >
-        {resolvedHeaderMode === "embedded" ? (
-          <div className="sr-only">
-            <h2 id={titleId}>{title}</h2>
-            {description ? (
-              <p id={descriptionId}>{description}</p>
-            ) : null}
-          </div>
-        ) : (
-          <div
-            className={density === "compact"
-              ? "flex items-start justify-between gap-3"
-              : "flex items-start justify-between gap-4"}
+    <AnimatePresence initial={motionMode !== "none"}>
+      {open ? (
+        <motion.div
+          aria-describedby={description ? descriptionId : undefined}
+          aria-labelledby={titleId}
+          aria-modal="true"
+          className="ds-dialog-overlay fixed inset-0 flex justify-center p-4"
+          data-align={align}
+          data-motion={motionMode}
+          data-surface={surface}
+          initial={motionMode === "none" ? false : "hidden"}
+          animate={motionMode === "none" ? undefined : "visible"}
+          exit={motionMode === "none" ? undefined : "exit"}
+          role="dialog"
+          variants={modalOverlay}
+        >
+          <button
+            aria-hidden="true"
+            className="absolute inset-0 cursor-default"
+            onClick={() => onOpenChange(false)}
+            tabIndex={-1}
+            type="button"
+          />
+          <motion.div
+            className={[
+              "relative z-10",
+              surface === "bare" ? "ds-dialog-shell" : "ds-dialog-panel",
+              ...(surface === "bare" ? [] : [
+                width === "account"
+                  ? "account-dialog-panel"
+                  : width === "command"
+                    ? "command-palette-panel"
+                    : "w-full max-w-lg",
+                resolvedHeaderMode === "embedded"
+                  ? "p-0"
+                  : density === "compact"
+                    ? "p-4"
+                    : "p-5",
+              ]),
+            ].join(" ")}
+            data-density={density}
+            data-surface={surface}
+            data-width={width}
+            initial={motionMode === "none" ? false : "hidden"}
+            animate={motionMode === "none" ? undefined : "visible"}
+            exit={motionMode === "none" ? undefined : "exit"}
+            ref={panelRef}
+            tabIndex={-1}
+            variants={modalContent}
           >
-            <div>
-              <h2
+            {resolvedHeaderMode === "embedded" ? (
+              <div className="sr-only">
+                <h2 id={titleId}>{title}</h2>
+                {description ? (
+                  <p id={descriptionId}>{description}</p>
+                ) : null}
+              </div>
+            ) : (
+              <div
                 className={density === "compact"
-                  ? "text-base font-semibold leading-tight text-foreground"
-                  : "text-xl font-semibold leading-tight text-foreground"}
-                id={titleId}
+                  ? "flex items-start justify-between gap-3"
+                  : "flex items-start justify-between gap-4"}
               >
-                {title}
-              </h2>
-              {description ? (
-                <p
-                  className={density === "compact"
-                    ? "mt-1.5 text-xs leading-5 text-muted-foreground"
-                    : "mt-3 text-sm leading-6 text-muted-foreground"}
-                  id={descriptionId}
-                >
-                  {description}
-                </p>
-              ) : null}
-            </div>
-            <Button
-              aria-label="关闭弹窗"
-              icon={XIcon}
-              onClick={() => onOpenChange(false)}
-              size="square"
-              title="关闭"
-              variant="ghost"
-            />
-          </div>
-        )}
-        {children}
-      </div>
-    </div>
+                <div>
+                  <h2
+                    className={density === "compact"
+                      ? "text-base font-semibold leading-tight text-foreground"
+                      : "text-xl font-semibold leading-tight text-foreground"}
+                    id={titleId}
+                  >
+                    {title}
+                  </h2>
+                  {description ? (
+                    <p
+                      className={density === "compact"
+                        ? "mt-1.5 text-xs leading-5 text-muted-foreground"
+                        : "mt-3 text-sm leading-6 text-muted-foreground"}
+                      id={descriptionId}
+                    >
+                      {description}
+                    </p>
+                  ) : null}
+                </div>
+                <Button
+                  aria-label="关闭弹窗"
+                  icon={XIcon}
+                  onClick={() => onOpenChange(false)}
+                  size="square"
+                  title="关闭"
+                  variant="ghost"
+                />
+              </div>
+            )}
+            {children}
+          </motion.div>
+        </motion.div>
+      ) : null}
+    </AnimatePresence>
   );
 }

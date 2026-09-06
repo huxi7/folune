@@ -1,11 +1,12 @@
 /**
- * [INPUT]: 依赖 useAiThreads、类型化 useChat/原生审批、持久化消息 API、本地 Design System Button/MentionInput、统一 Composer sources、Worker 胖工具链、权限/History 与 Dashboard AI 整理/草稿协调边界
- * [OUTPUT]: 对外提供 AI Native 右侧工作区；引用源按 memo 身份/置顶列表精确对账，已批准工具按持久消息语义幂等恢复，外层只回报选中会话 id
+ * [INPUT]: 依赖 useAiThreads、类型化 useChat/原生审批、持久化消息 API、本地 Design System Button/MentionInput、Motion for React 内容切换、统一 Composer sources、Worker 胖工具链、权限/History 与 Dashboard AI 整理/草稿协调边界
+ * [OUTPUT]: 对外提供 AI Native 右侧工作区；历史会话、加载态与当前会话以克制 Spring 过渡切换，引用源按 memo 身份/置顶列表精确对账，已批准工具按持久消息语义幂等恢复，外层只回报选中会话 id
  * [POS]: /app 右侧 AI Native V2 组合根；工具参数流结束且批准后才进入 Worker，api command 是唯一写事实源，Store 只做幂等投影与回滚
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
 import { useChat } from "@ai-sdk/react";
+import { AnimatePresence, motion } from "motion/react";
 import {
   ArrowUpIcon,
   AssistantPanelCloseIcon,
@@ -94,6 +95,7 @@ import { ThreadHistory } from "./ThreadHistory";
 import { normalizeAgentToolName } from "./toolPresentation";
 import { useAiThreads } from "./useAiThreads";
 import { useMemoSearch } from "../useMemoSearch";
+import { contentSwitch } from "../../lib/motion.js";
 
 type AgentPanelProps = {
   accessToken: string;
@@ -622,13 +624,28 @@ export function AgentPanel(props: AgentPanelProps) {
           <Button aria-label="收起 AI 面板" className="agent-panel-header-button" icon={AssistantPanelCloseIcon} onClick={props.onClose} size="square" variant="ghost" />
         </div>
       </header>
-      {historyOpen ? (
-        <ThreadHistory busy={actionBusy} onClose={() => setHistoryOpen(false)} onDelete={threads.removeThread} onRename={(id, title) => threads.patchThread(id, { title })} onSelect={async (id) => { await threads.selectThread(id); setHistoryOpen(false); }} selectedId={thread?.id ?? null} threads={threads.threads} />
-      ) : thread === null ? (
-        <div className="agent-panel-loading">{threads.loading ? "正在恢复会话…" : "会话加载失败，请重新打开面板。"}</div>
-      ) : (
-        <AgentConversation accessToken={props.accessToken} currentMemo={props.currentMemo} initialMessages={threads.messages} key={thread.id} memoTree={props.memoTree} onApplyOrganize={props.onApplyOrganize} onBusyChange={setChatBusy} onPrepareMutation={props.onPrepareMutation} onReferencesChange={threads.replaceReferences} onRejectOrganize={props.onRejectOrganize} onThreadUpdated={threads.refreshSelected} organizeReviewBusy={actionBusy} organizeRun={visibleOrganizeRun} thread={thread} userId={props.userId} />
-      )}
+      <AnimatePresence initial={false} mode="wait">
+        {historyOpen ? (
+          <motion.div
+            animate="visible"
+            className="agent-panel-view-switch"
+            exit="exit"
+            initial="hidden"
+            key="history"
+            variants={contentSwitch}
+          >
+            <ThreadHistory busy={actionBusy} onClose={() => setHistoryOpen(false)} onDelete={threads.removeThread} onRename={(id, title) => threads.patchThread(id, { title })} onSelect={async (id) => { await threads.selectThread(id); setHistoryOpen(false); }} selectedId={thread?.id ?? null} threads={threads.threads} />
+          </motion.div>
+        ) : thread === null ? (
+          <motion.div animate="visible" className="agent-panel-view-switch agent-panel-loading" exit="exit" initial="hidden" key="loading" variants={contentSwitch}>
+            {threads.loading ? "正在恢复会话…" : "会话加载失败，请重新打开面板。"}
+          </motion.div>
+        ) : (
+          <motion.div animate="visible" className="agent-panel-view-switch" exit="exit" initial="hidden" key={`thread-${thread.id}`} variants={contentSwitch}>
+            <AgentConversation accessToken={props.accessToken} currentMemo={props.currentMemo} initialMessages={threads.messages} key={thread.id} memoTree={props.memoTree} onApplyOrganize={props.onApplyOrganize} onBusyChange={setChatBusy} onPrepareMutation={props.onPrepareMutation} onReferencesChange={threads.replaceReferences} onRejectOrganize={props.onRejectOrganize} onThreadUpdated={threads.refreshSelected} organizeReviewBusy={actionBusy} organizeRun={visibleOrganizeRun} thread={thread} userId={props.userId} />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </aside>
   );
 }
