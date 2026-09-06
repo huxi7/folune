@@ -1,11 +1,53 @@
 /**
  * [INPUT]: 依赖 motion/react 的 Transition 类型
- * [OUTPUT]: 对外提供 press/micro/panel/spatial/stagger 语义 Motion Token、tree FLIP 的 CSS 与 JS 同源时间轴，以及工作台兼容过渡配置；纸张在两处之间的放大缩小归浏览器视图过渡，这里不再持有任何飞行规格
- * [POS]: app/src/pages 的唯一动效语言；只有 Canvas 新节点入场配 spring，Panel 保持克制 Tween，高频状态只消费 micro/press；文件树行位移与归档线端点迁移共用同一条 FLIP 曲线，因此它必须同时以 CSS 字符串和可求值函数出现在这里，而不是各自复制一份数字
+ * [OUTPUT]: 对外提供 interactive/snappy/gentle/smooth/expressive 五档 spring、easeOut/standardEase、press/micro/panel/spatial/stagger 语义 Motion Token、tree FLIP 的 CSS 与 JS 同源时间轴，以及工作台兼容过渡配置；纸张在两处之间的放大缩小归浏览器视图过渡，这里不再持有任何飞行规格
+ * [POS]: app/src/pages 的唯一动效语言；空间/尺寸/位置变化消费五档物理 preset，opacity/color/shadow/blur 继续消费短时 easing；文件树行位移与归档线端点迁移共用同一条 FLIP 曲线，因此它必须同时以 CSS 字符串和可求值函数出现在这里，而不是各自复制一份数字
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
 import type { Transition } from "motion/react";
+
+/**
+ * 全局物理基线。空间/尺寸/位置使用 spring，视觉属性仍在消费点用短时 easing。
+ * 这些对象是只读语义 token，组件不得自行复制一套 stiffness/damping/mass。
+ */
+export const interactive = {
+  type: "spring",
+  stiffness: 400,
+  damping: 30,
+  mass: 1,
+} as const;
+
+export const snappy = {
+  type: "spring",
+  stiffness: 350,
+  damping: 32,
+  mass: 1,
+} as const;
+
+export const gentle = {
+  type: "spring",
+  stiffness: 300,
+  damping: 35,
+  mass: 1,
+} as const;
+
+export const smooth = {
+  type: "spring",
+  stiffness: 200,
+  damping: 40,
+  mass: 1.2,
+} as const;
+
+export const expressive = {
+  type: "spring",
+  stiffness: 500,
+  damping: 28,
+  mass: 0.8,
+} as const;
+
+export const easeOut = [0.22, 1, 0.36, 1] as const;
+export const standardEase = [0.25, 0.1, 0.25, 1] as const;
 
 export const motionDuration = {
   microEnter: 0.16,
@@ -77,13 +119,13 @@ export const spatialSpring: Transition = {
 };
 
 export const panelEnterTransition: Transition = {
-  duration: motionDuration.panelEnter,
-  ease: [0.22, 1, 0.36, 1],
+  ...gentle,
+  opacity: { duration: motionDuration.panelEnter, ease: easeOut },
 };
 
 export const panelExitTransition: Transition = {
-  duration: motionDuration.panelExit,
-  ease: [0.4, 0, 1, 1],
+  ...snappy,
+  opacity: { duration: motionDuration.panelExit, ease: [0.4, 0, 1, 1] },
 };
 
 export const workspaceLayoutTransition: Transition = {

@@ -1,10 +1,14 @@
 /**
- * [INPUT]: 依赖后端 MemoTreeNode、memoLibrary 落点、紧凑 SidebarButton、archiveCordPolicy 的 ArchiveRepresentative 与上层展开/拖拽/原地重命名命令
- * [OUTPUT]: 对外提供递归树、folder/memo 落点、笔记正文意图预热、稳定 tree row、至多一个 data-archive-representative 标记、拖拽状态、原地重命名与重名提示
- * [POS]: app/src/widgets 的纯树交互渲染器；只表达可见层级、HTML5 DnD 几何与真实目标 DOM，不解析代表、不拥有树数据、连线生命周期或 API
+ * [INPUT]: 依赖后端 MemoTreeNode、motion/react、workspaceMotion snappy、memoLibrary 落点、紧凑 SidebarButton、archiveCordPolicy 的 ArchiveRepresentative 与上层展开/拖拽/原地重命名命令
+ * [OUTPUT]: 对外提供递归树、可打断的 folder 子树展开收起、folder/memo 落点、笔记正文意图预热、稳定 tree row、至多一个 data-archive-representative 标记、拖拽状态、原地重命名与重名提示
+ * [POS]: app/src/widgets 的纯树交互渲染器；子树只在自身高度与透明度上建立连续性，不改变行高/拖放几何；不解析代表、不拥有树数据、连线生命周期或 API
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
+import {
+  AnimatePresence,
+  motion,
+} from "motion/react";
 import {
   CanvasIcon,
   FileTextIcon,
@@ -22,6 +26,7 @@ import {
 
 import type { MemoTreeNode } from "../shared/api/memo";
 import { SidebarButton } from "../shared/design-system/components";
+import { snappy } from "../pages/workspaceMotion";
 import type { ArchiveRepresentative } from "./archiveCordPolicy";
 import type { MemoDropTarget } from "./memoLibrary";
 
@@ -402,14 +407,27 @@ export function MemoTreeBranch(props: MemoTreeBranchProps) {
                 style={rowStyle}
               />
             )}
-            {isFolder && isExpanded ? (
-              <MemoTreeBranch
-                {...props}
-                depth={depth + 1}
-                nodes={node.children}
-                parentId={node.id}
-              />
-            ) : null}
+            <AnimatePresence initial={false}>
+              {isFolder && isExpanded ? (
+                <motion.div
+                  animate={{ height: "auto", opacity: 1 }}
+                  className="memo-tree-children"
+                  exit={{ height: 0, opacity: 0 }}
+                  initial={{ height: 0, opacity: 0 }}
+                  transition={{
+                    ...snappy,
+                    opacity: { duration: 0.16, ease: [0.22, 1, 0.36, 1] },
+                  }}
+                >
+                  <MemoTreeBranch
+                    {...props}
+                    depth={depth + 1}
+                    nodes={node.children}
+                    parentId={node.id}
+                  />
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
             <MemoTreeDropZone
               depth={depth}
               draggedNodeId={draggedNodeId}

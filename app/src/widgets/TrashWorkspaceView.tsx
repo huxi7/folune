@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖回收站最小 DTO、共享 Button/Dialog/Skeleton 与 共享 Lucide 图标
- * [OUTPUT]: 对外提供 TrashWorkspaceView 及其视图状态类型
- * [POS]: app/src/widgets 的纯回收站视图；不请求数据、不复制 active tree，供控制器和无网络测试复用
+ * [INPUT]: 依赖回收站最小 DTO、motion/react、workspaceMotion snappy、共享 Button/Dialog/Skeleton 与共享 Lucide 图标
+ * [OUTPUT]: 对外提供带轻量新增/删除/重排连续性的 TrashWorkspaceView 及其视图状态类型
+ * [POS]: app/src/widgets 的纯回收站视图；条目只用 transform/opacity/layout 建立连续性，不请求数据、不复制 active tree，供控制器和无网络测试复用
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -19,6 +19,8 @@ import {
   Skeleton,
   SkeletonGroup,
 } from "../shared/design-system/components";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { snappy } from "../pages/workspaceMotion";
 
 export type TrashStatus = "empty" | "error" | "loading" | "ready";
 export type TrashBusyAction =
@@ -90,6 +92,7 @@ export function TrashWorkspaceView({
   onRetry,
   status,
 }: TrashWorkspaceViewProps) {
+  const reduceMotion = useReducedMotion();
   const mutating = busyAction !== null;
   const permanentTarget = confirmation?.kind === "permanent"
     ? confirmation.item
@@ -147,6 +150,7 @@ export function TrashWorkspaceView({
             aria-label="已删除项目"
             className="trash-list divide-y divide-border/70 border-y border-border/70"
           >
+            <AnimatePresence initial={false}>
             {items.map((item) => {
               const Icon = item.node_type === "folder"
                 ? FolderIcon
@@ -155,7 +159,18 @@ export function TrashWorkspaceView({
                 busyAction.nodeId === item.id;
 
               return (
-                <article className="trash-item" key={item.id}>
+                <motion.article
+                  animate={{ opacity: 1, y: 0 }}
+                  className="trash-item"
+                  exit={{ opacity: 0, y: reduceMotion ? 0 : -6 }}
+                  initial={{ opacity: 0, y: reduceMotion ? 0 : 6 }}
+                  key={item.id}
+                  layout
+                  transition={reduceMotion ? { duration: 0.09 } : {
+                    ...snappy,
+                    opacity: { duration: 0.16, ease: [0.22, 1, 0.36, 1] },
+                  }}
+                >
                   <div className="trash-item-icon" aria-hidden="true">
                     <Icon size={16} />
                   </div>
@@ -193,9 +208,10 @@ export function TrashWorkspaceView({
                       </Button>
                     </div>
                   </div>
-                </article>
+                </motion.article>
               );
             })}
+            </AnimatePresence>
           </section>
         ) : null}
       </div>

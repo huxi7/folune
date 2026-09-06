@@ -423,6 +423,7 @@
   .sidebar-section-label { padding: 0 0.45rem 0.3rem; color: var(--muted-foreground); font-family: var(--font-mono); font-size: 0.625rem; font-weight: 600; text-transform: uppercase; }
   .memo-tree-level,
   .memo-tree-item { min-width: 0; }
+  .memo-tree-children { min-height: 0; overflow: hidden; }
   .memo-tree-level { --memo-tree-step: 1rem; flex-shrink: 0; }
   .memo-tree-drop-zone { position: relative; z-index: 2; height: 0; margin-left: calc(0.4rem + var(--memo-tree-depth, 0) * var(--memo-tree-step, 1rem)); }
   .memo-tree-drop-zone::before { content: ""; position: absolute; top: -0.3125rem; right: 0.35rem; left: 0; height: 0.625rem; pointer-events: none; }

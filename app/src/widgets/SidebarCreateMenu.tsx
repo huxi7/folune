@@ -1,17 +1,19 @@
 /**
- * [INPUT]: 依赖设计系统图标、文件库当前目录语境与上层 memo/canvas/folder 创建意图
- * [OUTPUT]: 对外提供约 80px split 新建控件及只含 Canvas/文件夹的可聚焦菜单，支持方向键/Home/End/Escape、外部关闭与焦点归还
- * [POS]: AppSidebar 的创建入口；只管理菜单焦点和选择，不持有树事务或路由状态
+ * [INPUT]: 依赖 motion/react、workspaceMotion snappy/reducedFade、设计系统图标、文件库当前目录语境与上层 memo/canvas/folder 创建意图
+ * [OUTPUT]: 对外提供约 80px split 新建控件及只含 Canvas/文件夹的可聚焦菜单，支持可打断开合、方向键/Home/End/Escape、外部关闭与焦点归还
+ * [POS]: AppSidebar 的创建入口；关闭时立即撤出无障碍树并冻结交互，视觉层单独完成轻微回收，不持有树事务或路由状态
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
 import { useEffect, useRef, useState } from "react";
+import { motion, useReducedMotion } from "motion/react";
 
 import {
   CanvasIcon,
   CaretDownIcon,
   FolderIcon,
 } from "../shared/design-system/icons";
+import { snappy, reducedFadeTransition } from "../pages/workspaceMotion";
 
 type SidebarCreateMenuProps = {
   disabled: boolean;
@@ -27,6 +29,7 @@ export function SidebarCreateMenu({
   onCreateMemo,
 }: SidebarCreateMenuProps) {
   const [open, setOpen] = useState(false);
+  const reduceMotion = useReducedMotion();
   const rootRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -81,9 +84,13 @@ export function SidebarCreateMenu({
       >
         <CaretDownIcon aria-hidden size={14} />
       </button>
-      {open ? (
-        <div
+      <motion.div
+          animate={open
+            ? { opacity: 1, scale: 1, y: 0 }
+            : { opacity: 0, scale: 0.98, y: -4 }}
+          aria-hidden={!open}
           className="sidebar-create-menu"
+          data-open={open}
           onKeyDown={(event) => {
             const items = [...(menuRef.current?.querySelectorAll<HTMLButtonElement>(
               "button",
@@ -112,8 +119,14 @@ export function SidebarCreateMenu({
             }
           }}
           ref={menuRef}
-          role="menu"
+          role={open ? "menu" : undefined}
           tabIndex={-1}
+          initial={false}
+          style={{ pointerEvents: open ? "auto" : "none" }}
+          transition={reduceMotion ? reducedFadeTransition : {
+            ...snappy,
+            opacity: { duration: 0.16, ease: [0.22, 1, 0.36, 1] },
+          }}
         >
           <button onClick={() => choose(onCreateCanvas)} role="menuitem" type="button">
             <CanvasIcon size={14} />新建 Canvas
@@ -121,8 +134,7 @@ export function SidebarCreateMenu({
           <button onClick={() => choose(onCreateFolder)} role="menuitem" type="button">
             <FolderIcon size={14} />新建文件夹
           </button>
-        </div>
-      ) : null}
+      </motion.div>
     </div>
   );
 }

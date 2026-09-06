@@ -10,8 +10,13 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import {
+  expressive,
+  gentle,
+  interactive,
   motionDuration,
   reducedFadeTransition,
+  smooth,
+  snappy,
   spatialSpring,
   staggerMaxMs,
   staggerStepMs,
@@ -57,6 +62,11 @@ describe("Workspace Motion Language", () => {
       type: "spring",
       visualDuration: 0.36,
     });
+    expect(interactive).toEqual({ type: "spring", stiffness: 400, damping: 30, mass: 1 });
+    expect(snappy).toEqual({ type: "spring", stiffness: 350, damping: 32, mass: 1 });
+    expect(gentle).toEqual({ type: "spring", stiffness: 300, damping: 35, mass: 1 });
+    expect(smooth).toEqual({ type: "spring", stiffness: 200, damping: 40, mass: 1.2 });
+    expect(expressive).toEqual({ type: "spring", stiffness: 500, damping: 28, mass: 0.8 });
     expect(reducedFadeTransition.duration).toBe(0.09);
     expect(staggerStepMs).toBe(32);
     expect(staggerMaxMs).toBe(128);

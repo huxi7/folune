@@ -20,6 +20,7 @@ src/index.css: Kumo/Tailwind v4 入口与唯一语义 Token 源，冻结 Quiet E
 src/styles/: UI 样式实现层，以 global-base.css 收口文档根与 reduced-motion、landing.css 隔离营销页、workspace.css 隔离 Paper/Panel/共享业务布局、note-paper.css 收口 Canvas 卡片缩略纸与全尺寸阅读纸共用的唯一纸面、knowledge-canvas.css 隔离 Canvas V2 Workspace 并收敛 React Flow 默认视觉，其余模块分别维护 design system、AI 消息、连线、认证、菜单与 CodeMirror；跨样式颜色插值统一使用 sRGB
 src/app/: 应用装配层，承载 OAuth 回调、Profile/access token 登录守卫、`/app` 共享 Dashboard 生命周期及仅 DEV 的无状态 Color Lab / Archive Cord Lab 入口
 src/pages/: 页面层，承载 Landing、OAuth Callback、Paper/Canvas 路由协调与仅 DEV 的配色决策页、归档线验收台；编排 flush、删除、整理、默认/空白 Canvas 入口、增量布局和返回恢复
+MOTION_AUDIT.md: 当前全项目动效审计矩阵、保留的复杂动画边界、统一 preset 基线与浏览器验收门槛
 src/widgets/: 业务组合组件层，承载 Landing、PaperWorkspaceShell/CanvasWorkspace、共享文件库/AI Panel、memo 编辑会话、账户/订阅/回收站、全局对象命令与 Canvas V2 React Flow 交互
 src/shared/: 前端共享层，承载 memo/AI/Canvas API、轻量 tree、按 ID 正文、Canvas document/WAL/Workspace Store/保存协调器、Paper 与 Canvas 各自独立的 Chrome 状态、design system、纯 Supabase Auth 与主题状态；前端禁止直连业务表或 Storage
 docs/: UI 验收与决策证据目录，保存 Design System 语义说明、computed Token 快照、Paper First V1.1 当前前后对比/验收截图及 Color Lab v0 同构配色快照
