@@ -152,3 +152,12 @@ describe("平滑圆角完整性", () => {
     expect(declarationsFor(menuCss, ".note-more-menu")).toContain("border-radius: var(--radius-menu)");
   });
 });
+
+describe("滚动条对比度", () => {
+  test("只降低中性 thumb 的不透明度，不引入第二套颜色轴", () => {
+    expect(indexCss).toContain("--scrollbar-thumb: rgb(0 0 0 / 11%);");
+    expect(indexCss).toContain("--scrollbar-thumb: rgb(255 255 255 / 13%);");
+    expect(indexCss).not.toContain("--scrollbar-thumb: rgb(0 0 0 / 14%);");
+    expect(indexCss).not.toContain("--scrollbar-thumb: rgb(255 255 255 / 16%);");
+  });
+});

@@ -303,7 +303,7 @@
     0 4px 10px -7px var(--button-shadow-neutral-rest);
   --surface-neutral: #f4f6f8;
   --surface-accent-subtle: #f3f6f8;
-  --scrollbar-thumb: rgb(0 0 0 / 14%);
+  --scrollbar-thumb: rgb(0 0 0 / 11%);
   --skeleton-base: #ebebeb;
   --skeleton-highlight: #f6f6f6;
 
@@ -441,7 +441,7 @@
     0 4px 10px -7px var(--button-shadow-neutral-rest);
   --surface-neutral: #29303d;
   --surface-accent-subtle: #2f3942;
-  --scrollbar-thumb: rgb(255 255 255 / 16%);
+  --scrollbar-thumb: rgb(255 255 255 / 13%);
   --skeleton-base: #363636;
   --skeleton-highlight: #454545;
   --archive-cord: #d4d2ca;

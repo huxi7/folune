@@ -47,3 +47,5 @@ color-lab.css: DEV `/color-lab` 蓝色终选决策画布，以同构静态 Libra
 2026-09-07 Menu consistency: design-system.css 单独拥有审批/更多/新建/右键/@/Select/账户菜单的背景、边框、前景、曲率、4px 内边距与阴影；业务样式仅负责定位与内容。审批菜单当前项用勾选标记，hover/focus 才铺中性底色。
 
 2026-09-07 Scrollbar refinement: global-base.css 消费 index.css 的淡中性 scrollbar-thumb、透明轨道与原生 thin，forced-colors 交还系统。workspace.css 的文件树/消息列表用 space-3 抵消父内缩并在滚动区内部保留内容留白，滚动条贴 Panel 边缘；历史/设置/结果列表/输入区统一稳定 gutter，避免文字与滚动条抢位置。
+
+2026-09-07 滚动条颜色微调：在中间节点的原生 thin 与容器位置基础上，只降低 thumb 不透明度，浅色 14% → 11%、暗色 16% → 13%；颜色轴、宽度和位置不变。
