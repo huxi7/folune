@@ -148,6 +148,7 @@ describe("平滑圆角完整性", () => {
     for (const selector of [".agent-composer-sources > span", ".agent-composer-sources button", ".note-more-menu-item", ".memo-context-menu button", ".agent-permission-menu > button"]) {
       expect(declarationsFor(workspaceCss, selector)).toContain("border-radius: var(--radius-compact)");
     }
-    expect(declarationsFor(workspaceCss, ".note-more-menu")).toContain("border-radius: var(--radius-menu)");
+    const menuCss = readFileSync(join(import.meta.dir, "design-system.css"), "utf8");
+    expect(declarationsFor(menuCss, ".note-more-menu")).toContain("border-radius: var(--radius-menu)");
   });
 });

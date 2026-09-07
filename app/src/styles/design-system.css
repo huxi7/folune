@@ -1,10 +1,27 @@
 /**
  * [INPUT]: 依赖设计系统的半径/曲线配对规则与 index.css 的 Quiet Editorial 语义 Color/Type/Spacing/Radius/Elevation/Motion、统一中性 interactive-hover 与 Tailwind v4 layer
- * [OUTPUT]: 对外提供平面 Input/Select/Card、纯色 BrandMark、克制 Dialog panel/bare 与 default|none 入场（motion=none 交出入场编排给 root 视图过渡，因此磨砂玻璃得以保留）、Skeleton/Thinking/loading 信息态；Select 临时指向状态与普通菜单共享中性 hover，Button 由 button.css 独立维护
+ * [OUTPUT]: 统一业务/Select/账户弹出菜单的唯一材质规则； 对外提供平面 Input/Select/Card、纯色 BrandMark、克制 Dialog panel/bare 与 default|none 入场（motion=none 交出入场编排给 root 视图过渡，因此磨砂玻璃得以保留）、Skeleton/Thinking/loading 信息态；Select 临时指向状态与普通菜单共享中性 hover，Button 由 button.css 独立维护
  * [POS]: app/src/styles 的组件视觉层，被 index.css 统一导入
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 @layer components {
+  /* 菜单材质只有一个所有者，业务只保留定位、宽度和内容布局。 */
+  .sidebar-create-menu,
+  .memo-context-menu,
+  .note-more-menu,
+  .agent-permission-menu,
+  .agent-mention-menu,
+  .ds-select-menu,
+  .ds-user-menu-popover {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-menu);
+    corner-shape: var(--corner-shape-smooth);
+    background: var(--popover);
+    color: var(--popover-foreground);
+    padding: var(--space-1);
+    box-shadow: var(--shadow-sm);
+  }
+
   .ds-skeleton-group {
     position: relative;
     isolation: isolate;
@@ -434,13 +451,6 @@
     z-index: 40;
     width: 100%;
     overflow: hidden;
-    border-radius: var(--radius-menu);
-    corner-shape: var(--corner-shape-smooth);
-    border: 1px solid var(--border);
-    background: var(--popover);
-    padding: calc(var(--spacing) * 1.5);
-    color: var(--popover-foreground);
-    box-shadow: var(--shadow-sm);
     transform-origin: center top;
     /* 入退场归 PresenceSurface。 */
   }

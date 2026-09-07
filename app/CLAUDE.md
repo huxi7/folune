@@ -62,7 +62,7 @@ AI 消息组件约束: 用户气泡必须与 Primary Button 同源；消息角�
 
 Kumo Toast 约束: 全局瞬时反馈必须经本地 Toast API 适配 Kumo Toast Provider/Manager/Parts；Kumo 负责队列、自动关闭、悬停暂停、焦点与滑动生命周期，表现层只使用 SuperNote 的不透明中性 Popover、12px 曲率与克制浮层阴影。状态只通过轻量图标传达，禁止玻璃、旧式彩色竖线、图标盒、状态边框与彩色填充；业务层不得直接依赖 Kumo 协议。
 
-交互色彩约束: 普通指针/键盘行 hover 必须消费 `src/index.css` 的中性 `interactive-hover`，文件树、SidebarButton、User Menu、Select、文件右键菜单、More Menu 与 Agent 弹出菜单不得因单纯指向而显示 Soft Ink 蓝底或蓝字。AI 历史会话和审批模式的选中态不是品牌动作或全局当前位置，必须与 hover/focus 共享同一中性表面，不得使用 Accent 蓝底。柔和墨蓝只服务 Primary、其他明确选中/当前位置、focus 与整理/拖放反馈；危险菜单项在同一中性 hover 表面上保留 destructive 文字，不增加红色或蓝色填充。
+交互色彩约束: 普通指针/键盘行 hover 必须消费 `src/index.css` 的中性 `interactive-hover`，文件树、SidebarButton、User Menu、Select、文件右键菜单、More Menu 与 Agent 弹出菜单不得因单纯指向而显示 Soft Ink 蓝底或蓝字。AI 历史会话和审批模式的选中态不是品牌动作或全局当前位置，不得使用 Accent 蓝底；审批当前项仅用勾选标记，hover/focus 才铺共享中性表面。柔和墨蓝只服务 Primary、其他明确选中/当前位置、focus 与整理/拖放反馈；危险菜单项在同一中性 hover 表面上保留 destructive 文字，不增加红色或蓝色填充。
 
 纯白画布约束: Light APP 与 DEV Design System 的页面、卡片和预览底材必须保持纯白；轨道、Skeleton 与禁用态只能消费 index.css 中确定性的中性灰蓝 token，禁止以 muted/destructive 混色生成基础背景，也禁止用低饱和 OKLCH 插值制造可能偏红的表面、边缘或阴影。跨样式颜色插值统一使用 sRGB。Danger Button 是唯一允许保留实心 destructive 红色功能面的组件；错误 Toast、Agent 错误区、菜单危险项等其他入口只通过红色文字、图标和细边界表达，不允许红色或浅红色填充。非 Danger Button 的 loading 状态不得复用 Primary 填色，统一消费独立状态面与低频 Shimmer；dark 主题仍遵循其独立暗色语义画布。
 

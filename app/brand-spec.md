@@ -220,3 +220,5 @@ The motion language is part of the Design System. `src/shared/design-system/moti
 - Skeleton base/highlight are achromatic: Light #ebebeb/#f6f6f6, Dark #363636/#454545. Loading placeholders never borrow brand blue. Canvas entry keeps only its clean Stage and accessible busy state, with no pretend paper card.
 - Dark settings scope neutral charcoal surfaces (#1c1c1c main, #262626 sidebar), gray borders and neutral navigation states to the account dialog. Brand actions and keyboard focus retain their semantic color.
 - Assistant undo uses Undo2 and the short label 撤销, with the shared 12px/16px Label typography.
+
+2026-09-07 Menu consistency: All App popup menus (approval, More, create, context, mentions, Select and user menu) share one material rule in design-system.css: opaque Popover, semantic border/foreground, Menu radius, 4px inset and shadow-sm. Approval selection uses a check mark; only hover and keyboard focus paint the neutral row surface.

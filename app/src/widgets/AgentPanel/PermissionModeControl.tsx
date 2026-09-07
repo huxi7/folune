@@ -1,12 +1,12 @@
 /**
  * [INPUT]: 依赖 PresenceSurface 的统一入退场、 shared/api/ai settings GET/PATCH、AgentPanel 权限设置缓存、后端确认状态、全局 Toast、当前用户/access token 与 busy 状态
- * [OUTPUT]: 对外提供账号全局“每次询问/智能审批实验/完全访问”切换、中性选中表面、精简模式说明、紧凑图标入口、加载/保存错误明示及失败不漂移语义
+ * [OUTPUT]: 对外提供账号全局“每次询问/智能审批实验/完全访问”切换、勾选标记与统一中性菜单表面、精简模式说明、紧凑图标入口、加载/保存错误明示及失败不漂移语义
  * [POS]: AgentPanel Composer 的 AI 权限偏好控制器；界面只展示 API 已确认模式，不用乐观假象代替持久化事实
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
 import { PresenceSurface } from "../../shared/design-system/components/PresenceSurface";
-import { CaretDownIcon, ShieldCheckIcon } from "../../shared/design-system/icons";
+import { CaretDownIcon, CheckIcon, ShieldCheckIcon } from "../../shared/design-system/icons";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useDismissable } from "../../shared/design-system/useDismissable";
 
@@ -130,6 +130,7 @@ export function PermissionModeControl({
               type="button"
             >
               <strong>{labels[value]}</strong>
+              {mode === value ? <CheckIcon aria-hidden="true" className="agent-permission-check" size={16} /> : null}
               <small>
                 {value === "ask" && "写入前都先询问。"}
                 {value === "auto_approve" && "低风险自动执行，不确定时询问。"}
