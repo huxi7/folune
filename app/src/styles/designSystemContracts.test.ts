@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 读取 DS motionTokenStyles、index.css、button.css、sidebar-button.css 与 workspace.css 的 Control radius、Button 共享别名、Composer 圆形例外与统一 press
- * [OUTPUT]: 锁定 12px Control、显式 9px inner、Button 不建立私有半径、Composer 继续显式使用 round，以及四处命令控件共读同一份 press 缩放并在 Reduced Motion 下归 1、创建 split 的 hover 与 press 只认外壳那两半而不认展开的菜单项
+ * [OUTPUT]: 锁定 12px Control、显式 9px inner、Button 不建立私有半径、实体 Button 使用极轻纵向同色面光且没有 1px 全周内环、Ghost 无实体阴影、Press 收回外影、Composer 继续显式使用 round，以及四处命令控件共读同一份 press 缩放并在 Reduced Motion 下归 1、创建 split 的 hover 与 press 只认外壳那两半而不认展开的菜单项
  * [POS]: app/src/styles 的设计系统静态契约测试；在浏览器视觉验收之外阻止 Radius 与 press 两条公理被局部覆盖
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -40,6 +40,31 @@ describe("Control radius 公理", () => {
     const composerAction = declarationsFor(workspaceCss, ".agent-composer-action");
     expect(composerAction).toContain("border-radius: var(--radius-pill)");
     expect(composerAction).toContain("corner-shape: round");
+  });
+});
+
+describe("Button material 公理", () => {
+  test("实体 Button 只使用极轻纵向同色面光, 不再画 1px 全周内环", () => {
+    expect(buttonCss).toContain("background: linear-gradient(180deg, var(--button-face-top-rest), var(--button-face-bottom-rest));");
+    expect(buttonCss).toContain("background: linear-gradient(180deg, var(--button-face-top-hover), var(--button-face-bottom-hover));");
+    expect(buttonCss).toContain("background: linear-gradient(180deg, var(--button-face-top-active), var(--button-face-bottom-active));");
+    expect(buttonCss).toContain("background: linear-gradient(180deg, var(--processing-surface-top), var(--processing-surface-bottom));");
+    expect(buttonCss).not.toContain("linear-gradient(135deg");
+    expect(buttonCss).not.toMatch(/inset 0 0 0 1px/);
+    expect(buttonCss).not.toContain("filter: saturate(");
+  });
+
+  test("Hover 放宽中性外影, Press 只保留内压感, Ghost 始终无影", () => {
+    expect(buttonCss).toContain("0 6px 14px -8px var(--button-shadow-neutral-hover)");
+    expect(buttonCss).toContain("inset 0 2px 4px var(--button-press-depth)");
+    expect(declarationsFor(buttonCss, ".ds-button-ghost")).toContain("--button-state-shadow: none");
+    const pressedShadow = /--button-shadow-pressed:\s*([^;]+);/.exec(buttonCss)?.[1] ?? "";
+    expect(pressedShadow).not.toMatch(/\n\s*0\s/);
+  });
+
+  test("按压只收紧中心, split 外壳继续消费同一面光且不保留零位移 transform", () => {
+    expect(workspaceCss).not.toContain("transform: translateY(0)");
+    expect(workspaceCss).toContain("background: linear-gradient(180deg, var(--button-primary-face-top-rest), var(--button-primary-face-bottom-rest));");
   });
 });
 

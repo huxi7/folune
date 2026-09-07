@@ -168,9 +168,11 @@ One axis is deliberately singular:
 
 ## Button material
 
-- Solid surfaces only; no static background gradients.
-- A restrained vertical face light, one crisp `1px` inset ring, a thin inner halo and zero-offset short soft outer mist provide a light tactile quality; the highlight must wrap evenly rather than read as a top-only shine.
-- Hover stays in place; press tightens in place with `transform: scale(var(--press-scale))` (`0.98`, 90ms, center origin) and the pressed shadow contracts. No `translateY` drop, no bounce or overshoot curve. Split controls scale as one shell, loading and disabled never scale, and Reduced Motion keeps the active color, border and shadow compression without the scale.
+- Filled faces use only an extremely shallow `180deg` lightness shift inside the same semantic color. The material must read as a solid button first, never as a gradient, glass, metal, plastic or glossy strip.
+- Primary, Secondary and Danger do not draw a crisp full-perimeter inset ring. A broad, low-opacity top inset may support the face, but it must not resolve as an outline.
+- Rest uses a short neutral gray-black grounding shadow. Hover remains in place while the neutral shadow becomes slightly softer and wider. Press removes the outer shadow and keeps only a shallow inset compression.
+- Primary and Danger may add one very weak, downward-biased same-color ambient layer behind the neutral shadow; it is auxiliary separation, never blue/red glow. Secondary stays neutral and Ghost carries no solid-button shadow.
+- Press tightens in place with `transform: scale(var(--press-scale))` (`0.98`, 90ms, center origin). No `translateY` drop, bounce or overshoot curve. Split controls scale as one shell, loading and disabled never scale, and Reduced Motion keeps the active color, border and shadow compression without the scale.
 - Saving uses the same radius, a low-frequency narrow shimmer swept on a subtle diagonal, and the specimen label stays simply `Saving` without trailing dots.
 
 ## Historical reference — Current Blue
