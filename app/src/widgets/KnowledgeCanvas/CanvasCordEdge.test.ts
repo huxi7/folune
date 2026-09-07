@@ -7,7 +7,7 @@
 
 import { describe, expect, test } from "bun:test";
 
-import { canvasFloatingCurve } from "./CanvasCordEdge";
+import { canvasEdgeReasonPoint, canvasFloatingCurve } from "./CanvasCordEdge";
 
 const nodeAt = (x: number, y: number) => ({
   height: 360,
@@ -86,5 +86,11 @@ describe("canvasFloatingCurve", () => {
     expect(rounded.from.x).toBeLessThan(280);
     expect(rounded.from.y).toBeLessThan(360);
     expect(Math.hypot(rounded.from.x - 264, rounded.from.y - 344)).toBeCloseTo(16, 6);
+  });
+});
+
+describe("canvasEdgeReasonPoint", () => {
+  test("解释入口固定在正式中心 Handle 的中点，不跟随边界端点收缩", () => {
+    expect(canvasEdgeReasonPoint(140, 180, 640, 360)).toEqual({ x: 390, y: 270 });
   });
 });
