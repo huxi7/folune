@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 读取 DS motionTokenStyles、index.css、button.css、sidebar-button.css 与 workspace.css 的 Control radius、Button 共享别名、Composer 圆形例外与统一 press
- * [OUTPUT]: 锁定 16px Control、显式 12px inner、Button 不建立私有半径、实体 Button 使用极轻纵向同色面光且没有 1px 全周内环、Ghost 无实体阴影、Press 收回外影、Composer 继续显式使用 round，以及四处命令控件共读同一份 press 缩放并在 Reduced Motion 下归 1、创建 split 的 hover 与 press 只认外壳那两半而不认展开的菜单项
+ * [OUTPUT]: 检查所有生产圆角与曲线配对及菜单 Compact 分档；锁定 16px Control、显式 12px inner、Button 不建立私有半径、实体 Button 使用极轻纵向同色面光且没有 1px 全周内环、Ghost 无实体阴影、Press 收回外影、Composer 继续显式使用 round，以及四处命令控件共读同一份 press 缩放并在 Reduced Motion 下归 1、创建 split 的 hover 与 press 只认外壳那两半而不认展开的菜单项
  * [POS]: app/src/styles 的设计系统静态契约测试；在浏览器视觉验收之外阻止 Radius 与 press 两条公理被局部覆盖
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -123,5 +123,31 @@ describe("press 公理", () => {
     const override = /@media \(prefers-reduced-motion: reduce\) \{\s*:root \{\s*--press-scale: 1;/.exec(indexCss);
     expect(override).not.toBeNull();
     expect(indexCss.indexOf("--press-scale: 1;")).toBeGreaterThan(indexCss.indexOf("--press-scale: 0.98;"));
+  });
+});
+
+
+describe("平滑圆角完整性", () => {
+  test("生产圆角必须与曲线同处声明，不得私算半径", () => {
+    const styles = ["workspace", "design-system", "ai-message", "user-menu", "knowledge-canvas", "codemirror", "auth", "toast", "segmented-control", "button", "sidebar-button", "note-paper", "motion"];
+    for (const name of styles) {
+      const css = readFileSync(join(import.meta.dir, `${name}.css`), "utf8");
+      for (const match of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+        const selector = match[1]!.replace(/\/\*[\s\S]*?\*\//g, "").trim();
+        const body = match[2]!;
+        const radius = /border-radius:\s*([^;]+);/.exec(body)?.[1];
+        if (!radius || radius === "0" || selector === ".ds-brand-tab") continue;
+        expect(radius, `${name}: ${selector}`).not.toContain("calc(");
+        expect(radius, `${name}: ${selector}`).toMatch(/^(inherit|50%|(?:var\(--(?:radius-[a-z-]+|button-radius|ds-radius-[a-z-]+)\)|0)(?: (?:var\(--(?:radius-[a-z-]+|button-radius|ds-radius-[a-z-]+)\)|0))*)$/);
+        const curve = radius === "inherit" ? "inherit" : radius === "50%" || radius === "var(--radius-pill)" ? "round" : "var(--corner-shape-smooth)";
+        expect(body, `${name}: ${selector}`).toContain(`corner-shape: ${curve};`);
+      }
+    }
+  });
+  test("固定笔记与菜单 hover 使用 Compact，外壳使用 Menu", () => {
+    for (const selector of [".agent-composer-sources > span", ".agent-composer-sources button", ".note-more-menu-item", ".memo-context-menu button", ".agent-permission-menu > button"]) {
+      expect(declarationsFor(workspaceCss, selector)).toContain("border-radius: var(--radius-compact)");
+    }
+    expect(declarationsFor(workspaceCss, ".note-more-menu")).toContain("border-radius: var(--radius-menu)");
   });
 });

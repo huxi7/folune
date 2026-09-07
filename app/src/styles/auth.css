@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 index.css 的语义颜色、间距、阴影与动效 token，依赖 AuthDialog 暴露的 auth-* 结构类
+ * [INPUT]: 依赖设计系统的半径/曲线配对规则与 index.css 的语义颜色、间距、阴影与动效 token，依赖 AuthDialog 暴露的 auth-* 结构类
  * [OUTPUT]: 对外提供登录/注册表单、共享内凹输入框的认证尺寸、模式切换与协议提示样式
  * [POS]: app/src/styles 的认证界面样式，只服务 AuthDialog 并由 index.css 统一导入
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -96,6 +96,7 @@
   .auth-mode-switch button:focus-visible,
   .auth-terms-copy button:focus-visible {
     border-radius: var(--radius-control);
+    corner-shape: var(--corner-shape-smooth);
     outline: 2px solid color-mix(in srgb, var(--ring) 45%, transparent);
     outline-offset: 0.15rem;
   }

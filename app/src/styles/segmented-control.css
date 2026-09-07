@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 index.css 的 Button 高度、smooth corner、表面、文字、focus 与 motion 语义 token
+ * [INPUT]: 依赖设计系统的半径/曲线配对规则与 index.css 的 Button 高度、smooth corner、表面、文字、focus 与 motion 语义 token
  * [OUTPUT]: 对外提供无内凹阴影、无凸起位移、确定性中性灰轨道与纯白选中片段的 SegmentedControl
  * [POS]: app/src/styles 的互斥选择原子样式，只塑造 SegmentedControl，不复制 Button 或 Select 材质
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -14,6 +14,7 @@
     gap: 0.125rem;
     border: 1px solid var(--border);
     border-radius: var(--button-radius);
+    corner-shape: var(--corner-shape-smooth);
     background: var(--surface-neutral);
     padding: 0.1875rem;
   }
@@ -28,6 +29,7 @@
     gap: 0.4rem;
     border: 0;
     border-radius: var(--radius-inner-control);
+    corner-shape: var(--corner-shape-smooth);
     background: transparent;
     padding-inline: 0.75rem;
     color: var(--muted-foreground);
@@ -49,7 +51,7 @@
     color: var(--card-foreground);
   }
 
-  .ds-segmented-control-indicator { position: absolute; z-index: -1; inset: 0; border-radius: inherit; background: var(--card); pointer-events: none; }
+  .ds-segmented-control-indicator { position: absolute; z-index: -1; inset: 0; border-radius: inherit; corner-shape: inherit; background: var(--card); pointer-events: none; }
 
   .ds-segmented-control-option:focus-visible {
     outline: 2px solid color-mix(in srgb, var(--ring) 58%, transparent);
@@ -58,14 +60,5 @@
 
   .ds-segmented-control-option:disabled {
     opacity: 0.42;
-  }
-}
-
-@supports (corner-shape: squircle) {
-  @layer components {
-    .ds-segmented-control,
-    .ds-segmented-control-option {
-      corner-shape: var(--corner-shape-smooth);
-    }
   }
 }

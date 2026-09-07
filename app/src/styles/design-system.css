@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 index.css 的 Quiet Editorial 语义 Color/Type/Spacing/Radius/Elevation/Motion、统一中性 interactive-hover 与 Tailwind v4 layer
+ * [INPUT]: 依赖设计系统的半径/曲线配对规则与 index.css 的 Quiet Editorial 语义 Color/Type/Spacing/Radius/Elevation/Motion、统一中性 interactive-hover 与 Tailwind v4 layer
  * [OUTPUT]: 对外提供平面 Input/Select/Card、纯色 BrandMark、克制 Dialog panel/bare 与 default|none 入场（motion=none 交出入场编排给 root 视图过渡，因此磨砂玻璃得以保留）、Skeleton/Thinking/loading 信息态；Select 临时指向状态与普通菜单共享中性 hover，Button 由 button.css 独立维护
  * [POS]: app/src/styles 的组件视觉层，被 index.css 统一导入
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -51,16 +51,19 @@
 
   .ds-skeleton-rect {
     border-radius: var(--button-radius);
+    corner-shape: var(--corner-shape-smooth);
   }
 
   .ds-skeleton-text {
     height: 0.72em;
-    border-radius: var(--radius-pill);
+    border-radius: var(--radius-compact);
+    corner-shape: var(--corner-shape-smooth);
   }
 
   .ds-skeleton-circle {
     aspect-ratio: 1;
     border-radius: var(--radius-pill);
+    corner-shape: round;
   }
 
   .ds-thinking-mark {
@@ -146,6 +149,7 @@
   .ds-input {
     min-height: var(--control-height-default);
     border-radius: var(--radius-control);
+    corner-shape: var(--corner-shape-smooth);
     border-width: 1px;
     border-color: var(--input);
     background: var(--card);
@@ -212,6 +216,7 @@
     align-items: center;
     justify-content: center;
     border-radius: var(--button-radius);
+    corner-shape: var(--corner-shape-smooth);
     color: var(--muted-foreground);
     transition: color var(--motion-fast) var(--ease-standard), background var(--motion-fast) var(--ease-standard);
   }
@@ -233,6 +238,7 @@
 
   .ds-card {
     border-radius: var(--radius-panel);
+    corner-shape: var(--corner-shape-smooth);
     border-width: 1px;
     box-shadow: none;
     transition: border-color var(--motion-normal) var(--ease-standard), background var(--motion-normal) var(--ease-standard), box-shadow var(--motion-normal) var(--ease-standard);
@@ -265,6 +271,7 @@
     overflow: hidden;
     border: 1px solid var(--primary);
     border-radius: var(--radius-control);
+    corner-shape: var(--corner-shape-smooth);
     background: var(--primary);
     box-shadow: none;
   }
@@ -285,6 +292,7 @@
     left: 0.34rem;
     height: 0.1rem;
     border-radius: var(--radius-pill);
+    corner-shape: round;
     background: color-mix(in srgb, var(--primary-foreground) 82%, transparent);
   }
 
@@ -312,6 +320,7 @@
 
   .ds-dialog-panel {
     border-radius: var(--radius-dialog);
+    corner-shape: var(--corner-shape-smooth);
     border: 1px solid var(--border);
     background: var(--popover);
     color: var(--popover-foreground);
@@ -399,6 +408,7 @@
     justify-content: space-between;
     gap: calc(var(--spacing) * 3);
     border-radius: var(--button-radius);
+    corner-shape: var(--corner-shape-smooth);
     border: 1px solid var(--border);
     background: var(--card);
     padding: 0.65rem 0.75rem;
@@ -425,6 +435,7 @@
     width: 100%;
     overflow: hidden;
     border-radius: var(--radius-menu);
+    corner-shape: var(--corner-shape-smooth);
     border: 1px solid var(--border);
     background: var(--popover);
     padding: calc(var(--spacing) * 1.5);
@@ -448,7 +459,8 @@
     width: 100%;
     align-items: center;
     gap: calc(var(--spacing) * 2.5);
-    border-radius: var(--button-radius);
+    border-radius: var(--radius-compact);
+    corner-shape: var(--corner-shape-smooth);
     padding: 0.6rem 0.65rem;
     text-align: left;
     color: var(--foreground);
@@ -478,6 +490,7 @@
     align-items: center;
     gap: calc(var(--spacing) * 2.5);
     border-radius: var(--button-radius);
+    corner-shape: var(--corner-shape-smooth);
     border: 1px solid var(--sidebar-border);
     background: var(--sidebar);
     padding: 0.55rem 0.65rem;
@@ -507,29 +520,13 @@
     overflow: hidden;
     object-fit: cover;
     border-radius: var(--ds-radius-soft);
+    corner-shape: var(--corner-shape-smooth);
     border: 1px solid color-mix(in srgb, var(--primary) 34%, var(--border));
     background: var(--primary);
     color: var(--primary-foreground);
     font-size: 0.75rem;
     font-weight: 700;
     box-shadow: none;
-  }
-
-  @supports (corner-shape: squircle) {
-    .ds-input,
-    .ds-password-toggle,
-    .ds-card,
-    .ds-brand-mark,
-    .design-system-tile,
-    .design-system-preview,
-    .ds-dialog-panel,
-    .ds-select-trigger,
-    .ds-select-menu,
-    .ds-select-option,
-    .ds-user-button,
-    .ds-user-avatar {
-      corner-shape: var(--corner-shape-smooth);
-    }
   }
 
   @keyframes ds-panel-in {

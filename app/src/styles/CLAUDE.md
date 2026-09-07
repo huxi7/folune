@@ -41,3 +41,5 @@ color-lab.css: DEV `/color-lab` 蓝色终选决策画布，以同构静态 Libra
 2026-09-04 形制投影：主 Paper 阴影收敛为在 16px Stage inset 内自然衰减的短尾，避免滚动视口边界硬切。（同日更早那条「顶栏右侧相邻命令统一 8px gap」已被上文 12px/4px 两层分组取代，桌面顶栏不存在 8px 这一档；只有 ≤479px 断点为防溢出把整理与图标簇收到 8px。）
 
 2026-09-07 视觉收口：设置暗色在模态内部映射中性黑灰；Skeleton 全局使用无彩灰阶；Canvas 加载不画纸；Secondary 提高细边框对比，工具结果直接用圆形轮廓图标。
+
+2026-09-07 曲线规范：生产样式将 border-radius 与 corner-shape 同处声明，取消容易漏项的独立 supports 选择器清单；固定笔记、更多/右键/权限/@菜单及 hover 行全部覆盖。菜单外壳使用 Menu 12px、行与紧凑动作使用 Compact 8px；Canvas 预览与 Toast 关闭不再使用圆形命令，头像/状态点/发送停止等几何语义显式 round。designSystemContracts.test.ts 检查生产规则的 token 与曲线配对。

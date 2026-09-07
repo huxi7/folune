@@ -37,17 +37,24 @@ SuperNote is a quiet editorial instrument that lets users write first and allows
 
 ## Radius system
 
-- Compact `8px`: dense tree rows, small navigation targets
+- Compact `8px`: dense tree rows, menu hover rows, pinned-note chips and small navigation targets
 - Control `16px`: Button, Input, Select, SidebarButton, user message and tool-call bubbles
 - Paper / Menu `12px`: editorial Paper, code surfaces, popovers
 - Panel `16px`: workspace panels, cards, composite inputs
 - Dialog `20px`: modal decision surfaces
-- True circles and pills are reserved for avatars, status dots, tags and the AI Composer's singular 32px send/stop action; Panel Toggle and other icon commands use the shared Control radius, never pill geometry.
+- True circles and pills are reserved for avatars, status dots and the AI Composer's singular 32px send/stop action; Panel Toggle and other icon commands use the shared Control radius, never pill geometry.
 
 ### Control softened together (2026-09-07)
 
 - Control is now 16px, with an explicit 12px inner-control radius. This supersedes the earlier 12px/9px decision and applies to the entire control family, including AI message and tool-call bubbles.
 - Keep the shared squircle and 32/36px heights; do not introduce per-button radii or capsule geometry. Paper/Menu, Panel and Dialog retain their separate surface roles.
+
+### Curve ownership (2026-09-07)
+
+- Every non-circular App surface declares `corner-shape: var(--corner-shape-smooth)` beside its radius. Nested clipping shells inherit both properties; do not maintain a separate selector list that can omit surfaces.
+- Menu shells use Menu 12px; hover rows and pinned-note chips use Compact 8px, never Control 16px. No local radius arithmetic or new curve is allowed.
+- Ordinary commands, including Canvas preview and Toast dismissal, use Control/Compact. Geometric avatars, status dots, resize handles, spinners and Composer send/stop retain explicit round geometry. Brand artwork retains its signature exception.
+- Unsupported browsers keep the radius fallback without JavaScript emulation.
 
 ### corner-shape is not a softener
 

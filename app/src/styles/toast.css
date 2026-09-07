@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 Kumo Toast Parts 的堆叠/滑动状态、本地 Button 与 index.css 的中性 Popover、Radius、Elevation、Motion token
+ * [INPUT]: 依赖设计系统的半径/曲线配对规则与 Kumo Toast Parts 的堆叠/滑动状态、本地 Button 与 index.css 的中性 Popover、Radius、Elevation、Motion token
  * [OUTPUT]: 对外提供不玻璃化、不使用彩色状态容器的轻量 Toast、克制状态符号、单一回执动作与 reduced-motion 降级
  * [POS]: app/src/styles 的瞬时反馈视觉层；Kumo 负责队列交互，SuperNote 定义安静纸面材质与本地动作层级
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -35,6 +35,7 @@
     overflow: hidden;
     border: 1px solid color-mix(in srgb, var(--foreground) 9%, transparent);
     border-radius: var(--radius-menu);
+    corner-shape: var(--corner-shape-smooth);
     background: var(--popover);
     color: var(--popover-foreground);
     box-shadow: var(--shadow-lg);
@@ -69,6 +70,7 @@
     position: absolute;
     inset: 0;
     border-radius: inherit;
+    corner-shape: inherit;
     background: var(--popover);
   }
 
@@ -188,7 +190,8 @@
     align-items: center;
     justify-content: center;
     border: 0;
-    border-radius: var(--radius-pill);
+    border-radius: var(--radius-compact);
+    corner-shape: var(--corner-shape-smooth);
     background: color-mix(in srgb, var(--foreground) 5%, transparent);
     color: var(--muted-foreground);
     opacity: 0.72;
@@ -207,16 +210,6 @@
   .ds-toast-dismiss:focus-visible {
     outline: 2px solid color-mix(in srgb, var(--ring) 44%, transparent);
     outline-offset: 1px;
-  }
-}
-
-@supports (corner-shape: squircle) {
-  @layer components {
-    .ds-toast,
-    .ds-toast-material,
-    .ds-toast-dismiss {
-      corner-shape: var(--corner-shape-smooth);
-    }
   }
 }
 

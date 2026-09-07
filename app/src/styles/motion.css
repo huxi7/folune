@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 Design System motion.ts 注入的同源 CSS token 与生产组件语义标记
+ * [INPUT]: 依赖设计系统的半径/曲线配对规则与 Design System motion.ts 注入的同源 CSS token 与生产组件语义标记
  * [OUTPUT]: 对外提供视图淡换容器、通用浮层动画所有权、普通导航及减少动态效果适配
  * [POS]: styles 的通用 Motion 消费层；纸面签名仍由 knowledge-canvas.css 解释，定位/材质仍归各组件
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -39,10 +39,10 @@ html:not([data-paper-transition]) { --paper-world: var(--motion-micro-enter); --
   .motion-specimen-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
   .motion-specimen-controls { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 24px; }
   .motion-specimen-controls > div { flex: 1; min-width: 160px; }
-  .motion-specimen-space { position: relative; min-height: 200px; margin-top: 16px; overflow: clip; border-radius: var(--radius-panel); background: var(--muted); padding: 16px; }
+  .motion-specimen-space { position: relative; min-height: 200px; margin-top: 16px; overflow: clip; border-radius: var(--radius-panel); corner-shape: var(--corner-shape-smooth); background: var(--muted); padding: 16px; }
   .motion-specimen-space p { margin: 12px 0; font-size: 13px; }
   .motion-specimen-tree { width: 45%; min-width: 150px; }
-  .motion-specimen-panel { position: absolute; top: 12px; right: 12px; bottom: 12px; width: 48%; border: 1px solid var(--border); border-radius: var(--radius-panel); background: var(--popover); padding: 16px; box-shadow: var(--shadow-md); }
+  .motion-specimen-panel { position: absolute; top: 12px; right: 12px; bottom: 12px; width: 48%; border: 1px solid var(--border); border-radius: var(--radius-panel); corner-shape: var(--corner-shape-smooth); background: var(--popover); padding: 16px; box-shadow: var(--shadow-md); }
   .motion-specimen-view { position: relative; min-height: 100px; margin-block: 16px; }
   .motion-specimen-view textarea { width: 100%; min-height: 80px; }
   .motion-specimen-card { padding: 24px; font-size: 13px; }
@@ -58,7 +58,7 @@ html:not([data-paper-transition]) { --paper-world: var(--motion-micro-enter); --
 }
 
 @layer components {
-  .motion-specimen-conversation { display: flex; flex-direction: column; height: 320px; margin-top: 16px; border: 1px solid var(--border); border-radius: var(--radius-panel); background: var(--card); overflow: clip; }
+  .motion-specimen-conversation { display: flex; flex-direction: column; height: 320px; margin-top: 16px; border: 1px solid var(--border); border-radius: var(--radius-panel); corner-shape: var(--corner-shape-smooth); background: var(--card); overflow: clip; }
   .motion-specimen-conversation .agent-message-list p { color: var(--muted-foreground); font-size: 13px; }
   .motion-specimen-conversation textarea { width: 100%; min-height: 64px; resize: none; }
   .motion-specimen-conversation .agent-composer-footer > span { color: var(--muted-foreground); font-size: 11px; }

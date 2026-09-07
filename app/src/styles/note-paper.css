@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 index.css 的 Paper 语义 token（paper-surface/paper-edge/paper-foreground/paper-shadow/paper-float-shadow）、font-serif、4px 空间基线、同心曲率阶梯与 knowledge-canvas.css 的 .paper/.paper-body 视图过渡分类
+ * [INPUT]: 依赖设计系统的半径/曲线配对规则与 index.css 的 Paper 语义 token（paper-surface/paper-edge/paper-foreground/paper-shadow/paper-float-shadow）、font-serif、4px 空间基线、同心曲率阶梯与 knowledge-canvas.css 的 .paper/.paper-body 视图过渡分类
  * [OUTPUT]: 对外提供唯一共享纸面 .note-paper 及 thumbnail/reader 两个 variant；thumbnail 以文字透明度连续衰减叠加无填色渐进失焦且不形成横向色带，reader 是按 ISO 216 的 1:√2 立起的 A4 开本、以渐变柔影悬浮，纸面静止而正文在纸内滚动
  * [POS]: app/src/styles 的纸张视觉单一真相；Canvas 卡片缩略与全尺寸阅读共用同一套纸面规则，禁止任何组件再复制近似 Paper 样式
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -20,6 +20,7 @@
     flex-direction: column;
     border: 1px solid var(--paper-edge);
     border-radius: var(--radius-paper);
+    corner-shape: var(--corner-shape-smooth);
     background: var(--paper-surface);
     color: var(--paper-foreground);
   }
@@ -216,14 +217,6 @@
     /* 工具列在窄屏浮在纸的右上角之上, 因此正文从按钮下沿之后才开始 */
     .note-paper[data-variant="reader"] .note-paper-column {
       padding: 3.75rem 1.25rem 3rem;
-    }
-  }
-}
-
-@supports (corner-shape: squircle) {
-  @layer components {
-    .note-paper {
-      corner-shape: var(--corner-shape-smooth);
     }
   }
 }
