@@ -84,6 +84,7 @@ describe("Prompt Bar mention search", () => {
 
   test("renders each result as file icon and filename only", () => {
     const html = renderToStaticMarkup(createElement(MentionMenu, {
+      open: true,
       activeIndex: 0,
       onSelect: () => undefined,
       results: [{

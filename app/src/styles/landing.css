@@ -74,6 +74,8 @@
     box-shadow: 0 0.55rem 1.8rem -1.5rem color-mix(in srgb, var(--foreground) 28%, transparent);
   }
 
+  .landing-blueprint .ds-card[data-card-motion="lift"]:hover { box-shadow: var(--shadow-md); }
+
   .marketing-header {
     background: color-mix(in srgb, var(--background) 94%, transparent);
     backdrop-filter: blur(1rem) saturate(112%);
@@ -542,20 +544,6 @@
   .landing-content-section { overflow: hidden; }
   .landing-section-content { position: relative; z-index: 2; padding: var(--blueprint-section-space) var(--layout-page-gutter); }
 
-  [data-landing-reveal] {
-    opacity: 0;
-    filter: blur(0.04rem);
-    transform: translateY(0.25rem);
-    transition: opacity 420ms var(--ease-standard), filter 420ms var(--ease-standard), transform 420ms var(--ease-standard);
-  }
-
-  [data-landing-reveal][data-visible="true"] { opacity: 1; filter: blur(0); transform: translateY(0); }
-  [data-reveal-item] { opacity: 0; filter: blur(0.03rem); transform: translateY(0.18rem); transition: opacity 360ms var(--ease-standard), filter 360ms var(--ease-standard), transform 360ms var(--ease-standard); }
-  [data-visible="true"] [data-reveal-item] { opacity: 1; filter: blur(0); transform: translateY(0); }
-  [data-visible="true"] [data-reveal-stagger] > [data-reveal-item]:nth-child(2) { transition-delay: 40ms; }
-  [data-visible="true"] [data-reveal-stagger] > [data-reveal-item]:nth-child(3) { transition-delay: 80ms; }
-  [data-visible="true"] [data-reveal-stagger] > [data-reveal-item]:nth-child(4) { transition-delay: 120ms; }
-
   .landing-metrics-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -773,7 +761,5 @@
   @layer components {
     .landing-hero-copy,
     .notebook-preview { animation: none; }
-    [data-landing-reveal],
-    [data-reveal-item] { opacity: 1; filter: none; transform: none; }
   }
 }

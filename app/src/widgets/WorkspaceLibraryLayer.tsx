@@ -18,6 +18,7 @@ import {
   panelExitTransition,
   reducedFadeTransition,
 } from "../pages/workspaceMotion";
+import { motionDistance } from "../shared/design-system/motion";
 import {
   beginArchiveMotion,
   endArchiveMotion,
@@ -68,7 +69,7 @@ export function WorkspaceLibraryLayer({
     <motion.div
       animate={{
         opacity: open ? 1 : 0,
-        x: open || reduceMotion ? 0 : -12,
+        x: open || reduceMotion ? 0 : -motionDistance.panel,
       }}
       aria-hidden={!open}
       className="app-sidebar-shell workspace-floating-panel workspace-persistent-panel"

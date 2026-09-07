@@ -24,7 +24,7 @@
     color: var(--popover-foreground);
     box-shadow: var(--shadow-sm);
     transform-origin: center bottom;
-    animation: ds-menu-in var(--motion-fast) var(--ease-standard);
+    /* 入退场归 PresenceSurface。 */
   }
 
   .ds-user-menu-identity {

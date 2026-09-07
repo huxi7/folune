@@ -6,6 +6,7 @@
  */
 
 /* oxlint-disable jsx-a11y/label-has-associated-control -- 预览中的 label 包裹本地 Input/PasswordInput，插件无法穿透自定义组件识别原生控件 */
+import { MotionSpecimen } from "./MotionSpecimen";
 import {
   ICON_SIZES,
   ArrowUpIcon,
@@ -232,11 +233,7 @@ function RadiusElevationMotionPreview() {
         <span data-elevation="panel">Panel</span>
         <span data-elevation="popover">Popover</span>
       </div>
-      <div className="ds-motion-preview">
-        {([["Fast", "160"], ["Normal", "260"], ["Spatial", "320"], ["Quiet", "600"]] as const).map(([label, value]) => (
-          <span key={label}><i data-motion={label.toLowerCase()} /><small>{label} · {value}ms</small></span>
-        ))}
-      </div>
+      <MotionSpecimen />
     </div>
   );
 }
@@ -416,7 +413,7 @@ function ComposerPreview() {
   return (
     <div className="ds-composer-preview">
       <form className="agent-composer" onSubmit={(event) => event.preventDefault()}>
-        {mentionStart !== null ? <MentionMenu activeIndex={0} onSelect={selectMention} results={results} /> : null}
+        <MentionMenu open={mentionStart !== null} activeIndex={0} onSelect={selectMention} results={results} />
         <MentionInput
           aria-label="Prompt Composer 示例"
           className="agent-chat-input"

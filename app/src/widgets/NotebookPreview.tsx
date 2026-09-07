@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖本地 Card 与 共享 Lucide 图标展示确定性的产品结构
- * [OUTPUT]: 对外提供含工具轨、文件树、文档纸面与 Agent 归档面板的 /app 工作台预览
+ * [INPUT]: 依赖本地 Card、Motion for React 统一非线性 入场与共享 Lucide 图标展示确定性的产品结构
+ * [OUTPUT]: 对外提供含工具轨、文件树、文档纸面与 Agent 归档面板的 /app 工作台预览，并在 Landing 首屏由 Motion 独占稳定入场
  * [POS]: app/src/widgets 的首屏产品视觉，被 LandingHero 消费并作为实际产品信号
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -14,8 +14,10 @@ import {
   PlusIcon,
   SparkleIcon,
 } from "../shared/design-system/icons";
+import { motion, useReducedMotion } from "motion/react";
 
 import { Card } from "../shared/design-system/components";
+import { revealVariants } from "../shared/design-system/motion";
 
 const folders = [
   { count: 12, name: "工作", open: true },
@@ -30,11 +32,18 @@ const filingSteps = [
 ];
 
 export function NotebookPreview() {
+  const scaleIn = revealVariants(Boolean(useReducedMotion()), true);
   return (
-    <Card
-      className="notebook-preview motion-safe:animate-blueprint-preview motion-reduce:animate-none"
-      data-landing-preview
+    <motion.div
+      initial="hidden"
+      animate="visible"
+      variants={scaleIn}
     >
+      <Card
+        className="notebook-preview"
+        motion="lift"
+        data-landing-preview
+      >
       <header className="notebook-window-bar">
         <div className="notebook-window-dots" aria-hidden="true">
           <span />
@@ -132,6 +141,7 @@ export function NotebookPreview() {
           </div>
         </aside>
       </div>
-    </Card>
+      </Card>
+    </motion.div>
   );
 }

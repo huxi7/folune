@@ -196,7 +196,8 @@ describe("Command Palette 键盘状态机", () => {
 
     openPalette();
     await waitFor(() => {
-      expect(document.querySelector(".command-palette-input")).toBeNull();
+      const input = document.querySelector(".command-palette-input");
+      expect(input === null || input.closest("[inert]") !== null).toBe(true);
     });
   }, 20_000);
 
@@ -233,7 +234,8 @@ describe("Command Palette 键盘状态机", () => {
     fireEvent.keyDown(input(), { key: "Enter" });
     expect(opened).toEqual(["memo-a"]);
     await waitFor(() => {
-      expect(document.querySelector(".command-palette-input")).toBeNull();
+      const input = document.querySelector(".command-palette-input");
+      expect(input === null || input.closest("[inert]") !== null).toBe(true);
     });
   });
 
@@ -249,7 +251,8 @@ describe("Command Palette 键盘状态机", () => {
     expect(openedCanvas).toEqual(["memo-a"]);
     expect(opened).toEqual([]);
     await waitFor(() => {
-      expect(document.querySelector(".command-palette-input")).toBeNull();
+      const input = document.querySelector(".command-palette-input");
+      expect(input === null || input.closest("[inert]") !== null).toBe(true);
     });
   });
 
@@ -312,7 +315,8 @@ describe("Command Palette 键盘状态机", () => {
 
     fireEvent.keyDown(document, { key: "Escape" });
     await waitFor(() => {
-      expect(document.querySelector(".command-palette-input")).toBeNull();
+      const input = document.querySelector(".command-palette-input");
+      expect(input === null || input.closest("[inert]") !== null).toBe(true);
     });
   });
 

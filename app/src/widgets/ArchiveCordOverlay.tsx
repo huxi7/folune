@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 WorkspaceOrganizePresentation 与可见性策略、archiveCordGeometry 的连续钳制与端点插值、archiveCordMotion 租约、共享 tree FLIP 时间轴；可选 scopeSelector 用于隔离嵌入式样板
+ * [INPUT]: 忽略退出中 inert 子树的代表，依赖 WorkspaceOrganizePresentation 与可见性策略、archiveCordGeometry 的连续钳制与端点插值、archiveCordMotion 租约、共享 tree FLIP 时间轴；可选 scopeSelector 用于隔离嵌入式样板
  * [OUTPUT]: 对外提供 fixed viewport ArchiveCordOverlay；单一调度器直接写 visible/flow/hit 三条 path 的 d，命中区把点击委托给与 source 相同的定位命令
  * [POS]: Paper 与真实文件树之间的归档事实渲染层；source 来自 ArchiveStatus，target 只来自树上唯一的 data-archive-representative，presentation 生命周期归 Dashboard，代表解析归 AppSidebar，这里不猜树也不写 React 几何状态
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -31,7 +31,7 @@ type ArchiveCordOverlayProps = {
 };
 
 const SOURCE_SELECTOR = '[data-archive-source="true"]';
-const REPRESENTATIVE_SELECTOR = "[data-archive-representative]";
+const REPRESENTATIVE_SELECTOR = "[data-archive-representative]:not([inert] *)";
 const TREE_SELECTOR = ".app-sidebar-tree";
 
 const rectOf = (element: Element) => {

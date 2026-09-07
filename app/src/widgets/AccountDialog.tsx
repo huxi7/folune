@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖后端缓存 Profile、共享 Dialog/Button/SidebarButton、账户/外观面板与 React 受控 refreshing/section
+ * [INPUT]: 依赖后端缓存 Profile、共享 PersistentView/Dialog/Button/SidebarButton、账户/外观面板与 React 受控 refreshing/section
  * [OUTPUT]: 对外提供账户和外观共用的 4:3 设置模态框、保留旧资料的后台刷新语义、按“通用”归类的双入口侧边导航与 AccountSection 类型
  * [POS]: app/src/widgets 的设置总入口，由 AppDashboard 持有唯一 section 与 stale-while-revalidate Profile；刷新期间保持完整可见布局，不以 Skeleton 清空已揭示内容
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -14,6 +14,7 @@ import {
   Button,
   Dialog,
   SidebarButton,
+  PersistentView,
 } from "../shared/design-system/components";
 import type { Profile } from "../shared/api/profile";
 import { AccountProfilePanel } from "./AccountProfilePanel";
@@ -121,23 +122,23 @@ export function AccountDialog({
             />
           </header>
           <div className="account-center-content">
-            <section
+            <PersistentView
               aria-labelledby="account-dialog-section-title"
               className="account-center-panel"
-              hidden={section !== "account"}
+              active={section === "account"}
             >
               <AccountProfilePanel
                 onProfileChange={onProfileChange}
                 profile={profile}
               />
-            </section>
-            <section
+            </PersistentView>
+            <PersistentView
               aria-labelledby="account-dialog-section-title"
               className="account-center-panel"
-              hidden={section !== "appearance"}
+              active={section === "appearance"}
             >
               <AccountSettingsPanel />
-            </section>
+            </PersistentView>
           </div>
         </div>
       </div>

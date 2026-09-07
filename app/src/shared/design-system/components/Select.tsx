@@ -1,9 +1,10 @@
 /**
- * [INPUT]: 依赖 React 的受控状态、effect/id/ref 与键盘事件，依赖 共享 Lucide 图标，依赖 index.css 的 ds-select 组件类
+ * [INPUT]: 依赖 PresenceSurface 的统一入退场、 React 的受控状态、effect/id/ref 与键盘事件，依赖 共享 Lucide 图标，依赖 index.css 的 ds-select 组件类
  * [OUTPUT]: 对外提供具备 combobox/listbox ARIA 契约的 Select 组件及其选项、位置与触发器类型
  * [POS]: app/src/shared/design-system/components 的通用选择器基础件，被 AccountSettingsPanel 与 Design System 预览消费；UserMenu 已使用独立账户菜单语义
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
+import { PresenceSurface } from "../components/PresenceSurface";
 import {
   CaretUpDownIcon,
   CheckIcon,
@@ -201,8 +202,7 @@ export function Select({
         </button>
       )}
 
-      {open ? (
-        <div
+      <PresenceSurface open={open} placement={placement}
           aria-label={ariaLabel}
           className={[
             "ds-select-menu",
@@ -226,6 +226,7 @@ export function Select({
                 onClick={() => selectOption(option)}
                 onPointerMove={() => setActiveIndex(index)}
                 role="option"
+                tabIndex={-1}
                 type="button"
               >
                 {IconComponent ? (
@@ -245,8 +246,7 @@ export function Select({
               </button>
             );
           })}
-        </div>
-      ) : null}
+      </PresenceSurface>
     </div>
   );
 }

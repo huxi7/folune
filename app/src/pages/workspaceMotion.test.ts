@@ -45,7 +45,7 @@ const vtCss = canvasCss.slice(canvasCss.indexOf("\nhtml {\n  --paper-morph:"));
 
 describe("Workspace Motion Language", () => {
   test("语义时长、spring 与 stagger 只有一套标准", () => {
-    expect(motionDuration).toEqual({
+    expect(motionDuration).toMatchObject({
       microEnter: 0.16,
       microExit: 0.13,
       panelEnter: 0.22,

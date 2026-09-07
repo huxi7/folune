@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 @xyflow/react v12、同步首帧 Canvas bootstrap、纸面视图过渡、Canvas Chat/Coordinator/Store、瞬时 motion receipt、空间文字、增量布局与拖拽载荷
- * [OUTPUT]: 对外提供始终挂载真实 React Flow 的 Canvas：首帧过渡落点、稳定受控图、尺寸变化时不随节点拖动重建 observer 的响应式视口校准、拖/点等效直接连接、单一 Stage loading、Preview 纸面形变、删除退场与可靠保存
+ * [OUTPUT]: 对外提供始终挂载真实 React Flow 的 Canvas（删除只由产品确认流拥有、浮层键盘不穿透）：首帧过渡落点、稳定受控图、尺寸变化时不随节点拖动重建 observer 的响应式视口校准、拖/点等效直接连接、单一 Stage loading、Preview 纸面形变、删除退场与可靠保存
  * [POS]: KnowledgeCanvas 的会话内容根；连接手势只经 useCanvasConnectionSession 产生一次 upsert_edge，响应式校准只读 latest nodes 并保持 observer 稳定，几何/选择/WAL 仍由原系统负责，hydration/rebase/save/rerender 不得重播 UI receipt
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -1292,6 +1292,8 @@ export function KnowledgeCanvas({
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || (event.target instanceof Element
+        && event.target.closest('[role="dialog"], [role="menu"], [role="listbox"]'))) return;
       /*
        * ⌘E 在 Paper 里是「进入这篇笔记的画布」, 在这里是「从选中节点继续拓展」。
        * 同一个键在两个互斥的 Workspace 里表达同一件事——往前推进一步——所以不需要
@@ -1425,6 +1427,8 @@ export function KnowledgeCanvas({
       >
         <ReactFlow<CanvasFlowNode, CanvasFlowEdge>
           connectOnClick={false}
+          /* 删除只归 requestNodeRemoval；默认 Backspace 会绕过确认并清掉 React Flow 选择。 */
+          deleteKeyCode={null}
           connectionLineComponent={CanvasElasticConnectionLine}
           edgeTypes={edgeTypes}
           edges={edges}

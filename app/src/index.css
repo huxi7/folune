@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Kumo Tailwind 样式源、Tailwind v4，并导入 AI 消息与 Design System 等生产样式模块消费本文件语义 token
- * [OUTPUT]: 对外提供 Kumo 基础样式、Landing Light、Quiet Editorial Instrument 与隔离 Color Lab 蓝色终选候选：唯一语义 Color/Type/Spacing/Radius/Elevation/Motion、全站命令控件共读的单一 press 收紧比例（Reduced Motion 在此归 1）、可组合 Primary Button 材质、Paper First Stage/Paper/Panel Toggle/Archive Cord/Cord、Tailwind 映射及样式模块入口
+ * [OUTPUT]: 对外提供 Kumo 基础样式、Landing Light、Quiet Editorial Instrument 与隔离 Color Lab 蓝色终选候选：唯一静态语义 Color/Type/Spacing/Radius/Elevation 与 DS motion.ts 时长/曲线的消费别名、全站命令控件共读的单一 press 收紧比例（Reduced Motion 在此归 1）、可组合 Primary Button 材质、Paper First Stage/Paper/Panel Toggle/Archive Cord/Cord、Tailwind 映射及样式模块入口
  * [POS]: app/src 的主题入口，被 main.tsx 引入并约束 Kumo 与本地设计系统共享同一全局视觉来源
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -23,6 +23,7 @@
 @import "./styles/knowledge-canvas.css";
 @import "./styles/design-system-workspace.css";
 @import "./styles/landing.css";
+@import "./styles/motion.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -229,18 +230,11 @@
    * 从前 button.css 与 workspace.css 各写一遍 70ms、各写一遍位移量, 于是
    * "按下是什么感觉"有四五个答案; 而 90ms 这个 token 从来没有人消费。
    */
+  --layer-dialog: 100;
   --press-scale: 0.98;
-  --motion-press: 70ms;
-  --motion-micro-enter: 160ms;
-  --motion-micro-exit: 130ms;
-  --motion-panel-enter: 220ms;
-  --motion-panel-exit: 170ms;
-  --motion-spatial: 360ms;
   --motion-fast: var(--motion-micro-enter);
   --motion-normal: var(--motion-panel-enter);
-  --motion-quiet: 600ms;
   --motion-slow: var(--motion-quiet);
-  --ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
   --radius-compact: 0.5rem;
   --radius-control: 0.75rem;
   --radius-paper: 0.75rem;

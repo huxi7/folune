@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 React lazy/Suspense、react-router-dom loader/redirect/useLocation、共享 Skeleton/延迟策略、Supabase Auth token 读取与后端 Profile API
- * [OUTPUT]: 对外提供 /、OAuth 回调、受保护 /app 与 /app/notes/:noteId 路由、仅开发态 /color-lab 与 /archive-cord-lab，以及区分索引/详情深链的首屏等待面
+ * [OUTPUT]: 对外提供 /、OAuth 回调、受保护 /app 与 /app/notes/:noteId 路由、仅开发态 /motion-lab、/color-lab 与 /archive-cord-lab，以及区分索引/详情深链的首屏等待面
  * [POS]: app/src/app/router 的路由装配文件；loader 只建立身份，/app 索引等待由 Paper 壳承接，详情深链因节点类型尚未确认先用中性全屏面，禁止画布首帧闪出 Paper；左右工具偏好在 Dashboard 获得用户后恢复
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -48,6 +48,10 @@ const ArchiveCordLabPage = import.meta.env.DEV
       default: module.ArchiveCordLabPage,
     })),
   )
+  : null;
+
+const MotionLabPage = import.meta.env.DEV
+  ? lazy(() => import("../../pages/MotionLabPage").then((module) => ({ default: module.MotionLabPage })))
   : null;
 
 function RouteSuspense({
@@ -166,6 +170,10 @@ export const router = createBrowserRouter([
       </RouteSuspense>
     ),
   },
+  ...(MotionLabPage === null ? [] : [{
+    path: "/motion-lab",
+    element: <RouteSuspense><MotionLabPage /></RouteSuspense>,
+  }]),
   ...(ColorLabPage === null
     ? []
     : [{

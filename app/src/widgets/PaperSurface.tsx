@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 motion/react、纸面名字、工作台统一 Motion 与稳定 paperIdentity/编辑器内容；路由纸面过渡期间由 CSS 接管内层入场
- * [OUTPUT]: 对外提供纸壳与纸内正文各自命名、由 CSS 以「Panel 内缩线高度 → 7:9 反推宽度」立开本并允许长文增长的 Paper Surface；归档 source 由 Toolbar/Overlay 独立拥有
+ * [OUTPUT]: 对外提供纸壳与纸内正文各自命名、跨辅助视图保留子树实例的 Paper Surface；几何由 CSS 立开本，归档 source 由 Toolbar/Overlay 独立拥有
  * [POS]: app/src/widgets 的 Paper First Signature 纸面层；只拥有纸的视觉边界，NotesWorkspace 编辑会话仍由 Dashboard 以 memoClientKey 保持稳定
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -50,7 +50,7 @@ export function PaperSurface({
         animate={{ opacity: 1, y: 0 }}
         className="paper-content-transition"
         initial={{ opacity: reducedMotion ? 1 : 0.82, y: reducedMotion ? 0 : 2 }}
-        key={paperIdentity}
+        data-paper-identity={paperIdentity}
         /*
          * 正文与纸壳分开命名: 纸壳被拉伸看不出来, 字被拉伸就是"字在膨胀"。分开之后
          * 正文按原始尺寸淡换, 由纸壳的取景框裁切, 纸长大只是露出更多正文。

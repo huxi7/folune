@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 React 本地展开状态、共享 Lucide Caret、SuperNote ThinkingMark 与真实生成 active 状态
+ * [INPUT]: 依赖 Collapse 的保留式高度披露、 React 本地展开状态、共享 Lucide Caret、SuperNote ThinkingMark 与真实生成 active 状态
  * [OUTPUT]: 对外提供顶部 Agent 状态入口、生成期强制展开、完成后可手动收起且不包裹最终正文的 AgentProcessDisclosure
  * [POS]: AgentPanel 回复过程容器，在过程内容之前管理透明度信息的显隐，不拥有工具/正文内容语义
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -13,7 +13,7 @@ import {
   useState,
 } from "react";
 
-import { ThinkingMark } from "../../shared/design-system/components";
+import { ThinkingMark, Collapse } from "../../shared/design-system/components";
 
 type AgentProcessDisclosureProps = {
   active: boolean;
@@ -59,13 +59,14 @@ export function AgentProcessDisclosure({
           <CaretRightIcon aria-hidden="true" size={14} />
         </button>
       )}
+      <Collapse open={expanded} keepMounted>
       <div
         className="agent-process-content"
-        hidden={!expanded}
         id={contentId}
       >
         {children}
       </div>
+      </Collapse>
     </div>
   );
 }

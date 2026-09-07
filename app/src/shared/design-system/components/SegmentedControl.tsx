@@ -1,12 +1,15 @@
 /**
- * [INPUT]: 依赖 React ref/键盘事件、共享 Lucide Icon 类型与 segmented-control.css 的语义 token 样式
+ * [INPUT]: 依赖 Motion 共享底片与 DS 时长、 React ref/键盘事件、共享 Lucide Icon 类型与 segmented-control.css 的语义 token 样式
  * [OUTPUT]: 对外提供受控 SegmentedControl、SegmentedControlOption 与方向键/Home/End 单选交互
  * [POS]: app/src/shared/design-system/components 的紧凑互斥选择原子件，用于少量稳定选项，不替代 Select 或普通 Button
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
+import { motion, useReducedMotion } from "motion/react";
+import { fadeTransition, reducedFadeTransition } from "../motion";
 import type { Icon } from "../icons";
 import {
   useRef,
+  useId,
   type KeyboardEvent,
 } from "react";
 
@@ -41,6 +44,8 @@ export function SegmentedControl<Value extends string>({
   options,
   value,
 }: SegmentedControlProps<Value>) {
+  const selectionId = useId();
+  const reduced = useReducedMotion();
   const optionRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   function handleKeyDown(
@@ -110,6 +115,12 @@ export function SegmentedControl<Value extends string>({
             tabIndex={active ? 0 : -1}
             type="button"
           >
+            {active ? <motion.span
+              aria-hidden="true"
+              className="ds-segmented-control-indicator"
+              layoutId={reduced ? undefined : selectionId}
+              transition={reduced ? reducedFadeTransition : fadeTransition}
+            /> : null}
             {IconComponent ? (
               <IconComponent aria-hidden="true" size={16} />
             ) : null}

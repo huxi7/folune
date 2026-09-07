@@ -135,7 +135,6 @@ export function WorkspaceCommandPalette({
       ?.scrollIntoView({ block: "nearest" });
   }, [activeId]);
 
-  if (!open) return null;
 
   const activeIndex = results.findIndex((result) => result.id === activeId);
   const active = activeIndex === -1 ? null : results[activeIndex] ?? null;
@@ -220,7 +219,7 @@ export function WorkspaceCommandPalette({
       onOpenChange={(next) => {
         if (!next) close();
       }}
-      open
+      open={open}
       title="打开或搜索对象"
       width="command"
     >

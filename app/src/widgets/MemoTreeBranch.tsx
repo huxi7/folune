@@ -1,10 +1,11 @@
 /**
- * [INPUT]: 依赖后端 MemoTreeNode、memoLibrary 落点、紧凑 SidebarButton、archiveCordPolicy 的 ArchiveRepresentative 与上层展开/拖拽/原地重命名命令
+ * [INPUT]: 依赖 TreeDisclosure 连续层级开合、后端 MemoTreeNode、memoLibrary 落点、紧凑 SidebarButton、archiveCordPolicy 的 ArchiveRepresentative 与上层展开/拖拽/原地重命名命令
  * [OUTPUT]: 对外提供递归树、folder/memo 落点、笔记正文意图预热、稳定 tree row、至多一个 data-archive-representative 标记、拖拽状态、原地重命名与重名提示
  * [POS]: app/src/widgets 的纯树交互渲染器；只表达可见层级、HTML5 DnD 几何与真实目标 DOM，不解析代表、不拥有树数据、连线生命周期或 API
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
+import { TreeDisclosure } from "./TreeDisclosure";
 import {
   CanvasIcon,
   FileTextIcon,
@@ -402,13 +403,15 @@ export function MemoTreeBranch(props: MemoTreeBranchProps) {
                 style={rowStyle}
               />
             )}
-            {isFolder && isExpanded ? (
+            {isFolder ? (
+              <TreeDisclosure open={isExpanded}>
               <MemoTreeBranch
                 {...props}
                 depth={depth + 1}
                 nodes={node.children}
                 parentId={node.id}
               />
+              </TreeDisclosure>
             ) : null}
             <MemoTreeDropZone
               depth={depth}

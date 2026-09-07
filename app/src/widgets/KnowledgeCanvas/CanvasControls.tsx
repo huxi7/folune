@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 React Flow Panel、设计系统 Dialog/图标与上层明确的加入/视口命令
+ * [INPUT]: 依赖 React Flow Panel、持续挂载的设计系统 Dialog/图标与上层明确的加入/视口命令
  * [OUTPUT]: 对外提供一个 Panel 内彼此留白、同为中性材质的图标内容动作面与视口动作面
  * [POS]: KnowledgeCanvas 的无状态空间命令条；外壳只负责 bottom-center 定位，两个独立 surface 用留白而非强调色表达语义边界，不读写图数据
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -54,11 +54,10 @@ export function CanvasControls({
           </button>
         </div>
       </Panel>
-      {helpOpen ? (
         <Dialog
           description="Canvas 只保存卡片、关系和空间位置；笔记正文始终留在原文。"
           onOpenChange={setHelpOpen}
-          open
+          open={helpOpen}
           title="Canvas 操作"
         >
           <ul className="canvas-help-list">
@@ -68,7 +67,6 @@ export function CanvasControls({
             <li>选中笔记可 AI 拓展、预览或移出；右下连接柄用于建立关系。</li>
           </ul>
         </Dialog>
-      ) : null}
     </>
   );
 }

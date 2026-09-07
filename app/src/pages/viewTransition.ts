@@ -1,10 +1,11 @@
 /**
  * [INPUT]: 依赖浏览器 View Transitions API（document.startViewTransition）与 memo 身份
- * [OUTPUT]: 对外提供纸壳/纸内正文两个纸面名字、同文档 runViewTransition 与跨路由 navigateWithPaperTransition，把纸张身份和四种方向统一交给浏览器/CSS
+ * [OUTPUT]: 对外提供纸壳/纸内正文两个纸面名字、本地内容 transitionContent、同文档 runViewTransition 与跨路由 navigateWithPaperTransition，把纸张身份和四种方向统一交给浏览器/CSS
  * [POS]: pages 的纸面过渡唯一入口；不复制 DOM、不测量矩形，集中处理并发跳过、方向标记与路由过渡收尾，避免各调用方各自留下不同节奏
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
+import { flushSync } from "react-dom";
 type ViewTransitionHandle = {
   finished: Promise<void>;
   skipTransition: () => void;
@@ -134,4 +135,9 @@ export const navigateWithPaperTransition = async (
   } finally {
     if (routeSequence === sequence) markKind(undefined);
   }
+};
+
+/** 普通本地内容切换：截图不保留旧 React 会话，更新本身只执行一次。 */
+export const transitionContent = (update: () => void): void => {
+  if (!runViewTransition(() => flushSync(update))) update();
 };

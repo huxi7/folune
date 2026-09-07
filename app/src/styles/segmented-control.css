@@ -19,6 +19,8 @@
   }
 
   .ds-segmented-control-option {
+    position: relative;
+    isolation: isolate;
     display: inline-flex;
     min-width: 4rem;
     align-items: center;
@@ -44,9 +46,10 @@
   }
 
   .ds-segmented-control-option[data-active="true"] {
-    background: var(--card);
     color: var(--card-foreground);
   }
+
+  .ds-segmented-control-indicator { position: absolute; z-index: -1; inset: 0; border-radius: inherit; background: var(--card); pointer-events: none; }
 
   .ds-segmented-control-option:focus-visible {
     outline: 2px solid color-mix(in srgb, var(--ring) 58%, transparent);

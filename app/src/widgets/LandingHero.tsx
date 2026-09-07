@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖本地 Button、共享 Lucide 图标、NotebookPreview 与 React Router 导航
- * [OUTPUT]: 对外提供冷调工程蓝图 Hero、轻微一次性淡入、无磁吸 CTA、静态能力条与真实产品预览
+ * [INPUT]: 依赖本地 Button、共享 Lucide 图标、Motion for React 轻量变体、NotebookPreview 与 React Router 导航
+ * [OUTPUT]: 对外提供冷调工程蓝图 Hero、由 Motion 独占的 统一非线性 入场、无磁吸 CTA、带错开入场的能力条与真实产品预览
  * [POS]: app/src/widgets 的 Landing 首屏，被 LandingPage 消费并定义全页 Blueprint 视觉基准
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -10,8 +10,10 @@ import {
   SparkleIcon,
   TreeStructureIcon,
 } from "../shared/design-system/icons";
+import { motion, useReducedMotion } from "motion/react";
 import { useNavigate } from "react-router-dom";
 
+import { revealVariants, staggerVariants } from "../shared/design-system/motion";
 import { Button } from "../shared/design-system/components";
 import { NotebookPreview } from "./NotebookPreview";
 
@@ -36,10 +38,19 @@ const featureItems = [
 export function LandingHero() {
   const navigate = useNavigate();
 
+  const reduced = Boolean(useReducedMotion());
+  const fadeInUp = revealVariants(reduced);
+  const staggerItem = fadeInUp;
+  const staggerContainer = staggerVariants(reduced);
   return (
     <section className="blueprint-section landing-main" id="product">
       <div className="landing-hero">
-        <div className="landing-hero-copy motion-safe:animate-blueprint-rise motion-reduce:animate-none">
+        <motion.div
+          className="landing-hero-copy"
+          initial="hidden"
+          animate="visible"
+          variants={fadeInUp}
+        >
           <div className="landing-eyebrow">
             <NotePencilIcon aria-hidden="true" size={14} />
             SuperNote / Intelligent notes
@@ -66,29 +77,36 @@ export function LandingHero() {
               查看工作方式
             </Button>
           </div>
-        </div>
+        </motion.div>
 
         <NotebookPreview />
 
-        <div className="landing-feature-strip">
+        <motion.div
+          className="landing-feature-strip"
+          initial="hidden"
+          animate="visible"
+          variants={staggerContainer}
+        >
           {featureItems.map((item) => {
             const IconComponent = item.icon;
 
             return (
-              <div className="landing-feature-item" key={item.title}>
-                <IconComponent
-                  aria-hidden="true"
-                  className="shrink-0 text-primary"
-                  size={16}
-                />
+              <motion.div className="landing-feature-item" key={item.title} variants={staggerItem}>
+                <span>
+                  <IconComponent
+                    aria-hidden="true"
+                    className="shrink-0 text-primary"
+                    size={16}
+                  />
+                </span>
                 <div>
                   <h2>{item.title}</h2>
                   <p>{item.body}</p>
                 </div>
-              </div>
+              </motion.div>
             );
           })}
-        </div>
+        </motion.div>
       </div>
     </section>
   );

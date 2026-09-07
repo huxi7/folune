@@ -28,7 +28,7 @@ const codeOf = (fileName: string): string => readFileSync(
   .replace(/(^|[^:])\/\/.*$/gm, "$1");
 
 const overlaySource = codeOf("ArchiveCordOverlay.tsx");
-const sidebarSource = codeOf("AppSidebar.tsx");
+const sidebarSource = codeOf("useTreeReorder.ts");
 
 describe("Archive Cord 运动租约", () => {
   test("有租约在手才逐帧，全部归还即停下——静止页面不许常驻测量循环", () => {
@@ -97,7 +97,7 @@ describe("Archive Cord 几何架构门禁", () => {
   });
 
   test("Overlay 不自己遍历树：代表只能来自树上唯一那个标记", () => {
-    expect(overlaySource).toContain('const REPRESENTATIVE_SELECTOR = "[data-archive-representative]"');
+    expect(overlaySource).toContain('const REPRESENTATIVE_SELECTOR = "[data-archive-representative]:not([inert] *)"');
     expect(overlaySource).not.toContain("getAncestorFolderIds");
     expect(overlaySource).not.toContain("expandedFolders");
     expect(overlaySource).not.toContain("resolveArchiveRepresentative");

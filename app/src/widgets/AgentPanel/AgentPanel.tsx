@@ -1,10 +1,11 @@
 /**
- * [INPUT]: 依赖 useAiThreads、类型化 useChat/原生审批、持久化消息 API、本地 Design System Button/MentionInput、统一 Composer sources、Worker 胖工具链、权限/History 与 Dashboard AI 整理/草稿协调边界
+ * [INPUT]: 依赖 PersistentView 历史/会话淡换、useAiThreads、类型化 useChat/原生审批、持久化消息 API、本地 Design System Button/MentionInput、统一 Composer sources、Worker 胖工具链、权限/History 与 Dashboard AI 整理/草稿协调边界
  * [OUTPUT]: 对外提供 AI Native 右侧工作区；引用源按 memo 身份/置顶列表精确对账，已批准工具按持久消息语义幂等恢复，外层只回报选中会话 id
  * [POS]: /app 右侧 AI Native V2 组合根；工具参数流结束且批准后才进入 Worker，api command 是唯一写事实源，Store 只做幂等投影与回滚
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
+import { PersistentView, MotionSurface } from "../../shared/design-system/components";
 import { useChat } from "@ai-sdk/react";
 import {
   ArrowUpIcon,
@@ -573,7 +574,7 @@ function AgentConversation({
         <OrganizeReviewCard busy={organizeReviewBusy} onApply={onApplyOrganize} onReject={onRejectOrganize} run={organizeRun} />
       ) : null}
       <form className="agent-composer" onSubmit={handleSubmit}>
-        {mentionOpen ? <MentionMenu activeIndex={mentionIndex} onSelect={selectMention} results={mentionResults} /> : null}
+        <MentionMenu open={mentionOpen} activeIndex={mentionIndex} onSelect={selectMention} results={mentionResults} />
         {visibleContextSources.length > 0 ? <div className="agent-composer-sources">{visibleContextSources.map((source) => {
           return <span key={source.id}><AtIcon size={14} /><strong>{source.title}</strong><button aria-label={`${source.pinned ? "取消置顶" : "置顶引用"} ${source.title}`} onClick={() => void onReferencesChange(source.pinned ? pinnedIds.filter((id) => id !== source.id) : [...pinnedIds, source.id])} type="button"><PushPinIcon fill={source.pinned ? "currentColor" : "none"} size={14} /></button><button aria-label={`移除引用 ${source.title}`} onClick={() => void (async () => { if (source.pinned) await onReferencesChange(pinnedIds.filter((id) => id !== source.id)); if (source.current) setSuppressedCurrentMemoId(source.id); setSources((current) => current.filter((item) => item.id !== source.id)); })()} type="button"><XIcon size={14} /></button></span>;
         })}</div> : null}
@@ -622,13 +623,20 @@ export function AgentPanel(props: AgentPanelProps) {
           <Button aria-label="收起 AI 面板" className="agent-panel-header-button" icon={AssistantPanelCloseIcon} onClick={props.onClose} size="square" variant="ghost" />
         </div>
       </header>
-      {historyOpen ? (
+      <div className="agent-panel-view-stack">
+      <PersistentView active={historyOpen} className="agent-panel-view-switch">
         <ThreadHistory busy={actionBusy} onClose={() => setHistoryOpen(false)} onDelete={threads.removeThread} onRename={(id, title) => threads.patchThread(id, { title })} onSelect={async (id) => { await threads.selectThread(id); setHistoryOpen(false); }} selectedId={thread?.id ?? null} threads={threads.threads} />
-      ) : thread === null ? (
+      </PersistentView>
+      <PersistentView active={!historyOpen} className="agent-panel-view-switch">
+      {thread === null ? (
         <div className="agent-panel-loading">{threads.loading ? "正在恢复会话…" : "会话加载失败，请重新打开面板。"}</div>
       ) : (
+        <MotionSurface kind="fade" className="agent-panel-view-switch" key={thread.id}>
         <AgentConversation accessToken={props.accessToken} currentMemo={props.currentMemo} initialMessages={threads.messages} key={thread.id} memoTree={props.memoTree} onApplyOrganize={props.onApplyOrganize} onBusyChange={setChatBusy} onPrepareMutation={props.onPrepareMutation} onReferencesChange={threads.replaceReferences} onRejectOrganize={props.onRejectOrganize} onThreadUpdated={threads.refreshSelected} organizeReviewBusy={actionBusy} organizeRun={visibleOrganizeRun} thread={thread} userId={props.userId} />
+        </MotionSurface>
       )}
+      </PersistentView>
+      </div>
     </aside>
   );
 }

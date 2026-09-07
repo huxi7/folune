@@ -1,10 +1,11 @@
 /**
- * [INPUT]: 依赖 motion/react、EdgeDock/PaperSurface、右侧工具插槽与稳定 paperIdentity/纸面过渡身份；文件库与 fixed 归档 Overlay 由外部持久宿主承载
+ * [INPUT]: 依赖 PresenceSurface 面板入退场、 motion/react、EdgeDock/PaperSurface、右侧工具插槽与稳定 paperIdentity/纸面过渡身份；文件库与 fixed 归档 Overlay 由外部持久宿主承载
  * [OUTPUT]: 对外提供 Paper First 共享 Workspace Chrome、遮罩布局的消费与 Escape 收束，并只保留文件库的开关语义
  * [POS]: widgets 的写作工作台空间壳；Canvas 已成为独立持久 Workspace，旧临时探索舞台不再进入生产壳。响应式判据不在此处再算一遍——它由 Dashboard 的 useOverlayPanels 持有并下传，壳只消费；同一个断点算两遍就会出现两个都自称正确的布局
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
+import { PresenceSurface } from "../shared/design-system/components/PresenceSurface";
 import {
   AnimatePresence,
   motion,
@@ -24,8 +25,6 @@ import {
 } from "../shared/design-system/icons";
 import {
   fadeTransition,
-  panelEnterTransition,
-  panelExitTransition,
   reducedFadeTransition,
   workspaceLayoutTransition,
 } from "../pages/workspaceMotion";
@@ -192,25 +191,9 @@ export function PaperWorkspaceShell({
           </motion.div>
         </div>
 
-        <AnimatePresence initial={false}>
-          {assistantOpen ? (
-            <motion.div
-              animate={{ opacity: 1, x: 0 }}
-              className="app-agent-shell workspace-floating-panel"
-              exit={{
-                opacity: 0,
-                transition: reduceMotion ? reducedFadeTransition : panelExitTransition,
-                x: reduceMotion ? 0 : 12,
-              }}
-              initial={{ opacity: 0, x: reduceMotion ? 0 : 12 }}
-              transition={reduceMotion ? reducedFadeTransition : panelEnterTransition}
-            >
-              <div className="workspace-panel-content workspace-panel-content-assistant">
-                {assistant}
-              </div>
-            </motion.div>
-          ) : null}
-        </AnimatePresence>
+      <PresenceSurface open={assistantOpen} kind="panel-right" className="app-agent-shell workspace-floating-panel">
+        <div className="workspace-panel-content workspace-panel-content-assistant">{assistant}</div>
+      </PresenceSurface>
 
         <AnimatePresence initial={false}>
           {overlayPanels && anyPanelOpen ? (

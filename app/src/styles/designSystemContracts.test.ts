@@ -1,11 +1,12 @@
 /**
- * [INPUT]: 读取 index.css、button.css、sidebar-button.css 与 workspace.css 的 Control radius、Button 共享别名、Composer 圆形例外与统一 press
+ * [INPUT]: 读取 DS motionTokenStyles、index.css、button.css、sidebar-button.css 与 workspace.css 的 Control radius、Button 共享别名、Composer 圆形例外与统一 press
  * [OUTPUT]: 锁定 12px Control、显式 9px inner、Button 不建立私有半径、Composer 继续显式使用 round，以及四处命令控件共读同一份 press 缩放并在 Reduced Motion 下归 1、创建 split 的 hover 与 press 只认外壳那两半而不认展开的菜单项
  * [POS]: app/src/styles 的设计系统静态契约测试；在浏览器视觉验收之外阻止 Radius 与 press 两条公理被局部覆盖
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
 import { describe, expect, test } from "bun:test";
+import { motionTokenStyles } from "../shared/design-system/motion";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -43,9 +44,9 @@ describe("Control radius 公理", () => {
 });
 
 describe("press 公理", () => {
-  test("按下只有一个数值: 比例与时长都住在 index.css", () => {
+  test("按下只有一个数值: 比例在 index.css，时长由 DS 单一源生成", () => {
     expect(indexCss).toContain("--press-scale: 0.98;");
-    expect(indexCss).toContain("--motion-press: 70ms;");
+    expect(motionTokenStyles).toContain("--motion-press:90ms;");
   });
 
   test("命令控件不再向下掉一格, 四处共读同一个收紧比例", () => {

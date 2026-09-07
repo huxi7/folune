@@ -1,10 +1,12 @@
 /**
- * [INPUT]: 依赖回收站最小 DTO、共享 Button/Dialog/Skeleton 与 共享 Lucide 图标
+ * [INPUT]: 依赖 MotionSurface 条目入退场与位置重排、回收站最小 DTO、共享 Button/Dialog/Skeleton 与 共享 Lucide 图标
  * [OUTPUT]: 对外提供 TrashWorkspaceView 及其视图状态类型
  * [POS]: app/src/widgets 的纯回收站视图；不请求数据、不复制 active tree，供控制器和无网络测试复用
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
+import { AnimatePresence } from "motion/react";
+import { MotionSurface } from "../shared/design-system/components/PresenceSurface";
 import {
   ArrowCounterClockwiseIcon,
   FileTextIcon,
@@ -142,12 +144,12 @@ export function TrashWorkspaceView({
             <span>从文件树移除的备忘录和文件夹会显示在这里。</span>
           </section>
         ) : null}
-        {status === "ready" ? (
           <section
             aria-label="已删除项目"
             className="trash-list divide-y divide-border/70 border-y border-border/70"
           >
-            {items.map((item) => {
+            <AnimatePresence initial={false} mode="popLayout">
+            {(status === "ready" ? items : []).map((item) => {
               const Icon = item.node_type === "folder"
                 ? FolderIcon
                 : FileTextIcon;
@@ -155,7 +157,7 @@ export function TrashWorkspaceView({
                 busyAction.nodeId === item.id;
 
               return (
-                <article className="trash-item" key={item.id}>
+                <MotionSurface role="article" kind="fade" layout="position" className="trash-item" key={item.id}>
                   <div className="trash-item-icon" aria-hidden="true">
                     <Icon size={16} />
                   </div>
@@ -193,11 +195,11 @@ export function TrashWorkspaceView({
                       </Button>
                     </div>
                   </div>
-                </article>
+                </MotionSurface>
               );
             })}
+            </AnimatePresence>
           </section>
-        ) : null}
       </div>
 
       <Dialog

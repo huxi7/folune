@@ -2,6 +2,7 @@
 > L2 | 父级: ../../CLAUDE.md
 
 成员清单
+motion.css: 通用 Motion 消费与验收布局层，保留式视图定位、通用浮层单一动画所有权、普通路由淡换及共享 Canvas/Select/User press；原 Paper 方向的几何节奏继续由 knowledge-canvas.css 拥有
 .gitkeep: 保留产品样式目录
 CLAUDE.md: 记录样式层职责与文档协议
 global-base.css: 全局浏览器基础层，消费 index.css 语义 token，收口文档根、表单字体、选择色、滚动条、指针与 reduced-motion 兜底
@@ -17,9 +18,9 @@ auth.css: 登录/注册 Dialog 专用样式，承载共享平面 Input/PasswordI
 design-system.css: Quiet Editorial 基础组件视觉层与 ThinkingMark Formation Motion；Dialog 提供 panel/bare 表面及 motion=none 模式，而 motion=none 连遮罩都不自带淡入——遮罩自己淡入会被视图过渡拍成「新状态里没有磨砂」，于是背后内容整段清清楚楚、过渡结束才一下盖上来，磨砂因此交给 root 那对截图去带，只有不支持视图过渡的浏览器才由 @supports 兜一次 140ms。也正因为遮罩属于 root 那张截图而不是自带过渡身份，磨砂玻璃在这里是完整可用的，不必为了截图退化成一块不透明色；Input/Select、Skeleton/Loading 与 reduced-motion 规则继续由本层统一
 button.css: Button 专用视觉层；统一 36px 标准命令高度、14px/18px UI 文字、14px 横向留白、6px 图文间距、12px Control 曲率，以 1px 清晰内亮环和薄内侧柔光构成克制的连续环绕内高光；Primary/Secondary/Danger/Ghost 共用「原地收紧」的 scale(var(--press-scale)) press 与 16 度倾斜窄光带 Saving 状态，文件树、SidebarButton 与 Header 命令独立消费 32px compact 尺寸
 sidebar-button.css: SidebarButton 专用 32px compact 平面视觉层，APP/账户导航与 36px 标准 Button 共享 12px Control 曲率而不强制等高；hover 消费全局中性 interactive-hover，active 只使用轻中性表面和墨色并共读全局 press 收紧比例，hover/press/选中不抬升，侧栏底部 Design System/回收站以 12px/16px Label 文字和 primary 前景色表达当前位置
-segmented-control.css: SegmentedControl 专用视觉层，以默认 Button 总高度、统一 smooth corner、确定性中性灰轨道与纯白选中片段组成平整控制面，不使用内凹阴影、外投影或位移
+segmented-control.css: 分段选择的静态文字/轨道材质与独立选中底片，底片布局迁移由组件 Motion 独占，文字不位移或缩放
 toast.css: Kumo Toast Parts 的 Quiet Editorial 适配层，消费其堆叠/展开/滑动 data state，以中性不透明 Popover、12px 曲率、克制浮层阴影、轻量状态符号与本地 Button 单一回执动作表达 info/success/warning/error；禁止玻璃、彩色容器、竖线、图标盒与 Kumo Button
-user-menu.css: UserMenu 专用视觉层，以身份卡片、统一 smooth-corner 分组动作、与文件树同源的中性 interactive-hover 及无填色危险动作组成账户弹层，并与通用 Select 样式职责分离
+user-menu.css: 账户菜单材质与中性 hover，入退场统一交给 PresenceSurface，不再保留 CSS keyframe 的第二动画通道
 codemirror.css: 未分层的 CodeMirror 6 适配层；写作 Paper 覆盖 height/overflow 让编辑器按正文自然增长并把唯一纵向滚动交还 paper-stage-scroll，其他宿主仍使用 100% 高度。继续维护 light/dark、14px source/15px live、Editorial 标题/引用与 GFM 显示，pre-wrap 保真空白
 cord.css: Cord Signature 表现层，按语境把 --cord-color 映射到既有 --archive-cord/--primary，承载 pathLength 归一化的出场自绘、虚实区分与自中点向两端流动的双层白光；外发光用更宽更淡的第二条描边而非 feGaussianBlur，reduced-motion 直接静态
 knowledge-canvas.css: Canvas 表现层，同时是全站纸面视图过渡节奏的唯一落点。Grip 是底栏元信息行最右端的流内格子（`position: relative` 只为继续压住 z-index 4 的 whole-card target，"拖到别人的抓手上等于取消"依赖这个次序），不再骑在卡片圆角外，拖拽即隐藏；whole-card target 静止零命中、连接会话才开放；目标反馈分两档且都只动那条 1px Soft Ink 细边——候选（primary 46%）说"这些都能接"，指针正下方那一张（primary 78%，判据取 React Flow 自己的 connectingto/valid）说"松手就是它"；三股临时绳沉到 `z-index: 0`（与已成立的关系线同一档、DOM 在其后所以仍压在它之上），因此拖线钻到卡片底下而不覆盖正文——这条必须写在未分层边界，React Flow 的 style.css 不在 cascade layer 里；三股透明度由深到淡 0.88/0.5/0.26，与几何层的 strandSpeeds 同序（越淡跑得越快）；末端珠子是实心 primary + 一圈画布色描边并靠 `paint-order: stroke` 把描边整圈留在外面，于是它压住从底下绕过的三股。临时绳/珠子都不拦指针，Reduced Motion 静止。底部 Panel 仍是透明定位壳，图标化内容动作与视口动作共用中性 Ghost surface、以 8px 留白表达分组并在窄屏让出保存状态。纸面规则只写一次，四个方向只在 html[data-paper-transition] 上声明 --paper-morph/--paper-world；正文零过冲、永不缩放、交接互补、世界先落定的既有五律不变，正式关系线仍由 CanvasCordEdge/cord.css 独立拥有
@@ -27,7 +28,7 @@ design-system-workspace.css: DEV Design System 五层生产矩阵与响应式样
 archive-cord-lab.css: DEV `/archive-cord-lab` 验收台的隔离样式，只提供说明正文与坐在纸外的验收控制条；刻意不含任何归档线、代表行或 source 规则——那些必须由 workspace.css 提供，否则 fixture 验的就不是线上那条线
 color-lab.css: DEV `/color-lab` 蓝色终选决策画布，以同构静态 Library/Paper/AI 工作区、候选选择与 Light/Dark 响应式控制消费 index.css 隔离的现有蓝/灰蓝/标准墨蓝/柔和墨蓝 token；不定义颜色值、不读取业务状态、不改生产主题
 
-职责: UI 样式实现层；landing.css 隔离营销页，workspace.css 承载 Paper/Canvas 共用产品壳，note-paper.css 收口共享纸面，knowledge-canvas.css 隔离图交互，ai-message.css 让生产 Activity 跨 AgentPanel/Design System 同源，design-system-workspace.css、color-lab.css 与 archive-cord-lab.css 分别负责组件陈列、隔离配色决策与归档线真实交互验收，codemirror.css 跨越第三方级联边界；所有文件只消费 app/src/index.css 语义 token，颜色插值统一使用 sRGB。
+职责: UI 样式实现层；landing.css 隔离营销页，workspace.css 承载 Paper/Canvas 共用产品壳，note-paper.css 收口共享纸面，knowledge-canvas.css 隔离图交互，ai-message.css 让生产 Activity 跨 AgentPanel/Design System 同源，design-system-workspace.css、color-lab.css 与 archive-cord-lab.css 分别负责组件陈列、隔离配色决策与归档线真实交互验收，codemirror.css 跨越第三方级联边界；所有文件消费 app/src/index.css 的静态语义 token 与 DS motion.ts 注入的同源动效变量，颜色插值统一使用 sRGB。
 
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 

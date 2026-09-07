@@ -44,3 +44,7 @@ export type { ThinkingMarkProps, ThinkingMarkVariant } from "./ThinkingMark";
 export type { ThinkingIndicatorProps } from "./ThinkingIndicator";
 export type { ThinkingStatusTextProps } from "./ThinkingStatusText";
 export type { ToolCallDetail, ToolCallState } from "./ToolCallBubble";
+
+export { PresenceSurface, MotionSurface } from "./PresenceSurface";
+export { PersistentView } from "./PersistentView";
+export { Collapse } from "./Collapse";

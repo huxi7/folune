@@ -1,11 +1,15 @@
 /**
- * [INPUT]: 依赖 React 的 effect/id/ref 与 ReactNode，依赖 共享 Lucide XIcon，依赖 Button 与 design-system.css 暴露的 ds-dialog-overlay/ds-dialog-panel/ds-dialog-shell 模态材质类
- * [OUTPUT]: 对外提供密度/宽度/对齐/表面/标题、default|none 入场模式、标题描述关联、Esc、焦点循环、滚动锁定的 Dialog
+ * [INPUT]: 依赖 Motion presence、Portal、useModalLifecycle 与 React id/ref，依赖 共享 Lucide XIcon，依赖 Button 与 design-system.css 暴露的 ds-dialog-overlay/ds-dialog-panel/ds-dialog-shell 模态材质类
+ * [OUTPUT]: 对外提供密度/宽度/对齐/表面/标题、default|none 入退场模式、标题描述关联、Esc、焦点循环、滚动锁定的 Dialog
  * [POS]: app/src/shared/design-system/components 的唯一模态基础件；motion=none 交出入场编排让遮罩随 root 视图过渡一起换（遮罩绝不自带过渡身份，否则会盖住正在放大的纸），模态行为仍由此统一
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { XIcon } from "../icons";
-import { useEffect, useId, useRef, type ReactNode } from "react";
+import { useId, useRef, useSyncExternalStore, type ReactNode } from "react";
+import { AnimatePresence, motion as m, useIsPresent, useReducedMotion } from "motion/react";
+import { createPortal } from "react-dom";
+import { surfaceVariants } from "../motion";
+import { useModalLifecycle } from "../useModalLifecycle";
 
 import { Button } from "./Button";
 
@@ -32,7 +36,21 @@ export type DialogMotion = "default" | "none";
 export type DialogSurface = "bare" | "panel";
 export type DialogWidth = "account" | "command" | "default";
 
-export function Dialog({
+const subscribeClient = () => () => {};
+const clientSnapshot = () => true;
+const serverSnapshot = () => false;
+export function Dialog(props: DialogProps) {
+  const client = useSyncExternalStore(subscribeClient, clientSnapshot, serverSnapshot);
+  // 空的嵌套 Dialog 不注册父级退出：空 presence 没有子动画可回报完成。
+  const content = (
+    <AnimatePresence propagate={props.open}>
+      {props.open ? <DialogFrame key="dialog" {...props} /> : null}
+    </AnimatePresence>
+  );
+  return client ? createPortal(content, document.body) : content;
+}
+
+function DialogFrame({
   align = "center",
   children,
   density = "default",
@@ -40,7 +58,6 @@ export function Dialog({
   headerMode = "default",
   motion = "default",
   onOpenChange,
-  open,
   surface = "panel",
   title,
   width = "default",
@@ -50,102 +67,26 @@ export function Dialog({
   const titleId = useId();
   const descriptionId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
-  const onOpenChangeRef = useRef(onOpenChange);
-
-  useEffect(() => {
-    onOpenChangeRef.current = onOpenChange;
-  }, [onOpenChange]);
-
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-
-    const previousActiveElement = document.activeElement as HTMLElement | null;
-    const previousBodyOverflow = document.body.style.overflow;
-    const focusFrame = requestAnimationFrame(() => {
-      const initialFocusTarget =
-        panelRef.current?.querySelector<HTMLElement>("[data-dialog-autofocus]") ??
-        panelRef.current;
-      initialFocusTarget?.focus();
-    });
-
-    document.body.style.overflow = "hidden";
-
-    function handleKeyDown(event: globalThis.KeyboardEvent) {
-      if (event.key === "Escape") {
-        // 标记已消费, 阻止壳层 (PaperWorkspaceShell) 同一次 Escape 再关 Panel
-        event.preventDefault();
-        onOpenChangeRef.current(false);
-        return;
-      }
-
-      if (event.key !== "Tab" || !panelRef.current) {
-        return;
-      }
-
-      const focusableElements = Array.from(
-        panelRef.current.querySelectorAll<HTMLElement>(
-          "button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), a[href], [tabindex]:not([tabindex='-1'])",
-        ),
-      ).filter(
-        (element) =>
-          element.closest("[hidden]") === null && element.tabIndex >= 0,
-      );
-
-      if (focusableElements.length === 0) {
-        event.preventDefault();
-        panelRef.current.focus();
-        return;
-      }
-
-      const firstElement = focusableElements[0];
-      const lastElement = focusableElements.at(-1);
-      const active = document.activeElement;
-
-      // ---- 不变量: 焦点必须仍在 panel 内 ----
-      // 只比对首/尾元素是不够的: 焦点停在 panel 容器自身 (tabIndex=-1) 或
-      // body 上时, 两个等值判断都不成立, Shift+Tab 直接穿出到被遮住且已锁滚
-      // 的应用界面。aria-modal 只影响读屏虚拟光标, 拦不住真实 Tab 序列。
-      if (active === null || !panelRef.current.contains(active)) {
-        event.preventDefault();
-        (event.shiftKey ? lastElement : firstElement)?.focus();
-        return;
-      }
-
-      if (event.shiftKey && active === firstElement) {
-        event.preventDefault();
-        lastElement?.focus();
-      } else if (!event.shiftKey && active === lastElement) {
-        event.preventDefault();
-        firstElement?.focus();
-      }
-    }
-
-    document.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      cancelAnimationFrame(focusFrame);
-      document.body.style.overflow = previousBodyOverflow;
-      document.removeEventListener("keydown", handleKeyDown);
-      previousActiveElement?.focus();
-    };
-  }, [open]);
-
-  if (!open) {
-    return null;
-  }
+  const present = useIsPresent();
+  const reduced = Boolean(useReducedMotion());
+  useModalLifecycle(panelRef, present, () => onOpenChange(false));
 
   return (
-    <div
+    <m.div
       aria-describedby={description ? descriptionId : undefined}
       aria-labelledby={titleId}
-      aria-modal="true"
+      aria-modal={present ? true : undefined}
+      aria-hidden={!present}
+      inert={!present}
       className="ds-dialog-overlay fixed inset-0 flex justify-center p-4"
       data-align={align}
       data-motion={motion}
       data-surface={surface}
-      role="dialog"
+      role={present ? "dialog" : undefined}
+      initial={motion === "none" ? false : "hidden"}
+      animate="visible"
+      exit={motion === "none" ? undefined : "exit"}
+      variants={motion === "none" ? undefined : surfaceVariants("fade", reduced)}
     >
       <button
         aria-hidden="true"
@@ -154,7 +95,11 @@ export function Dialog({
         tabIndex={-1}
         type="button"
       />
-      <div
+      <m.div
+        initial={motion === "none" ? false : "hidden"}
+        animate="visible"
+        exit={motion === "none" ? undefined : "exit"}
+        variants={motion === "none" ? undefined : surfaceVariants("modal", reduced)}
         className={[
           "relative z-10",
           surface === "bare" ? "ds-dialog-shell" : "ds-dialog-panel",
@@ -221,7 +166,7 @@ export function Dialog({
           </div>
         )}
         {children}
-      </div>
-    </div>
+      </m.div>
+    </m.div>
   );
 }

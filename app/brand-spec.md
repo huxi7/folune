@@ -96,7 +96,7 @@ The organize command keeps its `32px` hit geometry (see the 2026-09-04 refinemen
 | Rest | Background, border and outer shadow all transparent; icon + `整理笔记` always present; foreground is the existing Soft Ink `primary` |
 | Hover | Faint `primary-soft` surface, foreground moves to `primary-hover`; no stroke, no displacement, no outer shadow |
 | Focus | Global focus ring retained — color alone never carries focus |
-| Active | `scale(--press-scale)` with a slightly deeper soft surface, ~70ms; no `translateY`, no rebound |
+| Active | `scale(--press-scale)` with a slightly deeper soft surface, 90ms; no `translateY`, no rebound |
 | Loading | The shared Processing surface, spinner and `aria-busy`; it may condense into a solid **while the task runs**, because there the solid expresses state |
 | Success / Failure | Returns to Rest; the archive-status element, archive cord or a Toast states the result — the button is not a result display |
 | Reduced Motion | Scale removed; color, surface and focus feedback stay |
@@ -170,7 +170,7 @@ One axis is deliberately singular:
 
 - Solid surfaces only; no static background gradients.
 - A restrained vertical face light, one crisp `1px` inset ring, a thin inner halo and zero-offset short soft outer mist provide a light tactile quality; the highlight must wrap evenly rather than read as a top-only shine.
-- Hover stays in place; press tightens in place with `transform: scale(var(--press-scale))` (`0.98`, ~70ms, center origin) and the pressed shadow contracts. No `translateY` drop, no bounce or overshoot curve. Split controls scale as one shell, loading and disabled never scale, and Reduced Motion keeps the active color, border and shadow compression without the scale.
+- Hover stays in place; press tightens in place with `transform: scale(var(--press-scale))` (`0.98`, 90ms, center origin) and the pressed shadow contracts. No `translateY` drop, no bounce or overshoot curve. Split controls scale as one shell, loading and disabled never scale, and Reduced Motion keeps the active color, border and shadow compression without the scale.
 - Saving uses the same radius, a low-frequency narrow shimmer swept on a subtle diagonal, and the specimen label stays simply `Saving` without trailing dots.
 
 ## Historical reference — Current Blue
@@ -201,3 +201,7 @@ One axis is deliberately singular:
 - Processing/Saving keeps one shared neutralized blue-gray surface across all historical candidates because it is a state, not a second Primary.
 
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+
+## Motion System
+
+The motion language is part of the Design System. `src/shared/design-system/motion.ts` is the single source for shared durations, easing and springs and generates the CSS declarations consumed by controls. Full A/B decisions, component recipes and verification evidence live in [MOTION_SYSTEM.md](MOTION_SYSTEM.md). Menus use anchored 160/130ms presence, modals retain the 10px/0.985 reveal, Panels use an 8px non-bouncing 220/170ms transition, and tree disclosure shares the 210ms FLIP timeline. Reduced Motion removes spatial changes and keeps at most 90ms opacity feedback. Paper/Canvas geometry retains its dedicated browser View Transition contract.

@@ -1,33 +1,23 @@
 /**
- * [INPUT]: 依赖 React 的 HTMLAttributes，依赖 index.css 暴露的 ds-card 微拟物表面类
- * [OUTPUT]: 对外提供仅保留实际使用的 default、accent 表面的 Card 组件与 CardTone 类型
- * [POS]: app/src/shared/design-system/components 的表面基础件，被 Landing、NotebookPreview、NotesWorkspace 与 TrashWorkspace 消费
+ * [INPUT]: 依赖 Motion 的手势/减少动态效果与 Design System 的 response spring
+ * [OUTPUT]: 对外提供 Card、CardTone、显式 opt-in 的 CardMotion；阴影由 CSS 独占
+ * [POS]: Design System 表面基础件；默认信息容器静止，Landing 等需层级反馈的表面可选择 lift
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
-import type { HTMLAttributes } from "react";
-
+import { motion as m, useReducedMotion, type HTMLMotionProps } from "motion/react";
+import { motionSpring } from "../motion";
 export type CardTone = "default" | "accent";
-
-type CardProps = HTMLAttributes<HTMLDivElement> & {
-  tone?: CardTone;
-};
-
-const toneClassName: Record<CardTone, string> = {
-  default: "ds-card-default",
-  accent: "ds-card-accent",
-};
-
-export function Card({ children, className = "", tone = "default", ...props }: CardProps) {
-  return (
-    <div
-      className={[
-        "ds-card",
-        toneClassName[tone],
-        className,
-      ].join(" ")}
-      {...props}
-    >
-      {children}
-    </div>
-  );
+export type CardMotion = "lift" | "none";
+type CardProps = HTMLMotionProps<"div"> & { tone?: CardTone; motion?: CardMotion };
+export function Card({ className = "", tone = "default", motion = "none", ...props }: CardProps) {
+  const reduced = useReducedMotion();
+  const lift = motion === "lift" && !reduced;
+  return <m.div
+    {...props}
+    className={`ds-card ds-card-${tone} ${className}`}
+    data-card-motion={motion}
+    initial={false}
+    whileHover={lift ? { y: -4, scale: 1.012 } : undefined}
+    transition={motionSpring.response}
+  />;
 }

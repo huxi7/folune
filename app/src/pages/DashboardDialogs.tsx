@@ -1,10 +1,11 @@
 /**
- * [INPUT]: 依赖 AccountDialog/MemoNodeDialog、Profile 与 Dashboard 的受控 Dialog 状态/回调
+ * [INPUT]: 依赖 AccountDialog/MemoNodeDialog、Profile 与 Dashboard 的受控 Dialog 状态/回调与 AnimatePresence 退出宿主
  * [OUTPUT]: 对外提供 DashboardDialogs，集中渲染账户与新建文件夹两个互斥覆盖层，并把新文件夹的落点交给弹窗做同级重名判定
  * [POS]: pages 的纯覆盖层组合；AppDashboard 只保留业务状态与命令，不展开重复 Dialog 生命周期标记
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
+import { AnimatePresence } from "motion/react";
 import type { Profile } from "../shared/api/profile";
 import { AccountDialog } from "../widgets/AccountDialog";
 import { MemoNodeDialog } from "../widgets/MemoNodeDialog";
@@ -39,9 +40,10 @@ export function DashboardDialogs({
   profile,
 }: DashboardDialogsProps) {
   return (
-    <>
+    <AnimatePresence>
       {accountDialog === null ? null : (
         <AccountDialog
+          key="account"
           refreshing={accountProfileRefreshing}
           onOpenChange={(open) => {
             if (!open) onAccountClose();
@@ -66,6 +68,6 @@ export function DashboardDialogs({
           parentId={memoDialog.parentId}
         />
       )}
-    </>
+    </AnimatePresence>
   );
 }

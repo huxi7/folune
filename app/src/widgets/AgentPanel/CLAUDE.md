@@ -3,15 +3,15 @@
 
 成员清单
 CLAUDE.md: 记录 AgentPanel 子域成员、依赖方向与 GEB 回环协议
-AgentPanel.tsx: AI Native V2 组合根；Prompt Bar 的当前 memo 与置顶 references 先稳定为身份数组再对账 sources，普通 tool approval 与 AI 整理共用唯一 Dock；刷新后的已批准未完成工具只由持久消息与稳定工具表触发扫描、按 toolCallId 幂等恢复，选中 thread id 经解构回调通知外层，避免 props 对象身份驱动 effect
+AgentPanel.tsx: AI 组合根，History/Conversation 以 PersistentView 保留式淡换，thread 身份变化只重建对应会话；菜单与内容 Motion 不接管审批/流式/工具执行协议，隐藏会话保留 Composer 草稿
 ApprovalDock.tsx: Composer 上方唯一的紧凑非模态审批视觉原语，统一图标、标题、影响说明、按钮槽位与无蒙层语义；普通工具和 AI 整理审批只能适配它，禁止复制表面
 approvalState.ts: 审批状态机纯领域层，只检查末条 assistant；统一负责 requested 单次响应投影、approved 未完成工具恢复候选与 output 结果投影，避免 UI、持久化和恢复各自解释 AI SDK 状态
 approvalState.test.ts: 审批状态机回归测试，锁定同一 approval 只响应一次、拒绝不恢复、批准刷新可恢复及结果落地后退出恢复队列
 composerSources.ts: Prompt Bar 唯一上下文领域层；当前 memo 与置顶来源保持结构化上下文，手动 @笔记与正文 token 同步删除，全部来源去重、限五篇并生成同一冻结 metadata
 composerSources.test.ts: 覆盖当前 memo 默认来源、删除抑制、切换更新、手动/置顶去重、内联 mention 删除同步、发送冻结及发送后草稿来源收束
-MentionMenu.tsx: Prompt Bar 与 Canvas Picker 共用的 memo 搜索纯函数；只投影 folder 导航下的 memo，显式排除 canvas，标题/路径本地匹配并合并正文命中，视图仍只显示文件图标与文件名
+MentionMenu.tsx: Prompt Bar 与 Canvas Picker 共用的 memo 搜索纯函数及无状态 @列表；列表向上用 PresenceSurface 开合，查询、IME、选择生命周期由 Composer 持有
 MentionMenu.test.ts: 覆盖空 @候选、搜索排除、revision、Canvas 节点隔离及轻量渲染结构
-PermissionModeControl.tsx: Composer 左下角账号全局每次询问/智能审批实验/完全访问 32px 本地 Ghost Button；与右侧发送/停止同尺寸，菜单向上展开，以一句短描述区分模式，hover 与当前模式共享中性表面，只显示 API 已确认模式，加载/保存失败保持旧值并经全局 Toast 明示
+PermissionModeControl.tsx: 账号权限偏好控制器，继续只显示 API 确认结果并维持加载/失败门禁；向上/向下菜单统一消费 PresenceSurface，不改变权限或业务调用
 aiSettingsCache.ts: 按用户短时缓存已确认审批设置并合并在途读取；侧栏重复挂载直接复用新鲜值，改设置成功后同步写回，不替代服务端权限事实
 aiSettingsCache.test.ts: 锁定审批设置缓存的用户隔离、新鲜命中、过期重读、并发合并与成功写回语义
 ApprovalCard.tsx: 每次询问与智能审批回退的工具审批语义适配；把人话动作、最小影响说明和危险操作按钮映射到共享 ApprovalDock
@@ -26,7 +26,7 @@ threadSelection.test.ts: 覆盖用户偏好隔离、合法恢复和失效 ID 回
 aiThreadCache.ts: 按用户隔离的 30 秒进程内 AI 会话快照；允许陈旧读取以立即恢复最后可用画面，只服务 stale-while-revalidate，不替代服务端真相
 aiThreadCache.test.ts: 锁定 AI 快照用户隔离、TTL 后仍可陈旧读取与局部更新不清空其余内容
 useAiThreads.ts: 会话控制器与显式只读数据预热入口；Workspace 空闲预热只缓存已有会话，空账号仍等用户真正打开面板才创建首个会话；预热与面板初始化共用同一在途请求，重挂载先显示进程内快照，新鲜命中不请求、陈旧命中后台校准，CRUD 后同步修正快照
-AgentProcessDisclosure.tsx: 单条 assistant 回复的处理过程显隐边界，入口固定在所有过程文字与工具之前；生成期以 ThinkingMark + 真实状态强制展开，完成后保留“思考过程”顶部入口供手动收起/展开，容器永不包裹最终正文
+AgentProcessDisclosure.tsx: 真实生成过程的透明披露容器，生成期展开、完成后可手动收起，keepMounted Collapse 连续收放且保留内部工具详情状态，不包裹最终正文
 ChatMessage.tsx: SuperNoteUIMessage 适配层；冻结上下文只参与请求而不渲染到用户/assistant 对话，assistant 保持单一过程区且不承载审批控件，同轮成功命令只在最终回复末尾提供一个整轮撤销
 ChatMessage.test.tsx: 完整回复 DOM 契约测试，锁定单一过程区、审批条非模态且与消息解耦、单一整轮撤销、最终正文边界、冻结来源不污染消息与敏感 ID 屏蔽
 composerBehavior.ts: Composer 的纯交互判定，统一非空闲/空白提交保护，并把普通 Enter 与 Shift/修饰键/IME 组合输入严格分流

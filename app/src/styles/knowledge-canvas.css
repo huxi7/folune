@@ -175,7 +175,7 @@
   .canvas-card-paper { flex: 1; }
 
   /* 展开按钮常驻 DOM, 只用透明度浮现: 出现与消失都不能改变卡片布局 */
-  .canvas-card-expand { position: absolute; z-index: 2; top: var(--space-2); right: var(--space-2); display: inline-flex; width: var(--control-height-compact); height: var(--control-height-compact); align-items: center; justify-content: center; border: 1px solid var(--paper-edge); border-radius: var(--radius-control); background: color-mix(in srgb, var(--paper-surface) 90%, transparent); padding: 0; color: color-mix(in srgb, var(--paper-foreground) 58%, transparent); box-shadow: var(--shadow-2xs); opacity: 0; cursor: pointer; transform: translateY(-2px); transition: opacity 140ms var(--ease-standard), transform 140ms var(--ease-standard), background var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard); backdrop-filter: blur(6px); }
+  .canvas-card-expand { position: absolute; z-index: 2; top: var(--space-2); right: var(--space-2); display: inline-flex; width: var(--control-height-compact); height: var(--control-height-compact); align-items: center; justify-content: center; border: 1px solid var(--paper-edge); border-radius: var(--radius-control); background: color-mix(in srgb, var(--paper-surface) 90%, transparent); padding: 0; color: color-mix(in srgb, var(--paper-foreground) 58%, transparent); box-shadow: var(--shadow-2xs); opacity: 0; cursor: pointer; transform: translateY(-2px); transition: opacity var(--motion-micro-enter) var(--ease-standard), transform var(--motion-micro-enter) var(--ease-standard), background var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard); backdrop-filter: blur(6px); }
   /* hover: none 的触摸设备只靠选中态常显, 因此不需要单独的媒体查询分支 */
   .canvas-card:hover .canvas-card-expand,
   .canvas-card:focus-within .canvas-card-expand,
@@ -192,7 +192,7 @@
   .canvas-card-meta { --canvas-card-action-gap: 2px; display: flex; height: var(--control-height-compact); flex: 0 0 auto; align-items: center; justify-content: space-between; gap: var(--canvas-card-action-gap); padding-inline: var(--space-2); }
   /* flex: 1 让状态吃掉空档, 于是动作簇与抓手一起靠右收口, 而不是被 space-between 摊开 */
   .canvas-card-status { min-width: 0; flex: 1; overflow: hidden; color: var(--muted-foreground); font-size: var(--type-caption); line-height: var(--leading-caption); text-overflow: ellipsis; white-space: nowrap; }
-  .canvas-card-actions { display: flex; flex: 0 0 auto; align-items: center; gap: var(--canvas-card-action-gap); opacity: 0; transition: opacity 140ms var(--ease-standard); }
+  .canvas-card-actions { display: flex; flex: 0 0 auto; align-items: center; gap: var(--canvas-card-action-gap); opacity: 0; transition: opacity var(--motion-micro-enter) var(--ease-standard); }
   .canvas-card:hover .canvas-card-actions,
   .canvas-card:focus-within .canvas-card-actions,
   .canvas-card[data-selected="true"] .canvas-card-actions { opacity: 1; }
@@ -374,7 +374,7 @@
   cursor: grab;
   pointer-events: none;
   transform: none;
-  transition: opacity 140ms var(--ease-standard), background var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard);
+  transition: opacity var(--motion-micro-enter) var(--ease-standard), background var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard);
 }
 .canvas-card:hover .canvas-card-connect-handle,
 .canvas-card:focus-within .canvas-card-connect-handle,

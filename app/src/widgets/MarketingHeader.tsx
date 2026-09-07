@@ -1,9 +1,10 @@
 /**
- * [INPUT]: 依赖 React lazy/Suspense、本地 Button/BrandMark、React Router URL 状态与按需加载的 AuthDialog
+ * [INPUT]: 依赖 React lazy/Suspense 与 AnimatePresence 的完整退出、本地 Button/BrandMark、React Router URL 状态与按需加载的 AuthDialog
  * [OUTPUT]: 对外提供仅显示 SuperNote 主名称、无装饰位移的 Blueprint 顶部导航与只在打开时下载认证逻辑的登录入口
  * [POS]: app/src/widgets 的营销导航内容组件，被 LandingPage 放入顶边贴视口、全宽背景且主轨/外轨相连的粘性 Header RailLayer
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
+import { AnimatePresence } from "motion/react";
 import { lazy, Suspense } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
@@ -77,8 +78,9 @@ export function MarketingHeader() {
           </div>
         </div>
       </header>
+      <AnimatePresence>
       {authDialogOpen ? (
-        <Suspense fallback={null}>
+        <Suspense key="auth" fallback={null}>
           <AuthDialog
             onAuthenticated={handleAuthenticated}
             onOpenChange={handleAuthDialogOpenChange}
@@ -86,6 +88,7 @@ export function MarketingHeader() {
           />
         </Suspense>
       ) : null}
+      </AnimatePresence>
     </>
   );
 }

@@ -1,9 +1,10 @@
 /**
- * [INPUT]: 依赖 React 弹出层状态/焦点管理、共享 Lucide 设置/订阅/退出图标、UserAvatar/UserButton 与上层账户命令
+ * [INPUT]: 依赖 PresenceSurface 的统一入退场、 React 弹出层状态/焦点管理、共享 Lucide 设置/订阅/退出图标、UserAvatar/UserButton 与上层账户命令
  * [OUTPUT]: 对外提供顶部身份卡片直达个人资料、具备菜单焦点容器的动作区与退出失败全局 Toast
  * [POS]: app/src/shared/design-system/components 的账户菜单；身份卡片与设置命令进入同一个 AccountDialog，不把个人资料重复成普通菜单项
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
+import { PresenceSurface } from "./PresenceSurface";
 import {
   CaretRightIcon,
   CreditCardIcon,
@@ -120,8 +121,7 @@ export function UserMenu({
         ref={triggerRef}
       />
 
-      {open ? (
-        <div
+      <PresenceSurface open={open} placement="top"
           aria-label="用户菜单"
           className="ds-user-menu-popover"
           id={menuId}
@@ -187,8 +187,7 @@ export function UserMenu({
             <SignOutIcon aria-hidden="true" size={16} />
             <span>退出登录</span>
           </button>
-        </div>
-      ) : null}
+      </PresenceSurface>
     </div>
   );
 }

@@ -1,10 +1,11 @@
 /**
- * [INPUT]: 依赖 memo tree、当前查询、已选 ID、激活索引和搜索纯函数
+ * [INPUT]: 依赖 PresenceSurface 的向上入退场、memo tree、当前查询、已选 ID、激活索引和搜索纯函数
  * [OUTPUT]: 对外提供只显示文件图标与文件名的 @笔记搜索列表、搜索纯函数与 mouse down 选择交互
  * [POS]: Prompt Bar 的无状态原生 @笔记命令菜单；结果保持内容宽度，键盘、IME 与选择生命周期归 AgentConversation 统一控制
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
+import { PresenceSurface } from "../../shared/design-system/components/PresenceSurface";
 import { FileTextIcon } from "../../shared/design-system/icons";
 import type { MemoTreeNode } from "../../shared/api/memo";
 import { findNode } from "../../shared/store/memoTree";
@@ -55,14 +56,15 @@ export const getMentionResults = (
 };
 
 type MentionMenuProps = {
+  open: boolean;
   activeIndex: number;
   onSelect: (memo: MentionResult) => void;
   results: readonly MentionResult[];
 };
 
-export function MentionMenu({ activeIndex, onSelect, results }: MentionMenuProps) {
+export function MentionMenu({ activeIndex, onSelect, results, open }: MentionMenuProps) {
   return (
-    <div aria-label="引用笔记" className="agent-mention-menu" role="listbox">
+    <PresenceSurface open={open} placement="top" aria-label="引用笔记" className="agent-mention-menu" role="listbox">
       {results.length === 0 ? (
         <p>没有可引用的笔记</p>
       ) : results.map((memo, index) => (
@@ -83,6 +85,6 @@ export function MentionMenu({ activeIndex, onSelect, results }: MentionMenuProps
           <strong>{memo.title}</strong>
         </button>
       ))}
-    </div>
+    </PresenceSurface>
   );
 }
