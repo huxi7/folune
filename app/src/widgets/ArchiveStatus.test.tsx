@@ -51,7 +51,10 @@ describe("ArchiveStatus", () => {
     expect(html).not.toContain("archive-status-dot");
     expect(css).not.toContain("archive-status-dot");
     // Rest 只有文字: 无填充、无描边、无外影
-    expect(css).toContain("border: 0; border-radius: var(--button-radius); background: transparent;");
+    expect(css).toContain("border: 0;");
+    expect(css).toContain("border-radius: var(--button-radius);");
+    expect(css).toContain("corner-shape: var(--corner-shape-smooth);");
+    expect(css).toContain("background: transparent;");
     expect(css).toContain(".archive-status:hover { background: var(--interactive-hover); color: var(--foreground); }");
   });
 
