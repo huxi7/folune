@@ -1,10 +1,11 @@
 /**
- * [INPUT]: 依赖 React state、React Router navigate、Canvas 默认入口/detail API、一次性 bootstrap、memoTreeStore merge、canvasChromeStore 与 Toast
+ * [INPUT]: 依赖 React state、React Router navigate、Canvas 默认入口/detail API、一次性 bootstrap、memoTreeStore merge、canvasChromeStore/workspaceChromeStore 与 Toast
  * [OUTPUT]: 对外提供 useMemoCanvasEntry，在草稿 required flush 后准备完整 detail，并以 to-canvas 方向进入或返回 Canvas；新鲜离场快照命中时不重复等待网络
  * [POS]: pages 的 memo→Canvas 路由协调器；等待期间保留原 Paper，detail 在路由首帧直接成为目标卡片并交给 Coordinator 一次消费
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
+import { useWorkspaceChromeStore } from "../shared/store/workspaceChromeStore";
 import { useState } from "react";
 import type { NavigateFunction } from "react-router-dom";
 
@@ -52,8 +53,8 @@ export function useMemoCanvasEntry({
         sourceMemoId: memoId,
         userId,
       });
-      // 从线性阅读切到空间思考: 先给完整画布, 两侧工具都收起
-      rememberEntry({ canvasId: entry.canvas.node_id, intent: "memo_default" });
+      // 只切换中央内容，左右工具继承导航时的可见状态。
+      rememberEntry({ canvasId: entry.canvas.node_id, intent: "memo_default", inherited: useWorkspaceChromeStore.getState() });
       await navigateWithPaperTransition(
         navigate,
         `/app/notes/${encodeURIComponent(entry.canvas.node_id)}`,

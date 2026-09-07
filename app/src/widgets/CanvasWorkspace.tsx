@@ -1,11 +1,10 @@
 /**
- * [INPUT]: 依赖 PresenceSurface 面板入退场、 motion/react、可选 CanvasEntryBootstrap、共享 EdgeDock/Panel 插槽、ArchiveCord 空闲上下文、canvasChromeStore/canvasWorkspaceStore、KnowledgeCanvas 会话控制与 Quiet Editorial token；文件库由 Dashboard 持久宿主承载
+ * [INPUT]: 依赖 motion/react、可选 CanvasEntryBootstrap、共享 EdgeDock、ArchiveCord 空闲上下文、canvasChromeStore/canvasWorkspaceStore、KnowledgeCanvas 会话控制与 Quiet Editorial token；左右工具由 Dashboard 持久宿主承载
  * [OUTPUT]: 对外提供可预载、可消费一次性 detail、可向路由暴露 flush 且中央始终保持同一 React Flow 实例的全视口 CanvasWorkspace
  * [POS]: widgets 的 Canvas V2 会话壳；负责返回 flush、Panel 会话状态、每画布布局记忆与空间布局，数据/交互/恢复归 KnowledgeCanvas；文件库宿主在路由壳外持久挂载，Canvas 只提供其开关语义，左右面板各自独立
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
-import { PresenceSurface } from "../shared/design-system/components/PresenceSurface";
 import {
   AnimatePresence,
   motion,
@@ -19,7 +18,6 @@ import {
   useRef,
   useState,
   type CSSProperties,
-  type ReactNode,
 } from "react";
 
 import {
@@ -58,7 +56,6 @@ const KnowledgeCanvas = lazy(() =>
 
 type CanvasWorkspaceProps = {
   accessToken: string;
-  assistant: ReactNode;
   bootstrap?: CanvasEntryBootstrap | null;
   canvasId: string;
   onNavigateMemo: (nodeId: string, descriptor: CanvasReturnDescriptor) => void;
@@ -72,7 +69,6 @@ type CanvasWorkspaceProps = {
 
 export function CanvasWorkspace({
   accessToken,
-  assistant,
   bootstrap = null,
   canvasId,
   onNavigateMemo,
@@ -292,9 +288,6 @@ export function CanvasWorkspace({
         </Suspense>
       </section>
 
-      <PresenceSurface open={assistantOpen} kind="panel-right" className="app-agent-shell workspace-floating-panel">
-        <div className="workspace-panel-content workspace-panel-content-assistant">{assistant}</div>
-      </PresenceSurface>
 
       <AnimatePresence initial={false}>
         {overlayPanels && anyPanelOpen ? (

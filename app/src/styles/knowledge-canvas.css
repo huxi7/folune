@@ -572,6 +572,26 @@ html {
 }
 
 /*
+ * 自定义 old/new 动画会覆盖浏览器默认的 animation-name, 也就一并覆盖了 UA
+ * 为视图过渡补上的 plus-lighter 混合。没有它, 两张全屏截图在中间帧的透明度
+ * 总和小于 1, 页面底色会从截图下面透出来, 于是笔记切到 Canvas 时整屏发白。
+ * 这些交接都是互补淡换, 直接恢复同一套隔离与混合语义。
+ */
+::view-transition-image-pair(root),
+::view-transition-image-pair(.paper),
+::view-transition-image-pair(.paper-body) {
+  isolation: isolate;
+}
+::view-transition-old(root),
+::view-transition-new(root),
+::view-transition-old(.paper),
+::view-transition-new(.paper),
+::view-transition-old(.paper-body),
+::view-transition-new(.paper-body) {
+  mix-blend-mode: plus-lighter;
+}
+
+/*
  * 两端排版的交接: 严格互补, 因此任何时刻两张图的总不透明度恰好是 1 —— 浏览器用
  * plus-lighter 混合它们, 互补是"中途不发灰、不叠字"的唯一写法。
  *

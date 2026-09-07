@@ -85,3 +85,5 @@ Paper First V1.1 / Quiet Editorial 覆盖约束: 本节覆盖上文遗留的 V1 
 2026-09-07 曲线规范：所有非圆形 APP 表面在半径声明处同时消费平滑曲线；菜单 hover 行使用 Compact 8px，菜单外壳 Menu 12px，普通按钮 Control 16px。禁止私有半径或胶囊命令，几何头像/状态点/发送停止保留 round。
 
 2026-09-07 Scrollbar refinement: 文件树与 AI 消息滚动区须到达 Panel 边缘，正文留白位于滚动区内部；原生细滚动条共用淡中性色与透明轨道，不能遮盖正文或再造装饰轨道。
+
+本次侧栏生命周期约束：Paper/Canvas 只承载中央内容与工具开关，左右工具由 Dashboard 的 WorkspacePanelLayer 持续挂载；从笔记进入默认画布继承当前工具开关，动画不得重建 AgentPanel。

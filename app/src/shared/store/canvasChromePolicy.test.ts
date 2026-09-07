@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun test 与 canvasChromePolicy 的纯策略
- * [OUTPUT]: 逐行锁定 Canvas 侧栏状态矩阵：memo 默认与新建独立都双收起、文件树切换保持现状、直接链接恢复该画布快照，以及 <1200 覆盖式与 <1400 互斥两条断点钳制
+ * [OUTPUT]: 逐行锁定 Canvas 侧栏状态矩阵：memo 默认继承与新建独立双收起、文件树切换保持现状、直接链接恢复该画布快照，以及 <1200 覆盖式与 <1400 互斥两条断点钳制
  * [POS]: shared/store 的 Canvas 侧栏进入门禁；只验证策略，不触碰 Store、localStorage 或 React
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -29,13 +29,14 @@ const entry = (
 });
 
 describe("Canvas 侧栏状态矩阵", () => {
-  test("从笔记进入默认 Canvas：两侧都收起，先给完整画布", () => {
+  test("从笔记进入默认 Canvas：继承当前工具状态", () => {
     expect(entry({ intent: "memo_default" })).toEqual(CLOSED);
-    // 即便这张画布上次是双开，从笔记进入也不继承
+    // 当前工具状态优先于画布历史快照。
     expect(entry({
       intent: "memo_default",
-      snapshot: OPEN_BOTH,
-    })).toEqual(CLOSED);
+      snapshot: CLOSED,
+      inherited: OPEN_BOTH,
+    })).toEqual(OPEN_BOTH);
   });
 
   test("新建独立 Canvas：同样双收起，先看到完整画布", () => {

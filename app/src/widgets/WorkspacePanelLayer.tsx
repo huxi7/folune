@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 motion/react 的面板 Tween、Dashboard 传入的文件库内容、共享工作区尺寸变量、归档线运动租约
- * [OUTPUT]: 对外提供跨 Paper/Canvas 路由持续挂载的文件库浮层宿主；关闭时只隐藏并冻结交互，不卸载 AppSidebar，并在 Tween 期间交出一段归档几何租约
- * [POS]: widgets 的跨空间 Workspace Chrome 边界；把文件树实例从互斥的 Paper/Canvas 内容壳中提出，消除路由切换时的重挂载闪烁。它是唯一知道这段 Tween 何时结束的人，因此必须由它显式通知归档线，而不是让归档线去猜 transform 动画的结尾
+ * [INPUT]: 依赖 motion/react 的面板 Tween、Dashboard 传入的左右工具内容、共享工作区尺寸变量、归档线运动租约
+ * [OUTPUT]: 对外提供跨 Paper/Canvas 路由持续挂载的左右工具浮层宿主；关闭时只隐藏并冻结交互，不卸载 AppSidebar/AgentPanel，并在 Tween 期间交出一段归档几何租约
+ * [POS]: widgets 的跨空间 Workspace Chrome 边界；把文件树与 AI 实例从互斥的 Paper/Canvas 内容壳中提出，消除路由切换时的重挂载闪烁。它是唯一知道这段 Tween 何时结束的人，因此必须由它显式通知归档线，而不是让归档线去猜 transform 动画的结尾
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -26,17 +26,19 @@ import {
 
 const ARCHIVE_MOTION_SOURCE = "library-panel";
 
-type WorkspaceLibraryLayerProps = {
+type WorkspacePanelLayerProps = {
   children: ReactNode;
   open: boolean;
+  side?: "library" | "assistant";
   style: CSSProperties;
 };
 
-export function WorkspaceLibraryLayer({
+export function WorkspacePanelLayer({
   children,
   open,
+  side = "library",
   style,
-}: WorkspaceLibraryLayerProps) {
+}: WorkspacePanelLayerProps) {
   const reduceMotion = useReducedMotion();
   const panelRef = useRef<HTMLDivElement>(null);
   const wasOpenRef = useRef(open);
@@ -69,16 +71,16 @@ export function WorkspaceLibraryLayer({
     <motion.div
       animate={{
         opacity: open ? 1 : 0,
-        x: open || reduceMotion ? 0 : -motionDistance.panel,
+        x: open || reduceMotion ? 0 : (side === "library" ? -1 : 1) * motionDistance.panel,
       }}
       aria-hidden={!open}
-      className="app-sidebar-shell workspace-floating-panel workspace-persistent-panel"
+      className={`app-${side === "library" ? "sidebar" : "agent"}-shell workspace-floating-panel workspace-persistent-panel`}
       data-open={open}
       inert={!open}
       initial={false}
       onAnimationComplete={releaseArchiveMotion}
       onAnimationStart={() => {
-        if (motionLeaseRef.current) return;
+        if (side !== "library" || motionLeaseRef.current) return;
         motionLeaseRef.current = true;
         beginArchiveMotion(ARCHIVE_MOTION_SOURCE);
       }}
@@ -93,7 +95,7 @@ export function WorkspaceLibraryLayer({
           ? panelEnterTransition
           : panelExitTransition}
     >
-      <div className="workspace-panel-content workspace-panel-content-library">
+      <div className={`workspace-panel-content workspace-panel-content-${side}`}>
         {children}
       </div>
     </motion.div>

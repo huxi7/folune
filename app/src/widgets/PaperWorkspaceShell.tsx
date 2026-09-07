@@ -1,11 +1,10 @@
 /**
- * [INPUT]: 依赖 PresenceSurface 面板入退场、 motion/react、EdgeDock/PaperSurface、右侧工具插槽与稳定 paperIdentity/纸面过渡身份；文件库与 fixed 归档 Overlay 由外部持久宿主承载
+ * [INPUT]: 依赖 motion/react、EdgeDock/PaperSurface、稳定 paperIdentity/纸面过渡身份；左右工具与 fixed 归档 Overlay 由外部持久宿主承载
  * [OUTPUT]: 对外提供 Paper First 共享 Workspace Chrome、遮罩布局的消费与 Escape 收束，并只保留文件库的开关语义
  * [POS]: widgets 的写作工作台空间壳；Canvas 已成为独立持久 Workspace，旧临时探索舞台不再进入生产壳。响应式判据不在此处再算一遍——它由 Dashboard 的 useOverlayPanels 持有并下传，壳只消费；同一个断点算两遍就会出现两个都自称正确的布局
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
-import { PresenceSurface } from "../shared/design-system/components/PresenceSurface";
 import {
   AnimatePresence,
   motion,
@@ -32,7 +31,6 @@ import { EdgeDock } from "./EdgeDock";
 import { PaperSurface } from "./PaperSurface";
 
 type PaperWorkspaceShellProps = {
-  assistant: ReactNode;
   assistantOpen: boolean;
   /** 单 Panel 已无法并列：抽屉 + 遮罩。判据由 Dashboard 唯一持有 */
   compactViewport: boolean;
@@ -51,7 +49,6 @@ type PaperWorkspaceShellProps = {
 };
 
 export function PaperWorkspaceShell({
-  assistant,
   assistantOpen,
   compactViewport,
   libraryOpen,
@@ -191,9 +188,6 @@ export function PaperWorkspaceShell({
           </motion.div>
         </div>
 
-      <PresenceSurface open={assistantOpen} kind="panel-right" className="app-agent-shell workspace-floating-panel">
-        <div className="workspace-panel-content workspace-panel-content-assistant">{assistant}</div>
-      </PresenceSurface>
 
         <AnimatePresence initial={false}>
           {overlayPanels && anyPanelOpen ? (

@@ -1,12 +1,12 @@
 /**
- * [INPUT]: 依赖 React Router navigate（viewTransition）、canvasReturnStore、仅在本次挂载首帧解释的 CanvasEntryBootstrap、上层树重命名命令与 CanvasWorkspace；文件库由 Dashboard 持久宿主承载
+ * [INPUT]: 依赖 React Router navigate（viewTransition）、canvasReturnStore、仅在本次挂载首帧解释的 CanvasEntryBootstrap、上层树重命名命令与 CanvasWorkspace；左右工具由 Dashboard 持久宿主承载
  * [OUTPUT]: 对外提供 /app/notes/:id 的 Canvas 路由协调器，冻结单次入口 bootstrap、统一返回描述、会话 flush 暴露、恢复与画布重命名下传，并以明确 to-editor 方向启动画布→写作区过渡；不拥有跨路由文件库
  * [POS]: pages 的 Canvas 路由边界；AppDashboard 不再拥有 Canvas 内部 flush/视口/选择/Panel 细节
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
 import { useNavigate } from "react-router-dom";
-import { useState, type CSSProperties, type ReactNode } from "react";
+import { useState, type CSSProperties } from "react";
 
 import { useCanvasReturnStore } from "../shared/store/canvasReturnStore";
 import { CanvasWorkspace } from "../widgets/CanvasWorkspace";
@@ -16,7 +16,6 @@ import { navigateWithPaperTransition } from "./viewTransition";
 
 type CanvasRouteCoordinatorProps = {
   accessToken: string;
-  assistant: ReactNode;
   bootstrap?: CanvasEntryBootstrap | null;
   canvasId: string;
   onRename: (nodeId: string, title: string) => Promise<void>;
@@ -28,7 +27,6 @@ type CanvasRouteCoordinatorProps = {
 
 export function CanvasRouteCoordinator({
   accessToken,
-  assistant,
   bootstrap = null,
   canvasId,
   onRename,
@@ -57,7 +55,6 @@ export function CanvasRouteCoordinator({
   return (
     <CanvasWorkspace
       accessToken={accessToken}
-      assistant={assistant}
       bootstrap={entryBootstrap}
       canvasId={canvasId}
       /*

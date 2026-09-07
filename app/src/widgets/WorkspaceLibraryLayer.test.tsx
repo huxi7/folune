@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 React 服务端渲染、Bun test 与 WorkspaceLibraryLayer 的持久挂载契约
+ * [INPUT]: 依赖 React 服务端渲染、Bun test 与 WorkspacePanelLayer 的持久挂载契约
  * [OUTPUT]: 证明文件库内容在开合两种状态都留在同一宿主 DOM 中，关闭只改变可见/交互语义而不是卸载子树
  * [POS]: widgets 的持久文件库宿主回归测试；与真实 AppSidebar 解耦，只锁定路由切换不应破坏的组件边界
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -8,15 +8,15 @@
 import { describe, expect, test } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
 
-import { WorkspaceLibraryLayer } from "./WorkspaceLibraryLayer";
+import { WorkspacePanelLayer } from "./WorkspacePanelLayer";
 
 const renderLayer = (open: boolean) => renderToStaticMarkup(
-  <WorkspaceLibraryLayer open={open} style={{}}>
+  <WorkspacePanelLayer open={open} style={{}}>
     <aside>Library panel</aside>
-  </WorkspaceLibraryLayer>,
+  </WorkspacePanelLayer>,
 );
 
-describe("WorkspaceLibraryLayer", () => {
+describe("WorkspacePanelLayer", () => {
   test("关闭时仍保留文件库子树，只冻结交互", () => {
     const closed = renderLayer(false);
     const opened = renderLayer(true);
@@ -27,4 +27,11 @@ describe("WorkspaceLibraryLayer", () => {
     expect(opened).toContain("Library panel");
     expect(opened).toContain('aria-hidden="false"');
   });
+});
+
+test("右侧工具关闭时仍保留内容且使用右侧宿主", () => {
+  const html = renderToStaticMarkup(<WorkspacePanelLayer open={false} side="assistant" style={{}}><textarea defaultValue="未发送的草稿" /></WorkspacePanelLayer>);
+  expect(html).toContain("app-agent-shell");
+  expect(html).toContain("未发送的草稿");
+  expect(html).toContain('aria-hidden="true"');
 });

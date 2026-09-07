@@ -113,6 +113,12 @@ describe("Workspace Motion Language", () => {
       expect(out[i]![1] + into[i]![1]).toBe(1);
     }
   });
+  test("自定义截图动画保留 plus-lighter, 不让全屏底色从中间帧透出", () => {
+    expect(vtCss).toContain("::view-transition-image-pair(root),");
+    expect(vtCss).toContain("  isolation: isolate;");
+    expect(vtCss).toContain("::view-transition-old(root),");
+    expect(vtCss).toContain("  mix-blend-mode: plus-lighter;");
+  });
   /*
    * 世界先落定。遮罩/画布是环境的状态改变, 不是与纸同行的物体: 摊到整段里, 它就全程跟
    * 纸抢注意力; 而"留到最后才揭开"更糟 —— 用户会盯着一张纸在空无一物的底上缩小, 那正是
