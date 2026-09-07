@@ -13,7 +13,7 @@ CanvasPersistenceStatus.tsx: 显示保存、恢复、冲突和显式重试状态
 CanvasPreviewOverlay.tsx: 不卸载 Canvas 的小开本 Paper 预览层；按 ID 读取正文，正文在路上时纸里先放卡片那段摘录（同一篇笔记的开头，放大的始终是同一段字，一个字都没到才退回 Skeleton），reader 纸面由 NotePaper 命名壳与正文。Dialog 使用 motion=none 且遮罩绝不拥有过渡身份——它留在 root 那张截图里，磨砂玻璃因此完整可用（backdrop-filter 采样的就是同一次绘制里身后的画布），而给它单独命名会让它排到过渡层末尾、整段盖住正在放大的纸；纸内只有正文，关闭/编辑一律在纸外
 CanvasPreviewOverlay.test.tsx: 预览结构回归门禁，锁定 motion=none bare 表面、单一 reader 纸，以及关闭/编辑原文一律不在纸内
 CanvasSelectionBounds.tsx: 成组外接框；只在 React Flow 自带 NodesSelection 缺席的两段时间出现——框选拖动中，以及多选静止但它已放手（抓住组里任意卡片就会让它消失）——与它共用同一条变换公式和同一个 --canvas-selection-line，因此松手只是换主人，框不移动也不闪。纯视觉、不接收指针，矩形判据住在 canvasPresentation
-CanvasCordEdge.tsx: 关系路径与理由说明，几何/receipt 仍沿原职责；理由 Popover 用 PresenceSurface 收放，保持聚焦/指向/显式展开与删除意图
+CanvasCordEdge.tsx: 关系路径与理由说明，几何/receipt 仍沿原职责；理由 Popover 用 top placement 的 PresenceSurface 收放，CSS 独立 translate 保持几何居中，保持聚焦/指向/显式展开与删除意图
 CanvasCordEdge.test.ts: 浮动端点纯几何回归门禁，锁定目标跨象限拖动时端点从左右边切换到上下边、轴向对齐取直而对角线两个控制点分居弦两侧（S）、卡片朝对角方向的端点收进圆角弧上，并覆盖节点尚未测量时的安全兜底
 CanvasElasticConnectionLine.tsx: React Flow 拖拽期纯 UI 渲染层；起点取 fromX/fromY（React Flow 按 handleBounds 算出的抓手中心，因此绳子从被按住的那一点出来），终点取 connection.pointer 并用 viewport transform 反解回画布坐标 —— 绝不消费 toX/toY：本产品的 target handle 覆盖整张卡片，一旦吸附 React Flow 就把 to 换成那个 handle 的中心，线于是贯穿目标正文。吸附对提交是对的（它决定连给谁），对显示是错的（它决定线画到哪）。坐标写 latest ref，单一 rAF 只直接更新三条 path 与 drop cursor 属性，卸载立即取消，Reduced Motion 停相位但继续严格跟手
 CanvasElasticConnectionLine.test.ts: 临时绳的坐标所有权门禁，锁定起点是抓手、终点是真实指针、cordAnchor 不再出现，toX/toY 只作 pointer 缺席时的兜底；珠子半径恒定且小，状态只由颜色表达

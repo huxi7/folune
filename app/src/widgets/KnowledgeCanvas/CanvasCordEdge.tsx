@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 PresenceSurface 的关系说明入退场、 @xyflow/react、CanvasFlowEdge UI-only motionState、共享 Cord draw/矩形射线几何、设计系统图标与 canvasActions
+ * [INPUT]: 依赖 PresenceSurface 的顶部关系说明入退场与 CSS 独立居中定位、 @xyflow/react、CanvasFlowEdge UI-only motionState、共享 Cord draw/矩形射线几何、设计系统图标与 canvasActions
  * [OUTPUT]: 对外提供可由本地 receipt 单次绘制的动态浮动 Cord、整线命中区、几何适配器与理由检查/删除入口
  * [POS]: KnowledgeCanvas 的关系交互层；每次节点移动都从两张卡片的真实中心连线求边界交点，彻底绕过固定左右 Handle 坐标；线本身是指向面，中点标记只是它常驻可见的把手与键盘入口
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -157,7 +157,7 @@ export function CanvasEdgeReasonInspector({
       >
         <InfoIcon aria-hidden size={14} />
       </button>
-      <PresenceSurface open={showDetails}
+      <PresenceSurface open={showDetails} placement="top"
           aria-label={relationKind}
           className="canvas-edge-reason"
           id={detailsId}
