@@ -101,20 +101,6 @@ export const canvasFloatingCurve = (
     );
 };
 
-/**
- * 理由入口属于两张卡片的关系身份，锚定正式中心 Handle 的中点；可见 Cord 的边界端点
- * 会因圆角和卡片尺寸收进表面，不能把那套显示几何反向当成关系身份的位置。
- */
-export const canvasEdgeReasonPoint = (
-  sourceX: number,
-  sourceY: number,
-  targetX: number,
-  targetY: number,
-) => ({
-  x: (sourceX + targetX) / 2,
-  y: (sourceY + targetY) / 2,
-});
-
 type CanvasEdgeReasonInspectorProps = {
   createdBy: "ai" | "user";
   /** 整条关系线正被指向: 线是对象本身, 中点标记只是它的把手 */
@@ -221,7 +207,6 @@ export function CanvasCordEdge({
     targetX,
     targetY,
   });
-  const reasonPoint = canvasEdgeReasonPoint(sourceX, sourceY, targetX, targetY);
 
   return (
     <>
@@ -266,7 +251,7 @@ export function CanvasCordEdge({
           rationale={rationale}
           selected={selected}
           style={{
-            transform: `translate(-50%, -50%) translate(${reasonPoint.x}px, ${reasonPoint.y}px)`,
+            transform: `translate(-50%, -50%) translate(${curve.mid.x}px, ${curve.mid.y}px)`,
           }}
         />
       </EdgeLabelRenderer>
