@@ -8,6 +8,7 @@ import { useState } from "react";
 import { AnimatePresence, MotionConfig, useReducedMotion } from "motion/react";
 import { Button, Card, Collapse, Dialog, Input, PersistentView, PresenceSurface, SegmentedControl, Select, UserMenu, useToast } from "../../shared/design-system/components";
 import { motionDuration } from "../../shared/design-system/motion";
+import { PanelMotionSpecimen } from "./PanelMotionSpecimen";
 import { SidebarCreateMenu } from "../SidebarCreateMenu";
 
 export function MotionSpecimen() {
@@ -72,6 +73,7 @@ export function MotionSpecimen() {
         </div>
         <Card motion="lift" className="motion-specimen-card">卡片表面 · hover 4px 提升，阴影持续存在</Card>
       </section>
+      <PanelMotionSpecimen />
       <AnimatePresence>
         {dialog ? <Dialog key="conditional-dialog" title="统一模态框" open onOpenChange={setDialog}>
           <div className="motion-specimen-dialog-content">

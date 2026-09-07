@@ -12,6 +12,7 @@
   .agent-panel-view-stack { position: relative; min-width: 0; min-height: 0; }
   .agent-panel-view-stack,
   .agent-panel-view-switch { display: flex; flex: 1; min-height: 0; min-width: 0; flex-direction: column; }
+  .agent-panel-view-stack { overflow: clip; }
   [data-persistent-view][hidden] { display: none; }
   .trash-list:empty { border: 0; }
   .landing-pricing-grid > div > .landing-pricing-card { height: 100%; }
@@ -54,4 +55,11 @@ html:not([data-paper-transition]) { --paper-world: var(--motion-micro-enter); --
     transition: transform var(--motion-micro-enter) var(--ease-standard), background var(--motion-micro-enter) var(--ease-standard), color var(--motion-micro-enter) var(--ease-standard), box-shadow var(--motion-micro-enter) var(--ease-standard), border-color var(--motion-micro-enter) var(--ease-standard);
   }
   :is(.canvas-control, .canvas-edge-delete, .ds-select-trigger, .ds-user-button):active:not(:disabled) { transform: scale(var(--press-scale)); transition-duration: var(--motion-press); }
+}
+
+@layer components {
+  .motion-specimen-conversation { display: flex; flex-direction: column; height: 320px; margin-top: 16px; border: 1px solid var(--border); border-radius: var(--radius-panel); background: var(--card); overflow: clip; }
+  .motion-specimen-conversation .agent-message-list p { color: var(--muted-foreground); font-size: 13px; }
+  .motion-specimen-conversation textarea { width: 100%; min-height: 64px; resize: none; }
+  .motion-specimen-conversation .agent-composer-footer > span { color: var(--muted-foreground); font-size: 11px; }
 }

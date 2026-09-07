@@ -14,6 +14,8 @@ export const motionDuration = {
   panelExit: 0.17,
   modalEnter: 0.28,
   modalExit: 0.16,
+  viewEnter: 0.28,
+  viewExit: 0.18,
   tree: 0.21,
   spatial: 0.36,
   reveal: 0.42,
@@ -31,7 +33,7 @@ export const motionSpring = {
   surface: { type: "spring", visualDuration: motionDuration.modalEnter, bounce: 0 },
   spatial: { type: "spring", visualDuration: motionDuration.spatial, bounce: 0.04 },
 } as const;
-export const motionDistance = { panel: 8, modal: 10, popover: 4, reveal: 16 } as const;
+export const motionDistance = { panel: 8, modal: 10, popover: 4, reveal: 16, view: 24, content: 12 } as const;
 export const staggerStepMs = 32;
 export const staggerMaxMs = 128;
 
@@ -43,6 +45,28 @@ export const panelExitTransition: Transition = { duration: motionDuration.panelE
 export const workspaceLayoutTransition: Transition = panelEnterTransition;
 export const spatialSpring: Transition = motionSpring.spatial;
 export const treeTransition: Transition = { duration: motionDuration.tree, ease: motionEase.tree };
+
+/** 目录视图从左侧进入、原路返回；短距离承接不推动底层内容。 */
+export function persistentViewTransition(active: boolean, reduced: boolean, directional: boolean): Transition {
+  if (reduced) return reducedFadeTransition;
+  if (!directional) return fadeTransition;
+  return { duration: active ? motionDuration.viewEnter : motionDuration.viewExit, ease: active ? motionEase.enter : motionEase.exit };
+}
+
+/** 新上下文的输入表面轻轻浮现；只在会话身份建立时播放，不跟随每次输入重播。 */
+export function contentEntranceVariants(reduced: boolean): Variants {
+  return {
+    hidden: { opacity: 0, y: reduced ? 0 : motionDistance.content },
+    visible: {
+      opacity: 1, y: 0,
+      transition: reduced ? reducedFadeTransition : {
+        duration: motionDuration.viewEnter,
+        delay: staggerStepMs / 1000,
+        ease: motionEase.enter,
+      },
+    },
+  };
+}
 
 export type SurfaceMotion = "popover" | "modal" | "fade" | "panel-left" | "panel-right";
 export type SurfacePlacement = "top" | "bottom";
@@ -80,7 +104,7 @@ const cssName = (name: string) => name.replace(/[A-Z]/g, (letter) => `-${letter.
 export const motionTokenStyles = `:root{${Object.entries(motionDuration)
   .map(([name, seconds]) => `--motion-${cssName(name)}:${seconds * 1000}ms;`).join("")}${Object.entries(motionEase)
   .map(([name, points]) => `--ease-${name}:cubic-bezier(${points.join(",")});`).join("")}}
-@media(prefers-reduced-motion:reduce){:root{--motion-press:90ms;--motion-micro-enter:90ms;--motion-micro-exit:90ms;--motion-panel-enter:90ms;--motion-panel-exit:90ms;--motion-modal-enter:90ms;--motion-modal-exit:90ms;--motion-tree:0ms;--motion-reveal:90ms;}}`;
+@media(prefers-reduced-motion:reduce){:root{--motion-press:90ms;--motion-micro-enter:90ms;--motion-micro-exit:90ms;--motion-panel-enter:90ms;--motion-panel-exit:90ms;--motion-modal-enter:90ms;--motion-modal-exit:90ms;--motion-view-enter:90ms;--motion-view-exit:90ms;--motion-tree:0ms;--motion-reveal:90ms;}}`;
 
 export function revealVariants(reduced: boolean, scale = false): Variants {
   return {

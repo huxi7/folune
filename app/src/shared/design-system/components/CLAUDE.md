@@ -5,7 +5,7 @@
 motionLifecycle.test.tsx: 真实 DOM 行为门禁，覆盖菜单快速反向开关、退出交互隔离、input 实例/光标保留、菜单/模态分层 Escape 与嵌套滚动锁；动画完成时间另由浏览器测量
 Collapse.tsx: Tree/披露控件的高度生命周期原语，210ms 同源曲线、可打断、退出立即 inert；keepMounted 保留工具详情状态，减少动态效果即时改变高度
 PresenceSurface.tsx: Menu/Popover/Panel 共用的无额外定位包装入退场基础件；关闭即 inert、完成后卸载，MotionSurface 支持外层 presence，定位和焦点策略留给语义组件
-PersistentView.tsx: 编辑器与表单的实例保留式淡换；旧视图立即脱离布局并 inert、淡出完成 hidden，切回复用原实例和草稿，父容器提供相对定位
+PersistentView.tsx: 保留实例的视图基础件；motion=from-left 选择从左侧进入的 24px 承接，fill 以四边定位维持 Panel 退出高度，默认仍为轻淡换；旧视图立即脱离布局并 inert、淡出完成 hidden，切回复用原实例和草稿，父容器提供相对定位
 .gitkeep: 保留本地组件目录
 CLAUDE.md: 记录本地组件目录职责与文档协议
 Button.tsx: 本地 36px 标准命令组件，使用 14px/18px UI 字体、14px 横向留白与 6px 图文间距，封装 primary、弱边缘 secondary、ghost、实心红色 danger、square 与正交 loading 状态；以统一 12px smooth corner、1px 清晰内亮环、薄内侧柔光、实体边缘、零偏移雾影与极轻垂直面光形成克制的轻巧实体层级，固定原位 hover、按下原地收紧（共读 index.css 的 --press-scale，Reduced Motion 归 1）；非 Danger loading 自动切换为独立蓝灰 Processing 状态面，继续联动原生 disabled/aria-busy，并以 spinner 配合带 16 度倾角的 3.2s 低频窄 shimmer

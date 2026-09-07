@@ -721,7 +721,6 @@
   .agent-panel-title { min-width: 0; overflow: hidden; color: var(--foreground); font-size: 0.8125rem; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
   .agent-panel-header-actions { display: flex; flex-shrink: 0; align-items: center; gap: var(--control-cluster-gap); }
   .agent-panel-header-button.ds-button.ds-button-size-square { width: var(--control-height-compact); min-width: var(--control-height-compact); height: var(--control-height-compact); min-height: var(--control-height-compact); border-radius: var(--button-radius); }
-  .agent-panel-header-button[aria-pressed="true"] { --button-surface-rest: var(--interactive-hover); --button-surface-hover: var(--interactive-hover); --button-surface-active: var(--interactive-hover); --button-face-top-rest: var(--interactive-hover); --button-face-bottom-rest: var(--interactive-hover); --button-face-top-hover: var(--interactive-hover); --button-face-bottom-hover: var(--interactive-hover); --button-face-top-active: var(--interactive-hover); --button-face-bottom-active: var(--interactive-hover); border-color: transparent; color: var(--foreground); box-shadow: none; }
   .agent-permission-control { position: relative; }
   .agent-permission-trigger.ds-button { color: var(--muted-foreground); font-size: 0.625rem; white-space: nowrap; }
   .agent-permission-trigger.ds-button:hover:not(:disabled) { color: var(--foreground); }
@@ -736,10 +735,7 @@
   .agent-panel-body { display: flex; min-height: 0; flex: 1; flex-direction: column; padding: 0.75rem; }
   .agent-panel-loading { display: flex; min-height: 0; flex: 1; align-items: center; justify-content: center; padding: var(--space-4); color: var(--muted-foreground); font-size: 0.75rem; }
   .agent-history { min-height: 0; flex: 1; overflow-y: auto; padding: var(--space-3); }
-  .agent-history-heading { display: flex; align-items: center; justify-content: space-between; }
-  .agent-history-heading > strong { color: var(--foreground); font-size: 0.8125rem; }
-  .agent-history-heading .ds-button { width: var(--control-height-compact); min-width: var(--control-height-compact); height: var(--control-height-compact); min-height: var(--control-height-compact); }
-  .agent-thread-list { display: grid; gap: var(--space-1); margin-top: var(--space-3); }
+  .agent-thread-list { display: grid; gap: var(--space-1); }
   .agent-thread-row { display: grid; min-width: 0; grid-template-columns: minmax(0, 1fr) auto; align-items: center; border-radius: var(--button-radius); padding: var(--space-1); }
   .agent-thread-row:hover,
   .agent-thread-row:focus-within,

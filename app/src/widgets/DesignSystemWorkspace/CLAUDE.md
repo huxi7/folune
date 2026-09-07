@@ -2,6 +2,7 @@
 > L2 | 父级: ../CLAUDE.md
 
 成员清单
+PanelMotionSpecimen.tsx: 复用生产单一顶栏、左侧目录承接与输入浮现规则的无网络示例；可重复切换历史、创建新上下文并验证草稿保留
 MotionSpecimen.tsx: 可重复交互的生产 Motion 样板，涵盖命令/Select/账户菜单/嵌套 Dialog/Tree/Panel/视图保留与 Card；仅用 fixture 本地状态，复用到 /motion-lab
 .gitkeep: 保留 Design System 工作区目录
 CLAUDE.md: 记录开发态 Design System 工作区职责与文档协议

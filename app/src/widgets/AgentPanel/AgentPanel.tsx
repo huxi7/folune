@@ -1,18 +1,19 @@
 /**
- * [INPUT]: 依赖 PersistentView 历史/会话淡换、useAiThreads、类型化 useChat/原生审批、持久化消息 API、本地 Design System Button/MentionInput、统一 Composer sources、Worker 胖工具链、权限/History 与 Dashboard AI 整理/草稿协调边界
+ * [INPUT]: 依赖 DS 实时动态偏好、 PersistentView 的有方向视图承接、DS 输入表面浮现语义、useAiThreads、类型化 useChat/原生审批及既有 Composer/工具执行边界
  * [OUTPUT]: 对外提供 AI Native 右侧工作区；引用源按 memo 身份/置顶列表精确对账，已批准工具按持久消息语义幂等恢复，外层只回报选中会话 id
  * [POS]: /app 右侧 AI Native V2 组合根；工具参数流结束且批准后才进入 Worker，api command 是唯一写事实源，Store 只做幂等投影与回滚
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
-import { PersistentView, MotionSurface } from "../../shared/design-system/components";
+import { AgentPanelHeader } from "./AgentPanelHeader";
+import { PersistentView, useToast } from "../../shared/design-system/components";
+import { useMotionPreference } from "../../shared/design-system/useMotionPreference";
+import { motion } from "motion/react";
+import { contentEntranceVariants } from "../../shared/design-system/motion";
 import { useChat } from "@ai-sdk/react";
 import {
   ArrowUpIcon,
-  AssistantPanelCloseIcon,
   AtIcon,
-  MenuIcon,
-  NewConversationIcon,
   PushPinIcon,
   StopIcon,
   WarningCircleIcon,
@@ -159,6 +160,7 @@ function AgentConversation({
   userId,
 }: ConversationProps) {
   const [inputValue, setInputValue] = useState("");
+  const reduceMotion = Boolean(useMotionPreference());
   const [sources, setSources] = useState<ComposerSource[]>([]);
   const [suppressedCurrentMemoId, setSuppressedCurrentMemoId] = useState<string | null>(null);
   const [mentionStart, setMentionStart] = useState<number | null>(null);
@@ -573,7 +575,13 @@ function AgentConversation({
       ) : respondingApprovalId === null ? (
         <OrganizeReviewCard busy={organizeReviewBusy} onApply={onApplyOrganize} onReject={onRejectOrganize} run={organizeRun} />
       ) : null}
-      <form className="agent-composer" onSubmit={handleSubmit}>
+      <motion.form
+        className="agent-composer"
+        onSubmit={handleSubmit}
+        initial="hidden"
+        animate="visible"
+        variants={contentEntranceVariants(reduceMotion)}
+      >
         <MentionMenu open={mentionOpen} activeIndex={mentionIndex} onSelect={selectMention} results={mentionResults} />
         {visibleContextSources.length > 0 ? <div className="agent-composer-sources">{visibleContextSources.map((source) => {
           return <span key={source.id}><AtIcon size={14} /><strong>{source.title}</strong><button aria-label={`${source.pinned ? "取消置顶" : "置顶引用"} ${source.title}`} onClick={() => void onReferencesChange(source.pinned ? pinnedIds.filter((id) => id !== source.id) : [...pinnedIds, source.id])} type="button"><PushPinIcon fill={source.pinned ? "currentColor" : "none"} size={14} /></button><button aria-label={`移除引用 ${source.title}`} onClick={() => void (async () => { if (source.pinned) await onReferencesChange(pinnedIds.filter((id) => id !== source.id)); if (source.current) setSuppressedCurrentMemoId(source.id); setSources((current) => current.filter((item) => item.id !== source.id)); })()} type="button"><XIcon size={14} /></button></span>;
@@ -587,13 +595,15 @@ function AgentConversation({
             <Button aria-label="发送消息" className="agent-composer-action" disabled={!canSubmitComposer(inputValue, busy)} icon={ArrowUpIcon} size="square" type="submit" variant="primary" />
           )}
         </div>
-      </form>
+      </motion.form>
     </div>
   );
 }
 
 export function AgentPanel(props: AgentPanelProps) {
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [creatingThread, setCreatingThread] = useState(false);
+  const { toast } = useToast();
   const [chatBusy, setChatBusy] = useState(false);
   const threads = useAiThreads({ accessToken: props.accessToken, userId: props.userId });
   const actionBusy = props.organizeBusy
@@ -611,29 +621,41 @@ export function AgentPanel(props: AgentPanelProps) {
     onSelectedThreadChange(thread?.id ?? null);
   }, [onSelectedThreadChange, thread?.id]);
 
+  const createConversation = async () => {
+    if (creatingThread || actionBusy || threads.loading) return;
+    setCreatingThread(true);
+    try {
+      // 数据就绪前保留当前视图与草稿；成功后从历史页回到新会话。
+      await threads.createThread();
+      setHistoryOpen(false);
+    } catch (error) {
+      toast({ title: "新建会话失败", description: error instanceof Error ? error.message : "请稍后重试。", variant: "error" });
+    } finally {
+      setCreatingThread(false);
+    }
+  };
+
   return (
     <aside aria-label="备忘录助手" className="agent-panel">
-      <header className="agent-panel-header">
-        <div className="agent-panel-heading">
-          <Button aria-label="会话历史" aria-pressed={historyOpen} className="agent-panel-header-button" disabled={chatBusy} icon={MenuIcon} onClick={() => setHistoryOpen((open) => !open)} size="square" variant="ghost" />
-          <p className="agent-panel-title">{thread?.title ?? "新对话"}</p>
-        </div>
-        <div className="agent-panel-header-actions">
-          <Button aria-label="新对话" className="agent-panel-header-button" disabled={actionBusy || threads.loading} icon={NewConversationIcon} onClick={() => void threads.createThread()} size="square" variant="ghost" />
-          <Button aria-label="收起 AI 面板" className="agent-panel-header-button" icon={AssistantPanelCloseIcon} onClick={props.onClose} size="square" variant="ghost" />
-        </div>
-      </header>
+      <AgentPanelHeader
+        historyOpen={historyOpen}
+        title={thread?.title ?? "新对话"}
+        historyDisabled={chatBusy || creatingThread}
+        createDisabled={actionBusy || threads.loading}
+        creating={creatingThread}
+        onToggleHistory={() => setHistoryOpen((open) => !open)}
+        onCreate={() => void createConversation()}
+        onClose={props.onClose}
+      />
       <div className="agent-panel-view-stack">
-      <PersistentView active={historyOpen} className="agent-panel-view-switch">
-        <ThreadHistory busy={actionBusy} onClose={() => setHistoryOpen(false)} onDelete={threads.removeThread} onRename={(id, title) => threads.patchThread(id, { title })} onSelect={async (id) => { await threads.selectThread(id); setHistoryOpen(false); }} selectedId={thread?.id ?? null} threads={threads.threads} />
+      <PersistentView active={historyOpen} motion="from-left" fill className="agent-panel-view-switch">
+        <ThreadHistory busy={actionBusy} onDelete={threads.removeThread} onRename={(id, title) => threads.patchThread(id, { title })} onSelect={async (id) => { await threads.selectThread(id); setHistoryOpen(false); }} selectedId={thread?.id ?? null} threads={threads.threads} />
       </PersistentView>
-      <PersistentView active={!historyOpen} className="agent-panel-view-switch">
+      <PersistentView active={!historyOpen} fill className="agent-panel-view-switch">
       {thread === null ? (
         <div className="agent-panel-loading">{threads.loading ? "正在恢复会话…" : "会话加载失败，请重新打开面板。"}</div>
       ) : (
-        <MotionSurface kind="fade" className="agent-panel-view-switch" key={thread.id}>
         <AgentConversation accessToken={props.accessToken} currentMemo={props.currentMemo} initialMessages={threads.messages} key={thread.id} memoTree={props.memoTree} onApplyOrganize={props.onApplyOrganize} onBusyChange={setChatBusy} onPrepareMutation={props.onPrepareMutation} onReferencesChange={threads.replaceReferences} onRejectOrganize={props.onRejectOrganize} onThreadUpdated={threads.refreshSelected} organizeReviewBusy={actionBusy} organizeRun={visibleOrganizeRun} thread={thread} userId={props.userId} />
-        </MotionSurface>
       )}
       </PersistentView>
       </div>

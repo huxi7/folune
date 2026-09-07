@@ -3,7 +3,8 @@
 
 成员清单
 CLAUDE.md: 记录 AgentPanel 子域成员、依赖方向与 GEB 回环协议
-AgentPanel.tsx: AI 组合根，History/Conversation 以 PersistentView 保留式淡换，thread 身份变化只重建对应会话；菜单与内容 Motion 不接管审批/流式/工具执行协议，隐藏会话保留 Composer 草稿
+AgentPanelHeader.tsx: 无状态固定顶栏，历史接管标题和左侧返回，新建/收起位置稳定；生产与样板共用
+AgentPanel.tsx: AI 组合根，History/Conversation 用撑满高度的 PersistentView 承接；历史从左侧进入，关闭向左回收，单一顶栏由 AgentPanelHeader 接管，对话原位淡换；新会话数据就绪后才替换身份，Composer 单独浮现，创建成功从历史返回新会话，失败保留旧视图并 Toast；菜单与内容 Motion 不接管审批/流式/工具执行协议，隐藏会话保留 Composer 草稿
 ApprovalDock.tsx: Composer 上方唯一的紧凑非模态审批视觉原语，统一图标、标题、影响说明、按钮槽位与无蒙层语义；普通工具和 AI 整理审批只能适配它，禁止复制表面
 approvalState.ts: 审批状态机纯领域层，只检查末条 assistant；统一负责 requested 单次响应投影、approved 未完成工具恢复候选与 output 结果投影，避免 UI、持久化和恢复各自解释 AI SDK 状态
 approvalState.test.ts: 审批状态机回归测试，锁定同一 approval 只响应一次、拒绝不恢复、批准刷新可恢复及结果落地后退出恢复队列
@@ -17,7 +18,7 @@ aiSettingsCache.test.ts: 锁定审批设置缓存的用户隔离、新鲜命中�
 ApprovalCard.tsx: 每次询问与智能审批回退的工具审批语义适配；把人话动作、最小影响说明和危险操作按钮映射到共享 ApprovalDock
 OrganizeReviewCard.tsx: AI 整理审批语义适配；只把当前 memo 的 awaiting_confirmation 标题/位置影响与确认/取消映射到共享 ApprovalDock，其他 Run 状态不在 AgentPanel 或 Paper 下方重复展示
 OrganizeReviewCard.test.tsx: AI 整理审批 DOM 同构测试，锁定 awaiting_confirmation 复用 agent-approval-dock 且 succeeded 输出为空
-ThreadHistory.tsx: Panel 内统一历史会话视图，会话行只提供切换、重命名与普通永久删除确认，hover、focus 与当前选中项共享中性表面而不使用品牌蓝底，不建立归档分组或第四栏
+ThreadHistory.tsx: 不含重复顶栏的 Panel 历史会话视图，会话行只提供切换、重命名与普通永久删除确认，hover、focus 与当前选中项共享中性表面而不使用品牌蓝底，不建立归档分组或第四栏
 organizeClient.ts: 浏览器到 Chat `/v1/organize` 的最小 authenticated client，复用 AI Run mapper，确认/apply/undo 仍经 shared/api/ai 进入 Business API
 canvasExpandClient.ts: 浏览器到 Chat `/v1/canvas-expand` 的最小 authenticated client；只发送 canvas_id/source_canvas_node_id/limit 并校验 up_to_date/候选，Chat 不写业务库，最终 intent 仍交给 CanvasSaveCoordinator
 canvasExpandClient.test.ts: Canvas expansion 响应契约门禁，锁定身份/版本、最多五项、0..1 confidence 与两种完成状态，畸形 Chat 输出不得进入 Canvas intent
