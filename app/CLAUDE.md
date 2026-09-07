@@ -83,3 +83,5 @@ Paper First V1.1 / Quiet Editorial 覆盖约束: 本节覆盖上文遗留的 V1 
 2026-09-07 视觉收口：Control 全族统一 16px / inner 12px；Skeleton 改为纯中性灰阶，覆盖上文旧的灰蓝加载约束。设置暗色局部使用统一黑灰表面，Canvas 加载只保留干净 Stage。
 
 2026-09-07 曲线规范：所有非圆形 APP 表面在半径声明处同时消费平滑曲线；菜单 hover 行使用 Compact 8px，菜单外壳 Menu 12px，普通按钮 Control 16px。禁止私有半径或胶囊命令，几何头像/状态点/发送停止保留 round。
+
+2026-09-07 Scrollbar refinement: 文件树与 AI 消息滚动区须到达 Panel 边缘，正文留白位于滚动区内部；原生细滚动条共用淡中性色与透明轨道，不能遮盖正文或再造装饰轨道。

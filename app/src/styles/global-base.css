@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 index.css 定义的全局语义 token 与 Tailwind v4 @apply 能力
- * [OUTPUT]: 对外提供文档根、表单继承、选择色、滚动条与 reduced-motion 的全局基础规则
+ * [OUTPUT]: 对外提供文档根、表单继承、选择色、透明轨道的低对比原生细滚动条与 reduced-motion 的全局基础规则
  * [POS]: app/src/styles 的浏览器基础层；index.css 负责 token，本文件负责全局元素行为，业务样式不得覆盖其可访问性兜底
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -45,7 +45,7 @@
   }
 
   * {
-    scrollbar-color: color-mix(in srgb, var(--muted-foreground) 34%, transparent) transparent;
+    scrollbar-color: var(--scrollbar-thumb) transparent;
     scrollbar-width: thin;
   }
 
@@ -67,4 +67,8 @@
     scroll-behavior: auto !important;
     transition-duration: var(--motion-press) !important;
   }
+}
+
+@media (forced-colors: active) {
+  * { scrollbar-color: auto; }
 }

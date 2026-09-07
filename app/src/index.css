@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Kumo Tailwind 样式源、Tailwind v4，并导入 AI 消息与 Design System 等生产样式模块消费本文件语义 token
- * [OUTPUT]: 对外提供 Kumo 基础样式、Landing Light、Quiet Editorial Instrument 与隔离 Color Lab 蓝色终选候选：16px Control/12px inner、中性灰阶 Skeleton 与设置暗色映射、唯一静态语义 Color/Type/Spacing/Radius/Elevation 与 DS motion.ts 时长/曲线的消费别名、全站命令控件共读的单一 press 收紧比例（Reduced Motion 在此归 1）、极轻纵向同色面光与中性落地阴影构成的 Button 材质、Paper First Stage/Paper/Panel Toggle/Archive Cord/Cord、Tailwind 映射及样式模块入口
+ * [OUTPUT]: 对外提供 Kumo 基础样式、Landing Light、Quiet Editorial Instrument 与隔离 Color Lab 蓝色终选候选：16px Control/12px inner、中性灰阶 Skeleton、低对比滚动条与设置暗色映射、唯一静态语义 Color/Type/Spacing/Radius/Elevation 与 DS motion.ts 时长/曲线的消费别名、全站命令控件共读的单一 press 收紧比例（Reduced Motion 在此归 1）、极轻纵向同色面光与中性落地阴影构成的 Button 材质、Paper First Stage/Paper/Panel Toggle/Archive Cord/Cord、Tailwind 映射及样式模块入口
  * [POS]: app/src 的主题入口，被 main.tsx 引入并约束 Kumo 与本地设计系统共享同一全局视觉来源
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -303,6 +303,7 @@
     0 4px 10px -7px var(--button-shadow-neutral-rest);
   --surface-neutral: #f4f6f8;
   --surface-accent-subtle: #f3f6f8;
+  --scrollbar-thumb: rgb(0 0 0 / 14%);
   --skeleton-base: #ebebeb;
   --skeleton-highlight: #f6f6f6;
 
@@ -440,6 +441,7 @@
     0 4px 10px -7px var(--button-shadow-neutral-rest);
   --surface-neutral: #29303d;
   --surface-accent-subtle: #2f3942;
+  --scrollbar-thumb: rgb(255 255 255 / 16%);
   --skeleton-base: #363636;
   --skeleton-highlight: #454545;
   --archive-cord: #d4d2ca;

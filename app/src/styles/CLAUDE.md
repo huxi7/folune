@@ -45,3 +45,5 @@ color-lab.css: DEV `/color-lab` 蓝色终选决策画布，以同构静态 Libra
 2026-09-07 曲线规范：生产样式将 border-radius 与 corner-shape 同处声明，取消容易漏项的独立 supports 选择器清单；固定笔记、更多/右键/权限/@菜单及 hover 行全部覆盖。菜单外壳使用 Menu 12px、行与紧凑动作使用 Compact 8px；Canvas 预览与 Toast 关闭不再使用圆形命令，头像/状态点/发送停止等几何语义显式 round。designSystemContracts.test.ts 检查生产规则的 token 与曲线配对。
 
 2026-09-07 Menu consistency: design-system.css 单独拥有审批/更多/新建/右键/@/Select/账户菜单的背景、边框、前景、曲率、4px 内边距与阴影；业务样式仅负责定位与内容。审批菜单当前项用勾选标记，hover/focus 才铺中性底色。
+
+2026-09-07 Scrollbar refinement: global-base.css 消费 index.css 的淡中性 scrollbar-thumb、透明轨道与原生 thin，forced-colors 交还系统。workspace.css 的文件树/消息列表用 space-3 抵消父内缩并在滚动区内部保留内容留白，滚动条贴 Panel 边缘；历史/设置/结果列表/输入区统一稳定 gutter，避免文字与滚动条抢位置。
