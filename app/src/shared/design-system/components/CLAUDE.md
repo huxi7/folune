@@ -4,7 +4,7 @@
 成员清单
 .gitkeep: 保留本地组件目录
 CLAUDE.md: 记录本地组件目录职责与文档协议
-Button.tsx: 本地 36px 标准命令组件，使用 14px/18px UI 字体、14px 横向留白与 6px 图文间距，封装 primary、弱边缘 secondary、ghost、实心红色 danger、square 与正交 loading 状态；以统一 12px smooth corner、1px 清晰内亮环、薄内侧柔光、实体边缘、零偏移短雾影与纯色 surface 形成克制的轻巧实体层级，固定原位 hover、按下原地收紧（共读 index.css 的 --press-scale，Reduced Motion 归 1）；非 Danger loading 自动切换为独立蓝灰 Processing 状态面，继续联动原生 disabled/aria-busy，并以 spinner 配合带 16 度倾角的 3.2s 低频窄 shimmer
+Button.tsx: 本地 36px 标准命令组件，使用 14px/18px UI 字体、14px 横向留白与 6px 图文间距，封装 primary、弱边缘 secondary、ghost、实心红色 danger、square 与正交 loading 状态；以统一 12px smooth corner、极轻纵向同色面光和短中性落地阴影形成克制实体层级，不绘制清晰全周内环，hover 固定原位并放宽外影，按下原地收紧且撤回外影（共读 index.css 的 --press-scale，Reduced Motion 归 1），Ghost 始终无实体阴影；非 Danger loading 自动切换为独立蓝灰 Processing 状态面，继续联动原生 disabled/aria-busy，并以 spinner 配合带 16 度倾角的 3.2s 低频窄 shimmer
 Skeleton.tsx: 统一低对比占位加载原语，提供 rect/text/circle 形状、单组宽光带 SkeletonGroup 与 180ms 延迟出现/360ms 最短可见时长的 useDelayedSkeleton；业务只按真实内容结构组合，不自建动画或计时器
 SidebarButton.tsx: 本地 32px compact 侧栏导航原子组件，以 active、default/icon 等高尺寸、default/prominent 层级和 leading/label/trailing 槽位统一 APP 与账户模态框导航；与 36px Button 共享平滑圆角和材质语言但不强制等高，hover 固定原位，选中态和 prominent 态直接复用弱边缘的 Secondary Button 材质
 SegmentedControl.tsx: 本地紧凑互斥选择原子组件，以受控值、原生 button、radiogroup/radio、单一 Tab 停靠点与方向键/Home/End 切换统一少量稳定选项；视觉只消费平整语义表面，不复刻 Button 的立体位移

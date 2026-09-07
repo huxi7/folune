@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Kumo Tailwind 样式源、Tailwind v4，并导入 AI 消息与 Design System 等生产样式模块消费本文件语义 token
- * [OUTPUT]: 对外提供 Kumo 基础样式、Landing Light、Quiet Editorial Instrument 与隔离 Color Lab 蓝色终选候选：唯一语义 Color/Type/Spacing/Radius/Elevation/Motion、全站命令控件共读的单一 press 收紧比例（Reduced Motion 在此归 1）、以 solid surface 与均匀环绕光影构成的 Button 材质、Paper First Stage/Paper/Panel Toggle/Archive Cord/Cord、Tailwind 映射及样式模块入口
+ * [OUTPUT]: 对外提供 Kumo 基础样式、Landing Light、Quiet Editorial Instrument 与隔离 Color Lab 蓝色终选候选：唯一语义 Color/Type/Spacing/Radius/Elevation/Motion、全站命令控件共读的单一 press 收紧比例（Reduced Motion 在此归 1）、以极轻纵向同色明度坡度和中性落地阴影构成的 Button 材质、Paper First Stage/Paper/Panel Toggle/Archive Cord/Cord、Tailwind 映射及样式模块入口
  * [POS]: app/src 的主题入口，被 main.tsx 引入并约束 Kumo 与本地设计系统共享同一全局视觉来源
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -258,86 +258,55 @@
   --button-height-default: var(--control-height-default);
   --button-padding-inline: 0.875rem;
   --button-content-gap: 0.375rem;
-  --button-shadow-inner-blur-rest: 0.22rem;
-  --button-shadow-inner-blur-hover: 0.26rem;
-  --button-shadow-inner-blur-active: 0.16rem;
-  --button-shadow-mist-blur-rest: 0.5rem;
-  --button-shadow-mist-blur-hover: 0.58rem;
-  --button-shadow-mist-blur-active: 0.34rem;
-  --button-shadow-mist-spread-rest: -0.28rem;
-  --button-shadow-mist-spread-hover: -0.26rem;
-  --button-shadow-mist-spread-active: -0.22rem;
-  --button-shadow-press-depth-blur: 0.22rem;
   --button-font-size: var(--type-ui);
   --button-line-height: var(--leading-ui);
-  --button-primary-border-rest: color-mix(in srgb, var(--primary) 82%, var(--button-depth));
-  --button-primary-border-hover: color-mix(in srgb, var(--primary-hover) 82%, var(--button-depth));
-  --button-primary-border-active: color-mix(in srgb, var(--primary-active) 82%, var(--button-depth));
-  /* 兼容旧的局部覆盖；Button 实际渲染只消费下方的 solid surface。 */
-  --button-primary-face-top-rest: var(--primary);
-  --button-primary-face-bottom-rest: var(--primary);
-  --button-primary-face-top-hover: var(--primary-hover);
-  --button-primary-face-bottom-hover: var(--primary-hover);
-  --button-primary-face-top-active: var(--primary-active);
-  --button-primary-face-bottom-active: var(--primary-active);
-  --button-primary-inner-ring-rest: rgb(255 255 255 / 30%);
-  --button-primary-inner-ring-hover: rgb(255 255 255 / 38%);
-  --button-primary-inner-ring-active: rgb(255 255 255 / 18%);
-  --button-primary-inner-glow-rest: rgb(255 255 255 / 8%);
-  --button-primary-inner-glow-hover: rgb(255 255 255 / 11%);
-  --button-primary-inner-glow-active: rgb(255 255 255 / 4%);
-  --button-primary-mist-rest: color-mix(in srgb, var(--primary) 24%, transparent);
-  --button-primary-mist-hover: color-mix(in srgb, var(--primary-hover) 30%, transparent);
-  --button-primary-mist-active: color-mix(in srgb, var(--primary-active) 18%, transparent);
-  --button-primary-press-depth: color-mix(in srgb, var(--button-depth) 22%, transparent);
+  --button-face-highlight-rest: rgb(255 255 255 / 5%);
+  --button-face-highlight-hover: rgb(255 255 255 / 7%);
+  --button-face-highlight-active: rgb(255 255 255 / 3%);
+  --button-shadow-neutral-rest: rgb(35 34 31 / 16%);
+  --button-shadow-neutral-hover: rgb(35 34 31 / 21%);
+  --button-primary-border-rest: color-mix(in srgb, var(--primary) 94%, var(--button-depth));
+  --button-primary-border-hover: color-mix(in srgb, var(--primary-hover) 93%, var(--button-depth));
+  --button-primary-border-active: color-mix(in srgb, var(--primary-active) 92%, var(--button-depth));
+  --button-primary-face-top-rest: color-mix(in srgb, var(--primary) 97%, white);
+  --button-primary-face-bottom-rest: color-mix(in srgb, var(--primary) 98%, var(--button-depth));
+  --button-primary-face-top-hover: color-mix(in srgb, var(--primary-hover) 97%, white);
+  --button-primary-face-bottom-hover: color-mix(in srgb, var(--primary-hover) 98%, var(--button-depth));
+  --button-primary-face-top-active: color-mix(in srgb, var(--primary-active) 99%, white);
+  --button-primary-face-bottom-active: color-mix(in srgb, var(--primary-active) 99%, var(--button-depth));
+  --button-primary-ambient-rest: color-mix(in srgb, var(--primary) 12%, transparent);
+  --button-primary-ambient-hover: color-mix(in srgb, var(--primary-hover) 15%, transparent);
+  --button-primary-press-depth: color-mix(in srgb, var(--button-depth) 20%, transparent);
   --button-primary-shadow-rest:
-    inset 0 0 0 1px var(--button-primary-inner-ring-rest),
-    inset 0 0 var(--button-shadow-inner-blur-rest) var(--button-primary-inner-glow-rest),
-    0 0 var(--button-shadow-mist-blur-rest) var(--button-shadow-mist-spread-rest) var(--button-primary-mist-rest);
+    inset 0 1px 2px var(--button-face-highlight-rest),
+    0 1px 2px -1px var(--button-shadow-neutral-rest),
+    0 4px 10px -7px var(--button-shadow-neutral-rest),
+    0 3px 9px -7px var(--button-primary-ambient-rest);
   --button-primary-shadow-hover:
-    inset 0 0 0 1px var(--button-primary-inner-ring-hover),
-    inset 0 0 var(--button-shadow-inner-blur-hover) var(--button-primary-inner-glow-hover),
-    0 0 var(--button-shadow-mist-blur-hover) var(--button-shadow-mist-spread-hover) var(--button-primary-mist-hover);
+    inset 0 1px 2px var(--button-face-highlight-hover),
+    0 2px 3px -2px var(--button-shadow-neutral-hover),
+    0 6px 14px -8px var(--button-shadow-neutral-hover),
+    0 5px 12px -9px var(--button-primary-ambient-hover);
   --button-primary-shadow-pressed:
-    inset 0 0 0 1px var(--button-primary-inner-ring-active),
-    inset 0 0 var(--button-shadow-inner-blur-active) var(--button-primary-inner-glow-active),
-    inset 0 0 var(--button-shadow-press-depth-blur) var(--button-primary-press-depth),
-    0 0 var(--button-shadow-mist-blur-active) var(--button-shadow-mist-spread-active) var(--button-primary-mist-active);
+    inset 0 2px 4px var(--button-primary-press-depth),
+    inset 0 -1px 2px var(--button-face-highlight-active);
   --button-danger-hover-background: #b84b55;
   --button-danger-active-background: #a33f49;
   --processing-surface: #dde6ed;
-  --processing-surface-top: var(--processing-surface);
-  --processing-surface-bottom: var(--processing-surface);
+  --processing-surface-top: color-mix(in srgb, var(--processing-surface) 98%, white);
+  --processing-surface-bottom: color-mix(in srgb, var(--processing-surface) 98%, var(--button-depth));
   --processing-border: #c1ced9;
   --processing-foreground: #425e76;
   --processing-shimmer: #ffffff;
-  --processing-inner-ring: rgb(255 255 255 / 46%);
-  --processing-inner-glow: rgb(255 255 255 / 12%);
-  --processing-mist: rgb(57 88 117 / 18%);
-  --button-secondary-inner-ring-rest: rgb(255 255 255 / 58%);
-  --button-secondary-inner-ring-hover: rgb(255 255 255 / 72%);
-  --button-secondary-inner-ring-active: rgb(255 255 255 / 38%);
-  --button-secondary-inner-glow-rest: rgb(255 255 255 / 16%);
-  --button-secondary-inner-glow-hover: rgb(255 255 255 / 22%);
-  --button-secondary-inner-glow-active: rgb(255 255 255 / 8%);
-  --button-secondary-mist-rest: rgb(35 46 56 / 12%);
-  --button-secondary-mist-hover: rgb(35 46 56 / 16%);
-  --button-secondary-mist-active: rgb(35 46 56 / 8%);
   --button-secondary-press-depth: rgb(35 46 56 / 14%);
-  --button-danger-inner-ring-rest: rgb(255 255 255 / 30%);
-  --button-danger-inner-ring-hover: rgb(255 255 255 / 38%);
-  --button-danger-inner-ring-active: rgb(255 255 255 / 18%);
-  --button-danger-inner-glow-rest: rgb(255 255 255 / 8%);
-  --button-danger-inner-glow-hover: rgb(255 255 255 / 11%);
-  --button-danger-inner-glow-active: rgb(255 255 255 / 4%);
   --button-loading-background: var(--processing-surface);
   --button-loading-border: var(--processing-border);
   --button-loading-foreground: var(--processing-foreground);
   --button-loading-shimmer: var(--processing-shimmer);
   --button-loading-shadow:
-    inset 0 0 0 1px var(--processing-inner-ring),
-    inset 0 0 0.24rem var(--processing-inner-glow),
-    0 0 0.58rem -0.28rem var(--processing-mist);
+    inset 0 1px 2px var(--button-face-highlight-rest),
+    0 1px 2px -1px var(--button-shadow-neutral-rest),
+    0 4px 10px -7px var(--button-shadow-neutral-rest);
   --surface-neutral: #f4f6f8;
   --surface-accent-subtle: #f3f6f8;
   --skeleton-base: #edf0f4;
@@ -455,45 +424,26 @@
   --primary-active: #7b95ae;
   --button-danger-hover-background: #c95d67;
   --button-danger-active-background: #b54e58;
+  --button-face-highlight-rest: rgb(255 255 255 / 4%);
+  --button-face-highlight-hover: rgb(255 255 255 / 6%);
+  --button-face-highlight-active: rgb(255 255 255 / 2%);
+  --button-shadow-neutral-rest: rgb(0 0 0 / 42%);
+  --button-shadow-neutral-hover: rgb(0 0 0 / 52%);
   --processing-surface: #2b3945;
-  --processing-surface-top: var(--processing-surface);
-  --processing-surface-bottom: var(--processing-surface);
+  --processing-surface-top: color-mix(in srgb, var(--processing-surface) 98%, white);
+  --processing-surface-bottom: color-mix(in srgb, var(--processing-surface) 98%, var(--button-depth));
   --processing-border: #435362;
   --processing-foreground: #b4c6d5;
   --processing-shimmer: #eef5fb;
-  --processing-inner-ring: rgb(255 255 255 / 22%);
-  --processing-inner-glow: rgb(255 255 255 / 7%);
-  --processing-mist: rgb(0 0 0 / 36%);
-  --button-secondary-inner-ring-rest: rgb(255 255 255 / 16%);
-  --button-secondary-inner-ring-hover: rgb(255 255 255 / 22%);
-  --button-secondary-inner-ring-active: rgb(255 255 255 / 10%);
-  --button-secondary-inner-glow-rest: rgb(255 255 255 / 5%);
-  --button-secondary-inner-glow-hover: rgb(255 255 255 / 8%);
-  --button-secondary-inner-glow-active: rgb(255 255 255 / 3%);
-  --button-secondary-mist-rest: rgb(0 0 0 / 32%);
-  --button-secondary-mist-hover: rgb(0 0 0 / 40%);
-  --button-secondary-mist-active: rgb(0 0 0 / 24%);
   --button-secondary-press-depth: rgb(0 0 0 / 28%);
-  --button-danger-inner-ring-rest: rgb(255 255 255 / 24%);
-  --button-danger-inner-ring-hover: rgb(255 255 255 / 32%);
-  --button-danger-inner-ring-active: rgb(255 255 255 / 14%);
-  --button-danger-inner-glow-rest: rgb(255 255 255 / 6%);
-  --button-danger-inner-glow-hover: rgb(255 255 255 / 9%);
-  --button-danger-inner-glow-active: rgb(255 255 255 / 3%);
-  --button-primary-inner-ring-rest: rgb(255 255 255 / 22%);
-  --button-primary-inner-ring-hover: rgb(255 255 255 / 28%);
-  --button-primary-inner-ring-active: rgb(255 255 255 / 12%);
-  --button-primary-inner-glow-rest: rgb(255 255 255 / 6%);
-  --button-primary-inner-glow-hover: rgb(255 255 255 / 9%);
-  --button-primary-inner-glow-active: rgb(255 255 255 / 3%);
   --button-loading-background: var(--processing-surface);
   --button-loading-border: var(--processing-border);
   --button-loading-foreground: var(--processing-foreground);
   --button-loading-shimmer: var(--processing-shimmer);
   --button-loading-shadow:
-    inset 0 0 0 1px var(--processing-inner-ring),
-    inset 0 0 0.26rem var(--processing-inner-glow),
-    0 0 0.58rem -0.28rem var(--processing-mist);
+    inset 0 1px 2px var(--button-face-highlight-rest),
+    0 1px 2px -1px var(--button-shadow-neutral-rest),
+    0 4px 10px -7px var(--button-shadow-neutral-rest);
   --surface-neutral: #29303d;
   --surface-accent-subtle: #2f3942;
   --skeleton-base: #343b49;
@@ -625,8 +575,8 @@
 .color-lab-system[data-palette="classic"],
 .color-lab-system[data-palette="soft"] {
   --processing-surface: #dde6ed;
-  --processing-surface-top: var(--processing-surface);
-  --processing-surface-bottom: var(--processing-surface);
+  --processing-surface-top: color-mix(in srgb, var(--processing-surface) 98%, white);
+  --processing-surface-bottom: color-mix(in srgb, var(--processing-surface) 98%, var(--button-depth));
   --processing-border: #c1ced9;
   --processing-foreground: #425e76;
   --processing-shimmer: #ffffff;
@@ -662,32 +612,25 @@
   --sidebar-accent-foreground: #efeee9;
   --sidebar-border: #393a35;
   --processing-surface: #2b3945;
-  --processing-surface-top: var(--processing-surface);
-  --processing-surface-bottom: var(--processing-surface);
+  --processing-surface-top: color-mix(in srgb, var(--processing-surface) 98%, white);
+  --processing-surface-bottom: color-mix(in srgb, var(--processing-surface) 98%, var(--button-depth));
   --processing-border: #435362;
   --processing-foreground: #b4c6d5;
   --processing-shimmer: #eef5fb;
-  --processing-inner-ring: rgb(255 255 255 / 22%);
-  --processing-inner-glow: rgb(255 255 255 / 7%);
-  --processing-mist: rgb(0 0 0 / 36%);
   --button-loading-background: var(--processing-surface);
   --button-loading-border: var(--processing-border);
   --button-loading-foreground: var(--processing-foreground);
   --button-loading-shimmer: var(--processing-shimmer);
-  --button-secondary-inner-ring-rest: rgb(255 255 255 / 18%);
-  --button-secondary-inner-ring-hover: rgb(255 255 255 / 25%);
-  --button-secondary-inner-ring-active: rgb(255 255 255 / 12%);
-  --button-secondary-inner-glow-rest: rgb(255 255 255 / 6%);
-  --button-secondary-inner-glow-hover: rgb(255 255 255 / 10%);
-  --button-secondary-inner-glow-active: rgb(255 255 255 / 4%);
-  --button-secondary-mist-rest: rgb(0 0 0 / 48%);
-  --button-secondary-mist-hover: rgb(0 0 0 / 58%);
-  --button-secondary-mist-active: rgb(0 0 0 / 34%);
+  --button-face-highlight-rest: rgb(255 255 255 / 4%);
+  --button-face-highlight-hover: rgb(255 255 255 / 6%);
+  --button-face-highlight-active: rgb(255 255 255 / 2%);
+  --button-shadow-neutral-rest: rgb(0 0 0 / 42%);
+  --button-shadow-neutral-hover: rgb(0 0 0 / 52%);
   --button-secondary-press-depth: rgb(0 0 0 / 24%);
   --button-loading-shadow:
-    inset 0 0 0 1px var(--processing-inner-ring),
-    inset 0 0 0.26rem var(--processing-inner-glow),
-    0 0 0.58rem -0.28rem var(--processing-mist);
+    inset 0 1px 2px var(--button-face-highlight-rest),
+    0 1px 2px -1px var(--button-shadow-neutral-rest),
+    0 4px 10px -7px var(--button-shadow-neutral-rest);
   --color-lab-frame-shadow: 0 1.5rem 4rem -2.5rem rgb(0 0 0 / 72%);
 }
 

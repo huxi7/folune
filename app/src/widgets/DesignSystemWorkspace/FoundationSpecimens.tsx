@@ -16,7 +16,7 @@ const semanticIcons = [
 ] as const;
 
 const concentricSurfaces = [
-  ["button", "Button · 内亮环"],
+  ["button", "Button · 轻面光"],
   ["input", "Input · 内层"],
   ["select", "Select · 内层"],
   ["composite", "复合输入 · 嵌套"],
