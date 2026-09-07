@@ -79,3 +79,5 @@ Paper First V1.1 / Quiet Editorial 覆盖约束: 本节覆盖上文遗留的 V1 
 2026-09-02 形制收口投影：归档线已由 fixed `ArchiveCordOverlay` 取代 react-archer；source 是 Paper Toolbar **左上角身份段**里的 `ArchiveStatus`（放在右侧命令簇里那条线必须横穿整张纸才够得到左边的文件树），target 是真实 tree row 标记，离屏目标由纯策略钳制，窄屏 overlay 只保留目标高亮。上文遗留的 Archive Port/Target Port 叙述不再代表当前实现。
 
 2026-09-02 层序投影：跨容器的浮层与连线不再靠 DOM 顺序决定谁盖谁。容器（浮动/常驻 Panel 60/80、Stage 角标 70）< 归档线 Overlay 84 < 弹层（85/90+）；侧栏 header/footer（各拥有一个弹层）显式排在文件树之上——三段各带一条 fill 常驻的 opacity 入场动画，因此都是 z-index: auto 的层叠上下文，不显式排序就会让树把新建菜单连命中一起吞掉。Paper 顶栏一个字都不裁（更多菜单从它里面垂下去，且 `overflow: hidden` 会让它自己成为 nearest 滚动容器、凝结时间线永远 inactive），需要裁的只有标题所在的身份段，且必须用 `clip` 而不是 `hidden`。
+
+2026-09-07 视觉收口：Control 全族统一 16px / inner 12px；Skeleton 改为纯中性灰阶，覆盖上文旧的灰蓝加载约束。设置暗色局部使用统一黑灰表面，Canvas 加载只保留干净 Stage。

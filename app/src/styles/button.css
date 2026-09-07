@@ -190,8 +190,8 @@
   }
 
   .ds-button-secondary {
-    --button-border-rest: color-mix(in srgb, var(--card) 88%, var(--border));
-    --button-border-hover: color-mix(in srgb, var(--secondary) 86%, var(--border));
+    --button-border-rest: color-mix(in srgb, var(--card) 20%, var(--border));
+    --button-border-hover: color-mix(in srgb, var(--secondary) 8%, var(--border));
     --button-border-active: color-mix(in srgb, var(--border) 86%, var(--card));
     --button-surface-rest: var(--card);
     --button-surface-hover: var(--secondary);

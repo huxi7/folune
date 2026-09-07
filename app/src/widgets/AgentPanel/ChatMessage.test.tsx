@@ -186,6 +186,6 @@ describe("ChatMessage", () => {
     );
     expect(successHtml).not.toContain('role="dialog"');
     expect(successHtml).toContain('aria-label="回复操作"');
-    expect(successHtml.match(/撤销本次操作/g)).toHaveLength(1);
+    expect(successHtml.match(/>撤销</g)).toHaveLength(1);
   });
 });

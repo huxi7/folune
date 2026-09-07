@@ -1,15 +1,9 @@
 /**
- * [INPUT]: 依赖 Design System Skeleton/SkeletonGroup 与 Canvas/Paper 共用 Stage 样式
- * [OUTPUT]: 对外提供延迟可见、单一真实纸面比例的 CanvasStageLoading
- * [POS]: widgets 的统一路由/Canvas 首屏占位；快速请求不出现，慢请求只画一张结构稳定的纸，不再并列伪造两张卡片
+ * [INPUT]: 依赖 Canvas 共用 Stage 样式与调用方的延迟可见状态
+ * [OUTPUT]: 对外提供无占位卡片、保留无障碍加载状态的 CanvasStageLoading
+ * [POS]: widgets 的统一路由/Canvas 首屏覆盖层；只保持干净画布，不伪造尚未加载的笔记
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
-
-import {
-  Skeleton,
-  SkeletonGroup,
-} from "../shared/design-system/components";
-
 export function CanvasStageLoading({
   label = "正在准备画布",
   visible,
@@ -18,14 +12,5 @@ export function CanvasStageLoading({
   visible: boolean;
 }) {
   if (!visible) return null;
-
-  return (
-    <SkeletonGroup
-      className="canvas-stage-loading"
-      label={label}
-      visible={visible}
-    >
-      <Skeleton className="canvas-stage-loading-paper" />
-    </SkeletonGroup>
-  );
+  return <div aria-label={label} aria-busy="true" role="status" className="canvas-stage-loading" />;
 }

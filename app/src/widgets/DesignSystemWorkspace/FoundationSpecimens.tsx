@@ -43,7 +43,7 @@ export function SemanticIconComparison() {
 
 export function ControlRadiusInnerPreview() {
   return (
-    <div aria-label="12px Control 与 9px inner radius 同心样板" className="ds-radius-inner-preview" role="img">
+    <div aria-label="16px Control 与 12px inner radius 同心样板" className="ds-radius-inner-preview" role="img">
       {concentricSurfaces.map(([surface, label]) => (
         <span data-surface={surface} key={surface}>
           <i aria-hidden="true"><b /></i>

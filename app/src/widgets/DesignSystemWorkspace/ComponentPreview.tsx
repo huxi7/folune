@@ -222,7 +222,7 @@ function RadiusElevationMotionPreview() {
     <div className="ds-foundation-material-preview">
       <div className="ds-radius-preview">
         <span data-radius="compact"><strong>8</strong><small>Compact</small></span>
-        <span data-radius="control"><strong>12</strong><small>Control</small></span>
+        <span data-radius="control"><strong>16</strong><small>Control</small></span>
         <span data-radius="paper"><strong>12</strong><small>Paper · Menu</small></span>
         <span data-radius="panel"><strong>16</strong><small>Panel</small></span>
         <span data-radius="dialog"><strong>20</strong><small>Dialog</small></span>

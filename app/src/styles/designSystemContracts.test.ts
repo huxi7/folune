@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 读取 DS motionTokenStyles、index.css、button.css、sidebar-button.css 与 workspace.css 的 Control radius、Button 共享别名、Composer 圆形例外与统一 press
- * [OUTPUT]: 锁定 12px Control、显式 9px inner、Button 不建立私有半径、实体 Button 使用极轻纵向同色面光且没有 1px 全周内环、Ghost 无实体阴影、Press 收回外影、Composer 继续显式使用 round，以及四处命令控件共读同一份 press 缩放并在 Reduced Motion 下归 1、创建 split 的 hover 与 press 只认外壳那两半而不认展开的菜单项
+ * [OUTPUT]: 锁定 16px Control、显式 12px inner、Button 不建立私有半径、实体 Button 使用极轻纵向同色面光且没有 1px 全周内环、Ghost 无实体阴影、Press 收回外影、Composer 继续显式使用 round，以及四处命令控件共读同一份 press 缩放并在 Reduced Motion 下归 1、创建 split 的 hover 与 press 只认外壳那两半而不认展开的菜单项
  * [POS]: app/src/styles 的设计系统静态契约测试；在浏览器视觉验收之外阻止 Radius 与 press 两条公理被局部覆盖
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -24,9 +24,9 @@ function declarationsFor(css: string, selectorFragment: string) {
 }
 
 describe("Control radius 公理", () => {
-  test("Control 整档为 12px，inner 冻结为显式 9px", () => {
-    expect(indexCss).toContain("--radius-control: 0.75rem;");
-    expect(indexCss).toContain("--radius-inner-control: 0.5625rem;");
+  test("Control 整档为 16px，inner 冻结为显式 12px", () => {
+    expect(indexCss).toContain("--radius-control: 1rem;");
+    expect(indexCss).toContain("--radius-inner-control: 0.75rem;");
     expect(indexCss).not.toMatch(/--radius-inner-control:\s*calc\(/);
   });
 

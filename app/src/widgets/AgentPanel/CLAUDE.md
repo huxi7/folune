@@ -59,3 +59,5 @@ index.ts: AgentPanel 模块稳定出口，隔离 AppDashboard 与内部文件布
 职责: 承载冻结上下文、唯一 @Prompt Bar、纯净对话、可信工具过程、普通/整理同构的唯一人工裁决 Dock、刷新恢复、撤销和消息传输；当前 memo 只作为默认预选 @进入同一 sources 数组，来源只在发送前 Composer 中可见，发送后不重复进入消息视觉层。审批响应必须先持久化，UI 点击锁与 AI SDK part 状态共同阻止重复执行；已批准未完成工具刷新后可依赖 command/toolCall 幂等恢复。AI 整理只在待确认时占用 Dock，成功后消失，禁止在 Panel 或 Paper 下方重复结果卡。四个 memo 客户端工具经 Worker 纯规划，细分 command 仍由 api 安全执行。备忘录写输入可以乐观投影，但事实只能由 api command output 确认，同一 tool_call_id 只投影一次，失败/拒绝精确回滚，同一 command_id+status 只对账一次。
 
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+
+2026-09-07 视觉收口：回复末尾撤销入口使用 Undo2、短标签「撤销」与共享 Label 字阶。

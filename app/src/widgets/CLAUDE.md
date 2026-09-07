@@ -49,8 +49,8 @@ cordGeometry.test.ts: 以独立三次贝塞尔求值反证中点切分，并覆�
 Cord.tsx: 共享连线 Signature 渲染层；粗细沿路径恒定是 SVG 硬限制，两头收细由沿线透明度渐变承担，虚线/实线表达关系状态，CordLayer 可声明 viewBox 让固定几何在响应式样板中与卡片共用同一坐标系；路径动画仍统一下沉 CSS，reduced-motion 直接静态
 EdgeDock.tsx: 文件库/AI 共用的 Stage 关闭态 Ghost 图标入口，桌面 32px、窄屏 44px，静止无背景/描边/文字且不使用共享 layoutId；Panel 关闭入口由各自 Header 内部拥有
 PaperSurface.tsx: 正文身份变化只重播局部动效，不卸载内容子树； Paper First 签名表面，纸壳/正文各自命名而不拉伸字；内层容器不再按辅助视图重挂载，NotesWorkspace 自己用 memoClientKey 隔离编辑会话，7:9 几何和归档 source 边界不变
-CanvasStageLoading.tsx: Paper/Canvas 共用的单纸面 Stage 占位；消费统一延迟 Skeleton，快速请求不出现，慢请求保持真实结构比例且只做交叉淡入
-CanvasStageLoading.test.tsx: 锁定 visible=false 时完全卸载全屏容器，visible=true 时只渲染一张纸面 Skeleton，防止透明占位遮住 ready Canvas
+CanvasStageLoading.tsx: 统一 Canvas 首屏加载覆盖层；延迟状态由调用方提供，只保留干净 Stage 与可访问 busy 状态，不渲染虚构笔记卡片
+CanvasStageLoading.test.tsx: 锁定隐藏时卸载、显示时保留加载语义且没有纸面 Skeleton
 CanvasWorkspace.tsx: Canvas 空间壳、标题/边缘工具和窄屏互斥 Panel，右 Panel 使用与 Paper 一致的 PresenceSurface；Canvas 会话和节点几何不受面板开合影响
 CanvasWorkspace.test.tsx: Canvas 会话壳回归测试，锁定中央 Canvas、共享 Panel、Paper 互斥关系，以及伪返回按钮/Canvas 文字标识/厚重标题卡片确已消失
 KnowledgeCanvas/: Canvas V2 交互内容根，以受控 React Flow 承载持久视口、memo/native 节点、右下抓手的拖/点等效连接与纯 UI 临时编织绳、带撤销回执/来源确认的移除、拖拽/缩放、Picker、Preview、显式 AI expansion、WAL 恢复与保存状态

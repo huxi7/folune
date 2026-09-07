@@ -38,27 +38,26 @@ SuperNote is a quiet editorial instrument that lets users write first and allows
 ## Radius system
 
 - Compact `8px`: dense tree rows, small navigation targets
-- Control `12px`: Button, Input, Select, SidebarButton
+- Control `16px`: Button, Input, Select, SidebarButton, user message and tool-call bubbles
 - Paper / Menu `12px`: editorial Paper, code surfaces, popovers
 - Panel `16px`: workspace panels, cards, composite inputs
 - Dialog `20px`: modal decision surfaces
 - True circles and pills are reserved for avatars, status dots, tags and the AI Composer's singular 32px send/stop action; Panel Toggle and other icon commands use the shared Control radius, never pill geometry.
 
-### Control moved 10px to 12px (2026-09-01)
+### Control softened together (2026-09-07)
 
-- The whole Control step moves together; Button never gets a private radius token. Button and Input sit on the same row — the Library header places the search Input beside the new-memo Button — and a 2px difference between adjacent controls reads as "something is off" without being nameable. That unnameable wrongness is exactly the complaint this step answers.
-- Control and Paper/Menu now hold the same 12px on purpose. Roundness is relative: 12px on a 36px control reads generous, 12px on an 800px-wide Paper reads nearly square, so one value cannot be confused across those two scales. If Paper later needs more curve, raise the whole Paper step — do not reopen a Button exception.
-- SuperNote compared the existing 10px Control, a 12px squircle and full capsule geometry, then selected 12px for the 32/36px Control family. In this product's dense desktop layout, 12px supplies the intended softness without making controls read as swollen pills; this is a frozen SuperNote decision, not a universal law for every 36px control.
+- Control is now 16px, with an explicit 12px inner-control radius. This supersedes the earlier 12px/9px decision and applies to the entire control family, including AI message and tool-call bubbles.
+- Keep the shared squircle and 32/36px heights; do not introduce per-button radii or capsule geometry. Paper/Menu, Panel and Dialog retain their separate surface roles.
 
 ### corner-shape is not a softener
 
 - `corner-shape: squircle` is `superellipse(2)` — a convex curve **between** `round` (`superellipse(1)`) and `square` (`superellipse(infinity)`). At an identical `border-radius` a squircle therefore reads *squarer* than the default arc, and larger superellipse values approach a right angle.
 - The squircle earns its keep at larger radii, where continuous curvature becomes legible; at small radii it only spends the radius. So when a surface still reads too square after this step, the next move is the radius step, never a higher superellipse.
-- Nested concentricity: inner radius starts from outer radius minus the full inset gap, padding and border both, but that subtraction is only a candidate under `corner-shape`, not the final truth. The 2026-09-01 implementation compared Button/Input/Select/composite nests in Light and Dark at 100% and 125%, then froze `--radius-inner-control` as an explicit `9px`; visual judgment selected the number once, it is not an unwritten runtime rule.
+- Nested concentricity: inner radius starts from outer radius minus the full inset gap, padding and border both, but that subtraction is only a candidate under `corner-shape`, not the final truth. The 2026-09-01 implementation compared Button/Input/Select/composite nests in Light and Dark at 100% and 125%, then froze `--radius-inner-control` as an explicit `9px` (superseded by 12px on 2026-09-07); visual judgment selected the number once, it is not an unwritten runtime rule.
 
 ### Rejected: capsule buttons (2026-09-01)
 
-Moving the 36px Button family to `999px` was evaluated and rejected. The Composer's 32px send/stop action is a signature precisely because nothing else in the product uses pill geometry; turning every button into a capsule would erase that uniqueness in exchange for softness that 12px already delivers. The product stays with a controlled rounded rectangle.
+Moving the 36px Button family to `999px` was evaluated and rejected. The Composer's 32px send/stop action is a signature precisely because nothing else in the product uses pill geometry; turning every button into a capsule would erase that uniqueness in exchange for softness that the shared Control step delivers. The product stays with a controlled rounded rectangle.
 
 ## Workspace panel controls
 
@@ -207,3 +206,10 @@ One axis is deliberately singular:
 ## Motion System
 
 The motion language is part of the Design System. `src/shared/design-system/motion.ts` is the single source for shared durations, easing and springs and generates the CSS declarations consumed by controls. Full A/B decisions, component recipes and verification evidence live in [MOTION_SYSTEM.md](MOTION_SYSTEM.md). Menus use anchored 160/130ms presence, modals retain the 10px/0.985 reveal, Panels use an 8px non-bouncing 220/170ms transition, and tree disclosure shares the 210ms FLIP timeline. Reduced Motion removes spatial changes and keeps at most 90ms opacity feedback. Paper/Canvas geometry retains its dedicated browser View Transition contract.
+
+## Neutral loading and settings (2026-09-07)
+
+- Secondary uses a restrained, visible 1px neutral border in rest and hover; tool calls consume the same material. Result icons contain their own circular outline, with no additional status box.
+- Skeleton base/highlight are achromatic: Light #ebebeb/#f6f6f6, Dark #363636/#454545. Loading placeholders never borrow brand blue. Canvas entry keeps only its clean Stage and accessible busy state, with no pretend paper card.
+- Dark settings scope neutral charcoal surfaces (#1c1c1c main, #262626 sidebar), gray borders and neutral navigation states to the account dialog. Brand actions and keyboard focus retain their semantic color.
+- Assistant undo uses Undo2 and the short label 撤销, with the shared 12px/16px Label typography.

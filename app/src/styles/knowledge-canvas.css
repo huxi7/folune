@@ -268,7 +268,6 @@
   /* ------------------------------------------------------------------------ */
 
   .canvas-stage-loading { position: absolute; z-index: 5; inset: 0; display: grid; place-items: center; padding: var(--space-10); background-color: var(--workspace-stage); background-image: radial-gradient(circle, color-mix(in srgb, var(--foreground) 9%, transparent) 1px, transparent 1px); background-size: 26px 26px; }
-  .canvas-stage-loading-paper { width: min(17.5rem, calc(100vw - 3rem)); aspect-ratio: 7 / 9; border-radius: var(--radius-paper); }
   .canvas-state { position: absolute; z-index: 6; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-2); background: var(--workspace-stage); color: var(--muted-foreground); text-align: center; }
   .canvas-state strong { color: var(--foreground); font-size: var(--type-ui); }
   .canvas-state span { max-width: 24rem; font-size: var(--type-label); line-height: 1.6; }
@@ -417,7 +416,6 @@
     .canvas-card,
     .canvas-card-expand,
     .canvas-card-action,
-    .canvas-stage-loading-paper,
     .canvas-empty-hint,
     .canvas-mode-notice,
     .canvas-drop-hint,

@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 Collapse 的保留式高度披露、 React 折叠状态、共享 Lucide 工具/状态图标、人话名称/详情与 AI SDK 调用状态
+ * [INPUT]: 依赖 Collapse 的保留式高度披露、 React 折叠状态、共享 Lucide 工具图标与自带圆形轮廓的结果图标、人话名称/详情与 AI SDK 调用状态
  * [OUTPUT]: 对外提供不暴露原始载荷、执行中带流光、有详情才可聚焦展开的 ToolCallBubble
  * [POS]: design-system AI 消息家族的工具披露控件，以 Secondary Button 同源材质承载动作入口，详情保持普通信息排版
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -7,10 +7,10 @@
 
 import { Collapse } from "./Collapse";
 import {
-  CheckIcon,
+  CheckCircleIcon,
   ToolboxIcon,
   WarningCircleIcon,
-  XIcon,
+  XCircleIcon,
   type Icon,
 } from "../icons";
 import { useId, useState } from "react";
@@ -64,11 +64,11 @@ export function ToolCallBubble({
   const active = pending && live;
   const expandable = details.length > 0;
   const ResultIcon = finished
-    ? CheckIcon
+    ? CheckCircleIcon
     : failed
       ? WarningCircleIcon
       : denied || interrupted
-        ? XIcon
+        ? XCircleIcon
         : null;
   const status = interrupted ? "未完成" : stateLabel[state];
   const bubbleClassName = [
@@ -84,7 +84,7 @@ export function ToolCallBubble({
       <strong className="ds-tool-call-name">{name}</strong>
       {ResultIcon ? (
         <span aria-hidden="true" className="ds-tool-call-result">
-          <ResultIcon size={14} />
+          <ResultIcon size={16} />
         </span>
       ) : null}
     </>

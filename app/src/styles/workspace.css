@@ -789,7 +789,7 @@
   .agent-approval-dock-actions { display: flex; flex: 0 0 auto; align-items: center; gap: var(--space-1); }
   .agent-approval-dock-actions .ds-button { min-height: var(--control-height-compact); height: var(--control-height-compact); padding-inline: var(--space-2); font-size: 0.625rem; }
   .agent-response-actions { display: flex; align-items: center; gap: var(--space-1); margin-top: var(--space-1); }
-  .agent-response-action.ds-button { min-height: 1.6rem; height: 1.6rem; padding-inline: 0.35rem; color: var(--muted-foreground); font-size: 0.625rem; box-shadow: none; }
+  .agent-response-action.ds-button { min-height: 1.6rem; height: 1.6rem; padding-inline: 0.35rem; color: var(--muted-foreground); font-size: var(--type-label); font-weight: var(--weight-label); line-height: var(--leading-label); box-shadow: none; }
   .agent-response-action.ds-button:hover { color: var(--foreground); }
   .agent-composer-action.ds-button.ds-button-size-square { width: var(--control-height-compact); min-width: var(--control-height-compact); height: var(--control-height-compact); min-height: var(--control-height-compact); flex-shrink: 0; border-radius: var(--radius-pill); corner-shape: round; }
   .panel-resize-handle { position: absolute; top: 0; bottom: 0; z-index: 40; width: 6px; cursor: col-resize; touch-action: none; }

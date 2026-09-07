@@ -1,11 +1,11 @@
 /**
  * [INPUT]: 依赖 SuperNoteUIMessage 的 AI SDK 有序文本/reasoning/工具 parts、过程分区与 design-system AI 消息组件
- * [OUTPUT]: 对外提供纯净用户消息、单一过程区及回复末尾轻量撤销的 assistant 回复
+ * [OUTPUT]: 对外提供纯净用户消息、单一过程区及回复末尾 Undo2 图标与「撤销」短标签的 assistant 回复
  * [POS]: AgentPanel 消息语义适配层，只负责对话与过程；人工审批由 AgentConversation 固定在 Composer 上方，冻结上下文不进入对话视觉层
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
-import { ArrowCounterClockwiseIcon } from "../../shared/design-system/icons";
+import { ArrowUUpLeftIcon } from "../../shared/design-system/icons";
 import { memo, useState } from "react";
 import { getToolName, isToolUIPart } from "ai";
 
@@ -119,7 +119,7 @@ function AssistantMessageContent({
           <Button
             className="agent-response-action"
             disabled={undoState !== "idle"}
-            icon={ArrowCounterClockwiseIcon}
+            icon={ArrowUUpLeftIcon}
             onClick={() => {
               setUndoState("running");
               void onUndo(undoCommands)
@@ -128,7 +128,7 @@ function AssistantMessageContent({
             }}
             variant="ghost"
           >
-            {undoState === "running" ? "正在撤销…" : undoState === "done" ? "已撤销" : "撤销本次操作"}
+            {undoState === "running" ? "正在撤销…" : undoState === "done" ? "已撤销" : "撤销"}
           </Button>
         </div>
       ) : null}

@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 index.css 的 primary/foreground/surface/spacing/button 零偏移环绕阴影与 motion 语义 token
- * [OUTPUT]: 提供用户主色气泡、零卡片最终正文、五词错峰模糊拖尾、可折叠处理过程、Formation ThinkingIndicator 与可展开轻量详情的工具状态样式
+ * [OUTPUT]: 提供用户主色气泡、零卡片最终正文、五词错峰模糊拖尾、可折叠处理过程、Formation ThinkingIndicator 与可展开轻量详情、结果图标不套盒的工具状态样式
  * [POS]: app/src/styles 的 AI 消息视觉层，被 AgentPanel 与 DEV Design System 共用；过程和正文只用自然留白过渡，不创建第二套主题或固定分隔线
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -296,9 +296,7 @@
     flex-shrink: 0;
     align-items: center;
     justify-content: center;
-    border: 1px solid color-mix(in srgb, var(--border) 62%, transparent);
-    border-radius: var(--radius-inner-control);
-    background: var(--card);
+    background: transparent;
     color: var(--muted-foreground);
     box-shadow: none;
   }
@@ -338,8 +336,7 @@
 
   @supports (corner-shape: squircle) {
     .ds-user-message-bubble,
-    .ds-tool-call-bubble,
-    .ds-tool-call-result {
+    .ds-tool-call-bubble {
       corner-shape: var(--corner-shape-smooth);
     }
   }
