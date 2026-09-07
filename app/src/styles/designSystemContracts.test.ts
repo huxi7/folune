@@ -154,10 +154,10 @@ describe("平滑圆角完整性", () => {
 });
 
 describe("滚动条对比度", () => {
-  test("只降低中性 thumb 的不透明度，不引入第二套颜色轴", () => {
-    expect(indexCss).toContain("--scrollbar-thumb: rgb(0 0 0 / 11%);");
-    expect(indexCss).toContain("--scrollbar-thumb: rgb(255 255 255 / 13%);");
-    expect(indexCss).not.toContain("--scrollbar-thumb: rgb(0 0 0 / 14%);");
-    expect(indexCss).not.toContain("--scrollbar-thumb: rgb(255 255 255 / 16%);");
+  test("只调整中性 thumb 颜色，保留既定 alpha，不引入第二套颜色轴", () => {
+    expect(indexCss).toContain("--scrollbar-thumb: rgb(96 96 96 / 11%);");
+    expect(indexCss).toContain("--scrollbar-thumb: rgb(190 190 190 / 13%);");
+    expect(indexCss).not.toContain("--scrollbar-thumb: rgb(0 0 0 / 11%);");
+    expect(indexCss).not.toContain("--scrollbar-thumb: rgb(255 255 255 / 13%);");
   });
 });
