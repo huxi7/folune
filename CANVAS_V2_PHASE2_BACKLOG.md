@@ -1,7 +1,7 @@
 # Canvas V2 Phase 2 / Polish Backlog
 
-> 状态：已确认方向 · 非实施 Plan  
-> 前置门禁：已通过——Canvas MVP 已落地并逐段真人验收  
+> 状态：已确认方向 · 非实施 Plan
+> 前置门禁：已通过——Canvas MVP 已落地并逐段真人验收
 > 产品约束：全部条目服从 [CANVAS_CONSTITUTION.md](CANVAS_CONSTITUTION.md)
 
 ## 1. 这份文件不是什么

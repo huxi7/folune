@@ -1,6 +1,6 @@
 # SuperNote Canvas 产品宪法
 
-> 常驻文档：Canvas 的产品定律，不随实现进度变化  
+> 常驻文档：Canvas 的产品定律，不随实现进度变化
 > 适用范围：Canvas 的一切实现、增强与重构
 
 ## 1. 本文件与 CLAUDE.md 的分工
