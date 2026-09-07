@@ -1,12 +1,12 @@
 /**
  * [INPUT]: 依赖 motion/react、纸面名字、工作台统一 Motion 与稳定 paperIdentity/编辑器内容；路由纸面过渡期间由 CSS 接管内层入场
- * [OUTPUT]: 对外提供纸壳与纸内正文各自命名、跨辅助视图保留子树实例的 Paper Surface；几何由 CSS 立开本，归档 source 由 Toolbar/Overlay 独立拥有
+ * [OUTPUT]: 对外提供纸壳与纸内正文各自命名、按正文身份播放局部过渡但保留子树实例的 Paper Surface；几何由 CSS 立开本，归档 source 由 Toolbar/Overlay 独立拥有
  * [POS]: app/src/widgets 的 Paper First Signature 纸面层；只拥有纸的视觉边界，NotesWorkspace 编辑会话仍由 Dashboard 以 memoClientKey 保持稳定
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
-import { motion } from "motion/react";
-import type { ReactNode } from "react";
+import { motion, useAnimationControls } from "motion/react";
+import { useLayoutEffect, type ReactNode } from "react";
 
 import {
   fadeTransition,
@@ -32,6 +32,11 @@ export function PaperSurface({
   reducedMotion,
   paperTransitionIdentity = null,
 }: PaperSurfaceProps) {
+  const contentAnimation = useAnimationControls();
+  useLayoutEffect(() => {
+    contentAnimation.set({ opacity: reducedMotion ? 1 : 0.82, y: reducedMotion ? 0 : 2 });
+    void contentAnimation.start({ opacity: 1, y: 0 });
+  }, [contentAnimation, paperIdentity, reducedMotion]);
   return (
     <motion.section
       className="app-main-panel paper-surface"
@@ -47,7 +52,7 @@ export function PaperSurface({
       transition={workspaceLayoutTransition}
     >
       <motion.div
-        animate={{ opacity: 1, y: 0 }}
+        animate={contentAnimation}
         className="paper-content-transition"
         initial={{ opacity: reducedMotion ? 1 : 0.82, y: reducedMotion ? 0 : 2 }}
         data-paper-identity={paperIdentity}

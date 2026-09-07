@@ -48,7 +48,7 @@ cordGeometry.ts: Cord 连线几何内核；提供边缘锚点（CordBox 声明 r
 cordGeometry.test.ts: 以独立三次贝塞尔求值反证中点切分，并覆盖四向边缘锚点、圆角锚点确实落在弧上且绕行 360° 每度位移有界（夹到边中段那种做法会在角上跳 ~68px）、重合端点不产 NaN 与两位小数收敛；另以「相对自身弦的有符号法向偏移」为形状描述子绕行 360°，逐度证明弯度无跳变（1° 内形变 < 2px）且恰好在四条轴上取直
 Cord.tsx: 共享连线 Signature 渲染层；粗细沿路径恒定是 SVG 硬限制，两头收细由沿线透明度渐变承担，虚线/实线表达关系状态，CordLayer 可声明 viewBox 让固定几何在响应式样板中与卡片共用同一坐标系；路径动画仍统一下沉 CSS，reduced-motion 直接静态
 EdgeDock.tsx: 文件库/AI 共用的 Stage 关闭态 Ghost 图标入口，桌面 32px、窄屏 44px，静止无背景/描边/文字且不使用共享 layoutId；Panel 关闭入口由各自 Header 内部拥有
-PaperSurface.tsx: Paper First 签名表面，纸壳/正文各自命名而不拉伸字；内层容器不再按辅助视图重挂载，NotesWorkspace 自己用 memoClientKey 隔离编辑会话，7:9 几何和归档 source 边界不变
+PaperSurface.tsx: 正文身份变化只重播局部动效，不卸载内容子树； Paper First 签名表面，纸壳/正文各自命名而不拉伸字；内层容器不再按辅助视图重挂载，NotesWorkspace 自己用 memoClientKey 隔离编辑会话，7:9 几何和归档 source 边界不变
 CanvasStageLoading.tsx: Paper/Canvas 共用的单纸面 Stage 占位；消费统一延迟 Skeleton，快速请求不出现，慢请求保持真实结构比例且只做交叉淡入
 CanvasStageLoading.test.tsx: 锁定 visible=false 时完全卸载全屏容器，visible=true 时只渲染一张纸面 Skeleton，防止透明占位遮住 ready Canvas
 CanvasWorkspace.tsx: Canvas 空间壳、标题/边缘工具和窄屏互斥 Panel，右 Panel 使用与 Paper 一致的 PresenceSurface；Canvas 会话和节点几何不受面板开合影响

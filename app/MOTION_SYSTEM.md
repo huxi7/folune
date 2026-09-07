@@ -92,3 +92,15 @@ A 涉及 30 个文件，B 涉及 10 个文件。A 的 Design System 演示、订
 - 查看历史再返回：临时草稿保持，消息 scrollTop 前后均为 891.5；清除测试草稿后，新建空会话成功返回聊天，Composer 捕获 y=12px/opacity=0 至原位可见的连续帧。本轮创建了两条空会话，未发送消息。
 - 快速反向开合正常；减少动态效果在页面载入及运行中切换都只淡换，无空间位移。Panel 与 Composer 通过 DS useMotionPreference 实时订阅偏好。
 - typecheck、lint、build 通过；最终全量 488/488 测试通过。中间一次 Canvas pagehide 测试失败，独立复跑 8/8 与最终全量均通过，未修改 Canvas 保存逻辑。构建仍有既有的大于 500kB chunk 提示。
+
+### 两侧面板稳定性修正
+
+普通笔记→笔记导航不启动整页 View Transition，避免 root 快照连同常驻文件树一起淡换；PaperSurface 仅按正文身份重播局部过渡，不通过 key 卸载内容。Canvas 空间转换继续沿用原有纸面过渡。
+
+AI 消息首次挂载在 layout effect 中直接定位到底部；退出时以 instant 取消尚未结束的原生 smooth scroll 并保持即时位置，presence 退出及历史隐藏期间忽略内容增长的追尾回调。重新挂载仍从底部开始，但不展示从顶部滚到底部的过程。
+
+代码验收：493 项测试通过，包含首次直接定位、退出冻结及迟到回调隔离；typecheck、lint、build 通过。按用户要求未使用浏览器，本轮视觉效果待用户手动验收。
+
+后续定位：keepMounted Collapse 原先没有自己的 AnimatePresence，直接继承父面板退出，把已展开详情高度收成零，引发正文重排。现在常驻与非常驻详情均有独立、不传播父退出的 presence 边界；面板离场不改变内部展开状态。退出取消平滑滚动时读取即时 scrollTop，不回退到可能滞后的 scroll 事件缓存。新增父面板退出隔离回归测试。
+
+退出隔离测试已做反证：还原旧 Collapse 实现时失败，恢复修复后通过；本轮仍未使用浏览器，视觉结果由用户手动验收。

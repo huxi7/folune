@@ -4,6 +4,8 @@
 成员清单
 CLAUDE.md: 记录 AgentPanel 子域成员、依赖方向与 GEB 回环协议
 AgentPanelHeader.tsx: 无状态固定顶栏，历史接管标题和左侧返回，新建/收起位置稳定；生产与样板共用
+useConversationScroll.test.tsx: 验证首次非平滑定位与退出冻结、迟到内容回调不追尾
+useConversationScroll.ts: 消息滚动唯一边界，首次绘制前定位、退出取消平滑滚动并冻结位置，隐藏历史拒绝追尾
 AgentPanel.tsx: AI 组合根，History/Conversation 用撑满高度的 PersistentView 承接；历史从左侧进入，关闭向左回收，单一顶栏由 AgentPanelHeader 接管，对话原位淡换；新会话数据就绪后才替换身份，Composer 单独浮现，创建成功从历史返回新会话，失败保留旧视图并 Toast；菜单与内容 Motion 不接管审批/流式/工具执行协议，隐藏会话保留 Composer 草稿
 ApprovalDock.tsx: Composer 上方唯一的紧凑非模态审批视觉原语，统一图标、标题、影响说明、按钮槽位与无蒙层语义；普通工具和 AI 整理审批只能适配它，禁止复制表面
 approvalState.ts: 审批状态机纯领域层，只检查末条 assistant；统一负责 requested 单次响应投影、approved 未完成工具恢复候选与 output 结果投影，避免 UI、持久化和恢复各自解释 AI SDK 状态

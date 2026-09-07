@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 Motion height/opacity 与 Design System 的层级时间轴
  * [OUTPUT]: 对外提供 Collapse，可中断的高度展开/收起与即时退出交互
- * [POS]: Tree/披露控件的尺寸生命周期原语；只动画一层高度，不缩放文字、不逐项错峰
+ * [POS]: Tree/披露控件的尺寸生命周期原语；独立 presence 边界隔离父面板退出，只在自身 open 改变时收放高度
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { AnimatePresence, motion, useIsPresent, useReducedMotion } from "motion/react";
@@ -36,6 +36,8 @@ function CollapseBody({ children, className, onMotionStart, onMotionEnd, keptOpe
   >{children}</motion.div>;
 }
 export function Collapse({ open, keepMounted = false, ...props }: CollapseProps) {
-  if (keepMounted) return <CollapseBody keptOpen={open} {...props} />;
-  return <AnimatePresence initial={false}>{open ? <CollapseBody key="content" {...props} /> : null}</AnimatePresence>;
+  // 常驻内容也必须拥有自己的 presence 边界，否则父 Panel 退出会使详情高度归零。
+  return <AnimatePresence initial={false} propagate={false}>
+    {keepMounted || open ? <CollapseBody key="content" keptOpen={keepMounted ? open : undefined} {...props} /> : null}
+  </AnimatePresence>;
 }

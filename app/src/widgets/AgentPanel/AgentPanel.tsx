@@ -1,14 +1,15 @@
 /**
- * [INPUT]: 依赖 DS 实时动态偏好、 PersistentView 的有方向视图承接、DS 输入表面浮现语义、useAiThreads、类型化 useChat/原生审批及既有 Composer/工具执行边界
+ * [INPUT]: 依赖 useConversationScroll 的挂载定位与退出冻结、 DS 实时动态偏好、 PersistentView 的有方向视图承接、DS 输入表面浮现语义、useAiThreads、类型化 useChat/原生审批及既有 Composer/工具执行边界
  * [OUTPUT]: 对外提供 AI Native 右侧工作区；引用源按 memo 身份/置顶列表精确对账，已批准工具按持久消息语义幂等恢复，外层只回报选中会话 id
  * [POS]: /app 右侧 AI Native V2 组合根；工具参数流结束且批准后才进入 Worker，api command 是唯一写事实源，Store 只做幂等投影与回滚
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
+import { useConversationScroll } from "./useConversationScroll";
 import { AgentPanelHeader } from "./AgentPanelHeader";
 import { PersistentView, useToast } from "../../shared/design-system/components";
 import { useMotionPreference } from "../../shared/design-system/useMotionPreference";
-import { motion } from "motion/react";
+import { motion, useIsPresent } from "motion/react";
 import { contentEntranceVariants } from "../../shared/design-system/motion";
 import { useChat } from "@ai-sdk/react";
 import {
@@ -161,6 +162,7 @@ function AgentConversation({
 }: ConversationProps) {
   const [inputValue, setInputValue] = useState("");
   const reduceMotion = Boolean(useMotionPreference());
+  const present = useIsPresent();
   const [sources, setSources] = useState<ComposerSource[]>([]);
   const [suppressedCurrentMemoId, setSuppressedCurrentMemoId] = useState<string | null>(null);
   const [mentionStart, setMentionStart] = useState<number | null>(null);
@@ -172,7 +174,6 @@ function AgentConversation({
   // 客户端工具 (Worker 规划 + createAiCommand) 执行中: 流已结束但会话不空闲
   const [clientToolsRunning, setClientToolsRunning] = useState(false);
   const composerRef = useRef<HTMLDivElement>(null);
-  const messageListRef = useRef<HTMLDivElement>(null);
   const manuallyApprovedToolCalls = useRef(new Set<string>());
   const memoToolExecutions = useRef(new Map<string, Promise<unknown>>());
   const respondingApprovalIds = useRef(new Set<string>());
@@ -431,14 +432,7 @@ function AgentConversation({
 
   useEffect(() => onBusyChange(busy), [busy, onBusyChange]);
 
-  const scrollToLatest = useCallback((behavior: ScrollBehavior) => {
-    const list = messageListRef.current;
-    if (list) list.scrollTo({ behavior, top: list.scrollHeight });
-  }, []);
-  useEffect(() => scrollToLatest(status === "streaming" ? "auto" : "smooth"), [messages, scrollToLatest, status]);
-
-  // 稳定引用: 内联箭头函数每次渲染都是新引用, 会让下游 memo 全部失效
-  const scrollToLatestAuto = useCallback(() => scrollToLatest("auto"), [scrollToLatest]);
+  const { messageListRef, scrollToLatestAuto } = useConversationScroll(messages, status, reduceMotion, present);
 
   const handleStop = useCallback(() => {
     cancelCelebration();

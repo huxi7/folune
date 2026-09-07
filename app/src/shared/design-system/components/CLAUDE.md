@@ -2,8 +2,8 @@
 > L2 | 父级: ../CLAUDE.md
 
 成员清单
-motionLifecycle.test.tsx: 真实 DOM 行为门禁，覆盖菜单快速反向开关、退出交互隔离、input 实例/光标保留、菜单/模态分层 Escape 与嵌套滚动锁；动画完成时间另由浏览器测量
-Collapse.tsx: Tree/披露控件的高度生命周期原语，210ms 同源曲线、可打断、退出立即 inert；keepMounted 保留工具详情状态，减少动态效果即时改变高度
+motionLifecycle.test.tsx: 验证父面板退出不连带折叠常驻详情； 真实 DOM 行为门禁，覆盖菜单快速反向开关、退出交互隔离、input 实例/光标保留、菜单/模态分层 Escape 与嵌套滚动锁；动画完成时间另由浏览器测量
+Collapse.tsx: 常驻详情同样使用独立且不传播父退出的 presence 边界，防止 Panel 退出使内部高度归零； Tree/披露控件的高度生命周期原语，210ms 同源曲线、可打断、退出立即 inert；keepMounted 保留工具详情状态，减少动态效果即时改变高度
 PresenceSurface.tsx: Menu/Popover/Panel 共用的无额外定位包装入退场基础件；关闭即 inert、完成后卸载，MotionSurface 支持外层 presence，定位和焦点策略留给语义组件
 PersistentView.tsx: 保留实例的视图基础件；motion=from-left 选择从左侧进入的 24px 承接，fill 以四边定位维持 Panel 退出高度，默认仍为轻淡换；旧视图立即脱离布局并 inert、淡出完成 hidden，切回复用原实例和草稿，父容器提供相对定位
 .gitkeep: 保留本地组件目录

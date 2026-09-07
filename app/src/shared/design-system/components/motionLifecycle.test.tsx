@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖 happy-dom、Testing Library 与真实 Dialog/Select/PersistentView/PresenceSurface
- * [OUTPUT]: 验证退出即隔离交互、快速反向开关、分层 Escape 与表单实例保留
+ * [INPUT]: 依赖 happy-dom、Testing Library 与真实 Dialog/Select/PersistentView/PresenceSurface/Collapse
+ * [OUTPUT]: 验证退出即隔离交互、快速反向开关、分层 Escape、表单实例保留与父退出隔离
  * [POS]: Design System 动效行为门禁；不以测试环境的动画时钟冒充浏览器逐帧验收
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -22,6 +22,7 @@ const { render, cleanup, fireEvent, waitFor } = await import("@testing-library/r
 const { Dialog } = await import("./Dialog");
 const { Select } = await import("./Select");
 const { PresenceSurface } = await import("./PresenceSurface");
+const { Collapse } = await import("./Collapse");
 const { PersistentView } = await import("./PersistentView");
 afterEach(cleanup);
 
@@ -93,4 +94,16 @@ describe("Motion 的行为边界", () => {
     expect(document.body.style.overflow).toBe("hidden");
     expect(document.activeElement === nestedTrigger).toBe(true);
   });
+});
+
+
+test("父面板退出不能连带收起常驻详情", () => {
+  const body = <Collapse open keepMounted><span>保持展开的正文</span></Collapse>;
+  const view = render(<PresenceSurface open kind="panel-right">{body}</PresenceSurface>);
+  const details = view.container.querySelector("[data-collapse]");
+  expect(details?.getAttribute("aria-hidden")).toBe("false");
+  view.rerender(<PresenceSurface open={false} kind="panel-right">{body}</PresenceSurface>);
+  expect(view.container.querySelector('[data-state="closing"]')).not.toBeNull();
+  expect(view.container.querySelector("[data-collapse]")).toBe(details);
+  expect(details?.getAttribute("aria-hidden")).toBe("false");
 });
