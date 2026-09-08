@@ -53,6 +53,7 @@ export type MemoTreeState = {
     input: CreateMemoInput,
   ): OptimisticMemoCreation;
   fetchTree(accessToken: string, signal?: AbortSignal): Promise<MemoTreeNode[]>;
+  hydrateTree(nodes: readonly MemoTreeNode[]): void;
   createFolder(
     accessToken: string,
     input: CreateMemoFolderInput,
@@ -335,6 +336,11 @@ export const useMemoTreeStore = create<MemoTreeState>()((set, get) => ({
     }
 
     return nodes;
+  },
+
+  hydrateTree(nodes) {
+    treeGeneration += 1;
+    set({ nodes: sortNodes(nodes) });
   },
 
   async createFolder(accessToken, input) {

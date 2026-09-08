@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun test、MemoTreeNode 与 memoTree 的不可变树算法
- * [OUTPUT]: 验证无限嵌套查找、同级排序、插入/移除/替换/更新、根与文件夹移动和后代防环
+ * [OUTPUT]: 验证嵌套查找、未变化分支引用保留、同级排序、插入/移除/替换/更新、根与文件夹移动和后代防环
  * [POS]: app/src/shared/store 的领域算法回归测试，为 Zustand 乐观事务提供无浏览器的确定性底座
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -67,6 +67,17 @@ const nestedTree = [
 ];
 
 describe("memoTree", () => {
+  test("排序和删除保留未变化分支，找不到删除目标返回原树", () => {
+    const tree = sortNodes(nestedTree);
+    expect(sortNodes(tree)[0]).toBe(tree[0]);
+    expect(removeNode(tree, "missing")).toBe(tree);
+    const removed = removeNode(tree, "root-memo");
+    expect(removed[0]).toBe(tree[0]);
+    const inserted = insertNode(tree, makeNode("new", "memo", null, "3000"), null);
+    expect(inserted[0]).toBe(tree[0]);
+    expect(findNode(tree, "deep-memo")?.id).toBe("deep-memo");
+  });
+
   test("updateNode 只克隆祖先路径，未命中的兄弟子树保持原引用", () => {
     const untouchedSibling = nestedTree[0];
     const updated = updateNode(nestedTree, "deep-memo", (node) => ({

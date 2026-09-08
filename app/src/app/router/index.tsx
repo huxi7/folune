@@ -1,13 +1,14 @@
 /**
  * [INPUT]: 依赖 React lazy/Suspense、react-router-dom loader/redirect/useLocation、共享 Skeleton/延迟策略、Supabase Auth token 读取与后端 Profile API
  * [OUTPUT]: 对外提供 /、OAuth 回调、受保护 /app 与 /app/notes/:noteId 路由、仅开发态 /motion-lab、/color-lab 与 /archive-cord-lab，以及区分索引/详情深链的首屏等待面
- * [POS]: app/src/app/router 的路由装配文件；loader 只建立身份，/app 索引等待由 Paper 壳承接，详情深链因节点类型尚未确认先用中性全屏面，禁止画布首帧闪出 Paper；左右工具偏好在 Dashboard 获得用户后恢复
+ * [POS]: app/src/app/router 的路由装配文件；静态身份、Profile 与轻量 tree loader 并行装配，Dashboard 直接消费 bootstrap；/app 索引等待由 Paper 壳承接，详情深链先用中性全屏面；左右工具偏好在 Dashboard 获得用户后恢复
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { lazy, Suspense, type ReactNode } from "react";
 import {
   createBrowserRouter,
   redirect,
+  type LoaderFunctionArgs,
   useLocation,
 } from "react-router-dom";
 
@@ -21,12 +22,6 @@ import {
 const AuthCallbackPage = lazy(() =>
   import("../../pages/AuthCallbackPage").then((module) => ({
     default: module.AuthCallbackPage,
-  })),
-);
-
-const AppDashboard = lazy(() =>
-  import("../../pages/AppDashboard").then((module) => ({
-    default: module.AppDashboard,
   })),
 );
 
@@ -127,13 +122,15 @@ function WorkspaceRouteLeaf() {
   return null;
 }
 
-async function requireWorkspace() {
+async function requireWorkspace({ request }: LoaderFunctionArgs) {
   const [
     { getProfile },
+    { getMemoTree },
     { isUnauthorizedApiError },
     { getAuthenticatedAccessToken },
   ] = await Promise.all([
     import("../../shared/api/profile"),
+    import("../../shared/api/memo"),
     import("../../shared/api/client"),
     import("../../shared/supabase/auth"),
   ]);
@@ -145,9 +142,12 @@ async function requireWorkspace() {
       throw redirect("/?auth=login");
     }
 
-    const profile = await getProfile(accessToken);
+    const [profile, memoTree] = await Promise.all([
+      getProfile(accessToken, request.signal),
+      getMemoTree(accessToken, request.signal),
+    ]);
 
-    return { accessToken, profile };
+    return { accessToken, memoTree, profile };
   } catch (error) {
     if (isUnauthorizedApiError(error)) {
       throw redirect("/?auth=login");
@@ -196,13 +196,10 @@ export const router = createBrowserRouter([
     }]),
   {
     path: "/app",
-    element: (
-      <RouteSuspense fallback={<WorkspaceRouteFallback />}>
-        <AppDashboard />
-      </RouteSuspense>
-    ),
+    lazy: async () => ({ Component: (await import("../../pages/AppDashboard")).AppDashboard }),
     hydrateFallbackElement: <WorkspaceRouteFallback />,
     loader: requireWorkspace,
+    shouldRevalidate: () => false,
     children: [
       { index: true, element: <WorkspaceRouteLeaf /> },
       { path: "notes/:noteId", element: <WorkspaceRouteLeaf /> },

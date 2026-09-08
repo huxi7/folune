@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun mock/test、可控单篇 memo API Promise 与 memoDocumentStore
- * [OUTPUT]: 验证正文按 ID 缓存、意图预取与点击请求合并、切换隔离、reset 门禁，以及临时 ID 对账语义
+ * [OUTPUT]: 验证正文按 ID 缓存、双向请求合并、独立取消、删除/切换隔离、reset 门禁，以及临时 ID 对账语义
  * [POS]: shared/store 的正文生命周期回归测试，保护目录轻载后只读取被打开笔记这一核心边界
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -93,6 +93,70 @@ describe("memoDocumentStore", () => {
     expect(await opened).toBe(await preload);
     expect(getMemoCalls).toEqual(["memo-a"]);
     expect(useMemoDocumentStore.getState().statuses["memo-a"]).toBe("ready");
+  });
+
+  test("先打开再预取、多个打开也只请求一次", async () => {
+    const pending = deferred<MemoDetailNode>();
+    getMemoHandler = () => pending.promise;
+    const store = useMemoDocumentStore.getState();
+    const requests = [store.loadMemo("token", "memo-a"), store.preloadMemo("token", "memo-a"), store.loadMemo("token", "memo-a")];
+    pending.resolve(makeDetail("memo-a", "同一份正文"));
+    await Promise.all(requests);
+    expect(getMemoCalls).toEqual(["memo-a"]);
+  });
+
+  test("一个阅读者取消不影响其他阅读者，取消立即返回", async () => {
+    const pending = deferred<MemoDetailNode>();
+    getMemoHandler = () => pending.promise;
+    const controller = new AbortController();
+    const store = useMemoDocumentStore.getState();
+    const canceled = store.loadMemo("token", "memo-a", controller.signal).catch((error) => error);
+    const retained = store.loadMemo("token", "memo-a");
+    controller.abort();
+    expect((await canceled).name).toBe("AbortError");
+    pending.resolve(makeDetail("memo-a", "继续加载"));
+    expect((await retained).memo.content_mdx).toBe("继续加载");
+    expect(getMemoCalls).toEqual(["memo-a"]);
+    expect(useMemoDocumentStore.getState().statuses["memo-a"]).toBe("ready");
+  });
+
+  test("所有阅读者取消后重新打开会发新请求，旧响应不能覆盖", async () => {
+    const old = deferred<MemoDetailNode>();
+    const fresh = deferred<MemoDetailNode>();
+    getMemoHandler = () => getMemoCalls.length === 1 ? old.promise : fresh.promise;
+    const controller = new AbortController();
+    const store = useMemoDocumentStore.getState();
+    const canceled = store.loadMemo("token", "memo-a", controller.signal).catch((error) => error);
+    controller.abort();
+    await canceled;
+    const reopened = store.loadMemo("token", "memo-a");
+    fresh.resolve(makeDetail("memo-a", "新正文"));
+    await reopened;
+    old.resolve(makeDetail("memo-a", "旧正文"));
+    await old.promise;
+    await Promise.resolve();
+    expect(getMemoCalls).toEqual(["memo-a", "memo-a"]);
+    expect(useMemoDocumentStore.getState().documents["memo-a"]?.memo.content_mdx).toBe("新正文");
+  });
+
+  test("删除后在途预取不得复活缓存，局部草稿也不被迟到读取覆盖", async () => {
+    const pending = deferred<MemoDetailNode>();
+    getMemoHandler = () => pending.promise;
+    const store = useMemoDocumentStore.getState();
+    const preload = store.preloadMemo("token", "memo-a");
+    store.removeMemos(new Set(["memo-a"]));
+    pending.resolve(makeDetail("memo-a", "已删除"));
+    await preload;
+    expect(useMemoDocumentStore.getState().documents["memo-a"]).toBeUndefined();
+    expect(useMemoDocumentStore.getState().statuses["memo-a"]).toBeUndefined();
+
+    const next = deferred<MemoDetailNode>();
+    getMemoHandler = () => next.promise;
+    const loading = store.loadMemo("token", "memo-b");
+    store.primeMemo(makeDetail("memo-b", "本地草稿"));
+    next.resolve(makeDetail("memo-b", "服务端旧值"));
+    await loading;
+    expect(useMemoDocumentStore.getState().documents["memo-b"]?.memo.content_mdx).toBe("本地草稿");
   });
 
   test("reset 后忽略旧会话尚未完成的正文响应", async () => {

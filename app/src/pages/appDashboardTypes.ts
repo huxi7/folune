@@ -6,10 +6,12 @@
  */
 
 import type { Profile } from "../shared/api/profile";
+import type { MemoTreeNode } from "../shared/api/memo";
 import type { AccountSection } from "../widgets/AccountDialog";
 
 export type WorkspaceLoaderData = {
   accessToken: string;
+  memoTree: MemoTreeNode[];
   profile: Profile;
 };
 

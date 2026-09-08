@@ -188,6 +188,17 @@ beforeEach(() => {
 });
 
 describe("memoTreeStore optimistic transactions", () => {
+  test("hydrates the route bootstrap without starting a second tree request", () => {
+    const bootstrap = [makeNode("bootstrap-memo", "memo", null, "2000")];
+
+    useMemoTreeStore.getState().hydrateTree(bootstrap);
+
+    expect(useMemoTreeStore.getState().nodes.map((node) => node.id)).toEqual([
+      "bootstrap-memo",
+    ]);
+    expect(getTreeCallCount).toBe(0);
+  });
+
   test("returns optimistic memos synchronously and allows concurrent creates", async () => {
     const firstRequest = deferred<MemoDetailNode>();
     const secondRequest = deferred<MemoDetailNode>();

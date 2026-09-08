@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 happy-dom、Testing Library、真实 WorkspaceCommandPalette/Dialog、memoTreeStore/recentNodesStore 与被替身接管的 /memo-search 响应
- * [OUTPUT]: 覆盖 ⌘K 双向开合、输入焦点、键盘/IME 状态机、Canvas 连续加入、正文补入稳定与提示条状态
+ * [OUTPUT]: 覆盖 ⌘K 双向开合、输入焦点、键盘/IME 状态机、Canvas 连续加入、正文补入稳定、树变化不重发查询与提示条状态
  * [POS]: widgets 的全局搜索键盘状态机门禁；只驱动真实组件与真实 Store，不绕过组件去单测排序（排序归 commandResults.test）
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -400,4 +400,18 @@ describe("Command Palette 键盘状态机", () => {
     expect(rowIds()).toContain("memo-a");
     expect(document.querySelector(".command-palette-input")).not.toBeNull();
   });
+});
+
+
+test("树变动过滤现有正文命中，不重新请求同一查询", async () => {
+  renderPalette();
+  openPalette();
+  await waitFor(() => expect(input()).toBeTruthy());
+  fireEvent.change(input(), { target: { value: "少则得" } });
+  await waitFor(() => expect(searchCalls).toHaveLength(1));
+  await waitFor(() => expect(rowIds()).toContain("memo-body"));
+  useMemoTreeStore.setState({ nodes: tree.filter((item) => item.id !== "memo-body") });
+  await waitFor(() => expect(rowIds()).not.toContain("memo-body"));
+  await new Promise((resolve) => setTimeout(resolve, 240));
+  expect(searchCalls).toHaveLength(1);
 });

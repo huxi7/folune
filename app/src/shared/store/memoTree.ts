@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 shared/api/memo 的 MemoTreeNode 领域契约
  * [OUTPUT]: 对外提供 findNode/findSiblings/insertNode/removeNode/replaceNode/updateNode/moveNodeInTree/isDescendant/sortNodes 与稀疏排序计算
- * [POS]: app/src/shared/store 的纯树算法内核，不访问网络或 React；Store 与拖拽视图共享同一套父子、防环和 sort_order 规则
+ * [POS]: app/src/shared/store 的纯树算法内核；查询用线性栈，排序/删除保留未变子树引用，Store 与拖拽视图共享同一套父子、防环和 sort_order 规则
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -16,10 +16,12 @@ const numericSortOrder = (node: MemoTreeNode): number => {
 
 export function sortNodes(nodes: readonly MemoTreeNode[]): MemoTreeNode[] {
   return nodes
-    .map((node) => ({
-      ...node,
-      children: sortNodes(node.children),
-    }))
+    .map((node) => {
+      const children = sortNodes(node.children);
+      return children.every((child, index) => child === node.children[index])
+        ? node
+        : { ...node, children };
+    })
     .sort((left, right) => {
       const orderDelta = numericSortOrder(left) - numericSortOrder(right);
       return orderDelta === 0 ? left.id.localeCompare(right.id) : orderDelta;
@@ -30,10 +32,10 @@ export function findNode(
   nodes: readonly MemoTreeNode[],
   nodeId: string,
 ): MemoTreeNode | null {
-  const pending = [...nodes];
+  const pending = [...nodes].reverse();
 
   while (pending.length > 0) {
-    const node = pending.shift();
+    const node = pending.pop();
 
     if (node === undefined) {
       continue;
@@ -43,7 +45,9 @@ export function findNode(
       return node;
     }
 
-    pending.unshift(...node.children);
+    for (let index = node.children.length - 1; index >= 0; index -= 1) {
+      pending.push(node.children[index]!);
+    }
   }
 
   return null;
@@ -176,20 +180,22 @@ export function removeNode(
   nodeId: string,
 ): MemoTreeNode[] {
   const nextNodes: MemoTreeNode[] = [];
+  let changed = false;
 
   for (const node of nodes) {
     if (node.id === nodeId) {
+      changed = true;
       continue;
     }
 
-    nextNodes.push(
-      node.children.length === 0
-        ? node
-        : { ...node, children: removeNode(node.children, nodeId) },
-    );
+    const children = node.children.length === 0
+      ? node.children
+      : removeNode(node.children, nodeId);
+    if (children !== node.children) changed = true;
+    nextNodes.push(children === node.children ? node : { ...node, children });
   }
 
-  return nextNodes;
+  return changed ? nextNodes : nodes as MemoTreeNode[];
 }
 
 export function replaceNode(

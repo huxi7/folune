@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Zustand、单篇 memo API、AiCommand 输出与 MemoDetailNode
- * [OUTPUT]: 对外提供按 ID 加载/缓存、意图预取与请求合并，及按提交值判定的临时 ID 对账、本地草稿、保存与 AI 正文投影状态
+ * [OUTPUT]: 对外提供按 ID 加载/缓存、双向请求合并、独立取消与删除失效，及按提交值判定的临时 ID 对账、本地草稿、保存与 AI 正文投影状态
  * [POS]: shared/store 的正文唯一客户端状态源；目录树只持有摘要，本 Store 不复制树结构或自行导航
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -54,7 +54,38 @@ type MemoDocumentState = {
 
 let loadGeneration = 0;
 const requestVersions = new Map<string, number>();
-const pendingPreloads = new Map<string, Promise<MemoDetailNode>>();
+type PendingRead = {
+  controller: AbortController;
+  promise: Promise<MemoDetailNode>;
+  readers: number;
+};
+const pendingReads = new Map<string, PendingRead>();
+
+// 每个消费者只取消自己的等待；最后一个离开后才停止共享传输。
+const consumeRead = (request: PendingRead, signal?: AbortSignal): Promise<MemoDetailNode> => {
+  request.readers += 1;
+  return new Promise((resolve, reject) => {
+    let finished = false;
+    const finish = () => {
+      if (finished) return false;
+      finished = true;
+      signal?.removeEventListener("abort", abort);
+      request.readers -= 1;
+      return true;
+    };
+    const abort = () => {
+      if (!finish()) return;
+      if (request.readers === 0) request.controller.abort();
+      reject(new DOMException("Aborted", "AbortError"));
+    };
+    signal?.addEventListener("abort", abort, { once: true });
+    request.promise.then(
+      (detail) => { if (finish()) resolve(detail); },
+      (error: unknown) => { if (finish()) reject(error); },
+    );
+    if (signal?.aborted) abort();
+  });
+};
 const aiProjections = new Map<string, AiDocumentProjection>();
 
 const nextRequestVersion = (nodeId: string): number => {
@@ -87,61 +118,53 @@ export const useMemoDocumentStore = create<MemoDocumentState>()((set, get) => ({
   statuses: {},
 
   async loadMemo(accessToken, nodeId, signal) {
+    signal?.throwIfAborted();
     const cached = get().documents[nodeId];
     if (cached !== undefined) return cached;
+    const pending = pendingReads.get(nodeId);
+    if (pending !== undefined && !pending.controller.signal.aborted) {
+      return consumeRead(pending, signal);
+    }
     const generation = loadGeneration;
     const version = nextRequestVersion(nodeId);
+    const controller = new AbortController();
+    const current = () => generation === loadGeneration
+      && requestVersions.get(nodeId) === version;
+    const request: PendingRead = {
+      controller,
+      readers: 0,
+      promise: getMemo(accessToken, nodeId, controller.signal).then((detail) => {
+        if (current() && !controller.signal.aborted && get().documents[nodeId] === undefined) {
+          get().primeMemo(detail);
+        }
+        return detail;
+      }).catch((error: unknown) => {
+        if (current() && get().documents[nodeId] === undefined) {
+          set((state) => ({
+            errors: { ...state.errors, [nodeId]: controller.signal.aborted
+              ? undefined : error instanceof Error ? error.message : "备忘录正文加载失败" },
+            statuses: { ...state.statuses, [nodeId]: controller.signal.aborted ? "idle" : "error" },
+          }));
+        }
+        throw error;
+      }).finally(() => {
+        if (pendingReads.get(nodeId) === request) pendingReads.delete(nodeId);
+        // 某些传输替身忽略 abort；取消后的成功响应也不能留住 loading。
+        if (current() && controller.signal.aborted && get().statuses[nodeId] === "loading") {
+          set((state) => ({ statuses: { ...state.statuses, [nodeId]: "idle" } }));
+        }
+      }),
+    };
+    pendingReads.set(nodeId, request);
     set((state) => ({
       errors: { ...state.errors, [nodeId]: undefined },
       statuses: { ...state.statuses, [nodeId]: "loading" },
     }));
-    try {
-      // 指针/键盘意图已经启动的预取不应在真正点击后再发第二份正文请求。
-      // 预取不绑定当前路由 AbortSignal，因此快速切换也不会浪费已经在途的结果。
-      const detail = await (pendingPreloads.get(nodeId)
-        ?? getMemo(accessToken, nodeId, signal));
-      if (generation === loadGeneration && requestVersions.get(nodeId) === version) {
-        set((state) => ({
-          documents: { ...state.documents, [nodeId]: detail },
-          statuses: { ...state.statuses, [nodeId]: "ready" },
-        }));
-      }
-      return detail;
-    } catch (error) {
-      if (generation === loadGeneration && requestVersions.get(nodeId) === version) {
-        set((state) => ({
-          errors: {
-            ...state.errors,
-            [nodeId]: error instanceof Error ? error.message : "备忘录正文加载失败",
-          },
-          statuses: { ...state.statuses, [nodeId]: "error" },
-        }));
-      }
-      throw error;
-    }
+    return consumeRead(request, signal);
   },
 
-  async preloadMemo(accessToken, nodeId) {
-    const cached = get().documents[nodeId];
-    if (cached !== undefined) return cached;
-    const existing = pendingPreloads.get(nodeId);
-    if (existing !== undefined) return existing;
-
-    const generation = loadGeneration;
-    const request = getMemo(accessToken, nodeId)
-      .then((detail) => {
-        if (generation === loadGeneration && get().documents[nodeId] === undefined) {
-          get().primeMemo(detail);
-        }
-        return detail;
-      })
-      .finally(() => {
-        if (pendingPreloads.get(nodeId) === request) {
-          pendingPreloads.delete(nodeId);
-        }
-      });
-    pendingPreloads.set(nodeId, request);
-    return request;
+  preloadMemo(accessToken, nodeId) {
+    return get().loadMemo(accessToken, nodeId);
   },
 
   primeMemo(detail) {
@@ -228,6 +251,11 @@ export const useMemoDocumentStore = create<MemoDocumentState>()((set, get) => ({
   },
 
   removeMemos(nodeIds) {
+    for (const nodeId of nodeIds) {
+      nextRequestVersion(nodeId);
+      pendingReads.get(nodeId)?.controller.abort();
+      pendingReads.delete(nodeId);
+    }
     set((state) => {
       const documents = { ...state.documents };
       const statuses = { ...state.statuses };
@@ -274,7 +302,8 @@ export const useMemoDocumentStore = create<MemoDocumentState>()((set, get) => ({
   reset() {
     loadGeneration += 1;
     requestVersions.clear();
-    pendingPreloads.clear();
+    for (const request of pendingReads.values()) request.controller.abort();
+    pendingReads.clear();
     aiProjections.clear();
     set({ documents: {}, errors: {}, statuses: {} });
   },

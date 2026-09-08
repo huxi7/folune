@@ -18,12 +18,12 @@ aiCommandTree.test.ts: 覆盖命令改名、软删除、stale 不变、创建撤
 aiCommandProjection.ts: AI 写工具乐观逆投影纯函数，以字段 CAS 精确撤销未获批/失败意图，不覆盖用户在途编辑
 memoTitleRules.ts: 命名规则纯策略，与 api/supabase/memo-naming.sql 的 memo_title_norm 同语义；提供规范化、同父同类型重名判据与服务端 MEMO_TITLE_CONFLICT 识别。它只负责即时反馈，重名的最终真相永远是数据库唯一索引；命名零特例，因此这里不再有「谁不可改名」与「谁的标题跟随谁」两类判据
 memoTitleRules.test.ts: 命名规则门禁，覆盖空白/大小写折叠、跨类型与笔记-默认画布同名合法、根节点作用域与 parent 缺失时不误报冲突
-memoTree.ts: 备忘录树的不可变领域算法，统一递归查找、同级定位、插入、移除、替换、更新、移动、防环与稀疏 sort_order 排序
-memoTree.test.ts: 树算法回归测试，覆盖无限嵌套、根/文件夹移动、首尾/中间排序、子树保留与自己/后代防环
-memoTreeStore.ts: Zustand 轻量 active tree 唯一数据源；mergeServerNode 让服务端已建成的节点（保存的画布、晋升出的笔记）就地落位而不刷新整棵树；只保存结构与摘要，除真人 CRUD 乐观事务外接收 Worker plan 转换后的结构命令并按 tool_call_id 只投影一次，最终以 command_id+status 对账服务端事实
+memoTree.ts: 备忘录树的不可变领域算法，统一递归查找、同级定位、插入、移除、替换、更新、移动、防环与稀疏 sort_order 排序 查询使用线性栈，排序/删除保留未变化子树引用。
+memoTree.test.ts: 树算法回归测试，覆盖无限嵌套、根/文件夹移动、首尾/中间排序、子树保留与自己/后代防环 验证排序、插入、删除不重建未变化分支。
+memoTreeStore.ts: Zustand 轻量 active tree 唯一数据源；路由 loader 的轻量 tree 通过 hydrateTree 注入，mergeServerNode 让服务端已建成的节点（保存的画布、晋升出的笔记）就地落位而不刷新整棵树；只保存结构与摘要，除真人 CRUD 乐观事务外接收 Worker plan 转换后的结构命令并按 tool_call_id 只投影一次，最终以 command_id+status 对账服务端事实
 memoTreeStore.test.ts: 轻量 Tree Store 事务回归测试，覆盖真人 CRUD 并发/回滚、临时 ID 与 Document Store 对账及 AI rename/create 投影去重
-memoDocumentStore.ts: Zustand 单篇正文共享数据源；按 ID 加载缓存、意图预取与在途合并，用 generation/version 拒绝迟到响应，并承载保存、临时 ID 对账与 AI 正文投影/回滚；逐键草稿留在编辑会话，保存边界才投影回来
-memoDocumentStore.test.ts: 正文生命周期回归测试，锁定按打开 ID 请求、预取/点击合并、缓存复用、reset 门禁与临时 ID 对账
+memoDocumentStore.ts: Zustand 单篇正文共享数据源；按 ID 加载缓存、意图预取与在途合并，用 generation/version 拒绝迟到响应，并承载保存、临时 ID 对账与 AI 正文投影/回滚；逐键草稿留在编辑会话，保存边界才投影回来 预取/点击/多阅读者共用同一在途请求，每个阅读者独立取消，最后一个离开才中止传输；删除与 reset 门禁迟到响应，已有草稿不被读响应覆盖。
+memoDocumentStore.test.ts: 正文生命周期回归测试，锁定按打开 ID 请求、预取/点击合并、缓存复用、reset 门禁与临时 ID 对账 覆盖双向合并、独立取消、取消重开、删除失效与草稿保护。
 canvasDocument.ts: Canvas intent 的纯领域内核；以 isCanvasOriginNode 向乐观投影与 UI 暴露唯一来源卡片判据，并归一连续编辑、空间文字尺寸与 text_scale、服务端回执/alias 对账和冲突 rebase，React、网络与 IndexedDB 禁止进入
 canvasDocument.test.ts: 锁定稳定 UUID 合并、空间文字尺寸与 text_scale、create+remove 由数据库判定 no-op、默认根移除清边、alias 对账与 dropped 不固化
 canvasWal.ts: 按 user_id+canvas_id 隔离的 IndexedDB WAL；原子保存 draft/queued mutation 与发送状态，不保存 JWT、access token 或组件实例，并提供内存实现供测试

@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖可信 AuthUser、请求期 access token、memo DTO 输入、memo repository、领域模型与 HttpError
- * [OUTPUT]: 对外提供供画布层复用的 nextSortOrder/memoContentData 派生规则，以及并发读取的轻量 active tree/单篇正文、关键词命中、带命中通道与名次的相似候选、folder/memo CRUD（系统默认名撞名顺位让开、用户输入撞名回 MEMO_TITLE_CONFLICT）、节点移动与恢复 subtree
+ * [OUTPUT]: 对外提供 nextSortOrder/memoContentData 派生规则、轻量 tree/单篇读取、检索与 CRUD；正文替换不下载旧正文，标题单独更新仍读取原文返回完整详情
  * [POS]: service 层 active 备忘录写入与读取编排边界；独立的节点/正文读取并发启动以消除首开瀑布，树组装委托 memo-tree.service，正文原样存储并派生摘要；检索 RPC 的失败在此收敛为稳定 HTTP 错误，且相似候选只出摘录不出正文。PATCH /memos 固定先写正文后写标题——标题会撞唯一约束、正文不会，先写正文才让重名只挂起 title 而不连坐正文，也就不再需要半写回滚
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -407,11 +407,13 @@ const updateMemo = async (
   nodeId: string,
   input: PatchMemoInput,
 ): Promise<MemoDetailNode> => {
-  const current = await findOwnedMemo(
-    authUser,
-    accessToken,
-    nodeId,
-  );
+  // 完整替换正文时不需要旧正文；节点仍先经 owner/type 校验，写入继续走用户 JWT/RLS。
+  const current = input.content_mdx === undefined
+    ? await findOwnedMemo(authUser, accessToken, nodeId)
+    : { node: await findOwnedNode(authUser, accessToken, nodeId), content: null };
+  if (current.node.node_type !== "memo") {
+    throw new HttpError(404, "MEMO_NOT_FOUND", "Memo was not found");
+  }
   let content = current.content;
 
   /*
@@ -461,6 +463,9 @@ const updateMemo = async (
     node = assertOwnedNode(authUser, updatedNode);
   }
 
+  if (content === null) {
+    throw new HttpError(502, "MEMO_CONTENT_MISSING", "Memo content was not available");
+  }
   return toMemoDetailNode(node, content);
 };
 

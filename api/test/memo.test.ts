@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun test、Hono app、Web fetch 与 test/support 的内存 Supabase Auth/PostgREST mock
- * [OUTPUT]: 覆盖 memo API 的认证、轻量树/画布身份/关键词搜索、单篇正文并发读取、创建补偿、正文统计、owner 隔离、严格更新与防环移动
+ * [OUTPUT]: 覆盖 memo API 的认证、轻量树/画布身份/关键词搜索、单篇正文并发读取、创建补偿、正文统计、owner 隔离、严格更新、防环移动、保存去除旧正文读取与 CORS/gzip 传输契约
  * [POS]: api/test 的备忘录树 HTTP 全链路契约测试，不连接远端服务且不保存或输出真实凭据；命名与重名边界另见 memo-naming.test.ts
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -34,6 +34,20 @@ afterEach(() => {
 });
 
 describe("memo API authentication", () => {
+  test("同一 token 的并发请求共享一次在途 Auth 校验，完成后不保留身份缓存", async () => {
+    const [first, second] = await Promise.all([
+      app.fetch(authenticatedRequest("/memo-tree")),
+      app.fetch(authenticatedRequest("/memo-tree")),
+    ]);
+
+    expect(first.status).toBe(200);
+    expect(second.status).toBe(200);
+    expect(mock.operations.filter((operation) => operation === "auth:get")).toHaveLength(1);
+
+    await app.fetch(authenticatedRequest("/memo-tree"));
+    expect(mock.operations.filter((operation) => operation === "auth:get")).toHaveLength(2);
+  });
+
   test("memo 与回收站接口没有 Bearer token 均返回统一 401", async () => {
     const nodeId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
     const requests = [
@@ -576,6 +590,7 @@ describe("memo read and update", () => {
 
     expect(payload.data.title).toBe("Keep");
     expect(mock.nodePatchBodies).toEqual([]);
+    expect(mock.operations.filter((op) => op === "memos:get")).toEqual([]);
   });
 
   test("PATCH /memos 原样保存空格、缩进、尾随空格与空白行", async () => {
@@ -671,5 +686,38 @@ describe("memo node rename and move", () => {
     expect(response.status).toBe(400);
     expect((await response.json()).code).toBe("MEMO_NODE_CYCLE");
     expect(mock.operations).not.toContain("nodes:patch");
+  });
+});
+
+
+describe("传输性能契约", () => {
+  test("允许来源的预检复用十分钟，未允许来源不获授权", async () => {
+    for (const origin of ["http://localhost:10000", "https://untrusted.example"]) {
+      const response = await app.request("/memo-tree", {
+        method: "OPTIONS",
+        headers: { Origin: origin, "Access-Control-Request-Method": "GET", "Access-Control-Request-Headers": "authorization" },
+      });
+      expect(response.status).toBe(204);
+      expect(response.headers.get("Access-Control-Max-Age")).toBe("600");
+      expect(response.headers.get("Access-Control-Allow-Origin")).toBe(origin.includes("localhost") ? origin : null);
+    }
+    expect(mock.operations).toEqual([]);
+  });
+
+  test("正文按客户端协商压缩，解压内容与未压缩响应逐字一致", async () => {
+    const memoId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+    mock.nodes.set(memoId, nodeFixture(memoId, { node_type: "memo" }));
+    mock.contents.set(memoId, contentFixture(memoId, { content_mdx: "# 长笔记\n\n真实正文 Alpha 中文。\n".repeat(1000) }));
+    const plain = await app.fetch(authenticatedRequest(`/memos/${memoId}`));
+    const expected = await plain.text();
+    const request = authenticatedRequest(`/memos/${memoId}`);
+    request.headers.set("Accept-Encoding", "gzip");
+    const compressed = await app.fetch(request);
+    expect(compressed.headers.get("Content-Encoding")).toBe("gzip");
+    expect(compressed.headers.get("Vary")).toContain("Accept-Encoding");
+    const bytes = new Uint8Array(await compressed.arrayBuffer());
+    expect(new TextDecoder().decode(Bun.gunzipSync(bytes))).toBe(expected);
+    expect(bytes.byteLength).toBeLessThan(new TextEncoder().encode(expected).byteLength / 4);
+    expect(plain.headers.get("Content-Encoding")).toBeNull();
   });
 });

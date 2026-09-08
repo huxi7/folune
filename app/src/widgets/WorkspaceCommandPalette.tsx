@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 commandPaletteStore 的唯一开合与 Canvas 次级动作、memoTreeStore 轻量树、recentNodesStore 最近顺序、useMemoSearch 正文命中与 commandResults 排序纯函数
  * [OUTPUT]: 对外提供全局唯一 Command Palette：⌘K 开合、可聚焦 option、稳定 active 身份、六档排序、Tab 进画布与 Canvas 连续加入
- * [POS]: widgets 的唯一 Command Surface，由 AppDashboard 挂载一次即覆盖 Paper 与 Canvas；Sidebar/Paper/Canvas 只是入口，排序归 commandResults，模态行为归 Dialog
+ * [POS]: widgets 的唯一 Command Surface，由 AppDashboard 挂载一次即覆盖 Paper 与 Canvas；关闭时不扫描树生成结果，排序归 commandResults，模态行为归 Dialog
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -106,7 +106,7 @@ export function WorkspaceCommandPalette({
   }, [open]);
 
   const results = useMemo(
-    () => trimmed.length === 0
+    () => !open ? [] : trimmed.length === 0
       ? recentCommandResults({ recentIds, tree })
       : buildCommandResults({
         bodyHitIds: [...bodyHitIds],
@@ -114,7 +114,7 @@ export function WorkspaceCommandPalette({
         recentIds,
         tree,
       }),
-    [bodyHitIds, query, recentIds, tree, trimmed],
+    [bodyHitIds, open, query, recentIds, tree, trimmed],
   );
 
   /*

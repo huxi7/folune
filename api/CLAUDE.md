@@ -7,7 +7,7 @@
 
 成员清单
 src/index.ts: Bun 进程入口，固定执行启动序列并用 6MiB 请求体上限在 multipart 解析前拦截异常上传
-src/app.ts: Hono 组装根，注册请求日志、CORS、X-Request-Id 跨域暴露、错误处理与 router
+src/app.ts: Hono 组装根，注册请求日志、CORS、X-Request-Id 跨域暴露、错误处理与 router Hono CORS 预检缓存十分钟，memo-tree/memos/canvases JSON 按 Accept-Encoding 压缩且保留 Vary。
 src/router/: HTTP 路由层，提供 /health、/profile、memo、Trash、AI 状态机与 Canvas V2 默认/空白入口、读取、人工/AI mutation、expansion context 的 JWT 资源接口
 src/dto/: DTO 层，定义 Auth/profile/memo/AI/Canvas V2/PostgREST-RPC 响应与严格 HTTP body/query/param 的 zod schema/infer 类型
 src/model/: 领域模型层，定义 AuthUser、Profile、Memo、AI 状态机、Canvas V2 身份/图/回执/context、健康状态与响应信封类型

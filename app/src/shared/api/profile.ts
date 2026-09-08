@@ -43,8 +43,11 @@ const mapProfile = (profile: ProfileDto): Profile => ({
   username: profile.username,
 });
 
-export const getProfile = async (accessToken?: string): Promise<Profile> =>
-  mapProfile(await apiRequest<ProfileDto>("/profile", {}, accessToken));
+export const getProfile = async (
+  accessToken?: string,
+  signal?: AbortSignal,
+): Promise<Profile> =>
+  mapProfile(await apiRequest<ProfileDto>("/profile", { signal }, accessToken));
 
 export const updateProfile = async (
   input: ProfileUpdateInput,

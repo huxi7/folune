@@ -1,14 +1,13 @@
 /**
  * [INPUT]: 依赖 React effect/state、鉴权 memo-search API、轻量目录树与查询词
  * [OUTPUT]: 对外提供经 180ms 防抖、可取消、按 active tree 过滤的正文命中 ID 集合与 idle/loading/ready/error 状态
- * [POS]: widgets 层普通关键词搜索控制器；只传输命中 ID/摘要，不加载或缓存任何完整正文；状态由此如实上报，Command Palette 才能把"正在补入正文结果"和"正文搜索失败"分开表达而不是一律显示空
+ * [POS]: widgets 层关键词搜索控制器；请求只随查询变化，树更新只重做本地过滤，先建立一次节点 ID 索引再过滤命中，避免命中数乘树大小的重复查找；状态如实区分加载与失败
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
 import { useEffect, useMemo, useState } from "react";
 
 import { searchMemos } from "../shared/api/memo";
-import { findNode } from "../shared/store/memoTree";
 import type { MemoTreeNode } from "../shared/api/memo";
 
 const SEARCH_DEBOUNCE_MS = 180;
@@ -20,6 +19,20 @@ export type MemoSearchState = {
   status: MemoSearchStatus;
 };
 
+const collectNodeIds = (tree: readonly MemoTreeNode[]): ReadonlySet<string> => {
+  const ids = new Set<string>();
+  const pending = [...tree];
+
+  while (pending.length > 0) {
+    const node = pending.pop();
+    if (node === undefined) continue;
+    ids.add(node.id);
+    for (const child of node.children) pending.push(child);
+  }
+
+  return ids;
+};
+
 export function useMemoSearch(
   accessToken: string,
   tree: readonly MemoTreeNode[],
@@ -29,6 +42,7 @@ export function useMemoSearch(
   const [bodyHitIds, setBodyHitIds] = useState<readonly string[]>([]);
   const [status, setStatus] = useState<MemoSearchStatus>("idle");
   const normalizedQuery = query.trim();
+  const treeNodeIds = useMemo(() => collectNodeIds(tree), [tree]);
 
   useEffect(() => {
     if (normalizedQuery.length === 0) {
@@ -44,9 +58,7 @@ export function useMemoSearch(
       void searchMemos(accessToken, normalizedQuery, controller.signal, limit)
         .then((hits) => {
           if (!active) return;
-          setBodyHitIds(
-            hits.flatMap((hit) => findNode(tree, hit.node_id) === null ? [] : [hit.node_id]),
-          );
+          setBodyHitIds(hits.map((hit) => hit.node_id));
           setStatus("ready");
         })
         .catch((error) => {
@@ -63,10 +75,10 @@ export function useMemoSearch(
       window.clearTimeout(timerId);
       controller.abort();
     };
-  }, [accessToken, limit, normalizedQuery, tree]);
+  }, [accessToken, limit, normalizedQuery]);
 
   return useMemo(
-    () => ({ bodyHitIds: new Set(bodyHitIds), status }),
-    [bodyHitIds, status],
+    () => ({ bodyHitIds: new Set(bodyHitIds.filter((id) => treeNodeIds.has(id))), status }),
+    [bodyHitIds, status, treeNodeIds],
   );
 }
