@@ -6,7 +6,8 @@ CLAUDE.md: 记录 AgentPanel 子域成员、依赖方向与 GEB 回环协议
 AgentPanelHeader.tsx: 无状态固定顶栏，历史接管标题和左侧返回，新建/收起位置稳定；生产与样板共用
 useConversationScroll.test.tsx: 验证首次非平滑定位与退出冻结、迟到内容回调不追尾
 useConversationScroll.ts: 消息滚动唯一边界，首次绘制前定位、退出取消平滑滚动并冻结位置，隐藏历史拒绝追尾
-AgentPanel.tsx: AI 组合根，History/Conversation 用撑满高度的 PersistentView 承接；历史从左侧进入，关闭向左回收，单一顶栏由 AgentPanelHeader 接管，对话原位淡换；新会话数据就绪后才替换身份，Composer 单独浮现，创建成功从历史返回新会话，失败保留旧视图并 Toast；流式消息以 32ms UI 节流、末条 assistant 工具对账、assistant 定点同步与本地快照提交降低重算，错误/中止仍后台校准；菜单与内容 Motion 不接管审批/流式/工具执行协议，隐藏会话保留 Composer 草稿
+AgentPanel.tsx: AI 组合根，History/Conversation 用撑满高度的 PersistentView 承接；历史从左侧进入，点击会话立即退出列表并由目标标题与 Skeleton 内容壳接管，失败在目标窗重试；流式消息以 32ms UI 节流、末条 assistant 工具对账、assistant 定点同步与本地快照提交降低重算，错误/中止仍后台校准；菜单与内容 Motion 不接管审批/流式/工具执行协议
+AgentPanelNavigation.test.tsx: 会话切换交互回归门禁，以未完成内容请求锁定历史列表立即退出、目标标题与加载壳同步接管
 ApprovalDock.tsx: Composer 上方唯一的紧凑非模态审批视觉原语，统一图标、标题、影响说明、按钮槽位与无蒙层语义；普通工具和 AI 整理审批只能适配它，禁止复制表面
 approvalState.ts: 审批状态机纯领域层，只检查末条 assistant；统一负责 requested 单次响应投影、approved 未完成工具恢复候选与 output 结果投影，避免 UI、持久化和恢复各自解释 AI SDK 状态
 approvalState.test.ts: 审批状态机回归测试，锁定同一 approval 只响应一次、拒绝不恢复、批准刷新可恢复及结果落地后退出恢复队列
@@ -20,15 +21,15 @@ aiSettingsCache.test.ts: 锁定审批设置缓存的用户隔离、新鲜命中�
 ApprovalCard.tsx: 每次询问与智能审批回退的工具审批语义适配；把人话动作、最小影响说明和危险操作按钮映射到共享 ApprovalDock
 OrganizeReviewCard.tsx: AI 整理审批语义适配；只把当前 memo 的 awaiting_confirmation 标题/位置影响与确认/取消映射到共享 ApprovalDock，其他 Run 状态不在 AgentPanel 或 Paper 下方重复展示
 OrganizeReviewCard.test.tsx: AI 整理审批 DOM 同构测试，锁定 awaiting_confirmation 复用 agent-approval-dock 且 succeeded 输出为空
-ThreadHistory.tsx: 不含重复顶栏的 Panel 历史会话视图，会话行只提供切换、重命名与普通永久删除确认，hover、focus 与当前选中项共享中性表面而不使用品牌蓝底，不建立归档分组或第四栏
+ThreadHistory.tsx: 不含重复顶栏的 Panel 历史会话视图，会话行在 pointer/focus 意图时预取，点击只发出立即导航，另提供重命名与普通永久删除确认；当前项保持中性表面
 organizeClient.ts: 浏览器到 Chat `/v1/organize` 的最小 authenticated client，复用 AI Run mapper，确认/apply/undo 仍经 shared/api/ai 进入 Business API
 canvasExpandClient.ts: 浏览器到 Chat `/v1/canvas-expand` 的最小 authenticated client；只发送 canvas_id/source_canvas_node_id/limit 并校验 up_to_date/候选，Chat 不写业务库，最终 intent 仍交给 CanvasSaveCoordinator
 canvasExpandClient.test.ts: Canvas expansion 响应契约门禁，锁定身份/版本、最多五项、0..1 confidence 与两种完成状态，畸形 Chat 输出不得进入 Canvas intent
 threadSelection.ts: 按用户 localStorage key 选择合法历史 thread，失效偏好回退服务端最近会话
 threadSelection.test.ts: 覆盖用户偏好隔离、合法恢复和失效 ID 回退
-aiThreadCache.ts: 按用户隔离的 30 秒进程内 AI 会话快照；允许陈旧读取以立即恢复最后可用画面，只服务 stale-while-revalidate，不替代服务端真相
-aiThreadCache.test.ts: 锁定 AI 快照用户隔离、TTL 后仍可陈旧读取与局部更新不清空其余内容
-useAiThreads.ts: 会话控制器与显式只读数据预热入口；首开用 bootstrap 一次取列表/选中详情/消息，Workspace 空闲预热只缓存已有会话，空账号仍等用户真正打开面板才创建首个会话；预热与面板初始化共用同一在途请求，重挂载先显示进程内快照，新鲜命中不请求、陈旧命中后台校准，流完成先本地提交快照、错误/中止再拉服务端校准，CRUD 后同步修正快照
+aiThreadCache.ts: 按用户隔离的 30 秒面板快照与最多八个逐会话内容快照；允许陈旧回显并按最久未写入淘汰，只服务 stale-while-revalidate，不替代服务端真相
+aiThreadCache.test.ts: 锁定面板/逐会话快照的用户隔离、TTL、局部更新、目标删除与有界淘汰
+useAiThreads.ts: 会话控制器与显式只读预热入口；首开用 bootstrap，普通切换先同步选择目标摘要，再命中逐会话缓存或展示加载壳，并用单一 content 请求合并 thread/ref/messages；pointer/focus 预取与点击读取共用在途请求，快速连续切换只提交最后选择；流完成本地提交，错误/中止再校准
 AgentProcessDisclosure.tsx: 真实生成过程的透明披露容器，生成期展开、完成后可手动收起，keepMounted Collapse 连续收放且保留内部工具详情状态，不包裹最终正文
 ChatMessage.tsx: SuperNoteUIMessage 适配层；冻结上下文只参与请求而不渲染到用户/assistant 对话，assistant 保持单一过程区且不承载审批控件，同轮成功命令只在最终回复末尾提供一个整轮撤销
 ChatMessage.test.tsx: 完整回复 DOM 契约测试，锁定单一过程区、审批条非模态且与消息解耦、单一整轮撤销、最终正文边界、冻结来源不污染消息与敏感 ID 屏蔽

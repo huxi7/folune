@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖统一 AiThread 列表、Design System Button/Input 与会话 CRUD 回调
- * [OUTPUT]: 对外提供 Panel 内历史会话列表、选择、重命名及普通删除确认
- * [POS]: AgentPanel 历史纯视图；顶栏与返回动作归 AgentPanelHeader，不持有消息或调用 API，流式期间由 disabled 统一冻结危险切换
+ * [INPUT]: 依赖统一 AiThread 列表、Design System Button/Input 与会话预取/CRUD 回调
+ * [OUTPUT]: 对外提供 Panel 内历史会话列表、指向预取、选择、重命名及普通删除确认
+ * [POS]: AgentPanel 历史纯视图；指针或键盘意图只触发可失败预取，点击导航由上层立即完成，流式期间由 disabled 统一冻结危险切换
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -18,6 +18,7 @@ import { Button, Dialog, Input } from "../../shared/design-system/components";
 type ThreadHistoryProps = {
   busy: boolean;
   onDelete: (threadId: string) => Promise<void>;
+  onPrefetch: (threadId: string) => Promise<void>;
   onRename: (threadId: string, title: string) => Promise<void>;
   onSelect: (threadId: string) => Promise<unknown>;
   selectedId: string | null;
@@ -56,7 +57,9 @@ export function ThreadHistory(props: ThreadHistoryProps) {
         <button
           className="agent-thread-select"
           disabled={props.busy}
+          onFocus={() => void props.onPrefetch(thread.id).catch(() => undefined)}
           onClick={() => void props.onSelect(thread.id)}
+          onPointerEnter={() => void props.onPrefetch(thread.id).catch(() => undefined)}
           type="button"
         >
           <strong>{thread.title}</strong>

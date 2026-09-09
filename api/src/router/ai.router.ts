@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Hono、router/request、AI zod schemas、auth 与 AI thread/context/run services、统一 ok helper
- * [OUTPUT]: 对外提供 /ai-threads（含 bootstrap 与消息定点 PATCH）、/ai-context（含 prepare-chat）、/ai-runs、/ai-settings、/ai-commands 的 JWT 保护资源 routers
+ * [OUTPUT]: 对外提供 /ai-threads（含首开 bootstrap、单会话 content 与消息定点 PATCH）、/ai-context（含 prepare-chat）、/ai-runs、/ai-settings、/ai-commands 的 JWT 保护资源 routers
  * [POS]: router 层 AI Native V2 HTTP 适配器，只做认证、param/body 校验和 service 下传；会话列表无状态 query，不调用模型或直接访问 Supabase
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -126,6 +126,13 @@ aiThreadRouter.get("/:threadId", async (c) => {
   const { accessToken, authUser } = await authenticate(c);
   const { threadId } = parseRouteParams(aiThreadIdParamSchema, c.req.param());
   return ok(c, await aiThreadService.getThread(authUser, accessToken, threadId));
+});
+
+// 会话切换只走一次浏览器请求；thread、refs、messages 在 service 内并发读取。
+aiThreadRouter.get("/:threadId/content", async (c) => {
+  const { accessToken, authUser } = await authenticate(c);
+  const { threadId } = parseRouteParams(aiThreadIdParamSchema, c.req.param());
+  return ok(c, await aiThreadService.getThreadContent(authUser, accessToken, threadId));
 });
 
 aiThreadRouter.patch("/:threadId", async (c) => {

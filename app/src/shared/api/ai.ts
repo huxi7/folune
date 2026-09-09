@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 shared/api/client 统一 Bearer 请求、AI SDK UIMessage 与 memo DTO mapper
- * [OUTPUT]: 对外提供 SuperNoteUIMessage、thread bootstrap、增量 assistant message PATCH、无归档状态的 AI thread/message/reference/settings/command CRUD、Run apply/reject/undo/get 类型与响应归一化
- * [POS]: app/src/shared/api 的 AI Native V2 HTTP 与消息契约边界；浏览器显示冻结引用和命令状态，但真实写入只经 api/chat
+ * [OUTPUT]: 对外提供 SuperNoteUIMessage、首开 bootstrap、单会话 content、增量 assistant message PATCH、无归档状态的 AI thread/message/reference/settings/command CRUD、Run apply/reject/undo/get 类型与响应归一化
+ * [POS]: app/src/shared/api 的 AI Native V2 HTTP 与消息契约边界；首开和会话切换分别使用聚合读取，真实写入只经 api/chat
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -61,6 +61,10 @@ export type AiThreadBootstrap = {
   threads: AiThread[];
   selectedThread: AiThreadDetail | null;
   messages: AiMessage[];
+};
+
+export type AiThreadContent = Pick<AiThreadBootstrap, "messages" | "selectedThread"> & {
+  selectedThread: AiThreadDetail;
 };
 
 export type AiMessage = SuperNoteUIMessage & {
@@ -256,6 +260,19 @@ export const getAiThreadBootstrap = (
       messages: mapAiMessages(bootstrap.messages),
     }));
 };
+
+export const getAiThreadContent = (
+  accessToken: string,
+  threadId: string,
+): Promise<AiThreadContent> =>
+  apiRequest<AiThreadContent>(
+    `/ai-threads/${encodeURIComponent(threadId)}/content`,
+    {},
+    accessToken,
+  ).then((content) => ({
+    ...content,
+    messages: mapAiMessages(content.messages),
+  }));
 
 export const getAiThread = (
   accessToken: string,

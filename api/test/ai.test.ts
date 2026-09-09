@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun test、Hono app、Web fetch 与内存 Supabase Auth/PostgREST/RPC mock
- * [OUTPUT]: 覆盖无归档状态的 AI thread/bootstrap/detail 并发读取、prepare-chat 增量首轮/续写与 assistant 定点 PATCH、message/reference/context/run 认证、持久化、幂等、owner、废弃字段拒绝、失效引用与安全执行测试
+ * [OUTPUT]: 覆盖无归档状态的 AI thread/bootstrap/detail/content 并发读取、prepare-chat 增量首轮/续写与 assistant 定点 PATCH、message/reference/context/run 认证、持久化、幂等、owner、废弃字段拒绝、失效引用与安全执行测试
  * [POS]: api/test 的 AI Native V1 HTTP 全链路契约测试，不连接模型或远端服务，不保存或输出真实凭据
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -440,6 +440,7 @@ describe("AI API authentication", () => {
   test("all AI resources reject missing Bearer before storage access", async () => {
     for (const pending of [
       app.request("/ai-threads"),
+      app.request(`/ai-threads/${THREAD_ID}/content`),
       app.request(`/ai-threads/${THREAD_ID}/messages`),
       app.request("/ai-context/resolve", { method: "POST" }),
       app.request(`/ai-runs/${RUN_ID}`),
@@ -506,7 +507,7 @@ describe("AI settings and commands", () => {
 });
 
 describe("AI threads and messages", () => {
-  test("GET thread 并发读取详情与引用，切换会话只等待一段存储往返", async () => {
+  test("GET thread 并发读取详情与引用，只等待一段存储往返", async () => {
     mock.threads.set(THREAD_ID, threadFixture());
     const originalMockFetch = mock.fetch;
     let started = 0;
@@ -563,6 +564,60 @@ describe("AI threads and messages", () => {
     }>(await request(`/ai-threads/bootstrap?selected_id=${THREAD_ID}`));
     expect(result.threads).toHaveLength(1);
     expect(result.selectedThread.id).toBe(THREAD_ID);
+    expect(result.messages[0]?.id).toBe("message-1");
+  });
+
+  test("content 用一次 HTTP 响应并发返回目标会话、引用与消息", async () => {
+    mock.threads.set(THREAD_ID, threadFixture({ title: "目标会话" }));
+    mock.references.push({
+      created_at: NOW,
+      memo_id: MEMO_A,
+      thread_id: THREAD_ID,
+      user_id: USER_ID,
+    });
+    mock.messages.set(`${THREAD_ID}:message-1`, {
+      id: "message-1",
+      thread_id: THREAD_ID,
+      user_id: USER_ID,
+      role: "assistant",
+      parts: [{ type: "text", text: "历史" }],
+      position: 0,
+      status: "complete",
+      context_snapshot: null,
+      created_at: NOW,
+      updated_at: NOW,
+    });
+    const originalMockFetch = mock.fetch;
+    let started = 0;
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const fallbackTimer = setTimeout(release, 40);
+    globalThis.fetch = (async (input, init) => {
+      const url = new URL(input instanceof URL
+        ? input.href
+        : typeof input === "string"
+          ? input
+          : input.url);
+      if (["/rest/v1/ai_threads", "/rest/v1/ai_thread_refs", "/rest/v1/ai_messages"]
+        .includes(url.pathname) && new Request(input, init).method === "GET") {
+        started += 1;
+        if (started === 3) release();
+        await gate;
+      }
+      return await originalMockFetch(input, init);
+    }) as typeof fetch;
+
+    const result = await data<{
+      messages: AiMessage[];
+      selectedThread: AiThread & { references: AiThreadReference[] };
+    }>(await request(`/ai-threads/${THREAD_ID}/content`));
+    clearTimeout(fallbackTimer);
+
+    expect(started).toBe(3);
+    expect(result.selectedThread.title).toBe("目标会话");
+    expect(result.selectedThread.references[0]?.memo_id).toBe(MEMO_A);
     expect(result.messages[0]?.id).toBe("message-1");
   });
 

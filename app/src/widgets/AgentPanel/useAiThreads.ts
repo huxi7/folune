@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 React、shared/api/ai、按用户短时快照缓存、访问令牌与 threadSelection 偏好策略
- * [OUTPUT]: 对外提供可由 Workspace 只读预热、立即恢复旧内容、消息本地提交与后台校准的会话列表/detail/messages 与 CRUD/reference 命令
- * [POS]: AgentPanel 会话控制器；服务端是真相源，进程内快照只跨面板挂载保留最后可用画面并合并预热/初始化请求，空账号只在真正打开面板时创建首个会话
+ * [INPUT]: 依赖 React、shared/api/ai 聚合读取、按用户与会话隔离的短时快照缓存、访问令牌与 threadSelection 偏好策略
+ * [OUTPUT]: 对外提供可只读预热、点击即切换目标壳、逐会话预取/回显、消息本地提交与后台校准的会话列表/detail/messages 与 CRUD/reference 命令
+ * [POS]: AgentPanel 会话控制器；列表选择不等待网络，内容缺失时显式加载、命中缓存时立即恢复，并合并同一会话的并发读取；服务端仍是真相源
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -11,20 +11,23 @@ import {
   createAiThread,
   deleteAiThread,
   getAiThreadBootstrap,
-  getAiThread,
-  listAiMessages,
+  getAiThreadContent,
   listAiThreads,
   replaceAiThreadReferences,
   updateAiThread,
   type AiMessage,
   type AiThread,
+  type AiThreadContent,
   type AiThreadDetail,
   type SuperNoteUIMessage,
 } from "../../shared/api/ai";
 import { selectedThreadStorageKey } from "./threadSelection";
 import {
   patchAiThreadSnapshot,
+  readAiThreadContent,
   readAiThreadSnapshot,
+  removeAiThreadContent,
+  writeAiThreadContent,
   writeAiThreadSnapshot,
   type AiThreadSnapshot,
 } from "./aiThreadCache";
@@ -36,6 +39,29 @@ type UseAiThreadsInput = {
 
 const pendingInitialThreads = new Map<string, Promise<AiThread>>();
 const pendingHydrations = new Map<string, Promise<AiThreadSnapshot | null>>();
+const pendingThreadContents = new Map<string, Promise<AiThreadContent>>();
+
+const threadContentKey = (userId: string, threadId: string) =>
+  `${userId}:${threadId}`;
+
+const requestThreadContent = (
+  accessToken: string,
+  userId: string,
+  threadId: string,
+): Promise<AiThreadContent> => {
+  const key = threadContentKey(userId, threadId);
+  const existing = pendingThreadContents.get(key);
+  if (existing !== undefined) return existing;
+
+  const request = getAiThreadContent(accessToken, threadId)
+    .then((content) => {
+      writeAiThreadContent(userId, content);
+      return content;
+    })
+    .finally(() => pendingThreadContents.delete(key));
+  pendingThreadContents.set(key, request);
+  return request;
+};
 
 const localTitleFromMessages = (
   messages: readonly SuperNoteUIMessage[],
@@ -101,11 +127,8 @@ const hydrateAiThreads = (
         threads,
       };
     }
-    const [selectedThread, messages] = await Promise.all([
-      getAiThread(accessToken, threadId),
-      listAiMessages(accessToken, threadId),
-    ]);
-    return { messages, selectedThread, storedAt: Date.now(), threads };
+    const content = await requestThreadContent(accessToken, userId, threadId);
+    return { ...content, storedAt: Date.now(), threads };
   })().finally(() => pendingHydrations.delete(userId));
   pendingHydrations.set(userId, hydration);
   return hydration;
@@ -132,6 +155,8 @@ export function useAiThreads({ accessToken, userId }: UseAiThreadsInput) {
   const [messages, setMessages] = useState<AiMessage[]>(() => initialSnapshot.current?.snapshot.messages ?? []);
   const [loading, setLoading] = useState(initialSnapshot.current === null);
   const [mutating, setMutating] = useState(false);
+  const [selectedLoading, setSelectedLoading] = useState(false);
+  const [selectedLoadError, setSelectedLoadError] = useState<string | null>(null);
   const selectedIdRef = useRef<string | null>(null);
 
   const persistSelection = useCallback((threadId: string) => {
@@ -144,24 +169,61 @@ export function useAiThreads({ accessToken, userId }: UseAiThreadsInput) {
     knownThreads?: AiThread[],
   ) => {
     persistSelection(threadId);
-    const [detail, storedMessages] = await Promise.all([
-      getAiThread(accessToken, threadId),
-      listAiMessages(accessToken, threadId),
-    ]);
-    if (selectedIdRef.current === threadId) {
-      setSelectedThread(detail);
-      setMessages(storedMessages);
-      const cachedThreads = knownThreads
-        ?? readAiThreadSnapshot(userId)?.snapshot.threads
-        ?? threads;
+    setSelectedLoadError(null);
+    const cachedThreads = knownThreads
+      ?? (threads.length > 0
+        ? threads
+        : readAiThreadSnapshot(userId)?.snapshot.threads ?? []);
+    const cached = readAiThreadContent(userId, threadId);
+
+    if (cached !== null) {
+      setSelectedThread(cached.snapshot.selectedThread);
+      setMessages(cached.snapshot.messages);
+      setSelectedLoading(false);
       writeAiThreadSnapshot(userId, {
-        messages: storedMessages,
-        selectedThread: detail,
+        messages: cached.snapshot.messages,
+        selectedThread: cached.snapshot.selectedThread,
         threads: cachedThreads,
       });
+      // 切到陈旧快照只改变当前画面，不能借此把内容 TTL 伪装成刚读取。
+      writeAiThreadContent(userId, {
+        messages: cached.snapshot.messages,
+        selectedThread: cached.snapshot.selectedThread,
+      }, cached.snapshot.storedAt);
+      if (cached.fresh) return cached.snapshot.selectedThread;
+    } else {
+      const summary = cachedThreads.find((thread) => thread.id === threadId);
+      if (summary !== undefined) {
+        setSelectedThread({ ...summary, references: [] });
+        setMessages([]);
+      }
+      setSelectedLoading(true);
     }
-    return detail;
+
+    try {
+      const content = await requestThreadContent(accessToken, userId, threadId);
+      if (selectedIdRef.current === threadId) {
+        setSelectedThread(content.selectedThread);
+        setMessages(content.messages);
+        setSelectedLoading(false);
+        writeAiThreadSnapshot(userId, { ...content, threads: cachedThreads });
+      }
+      return content.selectedThread;
+    } catch (error) {
+      if (selectedIdRef.current === threadId) {
+        setSelectedLoading(false);
+        if (cached === null) {
+          setSelectedLoadError(error instanceof Error ? error.message : "会话内容读取失败。");
+        }
+      }
+      throw error;
+    }
   }, [accessToken, persistSelection, threads, userId]);
+
+  const preloadThread = useCallback(async (threadId: string) => {
+    if (readAiThreadContent(userId, threadId)?.fresh) return;
+    await requestThreadContent(accessToken, userId, threadId);
+  }, [accessToken, userId]);
 
   const refreshLists = useCallback(async () => {
     const refreshedThreads = await listAiThreads(accessToken);
@@ -218,23 +280,32 @@ export function useAiThreads({ accessToken, userId }: UseAiThreadsInput) {
   const createThread = useCallback(() => runMutation(async () => {
     const created = await createAiThread(accessToken);
     const nextThreads = [created, ...threads];
+    const detail = { ...created, references: [] };
     setThreads(nextThreads);
-    await loadSelected(created.id, nextThreads);
-  }), [accessToken, loadSelected, runMutation, threads]);
+    persistSelection(created.id);
+    setSelectedThread(detail);
+    setMessages([]);
+    setSelectedLoading(false);
+    setSelectedLoadError(null);
+    writeAiThreadSnapshot(userId, { messages: [], selectedThread: detail, threads: nextThreads });
+  }), [accessToken, persistSelection, runMutation, threads, userId]);
 
-  const selectThread = useCallback((threadId: string) =>
-    runMutation(() => loadSelected(threadId)), [loadSelected, runMutation]);
+  const selectThread = useCallback(
+    (threadId: string) => loadSelected(threadId),
+    [loadSelected],
+  );
 
   const refreshSelected = useCallback(async () => {
     const threadId = selectedIdRef.current;
     if (threadId === null) return;
-    const [detail, storedMessages] = await Promise.all([
-      getAiThread(accessToken, threadId),
-      listAiMessages(accessToken, threadId),
-    ]);
-    setSelectedThread(detail);
-    setMessages(storedMessages);
-    patchAiThreadSnapshot(userId, { messages: storedMessages, selectedThread: detail });
+    const content = await getAiThreadContent(accessToken, threadId);
+    if (selectedIdRef.current !== threadId) return;
+    writeAiThreadContent(userId, content);
+    setSelectedThread(content.selectedThread);
+    setMessages(content.messages);
+    setSelectedLoading(false);
+    setSelectedLoadError(null);
+    patchAiThreadSnapshot(userId, content);
     await refreshLists();
   }, [accessToken, refreshLists, userId]);
 
@@ -313,6 +384,13 @@ export function useAiThreads({ accessToken, userId }: UseAiThreadsInput) {
     input: Partial<Pick<AiThread, "title">>,
   ) => runMutation(async () => {
     const updated = await updateAiThread(accessToken, threadId, input);
+    const cachedContent = readAiThreadContent(userId, threadId)?.snapshot;
+    if (cachedContent !== undefined) {
+      writeAiThreadContent(userId, {
+        messages: cachedContent.messages,
+        selectedThread: { ...cachedContent.selectedThread, ...updated },
+      }, cachedContent.storedAt);
+    }
     if (selectedIdRef.current === threadId) {
       setSelectedThread((detail) => detail === null ? null : { ...detail, ...updated });
       const cached = readAiThreadSnapshot(userId)?.snapshot;
@@ -347,16 +425,23 @@ export function useAiThreads({ accessToken, userId }: UseAiThreadsInput) {
       return;
     }
     const created = await createAiThread(accessToken);
+    const detail = { ...created, references: [] };
+    persistSelection(created.id);
     setThreads([created]);
-    await loadSelected(created.id, [created]);
-  }, [accessToken, loadSelected, threads]);
+    setSelectedThread(detail);
+    setMessages([]);
+    setSelectedLoading(false);
+    setSelectedLoadError(null);
+    writeAiThreadSnapshot(userId, { messages: [], selectedThread: detail, threads: [created] });
+  }, [accessToken, loadSelected, persistSelection, threads, userId]);
 
   const removeThread = useCallback((threadId: string) => runMutation(async () => {
     await deleteAiThread(accessToken, threadId);
+    removeAiThreadContent(userId, threadId);
     const wasSelected = selectedThread?.id === threadId;
     await refreshLists();
     if (wasSelected) await chooseNextOrCreate(threadId);
-  }), [accessToken, chooseNextOrCreate, refreshLists, runMutation, selectedThread?.id]);
+  }), [accessToken, chooseNextOrCreate, refreshLists, runMutation, selectedThread?.id, userId]);
 
   return {
     createThread,
@@ -365,11 +450,14 @@ export function useAiThreads({ accessToken, userId }: UseAiThreadsInput) {
     mutating,
     patchSelected,
     patchThread,
+    preloadThread,
     refreshSelected,
     commitLocalMessages,
     removeThread,
     replaceReferences,
     selectedThread,
+    selectedLoadError,
+    selectedLoading,
     selectThread,
     threads,
   };

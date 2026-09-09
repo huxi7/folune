@@ -1,6 +1,6 @@
 # Chat 全链路性能优化验收
 
-这份记录对应 2026-09-08 当前 checkout 的 Chat 性能改动。目标是减少用户能感知的等待，同时保持冻结 context、revision、审批、工具幂等与 API/RLS 事实边界不变。
+这份记录始于 2026-09-08，并在 2026-09-09 补入会话切换优化。目标是减少用户能感知的等待，同时保持冻结 context、revision、审批、工具幂等与 API/RLS 事实边界不变。
 
 ## 链路基线
 
@@ -12,6 +12,7 @@
 2. 普通发送每一轮都把完整历史消息从浏览器上传到 Chat；Chat 又先并发读取 thread/settings/context，再完整同步消息，模型启动前还有一次全量写入。
 3. 每次流结束、工具结果和审批响应都上传整段消息；前端随后再次读取 detail、messages、threads，用户已经看到答案却仍被后台往返拖住。
 4. 长会话的历史 Markdown 即使在视口外也参加布局和绘制，流式更新时会放大 React/Markdown 重算成本。
+5. 历史会话点击后仍停留在列表，等待 detail 与 messages 两个浏览器请求；两条 API 路径又重复读取 thread，合计四次存储访问后才完成导航。
 
 ## 实际改动
 
@@ -23,6 +24,8 @@
 - 客户端在流完成后先用本地消息快照立即更新会话画面；错误或中止才后台重新校准服务端，避免成功路径再发 detail+messages+list 三次请求。
 - `useChat` 使用 32ms 订阅节流；历史消息（最后一条除外）使用 `content-visibility: auto`，保留 DOM 与滚动语义，流式末尾仍完整测量。
 - AgentPanel 工具命令对账首次挂载扫全量，后续只检查当前 assistant 的状态变化；文本分块不再重复扫描整段历史 parts。
+- 会话切换改为点击后同步选择目标摘要并立即退出列表：命中过往内容缓存直接回显，首次读取则在目标会话窗口显示与消息/Composer 同构的 Skeleton，失败也留在目标窗口重试。
+- 新增单会话 `GET /ai-threads/:threadId/content` 聚合读取；浏览器只发一个请求，API 将 thread、references、messages 三路并行。列表项在 pointer/focus 时预取，预取和点击共享同一在途请求；每个用户最多保留八个逐会话内容快照。
 
 ## 可验证的改善
 
@@ -35,13 +38,14 @@
 | Chat prepare 前置读取 | thread/settings/context 与同步逻辑分散 | 单 API 入口，thread/settings/history/context 并行启动 |
 | AI 历史/上下文传输 | 未压缩 JSON | gzip/deflate 协商，保留 `Vary: Accept-Encoding` |
 | 流式工具对账计算 | 每个分块扫描整段历史 parts | 首次全量恢复，后续只扫描末条 assistant |
+| 历史会话切换 | 列表页等待 2 个浏览器请求、4 次存储读取 | 立即进入目标窗；冷读 1 个浏览器请求、3 次并行存储读取，热缓存 0 请求 |
 
 API 内存集成测试还验证了首轮完整消息、增量续写、稳定 assistant 不重复、冻结 revision、owner 过滤和定点 PATCH。以上是协议级确定性差异，不把本地 mock 时间冒充真实 DeepSeek 端到端延迟百分比。
 
 ## 验证结果
 
-- `app`: `508 pass / 0 fail`，`bun run typecheck`、`bun run lint`、`bun run build` 通过。
-- `api`: `112 pass / 0 fail`，`bun run typecheck` 通过；新增 bootstrap、prepare-chat、增量写入与 assistant PATCH 覆盖。
+- `app`: `515 pass / 0 fail`，`bun run typecheck`、`bun run lint`、`bun run build` 通过；会话请求未完成时的立即导航与目标加载壳已有交互测试覆盖。
+- `api`: `115 pass / 0 fail`，`bun run typecheck` 通过；新增 bootstrap、content 三路并行、prepare-chat、增量写入与 assistant PATCH 覆盖。
 - `chat`: `63 pass / 0 fail`，`bun run typecheck`、`bun run build` 通过。
 - `git diff --check` 通过。
 - 当前 Docker `api-dev`、`chat-dev` 健康探针均为 200；未认证请求仍在路由层返回 401，允许来源的 API 预检仍为 600 秒。

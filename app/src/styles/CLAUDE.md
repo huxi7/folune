@@ -33,6 +33,8 @@ color-lab.css: DEV `/color-lab` 蓝色终选决策画布，以同构静态 Libra
 
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 
+2026-09-09 Chat 会话切换：workspace.css 用现有 DS Skeleton 组合目标会话的消息区与 Composer 占位；历史页点击后先进入目标内容窗，加载态维持同一空间骨架，不新增第二套 shimmer、卡片材质或位移动画。
+
 2026-09-04 Toolbar refinement: `.note-view-actions` 使用 12px 外间距，`.note-view-cluster` 与 `.markdown-view-menu` 使用 4px 簇内间距；顶栏 32px 高度由 `.app-main-toolbar .ds-button, .app-main-toolbar .archive-status` 一条规则统一给出，整理只保留 Quiet Accent 的前景/hover/active token。
 
 2026-09-04 滚动交界收口：凝结的被动画量收敛为一个注册 `<number>` `--toolbar-condense-progress`，`.app-main-toolbar::before` 的实底高度、`.app-main-toolbar::after` 的 top/高度/`backdrop-filter` 模糊半径与遮罩强度都在消费点乘它算出来；软边上限由 20px 收到 `--toolbar-edge-max` 16px，模糊 `--toolbar-edge-blur` 6px；实底改为下沿锚定并新增 `--toolbar-condense-cover`，区间由 40–96/52–96 收到 24–80/36–80——正文抵达顶栏下沿只需 `1px 纸边 + 正文上边距`（窄屏 33px），96px 的终点来不及，顶栏上方因此长期漏出半行被切断的正文。软边的 top 现在是常量 `100%`，真空段没有可以存在的位置；进度 0 即 `blur(0)` 且高度 0，因此不存在常驻模糊带。

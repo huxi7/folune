@@ -1,13 +1,18 @@
 /**
- * [INPUT]: 依赖 useConversationScroll 的挂载定位与退出冻结、 DS 实时动态偏好、 PersistentView 的有方向视图承接、DS 输入表面浮现语义、useAiThreads、类型化 useChat/原生审批及既有 Composer/工具执行边界
- * [OUTPUT]: 对外提供 AI Native 右侧工作区；引用源按 memo 身份/置顶列表精确对账，已批准工具按持久消息语义幂等恢复，流式消息定点同步并以本地快照快速回显，外层只回报选中会话 id
- * [POS]: /app 右侧 AI Native V2 组合根；工具参数流结束且批准后才进入 Worker，api command 是唯一写事实源，Store 只做幂等投影与回滚
+ * [INPUT]: 依赖 useConversationScroll 的挂载定位与退出冻结、 DS 实时动态偏好、 PersistentView 的有方向视图承接、DS Skeleton/输入表面浮现语义、useAiThreads、类型化 useChat/原生审批及既有 Composer/工具执行边界
+ * [OUTPUT]: 对外提供 AI Native 右侧工作区；会话点击先切目标壳再异步载入，引用源精确对账，已批准工具幂等恢复，流式消息定点同步并以本地快照快速回显
+ * [POS]: /app 右侧 AI Native V2 组合根；历史只负责导航，目标会话加载/失败在内容窗承接；api command 是唯一写事实源，Store 只做幂等投影与回滚
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
 import { useConversationScroll } from "./useConversationScroll";
 import { AgentPanelHeader } from "./AgentPanelHeader";
-import { PersistentView, useToast } from "../../shared/design-system/components";
+import {
+  PersistentView,
+  Skeleton,
+  SkeletonGroup,
+  useToast,
+} from "../../shared/design-system/components";
 import { useMotionPreference } from "../../shared/design-system/useMotionPreference";
 import { motion, useIsPresent } from "motion/react";
 import { contentEntranceVariants } from "../../shared/design-system/motion";
@@ -666,6 +671,13 @@ export function AgentPanel(props: AgentPanelProps) {
     onSelectedThreadChange(thread?.id ?? null);
   }, [onSelectedThreadChange, thread?.id]);
 
+  const selectConversation = (threadId: string) => {
+    setHistoryOpen(false);
+    return threads.selectThread(threadId).catch((error) => {
+      toast({ title: "会话加载失败", description: error instanceof Error ? error.message : "请稍后重试。", variant: "error" });
+    });
+  };
+
   const createConversation = async () => {
     if (creatingThread || actionBusy || threads.loading) return;
     setCreatingThread(true);
@@ -694,11 +706,28 @@ export function AgentPanel(props: AgentPanelProps) {
       />
       <div className="agent-panel-view-stack">
       <PersistentView active={historyOpen} motion="from-left" fill className="agent-panel-view-switch">
-        <ThreadHistory busy={actionBusy} onDelete={threads.removeThread} onRename={(id, title) => threads.patchThread(id, { title })} onSelect={async (id) => { await threads.selectThread(id); setHistoryOpen(false); }} selectedId={thread?.id ?? null} threads={threads.threads} />
+        <ThreadHistory busy={actionBusy} onDelete={threads.removeThread} onPrefetch={threads.preloadThread} onRename={(id, title) => threads.patchThread(id, { title })} onSelect={selectConversation} selectedId={thread?.id ?? null} threads={threads.threads} />
       </PersistentView>
       <PersistentView active={!historyOpen} fill className="agent-panel-view-switch">
       {thread === null ? (
         <div className="agent-panel-loading">{threads.loading ? "正在恢复会话…" : "会话加载失败，请重新打开面板。"}</div>
+      ) : threads.selectedLoading ? (
+        <SkeletonGroup className="agent-conversation-loading" label={`正在载入会话 ${thread.title}`}>
+          <div className="agent-conversation-loading-list">
+            <Skeleton className="agent-conversation-loading-user" />
+            <div className="agent-conversation-loading-answer">
+              <Skeleton shape="text" />
+              <Skeleton shape="text" />
+              <Skeleton shape="text" />
+            </div>
+          </div>
+          <Skeleton className="agent-conversation-loading-composer" />
+        </SkeletonGroup>
+      ) : threads.selectedLoadError !== null ? (
+        <div className="agent-panel-loading" role="alert">
+          <span>这个会话暂时没有加载出来。</span>
+          <Button onClick={() => void selectConversation(thread.id)} variant="ghost">重试</Button>
+        </div>
       ) : (
         <AgentConversation accessToken={props.accessToken} currentMemo={props.currentMemo} initialMessages={threads.messages} key={thread.id} memoTree={props.memoTree} onApplyOrganize={props.onApplyOrganize} onBusyChange={setChatBusy} onPrepareMutation={props.onPrepareMutation} onReferencesChange={threads.replaceReferences} onRejectOrganize={props.onRejectOrganize} onThreadUpdated={(localMessages) => localMessages === undefined ? threads.refreshSelected() : threads.commitLocalMessages(localMessages)} organizeReviewBusy={actionBusy} organizeRun={visibleOrganizeRun} thread={thread} userId={props.userId} />
       )}
