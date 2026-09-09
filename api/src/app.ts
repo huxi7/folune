@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Hono、Hono CORS/compress、config/env、router 聚合器、middleware 请求日志与错误处理
- * [OUTPUT]: 对外提供十分钟 CORS 预检复用、memo/Canvas JSON 压缩协商、X-Request-Id 跨域暴露和路由装配的 app
+ * [OUTPUT]: 对外提供十分钟 CORS 预检复用、memo/Canvas/AI JSON 压缩协商、X-Request-Id 跨域暴露和路由装配的 app
  * [POS]: api HTTP 组装根，只注册横切中间件、错误钩子与 router，不承载业务判断
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -32,9 +32,15 @@ app.use(
   }),
 );
 
-// 正文、整树与图是主要下载载荷；不介入 AI 通道或头像上传。
+// 正文、整树、图与 Chat 恢复/上下文是主要下载载荷；不介入 SSE 或头像上传。
 const compressJson = compress({ contentTypeFilter: /^application\/json/ });
-for (const path of ["/memo-tree", "/memos/*", "/canvases/*"]) {
+for (const path of [
+  "/memo-tree",
+  "/memos/*",
+  "/canvases/*",
+  "/ai-threads/*",
+  "/ai-context/*",
+]) {
   app.use(path, async (c, next) => {
     await compressJson(c, next);
     c.header("Vary", "Accept-Encoding", { append: true });

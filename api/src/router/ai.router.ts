@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Hono、router/request、AI zod schemas、auth 与 AI thread/context/run services、统一 ok helper
- * [OUTPUT]: 对外提供 /ai-threads、/ai-context、/ai-runs、/ai-settings、/ai-commands 的 JWT 保护资源 routers
+ * [OUTPUT]: 对外提供 /ai-threads（含 bootstrap 与消息定点 PATCH）、/ai-context（含 prepare-chat）、/ai-runs、/ai-settings、/ai-commands 的 JWT 保护资源 routers
  * [POS]: router 层 AI Native V2 HTTP 适配器，只做认证、param/body 校验和 service 下传；会话列表无状态 query，不调用模型或直接访问 Supabase
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -11,6 +11,7 @@ import { Hono } from "hono";
 import { ok } from "../common/response.ts";
 import {
   aiCommandIdParamSchema,
+  aiMessageIdParamSchema,
   aiRunIdParamSchema,
   aiThreadIdParamSchema,
   createAiCommandSchema,
@@ -21,7 +22,9 @@ import {
   patchAiThreadSchema,
   recordAiRunPlanSchema,
   replaceAiThreadReferencesSchema,
+  prepareAiChatSchema,
   resolveAiContextSchema,
+  syncAiMessageSchema,
   syncAiMessagesSchema,
 } from "../dto/ai.dto.ts";
 import { aiCommandService, aiSettingsService } from "../service/ai-command.service.ts";
@@ -46,6 +49,13 @@ export const aiContextRouter = new Hono();
 export const aiRunRouter = new Hono();
 export const aiSettingsRouter = new Hono();
 export const aiCommandRouter = new Hono();
+
+const readPreferredThreadId = (c: Context): string | null => {
+  const value = c.req.query("selected_id");
+  return typeof value === "string" && /^[0-9a-f-]{36}$/iu.test(value)
+    ? value
+    : null;
+};
 
 aiSettingsRouter.get("/", async (c) => {
   const { accessToken, authUser } = await authenticate(c);
@@ -99,6 +109,19 @@ aiThreadRouter.get("/", async (c) => {
   return ok(c, await aiThreadService.listThreads(authUser, accessToken));
 });
 
+// 面板首开需要列表、选中会话和消息；合并浏览器请求，旧资源路径仍保留。
+aiThreadRouter.get("/bootstrap", async (c) => {
+  const { accessToken, authUser } = await authenticate(c);
+  return ok(
+    c,
+    await aiThreadService.bootstrap(
+      authUser,
+      accessToken,
+      readPreferredThreadId(c),
+    ),
+  );
+});
+
 aiThreadRouter.get("/:threadId", async (c) => {
   const { accessToken, authUser } = await authenticate(c);
   const { threadId } = parseRouteParams(aiThreadIdParamSchema, c.req.param());
@@ -122,6 +145,26 @@ aiThreadRouter.get("/:threadId/messages", async (c) => {
   const { accessToken, authUser } = await authenticate(c);
   const { threadId } = parseRouteParams(aiThreadIdParamSchema, c.req.param());
   return ok(c, await aiThreadService.listMessages(authUser, accessToken, threadId));
+});
+
+// Chat 流结束与工具结果只更新当前 assistant，避免重新上传整段消息。
+aiThreadRouter.patch("/:threadId/messages/:messageId", async (c) => {
+  const { accessToken, authUser } = await authenticate(c);
+  const { threadId, messageId } = parseRouteParams(
+    aiMessageIdParamSchema,
+    c.req.param(),
+  );
+  const message = await parseJsonBody(c, syncAiMessageSchema, "Invalid AI message");
+  return ok(
+    c,
+    await aiThreadService.syncMessage(
+      authUser,
+      accessToken,
+      threadId,
+      messageId,
+      message,
+    ),
+  );
 });
 
 aiThreadRouter.put("/:threadId/messages", async (c) => {
@@ -149,6 +192,12 @@ aiContextRouter.post("/resolve", async (c) => {
   const { accessToken, authUser } = await authenticate(c);
   const input = await parseJsonBody(c, resolveAiContextSchema, "Invalid AI context data");
   return ok(c, await aiContextService.resolve(authUser, accessToken, input));
+});
+
+aiContextRouter.post("/prepare-chat", async (c) => {
+  const { accessToken, authUser } = await authenticate(c);
+  const input = await parseJsonBody(c, prepareAiChatSchema, "Invalid Chat preparation data");
+  return ok(c, await aiThreadService.prepareChatTurn(authUser, accessToken, input));
 });
 
 aiRunRouter.post("/", async (c) => {

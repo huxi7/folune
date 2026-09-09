@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 useConversationScroll 的挂载定位与退出冻结、 DS 实时动态偏好、 PersistentView 的有方向视图承接、DS 输入表面浮现语义、useAiThreads、类型化 useChat/原生审批及既有 Composer/工具执行边界
- * [OUTPUT]: 对外提供 AI Native 右侧工作区；引用源按 memo 身份/置顶列表精确对账，已批准工具按持久消息语义幂等恢复，外层只回报选中会话 id
+ * [OUTPUT]: 对外提供 AI Native 右侧工作区；引用源按 memo 身份/置顶列表精确对账，已批准工具按持久消息语义幂等恢复，流式消息定点同步并以本地快照快速回显，外层只回报选中会话 id
  * [POS]: /app 右侧 AI Native V2 组合根；工具参数流结束且批准后才进入 Worker，api command 是唯一写事实源，Store 只做幂等投影与回滚
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -36,7 +36,7 @@ import {
 } from "ai";
 
 import {
-  syncAiMessages,
+  syncAiMessage,
   undoAiCommand,
   type AiCommand,
   type AiRun,
@@ -122,7 +122,7 @@ type ConversationProps = {
   onPrepareMutation: AgentPanelProps["onPrepareMutation"];
   onRejectOrganize: AgentPanelProps["onRejectOrganize"];
   onReferencesChange: (memoIds: readonly string[]) => Promise<void>;
-  onThreadUpdated: () => Promise<void>;
+  onThreadUpdated: (messages?: readonly SuperNoteUIMessage[]) => Promise<void>;
   organizeReviewBusy: boolean;
   organizeRun: AiRun | null;
   thread: AiThreadDetail;
@@ -179,6 +179,9 @@ function AgentConversation({
   const respondingApprovalIds = useRef(new Set<string>());
   const settledApprovalIds = useRef(new Set<string>());
   const recoveredToolCalls = useRef(new Set<string>());
+  const reconciledToolStates = useRef(new Map<string, string>());
+  const initialReconciliationDone = useRef(false);
+  const previousMessageCount = useRef(0);
   const messagesRef = useRef<SuperNoteUIMessage[]>(initialMessages);
   const transport = useMemo(
     () => createMemoChatTransport(thread.id),
@@ -242,8 +245,9 @@ function AgentConversation({
     id: thread.id,
     messages: initialMessages,
     transport,
+    experimental_throttle: 32,
     sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
-    onFinish: ({ message }) => {
+    onFinish: ({ message, messages: finishedMessages, isAbort, isError }) => {
       // 客户端工具执行期间必须计入 busy: 流已结束 (status=ready), 但 Worker
       // 规划 + createAiCommand 两次网络往返还在跑。这几百毫秒内切换会话会
       // 卸载 AgentConversation —— command 已落库、树已改变, tool result 永久
@@ -252,7 +256,17 @@ function AgentConversation({
       void executePendingClientTools(message)
         .finally(() => {
           setClientToolsRunning(false);
-          onThreadUpdated();
+          if (isAbort || isError) {
+            void onThreadUpdated();
+            return;
+          }
+          // AI SDK 给出流结束时的权威快照；只有客户端工具结果已经让 live ref
+          // 更完整时才采用它，避免 32ms 节流让 React 落后于最后一帧 SSE。
+          const liveMessages = messagesRef.current;
+          const hasFinishedAssistant = liveMessages.some(
+            (candidate) => candidate.id === message.id,
+          );
+          void onThreadUpdated(hasFinishedAssistant ? liveMessages : finishedMessages);
         });
     },
   });
@@ -301,12 +315,21 @@ function AgentConversation({
           });
       if (completedMessages !== undefined) {
         try {
-          await syncAiMessages(accessToken, thread.id, completedMessages);
+          const assistantMessage = completedMessages.findLast(
+            (candidate) => candidate.role === "assistant",
+          );
+          if (assistantMessage !== undefined) {
+            await syncAiMessage(accessToken, thread.id, assistantMessage);
+          }
         } catch {
-          // addToolResult 随后的续写仍会携带完整消息；若网络持续失败，刷新恢复会按 toolCallId 幂等补齐。
+          // addToolResult 随后的续写会由服务端按 thread 重建历史；若网络持续失败，
+          // 刷新恢复仍会按 toolCallId 幂等补齐。
         }
       }
       await addToolResult({ output, tool: toolName, toolCallId: part.toolCallId });
+      if (completedMessages !== undefined) {
+        await onThreadUpdated(completedMessages);
+      }
     } catch (toolError) {
       const errorText = toolError instanceof Error ? toolError.message : "客户端工具执行失败。";
       const completedMessages = durableBaseMessages === undefined
@@ -317,7 +340,12 @@ function AgentConversation({
           });
       if (completedMessages !== undefined) {
         try {
-          await syncAiMessages(accessToken, thread.id, completedMessages);
+          const assistantMessage = completedMessages.findLast(
+            (candidate) => candidate.role === "assistant",
+          );
+          if (assistantMessage !== undefined) {
+            await syncAiMessage(accessToken, thread.id, assistantMessage);
+          }
         } catch {
           // 交由后续 chat 请求或刷新恢复重试，不能因审计同步失败再次执行非幂等 UI 更新。
         }
@@ -328,6 +356,9 @@ function AgentConversation({
         tool: toolName,
         toolCallId: part.toolCallId,
       });
+      if (completedMessages !== undefined) {
+        await onThreadUpdated(completedMessages);
+      }
     }
   }
   const streamBusy = status === "submitted" || status === "streaming";
@@ -351,9 +382,24 @@ function AgentConversation({
   const errorCopy = getErrorCopy(error);
 
   useEffect(() => {
-    for (const message of messages) {
+    // 首次挂载必须扫完整历史以恢复已落账命令；流式阶段只有末条 assistant
+    // 会变化，避免每个文本分块都重新遍历整段会话。
+    const latestAssistant = messages.findLast((message) => message.role === "assistant");
+    const needsFullReconciliation = !initialReconciliationDone.current
+      || (previousMessageCount.current === 0 && messages.length > 0)
+      || messages.length < previousMessageCount.current;
+    const candidates = !needsFullReconciliation
+      ? latestAssistant === undefined ? [] : [latestAssistant]
+      : messages;
+    initialReconciliationDone.current = true;
+    previousMessageCount.current = messages.length;
+
+    for (const message of candidates) {
       for (const part of message.parts) {
         if (!isToolUIPart(part)) continue;
+        const previousState = reconciledToolStates.current.get(part.toolCallId);
+        if (previousState === part.state) continue;
+        reconciledToolStates.current.set(part.toolCallId, part.state);
         const toolName = normalizeAgentToolName(getToolName(part));
         const isWrite = toolName === "edit_node" || toolName === "edit_memo";
         if (part.state === "output-available") {
@@ -386,7 +432,12 @@ function AgentConversation({
 
     void (async () => {
       await addToolApprovalResponse({ id, approved });
-      await syncAiMessages(accessToken, thread.id, respondedMessages);
+      const respondedAssistant = respondedMessages.findLast(
+        (candidate) => candidate.role === "assistant",
+      );
+      if (respondedAssistant !== undefined) {
+        await syncAiMessage(accessToken, thread.id, respondedAssistant);
+      }
       settledApprovalIds.current.add(id);
 
       if (approved) {
@@ -396,7 +447,7 @@ function AgentConversation({
         manuallyApprovedToolCalls.current.delete(approvalPart.toolCallId);
         rollbackAiToolCall(approvalPart.toolCallId);
       }
-      await onThreadUpdated();
+      await onThreadUpdated(respondedMessages);
     })().catch(() => {
       if (!settledApprovalIds.current.has(id)) {
         setMessages(previousMessages);
@@ -542,7 +593,7 @@ function AgentConversation({
         },
       });
     } catch {
-      // useChat 维护 error；服务端完整消息同步会在下一请求修复状态。
+      // useChat 维护 error；下一次请求或后台校准会把服务端状态重新对齐。
     }
   }
 
@@ -649,7 +700,7 @@ export function AgentPanel(props: AgentPanelProps) {
       {thread === null ? (
         <div className="agent-panel-loading">{threads.loading ? "正在恢复会话…" : "会话加载失败，请重新打开面板。"}</div>
       ) : (
-        <AgentConversation accessToken={props.accessToken} currentMemo={props.currentMemo} initialMessages={threads.messages} key={thread.id} memoTree={props.memoTree} onApplyOrganize={props.onApplyOrganize} onBusyChange={setChatBusy} onPrepareMutation={props.onPrepareMutation} onReferencesChange={threads.replaceReferences} onRejectOrganize={props.onRejectOrganize} onThreadUpdated={threads.refreshSelected} organizeReviewBusy={actionBusy} organizeRun={visibleOrganizeRun} thread={thread} userId={props.userId} />
+        <AgentConversation accessToken={props.accessToken} currentMemo={props.currentMemo} initialMessages={threads.messages} key={thread.id} memoTree={props.memoTree} onApplyOrganize={props.onApplyOrganize} onBusyChange={setChatBusy} onPrepareMutation={props.onPrepareMutation} onReferencesChange={threads.replaceReferences} onRejectOrganize={props.onRejectOrganize} onThreadUpdated={(localMessages) => localMessages === undefined ? threads.refreshSelected() : threads.commitLocalMessages(localMessages)} organizeReviewBusy={actionBusy} organizeRun={visibleOrganizeRun} thread={thread} userId={props.userId} />
       )}
       </PersistentView>
       </div>

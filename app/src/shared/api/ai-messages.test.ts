@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun test、src/testEnv 的公开占位配置、shared/api/ai 消息同步 client 与可替换 global fetch
- * [OUTPUT]: 覆盖审批状态通过认证 PUT 原样同步到 thread messages 资源
+ * [OUTPUT]: 覆盖 bootstrap 恢复请求与审批状态通过认证 PUT 原样同步到 thread messages 资源
  * [POS]: shared/api 的审批持久化 HTTP 契约回归测试，不访问真实 Supabase 或浏览器会话
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -16,11 +16,12 @@ let syncAiMessages: (
   threadId: string,
   messages: readonly SuperNoteUIMessage[],
 ) => Promise<AiMessage[]>;
+let getAiThreadBootstrap: typeof import("./ai").getAiThreadBootstrap;
 
 const originalFetch = globalThis.fetch;
 
 beforeAll(async () => {
-  ({ syncAiMessages } = await import("./ai"));
+  ({ getAiThreadBootstrap, syncAiMessages } = await import("./ai"));
 });
 
 afterEach(() => {
@@ -28,6 +29,49 @@ afterEach(() => {
 });
 
 describe("AI messages API", () => {
+  test("bootstrap 请求一次返回选中会话所需的恢复数据", async () => {
+    let request: Request | undefined;
+    globalThis.fetch = (async (input, init) => {
+      request = new Request(input, init);
+      return Response.json({
+        code: "ok",
+        data: {
+          messages: [{
+            context_snapshot: {
+              primary: {
+                memo_id: "11111111-1111-4111-8111-111111111111",
+                revision: 3,
+                title: "当前",
+              },
+              references: [],
+            },
+            created_at: "2026-09-08T00:00:00Z",
+            id: "assistant-1",
+            parts: [],
+            position: 0,
+            role: "assistant",
+            status: "complete",
+            thread_id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+            updated_at: "2026-09-08T00:00:00Z",
+            user_id: "11111111-1111-4111-8111-111111111111",
+          }],
+          selectedThread: null,
+          threads: [],
+        },
+        message: "OK",
+      });
+    }) as typeof fetch;
+
+    const bootstrap = await getAiThreadBootstrap("token", "thread/1");
+
+    expect(request?.method).toBe("GET");
+    expect(new URL(request?.url ?? "http://invalid").pathname).toBe("/ai-threads/bootstrap");
+    expect(new URL(request?.url ?? "http://invalid").searchParams.get("selected_id")).toBe("thread/1");
+    expect(request?.headers.get("Authorization")).toBe("Bearer token");
+    expect(bootstrap.messages[0]?.metadata?.context_snapshot?.primary?.memo_id)
+      .toBe("11111111-1111-4111-8111-111111111111");
+  });
+
   test("PUT 持久化 approval-responded，刷新不会重新得到待确认状态", async () => {
     const messages: SuperNoteUIMessage[] = [{
       id: "assistant-1",

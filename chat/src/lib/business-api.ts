@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 config/env 的 BUSINESS_API_BASE_URL、调用方当前 Bearer JWT、Web fetch 与 zod
- * [OUTPUT]: 对外提供 thread/消息/冻结 context、轻量 tree、单篇正文、Canvas expansion 可信上下文、账号权限、命令与 Run 的 authenticated Business API client
+ * [OUTPUT]: 对外提供 thread/消息/冻结 context、一次性 Chat turn prepare、轻量 tree、单篇正文、Canvas expansion 可信上下文、账号权限、命令与 Run 的 authenticated Business API client
  * [POS]: lib 层 chat→api 唯一业务边界，每次请求临时转发用户 JWT，统一解析信封且绝不记录或持久化凭据；canvas 可穿过资源校验，再由各模型投影显式过滤
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -52,6 +52,23 @@ const aiSettingsSchema = z.object({
   permission_mode: aiPermissionModeSchema,
   created_at: z.string(),
   updated_at: z.string(),
+});
+
+const preparedChatMessageSchema = z
+  .object({
+    id: z.string().min(1),
+    role: z.enum(["user", "assistant"]),
+    parts: z.array(z.unknown()),
+    status: z.enum(["in_progress", "complete", "aborted", "error"]).optional(),
+    context_snapshot: z.unknown().nullable().optional(),
+  })
+  .passthrough();
+
+const preparedChatTurnSchema = z.object({
+  context: resolvedContextSchema,
+  messages: z.array(preparedChatMessageSchema),
+  permission_mode: aiPermissionModeSchema,
+  response_message_id: z.string().min(1),
 });
 
 export const aiCommandSchema = z.object({
@@ -261,6 +278,7 @@ const relatedHitsSchema = z.array(relatedHitSchema);
 export type RelatedHit = z.infer<typeof relatedHitSchema>;
 
 const syncMessageSchema = z.array(z.object({ id: z.string() }).passthrough());
+const syncedMessageSchema = z.object({ id: z.string() }).passthrough();
 
 export const businessApi = {
   getThread(threadId: string, accessToken: string) {
@@ -277,6 +295,59 @@ export const businessApi = {
       accessToken,
       syncMessageSchema,
       { method: "PUT", body: JSON.stringify(messages) },
+    );
+  },
+
+  syncMessage(
+    threadId: string,
+    message: UIMessage,
+    status: "in_progress" | "complete" | "aborted" | "error",
+    accessToken: string,
+  ) {
+    return request(
+      `/ai-threads/${threadId}/messages/${encodeURIComponent(message.id)}`,
+      accessToken,
+      syncedMessageSchema,
+      {
+        method: "PATCH",
+        body: JSON.stringify({
+          id: message.id,
+          parts: message.parts,
+          role: message.role,
+          status,
+        }),
+      },
+    );
+  },
+
+  prepareChatTurn(
+    input: {
+      threadId: string;
+      activeMemoId: string | null;
+      referenceMemoIds: readonly string[];
+      expectedRevisions: Readonly<Record<string, number>>;
+      messages?: readonly UIMessage[];
+      message?: UIMessage;
+      responseMessageId: string;
+    },
+    accessToken: string,
+  ) {
+    const body = {
+      thread_id: input.threadId,
+      active_memo_id: input.activeMemoId,
+      reference_memo_ids: input.referenceMemoIds,
+      expected_revisions: input.expectedRevisions,
+      include_thread_references: false,
+      response_message_id: input.responseMessageId,
+      ...(input.messages === undefined
+        ? { message: input.message }
+        : { messages: input.messages }),
+    };
+    return request(
+      "/ai-context/prepare-chat",
+      accessToken,
+      preparedChatTurnSchema,
+      { method: "POST", body: JSON.stringify(body) },
     );
   },
 

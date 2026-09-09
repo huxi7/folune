@@ -1,13 +1,13 @@
 /**
  * [INPUT]: 依赖 zod 与 AI SDK 用户消息 metadata 的 context 约定
- * [OUTPUT]: 对外提供 readFrozenTurnContext 与 isAssistantContinuation，提取本轮 active/@refs 快照并区分首次生成/工具续写
+ * [OUTPUT]: 对外提供 readFrozenTurnContext 与 isAssistantContinuation，提取本轮 active/@refs 快照并区分首次生成/工具续写；支持增量请求携带紧凑冻结上下文
  * [POS]: routes 的纯解析边界；页面当前状态只可作为 V1 回退，合法消息 metadata 一经发送便不再漂移
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
 import { z } from "zod";
 
-const frozenTurnContextSchema = z.object({
+export const frozenTurnContextSchema = z.object({
   active_memo_id: z.uuid().nullable(),
   reference_memo_ids: z.array(z.uuid()).max(5),
   revisions: z.record(z.uuid(), z.number().int().positive()).optional().default({}),
@@ -27,6 +27,7 @@ export const isAssistantContinuation = (
 export const readFrozenTurnContext = (
   messages: readonly MessageWithMetadata[],
   fallbackActiveMemoId: string | null,
+  fallbackContext: FrozenTurnContext | null = null,
 ): FrozenTurnContext => {
   for (let index = messages.length - 1; index >= 0; index -= 1) {
     const message = messages[index];
@@ -39,7 +40,7 @@ export const readFrozenTurnContext = (
     break;
   }
 
-  return {
+  return fallbackContext ?? {
     active_memo_id: fallbackActiveMemoId,
     reference_memo_ids: [],
     revisions: {},

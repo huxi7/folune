@@ -13,7 +13,8 @@ workspaceLayout.test.ts: 工作区浮层 Sidebar 的 CSS 契约测试，锁定 P
 designSystemContracts.test.ts: 设计系统 Radius 与 press 静态契约测试，锁定 16px Control、显式 12px inner、Button 继续引用共享 token、AI Composer 32px send/stop 的 round 圆形例外，以及 .ds-button/SidebarButton/EdgeDock/Toolbar icon/创建 split 共读同一份 --press-scale 且 Reduced Motion 归 1；创建 split 的 hover 与 press 两条都必须点名 .sidebar-create-main/.sidebar-create-more，宽 `button` 会把展开的菜单项算成这颗 split 的一部分，让反馈落在指针根本不在的控件上
 paperGeometry.test.ts: 主 Paper 几何契约测试，锁定桌面 7:9 重叠基线、基线以 min-width: 0 退出列定宽、编辑列无第二条 vh 公式、CodeMirror 交还纵向滚动、窄屏取消比例，并保护 reader 1:√2
 mobileToolbar.test.ts: 窄屏 Paper Toolbar 几何契约，锁定 479px 以下内边距/间距收紧；顶栏只剩 Quiet Accent 整理还带文字，因此需要收紧内边距的也只剩它一个
-ai-message.css: AgentPanel 与 Design System 共用的 AI 消息视觉层，承载 Primary 同源用户气泡、无卡片最终正文、最多五词常数节点错峰模糊拖尾、Formation ThinkingIndicator，以及带人话详情、灰阶结果符号和活动态 shimmer 的 Secondary 同源工具披露控件；流式正文不提供光标，历史正文不参与动画，过程与正文之间只使用自然留白，不绘制固定分隔线
+ai-message.css: AgentPanel 与 Design System 共用的 AI 消息视觉层，承载 Primary 同源用户气泡、无卡片最终正文、最多五词常数节点错峰模糊拖尾、Formation ThinkingIndicator，以及带人话详情、灰阶结果符号和活动态 shimmer 的 Secondary 同源工具披露控件；流式正文不提供光标，非末条历史消息使用原生 content-visibility 降低长会话布局成本，末条保持完整测量，过程与正文之间只使用自然留白，不绘制固定分隔线
+aiMessagePerformance.test.ts: 静态锁定 Chat 历史消息 content-visibility 只作用于非末条，防止流式末尾滚动测量回归
 auth.css: 登录/注册 Dialog 专用样式，承载共享平面 Input/PasswordInput 的认证尺寸、自动填充、模式切换与协议提示
 design-system.css: Quiet Editorial 基础组件视觉层与 ThinkingMark Formation Motion；Dialog 提供 panel/bare 表面及 motion=none 模式，而 motion=none 连遮罩都不自带淡入——遮罩自己淡入会被视图过渡拍成「新状态里没有磨砂」，于是背后内容整段清清楚楚、过渡结束才一下盖上来，磨砂因此交给 root 那对截图去带，只有不支持视图过渡的浏览器才由 @supports 兜一次 140ms。也正因为遮罩属于 root 那张截图而不是自带过渡身份，磨砂玻璃在这里是完整可用的，不必为了截图退化成一块不透明色；Input/Select、Skeleton/Loading 与 reduced-motion 规则继续由本层统一
 button.css: Button 专用视觉层；统一 36px 标准命令高度、14px/18px UI 文字、14px 横向留白、6px 图文间距、16px Control 曲率，以极轻 180deg 同色明度坡度、短中性落地阴影和不成环的宽淡面光恢复实体材质；hover 固定原位并放宽外影，press 共读 scale(var(--press-scale)) 且撤掉外影只留浅内压，Primary/Danger 仅有极弱同色环境层，Secondary 保持中性，Ghost 无实体阴影，Saving 继续使用 16 度倾斜窄光带

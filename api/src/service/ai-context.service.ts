@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖可信 AuthUser、请求期 JWT、resolve DTO、AI/memo repositories 与 MemoNode/MemoContent
- * [OUTPUT]: 对外提供服务端可信的 primary/references 正文、路径、revision 与失效引用解析结果
- * [POS]: service 层 AI 上下文边界，按本轮冻结当前笔记、显式引用、会话置顶引用的顺序分配字符预算，正文只作为数据返回给 chat
+ * [OUTPUT]: 对外提供服务端可信的 primary/references 正文、路径、revision 与失效引用解析结果，并暴露可并行启动的 context resolver
+ * [POS]: service 层 AI 上下文边界，按本轮冻结当前笔记、显式引用、会话置顶引用的顺序分配字符预算；普通 resolve 校验 thread，Chat prepare 可在 thread/settings 校验同时读取正文
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -58,21 +58,11 @@ const allocateContext = (
   };
 };
 
-export const aiContextService = {
-  async resolve(
-    authUser: AuthUser,
-    accessToken: string,
-    input: ResolveAiContextInput,
-  ): Promise<ResolvedAiContext> {
-    const thread = await aiRepository.findThread(
-      authUser.id,
-      input.thread_id,
-      accessToken,
-    );
-    if (thread === null) {
-      throw new HttpError(404, "AI_THREAD_NOT_FOUND", "AI thread was not found");
-    }
-
+const resolveForThread = async (
+  authUser: AuthUser,
+  accessToken: string,
+  input: ResolveAiContextInput,
+): Promise<ResolvedAiContext> => {
     const [nodes, references] = await Promise.all([
       memoRepository.listActiveNodes(authUser.id, accessToken),
       aiRepository.listReferences(authUser.id, input.thread_id, accessToken),
@@ -146,5 +136,26 @@ export const aiContextService = {
       references: resolvedReferences,
       missing_reference_ids: [...new Set(missingReferenceIds)],
     };
+};
+
+export const aiContextService = {
+  async resolve(
+    authUser: AuthUser,
+    accessToken: string,
+    input: ResolveAiContextInput,
+  ): Promise<ResolvedAiContext> {
+    const thread = await aiRepository.findThread(
+      authUser.id,
+      input.thread_id,
+      accessToken,
+    );
+    if (thread === null) {
+      throw new HttpError(404, "AI_THREAD_NOT_FOUND", "AI thread was not found");
+    }
+
+    return resolveForThread(authUser, accessToken, input);
   },
+
+  /** Chat prepare 可与 thread/settings 校验并行启动 context 读取。 */
+  resolveForThread,
 };

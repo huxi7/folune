@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 zod 的 strict object、JSON、UUID、联合与 infer 能力
- * [OUTPUT]: 对外提供 AI threads/messages/refs/context/runs/settings/commands HTTP 与 PostgREST/RPC schema；会话列表无归档分支且 PATCH 只允许标题
+ * [OUTPUT]: 对外提供 AI threads/messages/refs/context/runs/settings/commands HTTP 与 PostgREST/RPC schema；聊天准备支持增量消息与稳定 assistant 续写
  * [POS]: dto 层 AI Native V2 数据边界，原样接纳 UIMessage.parts，同时严格限制冻结上下文、权限模式、命令种类、revision 与整理方案结构
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -85,6 +85,10 @@ export const patchAiThreadSchema = z
   });
 
 export const aiThreadIdParamSchema = z.object({ threadId: z.uuid() });
+export const aiMessageIdParamSchema = z.object({
+  threadId: z.uuid(),
+  messageId: z.string().trim().min(1).max(200),
+});
 export const aiRunIdParamSchema = z.object({ runId: z.uuid() });
 
 export const syncAiMessageSchema = z
@@ -100,6 +104,31 @@ export const syncAiMessageSchema = z
   .passthrough();
 
 export const syncAiMessagesSchema = z.array(syncAiMessageSchema).max(500);
+
+/**
+ * Chat 首次生成可携带完整历史，工具/审批续写只携带最后一条 assistant。
+ * 服务端据此从已持久化会话重建模型输入，避免浏览器每轮重复上传整段对话。
+ */
+export const prepareAiChatSchema = z
+  .object({
+    thread_id: z.uuid(),
+    active_memo_id: z.uuid().nullable(),
+    reference_memo_ids: z.array(z.uuid()).max(5).default([]),
+    expected_revisions: z.record(z.uuid(), z.number().int().positive()).default({}),
+    include_thread_references: z.boolean().default(false),
+    messages: z.array(syncAiMessageSchema).max(500).optional(),
+    message: syncAiMessageSchema.optional(),
+    response_message_id: z.string().trim().min(1).max(200),
+  })
+  .strict()
+  .refine(
+    (value) => (value.messages === undefined) !== (value.message === undefined),
+    { message: "Exactly one of messages or message is required" },
+  )
+  .refine(
+    (value) => value.messages === undefined || value.messages.length > 0,
+    { message: "messages must not be empty" },
+  );
 
 export const replaceAiThreadReferencesSchema = z
   .object({ memo_ids: z.array(z.uuid()).max(5) })
@@ -373,6 +402,7 @@ export const createAiActionRowSchema = z.object({
 export type CreateAiThreadInput = z.infer<typeof createAiThreadSchema>;
 export type PatchAiThreadInput = z.infer<typeof patchAiThreadSchema>;
 export type SyncAiMessageInput = z.infer<typeof syncAiMessageSchema>;
+export type PrepareAiChatInput = z.infer<typeof prepareAiChatSchema>;
 export type ReplaceAiThreadReferencesInput = z.infer<
   typeof replaceAiThreadReferencesSchema
 >;

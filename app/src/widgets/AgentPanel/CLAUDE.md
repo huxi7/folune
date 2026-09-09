@@ -6,7 +6,7 @@ CLAUDE.md: 记录 AgentPanel 子域成员、依赖方向与 GEB 回环协议
 AgentPanelHeader.tsx: 无状态固定顶栏，历史接管标题和左侧返回，新建/收起位置稳定；生产与样板共用
 useConversationScroll.test.tsx: 验证首次非平滑定位与退出冻结、迟到内容回调不追尾
 useConversationScroll.ts: 消息滚动唯一边界，首次绘制前定位、退出取消平滑滚动并冻结位置，隐藏历史拒绝追尾
-AgentPanel.tsx: AI 组合根，History/Conversation 用撑满高度的 PersistentView 承接；历史从左侧进入，关闭向左回收，单一顶栏由 AgentPanelHeader 接管，对话原位淡换；新会话数据就绪后才替换身份，Composer 单独浮现，创建成功从历史返回新会话，失败保留旧视图并 Toast；菜单与内容 Motion 不接管审批/流式/工具执行协议，隐藏会话保留 Composer 草稿
+AgentPanel.tsx: AI 组合根，History/Conversation 用撑满高度的 PersistentView 承接；历史从左侧进入，关闭向左回收，单一顶栏由 AgentPanelHeader 接管，对话原位淡换；新会话数据就绪后才替换身份，Composer 单独浮现，创建成功从历史返回新会话，失败保留旧视图并 Toast；流式消息以 32ms UI 节流、末条 assistant 工具对账、assistant 定点同步与本地快照提交降低重算，错误/中止仍后台校准；菜单与内容 Motion 不接管审批/流式/工具执行协议，隐藏会话保留 Composer 草稿
 ApprovalDock.tsx: Composer 上方唯一的紧凑非模态审批视觉原语，统一图标、标题、影响说明、按钮槽位与无蒙层语义；普通工具和 AI 整理审批只能适配它，禁止复制表面
 approvalState.ts: 审批状态机纯领域层，只检查末条 assistant；统一负责 requested 单次响应投影、approved 未完成工具恢复候选与 output 结果投影，避免 UI、持久化和恢复各自解释 AI SDK 状态
 approvalState.test.ts: 审批状态机回归测试，锁定同一 approval 只响应一次、拒绝不恢复、批准刷新可恢复及结果落地后退出恢复队列
@@ -28,7 +28,7 @@ threadSelection.ts: 按用户 localStorage key 选择合法历史 thread，失�
 threadSelection.test.ts: 覆盖用户偏好隔离、合法恢复和失效 ID 回退
 aiThreadCache.ts: 按用户隔离的 30 秒进程内 AI 会话快照；允许陈旧读取以立即恢复最后可用画面，只服务 stale-while-revalidate，不替代服务端真相
 aiThreadCache.test.ts: 锁定 AI 快照用户隔离、TTL 后仍可陈旧读取与局部更新不清空其余内容
-useAiThreads.ts: 会话控制器与显式只读数据预热入口；Workspace 空闲预热只缓存已有会话，空账号仍等用户真正打开面板才创建首个会话；预热与面板初始化共用同一在途请求，重挂载先显示进程内快照，新鲜命中不请求、陈旧命中后台校准，CRUD 后同步修正快照
+useAiThreads.ts: 会话控制器与显式只读数据预热入口；首开用 bootstrap 一次取列表/选中详情/消息，Workspace 空闲预热只缓存已有会话，空账号仍等用户真正打开面板才创建首个会话；预热与面板初始化共用同一在途请求，重挂载先显示进程内快照，新鲜命中不请求、陈旧命中后台校准，流完成先本地提交快照、错误/中止再拉服务端校准，CRUD 后同步修正快照
 AgentProcessDisclosure.tsx: 真实生成过程的透明披露容器，生成期展开、完成后可手动收起，keepMounted Collapse 连续收放且保留内部工具详情状态，不包裹最终正文
 ChatMessage.tsx: SuperNoteUIMessage 适配层；冻结上下文只参与请求而不渲染到用户/assistant 对话，assistant 保持单一过程区且不承载审批控件，同轮成功命令只在最终回复末尾提供一个整轮撤销
 ChatMessage.test.tsx: 完整回复 DOM 契约测试，锁定单一过程区、审批条非模态且与消息解耦、单一整轮撤销、最终正文边界、冻结来源不污染消息与敏感 ID 屏蔽
@@ -52,8 +52,8 @@ toolPresentation.test.ts: 工具展示契约测试，锁定具体动作命名、
 activityState.ts: AI Activity 纯判定边界，以 status 和 assistant 最后一个 text/reasoning/step-start/tool part 导出 none/thinking/streaming/tool，工具 output 后只有 SDK 仍 streaming 才回到 thinking
 activityState.test.ts: Activity 状态回归测试，覆盖 submitted、首 token、活动工具、工具完成续写、新正文与 ready/error 卸载
 chatFetch.ts: 可独立测试的 HTTP 策略层，每次调用 token provider 后注入 Bearer，并把非 2xx 扁平/嵌套信封归一为带 code 的 ChatRequestError
-chatTransport.ts: 按 thread 创建 DefaultChatTransport，只发送 thread_id 与携带冻结 metadata 的完整 SuperNoteUIMessage；工具续写不再重读当前页面 memo，并集中导出 chat、organize、canvas-expand 端点 URL
-chatTransport.test.ts: chatFetch 回归测试，覆盖最新 Bearer 注入、无会话短路及扁平/嵌套错误信封 code 归一
+chatTransport.ts: 按 thread 创建 DefaultChatTransport，普通发送只发送最后一条增量 UIMessage，重生成保留完整消息，携带冻结 metadata 与稳定 assistant id；工具续写不再重读当前页面 memo，并集中导出 chat、organize、canvas-expand 端点 URL
+chatTransport.test.ts: transport/chatFetch 回归测试，覆盖增量消息裁剪、稳定 assistant id、最新 Bearer 注入、无会话短路及扁平/嵌套错误信封 code 归一
 index.ts: AgentPanel 模块稳定出口，隔离 AppDashboard 与内部文件布局，只额外暴露无 UI 副作用的会话数据预热入口
 
 职责: 承载冻结上下文、唯一 @Prompt Bar、纯净对话、可信工具过程、普通/整理同构的唯一人工裁决 Dock、刷新恢复、撤销和消息传输；当前 memo 只作为默认预选 @进入同一 sources 数组，来源只在发送前 Composer 中可见，发送后不重复进入消息视觉层。审批响应必须先持久化，UI 点击锁与 AI SDK part 状态共同阻止重复执行；已批准未完成工具刷新后可依赖 command/toolCall 幂等恢复。AI 整理只在待确认时占用 Dock，成功后消失，禁止在 Panel 或 Paper 下方重复结果卡。四个 memo 客户端工具经 Worker 纯规划，细分 command 仍由 api 安全执行。备忘录写输入可以乐观投影，但事实只能由 api command output 确认，同一 tool_call_id 只投影一次，失败/拒绝精确回滚，同一 command_id+status 只对账一次。

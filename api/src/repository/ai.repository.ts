@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖唯一 supabase-rest 适配器、AI DTO 行/RPC 校验、请求期用户 JWT 与领域输入
- * [OUTPUT]: 对外提供 owner-scoped 统一 threads 列表与 messages/refs/settings/commands CRUD、context 数据读取及受控 Run/Command 状态机 RPC
+ * [OUTPUT]: 对外提供 owner-scoped 统一 threads 列表/bootstrap、messages/refs/settings/commands CRUD、context 数据读取及受控 Run/Command 状态机 RPC；消息支持全量与定点写入
  * [POS]: repository 层 AI Native V2 PostgREST 访问器，只表达持久化操作与返回校验，不判断会话标题、上下文优先级或模型审批风险
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -55,6 +55,20 @@ const parseMessages = (payload: unknown): AiMessage[] => {
   return parsed.data;
 };
 
+type AiMessageIdentity = { id: string; updated_at: string };
+
+const parseMessageIdentity = (payload: unknown): AiMessageIdentity | null => {
+  const row = Array.isArray(payload) ? payload[0] : undefined;
+  if (row === undefined || row === null || typeof row !== "object") {
+    return null;
+  }
+  const record = row as Record<string, unknown>;
+  if (typeof record["id"] !== "string" || typeof record["updated_at"] !== "string") {
+    throw invalidStoragePayload("AI message identity");
+  }
+  return { id: record["id"], updated_at: record["updated_at"] };
+};
+
 const parseReferences = (payload: unknown): AiThreadReference[] => {
   const parsed = aiThreadReferenceRowsSchema.safeParse(payload ?? []);
   if (!parsed.success) throw invalidStoragePayload("AI reference");
@@ -100,6 +114,36 @@ const threadQuery = (userId: string, threadId?: string): string =>
     },
     limit: threadId === undefined ? undefined : 1,
   });
+
+type PersistedMessageRow = {
+  id: string;
+  thread_id: string;
+  user_id: string;
+  role: SyncAiMessageInput["role"];
+  parts: unknown[];
+  position: number;
+  status: NonNullable<SyncAiMessageInput["status"]>;
+  context_snapshot: SyncAiMessageInput["context_snapshot"];
+};
+
+const upsertMessageRows = async (
+  rows: readonly PersistedMessageRow[],
+  accessToken: string,
+  returnRepresentation: boolean,
+): Promise<AiMessage[]> => {
+  if (rows.length === 0) return [];
+  const query = createPostgrestQuery({
+    onConflict: ["thread_id", "id"],
+  });
+  const payload = await supabaseRest<unknown>(`ai_messages${query}`, {
+    accessToken,
+    method: "POST",
+    headers: { Prefer: "resolution=merge-duplicates" },
+    body: JSON.stringify(rows),
+    ...(returnRepresentation ? { returnRepresentation: true } : {}),
+  });
+  return returnRepresentation ? parseMessages(payload) : [];
+};
 
 export const aiRepository = {
   async findSettings(
@@ -251,16 +295,39 @@ export const aiRepository = {
     );
   },
 
+  async updateMessage(
+    userId: string,
+    threadId: string,
+    messageId: string,
+    input: Pick<SyncAiMessageInput, "parts" | "status" | "context_snapshot">,
+    accessToken: string,
+  ): Promise<AiMessageIdentity | null> {
+    const query = createPostgrestQuery({
+      select: ["id", "updated_at"],
+      eq: {
+        user_id: userId,
+        thread_id: threadId,
+        id: messageId,
+        role: "assistant",
+      },
+      limit: 1,
+    });
+    const payload = await supabaseRest<unknown>(`ai_messages${query}`, {
+      accessToken,
+      method: "PATCH",
+      body: JSON.stringify(input),
+      returnRepresentation: true,
+    });
+    return parseMessageIdentity(payload);
+  },
+
   async upsertMessages(
     userId: string,
     threadId: string,
     messages: readonly SyncAiMessageInput[],
     accessToken: string,
+    options: { returnRepresentation?: boolean } = {},
   ): Promise<AiMessage[]> {
-    if (messages.length === 0) return [];
-    const query = createPostgrestQuery({
-      onConflict: ["thread_id", "id"],
-    });
     const rows = messages.map((message, position) => ({
       id: message.id,
       thread_id: threadId,
@@ -271,14 +338,37 @@ export const aiRepository = {
       status: message.status ?? "complete",
       context_snapshot: message.context_snapshot ?? null,
     }));
-    const payload = await supabaseRest<unknown>(`ai_messages${query}`, {
+    const returnRepresentation = options.returnRepresentation ?? true;
+    return upsertMessageRows(
+      rows,
       accessToken,
-      method: "POST",
-      headers: { Prefer: "resolution=merge-duplicates" },
-      body: JSON.stringify(rows),
-      returnRepresentation: true,
-    });
-    return parseMessages(payload);
+      returnRepresentation,
+    );
+  },
+
+  async upsertMessagesAt(
+    userId: string,
+    threadId: string,
+    messages: readonly { message: SyncAiMessageInput; position: number }[],
+    accessToken: string,
+    options: { returnRepresentation?: boolean } = {},
+  ): Promise<AiMessage[]> {
+    const rows = messages.map(({ message, position }) => ({
+      id: message.id,
+      thread_id: threadId,
+      user_id: userId,
+      role: message.role,
+      parts: message.parts,
+      position,
+      status: message.status ?? "complete",
+      context_snapshot: message.context_snapshot ?? null,
+    }));
+    const returnRepresentation = options.returnRepresentation ?? true;
+    return upsertMessageRows(
+      rows,
+      accessToken,
+      returnRepresentation,
+    );
   },
 
   async listReferences(

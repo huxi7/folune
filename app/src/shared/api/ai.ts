@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 shared/api/client 统一 Bearer 请求、AI SDK UIMessage 与 memo DTO mapper
- * [OUTPUT]: 对外提供 SuperNoteUIMessage、无归档状态的 AI thread/message/reference/settings/command CRUD、Run apply/reject/undo/get 类型与响应归一化
+ * [OUTPUT]: 对外提供 SuperNoteUIMessage、thread bootstrap、增量 assistant message PATCH、无归档状态的 AI thread/message/reference/settings/command CRUD、Run apply/reject/undo/get 类型与响应归一化
  * [POS]: app/src/shared/api 的 AI Native V2 HTTP 与消息契约边界；浏览器显示冻结引用和命令状态，但真实写入只经 api/chat
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -55,6 +55,12 @@ export type AiThread = {
 
 export type AiThreadDetail = AiThread & {
   references: AiThreadReference[];
+};
+
+export type AiThreadBootstrap = {
+  threads: AiThread[];
+  selectedThread: AiThreadDetail | null;
+  messages: AiMessage[];
 };
 
 export type AiMessage = SuperNoteUIMessage & {
@@ -226,6 +232,31 @@ export const listAiThreads = (
 ): Promise<AiThread[]> =>
   apiRequest("/ai-threads", {}, accessToken);
 
+const mapAiMessages = (messages: AiMessage[]): AiMessage[] =>
+  messages.map((message) => ({
+    ...message,
+    metadata: {
+      ...message.metadata,
+      ...(message.context_snapshot === null
+        ? {}
+        : { context_snapshot: message.context_snapshot }),
+    },
+  }));
+
+export const getAiThreadBootstrap = (
+  accessToken: string,
+  preferredThreadId?: string | null,
+): Promise<AiThreadBootstrap> => {
+  const query = preferredThreadId === undefined || preferredThreadId === null
+    ? ""
+    : `?selected_id=${encodeURIComponent(preferredThreadId)}`;
+  return apiRequest<AiThreadBootstrap>(`/ai-threads/bootstrap${query}`, {}, accessToken)
+    .then((bootstrap) => ({
+      ...bootstrap,
+      messages: mapAiMessages(bootstrap.messages),
+    }));
+};
+
 export const getAiThread = (
   accessToken: string,
   threadId: string,
@@ -258,15 +289,7 @@ export const listAiMessages = (
     `/ai-threads/${encodeURIComponent(threadId)}/messages`,
     {},
     accessToken,
-  ).then((messages) => messages.map((message) => ({
-    ...message,
-    metadata: {
-      ...message.metadata,
-      ...(message.context_snapshot === null
-        ? {}
-        : { context_snapshot: message.context_snapshot }),
-    },
-  })));
+  ).then(mapAiMessages);
 
 export const syncAiMessages = (
   accessToken: string,
@@ -277,6 +300,26 @@ export const syncAiMessages = (
     body: JSON.stringify(messages),
     method: "PUT",
   }, accessToken);
+
+/** 流式 assistant 已有稳定行时只 PATCH 这一行，避免重复上传整段会话。 */
+export const syncAiMessage = (
+  accessToken: string,
+  threadId: string,
+  message: SuperNoteUIMessage,
+): Promise<Pick<AiMessage, "id" | "updated_at">> =>
+  apiRequest<Pick<AiMessage, "id" | "updated_at">>(
+    `/ai-threads/${encodeURIComponent(threadId)}/messages/${encodeURIComponent(message.id)}`,
+    {
+      body: JSON.stringify({
+        id: message.id,
+        parts: message.parts,
+        role: message.role,
+        status: "complete",
+      }),
+      method: "PATCH",
+    },
+    accessToken,
+  );
 
 export const getAiSettings = (accessToken: string): Promise<AiUserSettings> =>
   apiRequest("/ai-settings", {}, accessToken);

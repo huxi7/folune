@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 React、shared/api/ai、按用户短时快照缓存、访问令牌与 threadSelection 偏好策略
- * [OUTPUT]: 对外提供可由 Workspace 只读预热、立即恢复旧内容、后台校准的会话列表/detail/messages 与 CRUD/reference 命令
+ * [OUTPUT]: 对外提供可由 Workspace 只读预热、立即恢复旧内容、消息本地提交与后台校准的会话列表/detail/messages 与 CRUD/reference 命令
  * [POS]: AgentPanel 会话控制器；服务端是真相源，进程内快照只跨面板挂载保留最后可用画面并合并预热/初始化请求，空账号只在真正打开面板时创建首个会话
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -10,6 +10,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   createAiThread,
   deleteAiThread,
+  getAiThreadBootstrap,
   getAiThread,
   listAiMessages,
   listAiThreads,
@@ -18,11 +19,9 @@ import {
   type AiMessage,
   type AiThread,
   type AiThreadDetail,
+  type SuperNoteUIMessage,
 } from "../../shared/api/ai";
-import {
-  chooseSelectedThreadId,
-  selectedThreadStorageKey,
-} from "./threadSelection";
+import { selectedThreadStorageKey } from "./threadSelection";
 import {
   patchAiThreadSnapshot,
   readAiThreadSnapshot,
@@ -37,6 +36,20 @@ type UseAiThreadsInput = {
 
 const pendingInitialThreads = new Map<string, Promise<AiThread>>();
 const pendingHydrations = new Map<string, Promise<AiThreadSnapshot | null>>();
+
+const localTitleFromMessages = (
+  messages: readonly SuperNoteUIMessage[],
+): string | null => {
+  const userMessage = messages.find((message) => message.role === "user");
+  if (userMessage === undefined) return null;
+  const text = userMessage.parts
+    .filter((part) => part.type === "text")
+    .map((part) => part.text)
+    .join(" ")
+    .replace(/\s+/gu, " ")
+    .trim();
+  return text.length === 0 ? null : Array.from(text).slice(0, 30).join("");
+};
 
 const ensureInitialThread = (
   accessToken: string,
@@ -61,16 +74,32 @@ const hydrateAiThreads = (
   const existing = pendingHydrations.get(userId);
   if (existing !== undefined) return existing;
   const hydration = (async () => {
-    let threads = await listAiThreads(accessToken);
-    let threadId = chooseSelectedThreadId(
-      threads,
-      window.localStorage.getItem(selectedThreadStorageKey(userId)),
+    const preferredThreadId = window.localStorage.getItem(
+      selectedThreadStorageKey(userId),
     );
+    const bootstrap = await getAiThreadBootstrap(accessToken, preferredThreadId);
+    let threads = bootstrap.threads;
+    let threadId = bootstrap.selectedThread?.id ?? null;
     if (threadId === null) {
       if (!createIfEmpty) return null;
       const created = await ensureInitialThread(accessToken, userId, threads);
       threads = [created];
       threadId = created.id;
+      // 新建会话按定义没有引用和消息；不再为重建这个空状态连续读两次。
+      return {
+        messages: [],
+        selectedThread: { ...created, references: [] },
+        storedAt: Date.now(),
+        threads,
+      };
+    }
+    if (bootstrap.selectedThread !== null && bootstrap.selectedThread.id === threadId) {
+      return {
+        messages: bootstrap.messages,
+        selectedThread: bootstrap.selectedThread,
+        storedAt: Date.now(),
+        threads,
+      };
     }
     const [selectedThread, messages] = await Promise.all([
       getAiThread(accessToken, threadId),
@@ -209,6 +238,65 @@ export function useAiThreads({ accessToken, userId }: UseAiThreadsInput) {
     await refreshLists();
   }, [accessToken, refreshLists, userId]);
 
+  const commitLocalMessages = useCallback(async (
+    localMessages?: readonly SuperNoteUIMessage[],
+  ) => {
+    const currentThread = selectedThread;
+    const threadId = selectedIdRef.current;
+    if (currentThread === null || threadId === null || localMessages === undefined) {
+      return;
+    }
+
+    const now = new Date().toISOString();
+    const currentById = new Map(messages.map((message) => [message.id, message]));
+    const nextMessages: AiMessage[] = localMessages.map((message, position) => {
+      const previous = currentById.get(message.id);
+      const persistedFields = message as SuperNoteUIMessage &
+        Partial<Pick<AiMessage, "context_snapshot" | "status">>;
+      return {
+        ...(previous ?? {
+          created_at: now,
+          thread_id: threadId,
+          updated_at: now,
+          user_id: userId,
+        }),
+        ...message,
+        context_snapshot: persistedFields.context_snapshot
+          ?? previous?.context_snapshot
+          ?? null,
+        position,
+        // UIMessage 不暴露持久化 status；完成的 assistant 帧默认视为 complete。
+        // 如果沿用旧的 in_progress，重开面板会看起来像永远在忙。
+        status: persistedFields.status
+          ?? (message.role === "assistant"
+            ? "complete"
+            : previous?.status ?? "complete"),
+        updated_at: now,
+      } as AiMessage;
+    });
+    const inferredTitle = currentThread.title === "新会话"
+      ? localTitleFromMessages(localMessages)
+      : null;
+    const nextSelectedThread: AiThreadDetail = {
+      ...currentThread,
+      ...(inferredTitle === null ? {} : { title: inferredTitle }),
+      last_message_at: now,
+      updated_at: now,
+    };
+    const nextThreads = [
+      nextSelectedThread,
+      ...threads.filter((thread) => thread.id !== threadId),
+    ];
+    setMessages(nextMessages);
+    setSelectedThread(nextSelectedThread);
+    setThreads(nextThreads);
+    writeAiThreadSnapshot(userId, {
+      messages: nextMessages,
+      selectedThread: nextSelectedThread,
+      threads: nextThreads,
+    });
+  }, [messages, selectedThread, threads, userId]);
+
   const patchSelected = useCallback(async (
     input: Partial<Pick<AiThread, "title">>,
   ) => runMutation(async () => {
@@ -278,6 +366,7 @@ export function useAiThreads({ accessToken, userId }: UseAiThreadsInput) {
     patchSelected,
     patchThread,
     refreshSelected,
+    commitLocalMessages,
     removeThread,
     replaceReferences,
     selectedThread,

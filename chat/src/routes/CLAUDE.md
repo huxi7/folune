@@ -2,7 +2,7 @@
 > L2 | 父级: ../../CLAUDE.md
 
 成员清单
-chat.ts: 注册 POST /v1/chat；冻结 primary/@refs ID，首次生成校验发送时 revision，tool result 续写则读取本轮命令后的新版本；按账号模式在流末补充唯一可信 approval request，并复用同一 assistant ID
+chat.ts: 注册 POST /v1/chat；用一次性 prepare-chat 合并 thread/settings/context 与消息落账，普通发送只接收最后一条消息，冻结 primary/@refs ID，首次生成校验发送时 revision，tool result 续写复用同一 assistant ID；审批判断与模型流并行，流末只 PATCH 当前 assistant
 chat-persistence.ts: 提供只含 memo id/title/revision 的用户轮次 context snapshot、同轮 assistant ID/parts 续写、完成/中止/启动失败原位终态和最多一次持久化重试策略
 chat-persistence.test.ts: 锁定 context 正文不进入快照、服务端稳定 ID、续写及启动失败不追加重复 assistant、中止状态和一次安全重试生命周期
 frozen-turn-context.ts: 从最后用户消息 metadata 读取不可漂移的 active/@refs/revisions，识别以 assistant 结尾的工具续写，旧消息才回退请求级 active memo

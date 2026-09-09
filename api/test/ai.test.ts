@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun test、Hono app、Web fetch 与内存 Supabase Auth/PostgREST/RPC mock
- * [OUTPUT]: 覆盖无归档状态的 AI thread/detail 并发读取、message/reference/context/run 认证、持久化、幂等、owner、废弃字段拒绝、失效引用与安全执行测试
+ * [OUTPUT]: 覆盖无归档状态的 AI thread/bootstrap/detail 并发读取、prepare-chat 增量首轮/续写与 assistant 定点 PATCH、message/reference/context/run 认证、持久化、幂等、owner、废弃字段拒绝、失效引用与安全执行测试
  * [POS]: api/test 的 AI Native V1 HTTP 全链路契约测试，不连接模型或远端服务，不保存或输出真实凭据
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -148,6 +148,7 @@ class MockSupabase {
   readonly commands = new Map<string, AiCommand>();
   settings: AiUserSettings | null = null;
   readonly rpcBodies: Array<{ name: string; body: Record<string, unknown> }> = [];
+  readonly requests: Array<{ method: string; path: string }> = [];
   headersMatched = true;
   upsertMatched = true;
   private threadCounter = 1;
@@ -158,6 +159,7 @@ class MockSupabase {
   ): Promise<Response> => {
     const request = new Request(input, init);
     const url = new URL(request.url);
+    this.requests.push({ method: request.method, path: url.pathname });
     this.headersMatched &&=
       request.headers.get("apikey") === PUBLISHABLE_KEY &&
       request.headers.get("Authorization") === `Bearer ${ACCESS_TOKEN}`;
@@ -255,6 +257,19 @@ class MockSupabase {
       }));
       rows.forEach((message) => this.messages.set(`${message.thread_id}:${message.id}`, message));
       return response(rows, 201);
+    }
+    if (request.method === "PATCH") {
+      const id = url.searchParams.get("id")?.replace(/^eq\./, "") ?? "";
+      const key = `${threadId}:${id}`;
+      const current = this.messages.get(key);
+      const role = url.searchParams.get("role")?.replace(/^eq\./, "");
+      if (current === undefined || (role !== undefined && current.role !== role)) {
+        return response([]);
+      }
+      const input = await request.json() as Partial<AiMessage>;
+      const updated = { ...current, ...input, updated_at: NOW };
+      this.messages.set(key, updated);
+      return response([updated]);
     }
     throw new Error(`Unexpected ai_messages method: ${request.method}`);
   }
@@ -527,6 +542,65 @@ describe("AI threads and messages", () => {
     expect(overlapped).toBe(true);
   });
 
+  test("bootstrap 一次返回会话列表、选中详情与消息，并尊重有效偏好", async () => {
+    mock.threads.set(THREAD_ID, threadFixture({ title: "保留会话" }));
+    mock.messages.set(`${THREAD_ID}:message-1`, {
+      id: "message-1",
+      thread_id: THREAD_ID,
+      user_id: USER_ID,
+      role: "assistant",
+      parts: [{ type: "text", text: "历史" }],
+      position: 0,
+      status: "complete",
+      context_snapshot: null,
+      created_at: NOW,
+      updated_at: NOW,
+    });
+    const result = await data<{
+      threads: AiThread[];
+      selectedThread: AiThread & { references: AiThreadReference[] };
+      messages: AiMessage[];
+    }>(await request(`/ai-threads/bootstrap?selected_id=${THREAD_ID}`));
+    expect(result.threads).toHaveLength(1);
+    expect(result.selectedThread.id).toBe(THREAD_ID);
+    expect(result.messages[0]?.id).toBe("message-1");
+  });
+
+  test("Chat bootstrap 历史按 Accept-Encoding 压缩且解压后保持原 envelope", async () => {
+    mock.threads.set(THREAD_ID, threadFixture());
+    mock.messages.set(`${THREAD_ID}:message-large`, {
+      id: "message-large",
+      thread_id: THREAD_ID,
+      user_id: USER_ID,
+      role: "assistant",
+      parts: [{ type: "text", text: "历史内容 ".repeat(4000) }],
+      position: 0,
+      status: "complete",
+      context_snapshot: null,
+      created_at: NOW,
+      updated_at: NOW,
+    });
+
+    const requestWithEncoding = new Request(
+      `http://localhost/ai-threads/bootstrap?selected_id=${THREAD_ID}`,
+      {
+        headers: {
+          Accept: "application/json",
+          "Accept-Encoding": "gzip",
+          Authorization: `Bearer ${ACCESS_TOKEN}`,
+        },
+      },
+    );
+    const compressed = await app.fetch(requestWithEncoding);
+    expect(compressed.status).toBe(200);
+    expect(compressed.headers.get("Content-Encoding")).toBe("gzip");
+    expect(compressed.headers.get("Vary")).toContain("Accept-Encoding");
+    const decoded = JSON.parse(
+      new TextDecoder().decode(Bun.gunzipSync(new Uint8Array(await compressed.arrayBuffer()))),
+    ) as { data: { messages: AiMessage[] } };
+    expect(decoded.data.messages[0]?.id).toBe("message-large");
+  });
+
   test("creates, renames, lists and permanently deletes a thread", async () => {
     const created = await data<AiThread>(await request("/ai-threads", "POST", {}));
     expect(created.title).toBe("新会话");
@@ -576,6 +650,147 @@ describe("AI threads and messages", () => {
     expect(stored[0]?.context_snapshot?.primary?.memo_id).toBe(MEMO_A);
     expect(mock.threads.get(THREAD_ID)?.title).toBe("帮我 分析这篇产品构想的核心价值");
     expect(mock.upsertMatched).toBe(true);
+  });
+
+  test("Chat prepare 支持首轮完整消息与续写增量，并只创建一个稳定 assistant", async () => {
+    mock.threads.set(THREAD_ID, threadFixture());
+    mock.nodes.set(MEMO_A, memoNodeFixture(MEMO_A));
+    mock.contents.set(MEMO_A, contentFixture(MEMO_A));
+    mock.requests.length = 0;
+
+    const first = await data<{
+      context: { primary: { memo_id: string } };
+      messages: Array<{ id: string; status?: string }>;
+      response_message_id: string;
+    }>(await request("/ai-context/prepare-chat", "POST", {
+      thread_id: THREAD_ID,
+      active_memo_id: MEMO_A,
+      reference_memo_ids: [],
+      expected_revisions: { [MEMO_A]: 3 },
+      include_thread_references: false,
+      messages: [{
+        id: "user-first",
+        role: "user",
+        parts: [{ type: "text", text: "请分析" }],
+        metadata: {
+          context: {
+            active_memo_id: MEMO_A,
+            reference_memo_ids: [],
+            revisions: { [MEMO_A]: 3 },
+          },
+        },
+      }],
+      response_message_id: "msg_user-first",
+    }));
+
+    expect(first.context.primary.memo_id).toBe(MEMO_A);
+    expect(first.messages.map((message) => message.id)).toEqual([
+      "user-first",
+      "msg_user-first",
+    ]);
+    expect(first.messages.at(-1)?.status).toBe("in_progress");
+    expect(mock.requests.filter((request) => request.path === "/rest/v1/ai_messages").map((request) => request.method)).toEqual(["POST"]);
+
+    mock.requests.length = 0;
+    const continued = await data<{
+      messages: Array<{ id: string; parts: unknown[]; status?: string }>;
+    }>(await request("/ai-context/prepare-chat", "POST", {
+      thread_id: THREAD_ID,
+      active_memo_id: MEMO_A,
+      reference_memo_ids: [],
+      expected_revisions: {},
+      include_thread_references: false,
+      message: {
+        id: "msg_user-first",
+        role: "assistant",
+        parts: [{ type: "text", text: "完成" }],
+        status: "complete",
+      },
+      response_message_id: "msg_user-first",
+    }));
+
+    expect(continued.messages).toHaveLength(2);
+    expect(continued.messages.at(-1)?.id).toBe("msg_user-first");
+    expect(continued.messages.at(-1)?.parts).toEqual([
+      { type: "text", text: "完成" },
+    ]);
+    expect(mock.messages.size).toBe(2);
+    expect(mock.requests.filter((request) => request.path === "/rest/v1/ai_messages").map((request) => request.method)).toEqual(["GET", "PATCH"]);
+  });
+
+  test("assistant PATCH 只更新当前回复，不重写用户消息", async () => {
+    mock.threads.set(THREAD_ID, threadFixture());
+    mock.messages.set(`${THREAD_ID}:user-1`, {
+      id: "user-1",
+      thread_id: THREAD_ID,
+      user_id: USER_ID,
+      role: "user",
+      parts: [{ type: "text", text: "原问题" }],
+      position: 0,
+      status: "complete",
+      context_snapshot: null,
+      created_at: NOW,
+      updated_at: NOW,
+    });
+    mock.messages.set(`${THREAD_ID}:assistant-1`, {
+      id: "assistant-1",
+      thread_id: THREAD_ID,
+      user_id: USER_ID,
+      role: "assistant",
+      parts: [],
+      position: 1,
+      status: "in_progress",
+      context_snapshot: null,
+      created_at: NOW,
+      updated_at: NOW,
+    });
+
+    const result = await request(
+      `/ai-threads/${THREAD_ID}/messages/assistant-1`,
+      "PATCH",
+      {
+        id: "assistant-1",
+        role: "assistant",
+        parts: [{ type: "text", text: "已完成" }],
+        status: "complete",
+      },
+    );
+    expect(result.status).toBe(200);
+    expect(mock.messages.get(`${THREAD_ID}:user-1`)?.parts).toEqual([
+      { type: "text", text: "原问题" },
+    ]);
+    expect(mock.messages.get(`${THREAD_ID}:assistant-1`)?.parts).toEqual([
+      { type: "text", text: "已完成" },
+    ]);
+    expect((await request(
+      `/ai-threads/${THREAD_ID}/messages/user-1`,
+      "PATCH",
+      {
+        id: "user-1",
+        role: "user",
+        parts: [{ type: "text", text: "不应改写" }],
+        status: "complete",
+      },
+    )).status).toBe(404);
+  });
+
+  test("prepare-chat 拒绝与当前 turn 不匹配的 assistant id", async () => {
+    mock.threads.set(THREAD_ID, threadFixture());
+    const result = await request("/ai-context/prepare-chat", "POST", {
+      thread_id: THREAD_ID,
+      active_memo_id: null,
+      reference_memo_ids: [],
+      expected_revisions: {},
+      include_thread_references: false,
+      message: {
+        id: "user-safe",
+        role: "user",
+        parts: [{ type: "text", text: "问题" }],
+      },
+      response_message_id: "user-safe",
+    });
+    expect(result.status).toBe(400);
+    expect(await result.json()).toMatchObject({ code: "AI_RESPONSE_ID_INVALID" });
   });
 });
 

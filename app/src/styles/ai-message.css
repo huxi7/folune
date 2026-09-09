@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖设计系统的半径/曲线配对规则与 index.css 的 primary/foreground/surface/spacing/button 零偏移环绕阴影与 motion 语义 token
- * [OUTPUT]: 提供用户主色气泡、零卡片最终正文、五词错峰模糊拖尾、可折叠处理过程、Formation ThinkingIndicator 与可展开轻量详情、结果图标不套盒的工具状态样式
- * [POS]: app/src/styles 的 AI 消息视觉层，被 AgentPanel 与 DEV Design System 共用；过程和正文只用自然留白过渡，不创建第二套主题或固定分隔线
+ * [OUTPUT]: 提供用户主色气泡、零卡片最终正文、五词错峰模糊拖尾、可折叠处理过程、Formation ThinkingIndicator 与可展开轻量详情、结果图标不套盒的工具状态样式；长历史使用原生内容可见性优化布局
+ * [POS]: app/src/styles 的 AI 消息视觉层，被 AgentPanel 与 DEV Design System 共用；过程和正文只用自然留白过渡，不创建第二套主题或固定分隔线，末条流式消息保持完整测量
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -103,6 +103,13 @@
   .agent-process-disclosure {
     width: 100%;
     min-width: 0;
+  }
+
+  /* 长会话只让视口附近的历史消息参与布局；最后一条保持完整测量，
+   * 这样流式增长与 scrollHeight 不会被估算高度打断。旧浏览器会自然忽略。 */
+  .agent-message-list > .agent-chat-turn:not(:last-child) {
+    content-visibility: auto;
+    contain-intrinsic-block-size: 6rem;
   }
 
   .agent-process-content {
