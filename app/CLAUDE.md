@@ -13,7 +13,7 @@ index.html: Vite HTML 宿主页面，声明 V1 Classic Blueprint 默认画布、
 .env.example: app 浏览器环境变量模板，声明业务 API、chat 服务 base URL 与 Supabase 公开连接配置
 AUTH_SETUP.md: Supabase 邮箱确认模板、URL allow list、自定义 SMTP 限制与 Google OAuth 后台配置说明
 brand-spec.md: SuperNote 品牌真相源，记录已选 Soft Ink Light/Dark 轴、Saving Processing 状态、8/10/12/16/20px 同心曲率、Button 微雾材质及历史候选
-vite.config.ts: Vite 配置，从 app/.env.local 加载浏览器环境，将开发服务器严格固定到 10000，连接 React/Tailwind 插件，并用 Rolldown 按 React 封装、Markdown、View、State、Language、Features 拆分 CodeMirror chunk
+vite.config.ts: Vite 配置，从 app/.env.local 加载浏览器环境，将开发服务器严格固定到 10000，连接 React/Tailwind 插件，并用 Rolldown 按 Markdown、Language、Features 与其余 CodeMirror/Lezer 拆分 chunk（React 不再单独成 chunk，避免把编辑器 vendor 焊进首屏闭包）
 bunfig.toml: bun test 配置，声明 preload 在任何测试文件之前补齐浏览器公开环境变量，使裸跑 `bun test` 即为真实结果
 src/main.tsx: React 挂载入口，注入 DS motion.ts 生成的 CSS 时长/曲线，以 MotionConfig reducedMotion=user 包围 ThemeProvider/ToastProvider/RouterProvider 并加载全局样式
 src/testEnv.ts: 测试期浏览器公开配置的唯一兜底，只补立刻拒连的回环 Supabase 占位值且不覆盖已注入的真实值；产品代码永不导入

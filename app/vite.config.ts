@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 app 本地环境文件、@vitejs/plugin-react、@tailwindcss/vite 与 Vite 8 Rolldown chunk 输出能力
- * [OUTPUT]: 对外提供严格固定端口 10000 与 CodeMirror 核心/Markdown/React 封装拆包策略
+ * [OUTPUT]: 对外提供严格固定端口 10000 与 CodeMirror Markdown/Language/Features 拆包策略
  * [POS]: app 根配置文件，连接 app 环境、Vite、React、Tailwind CSS v4，并约束开发入口与重型编辑器依赖边界
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -17,27 +17,11 @@ export default defineConfig({
     rolldownOptions: {
       output: {
         manualChunks(id) {
-          if (id.includes("@uiw/react-codemirror")) {
-            return "codemirror-react";
-          }
-
           if (
             id.includes("@codemirror/lang-markdown") ||
             id.includes("@lezer/markdown")
           ) {
             return "codemirror-markdown";
-          }
-
-          if (
-            id.includes("@codemirror/view") ||
-            id.includes("style-mod") ||
-            id.includes("crelt")
-          ) {
-            return "codemirror-view";
-          }
-
-          if (id.includes("@codemirror/state")) {
-            return "codemirror-state";
           }
 
           if (
