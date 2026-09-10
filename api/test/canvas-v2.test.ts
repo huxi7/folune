@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 Bun test、Hono app 与只实现 Canvas V2 RPC 的内存 Supabase HTTP mock
+ * [INPUT]: 依赖 Bun test、Hono app、只实现 Canvas V2 RPC 的内存 Supabase HTTP mock 与 service/auth 的身份缓存测试清空口
  * [OUTPUT]: 覆盖默认/空白 Canvas 入口、strict protocol=2、人工/AI 共用 mutation、自由文字 scale=8 边界、409 恢复事实与可信 expansion context
  * [POS]: api/test 的 Canvas V2 HTTP 纵向契约；数据库原子性由 staging 回滚事务验证，本文件锁定 router→service→repository 的唯一 RPC 路径
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -24,6 +24,7 @@ Bun.env["SUPABASE_URL"] = SUPABASE_URL;
 Bun.env["SUPABASE_PUBLISHABLE_KEY"] = PUBLISHABLE_KEY;
 
 const { app } = await import("../src/app.ts");
+const { authService } = await import("../src/service/auth.service.ts");
 
 const json = (payload: unknown, status = 200) =>
   new Response(JSON.stringify(payload), {
@@ -174,6 +175,7 @@ const originalFetch = globalThis.fetch;
 let mock: CanvasV2Mock;
 
 beforeEach(() => {
+  authService.resetIdentityCacheForTests();
   mock = new CanvasV2Mock();
   globalThis.fetch = mock.fetch as typeof fetch;
 });

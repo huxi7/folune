@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 Bun test、Hono app、Web fetch 与内存 Supabase Auth/PostgREST/RPC mock
+ * [INPUT]: 依赖 Bun test、Hono app、Web fetch、内存 Supabase Auth/PostgREST/RPC mock 与 service/auth 的身份缓存测试清空口
  * [OUTPUT]: 覆盖无归档状态的 AI thread/bootstrap/detail/content 并发读取、prepare-chat 增量首轮/续写与 assistant 定点 PATCH、message/reference/context/run 认证、持久化、幂等、owner、废弃字段拒绝、失效引用与安全执行测试
  * [POS]: api/test 的 AI Native V1 HTTP 全链路契约测试，不连接模型或远端服务，不保存或输出真实凭据
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -35,6 +35,7 @@ Bun.env["SUPABASE_URL"] = SUPABASE_URL;
 Bun.env["SUPABASE_PUBLISHABLE_KEY"] = PUBLISHABLE_KEY;
 
 const { app } = await import("../src/app.ts");
+const { authService } = await import("../src/service/auth.service.ts");
 
 const response = (payload: unknown, status = 200): Response =>
   new Response(JSON.stringify(payload), {
@@ -415,6 +416,7 @@ const originalFetch = globalThis.fetch;
 let mock: MockSupabase;
 
 beforeEach(() => {
+  authService.resetIdentityCacheForTests();
   mock = new MockSupabase();
   globalThis.fetch = mock.fetch as typeof fetch;
 });

@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 Bun test、真实 Hono app 与内存 Supabase Auth/PostgREST/RPC 删除事务模拟器
+ * [INPUT]: 依赖 Bun test、真实 Hono app、内存 Supabase Auth/PostgREST/RPC 删除事务模拟器与 service/auth 的身份缓存测试清空口
  * [OUTPUT]: 覆盖删除批次、顶层 Trash、active 隔离、恢复边界、级联永久删除、当前用户清空、错误稳定性
  * [POS]: api/test 的回收站 HTTP 全链路回归测试，以单次 RPC 模拟原子事务且不连接远端或保存真实凭据
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -25,6 +25,7 @@ Bun.env["SUPABASE_URL"] = SUPABASE_URL;
 Bun.env["SUPABASE_PUBLISHABLE_KEY"] = PUBLISHABLE_KEY;
 
 const { app } = await import("../src/app.ts");
+const { authService } = await import("../src/service/auth.service.ts");
 
 const jsonResponse = (payload: unknown, status = 200): Response =>
   new Response(JSON.stringify(payload), {
@@ -330,6 +331,7 @@ const originalFetch = globalThis.fetch;
 let mock: TrashSupabaseMock;
 
 beforeEach(() => {
+  authService.resetIdentityCacheForTests();
   mock = new TrashSupabaseMock();
   globalThis.fetch = mock.fetch as typeof fetch;
 });

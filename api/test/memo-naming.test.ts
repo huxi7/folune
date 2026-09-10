@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 Bun test、Hono app 与 test/support 的内存 Supabase mock（忠实复刻两条标题唯一索引）
+ * [INPUT]: 依赖 Bun test、Hono app、test/support 的内存 Supabase mock（忠实复刻两条标题唯一索引）与 service/auth 的身份缓存测试清空口
  * [OUTPUT]: 覆盖默认名撞名顺位让开、用户输入撞名只回稳定业务冲突、跨类型同名合法、标题冲突不连坐正文、根节点作用域、soft-delete 后名称可复用、来源笔记改名与默认画布同一次写入同步，以及并发只成功一个
  * [POS]: api/test 的命名边界契约测试；唯一约束的最终裁决在数据库，这里锁定 api 把 23505 翻译成 MEMO_TITLE_CONFLICT 之后的可观测行为
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -16,11 +16,13 @@ import {
 } from "./support/supabase-mock.ts";
 
 const { app } = await import("../src/app.ts");
+const { authService } = await import("../src/service/auth.service.ts");
 
 const originalFetch = globalThis.fetch;
 let mock: MockSupabase;
 
 beforeEach(() => {
+  authService.resetIdentityCacheForTests();
   mock = new MockSupabase();
   globalThis.fetch = mock.fetch as typeof fetch;
 });

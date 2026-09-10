@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 Bun test、Hono app、Web File/FormData、内存 Supabase Auth/PostgREST/Storage fetch mock 与 Profile 模型
+ * [INPUT]: 依赖 Bun test、Hono app、Web File/FormData、内存 Supabase Auth/PostgREST/Storage fetch mock、Profile 模型与 service/auth 的身份缓存测试清空口
  * [OUTPUT]: 覆盖五字段 /profile 与 PUT /profile/avatar 的认证、默认/可修改 username、5MB/签名验证、旧文件删除、并发补偿及请求头测试
  * [POS]: api/test 的 profile HTTP 全链路契约测试，不连接远端服务且不保存或输出真实凭据
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -23,6 +23,7 @@ Bun.env["SUPABASE_URL"] = SUPABASE_URL;
 Bun.env["SUPABASE_PUBLISHABLE_KEY"] = PUBLISHABLE_KEY;
 
 const { app } = await import("../src/app.ts");
+const { authService } = await import("../src/service/auth.service.ts");
 
 const profileFixture = (overrides: Partial<Profile> = {}): Profile => ({
   id: USER_ID,
@@ -315,7 +316,10 @@ const pngFile = (
   return new File([bytes], "avatar.png", { type });
 };
 
-beforeEach(() => useSupabase());
+beforeEach(() => {
+  authService.resetIdentityCacheForTests();
+  useSupabase();
+});
 afterEach(() => {
   globalThis.fetch = originalFetch;
 });

@@ -1,11 +1,11 @@
 /**
- * [INPUT]: 依赖 Bun test、Hono app、Web fetch 与 test/support 的内存 Supabase Auth/PostgREST mock
- * [OUTPUT]: 覆盖 memo API 的认证、轻量树/画布身份/关键词搜索、单篇正文并发读取、创建补偿、正文统计、owner 隔离、严格更新、防环移动、保存去除旧正文读取与 CORS/gzip 传输契约
+ * [INPUT]: 依赖 Bun test、Hono app、Web fetch、test/support 的内存 Supabase Auth/PostgREST mock 与 service/auth 的身份缓存测试清空口
+ * [OUTPUT]: 覆盖 memo API 的认证与身份缓存 TTL 边界（撤销延迟窗口的上限）、轻量树/画布身份/关键词搜索、单篇正文并发读取、创建补偿、正文统计、owner 隔离、严格更新、防环移动、保存去除旧正文读取与 CORS/gzip 传输契约
  * [POS]: api/test 的备忘录树 HTTP 全链路契约测试，不连接远端服务且不保存或输出真实凭据；命名与重名边界另见 memo-naming.test.ts
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
-import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, setSystemTime, test } from "bun:test";
 
 import {
   authenticatedRequest,
@@ -20,11 +20,14 @@ import {
 import type { MemoNode } from "../src/model/memo.model.ts";
 
 const { app } = await import("../src/app.ts");
+const { authService } = await import("../src/service/auth.service.ts");
 
 const originalFetch = globalThis.fetch;
 let mock: MockSupabase;
 
 beforeEach(() => {
+  // 身份缓存是模块级的，跨用例与跨文件存活；不清空则 invalidToken 用例会被上一条用例的成功身份顶掉。
+  authService.resetIdentityCacheForTests();
   mock = new MockSupabase();
   globalThis.fetch = mock.fetch as typeof fetch;
 });
@@ -34,7 +37,7 @@ afterEach(() => {
 });
 
 describe("memo API authentication", () => {
-  test("同一 token 的并发请求共享一次在途 Auth 校验，完成后不保留身份缓存", async () => {
+  test("同一 token 的并发请求共享一次在途 Auth 校验，TTL 内复用已完成身份", async () => {
     const [first, second] = await Promise.all([
       app.fetch(authenticatedRequest("/memo-tree")),
       app.fetch(authenticatedRequest("/memo-tree")),
@@ -45,7 +48,7 @@ describe("memo API authentication", () => {
     expect(mock.operations.filter((operation) => operation === "auth:get")).toHaveLength(1);
 
     await app.fetch(authenticatedRequest("/memo-tree"));
-    expect(mock.operations.filter((operation) => operation === "auth:get")).toHaveLength(2);
+    expect(mock.operations.filter((operation) => operation === "auth:get")).toHaveLength(1);
   });
 
   test("memo 与回收站接口没有 Bearer token 均返回统一 401", async () => {
@@ -88,6 +91,34 @@ describe("memo API authentication", () => {
     expect(response.status).toBe(401);
     expect((await response.json()).code).toBe("UNAUTHORIZED");
     expect(mock.operations).toEqual(["auth:get"]);
+  });
+
+  /*
+   * 身份缓存把「撤销后仍可访问」的窗口从 0 拉到 TTL，这是显式买下的交易而不是疏漏。
+   * 因此窗口的上限必须是被测事实：TTL 内不回源（撤销不生效），TTL 一过必须回源，
+   * 且上游已撤销的 token 立刻恢复 401。谁调大 IDENTITY_TTL_MS，谁就在这里看见代价。
+   */
+  test("身份缓存在 TTL 内不回源，TTL 过后必须回源并对已撤销 token 恢复 401", async () => {
+    const base = new Date("2026-09-11T00:00:00.000Z");
+    setSystemTime(base);
+
+    expect((await app.fetch(authenticatedRequest("/memo-tree"))).status).toBe(200);
+    expect(mock.operations.filter((operation) => operation === "auth:get")).toHaveLength(1);
+
+    setSystemTime(new Date(base.getTime() + 44_000));
+    expect((await app.fetch(authenticatedRequest("/memo-tree"))).status).toBe(200);
+    expect(mock.operations.filter((operation) => operation === "auth:get")).toHaveLength(1);
+
+    setSystemTime(new Date(base.getTime() + 46_000));
+    mock = new MockSupabase({ invalidToken: true });
+    globalThis.fetch = mock.fetch as typeof fetch;
+
+    const afterTtl = await app.fetch(authenticatedRequest("/memo-tree"));
+    expect(afterTtl.status).toBe(401);
+    expect((await afterTtl.json()).code).toBe("UNAUTHORIZED");
+    expect(mock.operations).toEqual(["auth:get"]);
+
+    setSystemTime();
   });
 });
 
