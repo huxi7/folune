@@ -22,7 +22,7 @@ AI 是用户的备忘录协作伙伴与智能档案管理员。
 ## 技术栈
 全栈 TypeScript，顶层由三个业务模块组成。
 
-- app: 用户端，Bun + Vite 8 + React 19 + React Router 7 + Zustand 5 + Motion for React 12 + @xyflow/react 12 + CodeMirror 6/Lezer Markdown + react-markdown/remark/rehype-sanitize + Vercel AI SDK 6 (`@ai-sdk/react`) + `@mastra/client-js` + canvas-confetti + Kumo UI 2 + Tailwind CSS v4 + 本地 design system（含同源 Motion token 与完整入退场原语）+ Lucide React + Supabase Auth SDK
+- app: 用户端，Bun + Vite 8 + React 19 + React Router 7 + Zustand 5 + Motion for React 12 + @xyflow/react 12 + CodeMirror 6/Lezer Markdown + react-markdown/remark/rehype-sanitize + Vercel AI SDK 6 (`@ai-sdk/react`) + `@mastra/client-js` + zod 4 + canvas-confetti + Kumo UI 2 + Tailwind CSS v4 + 本地 design system（含同源 Motion token 与完整入退场原语）+ Lucide React + Supabase Auth SDK
 - chat: AI 能力服务，Bun + Mastra 1.57 + `@mastra/ai-sdk` + Vercel AI SDK 6 + zod 4；模型白名单只含 DeepSeek V4 Flash 且拒绝任何切换；对话/审批/整理三个 Agent 分离，模型只见 read_tree/read_memo/edit_memo/edit_node 四个胖笔记工具与 celebration
 - api: 业务接口服务，Bun + Hono 4 + zod 4 + Supabase REST/PostgREST/Storage HTTP API；只以用户 JWT 访问数据，禁止 service role、连接串与 ORM
 
