@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 index.css 的 Quiet Editorial Foundations 与 Design System/Signature Components 真实类
  * [OUTPUT]: 对外提供真实主题切换、五层展示页、Lucide 精选图标示例/语义对比、Control 内外同心样板、Editorial 样板及 Paper Surface/Edge Dock/Archive Cord 生产同源预览
- * [POS]: app/src/styles 的开发陈列专用视觉层，只可视化生产 token，不定义第二套颜色、曲率、阴影或 Motion
+ * [POS]: app/src/styles 的开发陈列专用视觉层，只可视化生产 token，不定义第二套颜色、曲率、阴影或 Motion；与 color-lab.css/archive-cord-lab.css 同一条隔离规则，不进 index.css 全局入口，只由 widgets/DesignSystemWorkspace/index.tsx 随 DEV 懒加载独占引入
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 @layer components {

@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖五层 designSystemSections/真实组件 catalog、全局 ThemeProvider 与 ComponentTile 统一陈列单元
+ * [INPUT]: 依赖五层 designSystemSections/真实组件 catalog、全局 ThemeProvider、ComponentTile 统一陈列单元与本入口独占导入的 styles/design-system-workspace.css
  * [OUTPUT]: 对外提供可切换真实 light/dark 主题的 Foundations、Primitives、Navigation & Overlays、Editorial、AI & Organize DEV-only Design System
  * [POS]: app/src/widgets/DesignSystemWorkspace 的入口，被 AppDashboard 懒加载并表达 Token 到 Signature Pattern 的依赖方向
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -11,6 +11,8 @@ import {
   designSystemSamples,
   designSystemSections,
 } from "./componentCatalog";
+
+import "../../styles/design-system-workspace.css";
 
 const themeOptions: SegmentedControlOption<Theme>[] = [
   { label: "System", value: "system" },
