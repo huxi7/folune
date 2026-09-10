@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 Bun test、MemoTreeNode fixture 与 Worker 纯规划内核
+ * [INPUT]: 依赖 Bun test、MemoTreeNode fixture 与纯规划内核
  * [OUTPUT]: 验证整树读取、五种 edit_node op、edit_memo、revision 和非法移动约束
- * [POS]: AgentPanel Worker Planner 回归测试，锁定胖工具到内部原子命令计划的完整语义
+ * [POS]: AgentPanel Planner 回归测试，锁定胖工具到内部原子命令计划的完整语义
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -59,7 +59,7 @@ const tree = [
   ]),
 ];
 
-describe("memo tool Worker planner", () => {
+describe("memo tool planner", () => {
   test("projects the complete tree in path order", () => {
     const plan = planMemoTool("read_tree", {}, tree);
 
@@ -147,7 +147,7 @@ describe("memo tool Worker planner", () => {
     });
   });
 
-  test("plans memo edits and rejects a stale Worker snapshot", () => {
+  test("plans memo edits and rejects a stale snapshot", () => {
     expect(planMemoTool("edit_memo", {
       content_mdx: "更新后的正文",
       expected_revision: 1,

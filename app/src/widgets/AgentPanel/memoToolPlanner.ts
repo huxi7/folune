@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖客户端工具 zod schema、MemoTreeNode 快照与 shared/store/memoTree 纯树算法
  * [OUTPUT]: 对外提供 planMemoTool，把四个胖工具请求转换为结构读结果、单篇读取意图或带 revision 的 Store/API 命令计划
- * [POS]: AgentPanel Worker 的纯规划内核；只读取结构化克隆快照，不访问 React、Store、DOM、网络或数据库
+ * [POS]: AgentPanel 客户端工具的纯规划内核；只读取调用方传入的 tree 快照参数，不访问 React、Store、DOM、网络或数据库；纯度由「快照必须作为入参」的签名与 memoToolPlannerBoundary.test.ts 静态门禁共同保证，而不再由 Worker realm 保证
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 

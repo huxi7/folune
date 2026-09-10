@@ -86,7 +86,7 @@ import {
   parseAgentClientToolInput,
 } from "./clientTools";
 import { executeMemoToolPlan } from "./memoToolExecution";
-import { requestMemoToolPlan } from "./memoToolWorkerClient";
+import { planMemoTool } from "./memoToolPlanner";
 import {
   coalesceAssistantMessages,
   reverseCommandsForUndo,
@@ -176,7 +176,7 @@ function AgentConversation({
   const [mentionOpen, setMentionOpen] = useState(false);
   const [approvalError, setApprovalError] = useState<string | null>(null);
   const [respondingApprovalId, setRespondingApprovalId] = useState<string | null>(null);
-  // 客户端工具 (Worker 规划 + createAiCommand) 执行中: 流已结束但会话不空闲
+  // 客户端工具 (客户端规划 + createAiCommand) 执行中: 流已结束但会话不空闲
   const [clientToolsRunning, setClientToolsRunning] = useState(false);
   const composerRef = useRef<HTMLDivElement>(null);
   const manuallyApprovedToolCalls = useRef(new Set<string>());
@@ -253,7 +253,7 @@ function AgentConversation({
     experimental_throttle: 32,
     sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
     onFinish: ({ message, messages: finishedMessages, isAbort, isError }) => {
-      // 客户端工具执行期间必须计入 busy: 流已结束 (status=ready), 但 Worker
+      // 客户端工具执行期间必须计入 busy: 流已结束 (status=ready), 但客户端
       // 规划 + createAiCommand 两次网络往返还在跑。这几百毫秒内切换会话会
       // 卸载 AgentConversation —— command 已落库、树已改变, tool result 永久
       // 丢失, assistant 回复永远停在 input-available (根因 13)。
@@ -296,18 +296,22 @@ function AgentConversation({
       const normalizedInput = normalizeToolInput(part.input);
       let execution = memoToolExecutions.current.get(part.toolCallId);
       if (execution === undefined) {
+        // async IIFE 是必需的而不是风格: planMemoTool 同步抛错(节点不存在/版本已变化/
+        // 非法移动), 裸调用会让异常在 memoToolExecutions.set 之前逃逸, 拒绝态因此不被
+        // 记忆, 恢复扫描可能对同一 toolCallId 再规划再执行。IIFE 把同步抛错转成已记忆
+        // 的 rejected promise, 与原先 Worker 的 promise 语义逐位一致。
         execution = isMemoClientToolName(toolName)
-          ? requestMemoToolPlan(
-              toolName,
-              parseAgentClientToolInput(clientTools, toolName, normalizedInput),
-              part.toolCallId,
-            ).then((plan) => executeMemoToolPlan({
+          ? (async () => executeMemoToolPlan({
               accessToken,
               manuallyApproved: manuallyApprovedToolCalls.current.has(part.toolCallId),
-              plan,
+              plan: planMemoTool(
+                toolName,
+                parseAgentClientToolInput(clientTools, toolName, normalizedInput),
+                useMemoTreeStore.getState().nodes,
+              ),
               threadId: thread.id,
               toolCallId: part.toolCallId,
-            }))
+            }))()
           : executeAgentClientTool(clientTools, toolName, normalizedInput);
         memoToolExecutions.current.set(part.toolCallId, execution);
       }

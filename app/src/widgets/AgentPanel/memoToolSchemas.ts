@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 zod 的对象 schema、字段描述与条件校验能力
- * [OUTPUT]: 对外提供 read_tree/edit_node/read_memo/edit_memo 客户端工具 schema、输入类型与 Worker 输出类型
- * [POS]: AgentPanel 胖工具协议源；与 chat 端模型工具保持同构，并把 revision 门禁带入纯 Worker plan
+ * [OUTPUT]: 对外提供 read_tree/edit_node/read_memo/edit_memo 客户端工具 schema、输入类型与 Planner 输出类型
+ * [POS]: AgentPanel 胖工具协议源；与 chat 端模型工具保持同构，并把 revision 门禁带入纯 Planner plan
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 

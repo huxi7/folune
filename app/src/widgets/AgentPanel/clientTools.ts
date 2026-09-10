@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 @mastra/client-js createTool、zod 与浏览器庆祝执行器
  * [OUTPUT]: 对外提供 celebration 与四个 memo 胖工具的客户端注册表、字符串入参归一化、schema 校验与庆祝执行入口
- * [POS]: AgentPanel 客户端工具边界；memo 工具由 Worker 规划并交 api command，庆祝仍由浏览器视觉执行器直接完成
+ * [POS]: AgentPanel 客户端工具边界；memo 工具由纯 Planner 规划并交 api command，庆祝仍由浏览器视觉执行器直接完成
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -99,7 +99,7 @@ export async function executeAgentClientTool(
 ): Promise<unknown> {
   const parsed = parseAgentClientToolInput(tools, name, input);
   if (name !== "celebration") {
-    throw new Error(`客户端 memo 工具 ${name} 必须通过 Worker 规划。`);
+    throw new Error(`客户端 memo 工具 ${name} 必须通过纯 Planner 规划。`);
   }
   return tools.celebration.execute!(
     parsed as { count: number; reason: string },
