@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖共享 Button、BlueprintFrame/Divider、Figma 原始品牌素材与既有 query 驱动认证弹窗
- * [OUTPUT]: 对外提供 56px 导航及底边交点，与正文同轴的主轨/外轨、公开锚点与按需加载的 AuthDialog
+ * [OUTPUT]: 对外提供原始导航文字/图标/快捷键、56px 导航及底边交点、公开锚点与按需加载的 AuthDialog
  * [POS]: widgets 的首页导航；认证成功仍经现有路由进入工作区，不改变登录协议
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -21,12 +21,12 @@ const AuthDialog = lazy(() =>
 );
 
 const navItems = [
-  { href: "#features", label: "Product⌄" },
-  { href: "#resources", label: "Resources⌄" },
+  { href: "#features", label: "Product", dropdown: true },
+  { href: "#resources", label: "Resources", dropdown: true },
   { href: "#extensions", label: "Extensions" },
   { href: "https://zed.dev/docs", label: "Docs" },
   { href: "https://zed.dev/pricing", label: "Pricing" },
-  { href: "https://zed.dev/delta", label: "♧ Delta" },
+  { href: "https://zed.dev/delta", label: "Delta", icon: "19-4560/imgFrame2" },
 ];
 
 export function MarketingHeader() {
@@ -70,12 +70,17 @@ export function MarketingHeader() {
                 href={item.href}
                 key={item.href}
               >
+                {item.icon ? <img src={assets[item.icon]} alt="" width="14" height="14" /> : null}
                 {item.label}
+                {item.dropdown ? <img src={assets["19-4560/imgFrame1"]} alt="" width="14" height="14" /> : null}
               </a>
             ))}
           </nav>
           <div className="flex items-center gap-2">
-            <span className="marketing-edition">◦ ◦ ◦　◧　▧　↗</span>
+            <span className="marketing-edition" aria-label="Search shortcut: Command Shift P">
+              <img src={assets["19-4560/imgFrame3"]} alt="" width="12" height="12" />
+              <kbd><img src={assets["19-4560/imgFrame4"]} alt="Command" width="10" height="10" /><img src={assets["19-4560/imgFrame5"]} alt="Shift" width="14" height="14" />P</kbd>
+            </span>
             <Button
               className="marketing-login-button"
               onClick={() => handleAuthDialogOpenChange(true)}

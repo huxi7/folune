@@ -9,5 +9,7 @@ baseline-first-screen.png: 第一阶段 1672×1000 原始首屏截图
 baseline-editor.png: 第一阶段主编辑器区域截图
 rails-first-screen.png: 导轨精修后的 1672×1000 首屏，记录导航/公告交点、蓝色渐变与编辑器前通栏横线
 rails-footer.png: 导轨精修后的桌面页底，记录页脚外轨/列线与无尾部留白的收尾
+typography-footer.png: 字体精修后的 1672×700 页底，记录衬线标题、14px 链接、原始字标比例与斜线底纹
+typography-sections.png: 字体精修后的功能区截图，记录标题/正文层级和与参考一致的段落换行
 
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
