@@ -8,6 +8,7 @@
 Canvas 已落地为一级持久 Workspace。memo 默认 Canvas 与 standalone Canvas 共用 React Flow 会话、WAL 与单一保存协调器；用户可从命令面板或文件树拖入 memo，预览/编辑原文、创建自由文字、连接/删除/拖拽/缩放并显式 AI 拓展。连接使用卡片底栏行尾抓手的拖/点等效路径（三个入口严格等距），临时弹性绳只活在 UI 且两端只有抓手与指针，并沉在卡片之下与已成立的关系线同层；路由离场先 flush，本地已持久但未同步时允许继续并诚实提示；页面重开、冲突、响应丢失和 pagehide 沿同一恢复协议处理。
 
 成员清单
+public/: 静态营销素材，第一阶段保存来自参考 Frame 的原始图像与字体
 MOTION_SYSTEM.md: A/B 全量源码取舍、统一 Motion Design 规范与实际验收记录
 index.html: Vite HTML 宿主页面，声明 V1 Classic Blueprint 默认画布、同步解析 App 的 system/light/dark 与 Landing 浅色画布 pre-paint bootstrap、提供 root 挂载点并内联折角笔记页 favicon
 .env.example: app 浏览器环境变量模板，声明业务 API、chat 服务 base URL 与 Supabase 公开连接配置

@@ -1,0 +1,11 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="1024" height="48" viewBox="0 0 1024 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect id="div.h-auto:mask" width="1024" height="48" fill="url(#paint0_linear_0_36)"/>
+<defs>
+<linearGradient id="paint0_linear_0_36" x1="512" y1="0" x2="512" y2="48" gradientUnits="userSpaceOnUse">
+<stop stop-opacity="0"/>
+<stop offset="0.1"/>
+<stop offset="0.9"/>
+<stop offset="1" stop-opacity="0"/>
+</linearGradient>
+</defs>
+</svg>

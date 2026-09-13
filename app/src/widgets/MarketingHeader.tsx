@@ -1,14 +1,16 @@
 /**
- * [INPUT]: 依赖 React lazy/Suspense 与 AnimatePresence 的完整退出、本地 Button/BrandMark、React Router URL 状态与按需加载的 AuthDialog
- * [OUTPUT]: 对外提供仅显示 SuperNote 主名称、无装饰位移的 Blueprint 顶部导航与只在打开时下载认证逻辑的登录入口
- * [POS]: app/src/widgets 的营销导航内容组件，被 LandingPage 放入顶边贴视口、全宽背景且主轨/外轨相连的粘性 Header RailLayer
+ * [INPUT]: 依赖共享 Button、Figma 原始品牌素材与既有 query 驱动认证弹窗
+ * [OUTPUT]: 对外提供 56px 参考导航、公开锚点与按需加载的 AuthDialog
+ * [POS]: widgets 的首页导航；认证成功仍经现有路由进入工作区，不改变登录协议
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { AnimatePresence } from "motion/react";
 import { lazy, Suspense } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
-import { BrandMark, Button } from "../shared/design-system/components";
+import { Button } from "../shared/design-system/components";
+
+import { referenceAssets as assets } from "./landingReferenceData";
 
 const AuthDialog = lazy(() =>
   import("./AuthDialog").then((module) => ({
@@ -17,9 +19,12 @@ const AuthDialog = lazy(() =>
 );
 
 const navItems = [
-  { href: "#product", label: "产品" },
-  { href: "#workflow", label: "工作方式" },
-  { href: "#pricing", label: "定价" },
+  { href: "#features", label: "Product⌄" },
+  { href: "#resources", label: "Resources⌄" },
+  { href: "#extensions", label: "Extensions" },
+  { href: "https://zed.dev/docs", label: "Docs" },
+  { href: "https://zed.dev/pricing", label: "Pricing" },
+  { href: "https://zed.dev/delta", label: "♧ Delta" },
 ];
 
 export function MarketingHeader() {
@@ -49,11 +54,11 @@ export function MarketingHeader() {
       <header className="marketing-header">
         <div className="ds-container marketing-nav">
           <Link
-            aria-label="返回 SuperNote 首页"
+            aria-label="返回首页"
             className="rounded-lg focus-visible:outline-2 focus-visible:outline-ring"
             to="/"
           >
-            <BrandMark />
+            <img className="reference-brand" src={assets["19-4560/imgFrame"]} alt="Zed" width="67" height="24" />
           </Link>
           <nav aria-label="主导航" className="hidden items-center gap-1 md:flex">
             {navItems.map((item) => (
@@ -67,14 +72,15 @@ export function MarketingHeader() {
             ))}
           </nav>
           <div className="flex items-center gap-2">
-            <span className="marketing-edition">2026 / BETA</span>
+            <span className="marketing-edition">◦ ◦ ◦　◧　▧　↗</span>
             <Button
               className="marketing-login-button"
               onClick={() => handleAuthDialogOpenChange(true)}
-              variant="primary"
+              variant="ghost"
             >
-              登录
+              Sign up <kbd>S</kbd>
             </Button>
+            <Button variant="primary" onClick={() => { window.location.href = "https://zed.dev/download"; }}>Download <kbd>D</kbd></Button>
           </div>
         </div>
       </header>

@@ -1,347 +1,59 @@
 /**
- * [INPUT]: 依赖 React ref、本地 Button/Card/BrandMark/BlueprintDivider、Motion for React 统一非线性 reveal、共享 Lucide 图标、CountUp/轻量 reveal 与 React Router 导航
- * [OUTPUT]: 对外提供由唯一 Divider 分隔、带 whileInView 统一非线性 与错开入场、无装饰 hover 填色/磁吸/聚光/浮动的指标、问题、流程、场景、定价、FAQ 与大图标/短标题/小按钮组成的无末端节点预页脚
- * [POS]: app/src/widgets 的 Landing 扩展模块，被 LandingPage 懒加载并保持工程骨架静止、内容独立入场，让正文竖轨无节点直达 Footer
+ * [INPUT]: 依赖 BlueprintDivider、共享 Button、Figma 原始图像及结构化参考内容
+ * [OUTPUT]: 对外提供评价、能力网格、统计、分栏、扩展、团队信与文章等参考分区
+ * [POS]: widgets 的营销叙事组合，采用语义布局重建阅读节奏，不复制导入稿定位树
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
-import {
-  ArrowRightIcon,
-  CheckCircleIcon,
-  CheckIcon,
-  PlusIcon,
-} from "../shared/design-system/icons";
-import { motion, useReducedMotion } from "motion/react";
-import { useRef } from "react";
-import { useNavigate } from "react-router-dom";
-
-import { revealVariants, staggerVariants } from "../shared/design-system/motion";
-import { BrandMark, Button, Card } from "../shared/design-system/components";
+import type { ReactNode } from "react";
+import { Button } from "../shared/design-system/components";
 import { BlueprintDivider } from "./BlueprintDivider";
-import { CountUp } from "./LandingMotion/CountUp";
+import { LandingActions } from "./LandingHero";
+import { referenceAssets as assets, referenceExtensions } from "./landingReferenceData";
 
-const behaviorMetrics = [
-  { label: "保存前必选分类", suffix: "", value: 0 },
-  { label: "统一记录入口", suffix: "", value: 1 },
-  { label: "归档判断步骤", suffix: "", value: 3 },
-  { label: "结构控制权", suffix: "%", value: 100 },
-];
-
-const problemItems = [
-  {
-    body: "当记录之前还要挑文件夹和标签，念头已经被界面打断。",
-    title: "分类发生得太早",
-  },
-  {
-    body: "临时标题和缺失标签让内容越积越多，也越来越难重新找到。",
-    title: "内容留下了，路径丢失了",
-  },
-  {
-    body: "为昨天设计的目录，未必接得住明天突然出现的新主题。",
-    title: "结构很快变成维护工作",
-  },
-];
-
-const workflowSteps = [
-  { body: "像使用最简单的备忘录一样，把当下最重要的内容留下。", label: "01", title: "捕捉" },
-  { body: "保存之后，AI 再读取主题、语义和当前文件树的上下文。", label: "02", title: "理解" },
-  { body: "优先复用已有位置；只有真正需要时，才创建新的结构分支。", label: "03", title: "归位" },
-];
-
-const useCases = [
-  "会议里来不及整理的决定",
-  "阅读时值得留下的句子",
-  "一闪而过的产品与创作想法",
-  "需要长期追踪的项目线索",
-];
-
-const pricingPlans = [
-  {
-    body: "给日常记录一个持续整洁的起点。",
-    name: "Starter",
-    points: ["基础 AI 归档", "个人文件树", "月度整理报告"],
-    price: "$5",
-  },
-  {
-    body: "给高频记录和长期知识沉淀更多空间。",
-    highlighted: true,
-    name: "Pro",
-    points: ["高级主题识别", "自动新建文件夹", "跨文件夹检索建议"],
-    price: "$20",
-  },
-  {
-    body: "让一组人维护同一套清晰、可审计的知识结构。",
-    name: "Studio",
-    points: ["团队空间", "归档策略审计", "优先 AI 配额"],
-    price: "$100",
-  },
-];
-
-const faqItems = [
-  {
-    answer: "AI 会优先匹配现有文件夹，只有主题明显不适配时才创建新节点；每一次调整都可以查看和修改。",
-    question: "AI 会不会乱建文件夹？",
-  },
-  {
-    answer: "可以。SuperNote 负责初步整理，你始终拥有最终结构的控制权。",
-    question: "我还能手动调整分类吗？",
-  },
-  {
-    answer: "归档发生在保存之后，不会阻塞输入；处理结果会安静地回到当前文件树。",
-    question: "AI 会打断我写笔记吗？",
-  },
-];
-
-function SectionHeading({
-  body,
-  eyebrow,
-  title,
-}: {
-  body: string;
-  eyebrow: string;
-  title: string;
-}) {
-  return (
-    <div className="landing-section-heading">
-      <p>{eyebrow}</p>
-      <h2>{title}</h2>
-      <span>{body}</span>
-    </div>
-  );
+export function LandingSectionHeading({title,body,children}: {title:string;body:string;children?:ReactNode}) {
+  return <header className="landing-section-heading"><div><h2>{title}</h2><p>{body}</p></div><div className="landing-section-links">{children}</div></header>;
 }
-
-export function LandingSections() {
-  const reduced = Boolean(useReducedMotion());
-  const fadeInUp = revealVariants(reduced);
-  const staggerItem = fadeInUp;
-  const staggerContainer = staggerVariants(reduced);
-  const navigate = useNavigate();
-  const rootRef = useRef<HTMLDivElement>(null);
-
-  return (
-    <div className="landing-sections" ref={rootRef}>
-      <section
-        aria-label="产品行为指标"
-        className="blueprint-section landing-metrics-section"
-      >
-        <motion.div
-          className="landing-metrics-grid"
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ amount: 0.2, once: true }}
-          variants={staggerContainer}
-        >
-          {behaviorMetrics.map((metric) => (
-            <motion.div key={metric.label} variants={staggerItem}>
-              <strong>
-                <CountUp suffix={metric.suffix} value={metric.value} />
-              </strong>
-              <span>{metric.label}</span>
-            </motion.div>
-          ))}
-        </motion.div>
-      </section>
-
-      <BlueprintDivider />
-
-      <section className="blueprint-section landing-content-section">
-        <motion.div
-          className="landing-section-content landing-split-section"
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ amount: 0.18, once: true }}
-          variants={fadeInUp}
-        >
-          <div className="landing-sticky-copy">
-            <p>The friction</p>
-            <h2>你不应该在每次记录前，都先设计一个系统。</h2>
-            <span>
-              文件夹、标签和链接本身没有错。问题在于，大多数笔记工具要求你在想法最脆弱的时候，同时完成记录与整理。
-            </span>
-          </div>
-          <motion.div className="landing-index-list" variants={staggerContainer}>
-            {problemItems.map((item, index) => (
-              <motion.article key={item.title} variants={staggerItem}>
-                <span>0{index + 1}</span>
-                <div>
-                  <h3>{item.title}</h3>
-                  <p>{item.body}</p>
-                </div>
-              </motion.article>
-            ))}
-          </motion.div>
-        </motion.div>
-      </section>
-
-      <BlueprintDivider />
-
-      <section
-        className="blueprint-section landing-content-section"
-        id="workflow"
-      >
-        <motion.div
-          className="landing-section-content"
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ amount: 0.18, once: true }}
-          variants={fadeInUp}
-        >
-          <SectionHeading
-            body="整个过程发生在保存之后：不弹出分类选择，也不要求你停下来整理。"
-            eyebrow="How it works"
-            title="记录是一条直线。整理在后台完成。"
-          />
-          <motion.ol className="landing-workflow-grid" variants={staggerContainer}>
-            {workflowSteps.map((step) => (
-              <motion.li key={step.label} variants={staggerItem}>
-                <span>{step.label}</span>
-                <h3>{step.title}</h3>
-                <p>{step.body}</p>
-              </motion.li>
-            ))}
-          </motion.ol>
-        </motion.div>
-      </section>
-
-      <BlueprintDivider />
-
-      <section className="blueprint-section landing-content-section">
-        <motion.div
-          className="landing-section-content landing-use-cases"
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ amount: 0.18, once: true }}
-          variants={fadeInUp}
-        >
-          <div>
-            <p>For real notes</p>
-            <h2>重要的信息先被留下，结构可以晚一点出现。</h2>
-            <span>会议结论、阅读摘录、产品想法和长期项目，都从同一个简单入口开始。</span>
-          </div>
-          <motion.div className="landing-use-case-list" variants={staggerContainer}>
-            {useCases.map((item) => (
-              <motion.div key={item} variants={staggerItem}>
-                <CheckCircleIcon aria-hidden="true" size={16} />
-                {item}
-              </motion.div>
-            ))}
-          </motion.div>
-        </motion.div>
-      </section>
-
-      <BlueprintDivider />
-
-      <section
-        className="blueprint-section landing-content-section"
-        id="pricing"
-      >
-        <motion.div
-          className="landing-section-content"
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ amount: 0.18, once: true }}
-          variants={fadeInUp}
-        >
-          <SectionHeading
-            body="每个方案都包含保存后自动归档；差别只在整理额度、协作方式与高级能力。"
-            eyebrow="Plans"
-            title="从个人记录，到一组人的知识结构。"
-          />
-          <motion.div className="landing-pricing-grid" variants={staggerContainer}>
-            {pricingPlans.map((plan) => (
-              <motion.div key={plan.name} variants={staggerItem}>
-                <Card
-                className="landing-pricing-card"
-                motion="lift"
-                data-featured={plan.highlighted || undefined}
-                tone={plan.highlighted ? "accent" : "default"}
-                >
-                <div className="landing-plan-heading">
-                  <p>{plan.name}</p>
-                  {plan.highlighted ? <span>Recommended</span> : null}
-                </div>
-                <div className="landing-plan-price">
-                  <strong>{plan.price}</strong>
-                  <span>/ month</span>
-                </div>
-                <p className="landing-plan-body">{plan.body}</p>
-                <div className="landing-plan-points">
-                  {plan.points.map((point) => (
-                    <p key={point}>
-                      <CheckIcon aria-hidden="true" size={14} />
-                      {point}
-                    </p>
-                  ))}
-                </div>
-                <Button
-                  className="mt-auto w-full"
-                  onClick={() => navigate("/app")}
-                  variant={plan.highlighted ? "primary" : "secondary"}
-                >
-                  选择 {plan.name}
-                </Button>
-                </Card>
-              </motion.div>
-            ))}
-          </motion.div>
-        </motion.div>
-      </section>
-
-      <BlueprintDivider />
-
-      <section
-        className="blueprint-section landing-content-section"
-        id="faq"
-      >
-        <motion.div
-          className="landing-section-content"
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ amount: 0.18, once: true }}
-          variants={fadeInUp}
-        >
-          <SectionHeading
-            body="控制权、创建文件夹的边界，以及记录过程会不会被打断。"
-            eyebrow="FAQ"
-            title="把整理交给 AI，不等于交出控制权。"
-          />
-          <div className="landing-faq-list">
-            {faqItems.map((item) => (
-              <details className="group" key={item.question}>
-                <summary>
-                  <span>{item.question}</span>
-                  <PlusIcon
-                    aria-hidden="true"
-                    className="transition-transform duration-200 ease-out group-open:rotate-45 motion-reduce:transition-none"
-                    size={16}
-                  />
-                </summary>
-                <p>{item.answer}</p>
-              </details>
-            ))}
-          </div>
-        </motion.div>
-      </section>
-
-      <BlueprintDivider />
-
-      <section className="blueprint-section landing-prefooter">
-        <div className="landing-prefooter-content">
-          <div className="landing-product-icon">
-            <BrandMark iconOnly />
-          </div>
-          <h2>
-            <span>立即使用</span>{" "}
-            <span>SuperNote</span>
-          </h2>
-          <Button
-            icon={ArrowRightIcon}
-            onClick={() => navigate("/app")}
-            variant="primary"
-          >
-            开始
-          </Button>
-        </div>
-      </section>
-    </div>
-  );
+const LinkButton = ({children,href="https://zed.dev/features"}:{children:ReactNode;href?:string}) => <Button variant="secondary" onClick={() => {window.location.href=href;}}>{children} ›</Button>;
+const features=[
+  ["Parallel Agents","Run multiple threads of your favorite agents across several projects so you never leave your flow.","imgSidebarWebp"],
+  ["Debugger","Built on the Debug Adapter Protocol (DAP), native support for debugging across multiple programming languages.","imgDebuggerWebp"],
+  ["Agentic Editing","Zed natively supports agentic editing, enabling fluent collaboration between humans and AI.","imgAgentWebp"],
+  ["Native Git Support","First-class support for staging, committing, pulling, pushing, viewing diffs, and many more Git operations.","imgGitWebp"],
+  ["Edit Prediction","A tool that anticipates your next move. Powered by Zeta2, our open-weight language model.","imgEpWebp"],
+];
+const quotes=[
+  {name:"José Valim",role:"Creator of Elixir",asset:"imgJoseValimsAvatar",quote:"“Yes! Now I can have shortcuts to run and debug tests. Ever since snippets were added, Zed has all of the features I could ask for in an editor.”"},
+  {name:"Ethan Perez",role:"Adversarial Robustness Research Lead",asset:"imgEthanPerezsAvatar",quote:"“I've had my mind blown using Zed with Claude 3.5 Sonnet. I wrote up a few sentences around a research idea and Claude 3.5 Sonnet delivered a first pass in seconds. When I spotted some small mistakes, I highlighted the parts I wanted to change and shared feedback for it to fix. I was able to go from idea to running experiment code in half an hour—it was really easy and fun.”"},
+  {name:"Dan Abramov",role:"React Core Team Member",asset:"imgDanAbramovsAvatar",quote:"“This is obviously a product built with love and care. I can tell it from two minutes of using it. Kudos to the team.”"},
+  {name:"Matt Baker",role:"Principal Engineer",asset:"imgMattBakersAvatar",quote:"“My god it is so fast. Boot time, UI interaction, typing latency. I feel it. I knew VS Code always felt sluggish, but I didn't realize how good things could really be. I'm honestly astounded.”"},
+  {name:"Mike Bostock",role:"Creator of D3.js, founder of Observable",asset:"imgMikeBostocksAvatar",quote:"“I’ve started using Zed, and I love it. Lots of subtle innovations (multibuffers, inlay hints, collaboration). Thoughtful, precise design. And the speed, the speed!”"},
+];
+const details=[
+  ["Helix Mode","Feel at home with Helix and Vim."],["Diagnostics Multibuffer","Project-wide errors and warnings."],["Dev Containers","Consistent development environment."],["CLI","Use Zed from the command line."],["Rainbow Brackets","Easily move around deeply nested code."],["Built-in REPL","Run code interactively through Jupyter kernels."],["Syntax-aware selections","Efficiently select syntax nodes."],["Inlay Hints","Peek through your code."],
+];
+function SplitFeature({kind}:{kind:"ai"|"care"}){
+ const ai=kind==="ai";
+ return <div className="landing-split"><div className="landing-split-copy"><div><h3>{ai?"Agentic Editing":"Language Server Protocol support"}</h3><p>{ai?"Delegate work to the agent, follow their progress live and review changes with ease.":"Fully integrate your language of choice."}</p><a href="https://zed.dev/docs">Learn More ›</a></div><div className="landing-split-options">{(ai?["Edit Prediction","Inline Assistant","Any Agent, Any Tool"]:["Outline view","Text and line manipulation"]).map(t=><a href="https://zed.dev/features" key={t}>{t} <span>⌄</span></a>)}</div></div><div className="landing-split-media"><img src={assets[ai?"19-3464/imgImage1":"19-3974/imgLspWebp"]} alt={ai?"Agentic editing in Zed":"Language server support in Zed"} loading="lazy" /></div></div>;
+}
+export function LandingSections(){
+ const avatars=Object.entries(assets).filter(([key])=>key.startsWith("19-2760/"));
+ return <>
+  <section className="landing-trust" id="community"><h2>Trusted by world-class developers<br />&amp; industry leading teams</h2><div className="landing-logo-strip">{["imgFrame1","imgFrame3","imgFrame5","imgFrame7","imgFrame9","imgFrame11"].map(name=><img src={assets[`19-2328/${name}`]} alt="" key={name} width="110" height="32" />)}</div><div className="landing-quotes">{quotes.map((q,i)=><figure key={q.name} data-featured={i===1}>{i===1?<img className="reference-anthropic" src={assets["19-2328/imgFrame14"]} alt="Anthropic" width="120" height="14" />:null}<blockquote>{q.quote}</blockquote><figcaption><img src={assets[`19-2328/${q.asset}`]} width="32" height="32" alt="" /><span>{q.name}<small>{q.role}</small></span></figcaption></figure>)}</div></section>
+  <BlueprintDivider fullBleed />
+  <section id="features"><LandingSectionHeading title="Zed Just Works" body="Incredibly powerful out of the box. And it only gets better as, every week, there's always a new version."><a href="https://zed.dev/roadmap">View Roadmap ›</a><LinkButton href="https://zed.dev/releases">View Releases</LinkButton></LandingSectionHeading><div className="landing-feature-grid">{features.map(([title,body,asset],i)=><article key={title} data-wide={i<2}><img src={assets[`19-2527/${asset}`]} alt={title} loading="lazy" /><h3>{title}</h3><p>{body}</p></article>)}</div><div className="landing-small-features">{[["Remote Development","Your machine only runs the Zed UI, while the actual codebase runs on a remote server."],["Multibuffer editing","Multibuffers compose excerpts from across the codebase in one editable surface."],["Vim-friendly","First-class modal editing via Vim bindings, including features like text objects and marks."]].map(([t,b])=><article key={t}><h3>{t}</h3><p>{b}</p></article>)}</div></section>
+  <BlueprintDivider fullBleed />
+  <section className="landing-open-source"><h2>Open Source</h2><p>Zed is built by a global, growing, and thriving<br />community of thousands of developers.</p><div className="landing-avatar-strip" aria-hidden="true">{avatars.map(([key,src])=><img key={key} src={src} alt="" width="18" height="18" loading="lazy" />)}</div><dl className="landing-stats">{[["10,406","Forks"],["89,634","Stars"],["2,214","Contributors"],["490","PRs merged last month"]].map(([n,t])=><div key={t}><dt>{n}</dt><dd>{t}</dd></div>)}</dl><div className="landing-avatar-strip" aria-hidden="true">{[...avatars].reverse().map(([key,src])=><img key={key} src={src} alt="" width="18" height="18" loading="lazy" />)}</div></section>
+  <BlueprintDivider fullBleed />
+  <section id="workflow"><LandingSectionHeading title="AI that works the way you code" body="Zed doesn't lock you into one model, it gives you the fastest way to collaborate with any agent."><LinkButton>Learn about AI in Zed</LinkButton></LandingSectionHeading><SplitFeature kind="ai" /></section>
+  <BlueprintDivider fullBleed />
+  <section id="extensions"><LandingSectionHeading title="Growing extensions ecosystem" body="Boost your Zed experience by choosing from hundreds of extensions that broaden language support, offer different themes, and more."><a href="https://zed.dev/docs/extensions">Create Extension ›</a><LinkButton href="https://zed.dev/extensions">View All Extensions</LinkButton></LandingSectionHeading><div className="landing-extensions">{referenceExtensions.map(([title,count,body,author])=><article key={title}><header><h3>{title}</h3><span>♧ {count}</span></header><p>{body}</p><small>♙ {author}</small></article>)}</div></section>
+  <BlueprintDivider fullBleed />
+  <section><LandingSectionHeading title="Built with ultimate care" body="Every single feature in Zed has been designed to advance the state of the art. Anything less isn't worth building."><LinkButton>Learn More</LinkButton></LandingSectionHeading><SplitFeature kind="care" /><div className="landing-detail-grid">{details.map(([t,b])=><article key={t}><h3>{t}</h3><p>{b}</p></article>)}</div></section>
+  <BlueprintDivider fullBleed />
+  <section className="landing-letter-section" id="resources"><article className="landing-letter"><div className="landing-letter-seal"><img src={assets["19-4121/imgVector"]} alt="" width="96" height="96" /></div><small>A LETTER</small><h2>From the team</h2><div className="landing-letter-body"><p>Programming and the tools we use to do so are changing. As the culmination of 15 years of work developing industry-leading tools for developers like Atom, Electron, and Tree-sitter, Zed strives to be at the forefront of this transformation.</p><p>We're confident that the future of software development lies in fluent collaboration between humans and AI. Crafted from the ground up, Zed is here to make this vision a reality.</p></div><div className="landing-signature"><div>{["imgNathanSobo","imgAntonioScandurra","imgMaxBrunsfeld"].map(n=><img key={n} alt="" src={assets[`19-4121/${n}`]} width="20" height="20" loading="lazy" />)}</div><span>Zed Industries</span><small>Nathan Sobo, Antonio Scandurra, Max Brunsfeld</small></div></article></section>
+  <BlueprintDivider fullBleed />
+  <section><LandingSectionHeading title="The latest from Zed" body="Check out recent announcements, the Zed Decoded series, and other in-depth posts about Zed behind the curtains."><LinkButton href="https://zed.dev/blog">View Blog</LinkButton></LandingSectionHeading><div className="landing-blog-grid">{[["Xanadu Was Waiting for Agents","Ted Nelson specified the docuverse sixty years ago. The technology finally…","imgXanaduWasWaitingForAgents","Nathan Sobo","September 1st, 2026"],["Introducing Delta","A multiplayer environment for coding with agents, from the creators of Zed.","imgIntroducingDelta","Nathan Sobo","August 12th, 2026"],["Sandboxing","Zed supports sandboxing to restrict what agents can do while using the…","imgSandboxing","Cameron Mcloughlin","August 5th, 2026"]].map(([t,b,img,author,date])=><article key={t}><img src={assets[`19-4211/${img}`]} alt="" loading="lazy" /><h3>{t}</h3><p>{b}</p><footer><span>{author}</span><time>{date}</time></footer></article>)}</div></section>
+  <BlueprintDivider fullBleed />
+  <section className="landing-final-cta"><img className="landing-app-icon" src={assets["19-4325/imgZedsLogo"]} alt="Zed" width="160" height="160" loading="lazy" /><div><h2>Daily drive with Zed</h2><p>Code at the speed of thought.</p></div><LandingActions /></section>
+ </>;
 }
