@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 ReactNode 与 landing.css 的浅色 RailLayer、全宽外轨和主内容内轨几何规则
+ * [INPUT]: 依赖 ReactNode 与 landing.css 的共享主轨宽度、视口外轨坐标和局部导轨颜色
  * [OUTPUT]: 对外提供承载连续导轨、自定义宽度 className 与可选 fullBleed 外轨的 BlueprintFrame
- * [POS]: app/src/widgets 的 Landing 蓝图结构骨架，被 LandingPage 用于全宽 Header/公告和 1088px 正文，Footer 与其解耦
+ * [POS]: widgets 的 Landing 纵向骨架；导航、1120px 正文与页脚共用坐标，页面区块仅承载内容
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import type { ReactNode } from "react";

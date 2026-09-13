@@ -8,14 +8,14 @@ useTreeReorder.ts: AppSidebar 结构重排 FLIP Hook，手势前捕获位置、�
 TreeDisclosure.tsx: 文件树与 DS Collapse 的薄适配，声明可打断、成对释放的归档运动租约，让 Overlay 跟随真实高度几何；不读取业务数据
 .gitkeep: 保留业务组合组件层空目录
 CLAUDE.md: 记录业务组合组件层职责与文档协议
-MarketingHeader.tsx: 56px 营销导航，保持既有 query 驱动认证弹窗和 APP 入口，页面样式隔离参考外观
+MarketingHeader.tsx: 56px 营销导航，复用 BlueprintFrame/Divider 延续正文主轨、外轨与底边交点，保持既有 query 驱动认证弹窗和 APP 入口
 MarketingAnnouncement.tsx: 紧贴粘性导航下方、约为 Header 2/3 高且随页面滚走的无关闭公告栏，在背景全宽、1088px 主轨与正文对齐且宽屏带视口外轨的 BlueprintFrame 中居中呈现标签、正文与 2px 箭头反馈；hover 不填充蓝色背景
-BlueprintFrame.tsx: Landing 通用连续 RailLayer 容器，以显式 DOM 绘制主内容竖轨与可选 fullBleed 视口外轨，由 LandingPage 组成全宽 Header/公告和 1088px 正文骨架，并统一在 Footer 前终止
-BlueprintDivider.tsx: Landing 独立 14px/零高度贴边区块分隔器，以显式 DOM 绘制正文止于主节点的中性淡灰横线，以及 fullBleed 模式下穿过内收外轨节点并继续延伸至视口的开放横线；节点内部以画布色遮罩导轨以杜绝穿模
+BlueprintFrame.tsx: Landing 纵向导轨容器；导航、1120px 正文与页脚共用主轨/外轨坐标，fullBleed 增加可选外轨，颜色由当前区块局部覆盖
+BlueprintDivider.tsx: Landing 横向导轨；14px 分隔带上下两条边分别共置横线与菱形，flush 提供零高度边界，compact 保留 7px 内部分隔带而不添加参考中没有的节点
 AuthDialog.tsx: 登录/注册状态切换的统一认证 Dialog，复用共享内凹 Input/PasswordInput 承载邮箱、双密码与显隐控制，并提供协议提示、六格 OTP 自动校验与 Google OAuth 入口
-LandingHero.tsx: 居中 Hero、公告、三列价值条与大幅编辑器插槽；复用 Button 与 BlueprintDivider
-LandingSections.tsx: 基于语义 Grid/Flex 重建参考页评价、能力、分栏、信件与收尾节奏，原始素材经引用索引加载
-LandingFooter.tsx: 全宽 Footer，主轨内承载导航分栏与宽幅字标；不再依赖旧营销正文结构
+LandingHero.tsx: 渐变公告、居中 Hero、三列价值条与大幅编辑器插槽；公告底边及能力条/编辑器交界复用通栏 BlueprintDivider
+LandingSections.tsx: 基于语义 Grid/Flex 重建参考分区；区块边界及细节网格前的分隔带共用 BlueprintDivider，原始素材经引用索引加载
+LandingFooter.tsx: 全宽 Footer，以 BlueprintFrame 延续正文主轨/外轨，局部浅色导轨连接导航分栏与宽幅字标
 LandingMotion/: Landing 克制反馈模块，只提供 CountUp 与一次性 reveal；磁吸、指针聚光与装饰点阵已移除，当前页面只保留有信息价值的计数与 3–4px 入场反馈
 NotebookPreview.tsx: 确定性首屏产品预览，DS 统一缩放淡入与显式卡片 lift 分处不同元素，阴影由 CSS 持有，内部布局不参与独立动画
 AppSidebar.tsx: 右键菜单通过 Portal 锚定视口，避免 Panel transform 改写 fixed 坐标；文件库内容与展开偏好的唯一所有者，负责创建/搜索、树/重命名/拖放意图、底部导航和唯一有效归档代表；重排交给 useTreeReorder，结构键按不可变树引用复用以跳过标题/摘要更新时的整树 FLIP 判据，子级尺寸交给 TreeDisclosure，业务事务仍由 Dashboard 持有

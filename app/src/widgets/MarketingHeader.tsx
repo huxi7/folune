@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖共享 Button、Figma 原始品牌素材与既有 query 驱动认证弹窗
- * [OUTPUT]: 对外提供 56px 参考导航、公开锚点与按需加载的 AuthDialog
+ * [INPUT]: 依赖共享 Button、BlueprintFrame/Divider、Figma 原始品牌素材与既有 query 驱动认证弹窗
+ * [OUTPUT]: 对外提供 56px 导航及底边交点，与正文同轴的主轨/外轨、公开锚点与按需加载的 AuthDialog
  * [POS]: widgets 的首页导航；认证成功仍经现有路由进入工作区，不改变登录协议
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -11,6 +11,8 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "../shared/design-system/components";
 
 import { referenceAssets as assets } from "./landingReferenceData";
+import { BlueprintDivider } from "./BlueprintDivider";
+import { BlueprintFrame } from "./BlueprintFrame";
 
 const AuthDialog = lazy(() =>
   import("./AuthDialog").then((module) => ({
@@ -52,6 +54,7 @@ export function MarketingHeader() {
   return (
     <>
       <header className="marketing-header">
+        <BlueprintFrame fullBleed>
         <div className="ds-container marketing-nav">
           <Link
             aria-label="返回首页"
@@ -83,6 +86,8 @@ export function MarketingHeader() {
             <Button variant="primary" onClick={() => { window.location.href = "https://zed.dev/download"; }}>Download <kbd>D</kbd></Button>
           </div>
         </div>
+        </BlueprintFrame>
+        <BlueprintDivider flush fullBleed />
       </header>
       <AnimatePresence>
       {authDialogOpen ? (

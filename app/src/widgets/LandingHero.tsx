@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖共享 Button、BlueprintDivider、参考原始素材与 LandingEditor
- * [OUTPUT]: 对外提供参考公告、居中 Hero、三列能力条与紧随其后的编辑器展示
+ * [OUTPUT]: 对外提供渐变公告、居中 Hero、三列能力条与编辑器展示；公告及能力条边界复用通栏导轨和交点
  * [POS]: widgets 的首页首屏；文案与图像在第一阶段保持参考状态供截图校准
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -22,7 +22,7 @@ export function LandingActions() {
 
 export function LandingHero() {
   return <>
-    <div className="landing-announcement"><span>Introducing:</span> <a href="https://zed.dev/delta">Delta, a multiplayer environment for coding with agents <span>→</span></a></div>
+    <div className="landing-announcement"><span>Introducing:</span> <a href="https://zed.dev/delta">Delta, a multiplayer environment for coding with agents <span>→</span></a><BlueprintDivider flush fullBleed /></div>
     <section className="landing-hero" aria-labelledby="landing-title">
       <div className="landing-hero-pattern" aria-hidden="true" />
       <div className="landing-hero-copy"><h1 id="landing-title">Your last next editor</h1><p>Zed is a minimal code editor crafted for speed and collaboration with humans and AI.</p></div>
@@ -34,6 +34,7 @@ export function LandingHero() {
       <div><h2>Agentic</h2><p>Run agents in parallel to smoothly edit files, navigate code, and run tools at native speed.</p></div>
       <div><h2>Collaborative</h2><p>Chat with teammates, code together, and share your screen and project.</p></div>
     </div>
+    <BlueprintDivider flush fullBleed />
     <section className="landing-editor-section" aria-label="Zed editor preview"><LandingEditor /></section>
     <BlueprintDivider fullBleed />
   </>;

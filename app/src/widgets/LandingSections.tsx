@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 BlueprintDivider、共享 Button、Figma 原始图像及结构化参考内容
- * [OUTPUT]: 对外提供评价、能力网格、统计、分栏、扩展、团队信与文章等参考分区
+ * [OUTPUT]: 对外提供评价、能力网格、统计、分栏、扩展、团队信与文章等参考分区，区块边界及细节网格前的分隔带复用 BlueprintDivider
  * [POS]: widgets 的营销叙事组合，采用语义布局重建阅读节奏，不复制导入稿定位树
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -48,7 +48,7 @@ export function LandingSections(){
   <BlueprintDivider fullBleed />
   <section id="extensions"><LandingSectionHeading title="Growing extensions ecosystem" body="Boost your Zed experience by choosing from hundreds of extensions that broaden language support, offer different themes, and more."><a href="https://zed.dev/docs/extensions">Create Extension ›</a><LinkButton href="https://zed.dev/extensions">View All Extensions</LinkButton></LandingSectionHeading><div className="landing-extensions">{referenceExtensions.map(([title,count,body,author])=><article key={title}><header><h3>{title}</h3><span>♧ {count}</span></header><p>{body}</p><small>♙ {author}</small></article>)}</div></section>
   <BlueprintDivider fullBleed />
-  <section><LandingSectionHeading title="Built with ultimate care" body="Every single feature in Zed has been designed to advance the state of the art. Anything less isn't worth building."><LinkButton>Learn More</LinkButton></LandingSectionHeading><SplitFeature kind="care" /><div className="landing-detail-grid">{details.map(([t,b])=><article key={t}><h3>{t}</h3><p>{b}</p></article>)}</div></section>
+  <section><LandingSectionHeading title="Built with ultimate care" body="Every single feature in Zed has been designed to advance the state of the art. Anything less isn't worth building."><LinkButton>Learn More</LinkButton></LandingSectionHeading><SplitFeature kind="care" /><BlueprintDivider compact /><div className="landing-detail-grid">{details.map(([t,b])=><article key={t}><h3>{t}</h3><p>{b}</p></article>)}</div></section>
   <BlueprintDivider fullBleed />
   <section className="landing-letter-section" id="resources"><article className="landing-letter"><div className="landing-letter-seal"><img src={assets["19-4121/imgVector"]} alt="" width="96" height="96" /></div><small>A LETTER</small><h2>From the team</h2><div className="landing-letter-body"><p>Programming and the tools we use to do so are changing. As the culmination of 15 years of work developing industry-leading tools for developers like Atom, Electron, and Tree-sitter, Zed strives to be at the forefront of this transformation.</p><p>We're confident that the future of software development lies in fluent collaboration between humans and AI. Crafted from the ground up, Zed is here to make this vision a reality.</p></div><div className="landing-signature"><div>{["imgNathanSobo","imgAntonioScandurra","imgMaxBrunsfeld"].map(n=><img key={n} alt="" src={assets[`19-4121/${n}`]} width="20" height="20" loading="lazy" />)}</div><span>Zed Industries</span><small>Nathan Sobo, Antonio Scandurra, Max Brunsfeld</small></div></article></section>
   <BlueprintDivider fullBleed />
