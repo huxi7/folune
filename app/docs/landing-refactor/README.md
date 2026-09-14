@@ -120,4 +120,10 @@ BrandMark 是母图的唯一运行时入口，工作台侧栏、登录弹窗、�
 
 ### Footer 描边字形修正
 
-用户指出首版 Folune 字标的 `e` 有异常折角、衬线字形不够圆润，且 32% 白色描边比 16% 斜纹更突出。字标从 Landing Serif（IBM Plex Serif Variable）改为项目既有的 `--font-sans`（当前 macOS 首选 Avenir Next），字号由 240px 收至 226px，字距由 -12px 调为 -10px，以适配六字母宽度并保留原展示窗比例。描边和斜纹现在共同读取 `--landing-footer-hatch: rgb(255 255 255 / 16%)`，填充改为透明；两者不会再独立漂移。证据：`brand-footer-rounded.png`。
+用户指出首版 Folune 字标的 `e` 有异常折角、衬线字形不够圆润，且 32% 白色描边比背景纹理更突出。字标从 Landing Serif（IBM Plex Serif Variable）改为项目既有的 `--font-sans`（当前 macOS 首选 Avenir Next），字号由 240px 收至 226px，字距由 -12px 调为 -10px，以适配六字母宽度并保留原展示窗比例。填充改为透明。证据：`brand-footer-rounded.png`。
+
+### Footer 编织纹理还原
+
+用户补充的局部截图揭示字标区由横线和斜纹编织，而非单层密集斜纹。重新读取 Figma `19:4390` 与字标子树 `19:4539` 后确认，原稿存在 10% 白色边线与独立的 20% 纹理 Frame；旧字标 SVG 内部 20% stroke 再受 40% group opacity 影响，有效描边约 8%。导入稿没有暴露两个空 Frame 的具体图元，因此线距以用户截图复原：横线约每 50px 一组、斜纹约每 34px 一组。
+
+实现把 10% 横线和 10% Folune 描边放在低对比底层，20% 斜纹通过上层伪元素覆盖字标；字标因此像被织在纹理下面，不再浮出。横线、斜纹与字标分别由 `--landing-footer-grid`、`--landing-footer-hatch` 收口。证据：`brand-footer-woven.png`。

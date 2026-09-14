@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖共享 Button/Blueprint DOM、BrandMark 母图、页面私有参考字体与 Figma 素材
- * [OUTPUT]: 对外提供参考稿的标题/正文/注释字体层级、共轴导轨、分层信纸和响应式版面；仅 Landing 禁止纵向越界回弹，页尾止于 Footer
+ * [OUTPUT]: 对外提供参考稿的标题/正文/注释字体层级、共轴导轨、分层信纸、Footer 编织纹理和响应式版面；仅 Landing 禁止纵向越界回弹，页尾止于 Footer
  * [POS]: styles 的 Landing 局部样式；参考值只存在页面作用域，不改写全局 DS
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -131,7 +131,7 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
 .landing-blog-newest { display:inline-flex; align-items:center; height:19px; padding-inline:4px; border:1px solid #8ec5ff; border-radius:2px; background:rgb(190 219 255 / 10%); color:#193cb8; font:10px/24px Menlo,monospace; }
 .landing-final-cta { padding:61px 16px; display:flex; flex-direction:column; align-items:center; gap:32px; text-align:center; min-height:450px; background:radial-gradient(ellipse at center,#e8edf2,transparent 70%); }.landing-app-icon { --brand-size:160px; }.landing-final-cta h2 { font-size:25.6px; color:var(--landing-accent); }.landing-final-cta p { margin-top:8px; font-size:16px; line-height:24px; letter-spacing:-.4px; }
 /* ---- Footer 保留参考的衬线标题、正文链接和六列节奏 ---- */
-.landing-footer { --landing-border:rgb(255 255 255 / 10%); --landing-footer-hatch:rgb(255 255 255 / 16%); background:var(--landing-accent); color:#e1e3e7; letter-spacing:0; }
+.landing-footer { --landing-border:rgb(255 255 255 / 10%); --landing-footer-grid:rgb(255 255 255 / 10%); --landing-footer-hatch:rgb(255 255 255 / 20%); background:var(--landing-accent); color:#e1e3e7; letter-spacing:0; }
 .landing-footer-columns { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:24px; min-height:388.72px; }
 .landing-footer-columns > * { min-width:0; padding:24px 16px; }
 .landing-footer-columns > :not(:last-child) { border-right:1px solid var(--landing-border); }
@@ -145,9 +145,11 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
 .landing-footer-arrow { color:rgb(255 255 255 / 50%); }
 .landing-footer a:hover { color:#fff; }
 .landing-footer a:focus-visible { outline-color:#fff; }
-.landing-footer-wordmark { height:243px; padding-top:24px; border-top:1px solid var(--landing-border); display:flex; align-items:flex-start; justify-content:center; overflow:hidden; background:repeating-linear-gradient(135deg,transparent 0 3px,var(--landing-footer-hatch) 3px 4px); }
-.landing-footer-wordmark svg { flex:none; width:min(824px,calc(100% - 48px)); height:auto; overflow:visible; }
-.landing-footer-wordmark text { font:600 226px var(--font-sans); letter-spacing:-10px; fill:transparent; stroke:var(--landing-footer-hatch); stroke-width:1.2px; stroke-linejoin:round; paint-order:stroke; }
+/* 横线与字标同属低对比底层；较强斜纹覆在其上，形成参考稿的编织关系。 */
+.landing-footer-wordmark { position:relative; isolation:isolate; height:243px; padding-top:24px; border-top:1px solid var(--landing-border); display:flex; align-items:flex-start; justify-content:center; overflow:hidden; background:linear-gradient(to bottom,transparent 0 12px,var(--landing-footer-grid) 12px 14px,transparent 14px) 0 0/100% 50px repeat; }
+.landing-footer-wordmark::after { content:""; position:absolute; inset:0; z-index:2; pointer-events:none; background:repeating-linear-gradient(135deg,transparent 0 21px,var(--landing-footer-hatch) 21px 24px); }
+.landing-footer-wordmark svg { position:relative; z-index:1; flex:none; width:min(824px,calc(100% - 48px)); height:auto; overflow:visible; }
+.landing-footer-wordmark text { font:600 226px var(--font-sans); letter-spacing:-10px; fill:transparent; stroke:var(--landing-footer-grid); stroke-width:1.2px; stroke-linejoin:round; paint-order:stroke; }
 .reference-code-lines { padding-top:4px; font:12px/20px Landing Mono,monospace; }
 .reference-code-line { height:19.95px; display:flex; white-space:pre; }
 .reference-code-line>span { flex:none; }

@@ -22,5 +22,6 @@ brand-landing-mobile.png: Folune 导航及母图在 390px 首页的显示
 brand-footer.png: Folune 纯描边字标的桌面页脚，保持原六列及展示窗
 brand-footer-mobile.png: Folune 描边字在手机页脚中的等比缩放
 brand-footer-rounded.png: Folune 页脚改用 Avenir Next 后的桌面截图，记录圆润字形及描边与斜纹同色融合
+brand-footer-woven.png: Folune 页脚最终编织纹理截图，记录 10% 横线/字标底层与 20% 斜纹覆盖关系
 
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
