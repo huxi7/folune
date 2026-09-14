@@ -18,6 +18,8 @@ Folune is a quiet editorial instrument that lets users write first and allows AI
 
 ## Selected system — Soft Ink
 
+Landing 中文化（2026-09-14）：保留参考布局、暖灰背景、纹理和导轨；英文标题/正文/代码继续使用 IBM Plex Serif / iA Writer Quattro S / Lilex，中文分别回退 `--font-serif` 与 `--font-sans`，不额外下载字体。实际中文字体取决于设备，macOS 优先 Songti SC / PingFang SC。Landing Button 直接继承生产 DS 的 16px 平滑圆角、微弱面光和按压反馈；主按钮与 Footer 共用 `--primary`，首页继续固定浅色，因此使用 #395875。Footer Folune 字形、8% 描边与 4px/16% 细斜纹维持原层序。品牌 PNG 不作任何变换。
+
 - Light Primary `#395875`, Hover `#304D67`, Active `#284158`, Soft `#EAF0F4`
 - Dark Primary `#91ABC4`, Hover `#A0B8CE`, Active `#7B95AE`, Soft `#29343F`
 - Meaning: dried-ink character with enough clarity for a durable digital Primary

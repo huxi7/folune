@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖共享 Button、BlueprintFrame/Divider、BrandMark 与 Figma 原始功能符号与既有 query 驱动认证弹窗
- * [OUTPUT]: 对外提供原始导航文字/图标/快捷键、56px 导航及底边交点、公开锚点与按需加载的 AuthDialog
+ * [OUTPUT]: 对外提供中文导航、共享 DS 行动按钮、56px 导航及底边交点、公开锚点与按需加载的 AuthDialog
  * [POS]: widgets 的首页导航；认证成功仍经现有路由进入工作区，不改变登录协议
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -21,11 +21,11 @@ const AuthDialog = lazy(() =>
 );
 
 const navItems = [
-  { href: "#features", label: "Product", dropdown: true },
-  { href: "#resources", label: "Resources", dropdown: true },
-  { href: "#extensions", label: "Extensions" },
-  { href: "https://zed.dev/docs", label: "Docs" },
-  { href: "https://zed.dev/pricing", label: "Pricing" },
+  { href: "#features", label: "功能", dropdown: true },
+  { href: "#resources", label: "关于", dropdown: true },
+  { href: "#extensions", label: "扩展参考" },
+  { href: "https://zed.dev/docs", label: "参考文档" },
+  { href: "https://zed.dev/pricing", label: "参考定价" },
   { href: "https://zed.dev/delta", label: "Delta", icon: "19-4560/imgFrame2" },
 ];
 
@@ -77,7 +77,7 @@ export function MarketingHeader() {
             ))}
           </nav>
           <div className="flex items-center gap-2">
-            <span className="marketing-edition" aria-label="Search shortcut: Command Shift P">
+            <span className="marketing-edition" aria-label="搜索快捷键示意：Command Shift P">
               <img src={assets["19-4560/imgFrame3"]} alt="" width="12" height="12" />
               <kbd><img src={assets["19-4560/imgFrame4"]} alt="Command" width="10" height="10" /><img src={assets["19-4560/imgFrame5"]} alt="Shift" width="14" height="14" />P</kbd>
             </span>
@@ -86,9 +86,9 @@ export function MarketingHeader() {
               onClick={() => handleAuthDialogOpenChange(true)}
               variant="ghost"
             >
-              Sign up <kbd>S</kbd>
+              登录
             </Button>
-            <Button variant="primary" onClick={() => { window.location.href = "https://zed.dev/download"; }}>Download <kbd>D</kbd></Button>
+            <Button variant="secondary" disabled title="桌面版即将推出" aria-label="下载，桌面版即将推出">下载</Button>
           </div>
         </div>
         </BlueprintFrame>

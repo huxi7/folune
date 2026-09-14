@@ -129,3 +129,17 @@ BrandMark 是母图的唯一运行时入口，工作台侧栏、登录弹窗、�
 放大纹理间距的尝试已被用户拒绝并撤销。重新读取 Figma 19:4539：纹理 Frame 未暴露图元，不能将放大的局部截图像素当作页面 CSS 线距；原始字标 SVG 的 20% 描边乘以 40% 组透明度，等效约 8%。
 
 本轮保持原有 4px 斜纹周期、1px 线宽、16% 白色和原版面尺寸，只把字标描边从 16% 降至 8%，并将同一斜纹移到文字上方的伪元素。Avenir Next 字形与字号不变。内置浏览器检查桌面与 390px 手机显示，实际计算样式确认密度未变，手机 document.scrollWidth 为 390px，无横向溢出。此次不复用前次截图作为新效果证据。
+
+### 中文、DS 按钮与品牌墨蓝（2026-09-14）
+
+保持已确认的分区、导轨、暖灰背景和纹理。Hero、信纸与主要价值叙事改为 Folune 的记录/整理/连接；导航、卡片说明和元信息中文化。人物评价、社区数字、扩展与文章仍为原稿素材，页面明确标明 Zed 参考来源，不能作为 Folune 的客户背书或已上线能力。信纸改写后移除参考团队头像，避免错误署名。代码示例、第三方专名与原资源域名保留。
+
+重新读取 Figma 19:4575，导航明确使用 iA Writer Quattro S；参考页面未提供独立中文方案。英文继续使用现有本地 IBM Plex Serif / iA Writer / Lilex；中文标题回退 DS `--font-serif`，正文回退 `--font-sans`（macOS 为 Songti SC / PingFang SC，其他设备依系统字体回退）。未增加字体依赖。Footer Folune 继续使用 Avenir Next 字形。
+
+删除 Landing 私有的 4px 圆角、填色、边框和阴影覆盖，复用 DS Button 的 16px 平滑圆角、轻面光、hover 和原地收紧反馈。`--landing-accent` 引用 DS `--primary`，主按钮与 Footer 同源 #395875。Footer 的 4px 细斜纹、16% 白色纹理与 8% 字标层序保持。
+
+Hero 与末端 CTA 共用 LandingActions：登录设置 auth=login，交由 MarketingHeader 已有 AuthDialog；成功后进入 /app，经现有 Supabase 会话、后端 Profile/目录加载准入。没有新增认证协议或绕过后端。Hero、导航、页脚的下载均为待发布状态，不请求安装包。手机导航保留登录。
+
+验收：类型检查、lint 和 git diff --check 通过；320/390/768/1280px 无文档横向溢出，导航容器未溢出，所有下载按钮 disabled、图片均有 src。内置浏览器目视检查桌面首屏、390px 首屏与 Footer。Ego 浏览器通过 Hero 真实邮箱密码登录进入工作台，后端准入完成；未修改业务笔记或调用模型。另验证手机只出现一个认证框、关闭删除 auth query；系统深色偏好下首页仍固定浅色，背景 #f4f4f2、Footer #395875。Google OAuth 与注册流程本轮没有提交，沿用原实现。
+
+本轮截图：chinese-desktop.png、chinese-mobile.png、chinese-footer.png。原冻结标记不变，本轮不自动认定为用户确认的新基线。

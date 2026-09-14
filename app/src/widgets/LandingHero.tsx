@@ -1,41 +1,42 @@
 /**
  * [INPUT]: 依赖共享 Button、BlueprintDivider、参考原始素材与 LandingEditor
  * [OUTPUT]: 对外提供渐变公告、居中 Hero、三列能力条与编辑器展示；公告及能力条边界复用通栏导轨和交点
- * [POS]: widgets 的首页首屏；文案与图像在第一阶段保持参考状态供截图校准
+ * [POS]: widgets 的中文首页首屏；共享行动区通过既有 auth query 打开唯一登录弹窗，下载仅展示待发布状态
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { Button } from "../shared/design-system/components";
+import { useSearchParams } from "react-router-dom";
 import { BlueprintDivider } from "./BlueprintDivider";
 import { LandingEditor } from "./LandingEditor";
-import { referenceAssets as assets } from "./landingReferenceData";
 
 export function LandingActions() {
+  const [, setSearchParams] = useSearchParams();
   return <div className="landing-actions">
-    <Button variant="primary" onClick={() => { window.location.href = "https://zed.dev/download"; }}>
-      <img alt="" src={assets["hero/imgFrame3"]} width="14" height="14" />Download now<kbd>D</kbd>
+    <Button variant="primary" onClick={() => setSearchParams(previous => { const next = new URLSearchParams(previous); next.set("auth", "login"); return next; }, { replace: true })}>
+      登录
     </Button>
-    <Button variant="secondary" onClick={() => { window.location.href = "https://github.com/zed-industries/zed"; }}>
-      <img alt="" src={assets["hero/imgFrame4"]} width="14" height="14" />Clone source<kbd>C</kbd>
+    <Button variant="secondary" disabled title="桌面版即将推出" aria-label="下载，桌面版即将推出">
+      下载
     </Button>
   </div>;
 }
 
 export function LandingHero() {
   return <>
-    <div className="landing-announcement"><span>Introducing:</span> <a href="https://zed.dev/delta">Delta, a multiplayer environment for coding with agents <span>→</span></a><BlueprintDivider flush fullBleed /></div>
+    <div className="landing-announcement"><span>认识 Folune：</span> <a href="#workflow">让记录自然发生，让想法有序生长 <span>→</span></a><BlueprintDivider flush fullBleed /></div>
     <section className="landing-hero" aria-labelledby="landing-title">
       <div className="landing-hero-pattern" aria-hidden="true" />
-      <div className="landing-hero-copy"><h1 id="landing-title">Your last next editor</h1><p>Folune is a minimal code editor crafted for speed and collaboration with humans and AI.</p></div>
-      <div><LandingActions /><p className="landing-action-note">Available for macOS, Linux, and Windows</p></div>
+      <div className="landing-hero-copy"><h1 id="landing-title">随手记下，自然有序。</h1><p>在 Folune，专注记录当下的想法。<br />让 AI 帮你整理、连接，再次发现。</p></div>
+      <div><LandingActions /><p className="landing-action-note">登录即可使用网页版 · 桌面版即将推出</p></div>
     </section>
     <BlueprintDivider flush fullBleed />
     <div className="landing-value-strip">
-      <div><h2>Fast</h2><p>Written from scratch in Rust to efficiently leverage multiple CPU cores and your GPU.</p></div>
-      <div><h2>Agentic</h2><p>Run agents in parallel to smoothly edit files, navigate code, and run tools at native speed.</p></div>
-      <div><h2>Collaborative</h2><p>Chat with teammates, code together, and share your screen and project.</p></div>
+      <div><h2>专注记录</h2><p>像在纸上写字一样自然，让灵感先落下来，不必急着分类。</p></div>
+      <div><h2>智能整理</h2><p>与 AI 一起梳理内容，让零散记录逐渐沉淀为有序的知识。</p></div>
+      <div><h2>连接想法</h2><p>在笔记与画布之间自由切换，看见内容之间的新联系。</p></div>
     </div>
     <BlueprintDivider flush fullBleed />
-    <section className="landing-editor-section" aria-label="Folune editor preview"><LandingEditor /></section>
+    <section className="landing-editor-section" aria-label="参考编辑器演示"><LandingEditor /></section>
     <BlueprintDivider fullBleed />
   </>;
 }

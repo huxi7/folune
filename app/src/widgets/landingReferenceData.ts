@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Figma 19:2 各 Section 的原始导出素材与静态文案
- * [OUTPUT]: 对外提供第一阶段视觉基线的素材索引、代码行与扩展卡片数据
+ * [OUTPUT]: 对外提供参考基线的素材索引、英文代码行与中文扩展说明
  * [POS]: widgets 的参考内容数据；只用于对照基线，第二阶段以真实产品内容替换
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -160,97 +160,97 @@ export const referenceExtensions = [
   [
     "HTML",
     "6.4M",
-    "HTML support.",
+    "HTML 语言支持。",
     "Isaac Clayton"
   ],
   [
     "Git Firefly",
     "1.7M",
-    "Provides Git Syntax Highlighting",
+    "提供 Git 语法高亮。",
     "d1y, Peter Tripp"
   ],
   [
     "TOML",
     "1.3M",
-    "TOML support.",
+    "TOML 语言支持。",
     "Max Brunsfeld, Ammar Arif"
   ],
   [
     "Java",
     "1.2M",
-    "Java support.",
+    "Java 语言支持。",
     "Java Extension Contributors"
   ],
   [
     "Dockerfile",
     "1.1M",
-    "Dockerfile and Docker Compose support.",
+    "Dockerfile 与 Docker Compose 支持。",
     "d1y, joshmeads"
   ],
   [
     "Catppuccin",
     "992k",
-    "🦀 Soothing pastel theme for Folune",
+    "柔和的浅彩色主题。",
     "Catppuccin"
   ],
   [
     "SQL",
     "805k",
-    "SQL language support.",
+    "SQL 语言支持。",
     "nervenes, notpeter, phileix, tammyxiong"
   ],
   [
     "PHP",
     "771k",
-    "PHP support.",
+    "PHP 语言支持。",
     "Piotr Osiewicz"
   ],
   [
     "Vue",
     "660k",
-    "Vue support.",
+    "Vue 语言支持。",
     "Folune"
   ],
   [
     "Ruby",
     "546k",
-    "Ruby support.",
+    "Ruby 语言支持。",
     "Vitaly Slobodin"
   ],
   [
     "Catppuccin Icons",
     "495k",
-    "🦊 Soothing pastel icons for Folune",
+    "柔和的浅彩色图标。",
     "Catppuccin"
   ],
   [
     "macOS Classic Theme",
     "481k",
-    "A macOS native style theme, let it same like native app in macOS.",
+    "贴近 macOS 原生应用的主题风格。",
     "Jason Lee"
   ],
   [
     "SCSS & SASS",
     "457k",
-    "SCSS and SASS support",
+    "SCSS 与 SASS 支持。",
     "Raunak Raj"
   ],
   [
     "C#",
     "444k",
-    "C# support.",
+    "C# 语言支持。",
     "fminkowski, Fabian Freimueller"
   ],
   [
     "Material Icon Theme",
     "421k",
-    "Material Design icons.",
+    "Material Design 图标。",
     "Folune"
   ],
   [
     "Make",
     "413k",
-    "Makefile syntax highlighting",
+    "Makefile 语法高亮。",
     "Caius Durling, d1y, Marshall Bowers, Luke Naylor, Igor Támara, Michael Alexander, Donnie Adams"
   ],
   [
@@ -262,19 +262,19 @@ export const referenceExtensions = [
   [
     "XML",
     "412k",
-    "XML syntax support.",
+    "XML 语法支持。",
     "sweetppro"
   ],
   [
     "Lua",
     "371k",
-    "Lua support.",
+    "Lua 语言支持。",
     "Max Brunsfeld"
   ],
   [
     "Terraform",
     "340k",
-    "Terraform support.",
+    "Terraform 语言支持。",
     "Caius Durling, Daniel Banck"
   ]
 ];
