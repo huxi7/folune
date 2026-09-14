@@ -14,7 +14,7 @@ BlueprintFrame.tsx: Landing 纵向导轨容器；导航、1120px 正文与页脚
 BlueprintDivider.tsx: Landing 横向导轨；14px 分隔带上下两条边分别共置横线与菱形，flush 提供零高度边界，compact 保留 7px 内部分隔带而不添加参考中没有的节点
 AuthDialog.tsx: 登录/注册状态切换的统一认证 Dialog，复用共享内凹 Input/PasswordInput 承载邮箱、双密码与显隐控制，并提供协议提示、六格 OTP 自动校验与 Google OAuth 入口
 LandingHero.tsx: 渐变公告、居中 Hero、三列价值条与大幅编辑器插槽；公告底边及能力条/编辑器交界复用通栏 BlueprintDivider
-LandingSections.tsx: 基于语义 Grid/Flex 重建参考文案、字体层级与文章 Newest 标签；分隔带共用 BlueprintDivider，扩展下载/作者符号使用原始素材
+LandingSections.tsx: 基于语义 Grid/Flex 重建参考文案、字体层级、信纸内外层及段间分隔线与文章 Newest 标签；分隔带共用 BlueprintDivider，扩展下载/作者符号使用原始素材
 LandingFooter.tsx: 全宽 Footer，六列网格中品牌占两列、导航各占一列；分离衬线标题/正文链接/快捷符号并保留字标原始比例，BlueprintFrame 延续主轨/外轨
 LandingMotion/: Landing 克制反馈模块，只提供 CountUp 与一次性 reveal；磁吸、指针聚光与装饰点阵已移除，当前页面只保留有信息价值的计数与 3–4px 入场反馈
 NotebookPreview.tsx: 确定性首屏产品预览，DS 统一缩放淡入与显式卡片 lift 分处不同元素，阴影由 CSS 持有，内部布局不参与独立动画

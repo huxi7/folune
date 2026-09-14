@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖共享 Button/Blueprint DOM、页面私有参考字体与 Figma 原始素材
- * [OUTPUT]: 对外提供参考稿的标题/正文/注释字体层级、共轴导轨和响应式版面；仅 Landing 禁止纵向越界回弹，页尾止于 Footer
+ * [OUTPUT]: 对外提供参考稿的标题/正文/注释字体层级、共轴导轨、分层信纸和响应式版面；仅 Landing 禁止纵向越界回弹，页尾止于 Footer
  * [POS]: styles 的 Landing 局部样式；参考值只存在页面作用域，不改写全局 DS
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -109,7 +109,24 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
 .landing-small-features article:not(:last-child)::after,.landing-detail-grid article:not(:nth-child(4n))::after { border-right:1px solid var(--landing-border); }
 .landing-detail-grid article:nth-child(-n + 4)::after { border-bottom:1px solid var(--landing-border); }
 .landing-split-media { box-shadow:inset 1px 0 var(--landing-border); }
-.landing-letter-section { padding:48px; }.landing-letter { position:relative; padding:32px; background:white; border:16px solid #f9fafb; outline:1px solid #d0deec; box-shadow:0 0 0 4px #e8edf2; min-height:489px; }.landing-letter>small { font:11px/16.5px Landing Mono,monospace; color:var(--landing-ink); letter-spacing:.55px; }.landing-letter h2 { font-size:25.6px; line-height:32px; }.landing-letter-body { max-width:512px; font-size:16px; line-height:24px; letter-spacing:-.4px; }.landing-letter-body p+p { margin-top:32px; }.landing-letter-seal { position:absolute; right:32px; top:24px; }.landing-signature { margin-top:20px; }.landing-signature>div { display:flex; }.landing-signature img { margin-right:-4px; border-radius:50%; }.landing-signature span { display:block; font:14px/20px var(--landing-heading); color:#000; }.landing-signature small { color:var(--landing-ink); font:10px/15px Menlo,monospace; }
+/* 信纸：完整错位纸层承载外影，内纸独立承载水印与内容，避免边角拼缝。 */
+.landing-letter-section { padding:48px; }
+.landing-letter { position:relative; isolation:isolate; padding:16px; border:1px solid #c9cdd3; border-radius:4px; box-shadow:-6px -6px 0 rgb(99 102 241 / 7%),6px 6px 0 rgb(99 102 241 / 7%); background:repeating-linear-gradient(135deg,#f4f4f2 0 3px,#e8e9e8 3px 4px); }
+.landing-letter-paper { position:relative; isolation:isolate; padding:24px; border:1px solid #c9cdd3; border-radius:2px; background:#fff; }
+.landing-letter-paper::before { content:""; position:absolute; inset:0; z-index:-1; pointer-events:none; background:url('/landing-reference/19-4121-imgLogoBlueNoGradientPadded064I3Nucm1OqoSvg.svg') 0 0/32px 32px repeat; opacity:.055; mask-image:linear-gradient(#000,transparent); }
+.landing-letter-paper>small { display:block; font:11px/16.5px Landing Mono,monospace; color:var(--landing-ink); letter-spacing:.55px; }
+.landing-letter h2 { margin-top:4px; font-size:25.6px; line-height:32px; }
+.landing-letter-body { max-width:512px; margin-top:12px; font-size:16px; line-height:24px; letter-spacing:-.4px; }
+.landing-letter-body p:first-child { max-width:480px; }
+.landing-letter-body hr { width:160px; max-width:100%; margin:24px 0; border:0; border-top:1px solid #e1e3e7; }
+.landing-letter-seal { position:absolute; right:24px; top:24px; width:104px; height:104px; opacity:.16; transform:rotate(165deg); }
+.landing-letter-seal img { width:100%; height:100%; }
+.landing-signature { margin-top:40px; }
+.landing-signature>div { display:flex; gap:0; }
+.landing-signature img { border-radius:50%; }
+.landing-signature span { display:block; margin-top:8px; font:14px/20px var(--landing-heading); color:#000; }
+.landing-signature small { display:block; margin-top:2px; color:#71717a; font:10px/15px Menlo,monospace; }
+
 .landing-blog-grid { padding:48px; display:grid; grid-template-columns:repeat(3,1fr); gap:24px; }.landing-blog-grid article { border:1px solid var(--landing-border); min-width:0; padding:12px; }.landing-blog-grid img { width:100%; aspect-ratio:16/9; object-fit:cover; margin-bottom:16px; }.landing-blog-grid h3 { font-family:var(--landing-heading); font-size:15px; line-height:22.5px; }.landing-blog-grid p { font-size:14px; line-height:24px; margin-top:4px; }.landing-blog-grid footer { display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-top:12px; font:10px/20px Landing Mono,monospace; color:var(--landing-ink); }.landing-blog-grid time { color:#5c636f; }
 .landing-blog-meta { display:flex; align-items:center; gap:8px; }
 .landing-blog-newest { display:inline-flex; align-items:center; height:19px; padding-inline:4px; border:1px solid #8ec5ff; border-radius:2px; background:rgb(190 219 255 / 10%); color:#193cb8; font:10px/24px Menlo,monospace; }
@@ -181,7 +198,7 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
   .landing-detail-grid article:nth-child(odd)::after { border-right:1px solid var(--landing-border); }
   .landing-detail-grid article:nth-last-child(-n + 2)::after { border-bottom:0; }
   .landing-split-media { box-shadow:inset 0 1px var(--landing-border); }
-  .landing-letter-section { padding:24px 16px; }.landing-letter { padding:24px 12px; border-width:8px; }.landing-letter-seal { display:none; }.landing-letter-body { font-size:13px; }.landing-letter small { overflow-wrap:anywhere; }
+  .landing-letter-section { padding:24px 16px; }.landing-letter { padding:8px; }.landing-letter-paper { padding:24px 12px; }.landing-letter-seal { display:none; }.landing-letter-body { font-size:13px; }.landing-letter small { overflow-wrap:anywhere; }
   .landing-blog-grid { grid-template-columns:1fr; padding:24px; }.landing-footer-wordmark { height:150px; }
 }
 @media(max-width:1023px) {

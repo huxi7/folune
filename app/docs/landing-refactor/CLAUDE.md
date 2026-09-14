@@ -12,4 +12,7 @@ rails-footer.png: 导轨精修后的桌面页底，记录页脚外轨/列线与�
 typography-footer.png: 字体精修后的 1672×700 页底，记录衬线标题、14px 链接、原始字标比例与斜线底纹
 typography-sections.png: 字体精修后的功能区截图，记录标题/正文层级和与参考一致的段落换行
 
+letter-desktop.png: 团队信纸精修的桌面截图，记录错位纸影、斜线框、渐隐水印与五行/三行正文
+letter-mobile.png: 团队信纸窄屏适配截图，记录正文、署名和纸边无横向溢出
+
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
