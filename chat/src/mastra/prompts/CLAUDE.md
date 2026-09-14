@@ -12,4 +12,6 @@ explore.ts: 关联判断指令与不可信候选序列化器；把候选标题/�
 explore.test.ts: 锁定单篇粒度、果断判断、0..1 confidence、逐字摘录、不相关最小响应及请求不出现候选 node_id
 CLAUDE.md: 记录提示词资产的成员、职责边界与 GEB 回环协议
 
+品牌展示: 提示词的产品自称统一为 Folune；Agent ID、name 配置、工具、协议与行为规则保持原样。
+
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md

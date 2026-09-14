@@ -155,6 +155,7 @@ Lilex_Regular.woff2: 参考字体原始文件
 grain.png: Figma 原始图像/矢量素材，由 landingReferenceData.ts 映射到语义内容
 hero-imgFrame.svg: Figma 原始图像/矢量素材，由 landingReferenceData.ts 映射到语义内容
 hero-imgFrame1.svg: Figma 原始图像/矢量素材，由 landingReferenceData.ts 映射到语义内容
+hero-geometry.svg: 从 hero-imgFrame2.svg 移除中央旧品牌路径，保留原有几何线稿与透明度，供品牌替换后的 Hero 使用
 hero-imgFrame2.svg: Figma 原始图像/矢量素材，由 landingReferenceData.ts 映射到语义内容
 hero-imgFrame3.svg: Figma 原始图像/矢量素材，由 landingReferenceData.ts 映射到语义内容
 hero-imgFrame4.svg: Figma 原始图像/矢量素材，由 landingReferenceData.ts 映射到语义内容

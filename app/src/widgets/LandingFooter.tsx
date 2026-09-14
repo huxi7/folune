@@ -1,10 +1,9 @@
 /**
- * [INPUT]: 依赖 BlueprintFrame/Divider、Figma 页脚原始字标与局部 Footer 样式
- * [OUTPUT]: 对外提供六列网格中的品牌区/四组导航、分层字体与原始比例字标；导轨继续共用正文坐标
+ * [INPUT]: 依赖 BlueprintFrame/Divider、局部 Folune 描边字标与局部 Footer 样式
+ * [OUTPUT]: 对外提供六列网格中的品牌区/四组导航、分层字体与居中 Folune 描边字标；导轨继续共用正文坐标
  * [POS]: widgets 的营销页收尾；链接保持原稿内容，第二阶段按产品真实入口重写
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
-import { referenceAssets as assets } from "./landingReferenceData";
 import { BlueprintDivider } from "./BlueprintDivider";
 import { BlueprintFrame } from "./BlueprintFrame";
 const columns = {
@@ -21,7 +20,7 @@ export function LandingFooter() {
       <BlueprintFrame className="landing-footer-inner" fullBleed>
         <div className="landing-footer-columns">
           <div className="landing-footer-brand">
-            <p className="landing-footer-title">Zed Industries © 2026</p>
+            <p className="landing-footer-title">Folune © 2026</p>
             <hr aria-hidden="true" className="landing-footer-brand-rule" />
             <div>
               <a href="https://zed.dev/sign_up">Sign Up</a> · Have an account?{" "}
@@ -47,7 +46,7 @@ export function LandingFooter() {
           ))}
         </div>
         <div className="landing-footer-wordmark">
-          <img src={assets["19-4390/imgFrame"]} alt="Zed" width="824" height="258" loading="lazy" />
+          <svg viewBox="0 0 824 258" role="img" aria-label="Folune"><text x="412" y="218" textAnchor="middle">Folune</text></svg>
         </div>
       </BlueprintFrame>
     </footer>

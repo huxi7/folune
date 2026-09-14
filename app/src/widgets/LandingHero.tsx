@@ -25,7 +25,7 @@ export function LandingHero() {
     <div className="landing-announcement"><span>Introducing:</span> <a href="https://zed.dev/delta">Delta, a multiplayer environment for coding with agents <span>→</span></a><BlueprintDivider flush fullBleed /></div>
     <section className="landing-hero" aria-labelledby="landing-title">
       <div className="landing-hero-pattern" aria-hidden="true" />
-      <div className="landing-hero-copy"><h1 id="landing-title">Your last next editor</h1><p>Zed is a minimal code editor crafted for speed and collaboration with humans and AI.</p></div>
+      <div className="landing-hero-copy"><h1 id="landing-title">Your last next editor</h1><p>Folune is a minimal code editor crafted for speed and collaboration with humans and AI.</p></div>
       <div><LandingActions /><p className="landing-action-note">Available for macOS, Linux, and Windows</p></div>
     </section>
     <BlueprintDivider flush fullBleed />
@@ -35,7 +35,7 @@ export function LandingHero() {
       <div><h2>Collaborative</h2><p>Chat with teammates, code together, and share your screen and project.</p></div>
     </div>
     <BlueprintDivider flush fullBleed />
-    <section className="landing-editor-section" aria-label="Zed editor preview"><LandingEditor /></section>
+    <section className="landing-editor-section" aria-label="Folune editor preview"><LandingEditor /></section>
     <BlueprintDivider fullBleed />
   </>;
 }

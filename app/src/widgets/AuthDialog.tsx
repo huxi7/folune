@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 React 的登录/注册/密码显隐/验证码局部状态与输入框引用，依赖本地 design-system 的 Button、Dialog、Input、PasswordInput，依赖 shared/supabase 认证服务
+ * [INPUT]: 依赖 React 的登录/注册/密码显隐/验证码局部状态与输入框引用，依赖本地 design-system 的 BrandMark、Button、Dialog、Input、PasswordInput，依赖 shared/supabase 认证服务
  * [OUTPUT]: 对外提供可切换登录与双密码注册、密码显隐、协议提示、六格邮箱验证码与 Google OAuth 的统一 Dialog
  * [POS]: app/src/widgets 的统一认证组件，被 MarketingHeader 消费；不直接持有 Supabase client
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -26,6 +26,7 @@ import {
   verifyEmailOtp,
 } from "../shared/supabase/auth";
 import {
+  BrandMark,
   Button,
   Dialog,
   Input,
@@ -269,10 +270,11 @@ export function AuthDialog({
         isVerificationStep
           ? "验证邮箱"
           : isRegisterMode
-            ? "注册 SuperNote"
-            : "登录 SuperNote"
+            ? "注册 Folune"
+            : "登录 Folune"
       }
     >
+      <BrandMark className="justify-center" iconOnly />
       {isVerificationStep ? (
         <div className="mt-5 space-y-4">
           <div className="grid grid-cols-6 gap-2" role="group" aria-label="六位邮箱验证码">
@@ -303,7 +305,7 @@ export function AuthDialog({
             ) : noticeMessage ? (
               <p className="text-muted-foreground">{noticeMessage}</p>
             ) : (
-              <p className="text-muted-foreground">输满 6 位后将自动验证并进入 SuperNote。</p>
+              <p className="text-muted-foreground">输满 6 位后将自动验证并进入 Folune。</p>
             )}
           </div>
 
@@ -421,7 +423,7 @@ export function AuthDialog({
           </p>
 
           <p className="auth-terms-copy">
-            继续即表示您同意 SuperNote 的
+            继续即表示您同意 Folune 的
             <button type="button">服务条款</button>
             和
             <button type="button">隐私政策</button>

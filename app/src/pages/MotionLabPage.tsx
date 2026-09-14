@@ -8,7 +8,7 @@ import { Link } from "react-router-dom";
 import { MotionSpecimen } from "../widgets/DesignSystemWorkspace/MotionSpecimen";
 export function MotionLabPage() {
   return <main className="motion-lab">
-    <header><p>SuperNote · Design System</p><h1>Motion</h1><p>连续、克制、可反复操作。</p>
+    <header><p>Folune · Design System</p><h1>Motion</h1><p>连续、克制、可反复操作。</p>
       <nav><Link to="/" viewTransition>Landing</Link><Link to="/archive-cord-lab" viewTransition>文件树与归档线</Link></nav>
     </header>
     <MotionSpecimen />

@@ -52,7 +52,7 @@ export function NotebookPreview() {
         </div>
         <div className="notebook-window-title">
           <SparkleIcon aria-hidden="true" size={14} />
-          SuperNote / 价格页
+          Folune / 价格页
         </div>
       </header>
 

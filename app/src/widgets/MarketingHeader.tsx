@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖共享 Button、BlueprintFrame/Divider、Figma 原始品牌素材与既有 query 驱动认证弹窗
+ * [INPUT]: 依赖共享 Button、BlueprintFrame/Divider、BrandMark 与 Figma 原始功能符号与既有 query 驱动认证弹窗
  * [OUTPUT]: 对外提供原始导航文字/图标/快捷键、56px 导航及底边交点、公开锚点与按需加载的 AuthDialog
  * [POS]: widgets 的首页导航；认证成功仍经现有路由进入工作区，不改变登录协议
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -8,7 +8,7 @@ import { AnimatePresence } from "motion/react";
 import { lazy, Suspense } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
-import { Button } from "../shared/design-system/components";
+import { BrandMark, Button } from "../shared/design-system/components";
 
 import { referenceAssets as assets } from "./landingReferenceData";
 import { BlueprintDivider } from "./BlueprintDivider";
@@ -61,7 +61,7 @@ export function MarketingHeader() {
             className="rounded-lg focus-visible:outline-2 focus-visible:outline-ring"
             to="/"
           >
-            <img className="reference-brand" src={assets["19-4560/imgFrame"]} alt="Zed" width="67" height="24" />
+            <BrandMark className="marketing-brand" />
           </Link>
           <nav aria-label="主导航" className="hidden items-center gap-1 md:flex">
             {navItems.map((item) => (

@@ -15,4 +15,11 @@ typography-sections.png: 字体精修后的功能区截图，记录标题/正文
 letter-desktop.png: 团队信纸精修的桌面截图，记录错位纸影、斜线框、渐隐水印与五行/三行正文
 letter-mobile.png: 团队信纸窄屏适配截图，记录正文、署名和纸边无横向溢出
 
+brand-sidebar-light.png: Folune 母图在生产 AppSidebar 浅色验收页的显示
+brand-sidebar-dark.png: Folune 母图在同一生产侧栏深色主题的显示
+brand-sidebar-mobile.png: Folune 母图在 390px 生产侧栏验收页的显示
+brand-landing-mobile.png: Folune 导航及母图在 390px 首页的显示
+brand-footer.png: Folune 纯描边字标的桌面页脚，保持原六列及展示窗
+brand-footer-mobile.png: Folune 描边字在手机页脚中的等比缩放
+
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md

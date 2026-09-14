@@ -102,3 +102,18 @@ Footer 恢复六列网格，品牌占两列，四组导航各占一列。字标�
 正文保持 16px/24px，第一段文本框为 480px，第二段为 512px；读取实际字符矩形，确认五行/三行的每行内容与用户截图一致，无硬编码换行。1672px 视口下外纸为 1024×490.5px。390px、1024px 视口的文档宽度均等于视口，无横向溢出；手机继续采用原有隐藏印章的适配。
 
 证据：letter-desktop.png、letter-mobile.png。Ego 页面可读取但截图超时，视觉核验使用内置浏览器。TypeScript、oxlint 与 git diff --check 通过。照片栅格化和纹理透明度以截图目测校准，未声称逐像素无差异；基线仍未冻结。
+
+
+## 2026-09-14 · Folune 展示品牌与统一母图
+
+在冻结基线后的替换分支接入用户提供的 1254×1254 RGBA 母图，public/brand/supernote.png 与输入文件逐字节相同，SHA-256 为 fcc2e1c4b7e9dc6cbdf349e6977548a834007ca804871e7bcad279c3e2d723d8。32px、192px Favicon 的 RGBA 像素与完整母图直接 LANCZOS 缩放一致。保留透明留白、原比例、色调、纹理及原阴影，不裁图、着色、加底或额外阴影。
+
+BrandMark 是母图的唯一运行时入口，工作台侧栏、登录弹窗、导航、信纸、CTA、参考编辑器品牌位置及组件预览共用。尺寸通过 --brand-size 等比调整。信纸按用户确认移除旧水印，单枚图形仍留在印章位置；Hero 仅移除旧品牌路径，其余线稿保持原样。页脚遵循用户后续指示，以 Folune 原生 SVG 文字描边替换旧字标及配套图标，保留六列布局、243px/150px 展示窗和线稿背景，不放 PNG，也不从母图提取线稿。
+
+应用展示名称、品牌 alt、加载/认证/订阅提示、浏览器标题、application-name、Open Graph/Twitter 标题与描述统一为 Folune；模型提示词的产品自称同步。未发现 Web Manifest，docs/design-system/v1-baseline/manifest.md 是历史验收索引，未作为 PWA 配置改写。包名、路径、资源文件名、CSS/TS 标识、存储键、Agent 配置名、API、域名、部署配置均保持。历史参考素材、第三方标识和图片内的参考编辑器内容保留，未对整张参考图作品牌修图。
+
+本轮只替换展示名称；参考功能介绍、团队/引文及外链仍是待后续逐项替换的基线占位，并非 Folune 已验证能力或真实客户背书。
+
+验证：桌面 1440px 与手机 390px 的首页/页脚、登录弹窗及生产 AppSidebar 验收页；母图为同一路径、无 filter、opacity 1、无额外背景/box-shadow，等比显示且无横向溢出。Landing 沿用固定浅色，AppSidebar 使用项目现有 /archive-cord-lab 切换真实 ThemeProvider 的浅/深色。两种浏览器访问 /app 均回到登录入口，因此本轮工作台视觉证据来自生产组件验收页，不冒充登录态业务页面。没有触发登录提交或模型调用。类型检查、lint、12 个现有提示词测试、git diff --check 通过。
+
+证据：brand-landing-mobile.png、brand-footer.png、brand-footer-mobile.png、brand-sidebar-light.png、brand-sidebar-dark.png、brand-sidebar-mobile.png。原冻结标记 landing-zed-baseline 不变。

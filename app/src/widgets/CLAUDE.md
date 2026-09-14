@@ -2,20 +2,20 @@
 > L2 | 父级: ../../CLAUDE.md
 
 成员清单
-LandingEditor.tsx: 主编辑器插槽，第一阶段以语义三栏和原始文本分段呈现参考画面，第二阶段接入共享 APP 组件
+LandingEditor.tsx: 主编辑器插槽，品牌图形共用 BrandMark、展示名为 Folune，仍以语义三栏和原始文本分段呈现参考画面，第二阶段接入共享 APP 组件
 landingReferenceData.ts: 第一阶段 Figma 素材路径、可见代码分段与卡片文本索引，不读取远程数据
 useTreeReorder.ts: AppSidebar 结构重排 FLIP Hook，手势前捕获位置、完成/取消归还租约；ResizeObserver 只刷新快照，文件夹展开不会再触发行位移动画
 TreeDisclosure.tsx: 文件树与 DS Collapse 的薄适配，声明可打断、成对释放的归档运动租约，让 Overlay 跟随真实高度几何；不读取业务数据
 .gitkeep: 保留业务组合组件层空目录
 CLAUDE.md: 记录业务组合组件层职责与文档协议
-MarketingHeader.tsx: 56px 营销导航，使用参考原始导航文字、箭头/Delta 标记与快捷键素材；复用 BlueprintFrame/Divider 和既有 query 驱动认证弹窗
+MarketingHeader.tsx: 56px 营销导航，使用共享 BrandMark、参考导航文字、箭头/Delta 标记与快捷键素材；复用 BlueprintFrame/Divider 和既有 query 驱动认证弹窗
 MarketingAnnouncement.tsx: 紧贴粘性导航下方、约为 Header 2/3 高且随页面滚走的无关闭公告栏，在背景全宽、1088px 主轨与正文对齐且宽屏带视口外轨的 BlueprintFrame 中居中呈现标签、正文与 2px 箭头反馈；hover 不填充蓝色背景
 BlueprintFrame.tsx: Landing 纵向导轨容器；导航、1120px 正文与页脚共用主轨/外轨坐标，fullBleed 增加可选外轨，颜色由当前区块局部覆盖
 BlueprintDivider.tsx: Landing 横向导轨；14px 分隔带上下两条边分别共置横线与菱形，flush 提供零高度边界，compact 保留 7px 内部分隔带而不添加参考中没有的节点
-AuthDialog.tsx: 登录/注册状态切换的统一认证 Dialog，复用共享内凹 Input/PasswordInput 承载邮箱、双密码与显隐控制，并提供协议提示、六格 OTP 自动校验与 Google OAuth 入口
+AuthDialog.tsx: 复用 BrandMark 原图的登录/注册统一认证 Dialog，复用共享内凹 Input/PasswordInput 承载邮箱、双密码与显隐控制，并提供协议提示、六格 OTP 自动校验与 Google OAuth 入口
 LandingHero.tsx: 渐变公告、居中 Hero、三列价值条与大幅编辑器插槽；公告底边及能力条/编辑器交界复用通栏 BlueprintDivider
-LandingSections.tsx: 基于语义 Grid/Flex 重建参考文案、字体层级、信纸内外层及段间分隔线与文章 Newest 标签；分隔带共用 BlueprintDivider，扩展下载/作者符号使用原始素材
-LandingFooter.tsx: 全宽 Footer，六列网格中品牌占两列、导航各占一列；分离衬线标题/正文链接/快捷符号并保留字标原始比例，BlueprintFrame 延续主轨/外轨
+LandingSections.tsx: 基于语义 Grid/Flex 重建参考文案、字体层级、信纸内外层及段间分隔线与文章 Newest 标签；信纸与 CTA 品牌图形共用 BrandMark；分隔带共用 BlueprintDivider，扩展下载/作者符号使用原始素材
+LandingFooter.tsx: 全宽 Footer，六列网格中品牌占两列、导航各占一列；分离衬线标题/正文链接/快捷符号并在原字标区显示 Folune 描边字，页脚不放 PNG，BlueprintFrame 延续主轨/外轨
 LandingMotion/: Landing 克制反馈模块，只提供 CountUp 与一次性 reveal；磁吸、指针聚光与装饰点阵已移除，当前页面只保留有信息价值的计数与 3–4px 入场反馈
 NotebookPreview.tsx: 确定性首屏产品预览，DS 统一缩放淡入与显式卡片 lift 分处不同元素，阴影由 CSS 持有，内部布局不参与独立动画
 AppSidebar.tsx: 右键菜单通过 Portal 锚定视口，避免 Panel transform 改写 fixed 坐标；文件库内容与展开偏好的唯一所有者，负责创建/搜索、树/重命名/拖放意图、底部导航和唯一有效归档代表；重排交给 useTreeReorder，结构键按不可变树引用复用以跳过标题/摘要更新时的整树 FLIP 判据，子级尺寸交给 TreeDisclosure，业务事务仍由 Dashboard 持有

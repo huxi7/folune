@@ -150,7 +150,7 @@ export const apiRequest = async <T>(
     throw new ApiError(
       0,
       "NETWORK_ERROR",
-      "无法连接 SuperNote API，请检查后端服务。",
+      "无法连接 Folune API，请检查后端服务。",
     );
   }
 

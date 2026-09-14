@@ -127,7 +127,7 @@ function TypographyPreview() {
       <section aria-label="字体家族" className="ds-type-family-grid">
         <article className="ds-type-family" data-family="interface">
           <div><strong>Interface / 界面</strong><code>--font-sans</code></div>
-          <p>SuperNote 文件库</p>
+          <p>Folune 文件库</p>
           <small>Avenir Next × PingFang SC · Noto Sans SC fallback</small>
         </article>
         <article className="ds-type-family" data-family="editorial">

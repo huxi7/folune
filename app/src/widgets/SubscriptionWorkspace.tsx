@@ -43,7 +43,7 @@ export function SubscriptionWorkspace() {
         <header className="subscription-header motion-safe:animate-blueprint-rise motion-reduce:animate-none">
           <div className="subscription-kicker">
             <SparkleIcon aria-hidden="true" size={14} />
-            Upgrade SuperNote
+            Upgrade Folune
           </div>
           <h1>为你的记录速度，选一个刚好的方案。</h1>
           <p>

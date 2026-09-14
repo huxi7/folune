@@ -77,7 +77,7 @@ export function AuthCallbackPage() {
               正在建立安全会话
             </h1>
             <p className="mt-3 text-sm leading-6 text-muted-foreground">
-              Google 授权已返回，正在进入 SuperNote。
+              Google 授权已返回，正在进入 Folune。
             </p>
           </>
         )}

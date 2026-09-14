@@ -1,14 +1,15 @@
-# SuperNote Brand Spec
+# Folune Brand Spec
 
-> SuperNote identity record. Soft Ink was selected as the production Primary on 2026-08-15 after the `/color-lab` blue-primary final round.
+> Folune identity record. Soft Ink was selected as the production Primary on 2026-08-15 after the `/color-lab` blue-primary final round.
 
 ## Product identity
 
-SuperNote is a quiet editorial instrument that lets users write first and allows AI-assisted structure to appear after the thought is safe. The stable visual world is warm Canvas, one clear Paper, near-ink text and a single restrained action color.
+Folune is a quiet editorial instrument that lets users write first and allows AI-assisted structure to appear after the thought is safe. The stable visual world is warm Canvas, one clear Paper, near-ink text and a single restrained action color.
 
 ## Protected assets
 
-- Brand asset: `src/shared/design-system/components/BrandMark.tsx`
+- Display name: `Folune`. Internal repository/package identifiers, storage keys, API names and domains remain unchanged. Footer is the sole wordmark exception: native outlined Folune text, no PNG or companion icon.
+- Brand asset: `src/shared/design-system/components/BrandMark.tsx`, the single runtime entry for `public/brand/supernote.png` (1254×1254 RGBA, original user-supplied bytes). Preserve the complete transparent canvas, proportions, texture, colors and embedded shadow. Light and dark use the same image; only proportional CSS sizing is allowed, without cropping, tint, filters, added backgrounds or shadows. Favicons are direct 32px/192px resizes. The image is an explicit exception to flat UI material rules.
 - Product evidence: re-captured from the running app when a judgement needs it; no screenshot set is kept, and the DEV `/design-system` route is the one place the whole system is on screen at once
 - Typography: Avenir Next for interface, Iowan Old Style/Palatino/Noto Serif SC/Songti SC for editorial Paper, SF Mono family for system labels
 - Spatial system: 4px baseline; 32px compact navigation / 36px standard command and form / 48px header ladder

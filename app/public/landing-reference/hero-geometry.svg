@@ -1,0 +1,20 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="1008" height="1008" viewBox="0 0 1008 1008" fill="none" xmlns="http://www.w3.org/2000/svg">
+<!-- [INPUT]: 原始 Hero 几何线稿，移除中央旧品牌路径
+[OUTPUT]: 不含品牌图标的背景几何
+[POS]: Landing Hero 装饰素材，不改变品牌母图
+[PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md -->
+<g id="Frame" opacity="0.03">
+<path id="Vector_2" d="M380.011 445.364L445.356 624.903L624.894 559.559L559.551 380.022L380.011 445.364Z" stroke="#1348DC" stroke-width="4.09756" stroke-miterlimit="10"/>
+<path id="Vector_3" d="M373.777 412.346L412.358 631.139L631.147 592.557L592.569 373.767L373.777 412.346Z" stroke="#1348DC" stroke-width="4.09756" stroke-miterlimit="10"/>
+<path id="Vector_4" d="M373.296 373.296V631.631H631.631V373.296H373.296Z" stroke="#1348DC" stroke-width="4.09756" stroke-miterlimit="10"/>
+<path id="Vector_5" d="M380.624 328.461L328.461 624.28L624.28 676.446L676.442 380.624L380.624 328.461Z" stroke="#1348DC" stroke-width="4.09756" stroke-miterlimit="10"/>
+<path id="Vector_6" d="M398.082 278.617L278.617 606.845L606.845 726.309L726.309 398.082L398.082 278.617Z" stroke="#1348DC" stroke-width="4.09756" stroke-miterlimit="10"/>
+<path id="Vector_7" d="M428.13 225.059L225.059 576.797L576.797 779.864L779.864 428.13L428.13 225.059Z" stroke="#1348DC" stroke-width="4.09756" stroke-miterlimit="10"/>
+<path id="Vector_8" d="M473.354 169.784L169.794 531.56L531.573 835.12L835.132 473.346L473.354 169.784Z" stroke="#1348DC" stroke-width="4.09756" stroke-miterlimit="10"/>
+<path id="Vector_9" d="M536.297 115.634L115.634 468.618L468.618 889.281L889.281 536.301L536.297 115.634Z" stroke="#1348DC" stroke-width="4.09756" stroke-miterlimit="10"/>
+<path id="Vector_10" d="M619.322 66.333L66.3318 385.594L385.603 938.583L938.591 619.314L619.322 66.333Z" stroke="#1348DC" stroke-width="4.09756" stroke-miterlimit="10"/>
+<path id="Vector_11" d="M724.338 26.6277L26.6277 280.575L280.575 978.289L978.289 724.338L724.338 26.6277Z" stroke="#1348DC" stroke-width="4.09756" stroke-miterlimit="10"/>
+<path id="Vector_12" d="M852.621 2.37343L2.37343 152.296L152.296 1002.53L1002.53 852.608L852.621 2.37343Z" stroke="#1348DC" stroke-width="4.09756" stroke-miterlimit="10"/>
+<path id="Vector_13" d="M1002.36 2.555V1002.36H2.55494V2.555H1002.36Z" stroke="#1348DC" stroke-width="4.09756"/>
+</g>
+</svg>

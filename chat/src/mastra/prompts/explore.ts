@@ -8,7 +8,7 @@
 import type { ExploreJudgeCandidate } from "@/lib/explore-contracts";
 
 export const explorePrompt = `
-你是 SuperNote 的关联判断器。用户正在写一段内容，系统已经用检索找出了一批可能相关的旧笔记。
+你是 Folune 的关联判断器。用户正在写一段内容，系统已经用检索找出了一批可能相关的旧笔记。
 每次只交给你其中一篇，你的唯一工作是：判断它是否真的相关，并说清为什么。
 
 <untrusted_data>

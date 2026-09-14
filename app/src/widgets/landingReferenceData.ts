@@ -190,7 +190,7 @@ export const referenceExtensions = [
   [
     "Catppuccin",
     "992k",
-    "🦀 Soothing pastel theme for Zed",
+    "🦀 Soothing pastel theme for Folune",
     "Catppuccin"
   ],
   [
@@ -209,7 +209,7 @@ export const referenceExtensions = [
     "Vue",
     "660k",
     "Vue support.",
-    "Zed Industries"
+    "Folune"
   ],
   [
     "Ruby",
@@ -220,7 +220,7 @@ export const referenceExtensions = [
   [
     "Catppuccin Icons",
     "495k",
-    "🦊 Soothing pastel icons for Zed",
+    "🦊 Soothing pastel icons for Folune",
     "Catppuccin"
   ],
   [
@@ -245,7 +245,7 @@ export const referenceExtensions = [
     "Material Icon Theme",
     "421k",
     "Material Design icons.",
-    "Zed Industries"
+    "Folune"
   ],
   [
     "Make",

@@ -83,7 +83,7 @@ function WorkspaceRouteFallback() {
 
   return (
     <main
-      aria-label="正在载入 SuperNote 工作区"
+      aria-label="正在载入 Folune 工作区"
       className="app-workspace workspace-route-skeleton"
       data-assistant-open="false"
       data-library-open="false"
