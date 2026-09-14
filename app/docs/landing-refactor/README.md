@@ -117,3 +117,7 @@ BrandMark 是母图的唯一运行时入口，工作台侧栏、登录弹窗、�
 验证：桌面 1440px 与手机 390px 的首页/页脚、登录弹窗及生产 AppSidebar 验收页；母图为同一路径、无 filter、opacity 1、无额外背景/box-shadow，等比显示且无横向溢出。Landing 沿用固定浅色，AppSidebar 使用项目现有 /archive-cord-lab 切换真实 ThemeProvider 的浅/深色。两种浏览器访问 /app 均回到登录入口，因此本轮工作台视觉证据来自生产组件验收页，不冒充登录态业务页面。没有触发登录提交或模型调用。类型检查、lint、12 个现有提示词测试、git diff --check 通过。
 
 证据：brand-landing-mobile.png、brand-footer.png、brand-footer-mobile.png、brand-sidebar-light.png、brand-sidebar-dark.png、brand-sidebar-mobile.png。原冻结标记 landing-zed-baseline 不变。
+
+### Footer 描边字形修正
+
+用户指出首版 Folune 字标的 `e` 有异常折角、衬线字形不够圆润，且 32% 白色描边比 16% 斜纹更突出。字标从 Landing Serif（IBM Plex Serif Variable）改为项目既有的 `--font-sans`（当前 macOS 首选 Avenir Next），字号由 240px 收至 226px，字距由 -12px 调为 -10px，以适配六字母宽度并保留原展示窗比例。描边和斜纹现在共同读取 `--landing-footer-hatch: rgb(255 255 255 / 16%)`，填充改为透明；两者不会再独立漂移。证据：`brand-footer-rounded.png`。

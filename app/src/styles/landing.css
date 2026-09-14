@@ -131,7 +131,7 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
 .landing-blog-newest { display:inline-flex; align-items:center; height:19px; padding-inline:4px; border:1px solid #8ec5ff; border-radius:2px; background:rgb(190 219 255 / 10%); color:#193cb8; font:10px/24px Menlo,monospace; }
 .landing-final-cta { padding:61px 16px; display:flex; flex-direction:column; align-items:center; gap:32px; text-align:center; min-height:450px; background:radial-gradient(ellipse at center,#e8edf2,transparent 70%); }.landing-app-icon { --brand-size:160px; }.landing-final-cta h2 { font-size:25.6px; color:var(--landing-accent); }.landing-final-cta p { margin-top:8px; font-size:16px; line-height:24px; letter-spacing:-.4px; }
 /* ---- Footer 保留参考的衬线标题、正文链接和六列节奏 ---- */
-.landing-footer { --landing-border:rgb(255 255 255 / 10%); background:var(--landing-accent); color:#e1e3e7; letter-spacing:0; }
+.landing-footer { --landing-border:rgb(255 255 255 / 10%); --landing-footer-hatch:rgb(255 255 255 / 16%); background:var(--landing-accent); color:#e1e3e7; letter-spacing:0; }
 .landing-footer-columns { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:24px; min-height:388.72px; }
 .landing-footer-columns > * { min-width:0; padding:24px 16px; }
 .landing-footer-columns > :not(:last-child) { border-right:1px solid var(--landing-border); }
@@ -145,9 +145,9 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
 .landing-footer-arrow { color:rgb(255 255 255 / 50%); }
 .landing-footer a:hover { color:#fff; }
 .landing-footer a:focus-visible { outline-color:#fff; }
-.landing-footer-wordmark { height:243px; padding-top:24px; border-top:1px solid var(--landing-border); display:flex; align-items:flex-start; justify-content:center; overflow:hidden; background:repeating-linear-gradient(135deg,transparent 0 3px,rgb(255 255 255 / 16%) 3px 4px); }
+.landing-footer-wordmark { height:243px; padding-top:24px; border-top:1px solid var(--landing-border); display:flex; align-items:flex-start; justify-content:center; overflow:hidden; background:repeating-linear-gradient(135deg,transparent 0 3px,var(--landing-footer-hatch) 3px 4px); }
 .landing-footer-wordmark svg { flex:none; width:min(824px,calc(100% - 48px)); height:auto; overflow:visible; }
-.landing-footer-wordmark text { font:600 240px var(--landing-heading); letter-spacing:-12px; fill:rgb(255 255 255 / 1%); stroke:rgb(255 255 255 / 32%); stroke-width:1.2px; stroke-linejoin:round; }
+.landing-footer-wordmark text { font:600 226px var(--font-sans); letter-spacing:-10px; fill:transparent; stroke:var(--landing-footer-hatch); stroke-width:1.2px; stroke-linejoin:round; paint-order:stroke; }
 .reference-code-lines { padding-top:4px; font:12px/20px Landing Mono,monospace; }
 .reference-code-line { height:19.95px; display:flex; white-space:pre; }
 .reference-code-line>span { flex:none; }
