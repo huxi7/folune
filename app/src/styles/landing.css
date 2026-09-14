@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖共享 Button/Blueprint DOM、BrandMark 母图、页面私有参考字体与 Figma 素材
  * [OUTPUT]: 对外提供参考稿的标题/正文/注释字体层级、共轴导轨、分层信纸和响应式版面；仅 Landing 禁止纵向越界回弹，页尾止于 Footer
- * [POS]: styles 的 Landing 局部样式；参考值只存在页面作用域，不改写全局 DS
+ * [POS]: styles 的 Landing 局部样式；Footer 淡字位于细密斜纹之下，参考值只存在页面作用域，不改写全局 DS
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 @font-face { font-family: Landing Writer; src: url('/landing-reference/iAWriterQuattroS_Regular.woff2') format('woff2'); font-display: swap; }
@@ -145,9 +145,11 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
 .landing-footer-arrow { color:rgb(255 255 255 / 50%); }
 .landing-footer a:hover { color:#fff; }
 .landing-footer a:focus-visible { outline-color:#fff; }
-.landing-footer-wordmark { height:243px; padding-top:24px; border-top:1px solid var(--landing-border); display:flex; align-items:flex-start; justify-content:center; overflow:hidden; background:repeating-linear-gradient(135deg,transparent 0 3px,var(--landing-footer-hatch) 3px 4px); }
-.landing-footer-wordmark svg { flex:none; width:min(824px,calc(100% - 48px)); height:auto; overflow:visible; }
-.landing-footer-wordmark text { font:600 226px var(--font-sans); letter-spacing:-10px; fill:transparent; stroke:var(--landing-footer-hatch); stroke-width:1.2px; stroke-linejoin:round; paint-order:stroke; }
+/* ---- 保留 4px 细密斜纹，只让纹理覆盖低对比字标 ---- */
+.landing-footer-wordmark { position:relative; isolation:isolate; height:243px; padding-top:24px; border-top:1px solid var(--landing-border); display:flex; align-items:flex-start; justify-content:center; overflow:hidden; }
+.landing-footer-wordmark::after { content:""; position:absolute; inset:0; z-index:1; pointer-events:none; background:repeating-linear-gradient(135deg,transparent 0 3px,var(--landing-footer-hatch) 3px 4px); }
+.landing-footer-wordmark svg { position:relative; z-index:0; flex:none; width:min(824px,calc(100% - 48px)); height:auto; overflow:visible; }
+.landing-footer-wordmark text { font:600 226px var(--font-sans); letter-spacing:-10px; fill:transparent; stroke:rgb(255 255 255 / 8%); stroke-width:1.2px; stroke-linejoin:round; paint-order:stroke; }
 .reference-code-lines { padding-top:4px; font:12px/20px Landing Mono,monospace; }
 .reference-code-line { height:19.95px; display:flex; white-space:pre; }
 .reference-code-line>span { flex:none; }
