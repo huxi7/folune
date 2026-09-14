@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖共享 Button/Blueprint DOM、BrandMark 母图、页面私有参考字体与 Figma 素材
+ * [INPUT]: 依赖共享 Button/Blueprint DOM、BrandMark 母图、创作者署名头像、页面私有参考字体与 Figma 素材
  * [OUTPUT]: 对外提供英文参考字体与 DS 中文回退的标题/正文/注释层级、共轴导轨、分层信纸和响应式版面；仅 Landing 禁止纵向越界回弹，页尾止于 Footer
  * [POS]: styles 的 Landing 局部样式；Footer 淡字位于细密斜纹之下，按钮材质与品牌墨蓝直接消费 DS，背景和纹理保留基线
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -118,15 +118,15 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
 .landing-letter-paper { position:relative; isolation:isolate; padding:24px; border:1px solid #c9cdd3; border-radius:2px; background:#fff; }
 .landing-letter-paper>small { display:block; font:11px/16.5px Landing Mono,monospace; color:var(--landing-ink); letter-spacing:.55px; }
 .landing-letter h2 { margin-top:4px; font-size:25.6px; line-height:32px; }
-.landing-letter-body { max-width:512px; margin-top:12px; font-size:16px; line-height:24px; letter-spacing:0; }
-.landing-letter-body p:first-child { max-width:480px; }
+.landing-letter-subtitle { margin-top:8px!important; padding-right:112px; color:#71717a; font:14px/22px var(--landing-body); }
+.landing-letter-body { max-width:640px; margin-top:28px; font-size:16px; line-height:28px; letter-spacing:0; }
+.landing-letter-body p + p { margin-top:20px; }
 .landing-letter-body hr { width:160px; max-width:100%; margin:24px 0; border:0; border-top:1px solid #e1e3e7; }
 .landing-letter-seal { --brand-size:104px; position:absolute; right:24px; top:24px; }
 .landing-signature { margin-top:40px; }
-.landing-signature>div { display:flex; gap:0; }
-.landing-signature img { border-radius:50%; }
+.landing-signature img { display:block; width:32px; height:32px; object-fit:cover; border-radius:50%; }
 .landing-signature span { display:block; margin-top:8px; font:14px/20px var(--landing-heading); color:#000; }
-.landing-signature small { display:block; margin-top:2px; color:#71717a; font:10px/15px Menlo,monospace; }
+.landing-signature small { display:block; margin-top:4px; color:#71717a; font:12px/18px var(--landing-body); }
 
 .landing-blog-grid { padding:48px; display:grid; grid-template-columns:repeat(3,1fr); gap:24px; }.landing-blog-grid article { border:1px solid var(--landing-border); min-width:0; padding:12px; }.landing-blog-grid img { width:100%; aspect-ratio:16/9; object-fit:cover; margin-bottom:16px; }.landing-blog-grid h3 { font-family:var(--landing-heading); font-size:15px; line-height:22.5px; }.landing-blog-grid p { font-size:14px; line-height:24px; margin-top:4px; }.landing-blog-grid footer { display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-top:12px; font:10px/20px Landing Mono,monospace; color:var(--landing-ink); }.landing-blog-grid time { color:#5c636f; }
 .landing-blog-meta { display:flex; align-items:center; gap:8px; }
@@ -201,6 +201,7 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
   .landing-detail-grid article:nth-last-child(-n + 2)::after { border-bottom:0; }
   .landing-split-media { box-shadow:inset 0 1px var(--landing-border); }
   .landing-letter-section { padding:24px 16px; }.landing-letter { padding:8px; }.landing-letter-paper { padding:24px 12px; }.landing-letter-seal { display:none; }.landing-letter-body { font-size:13px; }.landing-letter small { overflow-wrap:anywhere; }
+  .landing-letter-subtitle { padding-right:0; }.landing-letter-body { line-height:24px; }
   .landing-blog-grid { grid-template-columns:1fr; padding:24px; }.landing-footer-wordmark { height:150px; }
 }
 @media(max-width:1023px) {

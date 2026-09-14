@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 BlueprintDivider、共享 BrandMark/Button、Figma 原始图像及结构化参考内容
+ * [INPUT]: 依赖 BlueprintDivider、共享 BrandMark/Button、用户提供的 huxi 头像、Figma 原始图像及结构化参考内容
  * [OUTPUT]: 对外提供中文产品叙事、明确标注的参考内容与原始符号、文字层级、分层信纸与文章时效标签；区块边界及细节网格前的分隔带复用 BlueprintDivider
- * [POS]: widgets 的营销叙事组合，采用语义布局重建阅读节奏，不复制导入稿定位树
+ * [POS]: widgets 的营销叙事组合；创作者信件基于项目真实理念，以 huxi 个人署名，其他参考分区独立保留
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import type { ReactNode } from "react";
@@ -50,7 +50,33 @@ export function LandingSections(){
   <BlueprintDivider fullBleed />
   <section><LandingSectionHeading title="细节之处，也值得用心" body="让每一次操作清楚、自然，让界面安静地服务于内容。下方暂保留参考编辑器的功能细节。"><LinkButton>了解更多</LinkButton></LandingSectionHeading><SplitFeature kind="care" /><BlueprintDivider compact /><div className="landing-detail-grid">{details.map(([t,b])=><article key={t}><h3>{t}</h3><p>{b}</p></article>)}</div></section>
   <BlueprintDivider fullBleed />
-  <section className="landing-letter-section" id="resources"><article className="landing-letter"><div className="landing-letter-paper"><BrandMark className="landing-letter-seal" iconOnly /><small>一封信</small><h2>写给认真记录的你</h2><div className="landing-letter-body"><p>我们每天都会产生许多想法。有些留在聊天里，有些写在零散的备忘录中，还有些在忙碌中被遗忘。我们希望 Folune 能成为一个安静的地方，让你先把想法记下来，再慢慢找到它们的位置。</p><hr /><p>我们相信，好的工具应该让人更专注于内容。AI 可以帮助梳理与连接，而记录的方向始终由你决定。从一张纸开始，让每一份积累，都能在需要的时候重新被发现。</p></div><div className="landing-signature"><span>Folune</span><small>愿每个想法，都有安放之处</small></div></div></article></section>
+  <section className="landing-letter-section" id="resources" aria-labelledby="landing-letter-title">
+    <article className="landing-letter">
+      <div className="landing-letter-paper">
+        <BrandMark className="landing-letter-seal" iconOnly />
+        <small>一封信</small>
+        <h2 id="landing-letter-title">一封来自创作者的信</h2>
+        <p className="landing-letter-subtitle">致愿意在 Folune 留下想法的你</p>
+        <div className="landing-letter-body">
+          <p>你好，很高兴你来到这里。</p>
+          <hr />
+          <p>我是 huxi，Folune 的创作者。</p>
+          <p>做这个产品，是想解决一件很普通的事：我们记下了很多东西，却不一定能在需要的时候找到它们。一闪而过的念头、一段读书时的感触、一个还没想清楚的问题，写下时都有意义，后来却慢慢散在不同的地方。</p>
+          <p>如果每次落笔之前，都要先想好标题、目录和分类，记录就又多了一道门槛。我想做一个地方，让你可以先写下来。哪怕只是一句话，哪怕暂时没有条理，也可以好好放着。</p>
+          <p>这就是 Folune 从一张纸开始的原因。做它的过程中，我反复调整纸面的留白、按钮的分寸，还有整理之后，怎样让人清楚地看见笔记去了哪里。这些细节未必会被注意到，但我希望，你用起来时可以少一点犹豫。</p>
+          <p>AI 在这里，是帮你梳理内容、找到联系的伙伴。它可以分担整理的麻烦，但什么值得留下、一个想法要走向哪里，仍然由你决定。整理的结果应该看得见，不合适的操作也应该能撤销。把自己的记录交给一个工具，需要这样的踏实感。</p>
+          <p>我期待的，并不是让每个人都拥有一套漂亮而复杂的知识库。而是某一天，当你重新遇到一个问题，能找到自己曾经写下的几句话，发现那时的思考没有白费，还能接着往下走。</p>
+          <p>Folune 还在慢慢打磨。我会继续认真对待那些影响书写的小事，也希望从你的使用中，理解哪些地方仍然让人费心。比起催你写得更多，我更在意它能不能让你愿意再打开，继续写一点。</p>
+          <p>谢谢你愿意试试这个还在生长的作品。愿那些尚未成形的想法，都能先有一个落脚的地方。</p>
+        </div>
+        <div className="landing-signature">
+          <img src="/brand/huxi-avatar.jpg" alt="huxi 的头像" width="32" height="32" loading="lazy" />
+          <span>huxi</span>
+          <small>Folune 创作者</small>
+        </div>
+      </div>
+    </article>
+  </section>
   <BlueprintDivider fullBleed />
   <section><LandingSectionHeading title="阅读与灵感" body="以下文章来自 Zed 参考设计，保留内容卡片与阅读节奏，后续逐步替换为 Folune 的产品动态。"><LinkButton href="https://zed.dev/blog">参考博客</LinkButton></LandingSectionHeading><div className="landing-blog-grid">{[["Xanadu 一直在等待智能体","六十年前，Ted Nelson 描绘了文档宇宙。如今，技术终于……","imgXanaduWasWaitingForAgents","Nathan Sobo","2026年9月1日"],["认识 Delta","来自参考团队的多人智能体编程环境。","imgIntroducingDelta","Nathan Sobo","2026年8月12日"],["沙箱机制","通过沙箱限制智能体的操作范围，让执行边界更加清晰……","imgSandboxing","Cameron Mcloughlin","2026年8月5日"]].map(([t,b,img,author,date],index)=><article key={t}><img src={assets[`19-4211/${img}`]} alt="" loading="lazy" /><h3>{t}</h3><p>{b}</p><footer><span>{author}</span><div className="landing-blog-meta"><time>{date}</time>{index===0?<span className="landing-blog-newest">最新</span>:null}</div></footer></article>)}</div></section>
   <BlueprintDivider fullBleed />

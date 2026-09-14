@@ -14,7 +14,7 @@ BlueprintFrame.tsx: Landing 纵向导轨容器；导航、1120px 正文与页脚
 BlueprintDivider.tsx: Landing 横向导轨；14px 分隔带上下两条边分别共置横线与菱形，flush 提供零高度边界，compact 保留 7px 内部分隔带而不添加参考中没有的节点
 AuthDialog.tsx: 复用 BrandMark 原图的登录/注册统一认证 Dialog，复用共享内凹 Input/PasswordInput 承载邮箱、双密码与显隐控制，并提供协议提示、六格 OTP 自动校验与 Google OAuth 入口
 LandingHero.tsx: 中文公告、居中 Hero、三列价值条与参考编辑器插槽；LandingActions 共用 DS 登录与待发布下载，auth query 交给 MarketingHeader 唯一认证弹窗；分区仍复用通栏 BlueprintDivider
-LandingSections.tsx: 保留 Grid/Flex 分区与信纸骨架，承载中文 Folune 叙事；评价、社区数据、扩展和文章标明参考来源，不冒充产品背书；信纸/CTA 共用 BrandMark，按钮共用 DS 与 LandingActions
+LandingSections.tsx: 保留 Grid/Flex 分区与信纸骨架，承载中文 Folune 叙事与 huxi 个人创作者信件；信件以项目记录/整理/可撤销理念为依据，独立使用用户原图头像；评价、社区数据、扩展和文章标明参考来源，不冒充产品背书；信纸/CTA 共用 BrandMark，按钮共用 DS 与 LandingActions
 LandingFooter.tsx: 共用 DS 墨蓝的六列中文 Footer；资源标签与原地址分离，登录打开本地认证、下载为占位；保留 Folune 淡描边与细纹层序，不放 PNG，BlueprintFrame 延续导轨
 LandingMotion/: Landing 克制反馈模块，只提供 CountUp 与一次性 reveal；磁吸、指针聚光与装饰点阵已移除，当前页面只保留有信息价值的计数与 3–4px 入场反馈
 NotebookPreview.tsx: 确定性首屏产品预览，DS 统一缩放淡入与显式卡片 lift 分处不同元素，阴影由 CSS 持有，内部布局不参与独立动画
