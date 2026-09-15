@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖 BlueprintDivider、共享 BrandMark/Button、用户提供的 huxi 头像、Figma 原始图像及结构化参考内容
- * [OUTPUT]: 对外提供中文产品叙事、明确标注的参考内容与原始符号、文字层级、分层信纸与文章时效标签；区块边界及细节网格前的分隔带复用 BlueprintDivider
+ * [INPUT]: 依赖 BlueprintDivider、共享 BrandMark/Button、用户提供的 huxi 头像、虚构场景引语及其余分区的 Figma 参考素材
+ * [OUTPUT]: 对外提供中文产品叙事、明确披露虚构人物的场景评价及其余参考内容、文字层级、分层信纸与文章时效标签；区块边界及细节网格前的分隔带复用 BlueprintDivider
  * [POS]: widgets 的营销叙事组合；创作者信件沿用首稿叙事，与 Laper 参考同构：问候与自我介绍各占一行，再以长短有别的段落分承初衷、打磨、AI 分寸与期待，一段只说一件事，由 huxi 个人署名
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -21,12 +21,13 @@ const features=[
   ["有序归档","让文件夹随内容自然生长，整理过的笔记也能随时找回。","imgGitWebp"],
   ["连接知识","把相关笔记放进画布，沿着联系发现新的思路。","imgEpWebp"],
 ];
-const quotes=[
-  {name:"José Valim",role:"Elixir 创造者",asset:"imgJoseValimsAvatar",quote:"“终于可以用快捷键运行和调试测试了。加入代码片段功能后，这款编辑器已经具备了我需要的所有功能。”"},
-  {name:"Ethan Perez",role:"对抗鲁棒性研究负责人",asset:"imgEthanPerezsAvatar",quote:"“配合 Claude 3.5 Sonnet 使用时，我真的很惊喜。只写下几句研究构想，它就在几秒钟内给出了初稿。发现小问题后，我选中需要修改的部分，告诉它如何调整。从一个想法到能运行的实验代码，只用了半小时，过程轻松又有趣。”"},
-  {name:"Dan Abramov",role:"React 核心团队成员",asset:"imgDanAbramovsAvatar",quote:"“这显然是一款倾注了热爱与用心的产品。用了两分钟，我就能感受到。向团队致敬。”"},
-  {name:"Matt Baker",role:"首席工程师",asset:"imgMattBakersAvatar",quote:"“真的太快了。启动、界面交互、输入延迟，每个环节都能感受到。我知道 VS Code 有些迟缓，却没想到体验可以好到这种程度。确实让我惊讶。”"},
-  {name:"Mike Bostock",role:"D3.js 创造者、Observable 创始人",asset:"imgMikeBostocksAvatar",quote:"“开始使用后，我就喜欢上了它。多缓冲区、内联提示、协作，还有许多细微的创新。设计周到而精确，速度更是出色。”"},
+// ---- 场景示例：人物与引语均为虚构，页面同步披露 ----
+const quotes = [
+  { name: "林知夏", role: "自由撰稿人", scene: "灵感随记", quote: "“写到一半冒出别的念头，我就先记一笔。不用为了几句话停下来想标题、建目录，等思路走完了，再请 AI 帮忙整理。”" },
+  { name: "陈以安", role: "独立研究者", scene: "长期积累", quote: "“读书摘记、零散的问题、还没成形的判断，我都想先留下来。需要的时候，再和 AI 一起梳理，把相关的笔记放进画布。", emphasis: "不用每次都从一张白纸开始。", ending: "那些以前写下的话，也能成为下一次思考的起点。”" },
+  { name: "周予宁", role: "产品设计师", scene: "连接想法", quote: "“访谈摘记和设计草稿，单看各有各的道理。把它们放到同一张画布上，连一连、补几句，才发现自己一直在琢磨同一个问题。”" },
+  { name: "许禾", role: "在读研究生", scene: "整理有据", quote: "“我愿意让 AI 帮忙归档，但也想知道笔记去了哪里。能看清整理后的目录，不合适还能撤销，我才敢把这一步交出去。”" },
+  { name: "陆远", role: "独立开发者", scene: "日常备忘", quote: "“排查问题时随手记的几句话，过几天往往又会用上。记不清放在哪个文件夹，就搜正文里的关键词，接着上次的思路往下做。”" },
 ];
 const details=[
   ["Helix 模式","熟悉的 Helix 与 Vim 操作。"],["多缓冲区诊断","集中查看项目错误与警告。"],["开发容器","保持一致的开发环境。"],["CLI","从命令行启动编辑器。"],["彩虹括号","轻松辨认深层嵌套代码。"],["内置 REPL","通过 Jupyter 内核交互运行代码。"],["语法感知选择","高效选中语法节点。"],["内联提示","在代码中直接查看补充信息。"],
@@ -38,7 +39,28 @@ function SplitFeature({kind}:{kind:"ai"|"care"}){
 export function LandingSections(){
  const avatars=Object.entries(assets).filter(([key])=>key.startsWith("19-2760/"));
  return <>
-  <section className="landing-trust" id="community"><h2>用心打磨的工具，<br />让想法更进一步</h2><p className="landing-reference-note">以下品牌与评价来自 Zed 参考设计，译文仅用于版式展示，并非 Folune 用户背书。</p><div className="landing-logo-strip">{["imgFrame1","imgFrame3","imgFrame5","imgFrame7","imgFrame9","imgFrame11"].map(name=><img src={assets[`19-2328/${name}`]} alt="" key={name} width="110" height="32" />)}</div><div className="landing-quotes">{quotes.map((q,i)=><figure key={q.name} data-featured={i===1}>{i===1?<img className="reference-anthropic" src={assets["19-2328/imgFrame14"]} alt="Anthropic" width="120" height="14" />:null}<blockquote>{q.quote}</blockquote><figcaption><img src={assets[`19-2328/${q.asset}`]} width="32" height="32" alt="" /><span>{q.name}<small>{q.role}</small></span></figcaption></figure>)}</div></section>
+  <section className="landing-trust" id="community" aria-labelledby="landing-trust-title">
+    <h2 id="landing-trust-title">每一种认真记录，<br />都值得被好好安放</h2>
+    <p className="landing-reference-note">使用场景示例 · 以下人物与引语为虚构，依据产品现有能力撰写。</p>
+    <ul className="landing-audience-strip" aria-label="适用记录场景">
+      {["灵感随记", "阅读摘记", "学习研究", "项目思考", "日常备忘", "知识积累"].map((label, index) => (
+        <li key={label}><span aria-hidden="true">0{index + 1}</span>{label}</li>
+      ))}
+    </ul>
+    <div className="landing-quotes">
+      {quotes.map((q, i) => (
+        <figure key={q.name} data-featured={i === 1}>
+          {i === 1 ? <div className="landing-quote-brand"><BrandMark iconOnly /><span>Folune</span></div> : null}
+          <blockquote>{q.quote}{q.emphasis ? <><br /><mark>{q.emphasis}</mark><br />{q.ending}</> : null}</blockquote>
+          <figcaption>
+            <span className="landing-quote-avatar" aria-hidden="true">{q.name.slice(0, 1)}</span>
+            <span>{q.name}<small>{q.role}</small></span>
+            <span className="landing-quote-scene">{q.scene}</span>
+          </figcaption>
+        </figure>
+      ))}
+    </div>
+  </section>
   <BlueprintDivider fullBleed />
   <section id="features"><LandingSectionHeading title="记录、整理，一气呵成" body="从随手记录到有序积累，让工具顺着你的思路工作。下方图像暂沿用参考稿，后续替换为真实工作台。"><a href="https://zed.dev/roadmap">参考路线图 ›</a><LinkButton href="https://zed.dev/releases">参考更新</LinkButton></LandingSectionHeading><div className="landing-feature-grid">{features.map(([title,body,asset],i)=><article key={title} data-wide={i<2}><img src={assets[`19-2527/${asset}`]} alt={title} loading="lazy" /><h3>{title}</h3><p>{body}</p></article>)}</div><div className="landing-small-features">{[["随时记录","打开网页版，就能继续书写与整理自己的笔记。"],["笔记与画布","在文字中深入思考，在画布中看见记录之间的联系。"],["由你掌控","整理结果可以检查，已执行的整理操作也可以撤销。"]].map(([t,b])=><article key={t}><h3>{t}</h3><p>{b}</p></article>)}</div></section>
   <BlueprintDivider fullBleed />
