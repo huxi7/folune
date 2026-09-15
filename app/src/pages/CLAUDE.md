@@ -2,13 +2,15 @@
 > L2 | 父级: ../../CLAUDE.md
 
 成员清单
+MarketingLayout.tsx: 首页和博客持续挂载的公共壳，持有唯一 MarketingHeader/AuthDialog、Footer 与 Router ScrollRestoration；仅正文 Outlet 切换，路径变化聚焦主标题
+BlogPage.tsx: /blog 目录与 /blog/:slug 中文阅读页，共用 Blueprint 导轨和静态文章；阅读页拥有居中点阵标题舞台，字标/标题/摘要/分类日期署名与返回按钮按纵向排列，分隔带之后直接进入导读和正文；支持返回来路、直接深链回目录、未知 slug 回退和页面标题恢复
 workspacePreload.ts: 正文邻居与 Canvas 代码预热共用的在线/前台/省流/慢网判据，只约束非必要预取，不阻止主动打开
 workspacePreload.test.ts: 验证弱网、省流、后台与离线不预取，以及缺失 Network Information 时的兼容行为
 MotionLabPage.tsx: DEV /motion-lab 无鉴权验收入口，复用生产 MotionSpecimen，所有交互只更新本地 fixture 状态，并链接真实 AppSidebar/归档线验收台
 useAppDashboardController.ts: 普通笔记导航禁用整页快照以保持文件库视觉稳定； Dashboard 单次持有的状态/命令协调 Hook，保持 Profile/正文订阅、乐观事务、flush/导航、工具预载、唯一响应式判据与归档 canonical 目标；普通本地辅助视图走 transitionContent，跨路由快照交给 Router 当前节点查询按 tree/路由 ID 缓存，相邻正文预取等当前正文就绪。
 .gitkeep: 保留页面层空目录
 CLAUDE.md: 记录页面层职责与文档协议
-LandingPage.tsx: 公开首页，以 1120px 主轨和流式分区组合居中 Hero、大幅编辑器、图文叙事与全宽 Footer；声明中文语言，复用 DS 字体回退、圆角按钮和品牌墨蓝，保留参考布局与背景
+LandingPage.tsx: MarketingLayout 内的公开首页正文，以 1120px 主轨和流式分区组合居中 Hero、大幅编辑器、图文叙事；顶栏与全宽 Footer 由父布局持有；声明中文语言，复用 DS 字体回退、圆角按钮和品牌墨蓝，保留参考布局与背景
 ArchiveCordLabPage.tsx: 仅 DEV `/archive-cord-lab` 归档线验收 fixture；复用生产 PaperSurface/ArchiveStatus/AppSidebar/WorkspacePanelLayer/PanelResizeHandle/ArchiveCordOverlay 与真实 organizePresentation 构造器，以三层嵌套 + 上下填充的确定性假树覆盖 fresh/restore/清除、逐层折叠展开、tree 滚动贴边、文件库开关、Panel resize 与 Light/Dark。纸必须由 PaperSurface 包出来——`.app-main-panel` 是单 grid area，7:9 比例基线与 `.paper-content-transition` 叠在同一格里，少了那层顶栏会被放到基线下面那一行、source 直接掉出视口。进入时清掉 fixture 专属的展开偏好键使结论可重跑；假 ID、假内容，不读写 API、数据库、真实用户正文或真实 AI run
 ColorLabPage.tsx: 仅 DEV `/color-lab` 色彩决策实验页，以同一静态 Paper First/Library/AI DOM、共享生产组件与候选选择、Light/Dark 控制公平比较现有蓝、02 灰蓝、04 标准墨蓝与 05 柔和墨蓝 scoped token，不读取鉴权、业务数据或主题持久化
 AuthCallbackPage.tsx: /auth/callback 路由页面，交换 Google OAuth PKCE code，成功进入 /app，失败提供返回登录入口；会话 Spinner 在 reduced-motion 下静止

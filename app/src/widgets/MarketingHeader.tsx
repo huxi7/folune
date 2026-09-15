@@ -1,12 +1,12 @@
 /**
  * [INPUT]: 依赖共享 Button、BlueprintFrame/Divider、BrandMark 与 Figma 原始功能符号与既有 query 驱动认证弹窗
- * [OUTPUT]: 对外提供中文导航、共享 DS 行动按钮、56px 导航及底边交点、公开锚点与按需加载的 AuthDialog
- * [POS]: widgets 的首页导航；认证成功仍经现有路由进入工作区，不改变登录协议
+ * [OUTPUT]: 对外提供中文导航、共享 DS 行动按钮、56px 导航及底边交点、跨页首页锚点、博客入口与按需加载的 AuthDialog
+ * [POS]: widgets 的共享营销导航；认证成功仍经现有路由进入工作区，不改变登录协议
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { AnimatePresence } from "motion/react";
 import { lazy, Suspense } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
 import { BrandMark, Button } from "../shared/design-system/components";
 
@@ -21,9 +21,10 @@ const AuthDialog = lazy(() =>
 );
 
 const navItems = [
-  { href: "#features", label: "功能", dropdown: true },
-  { href: "#resources", label: "关于", dropdown: true },
-  { href: "#extensions", label: "扩展参考" },
+  { href: "/#features", label: "功能", dropdown: true },
+  { href: "/blog", label: "博客" },
+  { href: "/#resources", label: "关于", dropdown: true },
+  { href: "/#extensions", label: "扩展参考" },
   { href: "https://zed.dev/docs", label: "参考文档" },
   { href: "https://zed.dev/pricing", label: "参考定价" },
   { href: "https://zed.dev/delta", label: "Delta", icon: "19-4560/imgFrame2" },
@@ -31,6 +32,7 @@ const navItems = [
 
 export function MarketingHeader() {
   const navigate = useNavigate();
+  const { state } = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const authDialogOpen = searchParams.get("auth") === "login";
 
@@ -43,7 +45,7 @@ export function MarketingHeader() {
       nextSearchParams.delete("auth");
     }
 
-    setSearchParams(nextSearchParams, { replace: true });
+    setSearchParams(nextSearchParams, { replace: true, preventScrollReset: true, state });
   }
 
   function handleAuthenticated() {
@@ -65,15 +67,15 @@ export function MarketingHeader() {
           </Link>
           <nav aria-label="主导航" className="hidden items-center gap-1 md:flex">
             {navItems.map((item) => (
-              <a
+              <Link
                 className="marketing-nav-link"
-                href={item.href}
+                to={item.href}
                 key={item.href}
               >
                 {item.icon ? <img src={assets[item.icon]} alt="" width="14" height="14" /> : null}
                 {item.label}
                 {item.dropdown ? <img src={assets["19-4560/imgFrame1"]} alt="" width="14" height="14" /> : null}
-              </a>
+              </Link>
             ))}
           </nav>
           <div className="flex items-center gap-2">

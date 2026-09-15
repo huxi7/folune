@@ -12,7 +12,7 @@ import { LandingEditor } from "./LandingEditor";
 export function LandingActions() {
   const [, setSearchParams] = useSearchParams();
   return <div className="landing-actions">
-    <Button variant="primary" onClick={() => setSearchParams(previous => { const next = new URLSearchParams(previous); next.set("auth", "login"); return next; }, { replace: true })}>
+    <Button variant="primary" onClick={() => setSearchParams(previous => { const next = new URLSearchParams(previous); next.set("auth", "login"); return next; }, { replace: true, preventScrollReset: true })}>
       打开
     </Button>
     <Button variant="secondary" disabled title="桌面版即将推出" aria-label="下载，桌面版即将推出">
@@ -26,7 +26,7 @@ export function LandingHero() {
     <div className="landing-announcement"><span>认识 Folune：</span> <a href="#workflow">让记录自然发生，让想法有序生长 <span>→</span></a><BlueprintDivider flush fullBleed /></div>
     <section className="landing-hero" aria-labelledby="landing-title">
       <div className="landing-hero-pattern" aria-hidden="true" />
-      <div className="landing-hero-copy"><h1 id="landing-title">随手记下，自然有序。</h1><p>在 Folune，专注记录当下的想法。<br />让 AI 帮你整理、连接，再次发现。</p></div>
+      <div className="landing-hero-copy"><h1 id="landing-title" tabIndex={-1}>随手记下，自然有序。</h1><p>在 Folune，专注记录当下的想法。<br />让 AI 帮你整理、连接，再次发现。</p></div>
       <div><LandingActions /><p className="landing-action-note">打开即可使用网页版 · 桌面版即将推出</p></div>
     </section>
     <BlueprintDivider flush fullBleed />

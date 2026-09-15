@@ -2,6 +2,7 @@
 > L2 | 父级: ../../CLAUDE.md
 
 成员清单
+blog.css: index.css 在 Landing 后同层加载的博客样式，首页三列卡片、带封面目录、单篇独立点阵标题区与居中返回按钮、导读框和窄栏阅读；约 36 汉字正文行宽，继承 Landing 字体/墨蓝，768px 以下单列，无卡片位移动画
 motion.css: 通用 Motion 消费与验收布局层，Panel 内容窗口裁剪顶部浮现但不改变自身高度，保留式视图定位、通用浮层单一动画所有权、普通路由淡换及共享 Canvas/Select/User press；原 Paper 方向的几何节奏继续由 knowledge-canvas.css 拥有
 .gitkeep: 保留产品样式目录
 CLAUDE.md: 记录样式层职责与文档协议

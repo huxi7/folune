@@ -1,9 +1,10 @@
 /**
- * [INPUT]: 依赖 BlueprintDivider、共享 BrandMark/Button、用户提供的 huxi 头像、虚构场景引语及其余分区的 Figma 参考素材
- * [OUTPUT]: 对外提供中文产品叙事、使用模拟机构与账号的评价版式及其余参考内容、文字层级、分层信纸与文章时效标签；区块边界及细节网格前的分隔带复用 BlueprintDivider
+ * [INPUT]: 依赖 LandingBlog、BlueprintDivider、共享 BrandMark/Button、用户提供的 huxi 头像、虚构场景引语及其余分区的 Figma 参考素材
+ * [OUTPUT]: 对外提供中文产品叙事、使用模拟机构与账号的评价版式及其余参考内容、文字层级、分层信纸与Folune 原创博客入口；区块边界及细节网格前的分隔带复用 BlueprintDivider
  * [POS]: widgets 的营销叙事组合；创作者信件沿用首稿叙事，与 Laper 参考同构：问候与自我介绍各占一行，再以长短有别的段落分承初衷、打磨、AI 分寸与期待，一段只说一件事，由 huxi 个人署名
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
+import { LandingBlog } from "./LandingBlog";
 import type { ReactNode } from "react";
 import { BrandMark, Button } from "../shared/design-system/components";
 import { BlueprintDivider } from "./BlueprintDivider";
@@ -105,7 +106,7 @@ export function LandingSections(){
     </article>
   </section>
   <BlueprintDivider fullBleed />
-  <section><LandingSectionHeading title="阅读与灵感" body="以下文章来自 Zed 参考设计，保留内容卡片与阅读节奏，后续逐步替换为 Folune 的产品动态。"><LinkButton href="https://zed.dev/blog">参考博客</LinkButton></LandingSectionHeading><div className="landing-blog-grid">{[["Xanadu 一直在等待智能体","六十年前，Ted Nelson 描绘了文档宇宙。如今，技术终于……","imgXanaduWasWaitingForAgents","Nathan Sobo","2026年9月1日"],["认识 Delta","来自参考团队的多人智能体编程环境。","imgIntroducingDelta","Nathan Sobo","2026年8月12日"],["沙箱机制","通过沙箱限制智能体的操作范围，让执行边界更加清晰……","imgSandboxing","Cameron Mcloughlin","2026年8月5日"]].map(([t,b,img,author,date],index)=><article key={t}><img src={assets[`19-4211/${img}`]} alt="" loading="lazy" /><h3>{t}</h3><p>{b}</p><footer><span>{author}</span><div className="landing-blog-meta"><time>{date}</time>{index===0?<span className="landing-blog-newest">最新</span>:null}</div></footer></article>)}</div></section>
+  <LandingBlog />
   <BlueprintDivider fullBleed />
   <section className="landing-final-cta"><BrandMark className="landing-app-icon" iconOnly /><div><h2>从今天，开始记录</h2><p>让想法落在纸上，让积累慢慢生长。</p></div><LandingActions /></section>
  </>;
