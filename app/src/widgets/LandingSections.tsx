@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 BlueprintDivider、共享 BrandMark/Button、用户提供的 huxi 头像、虚构场景引语及其余分区的 Figma 参考素材
- * [OUTPUT]: 对外提供中文产品叙事、明确披露虚构人物的场景评价及其余参考内容、文字层级、分层信纸与文章时效标签；区块边界及细节网格前的分隔带复用 BlueprintDivider
+ * [OUTPUT]: 对外提供中文产品叙事、使用模拟机构与账号的评价版式及其余参考内容、文字层级、分层信纸与文章时效标签；区块边界及细节网格前的分隔带复用 BlueprintDivider
  * [POS]: widgets 的营销叙事组合；创作者信件沿用首稿叙事，与 Laper 参考同构：问候与自我介绍各占一行，再以长短有别的段落分承初衷、打磨、AI 分寸与期待，一段只说一件事，由 huxi 个人署名
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -21,13 +21,21 @@ const features=[
   ["有序归档","让文件夹随内容自然生长，整理过的笔记也能随时找回。","imgGitWebp"],
   ["连接知识","把相关笔记放进画布，沿着联系发现新的思路。","imgEpWebp"],
 ];
-// ---- 场景示例：人物与引语均为虚构，页面同步披露 ----
+// ---- 营销版式模拟：机构、账号与引语均为占位内容，不代表已获真实背书 ----
+const studios = [
+  { mark: "S", name: "拾页工作室" },
+  { mark: "G", name: "格点设计" },
+  { mark: "F", name: "周五内容社" },
+  { mark: "K", name: "小步科技" },
+  { mark: "O", name: "开卷研究室" },
+  { mark: "L", name: "留白制作" },
+];
 const quotes = [
-  { name: "林知夏", role: "自由撰稿人", scene: "灵感随记", quote: "“写到一半冒出别的念头，我就先记一笔。不用为了几句话停下来想标题、建目录，等思路走完了，再请 AI 帮忙整理。”" },
-  { name: "陈以安", role: "独立研究者", scene: "长期积累", quote: "“读书摘记、零散的问题、还没成形的判断，我都想先留下来。需要的时候，再和 AI 一起梳理，把相关的笔记放进画布。", emphasis: "不用每次都从一张白纸开始。", ending: "那些以前写下的话，也能成为下一次思考的起点。”" },
-  { name: "周予宁", role: "产品设计师", scene: "连接想法", quote: "“访谈摘记和设计草稿，单看各有各的道理。把它们放到同一张画布上，连一连、补几句，才发现自己一直在琢磨同一个问题。”" },
-  { name: "许禾", role: "在读研究生", scene: "整理有据", quote: "“我愿意让 AI 帮忙归档，但也想知道笔记去了哪里。能看清整理后的目录，不合适还能撤销，我才敢把这一步交出去。”" },
-  { name: "陆远", role: "独立开发者", scene: "日常备忘", quote: "“排查问题时随手记的几句话，过几天往往又会用上。记不清放在哪个文件夹，就搜正文里的关键词，接着上次的思路往下做。”" },
+  { name: "@xiaozhang_notes", avatar: "xz", role: "内容编辑", studio: "拾页工作室", quote: "“写到一半冒出别的念头，我就先记一笔。不用为了几句话停下来想标题、建目录，等思路走完了，再请 AI 帮忙整理。”" },
+  { name: "陈文", avatar: "陈", role: "研究员", studio: "开卷研究室", quote: "“读书摘记、零散的问题、还没成形的判断，我都想先留下来。需要的时候，再和 AI 一起梳理，把相关的笔记放进画布。", emphasis: "不用每次都从一张白纸开始。", ending: "那些以前写下的话，也能成为下一次思考的起点。”" },
+  { name: "@momo_ux", avatar: "m", role: "产品设计师", studio: "格点设计", quote: "“访谈摘记和设计草稿，单看各有各的道理。把它们放到同一张画布上，连一连、补几句，才发现自己一直在琢磨同一个问题。”" },
+  { name: "@zhouzhou_lab", avatar: "zz", role: "策划 / 自由撰稿人", studio: "周五内容社", quote: "“我愿意让 AI 帮忙归档，但也想知道笔记去了哪里。能看清整理后的目录，不合适还能撤销，我才敢把这一步交出去。”" },
+  { name: "王磊", avatar: "王", role: "软件工程师", studio: "小步科技", quote: "“排查问题时随手记的几句话，过几天往往又会用上。记不清放在哪个文件夹，就搜正文里的关键词，接着上次的思路往下做。”" },
 ];
 const details=[
   ["Helix 模式","熟悉的 Helix 与 Vim 操作。"],["多缓冲区诊断","集中查看项目错误与警告。"],["开发容器","保持一致的开发环境。"],["CLI","从命令行启动编辑器。"],["彩虹括号","轻松辨认深层嵌套代码。"],["内置 REPL","通过 Jupyter 内核交互运行代码。"],["语法感知选择","高效选中语法节点。"],["内联提示","在代码中直接查看补充信息。"],
@@ -40,11 +48,10 @@ export function LandingSections(){
  const avatars=Object.entries(assets).filter(([key])=>key.startsWith("19-2760/"));
  return <>
   <section className="landing-trust" id="community" aria-labelledby="landing-trust-title">
-    <h2 id="landing-trust-title">每一种认真记录，<br />都值得被好好安放</h2>
-    <p className="landing-reference-note">使用场景示例 · 以下人物与引语为虚构，依据产品现有能力撰写。</p>
-    <ul className="landing-audience-strip" aria-label="适用记录场景">
-      {["灵感随记", "阅读摘记", "学习研究", "项目思考", "日常备忘", "知识积累"].map((label, index) => (
-        <li key={label}><span aria-hidden="true">0{index + 1}</span>{label}</li>
+    <h2 id="landing-trust-title">为认真记录的个人与创作团队而做</h2>
+    <ul className="landing-studio-strip" aria-label="工作室与团队">
+      {studios.map(({ mark, name }) => (
+        <li key={name}><span aria-hidden="true">{mark}</span>{name}</li>
       ))}
     </ul>
     <div className="landing-quotes">
@@ -53,9 +60,9 @@ export function LandingSections(){
           {i === 1 ? <div className="landing-quote-brand"><BrandMark iconOnly /><span>Folune</span></div> : null}
           <blockquote>{q.quote}{q.emphasis ? <><br /><mark>{q.emphasis}</mark><br />{q.ending}</> : null}</blockquote>
           <figcaption>
-            <span className="landing-quote-avatar" aria-hidden="true">{q.name.slice(0, 1)}</span>
+            <span className="landing-quote-avatar" aria-hidden="true">{q.avatar}</span>
             <span>{q.name}<small>{q.role}</small></span>
-            <span className="landing-quote-scene">{q.scene}</span>
+            <span className="landing-quote-studio">{q.studio}</span>
           </figcaption>
         </figure>
       ))}

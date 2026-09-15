@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖共享 Button/Blueprint DOM、BrandMark 母图、创作者署名头像、页面私有参考字体与 Figma 素材
- * [OUTPUT]: 对外提供英文参考字体与 DS 中文回退的标题/正文/注释层级、共轴导轨、分层信纸、场景评价与五组页脚导航的响应式版面；仅 Landing 禁止纵向越界回弹，页尾止于 Footer
+ * [OUTPUT]: 对外提供英文参考字体与 DS 中文回退的标题/正文/注释层级、共轴导轨、分层信纸、场景评价与四组页脚导航的响应式版面；仅 Landing 禁止纵向越界回弹，页尾止于 Footer
  * [POS]: styles 的 Landing 局部样式；Footer 淡字位于细密斜纹之下，按钮材质与品牌墨蓝直接消费 DS，背景和纹理保留基线
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -88,10 +88,10 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
 .reference-terminal { position:relative; flex:1; padding:10px; border-top:1px solid #bbb; font:10px/15px Landing Mono,monospace; }.reference-terminal pre { margin:12px 0 0; color:#03aebb; font:9px/11px monospace; width:50%; }.reference-terminal>span { position:absolute; left:52%; top:43px; color:#3280a4; }.reference-bottom { justify-content:space-between; border-top:1px solid #ccc; border-bottom:0; }
 .reference-demo-label { position:absolute; top:-1px; left:calc(50% - 54px); border:1px solid #aaa; border-radius:0 0 5px 5px; background:#fff; padding:2px 10px; color:#000; box-shadow:0 2px 5px #0001; font:12px/20px var(--landing-body); }
 .landing-trust { padding:64px 48px; }
-.landing-trust>h2 { max-width:560px; text-align:center; margin:0 auto; line-height:1.5; color:var(--landing-accent); }
-.landing-audience-strip { margin:40px 0 48px; padding:0; list-style:none; display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:16px; }
-.landing-audience-strip li { display:flex; align-items:center; justify-content:center; gap:8px; color:#626874; font-size:13px; white-space:nowrap; }
-.landing-audience-strip li>span { display:grid; place-items:center; width:26px; height:26px; border:1px solid var(--landing-border); color:var(--landing-accent); font:11px/1 Landing Mono,monospace; }
+.landing-trust>h2 { max-width:100%; text-wrap:balance; text-align:center; margin:0 auto; line-height:1.5; color:var(--landing-accent); }
+.landing-studio-strip { margin:56px 0 48px; padding:0; list-style:none; display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:16px; }
+.landing-studio-strip li { display:flex; align-items:center; justify-content:center; gap:10px; color:#626874; font:600 13px/20px var(--font-sans); white-space:nowrap; }
+.landing-studio-strip li>span { display:grid; place-items:center; width:26px; height:26px; flex:none; border-radius:2px; background:var(--landing-ink); color:var(--landing-bg); font:600 14px/1 var(--font-sans); }
 .landing-quotes { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:32px 24px; }
 .landing-quotes figure { display:flex; flex-direction:column; min-width:0; min-height:210px; padding:24px 0; }
 .landing-quotes figure[data-featured=false]:nth-child(-n+3) { border-bottom:1px solid var(--landing-border); }
@@ -102,9 +102,9 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
 .landing-quotes blockquote { margin:0 0 24px; font:14px/1.9 var(--landing-body); }
 .landing-quotes mark { background:var(--landing-accent); color:#fff; padding:2px 3px; box-decoration-break:clone; -webkit-box-decoration-break:clone; }
 .landing-quotes figcaption { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:auto; font:13px/20px var(--landing-body); }
-.landing-quote-avatar { display:grid; place-items:center; flex:none; width:32px; height:32px; color:var(--landing-accent); background:color-mix(in srgb,var(--landing-accent) 8%,var(--landing-bg)); border:1px solid color-mix(in srgb,var(--landing-accent) 16%,transparent); font-family:var(--landing-heading); }
+.landing-quote-avatar { display:grid; place-items:center; flex:none; width:32px; height:32px; color:var(--landing-accent); background:color-mix(in srgb,var(--landing-accent) 8%,var(--landing-bg)); border:1px solid color-mix(in srgb,var(--landing-accent) 16%,transparent); font:500 13px/1 var(--landing-body); }
 .landing-quotes figcaption small { display:block; color:#626874; font:11px/16px var(--landing-body); }
-.landing-quote-scene { margin-left:auto; color:#626874; font-size:10px; }
+.landing-quote-studio { margin-left:auto; color:#626874; font:500 11px/16px var(--font-sans); }
 .landing-quote-brand { display:flex; align-items:center; gap:8px; margin-bottom:32px; color:var(--landing-accent); font:600 22px/32px var(--font-sans); }
 .landing-quote-brand .ds-brand { --brand-size:28px; }
 .landing-section-heading { padding:48px; display:flex; gap:32px; align-items:center; justify-content:space-between; border-bottom:1px solid var(--landing-border); min-height:185px; }.landing-section-heading>div:first-child { max-width:512px; }.landing-section-heading p { max-width:512px; margin-top:8px; font-size:16px; line-height:24px; letter-spacing:0; }.landing-section-links { display:flex; flex-wrap:wrap; align-items:center; gap:16px; white-space:nowrap; font-size:14px; line-height:20px; letter-spacing:0; }.landing-section-links .ds-button { height:36px; min-height:36px; font-size:14px; }
@@ -146,9 +146,9 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
 .landing-blog-meta { display:flex; align-items:center; gap:8px; }
 .landing-blog-newest { display:inline-flex; align-items:center; height:19px; padding-inline:4px; border:1px solid #8ec5ff; border-radius:2px; background:rgb(190 219 255 / 10%); color:#193cb8; font:10px/24px Menlo,monospace; }
 .landing-final-cta { padding:61px 16px; display:flex; flex-direction:column; align-items:center; gap:32px; text-align:center; min-height:450px; background:radial-gradient(ellipse at center,#e8edf2,transparent 70%); }.landing-app-icon { --brand-size:160px; }.landing-final-cta h2 { font-size:25.6px; color:var(--landing-accent); }.landing-final-cta p { margin-top:8px; font-size:16px; line-height:24px; letter-spacing:0; }
-/* ---- Footer 保留参考的衬线标题、正文链接和六列节奏 ---- */
+/* ---- Footer：品牌占两份宽度，四组导航各占一份 ---- */
 .landing-footer { --landing-border:rgb(255 255 255 / 10%); --landing-footer-hatch:rgb(255 255 255 / 16%); background:var(--landing-accent); color:#e1e3e7; letter-spacing:0; }
-.landing-footer-columns { display:grid; grid-template-columns:2fr repeat(5,minmax(0,1fr)); gap:0; min-height:376px; }
+.landing-footer-columns { display:grid; grid-template-columns:2fr repeat(4,minmax(0,1fr)); gap:0; min-height:320px; }
 .landing-footer-columns > * { min-width:0; padding:32px 16px; }
 .landing-footer-columns > :not(:last-child) { border-right:1px solid var(--landing-border); }
 .landing-footer-brand { display:flex; flex-direction:column; align-items:flex-start; gap:8px; font:12px/16px var(--landing-body); }
@@ -197,6 +197,9 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
   .landing-feature-grid article { padding:32px; }.landing-small-features article,.landing-detail-grid article { padding:24px; }.landing-section-links { gap:8px; }
   .reference-editor { grid-template-columns:200px 1fr; }.reference-working-body { grid-template-columns:42% 58%; }.reference-agent-messages { font-size:10px; }
 }
+@media(min-width:768px) and (max-width:1023px) {
+  .landing-studio-strip { grid-template-columns:repeat(3,minmax(0,1fr)); }
+}
 @media(max-width:767px) {
   .landing-blueprint { --landing-gutter:16px; }
   .marketing-nav { padding:0 24px; justify-content:space-between; gap:8px; }.marketing-nav>nav { display:none; }
@@ -204,7 +207,7 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
   .landing-hero { min-height:400px; padding:64px 24px; }.landing-hero h1 { font-size:clamp(26px,7vw,36px); line-height:1.4; }.landing-hero-copy p { font-size:14px; line-height:22px; }.landing-action-note { font-size:11px; }
   .landing-value-strip { grid-template-columns:1fr; }.landing-value-strip>div { border-right:0; border-bottom:1px solid var(--landing-border); padding:16px 24px; }.landing-value-strip p { max-width:none; }
   .landing-editor-section { padding:8px; overflow:auto; }.reference-editor { width:740px; height:550px; grid-template-columns:190px 1fr; }.reference-working-body { grid-template-columns:42% 58%; }
-  .landing-trust { padding:40px 24px; }.landing-trust>h2 { font-size:22px; }.landing-audience-strip { grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; margin:28px 0; }.landing-audience-strip li { justify-content:flex-start; }
+  .landing-trust { padding:40px 24px; }.landing-trust>h2 { font-size:22px; }.landing-studio-strip { grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; margin:28px 0; }.landing-studio-strip li { justify-content:flex-start; }
   .landing-quotes { display:flex; flex-direction:column; gap:16px; }.landing-quotes figure { min-height:auto; }.landing-quotes figure[data-featured=true] { order:-1; }
   .landing-section-heading { flex-direction:column; align-items:flex-start; min-height:0; gap:24px; padding:32px 24px; }.landing-section-heading h2 { font-size:26px; }.landing-section-heading p { font-size:13px; }
   .landing-feature-grid { display:flex; flex-direction:column; }.landing-feature-grid article { padding:24px; border-right:0; }.landing-small-features { grid-template-columns:1fr; }.landing-small-features article { padding:24px; }

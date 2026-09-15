@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 React Router 认证入口、BlueprintFrame/Divider 与局部 Footer 样式
- * [OUTPUT]: 对外提供品牌区、五组 Folune 导航与居中描边字标；待接通入口无跳转行为
+ * [OUTPUT]: 对外提供品牌区、四组 Folune 导航与居中描边字标；待接通入口无跳转行为
  * [POS]: widgets 的营销页收尾；沿用正文导轨与 DS 墨蓝，认证复用首页弹窗，其余入口仅预留展示
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -9,11 +9,10 @@ import { BlueprintDivider } from "./BlueprintDivider";
 import { BlueprintFrame } from "./BlueprintFrame";
 
 const columns = [
-  { name: "产品", items: ["产品概览", "专注书写", "AI 对话", "智能归档", "知识画布", "全文搜索", "订阅方案", "桌面版"] },
-  { name: "资源", items: ["快速开始", "使用指南", "Markdown 写作", "整理与撤销", "快捷键", "常见问题", "更新日志", "产品动态"] },
-  { name: "关于", items: ["关于 Folune", "创作者的信", "产品理念", "品牌资源", "联系作者", "意见反馈"] },
-  { name: "法律", items: ["服务条款", "隐私政策", "订阅与付费", "取消与退款", "数据与账户"] },
-  { name: "连接", items: ["X / Twitter", "小红书", "即刻", "微信公众号", "Discord", "YouTube", "哔哩哔哩"], social: true },
+  { name: "产品", items: ["产品特性", "订阅方案"] },
+  { name: "资源", items: ["使用指南", "更新日志", "常见问题", "意见反馈"] },
+  { name: "关于", items: ["关于 Folune", "创作者的信", "联系作者"] },
+  { name: "连接", items: ["Discord", "小红书", "推特"], social: true },
 ];
 
 export function LandingFooter() {
