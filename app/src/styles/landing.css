@@ -148,17 +148,16 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
 .landing-final-cta { padding:61px 16px; display:flex; flex-direction:column; align-items:center; gap:32px; text-align:center; min-height:450px; background:radial-gradient(ellipse at center,#e8edf2,transparent 70%); }.landing-app-icon { --brand-size:160px; }.landing-final-cta h2 { font-size:25.6px; color:var(--landing-accent); }.landing-final-cta p { margin-top:8px; font-size:16px; line-height:24px; letter-spacing:0; }
 /* ---- Footer：品牌占两份宽度，四组导航各占一份 ---- */
 .landing-footer { --landing-border:rgb(255 255 255 / 10%); --landing-footer-hatch:rgb(255 255 255 / 16%); background:var(--landing-accent); color:#e1e3e7; letter-spacing:0; }
-.landing-footer-columns { display:grid; grid-template-columns:2fr repeat(4,minmax(0,1fr)); gap:0; min-height:320px; }
+.landing-footer-columns { display:grid; grid-template-columns:2fr repeat(4,minmax(0,1fr)); gap:0; min-height:388.72px; }
 .landing-footer-columns > * { min-width:0; padding:32px 16px; }
 .landing-footer-columns > :not(:last-child) { border-right:1px solid var(--landing-border); }
 .landing-footer-brand { display:flex; flex-direction:column; align-items:flex-start; gap:8px; font:12px/16px var(--landing-body); }
 .landing-footer-title,.landing-footer-columns h2 { font:400 15.2px/16.72px var(--landing-heading); color:#fff; letter-spacing:0; }
-.landing-footer-tagline { margin-top:8px!important; }
+.landing-footer-title { font:600 16px/20px var(--font-sans); }
 .landing-footer-auth { margin-top:12px; }
-.landing-footer-colophon { margin-top:auto; padding-top:56px; font-size:11px; line-height:1.9; }
-.landing-footer-note { margin-top:8px!important; color:rgb(255 255 255 / 65%); }
-.landing-footer-columns nav { display:flex; flex-direction:column; align-items:flex-start; gap:16px; }
-.landing-footer-links { display:flex; flex-direction:column; gap:11.8px; list-style:none; margin:0; padding:0; width:100%; }
+.landing-footer-colophon { margin-top:auto; padding-top:56px; font-size:12px; line-height:1.9; }
+.landing-footer-columns nav { display:flex; flex-direction:column; align-items:flex-start; gap:24px; }
+.landing-footer-links { display:flex; flex-direction:column; gap:16px; list-style:none; margin:0; padding:0; width:100%; }
 .landing-footer-placeholder { display:inline-flex; align-items:baseline; gap:8px; font:14px/20px var(--landing-body); }
 .landing-footer-brand a,.landing-footer-placeholder > span:first-child { text-decoration:underline; text-decoration-color:rgb(255 255 255 / 20%); text-decoration-thickness:from-font; text-underline-position:from-font; }
 .landing-footer-placeholder { cursor:default; }

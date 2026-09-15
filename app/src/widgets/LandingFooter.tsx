@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 React Router 认证入口、BlueprintFrame/Divider 与局部 Footer 样式
- * [OUTPUT]: 对外提供品牌区、四组 Folune 导航与居中描边字标；待接通入口无跳转行为
+ * [OUTPUT]: 对外提供品牌区、长短错落的四组 Folune 导航、上下分置的品牌署名与居中描边字标；待接通入口无跳转行为
  * [POS]: widgets 的营销页收尾；沿用正文导轨与 DS 墨蓝，认证复用首页弹窗，其余入口仅预留展示
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -10,7 +10,7 @@ import { BlueprintFrame } from "./BlueprintFrame";
 
 const columns = [
   { name: "产品", items: ["产品特性", "订阅方案"] },
-  { name: "资源", items: ["使用指南", "更新日志", "常见问题", "意见反馈"] },
+  { name: "资源", items: ["更新日志", "使用指南", "Markdown 写作", "AI 对话", "智能归档", "知识画布", "常见问题", "意见反馈"] },
   { name: "关于", items: ["关于 Folune", "创作者的信", "联系作者"] },
   { name: "连接", items: ["Discord", "小红书", "推特"], social: true },
 ];
@@ -23,14 +23,12 @@ export function LandingFooter() {
         <div className="landing-footer-columns">
           <div className="landing-footer-brand">
             <p className="landing-footer-title">Folune</p>
-            <p className="landing-footer-tagline">随手记下，自然有序。</p>
             <div className="landing-footer-auth">
               <Link to="?auth=login" replace>打开网页版</Link>
             </div>
             <div className="landing-footer-colophon">
-              <p>为值得留下的想法而做。</p>
-              <p>由 huxi 用心打磨 · © 2026 Folune</p>
-              <p className="landing-footer-note">更多内容与社交主页，陆续开放。</p>
+              <p>由 huxi 设计与构建</p>
+              <p>© 2026 Folune</p>
             </div>
           </div>
           {columns.map(({ name, items, social }) => (
