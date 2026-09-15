@@ -86,7 +86,7 @@ export function MarketingHeader() {
               onClick={() => handleAuthDialogOpenChange(true)}
               variant="ghost"
             >
-              登录
+              打开
             </Button>
             <Button variant="secondary" disabled title="桌面版即将推出" aria-label="下载，桌面版即将推出">下载</Button>
           </div>

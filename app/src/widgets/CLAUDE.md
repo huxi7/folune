@@ -8,12 +8,12 @@ useTreeReorder.ts: AppSidebar 结构重排 FLIP Hook，手势前捕获位置、�
 TreeDisclosure.tsx: 文件树与 DS Collapse 的薄适配，声明可打断、成对释放的归档运动租约，让 Overlay 跟随真实高度几何；不读取业务数据
 .gitkeep: 保留业务组合组件层空目录
 CLAUDE.md: 记录业务组合组件层职责与文档协议
-MarketingHeader.tsx: 56px 中文导航，共用 BrandMark/DS Button、参考符号和 BlueprintFrame/Divider；拥有唯一 query 驱动 AuthDialog，成功仍进入后端守卫的 /app，下载只展示禁用态
+MarketingHeader.tsx: 56px 中文导航，共用 BrandMark/DS Button、参考符号和 BlueprintFrame/Divider；拥有唯一 query 驱动 AuthDialog，成功仍进入后端守卫的 /app，下载只展示禁用态；顶栏认证入口用「打开」承载 Laper 参考的同位文案
 MarketingAnnouncement.tsx: 紧贴粘性导航下方、约为 Header 2/3 高且随页面滚走的无关闭公告栏，在背景全宽、1088px 主轨与正文对齐且宽屏带视口外轨的 BlueprintFrame 中居中呈现标签、正文与 2px 箭头反馈；hover 不填充蓝色背景
 BlueprintFrame.tsx: Landing 纵向导轨容器；导航、1120px 正文与页脚共用主轨/外轨坐标，fullBleed 增加可选外轨，颜色由当前区块局部覆盖
 BlueprintDivider.tsx: Landing 横向导轨；14px 分隔带上下两条边分别共置横线与菱形，flush 提供零高度边界，compact 保留 7px 内部分隔带而不添加参考中没有的节点
 AuthDialog.tsx: 复用 BrandMark 原图的登录/注册统一认证 Dialog，复用共享内凹 Input/PasswordInput 承载邮箱、双密码与显隐控制，并提供协议提示、六格 OTP 自动校验与 Google OAuth 入口
-LandingHero.tsx: 中文公告、居中 Hero、三列价值条与参考编辑器插槽；LandingActions 共用 DS 登录与待发布下载，auth query 交给 MarketingHeader 唯一认证弹窗；分区仍复用通栏 BlueprintDivider
+LandingHero.tsx: 中文公告、居中 Hero、三列价值条与参考编辑器插槽；LandingActions 共用 DS 两字「打开」与两字待发布下载（全站同一动作同一词，2+2 等密度），auth query 交给 MarketingHeader 唯一认证弹窗；分区仍复用通栏 BlueprintDivider
 LandingSections.tsx: 保留 Grid/Flex 分区与信纸骨架，承载中文 Folune 叙事与 huxi 个人创作者信件；信件以项目记录/整理/可撤销理念为依据，独立使用用户原图头像；评价、社区数据、扩展和文章标明参考来源，不冒充产品背书；信纸/CTA 共用 BrandMark，按钮共用 DS 与 LandingActions
 LandingFooter.tsx: 共用 DS 墨蓝的六列中文 Footer；资源标签与原地址分离，登录打开本地认证、下载为占位；保留 Folune 淡描边与细纹层序，不放 PNG，BlueprintFrame 延续导轨
 LandingMotion/: Landing 克制反馈模块，只提供 CountUp 与一次性 reveal；磁吸、指针聚光与装饰点阵已移除，当前页面只保留有信息价值的计数与 3–4px 入场反馈

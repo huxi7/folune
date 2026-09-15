@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 BlueprintFrame/Divider、局部 Folune 描边字标与局部 Footer 样式
  * [OUTPUT]: 对外提供六列网格中的品牌区/四组导航、分层字体与居中 Folune 描边字标；导轨继续共用正文坐标
- * [POS]: widgets 的营销页收尾；中文导航保留参考资源地址并标明来源，登录复用首页认证，下载仅为占位
+ * [POS]: widgets 的营销页收尾；中文导航保留参考资源地址并标明来源，认证入口与首页共用「打开」一词，下载仅为占位
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { Link } from "react-router-dom";
@@ -25,7 +25,7 @@ export function LandingFooter() {
             <p className="landing-footer-title">Folune © 2026</p>
             <hr aria-hidden="true" className="landing-footer-brand-rule" />
             <div>
-              <Link to="?auth=login" replace>登录网页版</Link> · 开始记录
+              <Link to="?auth=login" replace>打开网页版</Link> · 开始记录
             </div>
             <p className="landing-footer-legal"><span>服务条款</span> · <span>署名与致谢</span></p>
             <a href="https://zed.dev/privacy">管理网站 Cookie</a>
