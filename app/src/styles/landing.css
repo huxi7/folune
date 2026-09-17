@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖共享 Button/Blueprint DOM、BrandMark 母图、创作者署名头像、页面私有参考字体与 Figma 素材、独立 Demo iframe 和 ShowcaseBackdrop
- * [OUTPUT]: 对外提供英文参考字体与 DS 中文回退的文字层级、共轴导轨、APP 展示区平滑轮廓与点阵后景、信纸、评价与页脚的响应式版面；仅 Landing 禁止纵向越界回弹，页尾止于 Footer
+ * [OUTPUT]: 对外提供英文参考字体与 DS 中文回退的文字层级、共轴导轨、APP 外壳平滑轮廓与铺满导轨矩形的点阵后景、信纸、评价与页脚的响应式版面；仅 Landing 禁止纵向越界回弹，页尾止于 Footer
  * [POS]: styles 的 Landing 局部样式；Footer 淡字位于细密斜纹之下，按钮材质与品牌墨蓝直接消费 DS，背景和纹理保留基线；功能区按参考稿使用 40px 卡片纵向留白与外扩 6px 虚线图片框
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -76,8 +76,8 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
 .landing-value-strip { display:grid; grid-template-columns:repeat(3,1fr); min-height:97.5px; }
 .landing-value-strip > div { padding:16px 24px; border-right:1px solid var(--landing-border); }.landing-value-strip>div:last-child { border:0; }
 .landing-value-strip h2 { font-size:15px; line-height:22.5px; letter-spacing:0; }.landing-value-strip p { margin-top:4px; font-size:13px; line-height:19.5px; max-width:325px; }
-.landing-editor-section { --showcase-inset:16px; position:relative; isolation:isolate; padding:var(--showcase-inset); overflow:hidden; border-radius:calc(var(--radius-panel) + var(--showcase-inset)); corner-shape:var(--corner-shape-smooth); background:color-mix(in srgb,var(--primary) 3%,var(--landing-bg)); }
-.landing-showcase-backdrop { position:absolute; inset:0; z-index:0; pointer-events:none; color:var(--primary); border-radius:inherit; corner-shape:inherit; overflow:hidden; background:radial-gradient(circle,color-mix(in srgb,currentColor 9%,transparent) .65px,transparent .85px) 0 0/7px 7px; }
+.landing-editor-section { --showcase-inset:16px; position:relative; isolation:isolate; padding:var(--showcase-inset); overflow:hidden; border-radius:0; background:color-mix(in srgb,var(--primary) 3%,var(--landing-bg)); }
+.landing-showcase-backdrop { position:absolute; inset:0; z-index:0; pointer-events:none; color:var(--primary); border-radius:0; overflow:hidden; background:radial-gradient(circle,color-mix(in srgb,currentColor 9%,transparent) .65px,transparent .85px) 0 0/7px 7px; }
 .landing-showcase-backdrop:has(canvas) { background:none; }
 .landing-showcase-shader { opacity:.1; }
 .reference-editor { width:100%; height:738px; border:1px solid #c4c7cc; border-radius:8px; box-shadow:0 2px 5px #0002; display:grid; grid-template-columns:256px 1fr; overflow:hidden; position:relative; background:#f9f9f9; font:11px/1.5 var(--landing-body); color:#51545a; }
@@ -237,7 +237,7 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
 @media(prefers-reduced-motion:reduce) { .landing-blueprint * { scroll-behavior:auto!important; } }
 }
 
-/* ---- 同心平滑轮廓：外壳承担边框与裁剪，iframe 保持既有展示高度 ---- */
+/* ---- APP 平滑轮廓：仅界面外壳承担圆角裁剪，背景铺满导轨矩形 ---- */
 .landing-product-shell { position:relative; z-index:1; overflow:hidden; border:1px solid var(--landing-border); border-radius:var(--radius-panel); corner-shape:var(--corner-shape-smooth); box-shadow:var(--shadow-md); background:var(--workspace-stage); }
 .landing-product-demo { display:block; width:100%; height:736px; border:0; background:var(--workspace-stage); }
 @media(max-width:767px) { .landing-product-demo { height:648px; } }
