@@ -1,11 +1,11 @@
 /**
- * [INPUT]: 依赖 Router Link、静态博客内容、BlogCover 与现有作者头像
+ * [INPUT]: 依赖 Router Link、静态精选博客内容、BlogCover 与现有作者头像
  * [OUTPUT]: 对外提供首页三列博客卡片与通往公开博客目录的入口
  * [POS]: widgets 的博客预览区；整卡是单一可聚焦链接，内容与阅读页同源，导航状态用于返回原位置
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { Link } from "react-router-dom";
-import { blogAuthor, blogPosts } from "./landingBlogData";
+import { blogAuthor, featuredBlogPosts } from "./landingBlogData";
 import { BlogCover } from "./BlogCover";
 
 export function LandingBlog() {
@@ -15,7 +15,7 @@ export function LandingBlog() {
       <Link className="ds-button ds-button-secondary ds-button-size-default" to="/blog"><span className="ds-button-content">查看博客 <span aria-hidden="true">→</span></span></Link>
     </header>
     <div className="landing-blog-grid">
-      {blogPosts.map(post => <article key={post.slug}>
+      {featuredBlogPosts.map(post => <article key={post.slug}>
         <Link className="blog-card-link" to={`/blog/${post.slug}`} state={{ fromBlog: true }} aria-labelledby={`card-${post.slug}`}>
           <div className="blog-card-cover"><BlogCover kind={post.cover} /></div>
           <div className="blog-card-copy">

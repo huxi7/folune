@@ -1,9 +1,11 @@
 /**
- * [INPUT]: 依据当前 Paper、已实测的整理/引用/搜索/Canvas 能力与写作研究演示截图，不读取账号数据
- * [OUTPUT]: 对外提供三篇中文博客、稳定 slug、可选章节实景图、封面主题与统一作者信息；整理与画布指南承接功能区入口
+ * [INPUT]: 依赖 landingDetailData 四篇细节文章，依据当前 Paper、已实测的整理/引用/搜索/Canvas 能力与写作研究演示截图，不读取账号数据
+ * [OUTPUT]: 对外提供三篇首页精选与四篇功能细节中文博客、稳定 slug、可选章节实景图、封面主题与统一作者信息；整理与画布指南承接功能区入口
  * [POS]: widgets 的公开编辑内容源；首页卡片、博客目录与阅读页共读，避免标题摘要与正文各自维护
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
+import { detailStories } from "./landingDetailData";
+
 export type BlogCoverKind = "paper" | "branches" | "connections";
 export type BlogPost = {
   slug: string;
@@ -20,7 +22,7 @@ export type BlogPost = {
   }[];
 };
 export const blogAuthor = { name: "huxi", role: "Folune 创作者", avatar: "/brand/huxi-avatar.jpg" };
-export const blogPosts: BlogPost[] = [
+export const featuredBlogPosts: BlogPost[] = [
   {
     slug: "write-first-organize-later",
     title: "先记下来，让想法有处可去",
@@ -116,3 +118,5 @@ export const blogPosts: BlogPost[] = [
     ],
   },
 ];
+
+export const blogPosts: BlogPost[] = [...featuredBlogPosts, ...detailStories.map(item => item.post)];

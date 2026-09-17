@@ -2,6 +2,11 @@
 > L2 | 父级: ../CLAUDE.md
 
 成员清单
+details-content.md: 第 11 区块四项细节、真实截图来源、文章路由与返回/键盘/响应式验收记录
+details-desktop.png: 1440px 功能细节默认归档项与四列文章入口
+details-mobile.png: 390px 功能细节标题、展开项与实景图衔接
+details-mobile-guides.png: 390px 实景图与底部双列文章入口
+details-article-mobile.png: Markdown 指南在 390px 的正文、实景图与图注
 features-content.md: 五项功能选择、真实 APP 演示与截图裁切来源、配套文章/返回链路及本轮验证边界
 features-desktop.png: 五图内容替换后的桌面功能区验收截图
 features-mobile.png: 390px 功能区标题、双文章入口与前两项能力验收截图
