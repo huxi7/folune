@@ -1,15 +1,24 @@
 # LandingHeroLab/
 > L2 | 父级: ../CLAUDE.md
 
-首屏视觉研究的独立入口。只呈现 Header、Hero 和三栏价值条；沿用 Folune 品牌母图、生产字体/按钮与 Blueprint 骨架，不导入正式 MarketingHeader 的认证链路或 LandingHero 的 APP 展示。所有候选仅由 hero-lab.html 在开发期装配，不进入正式路由与构建。
+独立首屏 Shader 选型 Demo，只包含 Header、居中 Hero 与三栏价值条。正式 Landing 正由另一位 Agent 修改，本模块禁止反向修改正式页面、共享组件/样式、路由与构建入口；入口仍为 hero-lab.html。
 
 成员清单
 main.tsx: 独立 React/DS 样式入口，固定浅色且不读取持久化偏好
-HeroLab.tsx: 三套候选与当前基线切换；同位呈现完整首屏，暂停只作用于本页，地址 hash 可直接定位方案
-HeroArtwork.tsx: 原创纸页、流线、纸光三种视觉素材，复用 SVG/CSS 的可控低频动态；无第三方复制源码与图形引擎
-useAmbientMotion.ts: 装饰层生命周期边界，系统减少动态效果、用户暂停、离屏与后台共同决定是否运行
-hero-lab.css: 仅 hero-lab 页面加载的完整候选版式、导轨边注与动态；同一主轨连接三栏价值条，中央文字不参与循环动画
+HeroLab.tsx: GrainGradient/Warp 两套完整居中首屏切换，提供暂停和 Shader 加载/失败/系统减少动态效果反馈；hash 只选择本地候选
+HeroArtwork.tsx: 直接装配已安装的 Paper Shaders GrainGradient 和 Warp，蓝灰/纸色色场由局部参数定义；WebGL2 探测、画布创建与上下文丢失反馈避免把静态备用底色当成正常动态
+useAmbientMotion.ts: 系统减少动态效果、用户暂停、离屏和后台共同决定传给 Shader 的 speed，不创建逐帧 React 状态
+hero-lab.css: 两套候选共用居中排版，画布扩展至外轨并通过中央纸色遮罩保护阅读；无自绘纸卡、CSS 背景动画或侧排标题
 
-实现取舍：组件库提供图形和动效模式参考，实际几何属于 Folune；Motion 仅复用既有视口观察，CSS 持有循环时间线。每次只挂载一个候选，不引入 WebGL、Canvas、GSAP 或第二套状态管理。
+用户纠正后的选型：直接使用真实 Shader 组件，不以借鉴组件思路后自绘 SVG/CSS 替代要求。A 为 GrainGradient wave（speed 0.8），B 为 Warp edge（speed 1.2）；单次只挂载一个 canvas，渲染上限 140 万像素。复用项目已经安装的 @paper-design/shaders-react 0.0.80，不更改依赖。
+
+官方组件文档：
+- https://shaders.paper.design/grain-gradient ：wave 形态、noise/softness/intensity 与 speed/frame。
+- https://shaders.paper.design/warp ：edge 形态、distortion/swirl/iterations、颜色与 speed/frame。
+- 以本地 0.0.80 类型与组件源码为准；Context7 返回的 GrainGradient shape/参数与本地不同，未采用。
+
+2026-09-18 运行验收：两套均实际显示一个 WebGL2 canvas；1.5 秒内 GrainGradient 时间推进约 1200ms、Warp 约 1800ms，匹配各自 0.8/1.2 的 speed。1440px 下标题中心为 x=720；390px 两套 scrollWidth 均为 390。暂停后 Warp 时间在两次读取间完全一致且 speed=0；系统减少动态效果也为 speed=0 并显示原因，检查后已恢复默认播放。模块 oxlint、APP 类型检查、只针对 hero-lab.html 的临时独立构建通过，正式构建输出未触碰。旧 Hook 改造期间热更新曾报钩子数量错误，最终完整重新加载后正常运行；历史日志不冒充最终加载错误。
+
+旧 app/docs/landing-refactor/hero-lab-research.md 记录的三套 SVG/CSS 方案已被用户否决，不再代表当前 Demo；该文件与上层目录地图本轮不改，以避免碰到另一位 Agent 的正式 Landing 工作。当前实现和验收以此局部文档为准。
 
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
