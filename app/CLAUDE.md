@@ -26,7 +26,7 @@ src/pages/: 页面层，以 useAppDashboardController 与 AppDashboard 分离状
 src/widgets/: 业务组合组件层，承载 Landing、PaperWorkspaceShell/CanvasWorkspace、共享文件库/AI Panel、memo 编辑会话、账户/订阅/回收站、全局对象命令与 Canvas V2 React Flow 交互
 src/shared/: 前端共享层，承载 memo/AI/Canvas API、轻量 tree、按 ID 正文、Canvas document/WAL/Workspace Store/保存协调器、Paper 与 Canvas 各自独立的 Chrome 状态、design system、纯 Supabase Auth 与主题状态；前端禁止直连业务表或 Storage
 docs/: UI 验收与决策证据目录，保存 Design System 语义说明、computed Token 快照、Paper First V1.1 当前前后对比/验收截图及 Color Lab v0 同构配色快照
-package.json: Bun 包元数据、Vite dev/build/typecheck、Bun test 与 oxlint scripts 及用户端依赖清单；Paper Shaders 仅由 Landing APP 展示背景按需加载
+package.json: Bun 包元数据、Vite dev/build/typecheck、Bun test 与 oxlint scripts 及用户端依赖清单；Paper Shaders 仅由 Landing 三处产品展示背景按需加载
 bun.lock: Bun 锁定依赖版本
 .oxlintrc.json: 前端静态检查策略，启用 React Hooks、JSX a11y 与未使用变量诊断；render 期 latest ref 写入等已证明安全的模式只允许带就地中文依据后局部豁免
 tsconfig.json: TypeScript 编辑器与编译约束

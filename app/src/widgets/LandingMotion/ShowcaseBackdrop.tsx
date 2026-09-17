@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 Paper Shaders Dithering、Motion 视口观察、DS 动效偏好与展示区的品牌颜色
- * [OUTPUT]: 对外提供铺满 APP 展示区导轨矩形的低对比点阵流动背景
- * [POS]: LandingEditor 的装饰层；按需加载 shader，离屏/后台由库暂停，减少动态效果时保留静态点阵
+ * [OUTPUT]: 对外提供铺满宿主矩形的低对比细点阵流动背景，三处展示共用同一组视觉参数
+ * [POS]: LandingEditor 与 LandingSections 两处 SplitFeature 共用的装饰层；按需加载 shader，离屏/后台由库暂停，减少动态效果时保留静态点阵
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
@@ -35,7 +35,7 @@ export function ShowcaseBackdrop() {
             colorFront={ink}
             shape="warp"
             type="4x4"
-            size={1.5}
+            size={1}
             scale={0.65}
             speed={0.20}
             frame={12000}

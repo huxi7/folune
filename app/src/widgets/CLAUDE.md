@@ -18,9 +18,9 @@ BlueprintFrame.tsx: Landing 纵向导轨容器；导航、1120px 正文与页脚
 BlueprintDivider.tsx: Landing 横向导轨；14px 分隔带上下两条边分别共置横线与菱形，flush 提供零高度边界，compact 保留 7px 内部分隔带而不添加参考中没有的节点
 AuthDialog.tsx: 复用 BrandMark 原图的登录/注册统一认证 Dialog，复用共享内凹 Input/PasswordInput 承载邮箱、双密码与显隐控制，并提供协议提示、六格 OTP 自动校验与 Google OAuth 入口
 LandingHero.tsx: 中文公告、居中 Hero、三列价值条与真实 UI 互动插槽；LandingActions 共用 DS 两字「打开」与两字待发布下载（全站同一动作同一词，2+2 等密度），auth query 交给 MarketingHeader 唯一认证弹窗；分区仍复用通栏 BlueprintDivider
-LandingSections.tsx: 保留 Grid/Flex 分区与信纸骨架，承载中文 Folune 叙事与 huxi 个人创作者信件；信件以项目记录/整理/可撤销理念为依据，独立使用用户原图头像；评价区采用六个模拟机构字标、日常姓名与账号混排，机构名和引语仅为版式占位；标题自然换行，无副标题；社区数据和扩展继续标明参考来源；博客由 LandingBlog 提供 Folune 原创内容；信纸/CTA 共用 BrandMark，按钮共用 DS 与 LandingActions
+LandingSections.tsx: 保留 Grid/Flex 分区与信纸骨架，承载中文 Folune 叙事与 huxi 个人创作者信件；两处 SplitFeature 图片共用 ShowcaseBackdrop，与 APP 展示背景同参数且由图片区隔离层级；信件以项目记录/整理/可撤销理念为依据，独立使用用户原图头像；评价区采用六个模拟机构字标、日常姓名与账号混排，机构名和引语仅为版式占位；标题自然换行，无副标题；社区数据和扩展继续标明参考来源；博客由 LandingBlog 提供 Folune 原创内容；信纸/CTA 共用 BrandMark，按钮共用 DS 与 LandingActions
 LandingFooter.tsx: 共用 DS 墨蓝的品牌区与产品/资源/关于/连接四组导航；16 项预留入口（产品 2、资源 8、关于 3、连接 3）以 aria-disabled link 语义展示且不跳转，打开网页版保留博客来路并复用本地认证；品牌与入口置顶、作者与版权置底；保留 Folune 淡描边与细纹层序，不放 PNG，BlueprintFrame 延续导轨
-LandingMotion/: Landing 克制反馈模块，提供 CountUp 与 APP 展示区专属的低对比点阵后景；磁吸、指针聚光不启用，一次性 reveal 仍由共享动效原语承载
+LandingMotion/: Landing 克制反馈模块，提供 CountUp 与 APP/两处图文展示共用的低对比细点阵后景；磁吸、指针聚光不启用，一次性 reveal 仍由共享动效原语承载
 NotebookPreview.tsx: 确定性首屏产品预览，DS 统一缩放淡入与显式卡片 lift 分处不同元素，阴影由 CSS 持有，内部布局不参与独立动画
 AppSidebar.tsx: 右键菜单通过 Portal 锚定视口，避免 Panel transform 改写 fixed 坐标；文件库内容与展开偏好的唯一所有者，负责创建/搜索、树/重命名/拖放意图、底部导航和唯一有效归档代表；重排交给 useTreeReorder，结构键按不可变树引用复用以跳过标题/摘要更新时的整树 FLIP 判据，子级尺寸交给 TreeDisclosure，业务事务仍由 Dashboard 持有
 WorkspacePanelLayer.tsx: 跨 Paper/Canvas 常驻左右工具宿主，8px/220ms 入、8px/170ms 出，不缩放内容或改变 Stage；关闭即 inert，开合运动租约成对归还，保留文件树/AI 会话实例与滚动位置

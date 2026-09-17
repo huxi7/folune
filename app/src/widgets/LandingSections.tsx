@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 LandingBlog、BlueprintDivider、共享 BrandMark/Button、用户提供的 huxi 头像、虚构场景引语及其余分区的 Figma 参考素材
+ * [INPUT]: 依赖 LandingBlog、BlueprintDivider、ShowcaseBackdrop、共享 BrandMark/Button、用户提供的 huxi 头像、虚构场景引语及其余分区的 Figma 参考素材
  * [OUTPUT]: 对外提供中文产品叙事、使用模拟机构与账号的评价版式及其余参考内容、文字层级、分层信纸与Folune 原创博客入口；区块边界及细节网格前的分隔带复用 BlueprintDivider
  * [POS]: widgets 的营销叙事组合；创作者信件沿用首稿叙事，与 Laper 参考同构：问候与自我介绍各占一行，再以长短有别的段落分承初衷、打磨、AI 分寸与期待，一段只说一件事，由 huxi 个人署名
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -9,6 +9,7 @@ import type { ReactNode } from "react";
 import { BrandMark, Button } from "../shared/design-system/components";
 import { BlueprintDivider } from "./BlueprintDivider";
 import { LandingActions } from "./LandingHero";
+import { ShowcaseBackdrop } from "./LandingMotion/ShowcaseBackdrop";
 import { referenceAssets as assets, referenceExtensions } from "./landingReferenceData";
 
 export function LandingSectionHeading({title,body,children}: {title:string;body:string;children?:ReactNode}) {
@@ -43,7 +44,7 @@ const details=[
 ];
 function SplitFeature({kind}:{kind:"ai"|"care"}){
  const ai=kind==="ai";
- return <div className="landing-split"><div className="landing-split-copy"><div><h3>{ai?"AI 协作":"语言服务器协议"}</h3><p>{ai?"把任务交给 AI，跟进处理进度，并检查修改内容。":"参考编辑器提供的语言支持。"}</p><a href="https://zed.dev/docs">了解更多 ›</a></div><div className="landing-split-options">{(ai?["连接知识","内联助手","智能体与工具"]:["大纲视图","文本与行操作"]).map(t=><a href="https://zed.dev/features" key={t}>{t} <span>⌄</span></a>)}</div></div><div className="landing-split-media"><img src={assets[ai?"19-3464/imgImage1":"19-3974/imgLspWebp"]} alt={ai?"AI 编辑参考画面":"语言服务器参考画面"} loading="lazy" /></div></div>;
+ return <div className="landing-split"><div className="landing-split-copy"><div><h3>{ai?"AI 协作":"语言服务器协议"}</h3><p>{ai?"把任务交给 AI，跟进处理进度，并检查修改内容。":"参考编辑器提供的语言支持。"}</p><a href="https://zed.dev/docs">了解更多 ›</a></div><div className="landing-split-options">{(ai?["连接知识","内联助手","智能体与工具"]:["大纲视图","文本与行操作"]).map(t=><a href="https://zed.dev/features" key={t}>{t} <span>⌄</span></a>)}</div></div><div className="landing-split-media"><ShowcaseBackdrop /><img src={assets[ai?"19-3464/imgImage1":"19-3974/imgLspWebp"]} alt={ai?"AI 编辑参考画面":"语言服务器参考画面"} loading="lazy" /></div></div>;
 }
 export function LandingSections(){
  const avatars=Object.entries(assets).filter(([key])=>key.startsWith("19-2760/"));
