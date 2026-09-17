@@ -2,6 +2,7 @@
 > L2 | 父级: ../CLAUDE.md
 
 成员清单
+hero-lab-research.md: 独立首屏研究的 Exa/官方文档/GitHub 证据、三套完整设计、文案依据与实际运行验收；结论不代表正式 Landing 已更改
 showcase-background.md: APP 与两处图文展示共用背景的候选比较、Paper Shaders 参数与依赖边界、细点阵/轮廓调整和实际桌面/手机验收证据
 README.md: 原始参考基线、逐项精修的视觉证据、产品真实性边界、已确认冻结节点与逐项替换约束
 chinese-desktop.png: 中文标题/正文、共享 DS 按钮和暖灰背景的 1280px 首屏

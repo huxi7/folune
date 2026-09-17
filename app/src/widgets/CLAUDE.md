@@ -2,6 +2,7 @@
 > L2 | 父级: ../../CLAUDE.md
 
 成员清单
+LandingHeroLab/: 独立首屏研究，三套完整 Header/Hero/价值条候选复用品牌、按钮、导轨与动态偏好；仅 hero-lab.html 开发入口加载，不改写正式 Landing
 landingBlogData.ts: 三篇 Folune 原创中文博客的单一内容源，稳定 slug、摘要、章节与主题供首页/目录/正文共读；署名复用用户提供的 huxi 头像
 BlogCover.tsx: 原创细网格 SVG 封面，散页、递归枝条与笔记关系三种构图对应记录/归档/Canvas；useId 隔离多实例图案引用，无动画和外部图片请求
 LandingBlog.tsx: 首页三列博客卡片；整卡单一 Router Link，链接携带来路供阅读页返回并恢复滚动，查看博客进入 /blog

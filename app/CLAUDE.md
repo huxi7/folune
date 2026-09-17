@@ -11,6 +11,7 @@ Canvas 已落地为一级持久 Workspace。memo 默认 Canvas 与 standalone Ca
 public/: 统一品牌母图、PNG Favicon 与静态营销素材，第一阶段保存来自参考 Frame 的原始图像与字体
 MOTION_SYSTEM.md: A/B 全量源码取舍、统一 Motion Design 规范与实际验收记录
 demo.html: Landing 独立 UI 演示入口，CSP 禁止连接与表单提交；不装配 Auth/Router/持久化主题，和 index.html 一同构建
+hero-lab.html: 首屏方案研究的独立开发入口，仅 Header/Hero/三栏价值条，支持三方案与原 Hero 切换；不进入正式路由或构建清单
 index.html: Vite HTML 宿主页面，声明 V1 Classic Blueprint 默认画布、同步解析 App 的 system/light/dark 与 Landing 浅色画布 pre-paint bootstrap、提供 root 挂载点并引用品牌母图等比缩放的 PNG Favicon
 .env.example: app 浏览器环境变量模板，声明业务 API、chat 服务 base URL 与 Supabase 公开连接配置
 AUTH_SETUP.md: Supabase 邮箱确认模板、URL allow list、自定义 SMTP 限制与 Google OAuth 后台配置说明
