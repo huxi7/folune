@@ -1,0 +1,58 @@
+/**
+ * [INPUT]: 依赖生产 Workspace/Paper/Canvas/Agent 与 DS 样式
+ * [OUTPUT]: Demo 文档的字号档位、三栏之间的空隙、Paper/Canvas 互斥显示与窄屏适配
+ * [POS]: 仅适配嵌入尺寸，不新增演示工具条或组件皮肤
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+html, body, #root { height:100%; overflow:hidden; }
+/*
+ * 普通 UI 的 rem 字号、间距与控件收小 12.5%；这不是整个 APP 的几何缩放。
+ * Canvas 卡片使用固定画布坐标，纸内排版由 note-paper.css 的 thumbnail 基准收口，
+ * 只随 React Flow 缩放，不再叠加这里的 rem 缩小。Demo 是独立文档，改不到真实 APP。
+ * 对照组见下面 pinned 档：把 --spacing 钉成绝对长度，字缩而按钮/行高不缩。
+ */
+:root { font-size:87.5%; }
+/*
+ * 栏间空隙：两侧轨道负责"面板多宽"，这个值负责"面板与中间那张纸之间留多少"。
+ * 它是 padding 的一部分（padding = 轨道 + 空隙），而面板自己从 --workspace-panel-inset
+ * 起算，所以**肉眼看到的空隙 = 这个值 − inset**（桌面约 30 − 10.5 ≈ 20px）。
+ * 纸宽 = min(可用高度 × 7/9, 可用宽度)，因此加大空隙会挤窄纸——虚线是它在让步。
+ */
+.demo-root { --demo-column-gap:30px; height:100%; color:var(--foreground); font-family:var(--font-sans); background:var(--workspace-stage); }
+/*
+ * 对比页用的另外两档（demo.html#，由 main.tsx 写到 html 的 data 属性上）。
+ * 不带 hash 就是上面 :root 那一组，也就是线上那一档，正式入口因此不经过这里。
+ *   pinned   字缩、控件不缩：--spacing 钉成绝对长度，于是按钮与行高保持原尺寸
+ *   original 本轮改动之前的原样：字号 100%、边栏固定像素、栏间空隙 20px
+ */
+html[data-demo-variant="pinned"] { --spacing:4px; }
+html[data-demo-variant="original"] { font-size:100%; }
+html[data-demo-variant="original"] .demo-root { --demo-column-gap:32px; }
+.demo-workspace-frame { position:relative; height:100%; overflow:hidden; }
+.demo-workspace-frame .app-workspace { height:100%; }
+.demo-workspace-frame .canvas-workspace { position:absolute; inset:0; }
+.demo-workspace-frame .paper-surface { min-height:var(--paper-opening-height); }
+.demo-canvas-layer { position:absolute; inset:0; height:100%; }
+.demo-canvas-layer[hidden] { display:none; }
+.demo-workspace-frame .paper-stage-layout { padding-left:calc(var(--workspace-sidebar-track) + var(--demo-column-gap)); padding-right:calc(var(--workspace-agent-track) + var(--demo-column-gap)); }
+.demo-workspace-frame .app-workspace[data-library-open="false"] .paper-stage-layout { padding-left:var(--demo-column-gap); }
+.demo-workspace-frame .app-workspace[data-assistant-open="false"] .paper-stage-layout { padding-right:var(--demo-column-gap); }
+/*
+ * 画布是全视口的，面板浮在它上面——与生产一致，也是 Canvas 宪法要求的：
+ * 「开合不得改变 React Flow 几何」。demo 曾经按面板宽度给 stage 加左右 margin，
+ * 于是每收一次面板 stage 就变宽、ResizeObserver 重取一次景、卡片跟着变大。
+ * 代价是左上角那排 chrome 会被面板盖住，而「回到笔记」是 demo 里回纸张的唯一
+ * 入口，所以它的左内缩得跟着面板走。生产那边画布标题本来就住在面板下面，不动。
+ */
+.demo-workspace-frame .canvas-stage { height:100%; }
+.demo-workspace-frame .canvas-chrome-start { left:calc(var(--workspace-panel-inset) + var(--demo-column-gap)); }
+.demo-workspace-frame .canvas-workspace[data-library-open="true"] .canvas-chrome-start { left:calc(var(--workspace-sidebar-track) + var(--demo-column-gap)); }
+.demo-workspace-frame .canvas-chrome-end { right:calc(var(--workspace-panel-inset) + var(--demo-column-gap)); }
+.demo-root .agent-composer-footer { justify-content:flex-end; }
+.demo-root .agent-message-list { padding-top:12px; }
+.demo-root .canvas-card-actions, .demo-root .canvas-card-connect-handle { display:none; }
+.demo-root .demo-canvas-flow .react-flow__node { cursor:default; }
+.demo-root .canvas-chrome-slot { width:auto; }
+@media(max-width:759px) {
+  .demo-workspace-frame .paper-stage-layout { padding:12px !important; }
+}

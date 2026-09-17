@@ -10,6 +10,7 @@ Canvas 已落地为一级持久 Workspace。memo 默认 Canvas 与 standalone Ca
 成员清单
 public/: 统一品牌母图、PNG Favicon 与静态营销素材，第一阶段保存来自参考 Frame 的原始图像与字体
 MOTION_SYSTEM.md: A/B 全量源码取舍、统一 Motion Design 规范与实际验收记录
+demo.html: Landing 独立 UI 演示入口，CSP 禁止连接与表单提交；不装配 Auth/Router/持久化主题，和 index.html 一同构建
 index.html: Vite HTML 宿主页面，声明 V1 Classic Blueprint 默认画布、同步解析 App 的 system/light/dark 与 Landing 浅色画布 pre-paint bootstrap、提供 root 挂载点并引用品牌母图等比缩放的 PNG Favicon
 .env.example: app 浏览器环境变量模板，声明业务 API、chat 服务 base URL 与 Supabase 公开连接配置
 AUTH_SETUP.md: Supabase 邮箱确认模板、URL allow list、自定义 SMTP 限制与 Google OAuth 后台配置说明
@@ -92,3 +93,21 @@ Paper First V1.1 / Quiet Editorial 覆盖约束: 本节覆盖上文遗留的 V1 
 2026-09-07 Scrollbar refinement: 文件树与 AI 消息滚动区须到达 Panel 边缘，正文留白位于滚动区内部；原生细滚动条共用淡中性色与透明轨道，不能遮盖正文或再造装饰轨道。
 
 本次侧栏生命周期约束：Paper/Canvas 只承载中央内容与工具开关，左右工具由 Dashboard 的 WorkspacePanelLayer 持续挂载；从笔记进入默认画布继承当前工具开关，动画不得重建 AgentPanel。
+
+2026-09-16 APP 展示区：LandingEditor 在原 738px 框内加载独立 demo.html。复用生产 Paper、Toolbar、MemoTreeBranch、消息渲染、CanvasCardView 与纸面 Transition；仅本实例内存管理笔记和模拟回复，禁止业务 API/Auth/持久化依赖。按用户反馈移除底部引导/重置栏、搜索/新建/历史管理/画布编辑工具；三栏上下同线。Paper 与 Canvas 互斥可见，左右 Panel 不随切换重挂载。
+
+2026-09-16 APP 展示区投影二：AI 面板此前只产 text part，于是生产那条「过程披露 → 工具芯片」的链路一直空转。本轮把 `model.ts` 改为产出 `DemoStep` 对话脚本（read_tree / read_memo / move_memo / say）并由 `materializeSteps` 物化成 AI SDK 的 dynamic-tool parts，`DemoAssistant` 按脚本逐步揭示——工具先停在 input-available 让芯片流光，落定才翻 output-available，写操作等文件树真正落定才打勾。活动判定复用生产 `deriveAssistantActivity`，不另写第二套。**历史对话一律只读**，写只发生在用户发送之后并真的改树；工具条的「整理笔记」与对话的 edit_node 共用一个 `organize(memoId, commandId?)`，回复末尾的「撤销」由同一份命令台账兑现，因此不存在假按钮。展示内容主线改为「散步 → 注意力 → 写作」，笔记回到六篇深浅搭配、根目录只留一篇待归档。CSS 与 DemoSidebar/DemoCanvas 未改动。
+
+2026-09-16 APP 展示区投影三（用户以真实 APP 画布截图作参照）：Demo 画布此前三张卡间距只有 52/40px（卡片本身 280×360），三张纸连成一整块把展示框填满，读起来像一张裁好的示意图而不是一片 Workspace。**取景只改 Demo，共用组件一律不动**——`positions` 打开到约 90/106，`fitView` padding 由 0.15 退到 0.18，并把这条视口参数收敛成一个 `fitOptions` 常量（原生 `fitView` 与 ResizeObserver 的重取景共读同一个值，此前是两处各写一份）。间距同时换来两件副产品：关系线从"卡片缝隙里的短茬"变回一条有长度的线，线上那个理由入口也不再贴着卡片。共用层的卡片开本、连线绘制与理由浮层本轮明确排除在外。
+
+2026-09-16 APP 展示区投影四（用户要求边栏宽度必须有规范）：原来的 220/288 是**固定像素**，占比随窗口漂（1088 时 20%/26%、1600 时 14%/18%）——真正的问题是"边栏不跟窗口一起长，窗口一大三栏就散架"。改为视口百分比 + 上下限：左 `clamp(180px, 20%, 260px)`、右 `clamp(240px, 26%, 340px)`，合计 46%，中间的纸因此稳定拿到约 50%（正在写的东西必须永远是最大的一块；左窄右宽不是审美——文件树里是短标题、AI 栏里是成句的话）。面板是 `position: fixed`，所以百分比就是视口百分比。栏间空隙是 padding 的一部分（`padding = 轨道 + --demo-column-gap`），而面板自己从 `--workspace-panel-inset` 起算，故肉眼看到的空隙 = 该值 − inset。
+
+2026-09-16 APP 展示区投影五（用户选定"等比例缩小"并要求据此修画布）：**默认档改为 uniform**——`:root { font-size:87.5% }` 且不再钉 `--spacing`，于是字、内边距、控件高度（全部由 `--spacing` 派生）等比小 12.5%；`pinned`（字缩而控件不缩）与 `original` 保留为对比档。画布两处修正：① **stage 改回全视口**，面板浮在它上面——与生产一致，也是 Canvas 宪法「开合不得改变 React Flow 几何」的字面要求；demo 此前按面板宽度给 stage 加 margin，于是每收一次面板 stage 就变宽、ResizeObserver 重取景、卡片自己变大，那正是用户报的 bug。代价是左上角 chrome 会被面板盖住，而「回到笔记」是 demo 回纸张的唯一入口，因此它的 `left` 跟着面板走（生产那边画布标题本来就住在面板下面，不动）。② `fitView` padding 由 0.18 收到 0.14——stage 从 527 宽变成整个框之后竖向成了唯一约束，留白可以更紧而卡片更大。另修共用层的浮层**够不到**问题：理由浮层与把手之间隔着 `--space-2`，指针穿过时两边都判"离开"，浮层在够到之前就关，里面那颗「删除关系」只有先点一下把手钉住才按得到；补一条等宽透明 `::before` 桥把两块连成连续可悬停区域，并去掉该浮层 96% 不透明下几乎不可见、却要在被缩放的标签层里每帧重算的 `backdrop-filter`。
+
+2026-09-16 关系浮层的两个状态：`CanvasEdgeReasonInspector` 同时有「跟指针走」（hovered / lineHovered）与「点一下钉住」（expanded）两种开法，而 expanded 此前**没有任何卸载路径**——点过之后说明就永久挂在画布上，只能再点一次把手才能收起。改走共享 `useDismissable`：外部 pointerdown 与 Escape 都能把它放回"跟指针走"，Escape 分支照旧 preventDefault 给壳层守卫让行。这条与上面那条桥是同一处控件的两半——一个负责够得到，一个负责放得下。
+
+2026-09-16 关系浮层收口（用户报"点旁边卡住"，且真 APP 无此现象）：撑开这个说明的其实有**四条**独立理由——指针在把手上、键盘焦点在把手上、指针在关系线上（命中区 18px 宽，把手就长在它上面）、点一下钉住。真 APP 里用户会缩放/拖动画布，指针多半落在空地；demo 里"点旁边"经常就落在线上，于是第四条仍然成立，看着像卡住。修正：消散一次收掉全部四条，且**焦点必须从"悬浮"里拆成独立状态**——Escape 会把焦点归还给把手，若焦点直接算作悬浮，归还那一刻它就自己重新打开，Escape 等于没按（这条由 `KnowledgeCanvas.interaction.test.tsx` 的"可聚焦查看"锁定，不能简单删掉焦点分支）。线的那条用"压制"而非清空：清了它，指针仍在线上不会重新触发 enter，说明会一直不回来。
+
+2026-09-16 APP 展示区投影六（用户报"第三张卡被 AI 栏挡一半"）：画布是全视口的、面板浮在它上面，而 `fitView` 把内容居中在**整块画布**上，于是最右那张卡正好顶到 AI 栏底边。`DemoCanvas` 因此不再用 `fitView`，改为自己算视口（`setViewport`），把"居中于什么"从整块画布换成**两侧面板之间真正看得见的那条带**；带的两端直接量面板元素——宽度规则住在 CSS，在 JS 里再写一遍就是第二份真相。带的两端只依赖 stage 尺寸、不依赖面板开合，所以面板开合仍然不重取景（与投影五同一条约束）。
+
+2026-09-17 展示入口收敛：移除临时三版对比页 demo-compare.html；首页继续通过 demo.html 加载既有互动展示，保留选定的 uniform 尺度与全部既有画布调整。

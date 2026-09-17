@@ -6,12 +6,13 @@
  */
 
 import { PresenceSurface } from "../../shared/design-system/components/PresenceSurface";
+import { useDismissable } from "../../shared/design-system/useDismissable";
 import {
   EdgeLabelRenderer,
   useInternalNode,
   type EdgeProps,
 } from "@xyflow/react";
-import { useId, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useId, useRef, useState, type CSSProperties } from "react";
 
 import type {
   CanvasFlowEdge,
@@ -122,8 +123,39 @@ export function CanvasEdgeReasonInspector({
   const detailsId = `canvas-edge-reason-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
   const [expanded, setExpanded] = useState(false);
   const [hovered, setHovered] = useState(false);
+  const [focused, setFocused] = useState(false);
+  const shellRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  /*
+   * 这个说明有**四条**独立理由可以撑开它：指针在把手上、键盘焦点在把手上、指针在
+   * 关系线上（命中区 18px 宽，把手就长在它上面）、以及点一下钉住。只用其中几条时
+   * 「点旁边收起」经常不生效——那一下落在线上，线的那条仍然成立，于是看着像卡住。
+   * 所以消散必须一次收掉全部四条，且**焦点必须与悬浮分开**：焦点不是一个可以随手
+   * 清掉的开关，Escape 会把焦点归还给把手，若焦点直接算作"悬浮"，归还的那一刻它就
+   * 自己重新打开，Escape 等于没按。线的那条用"压制"而不是清空——清了它，指针仍在
+   * 线上也不会重新触发 enter，说明会一直不回来；压到指针真正离开线为止。
+   * 消散走共享 useDismissable（外部 pointerdown + Escape + 焦点归还），
+   * 与 Select/菜单同一条协议；Escape 分支的 preventDefault 同时给壳层守卫让行。
+   */
+  const [lineSuppressed, setLineSuppressed] = useState(false);
+  useEffect(() => {
+    if (!lineHovered) setLineSuppressed(false);
+  }, [lineHovered]);
+  const dismiss = useCallback(() => {
+    setExpanded(false);
+    setFocused(false);
+    setHovered(false);
+    setLineSuppressed(true);
+  }, []);
   const normalizedRationale = rationale?.trim() ?? "";
-  const showDetails = expanded || hovered || lineHovered || selected;
+  const showDetails = expanded || hovered || focused
+    || (lineHovered && !lineSuppressed) || selected;
+  useDismissable({
+    focusRef: triggerRef,
+    onDismiss: dismiss,
+    open: showDetails,
+    shellRef,
+  });
   const relationKind = createdBy === "ai" ? "AI 关联理由" : "手工关联";
   const reason = normalizedRationale.length === 0
     ? createdBy === "ai"
@@ -136,11 +168,12 @@ export function CanvasEdgeReasonInspector({
       className="canvas-edge-inspector nodrag nopan"
       data-open={showDetails}
       onBlur={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget)) setHovered(false);
+        if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false);
       }}
-      onFocus={() => setHovered(true)}
+      onFocus={() => setFocused(true)}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      ref={shellRef}
       style={style}
     >
       <button
@@ -152,6 +185,7 @@ export function CanvasEdgeReasonInspector({
           event.stopPropagation();
           setExpanded((current) => !current);
         }}
+        ref={triggerRef}
         title={`查看${relationKind}`}
         type="button"
       >

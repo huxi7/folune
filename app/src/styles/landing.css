@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖共享 Button/Blueprint DOM、BrandMark 母图、创作者署名头像、页面私有参考字体与 Figma 素材
+ * [INPUT]: 依赖共享 Button/Blueprint DOM、BrandMark 母图、创作者署名头像、页面私有参考字体与 Figma 素材、独立 Demo iframe
  * [OUTPUT]: 对外提供英文参考字体与 DS 中文回退的标题/正文/注释层级、共轴导轨、分层信纸、场景评价与四组页脚导航的响应式版面；仅 Landing 禁止纵向越界回弹，页尾止于 Footer
  * [POS]: styles 的 Landing 局部样式；Footer 淡字位于细密斜纹之下，按钮材质与品牌墨蓝直接消费 DS，背景和纹理保留基线
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -228,3 +228,7 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
 }
 @media(prefers-reduced-motion:reduce) { .landing-blueprint * { scroll-behavior:auto!important; } }
 }
+
+/* 维持既有 738px 展示框与导轨；内部布局由真实 APP 自身处理。 */
+.landing-product-demo { display:block; width:100%; height:738px; border:1px solid #c4c7cc; border-radius:8px; box-shadow:0 2px 5px #0002; background:var(--workspace-stage); }
+@media(max-width:767px) { .landing-product-demo { height:650px; } }

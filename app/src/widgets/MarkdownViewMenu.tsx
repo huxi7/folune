@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 PresenceSurface 的统一入退场、 React 弹层/焦点状态、共享 Lucide 视图图标、共享 Button/Toast、当前 title/content 与 Markdown 视图状态协议
+ * [INPUT]: 依赖 PresenceSurface 的统一入退场、 React 弹层/焦点状态、共享 Lucide 视图图标、共享 Button/Toast、当前 title/content、可选文件操作能力与 Markdown 视图状态协议
  * [OUTPUT]: 对外提供高频编辑/阅读切换、具备完整菜单焦点语义的 More 菜单、原始 Markdown 复制与 .md 导出
  * [POS]: app/src/widgets 的编辑视图命令边界；只操作本地显示状态和原始正文副本，不拼接 title、不触发保存或改造业务数据流
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -28,6 +28,7 @@ import type { DocumentView, EditingMode } from "./markdownViewTypes";
 
 type MarkdownViewMenuProps = {
   content: string;
+  fileActionsEnabled?: boolean;
   documentView: DocumentView;
   editingMode: EditingMode;
   onDocumentViewChange: (view: DocumentView) => void;
@@ -50,6 +51,7 @@ export function markdownExportFilename(title: string): string {
 
 export function MarkdownViewMenu({
   content,
+  fileActionsEnabled = true,
   documentView,
   editingMode,
   onDocumentViewChange,
@@ -168,6 +170,7 @@ export function MarkdownViewMenu({
 
       <div className="note-more-menu-shell" ref={shellRef}>
         <Button
+          disabled={!fileActionsEnabled}
           aria-controls={menuId}
           aria-expanded={open}
           aria-haspopup="menu"

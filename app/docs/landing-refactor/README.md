@@ -151,3 +151,12 @@ Hero 与末端 CTA 共用 LandingActions：登录设置 auth=login，交由 Mark
 验收：类型检查、lint 和 git diff --check 通过；320/390/768/1280px 无文档横向溢出，导航容器未溢出，所有下载按钮 disabled、图片均有 src。内置浏览器目视检查桌面首屏、390px 首屏与 Footer。Ego 浏览器通过 Hero 真实邮箱密码登录进入工作台，后端准入完成；未修改业务笔记或调用模型。另验证手机只出现一个认证框、关闭删除 auth query；系统深色偏好下首页仍固定浅色，背景 #f4f4f2、Footer #395875。Google OAuth 与注册流程本轮没有提交，沿用原实现。
 
 本轮截图：chinese-desktop.png、chinese-mobile.png、chinese-footer.png。原冻结标记不变，本轮不自动认定为用户确认的新基线。
+
+
+## 2026-09-16：轻量 APP Demo
+
+现有导轨、斜纹外框与桌面 738px 高度不变。默认是林间的日常工作区：周末散步、注意力、阅读和通讯。可切换笔记、整理归档、输入并收到模拟回复、进入 Canvas 并阅读返回。按用户反馈删除底部重新体验栏、画布工具和非核心菜单行为，三栏上下对齐。刷新重置内存；不会为 Demo 打开认证弹窗。
+
+Exa 阅读了 [Zed](https://zed.dev)、[Linear](https://linear.app)、[Raycast](https://www.raycast.com)、[Attio](https://attio.com)、[Superhuman](https://superhuman.com) 官网。官网内容展示不等于自由交互：本次只借鉴具体工作内容、短任务路径、独立 CTA；AI 输入/650ms 等待/短分段预设回复是本项目的设计选择。Zed 与 Linear 的浏览器 DOM 另有核对，未把其余站点的动效宣称为实际交互测试。
+
+实现边界：独立 HTML/CSP/iframe 约束视口、网络连接、Portal 和 Transition；传递源码依赖门禁排除 Auth、API、业务 Store 和浏览器持久化。CanvasCardNode 只适配生产 Store，CanvasCardView 为两处共用视图，生产卡片行为不变。

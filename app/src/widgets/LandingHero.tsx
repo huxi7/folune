@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖共享 Button、BlueprintDivider、参考原始素材与 LandingEditor
- * [OUTPUT]: 对外提供渐变公告、居中 Hero、三列能力条与编辑器展示；公告及能力条边界复用通栏导轨和交点
+ * [OUTPUT]: 对外提供渐变公告、居中 Hero、三列能力条与真实 UI 互动展示；公告及能力条边界复用通栏导轨和交点
  * [POS]: widgets 的中文首页首屏；共享行动区与顶栏共用同一个两字动词「打开」，与「下载」构成 2+2 等密度并列，经既有 auth query 打开唯一登录/注册弹窗，下载仅展示待发布状态
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -36,7 +36,7 @@ export function LandingHero() {
       <div><h2>连接想法</h2><p>在笔记与画布之间自由切换，看见内容之间的新联系。</p></div>
     </div>
     <BlueprintDivider flush fullBleed />
-    <section className="landing-editor-section" aria-label="参考编辑器演示"><LandingEditor /></section>
+    <section className="landing-editor-section" aria-label="Folune 互动体验"><LandingEditor /></section>
     <BlueprintDivider fullBleed />
   </>;
 }

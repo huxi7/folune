@@ -5,7 +5,8 @@
 landingBlogData.ts: 三篇 Folune 原创中文博客的单一内容源，稳定 slug、摘要、章节与主题供首页/目录/正文共读；署名复用用户提供的 huxi 头像
 BlogCover.tsx: 原创细网格 SVG 封面，散页、递归枝条与笔记关系三种构图对应记录/归档/Canvas；useId 隔离多实例图案引用，无动画和外部图片请求
 LandingBlog.tsx: 首页三列博客卡片；整卡单一 Router Link，链接携带来路供阅读页返回并恢复滚动，查看博客进入 /blog
-LandingEditor.tsx: 主编辑器参考插槽，说明与对话中文化、英文代码和技术身份保留；品牌共用 BrandMark，后续替换真实 APP 展示
+LandingEditor.tsx: 保留原导轨和 738px 展示框，以受限 iframe 加载独立 demo.html；不传递真实账号状态
+LandingDemo/: 无业务会话的内存产品演示，复用 Paper/Toolbar/树/生产工具芯片/Canvas 视图；AI 面板按脚本逐步揭示真实工具调用，唯一的写操作与工具条共用同一归档入口并可真撤销；无底部额外工具栏
 landingReferenceData.ts: Figma 素材路径、英文代码分段与中文扩展卡片说明，不读取远程数据
 useTreeReorder.ts: AppSidebar 结构重排 FLIP Hook，手势前捕获位置、完成/取消归还租约；ResizeObserver 只刷新快照，文件夹展开不会再触发行位移动画
 TreeDisclosure.tsx: 文件树与 DS Collapse 的薄适配，声明可打断、成对释放的归档运动租约，让 Overlay 跟随真实高度几何；不读取业务数据
@@ -16,7 +17,7 @@ MarketingAnnouncement.tsx: 紧贴粘性导航下方、约为 Header 2/3 高且�
 BlueprintFrame.tsx: Landing 纵向导轨容器；导航、1120px 正文与页脚共用主轨/外轨坐标，fullBleed 增加可选外轨，颜色由当前区块局部覆盖
 BlueprintDivider.tsx: Landing 横向导轨；14px 分隔带上下两条边分别共置横线与菱形，flush 提供零高度边界，compact 保留 7px 内部分隔带而不添加参考中没有的节点
 AuthDialog.tsx: 复用 BrandMark 原图的登录/注册统一认证 Dialog，复用共享内凹 Input/PasswordInput 承载邮箱、双密码与显隐控制，并提供协议提示、六格 OTP 自动校验与 Google OAuth 入口
-LandingHero.tsx: 中文公告、居中 Hero、三列价值条与参考编辑器插槽；LandingActions 共用 DS 两字「打开」与两字待发布下载（全站同一动作同一词，2+2 等密度），auth query 交给 MarketingHeader 唯一认证弹窗；分区仍复用通栏 BlueprintDivider
+LandingHero.tsx: 中文公告、居中 Hero、三列价值条与真实 UI 互动插槽；LandingActions 共用 DS 两字「打开」与两字待发布下载（全站同一动作同一词，2+2 等密度），auth query 交给 MarketingHeader 唯一认证弹窗；分区仍复用通栏 BlueprintDivider
 LandingSections.tsx: 保留 Grid/Flex 分区与信纸骨架，承载中文 Folune 叙事与 huxi 个人创作者信件；信件以项目记录/整理/可撤销理念为依据，独立使用用户原图头像；评价区采用六个模拟机构字标、日常姓名与账号混排，机构名和引语仅为版式占位；标题自然换行，无副标题；社区数据和扩展继续标明参考来源；博客由 LandingBlog 提供 Folune 原创内容；信纸/CTA 共用 BrandMark，按钮共用 DS 与 LandingActions
 LandingFooter.tsx: 共用 DS 墨蓝的品牌区与产品/资源/关于/连接四组导航；16 项预留入口（产品 2、资源 8、关于 3、连接 3）以 aria-disabled link 语义展示且不跳转，打开网页版保留博客来路并复用本地认证；品牌与入口置顶、作者与版权置底；保留 Folune 淡描边与细纹层序，不放 PNG，BlueprintFrame 延续导轨
 LandingMotion/: Landing 克制反馈模块，只提供 CountUp 与一次性 reveal；磁吸、指针聚光与装饰点阵已移除，当前页面只保留有信息价值的计数与 3–4px 入场反馈
@@ -67,7 +68,7 @@ MarkdownEditor.test.ts: 以 content_mdx 恒等 round-trip 验证普通文本、2
 MarkdownLivePreview.ts: CodeMirror 6 原生 Live Preview 引擎，以 syntaxTree/visibleRanges 只扫描可见 block；活动标题保留弱化且无下划线的源码标记，非活动标题隐藏标记和分隔空白，活动/多选区与不安全语法回退完整源码，隐藏范围同步提供 atomicRanges，IME 合成期只映射旧装饰并在结束后刷新
 MarkdownReadingView.tsx: react-markdown + remark-gfm + 可选 remark-breaks + rehype-sanitize 的共享只读正文边界；备忘录阅读态保留单换行，AI 消息维持标准 CommonMark，并以模块级稳定渲染器 + Context 只装饰最后可见块；历史块和最后块的稳定前缀保留原生文本节点，末尾最多五个动画 span，固定 skipHtml 并禁止原始 HTML、JSX/JavaScript 执行
 MarkdownReadingView.test.tsx: 阅读换行、安全、常数尾部动画节点与文件边界测试；正则按真实 HTML 属性匹配，不保留无意义的 quote 转义
-MarkdownViewMenu.tsx: 编辑/阅读与 Markdown 文件操作入口；More 菜单共用 PresenceSurface，保留原文复制/导出和键盘行为，不修改保存协议
+MarkdownViewMenu.tsx: 可选关闭文件操作能力，供嵌入展示保留按钮形制； 编辑/阅读与 Markdown 文件操作入口；More 菜单共用 PresenceSurface，保留原文复制/导出和键盘行为，不修改保存协议
 markdownViewTypes.ts: DocumentView editing/reading 与 EditingMode live/source 的共享状态协议，阅读状态不占用编辑模式槽位
 NotesWorkspace.tsx: 单篇笔记编辑会话边界，保持 memoClientKey 与原 autosave 协议；编辑/阅读共享定位框并用 PersistentView 淡换，CodeMirror 不重挂载，旧视图不再撑高或接收焦点
 PaperWorkspaceShell.tsx: Paper 空间壳与边缘工具/窄屏遮罩，左右 Panel 由外层持久宿主负责，开合不改变纸面几何
