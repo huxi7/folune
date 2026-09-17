@@ -1,11 +1,12 @@
 /**
- * [INPUT]: 依赖 LandingBlog、BlueprintDivider、ShowcaseBackdrop、共享 BrandMark/Button、用户提供的 huxi 头像、虚构场景引语及其余分区的 Figma 参考素材
- * [OUTPUT]: 对外提供中文产品叙事、使用模拟机构与账号的评价版式及其余参考内容、文字层级、分层信纸与Folune 原创博客入口；区块边界及细节网格前的分隔带复用 BlueprintDivider
+ * [INPUT]: 依赖真实 APP 功能截图、Router Link、LandingBlog、BlueprintDivider、ShowcaseBackdrop、共享 BrandMark/Button、huxi 头像及其余分区的参考素材
+ * [OUTPUT]: 对外提供五项图文一一对应的 Folune 功能与整理/画布文章入口，以及评价占位、参考分区、创作者信件和博客
  * [POS]: widgets 的营销叙事组合；创作者信件沿用首稿叙事，与 Laper 参考同构：问候与自我介绍各占一行，再以长短有别的段落分承初衷、打磨、AI 分寸与期待，一段只说一件事，由 huxi 个人署名
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { LandingBlog } from "./LandingBlog";
 import type { ReactNode } from "react";
+import { Link } from "react-router-dom";
 import { BrandMark, Button } from "../shared/design-system/components";
 import { BlueprintDivider } from "./BlueprintDivider";
 import { LandingActions } from "./LandingHero";
@@ -16,12 +17,42 @@ export function LandingSectionHeading({title,body,children}: {title:string;body:
   return <header className="landing-section-heading"><div><h2>{title}</h2><p>{body}</p></div><div className="landing-section-links">{children}</div></header>;
 }
 const LinkButton = ({children,href="https://zed.dev/features"}:{children:ReactNode;href?:string}) => <Button variant="secondary" onClick={() => {window.location.href=href;}}>{children} ›</Button>;
-const features=[
-  ["多线程协作","在不同对话中梳理不同主题，让思路保持清晰。","imgSidebarWebp"],
-  ["专注书写","从一条随手记开始，在简洁的纸面上逐步展开想法。","imgDebuggerWebp"],
-  ["AI 协作","与 AI 讨论、改写和整理内容，把灵感变成可以继续使用的记录。","imgAgentWebp"],
-  ["有序归档","让文件夹随内容自然生长，整理过的笔记也能随时找回。","imgGitWebp"],
-  ["连接知识","把相关笔记放进画布，沿着联系发现新的思路。","imgEpWebp"],
+const features = [
+  {
+    title: "让 AI 整理笔记",
+    body: "根据正文起标题、选择归档位置。整理后，一条线连起纸面与文件树，笔记去了哪里，一眼就能看见。",
+    image: "organize",
+    alt: "整理后的读书摘记归入写作研究，归档线连接纸面状态与文件树中的同一篇笔记",
+    width: 1888, height: 1062,
+  },
+  {
+    title: "在画布上连接想法",
+    body: "把已有笔记放在同一张画布上，移动、连线，并排看见内容之间的关系。需要细节时，展开卡片就能读原文。",
+    image: "canvas",
+    alt: "卡片笔记法、让记录成为思考的起点和散步时的灵感三篇笔记在真实 Canvas 中相连",
+    width: 2304, height: 1296,
+  },
+  {
+    title: "在纸面上展开思路",
+    body: "用标题、引用和列表写清想法。编辑与阅读随时切换，让一条随手记慢慢长成完整的文章。",
+    image: "paper",
+    alt: "让记录成为思考的起点在 Paper 阅读视图中呈现标题、引用、章节与列表",
+    width: 1664, height: 936,
+  },
+  {
+    title: "带着笔记问 AI",
+    body: "输入 @ 选取笔记，把相关内容带进对话。围绕原文提问、梳理提纲，不必来回复制粘贴。",
+    image: "references",
+    alt: "AI 输入区已引用当前笔记，输入 @卡片后出现卡片笔记法候选，可将另一篇笔记加入问题",
+    width: 896, height: 504,
+  },
+  {
+    title: "从正文找回笔记",
+    body: "忘了标题，也能搜记得的词。搜索同时查找标题、路径和正文，直接回到那条记录。",
+    image: "search",
+    alt: "搜索摘记，找到标题不含该词的两篇笔记，结果标明写作研究路径与正文命中",
+    width: 1420, height: 798,
+  },
 ];
 // ---- 营销版式模拟：机构、账号与引语均为占位内容，不代表已获真实背书 ----
 const studios = [
@@ -71,7 +102,27 @@ export function LandingSections(){
     </div>
   </section>
   <BlueprintDivider fullBleed />
-  <section id="features"><LandingSectionHeading title="记录、整理，一气呵成" body="从随手记录到有序积累，让工具顺着你的思路工作。下方图像暂沿用参考稿，后续替换为真实工作台。"><a href="https://zed.dev/roadmap">参考路线图 ›</a><LinkButton href="https://zed.dev/releases">参考更新</LinkButton></LandingSectionHeading><div className="landing-feature-grid">{features.map(([title,body,asset],i)=><article key={title} data-wide={i<2}><img src={assets[`19-2527/${asset}`]} alt={title} loading="lazy" /><h3>{title}</h3><p>{body}</p></article>)}</div><div className="landing-small-features">{[["随时记录","打开网页版，就能继续书写与整理自己的笔记。"],["笔记与画布","在文字中深入思考，在画布中看见记录之间的联系。"],["由你掌控","整理结果可以检查，已执行的整理操作也可以撤销。"]].map(([t,b])=><article key={t}><h3>{t}</h3><p>{b}</p></article>)}</div></section>
+  <section id="features" aria-label="Folune 产品功能">
+    <LandingSectionHeading title="写下来，理清楚，连起来" body="从一张纸开始，让 AI 帮忙归档，在画布上接着思考。">
+      <Link to="/blog/a-place-for-every-note" state={{ fromBlog: true }}>了解笔记整理 <span aria-hidden="true">→</span></Link>
+      <Link className="ds-button ds-button-secondary ds-button-size-default" to="/blog/think-between-notes" state={{ fromBlog: true }}>
+        <span className="ds-button-content">看看画布用法 <span aria-hidden="true">→</span></span>
+      </Link>
+    </LandingSectionHeading>
+    <div className="landing-feature-grid">
+      {features.map((feature, i) => <article key={feature.image} data-wide={i < 2}>
+        <img src={`/landing-features/${feature.image}.png`} alt={feature.alt} width={feature.width} height={feature.height} loading="lazy" decoding="async" />
+        <h3>{feature.title}</h3><p>{feature.body}</p>
+      </article>)}
+    </div>
+    <div className="landing-small-features">
+      {[
+        ["写作时自动保存", "先专心把话写完。日常编辑自动保存，需要整理时，再点一次「整理笔记」。"],
+        ["卡片连着原文", "画布引用文件库里的笔记。展开阅读、进入原文编辑，不用维护两份内容。"],
+        ["带走 Markdown 原文", "在纸面的更多菜单里复制或导出 Markdown，让写下的内容继续用在别处。"],
+      ].map(([title, body]) => <article key={title}><h3>{title}</h3><p>{body}</p></article>)}
+    </div>
+  </section>
   <BlueprintDivider fullBleed />
   <section className="landing-open-source"><h2>开放协作的力量</h2><p>好的工具，离不开持续的交流与打磨。<br />以下保留 Zed 参考稿的社区数据展示。</p><div className="landing-avatar-strip" aria-hidden="true">{avatars.map(([key,src])=>key === "19-2760/imgZed" ? <BrandMark key={key} className="landing-contributor-brand" iconOnly /> : <img key={key} src={src} alt="" width="18" height="18" loading="lazy" />)}</div><dl className="landing-stats">{[["10,406","分支"],["89,634","星标"],["2,214","贡献者"],["490","上月合并请求"]].map(([n,t])=><div key={t}><dt>{n}</dt><dd>{t}</dd></div>)}</dl><div className="landing-avatar-strip" aria-hidden="true">{[...avatars].reverse().map(([key,src])=>key === "19-2760/imgZed" ? <BrandMark key={key} className="landing-contributor-brand" iconOnly /> : <img key={key} src={src} alt="" width="18" height="18" loading="lazy" />)}</div></section>
   <BlueprintDivider fullBleed />

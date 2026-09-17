@@ -3,7 +3,7 @@
 
 成员清单
 MarketingLayout.tsx: 首页和博客持续挂载的公共壳，持有唯一 MarketingHeader/AuthDialog、Footer 与 Router ScrollRestoration；仅正文 Outlet 切换，路径变化聚焦主标题
-BlogPage.tsx: /blog 目录与 /blog/:slug 中文阅读页，共用 Blueprint 导轨和静态文章；阅读页拥有居中点阵标题舞台，字标/标题/摘要/分类日期署名与返回按钮按纵向排列，分隔带之后直接进入导读和正文；支持返回来路、直接深链回目录、未知 slug 回退和页面标题恢复
+BlogPage.tsx: /blog 目录与 /blog/:slug 中文阅读页，共用 Blueprint 导轨和静态文章；居中点阵标题舞台后进入导读/正文，可选章节实景图与图注沿正文宽度展示；功能区与博客入口共用返回来路协议，直接深链回目录，保留未知 slug 回退和元信息恢复
 workspacePreload.ts: 正文邻居与 Canvas 代码预热共用的在线/前台/省流/慢网判据，只约束非必要预取，不阻止主动打开
 workspacePreload.test.ts: 验证弱网、省流、后台与离线不预取，以及缺失 Network Information 时的兼容行为
 MotionLabPage.tsx: DEV /motion-lab 无鉴权验收入口，复用生产 MotionSpecimen，所有交互只更新本地 fixture 状态，并链接真实 AppSidebar/归档线验收台

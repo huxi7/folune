@@ -2,6 +2,12 @@
 > L2 | 父级: ../CLAUDE.md
 
 成员清单
+features-content.md: 五项功能选择、真实 APP 演示与截图裁切来源、配套文章/返回链路及本轮验证边界
+features-desktop.png: 五图内容替换后的桌面功能区验收截图
+features-mobile.png: 390px 功能区标题、双文章入口与前两项能力验收截图
+features-mobile-details.png: 390px 后三项功能卡片与图文对应验收截图
+feature-article-mobile.png: 整理指南在 390px 的标题与导读验收截图
+feature-article-canvas.png: 画布指南实景图、图注与相邻正文的桌面验收截图
 hero-lab-research.md: 独立首屏研究的 Exa/官方文档/GitHub 证据、三套完整设计、文案依据与实际运行验收；结论不代表正式 Landing 已更改
 showcase-background.md: APP 与两处图文展示共用背景的候选比较、Paper Shaders 参数与依赖边界、细点阵/轮廓调整和实际桌面/手机验收证据
 README.md: 原始参考基线、逐项精修的视觉证据、产品真实性边界、已确认冻结节点与逐项替换约束

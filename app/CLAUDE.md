@@ -8,7 +8,7 @@
 Canvas 已落地为一级持久 Workspace。memo 默认 Canvas 与 standalone Canvas 共用 React Flow 会话、WAL 与单一保存协调器；用户可从命令面板或文件树拖入 memo，预览/编辑原文、创建自由文字、连接/删除/拖拽/缩放并显式 AI 拓展。连接使用卡片底栏行尾抓手的拖/点等效路径（三个入口严格等距），临时弹性绳只活在 UI 且两端只有抓手与指针，并沉在卡片之下与已成立的关系线同层；路由离场先 flush，本地已持久但未同步时允许继续并诚实提示；页面重开、冲突、响应丢失和 pagehide 沿同一恢复协议处理。
 
 成员清单
-public/: 统一品牌母图、PNG Favicon 与静态营销素材，第一阶段保存来自参考 Frame 的原始图像与字体
+public/: 统一品牌母图、PNG Favicon、参考 Frame 素材/字体与 landing-features 真实 APP 截图；功能网格和配套博客共用产品截图
 MOTION_SYSTEM.md: A/B 全量源码取舍、统一 Motion Design 规范与实际验收记录
 demo.html: Landing 独立 UI 演示入口，CSP 禁止连接与表单提交；不装配 Auth/Router/持久化主题，和 index.html 一同构建
 hero-lab.html: 首屏方案研究的独立开发入口，仅 Header/Hero/三栏价值条，支持三方案与原 Hero 切换；不进入正式路由或构建清单

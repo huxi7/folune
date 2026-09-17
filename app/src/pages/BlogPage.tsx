@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖 Router slug/历史导航、静态博客文章、BlogCover 与 Blueprint 导轨
- * [OUTPUT]: 对外提供 /blog 目录、/blog/:slug 阅读页与未知文章回退；维护当前文章标题和描述
+ * [INPUT]: 依赖 Router slug/历史导航、含可选实景图的静态博客文章、BlogCover 与 Blueprint 导轨
+ * [OUTPUT]: 对外提供 /blog 目录、图文文章阅读与未知文章回退；功能区/目录进入均保留返回位置，并维护文章元信息
  * [POS]: pages 的公开博客内容视图；共享 MarketingLayout 顶栏，标题区以居中字标/标题/摘要/元信息/返回按钮构成独立舞台，下接导读和语义正文，无账号或业务请求
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -79,6 +79,10 @@ export function BlogPage() {
             <section key={section.title} aria-labelledby={`section-${i}`}>
               <h2 id={`section-${i}`}>{section.title}</h2>
               {section.paragraphs.map(paragraph => <p key={paragraph}>{paragraph}</p>)}
+              {section.figure ? <figure className="blog-product-figure">
+                <img src={section.figure.src} alt={section.figure.alt} width={section.figure.width} height={section.figure.height} loading="lazy" decoding="async" />
+                <figcaption>{section.figure.caption}</figcaption>
+              </figure> : null}
             </section>
           ))}
           <div className="blog-endmark" aria-hidden="true">◇</div>

@@ -3,7 +3,7 @@
 
 成员清单
 LandingHeroLab/: 独立首屏研究，三套完整 Header/Hero/价值条候选复用品牌、按钮、导轨与动态偏好；仅 hero-lab.html 开发入口加载，不改写正式 Landing
-landingBlogData.ts: 三篇 Folune 原创中文博客的单一内容源，稳定 slug、摘要、章节与主题供首页/目录/正文共读；署名复用用户提供的 huxi 头像
+landingBlogData.ts: 三篇 Folune 原创中文博客的单一内容源；整理与画布指南使用功能截图中的写作研究示例和可选章节实景图，稳定 slug/摘要/章节供首页、功能入口、目录与正文共读；署名复用 huxi 头像
 BlogCover.tsx: 原创细网格 SVG 封面，散页、递归枝条与笔记关系三种构图对应记录/归档/Canvas；useId 隔离多实例图案引用，无动画和外部图片请求
 LandingBlog.tsx: 首页三列博客卡片；整卡单一 Router Link，链接携带来路供阅读页返回并恢复滚动，查看博客进入 /blog
 LandingEditor.tsx: 保留原导轨和 738px 展示框，平滑圆角外壳统一裁剪受限 demo.html iframe；ShowcaseBackdrop 独立置于后景，不传递真实账号状态
@@ -19,7 +19,7 @@ BlueprintFrame.tsx: Landing 纵向导轨容器；导航、1120px 正文与页脚
 BlueprintDivider.tsx: Landing 横向导轨；14px 分隔带上下两条边分别共置横线与菱形，flush 提供零高度边界，compact 保留 7px 内部分隔带而不添加参考中没有的节点
 AuthDialog.tsx: 复用 BrandMark 原图的登录/注册统一认证 Dialog，复用共享内凹 Input/PasswordInput 承载邮箱、双密码与显隐控制，并提供协议提示、六格 OTP 自动校验与 Google OAuth 入口
 LandingHero.tsx: 中文公告、居中 Hero、三列价值条与真实 UI 互动插槽；LandingActions 共用 DS 两字「打开」与两字待发布下载（全站同一动作同一词，2+2 等密度），auth query 交给 MarketingHeader 唯一认证弹窗；分区仍复用通栏 BlueprintDivider
-LandingSections.tsx: 保留 Grid/Flex 分区与信纸骨架，承载中文 Folune 叙事与 huxi 个人创作者信件；两处 SplitFeature 图片共用 ShowcaseBackdrop，与 APP 展示背景同参数且由图片区隔离层级；信件以项目记录/整理/可撤销理念为依据，独立使用用户原图头像；评价区采用六个模拟机构字标、日常姓名与账号混排，机构名和引语仅为版式占位；标题自然换行，无副标题；社区数据和扩展继续标明参考来源；博客由 LandingBlog 提供 Folune 原创内容；信纸/CTA 共用 BrandMark，按钮共用 DS 与 LandingActions
+LandingSections.tsx: 保留 Grid/Flex 分区与信纸骨架；功能区以真实整理/Canvas/Paper/@引用/正文搜索截图一一对应五项能力，两颗入口直达整理/画布博客并保留来路；补充自动保存、原文引用和 Markdown 导出。两处 SplitFeature 继续使用参考图与 ShowcaseBackdrop；评价机构和引语仍是版式占位，社区/扩展标明参考来源，创作者信件与其他分区独立保留
 LandingFooter.tsx: 共用 DS 墨蓝的品牌区与产品/资源/关于/连接四组导航；16 项预留入口（产品 2、资源 8、关于 3、连接 3）以 aria-disabled link 语义展示且不跳转，打开网页版保留博客来路并复用本地认证；品牌与入口置顶、作者与版权置底；保留 Folune 淡描边与细纹层序，不放 PNG，BlueprintFrame 延续导轨
 LandingMotion/: Landing 克制反馈模块，提供 CountUp 与 APP/两处图文展示共用的低对比细点阵后景；磁吸、指针聚光不启用，一次性 reveal 仍由共享动效原语承载
 NotebookPreview.tsx: 确定性首屏产品预览，DS 统一缩放淡入与显式卡片 lift 分处不同元素，阴影由 CSS 持有，内部布局不参与独立动画
