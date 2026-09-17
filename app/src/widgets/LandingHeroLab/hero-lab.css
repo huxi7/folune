@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖生产 DS 色彩/字体/按钮、Blueprint 主轨与 LandingHeroLab DOM
- * [OUTPUT]: 对外提供两套真实 Shader 居中首屏、比较控件与响应式和减少动态效果降级
+ * [OUTPUT]: 对外提供六套真实 Shader/组件库居中首屏、比较控件与响应式和减少动态效果降级
  * [POS]: hero-lab.html 专用样式，不被正式入口导入；WebGL 只作用于装饰，文字和骨架始终静止
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -100,4 +100,31 @@ body:has(.hero-lab) { margin:0; background:#eaece9; }
   .hero-lab-values p { font-size:12px; line-height:21px; max-width:none; }
   .hero-lab-caption { padding:16px; font-size:10px; gap:10px; flex-wrap:wrap; }
   .hero-lab-caption>span:nth-child(2) { order:3; width:100%; }
+}
+
+/* ---- 六版比较：两版新增 Shader 与两版真实组件库背景 ---- */
+.hero-lab-tabs { gap:3px; }
+.hero-lab-tabs button { padding-inline:10px; }
+.hero-lab-controls { gap:12px; padding-inline:24px; }
+.hero-lab-control-label { gap:8px; }
+.hero-lab-control-label span { display:none; }
+.hero-lab-art-rays .hero-lab-reading-veil { background:radial-gradient(ellipse 38% 49% at 50% 44%,#f4f4f2ce, #f4f4f270 48%,transparent 100%); }
+.hero-lab-art-dither .hero-lab-reading-veil { background:radial-gradient(ellipse 43% 70% at 50% 37%,#f4f4f2 4%,#f4f4f2dd 36%,#f4f4f230 78%,transparent 100%),linear-gradient(#f4f4f250,transparent 50%); }
+.hero-lab-art-waves { background:linear-gradient(180deg,#f4f4f2,#e6ecec); }
+.hero-lab-waves-canvas { display:block; width:100%; height:100%; }
+.hero-lab-art-waves .hero-lab-reading-veil { background:radial-gradient(ellipse 37% 60% at 50% 44%,#f4f4f2 12%,#f4f4f2ed 38%,#f4f4f210 89%,transparent 100%); }
+.hero-lab-beams-component { position:absolute; inset:0; background:radial-gradient(ellipse at bottom,#dce6eb55,transparent 70%); }
+.hero-lab-beams-svg { position:absolute; inset:0; width:100%; height:100%; }
+.hero-lab-art-beams .hero-lab-reading-veil { background:radial-gradient(ellipse 37% 65% at 50% 44%,#f4f4f2 5%,#f4f4f2dd 38%,#f4f4f218 90%,transparent 100%); }
+@media(max-width:767px) {
+  .hero-lab-controls { flex-wrap:wrap; padding:8px 10px; gap:6px; }
+  .hero-lab-tabs { display:grid; grid-template-columns:repeat(3,1fr); width:100%; }
+  .hero-lab-tabs button { padding:7px 8px; }
+  .hero-lab-pause { margin-left:auto; padding-block:3px; }
+  .hero-lab-art-waves .hero-lab-reading-veil,.hero-lab-art-beams .hero-lab-reading-veil { background:radial-gradient(ellipse 65% 65% at 50% 42%,#f4f4f2 5%,#f4f4f2dc 48%,#f4f4f21a 100%); }
+  .hero-lab-art-dither .hero-lab-reading-veil { background:radial-gradient(ellipse 75% 62% at 50% 37%,#f4f4f2 15%,#f4f4f2cb 50%,#f4f4f21a 100%); }
+}
+
+@media(max-width:767px) {
+  .hero-lab-art-beams .hero-lab-reading-veil { background:radial-gradient(ellipse 63% 43% at 50% 43%,#f4f4f2 3%,#f4f4f2c9 48%,transparent 100%); }
 }

@@ -4,13 +4,18 @@
 独立首屏 Shader 选型 Demo，只包含 Header、居中 Hero 与三栏价值条。正式 Landing 正由另一位 Agent 修改，本模块禁止反向修改正式页面、共享组件/样式、路由与构建入口；入口仍为 hero-lab.html。
 
 成员清单
+REVIEW.md: 六套真实背景的选型、参数取舍、当前排序与运行验收；C 为综合首选，A 为纸墨取向备选
+LibraryArtwork.tsx: React Bits Waves/Aceternity Beams 的局部装配，使用官方组件代码并统一播放/状态反馈
+ReactBitsWaves.tsx: 官方 Waves 的 Canvas/Perlin/线场实现，保留算法并适配暂停、确定种子、DPR、ResizeObserver 和严格类型
+AceternityBeams.tsx: 官方 Background Beams 原始路径和 Motion 渐变运动，改为蓝灰色、稀疏密度、确定时序、实例 ID 与暂停控制
+THIRD_PARTY.md: 实际引入源码的来源、改动边界与原始许可证
 main.tsx: 独立 React/DS 样式入口，固定浅色且不读取持久化偏好
-HeroLab.tsx: GrainGradient/Warp 两套完整居中首屏切换，提供暂停和 Shader 加载/失败/系统减少动态效果反馈；hash 只选择本地候选
-HeroArtwork.tsx: 直接装配已安装的 Paper Shaders GrainGradient 和 Warp，蓝灰/纸色色场由局部参数定义；WebGL2 探测、画布创建与上下文丢失反馈避免把静态备用底色当成正常动态
+HeroLab.tsx: 四种 Paper Shader 与两种组件库背景的六套完整居中首屏切换，提供暂停和 Shader 加载/失败/系统减少动态效果反馈；hash 只选择本地候选
+HeroArtwork.tsx: 直接装配已安装的 Paper Shaders GrainGradient、Warp、GodRays 和 Dithering，蓝灰/纸色色场由局部参数定义；WebGL2 探测、画布创建与上下文丢失反馈避免把静态备用底色当成正常动态
 useAmbientMotion.ts: 系统减少动态效果、用户暂停、离屏和后台共同决定传给 Shader 的 speed，不创建逐帧 React 状态
-hero-lab.css: 两套候选共用居中排版，画布扩展至外轨并通过中央纸色遮罩保护阅读；无自绘纸卡、CSS 背景动画或侧排标题
+hero-lab.css: 六套候选共用居中排版，画布扩展至外轨并通过中央纸色遮罩保护阅读；无自绘替代背景或侧排标题；E/F 使用官方组件的 Canvas/SVG 动画
 
-用户纠正后的选型：直接使用真实 Shader 组件，不以借鉴组件思路后自绘 SVG/CSS 替代要求。A 为 GrainGradient wave（speed 0.8），B 为 Warp edge（speed 1.2）；单次只挂载一个 canvas，渲染上限 140 万像素。复用项目已经安装的 @paper-design/shaders-react 0.0.80，不更改依赖。
+用户纠正后的选型：直接使用真实 Shader 组件，不以借鉴组件思路后自绘 SVG/CSS 替代要求。A 为 GrainGradient wave（speed 0.8），B 为 Warp edge（speed 1.2）；C 为 GodRays（speed .85），D 为 Dithering ripple（speed .65）；E 为 React Bits Waves，F 为 Aceternity Beams。单次只挂载一个候选，渲染上限 140 万像素。复用项目已经安装的 @paper-design/shaders-react 0.0.80，不更改依赖。
 
 官方组件文档：
 - https://shaders.paper.design/grain-gradient ：wave 形态、noise/softness/intensity 与 speed/frame。

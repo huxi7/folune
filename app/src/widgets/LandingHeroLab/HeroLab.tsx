@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 React、生产 BrandMark/Button、BlueprintFrame/Divider 与 Paper Shaders 背景和动态生命周期
- * [OUTPUT]: 对外提供两套居中文案的真实 Shader 首屏、方案切换与运行反馈
+ * [OUTPUT]: 对外提供六套居中文案的 Shader/组件库首屏、方案切换与运行反馈
  * [POS]: LandingHeroLab 的单一页面装配；生产首屏没有反向依赖，链接仅指向既有公开页面，演示不装配账号状态
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -9,6 +9,7 @@ import { BrandMark } from "../../shared/design-system/components/BrandMark";
 import { Button } from "../../shared/design-system/components/Button";
 import { BlueprintFrame } from "../BlueprintFrame";
 import { BlueprintDivider } from "../BlueprintDivider";
+import { LibraryArtwork } from "./LibraryArtwork";
 import { HeroArtwork, type ShaderStatus } from "./HeroArtwork";
 import { useAmbientMotion } from "./useAmbientMotion";
 import { useMotionPreference } from "../../shared/design-system/useMotionPreference";
@@ -16,6 +17,10 @@ import { useMotionPreference } from "../../shared/design-system/useMotionPrefere
 const concepts = [
   { id: "grain", code: "A", name: "纸墨流动", note: "Paper Shaders · GrainGradient · 颗粒色场" },
   { id: "silk", code: "B", name: "墨色流光", note: "Paper Shaders · Warp · 流动绸面" },
+  { id: "rays", code: "C", name: "窗间天光", note: "Paper Shaders · GodRays · 斜向光影" },
+  { id: "dither", code: "D", name: "墨点潮汐", note: "Paper Shaders · Dithering · 印刷波纹" },
+  { id: "waves", code: "E", name: "纸纹行云", note: "React Bits · Waves · 连续线场" },
+  { id: "beams", code: "F", name: "思路留痕", note: "Aceternity UI · Background Beams · 流动墨迹" },
 ] as const;
 type Concept = typeof concepts[number]["id"];
 
@@ -54,7 +59,7 @@ function FirstScreen({ concept, paused, onStatus }: { concept: Concept; paused: 
       <main>
         <div className="landing-announcement hero-lab-announcement"><span>认识 Folune</span><a href="/blog/write-first-organize-later" target="_blank" rel="noreferrer">从随手记录，到有序积累<span>→</span></a><BlueprintDivider flush fullBleed /></div>
         <section ref={ref} className="hero-lab-hero" aria-labelledby="hero-lab-title" data-running={running}>
-          <HeroArtwork concept={concept} running={running} onStatus={onStatus} />
+          {concept === "waves" || concept === "beams" ? <LibraryArtwork concept={concept} running={running} onStatus={onStatus} /> : <HeroArtwork concept={concept} running={running} onStatus={onStatus} />}
           <div className="hero-lab-margin-ticks" aria-hidden="true" />
           <div className="hero-lab-copy">
             <h1 id="hero-lab-title">随手记下，<br className="hero-lab-title-break" />自然有序。</h1>
@@ -84,7 +89,7 @@ export function HeroLab() {
   const [shaderStatus, setShaderStatus] = useState<ShaderStatus>("loading");
   const reduced = useMotionPreference();
   useEffect(() => {
-    const sync = () => setConcept(readConcept());
+    const sync = () => { setShaderStatus("loading"); setConcept(readConcept()); };
     window.addEventListener("hashchange", sync);
     return () => window.removeEventListener("hashchange", sync);
   }, []);
@@ -93,10 +98,10 @@ export function HeroLab() {
   return <div className="hero-lab">
     <div className="hero-lab-controls" aria-label="首屏方案比较">
       <span className="hero-lab-control-label">FOLUNE <span>首屏研究</span></span>
-      <div className="hero-lab-tabs" role="group" aria-label="选择首屏方案">{concepts.map(item => <button type="button" key={item.id} aria-pressed={item.id === concept} onClick={() => { setShaderStatus("loading"); setConcept(item.id); window.history.replaceState(null, "", `#${item.id}`); }}><span>{item.code}</span>{item.name}</button>)}</div>
+      <div className="hero-lab-tabs" role="group" aria-label="选择首屏方案">{concepts.map(item => <button type="button" key={item.id} aria-pressed={item.id === concept} onClick={() => { if (item.id === concept) return; setShaderStatus("loading"); setConcept(item.id); window.history.replaceState(null, "", `#${item.id}`); }}><span>{item.code}</span>{item.name}</button>)}</div>
       <button className="hero-lab-pause" type="button" aria-pressed={paused} onClick={() => setPaused(value => !value)}>{paused ? "播放动态" : "暂停动态"}</button>
     </div>
     <FirstScreen key={concept} concept={concept} paused={paused} onStatus={setShaderStatus} />
-    <div className="hero-lab-caption" aria-live="polite"><span>{current.code} / {current.name}</span><span>{current.note}</span><span role="status" data-status={shaderStatus}>{shaderStatus === "unavailable" ? "WebGL 未能启动，当前不是动态预览" : shaderStatus === "loading" ? "正在启动 Shader…" : reduced ? "系统减少动态效果已开启" : paused ? "已暂停" : "WebGL2 · 动态预览"}</span><a href="/" target="_blank" rel="noreferrer">查看正式页面 ↗</a></div>
+    <div className="hero-lab-caption" aria-live="polite"><span>{current.code} / {current.name}</span><span>{current.note}</span><span role="status" data-status={shaderStatus}>{shaderStatus === "unavailable" ? "背景未能启动" : shaderStatus === "loading" ? "正在加载背景…" : reduced ? "系统减少动态效果已开启" : paused ? "已暂停" : concept === "waves" ? "Canvas 2D · 动态预览" : concept === "beams" ? "Motion SVG · 动态预览" : "WebGL2 · 动态预览"}</span><a href="/" target="_blank" rel="noreferrer">查看正式页面 ↗</a></div>
   </div>;
 }
