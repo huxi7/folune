@@ -5,7 +5,7 @@
 landingBlogData.ts: 三篇 Folune 原创中文博客的单一内容源，稳定 slug、摘要、章节与主题供首页/目录/正文共读；署名复用用户提供的 huxi 头像
 BlogCover.tsx: 原创细网格 SVG 封面，散页、递归枝条与笔记关系三种构图对应记录/归档/Canvas；useId 隔离多实例图案引用，无动画和外部图片请求
 LandingBlog.tsx: 首页三列博客卡片；整卡单一 Router Link，链接携带来路供阅读页返回并恢复滚动，查看博客进入 /blog
-LandingEditor.tsx: 保留原导轨和 738px 展示框，以受限 iframe 加载独立 demo.html；不传递真实账号状态
+LandingEditor.tsx: 保留原导轨和 738px 展示框，平滑圆角外壳统一裁剪受限 demo.html iframe；ShowcaseBackdrop 独立置于后景，不传递真实账号状态
 LandingDemo/: 无业务会话的内存产品演示，复用 Paper/Toolbar/树/生产工具芯片/Canvas 视图；AI 面板按脚本逐步揭示真实工具调用，唯一的写操作与工具条共用同一归档入口并可真撤销；无底部额外工具栏
 landingReferenceData.ts: Figma 素材路径、英文代码分段与中文扩展卡片说明，不读取远程数据
 useTreeReorder.ts: AppSidebar 结构重排 FLIP Hook，手势前捕获位置、完成/取消归还租约；ResizeObserver 只刷新快照，文件夹展开不会再触发行位移动画
@@ -20,7 +20,7 @@ AuthDialog.tsx: 复用 BrandMark 原图的登录/注册统一认证 Dialog，复
 LandingHero.tsx: 中文公告、居中 Hero、三列价值条与真实 UI 互动插槽；LandingActions 共用 DS 两字「打开」与两字待发布下载（全站同一动作同一词，2+2 等密度），auth query 交给 MarketingHeader 唯一认证弹窗；分区仍复用通栏 BlueprintDivider
 LandingSections.tsx: 保留 Grid/Flex 分区与信纸骨架，承载中文 Folune 叙事与 huxi 个人创作者信件；信件以项目记录/整理/可撤销理念为依据，独立使用用户原图头像；评价区采用六个模拟机构字标、日常姓名与账号混排，机构名和引语仅为版式占位；标题自然换行，无副标题；社区数据和扩展继续标明参考来源；博客由 LandingBlog 提供 Folune 原创内容；信纸/CTA 共用 BrandMark，按钮共用 DS 与 LandingActions
 LandingFooter.tsx: 共用 DS 墨蓝的品牌区与产品/资源/关于/连接四组导航；16 项预留入口（产品 2、资源 8、关于 3、连接 3）以 aria-disabled link 语义展示且不跳转，打开网页版保留博客来路并复用本地认证；品牌与入口置顶、作者与版权置底；保留 Folune 淡描边与细纹层序，不放 PNG，BlueprintFrame 延续导轨
-LandingMotion/: Landing 克制反馈模块，只提供 CountUp 与一次性 reveal；磁吸、指针聚光与装饰点阵已移除，当前页面只保留有信息价值的计数与 3–4px 入场反馈
+LandingMotion/: Landing 克制反馈模块，提供 CountUp 与 APP 展示区专属的低对比点阵后景；磁吸、指针聚光不启用，一次性 reveal 仍由共享动效原语承载
 NotebookPreview.tsx: 确定性首屏产品预览，DS 统一缩放淡入与显式卡片 lift 分处不同元素，阴影由 CSS 持有，内部布局不参与独立动画
 AppSidebar.tsx: 右键菜单通过 Portal 锚定视口，避免 Panel transform 改写 fixed 坐标；文件库内容与展开偏好的唯一所有者，负责创建/搜索、树/重命名/拖放意图、底部导航和唯一有效归档代表；重排交给 useTreeReorder，结构键按不可变树引用复用以跳过标题/摘要更新时的整树 FLIP 判据，子级尺寸交给 TreeDisclosure，业务事务仍由 Dashboard 持有
 WorkspacePanelLayer.tsx: 跨 Paper/Canvas 常驻左右工具宿主，8px/220ms 入、8px/170ms 出，不缩放内容或改变 Stage；关闭即 inert，开合运动租约成对归还，保留文件树/AI 会话实例与滚动位置

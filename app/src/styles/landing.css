@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖共享 Button/Blueprint DOM、BrandMark 母图、创作者署名头像、页面私有参考字体与 Figma 素材、独立 Demo iframe
- * [OUTPUT]: 对外提供英文参考字体与 DS 中文回退的标题/正文/注释层级、共轴导轨、分层信纸、场景评价与四组页脚导航的响应式版面；仅 Landing 禁止纵向越界回弹，页尾止于 Footer
+ * [INPUT]: 依赖共享 Button/Blueprint DOM、BrandMark 母图、创作者署名头像、页面私有参考字体与 Figma 素材、独立 Demo iframe 和 ShowcaseBackdrop
+ * [OUTPUT]: 对外提供英文参考字体与 DS 中文回退的文字层级、共轴导轨、APP 展示区平滑轮廓与点阵后景、信纸、评价与页脚的响应式版面；仅 Landing 禁止纵向越界回弹，页尾止于 Footer
  * [POS]: styles 的 Landing 局部样式；Footer 淡字位于细密斜纹之下，按钮材质与品牌墨蓝直接消费 DS，背景和纹理保留基线；功能区按参考稿使用 40px 卡片纵向留白与外扩 6px 虚线图片框
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -76,7 +76,10 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
 .landing-value-strip { display:grid; grid-template-columns:repeat(3,1fr); min-height:97.5px; }
 .landing-value-strip > div { padding:16px 24px; border-right:1px solid var(--landing-border); }.landing-value-strip>div:last-child { border:0; }
 .landing-value-strip h2 { font-size:15px; line-height:22.5px; letter-spacing:0; }.landing-value-strip p { margin-top:4px; font-size:13px; line-height:19.5px; max-width:325px; }
-.landing-editor-section { padding:16px; background:repeating-linear-gradient(135deg,transparent 0 16px,rgb(142 197 255 / 12%) 16px 32px); }
+.landing-editor-section { --showcase-inset:16px; position:relative; isolation:isolate; padding:var(--showcase-inset); overflow:hidden; border-radius:calc(var(--radius-panel) + var(--showcase-inset)); corner-shape:var(--corner-shape-smooth); background:color-mix(in srgb,var(--primary) 3%,var(--landing-bg)); }
+.landing-showcase-backdrop { position:absolute; inset:0; z-index:0; pointer-events:none; color:var(--primary); border-radius:inherit; corner-shape:inherit; overflow:hidden; background:radial-gradient(circle,color-mix(in srgb,currentColor 9%,transparent) .65px,transparent .85px) 0 0/7px 7px; }
+.landing-showcase-backdrop:has(canvas) { background:none; }
+.landing-showcase-shader { opacity:.1; }
 .reference-editor { width:100%; height:738px; border:1px solid #c4c7cc; border-radius:8px; box-shadow:0 2px 5px #0002; display:grid; grid-template-columns:256px 1fr; overflow:hidden; position:relative; background:#f9f9f9; font:11px/1.5 var(--landing-body); color:#51545a; }
 .reference-editor h3 { font:11px/24px var(--landing-body); color:#58585a; padding-left:8px; }.reference-projects { display:flex; flex-direction:column; min-height:0; border-right:1px solid #d4d4d4; background:#eee; }
 .reference-windowbar { height:27px; flex:none; padding:0 6px; display:flex; align-items:center; border-bottom:1px solid #d4d4d4; background:#e5e5e5; gap:6px; }.reference-windowbar>span:last-child { margin-left:auto; }
@@ -207,7 +210,7 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
   .landing-announcement { height:auto; min-height:44px; padding:8px 16px; font-size:11px; text-align:center; }.landing-announcement>span { display:none; }
   .landing-hero { min-height:400px; padding:64px 24px; }.landing-hero h1 { font-size:clamp(26px,7vw,36px); line-height:1.4; }.landing-hero-copy p { font-size:14px; line-height:22px; }.landing-action-note { font-size:11px; }
   .landing-value-strip { grid-template-columns:1fr; }.landing-value-strip>div { border-right:0; border-bottom:1px solid var(--landing-border); padding:16px 24px; }.landing-value-strip p { max-width:none; }
-  .landing-editor-section { padding:8px; overflow:auto; }.reference-editor { width:740px; height:550px; grid-template-columns:190px 1fr; }.reference-working-body { grid-template-columns:42% 58%; }
+  .landing-editor-section { --showcase-inset:8px; }.reference-editor { width:740px; height:550px; grid-template-columns:190px 1fr; }.reference-working-body { grid-template-columns:42% 58%; }
   .landing-trust { padding:40px 24px; }.landing-trust>h2 { font-size:22px; }.landing-studio-strip { grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; margin:28px 0; }.landing-studio-strip li { justify-content:flex-start; }
   .landing-quotes { display:flex; flex-direction:column; gap:16px; }.landing-quotes figure { min-height:auto; }.landing-quotes figure[data-featured=true] { order:-1; }
   .landing-section-heading { flex-direction:column; align-items:flex-start; min-height:0; gap:24px; padding:32px 24px; }.landing-section-heading h2 { font-size:26px; }.landing-section-heading p { font-size:13px; }
@@ -234,6 +237,7 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
 @media(prefers-reduced-motion:reduce) { .landing-blueprint * { scroll-behavior:auto!important; } }
 }
 
-/* 维持既有 738px 展示框与导轨；内部布局由真实 APP 自身处理。 */
-.landing-product-demo { display:block; width:100%; height:738px; border:1px solid #c4c7cc; border-radius:8px; box-shadow:0 2px 5px #0002; background:var(--workspace-stage); }
-@media(max-width:767px) { .landing-product-demo { height:650px; } }
+/* ---- 同心平滑轮廓：外壳承担边框与裁剪，iframe 保持既有展示高度 ---- */
+.landing-product-shell { position:relative; z-index:1; overflow:hidden; border:1px solid var(--landing-border); border-radius:var(--radius-panel); corner-shape:var(--corner-shape-smooth); box-shadow:var(--shadow-md); background:var(--workspace-stage); }
+.landing-product-demo { display:block; width:100%; height:736px; border:0; background:var(--workspace-stage); }
+@media(max-width:767px) { .landing-product-demo { height:648px; } }

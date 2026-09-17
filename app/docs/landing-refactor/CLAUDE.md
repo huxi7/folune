@@ -2,6 +2,7 @@
 > L2 | 父级: ../CLAUDE.md
 
 成员清单
+showcase-background.md: APP 展示区的动态背景候选比较、Paper Shaders 参数与依赖边界、平滑轮廓和实际桌面/手机验收证据
 README.md: 原始参考基线、逐项精修的视觉证据、产品真实性边界、已确认冻结节点与逐项替换约束
 chinese-desktop.png: 中文标题/正文、共享 DS 按钮和暖灰背景的 1280px 首屏
 chinese-mobile.png: 390px 中文首屏，保留导航登录和待发布下载状态

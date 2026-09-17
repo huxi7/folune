@@ -1,6 +1,8 @@
 # app/src/styles/
 > L2 | 父级: ../../CLAUDE.md
 
+APP 展示区边界：landing.css 为展示区背景和 iframe 外壳使用 DS 平滑圆角；外半径等于内半径加内缩，背景不可接收指针事件。Demo 内 Paper/Panel 继续复用已有平滑轮廓；功能区五张图的直角虚线规则独立。
+
 成员清单
 landing-demo.css: 独立 Demo 入口专用，限定视口与三栏等高、Paper/Canvas 互斥显示；不增加底部工具栏或新视觉皮肤
 blog.css: index.css 在 Landing 后同层加载的博客样式，首页三列卡片、带封面目录、单篇独立点阵标题区与居中返回按钮、导读框和窄栏阅读；约 36 汉字正文行宽，继承 Landing 字体/墨蓝，768px 以下单列，无卡片位移动画
