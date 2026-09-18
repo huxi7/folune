@@ -1,12 +1,11 @@
 /**
- * [INPUT]: 依赖细节与文章同源数据、Router 查询/历史状态、共享 Collapse、语义图标和 ShowcaseBackdrop
- * [OUTPUT]: 对外提供四项垂直居中的功能细节、对应实景图、随选中项切换的文章入口与紧凑四格摘要
- * [POS]: widgets 的第 11 个 Landing 区块；query 保存当前项，替换历史且保持滚动，博客沿既有 fromBlog 协议返回
+ * [INPUT]: 依赖细节与文章同源数据、Router 查询/历史状态、DS CSS 动效 token、语义图标和 ShowcaseBackdrop
+ * [OUTPUT]: 对外提供固定展示区域内单项展开的功能细节、对应实景图、文章入口与紧凑四格摘要；展开项不提供收起动作
+ * [POS]: widgets 的第 11 个 Landing 区块；query 保存当前项，切换清除已消费的定位锚点并替换历史，避免 Router 再次滚动；博客沿既有 fromBlog 协议返回
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Collapse } from "../shared/design-system/components";
-import { ArrowRightIcon, MinusIcon, PlusIcon } from "../shared/design-system/icons";
+import { ArrowRightIcon, PlusIcon } from "../shared/design-system/icons";
 import { BlueprintDivider } from "./BlueprintDivider";
 import { ShowcaseBackdrop } from "./LandingMotion/ShowcaseBackdrop";
 import { detailStories } from "./landingDetailData";
@@ -21,7 +20,8 @@ export function LandingFeatureDetails() {
     if (id === active.id) return;
     const next = new URLSearchParams(params);
     next.set("detail", id);
-    void navigate({ pathname: location.pathname, search: next.toString(), hash: location.hash }, {
+    // ---- 锚点只负责首次定位；Router 会先处理 hash，再检查 preventScrollReset ----
+    void navigate({ pathname: location.pathname, search: next.toString(), hash: "" }, {
       replace: true, preventScrollReset: true, state: location.state,
     });
   }
@@ -39,12 +39,12 @@ export function LandingFeatureDetails() {
           const selected = item.id === active.id;
           return <div key={item.id} className="landing-details-item" data-active={selected}>
             <h3><button type="button" id={`detail-${item.id}`} aria-expanded={selected} aria-controls={`detail-panel-${item.id}`} aria-disabled={selected} onClick={() => selectDetail(item.id)}>
-              {item.title}{selected ? <MinusIcon size={16} /> : <PlusIcon size={16} />}
+              {item.title}{!selected && <PlusIcon size={16} />}
             </button></h3>
-            <div id={`detail-panel-${item.id}`} role="region" aria-labelledby={`detail-${item.id}`}>
-              <Collapse open={selected}>
+            <div className="landing-details-panel" id={`detail-panel-${item.id}`} role="region" aria-labelledby={`detail-${item.id}`} aria-hidden={!selected} inert={!selected}>
+              <div className="landing-details-panel-clip">
                 <div className="landing-details-body"><p>{item.description}</p><Link to={`/blog/${item.post.slug}`} state={{ fromBlog: true }}>了解更多 <ArrowRightIcon size={16} /></Link></div>
-              </Collapse>
+              </div>
             </div>
           </div>;
         })}
@@ -54,7 +54,6 @@ export function LandingFeatureDetails() {
         <div className="landing-details-image">
           <img key={active.id} src={active.figure.src} alt={active.figure.alt} width={active.figure.width} height={active.figure.height} loading="lazy" decoding="async" />
         </div>
-        <figcaption>{active.figure.caption}</figcaption>
       </figure>
     </div>
     <BlueprintDivider compact />

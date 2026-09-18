@@ -135,25 +135,28 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
 .landing-split-media { box-shadow:inset 1px 0 var(--landing-border); }
 /* ---- 功能细节：展开说明与实景图同源，移动端把图接在完整说明之后 ---- */
 .landing-feature-details .landing-section-heading { min-height:185px; }
-.landing-blueprint .landing-feature-details h2 { color:var(--landing-accent); }
 .landing-feature-details .landing-section-heading p { color:var(--muted-foreground); font-size:var(--type-ui); line-height:24px; }
-.landing-details-showcase { display:grid; grid-template-columns:5fr 7fr; min-height:456px; }
-.landing-details-accordion { align-self:stretch; display:flex; flex-direction:column; }
-.landing-details-item { border-bottom:1px solid var(--landing-border); }
+.landing-details-showcase { --details-height:456px; --details-row-height:61px; display:grid; grid-template-columns:5fr 7fr; grid-template-rows:var(--details-height); overflow-anchor:none; }
+.landing-details-accordion { display:flex; flex-direction:column; height:var(--details-height); min-width:0; }
+.landing-details-item { flex:0 0 var(--details-row-height); min-height:0; display:flex; flex-direction:column; justify-content:center; overflow:clip; border-bottom:1px solid var(--landing-border); transition:flex-grow var(--motion-tree) var(--ease-tree); }
 .landing-details-item:last-child { border-bottom:0; }
-.landing-details-item[data-active="true"] { flex:1; display:flex; flex-direction:column; justify-content:center; min-height:272px; padding-block:32px; }
-.landing-details-item h3 button { display:flex; align-items:center; justify-content:space-between; gap:16px; width:100%; padding:18px 48px; border:0; border-radius:0; background:transparent; color:var(--muted-foreground); text-align:left; font:var(--type-ui)/24px var(--landing-body); cursor:pointer; }
+.landing-details-item[data-active="true"] { flex-grow:1; }
+.landing-details-item h3 { flex:none; }
+.landing-details-item h3 button { display:flex; align-items:center; justify-content:space-between; gap:16px; width:100%; padding:18px 48px; border:0; border-radius:0; background:transparent; color:var(--muted-foreground); text-align:left; font:400 var(--type-ui)/24px var(--landing-heading); cursor:pointer; transition:font-size var(--motion-tree) var(--ease-tree),line-height var(--motion-tree) var(--ease-tree),padding-block var(--motion-tree) var(--ease-tree),color var(--motion-tree) var(--ease-tree); }
 .landing-details-item h3 button:hover { color:var(--landing-accent); }
 .landing-details-item h3 button:focus-visible { outline-offset:-5px; }
 .landing-details-item h3 button svg { flex:none; }
 .landing-details-item[data-active="true"] h3 button { padding-block:0; color:var(--foreground); font:400 var(--type-heading)/28px var(--landing-heading); cursor:default; }
-.landing-details-body { padding:0 48px; }
-.landing-details-body p { margin-top:12px; color:var(--muted-foreground); font-size:var(--type-label); line-height:22px; text-wrap:pretty; }
+/* ---- 行高、标题与正文共享 CSS 时间轴；内容常驻且退出即 inert，收尾没有卸载重排 ---- */
+.landing-details-panel { display:grid; grid-template-rows:0fr; flex:none; min-height:0; opacity:0; transition:grid-template-rows var(--motion-tree) var(--ease-tree),opacity var(--motion-tree) var(--ease-tree); }
+.landing-details-item[data-active="true"] .landing-details-panel { grid-template-rows:1fr; opacity:1; }
+.landing-details-panel-clip { min-height:0; overflow:hidden; }
+.landing-details-body { padding:12px 48px 0; }
+.landing-details-body p { color:var(--muted-foreground); font-size:var(--type-label); line-height:22px; text-wrap:pretty; }
 .landing-blueprint .landing-details-body a { display:inline-flex; align-items:center; gap:8px; margin-top:16px; color:var(--landing-accent); font-size:var(--type-label); line-height:20px; text-decoration:underline; text-underline-offset:4px; }
-.landing-details-media { position:relative; isolation:isolate; display:flex; flex-direction:column; min-width:0; padding:24px; border-left:1px solid var(--landing-border); overflow:hidden; background:color-mix(in srgb,var(--primary) 3%,var(--landing-bg)); }
-.landing-details-image { position:relative; z-index:1; flex:1; display:grid; place-items:center; min-height:340px; }
-.landing-details-image img { display:block; width:auto; max-width:100%; max-height:380px; height:auto; border:1px solid var(--landing-border); box-shadow:0 2px 7px #0000000d; }
-.landing-details-media figcaption { position:relative; z-index:1; margin-top:16px; color:#656c73; font-size:11px; line-height:18px; text-align:center; text-wrap:pretty; }
+.landing-details-media { position:relative; isolation:isolate; min-width:0; min-height:0; padding:24px; border-left:1px solid var(--landing-border); overflow:hidden; background:color-mix(in srgb,var(--primary) 3%,var(--landing-bg)); }
+.landing-details-image { position:relative; z-index:1; width:100%; height:100%; }
+.landing-details-image img { display:block; width:100%; height:100%; object-fit:contain; }
 .landing-details-summary { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); }
 .landing-details-summary article { padding:24px 48px; }
 .landing-details-summary article+article { border-left:1px solid var(--landing-border); }
@@ -166,13 +169,10 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
 }
 @media (max-width:767px) {
   .landing-feature-details .landing-section-heading { min-height:0; }
-  .landing-details-showcase { grid-template-columns:1fr; }
+  .landing-details-showcase { --details-height:420px; --details-row-height:57px; grid-template-columns:1fr; grid-template-rows:var(--details-height) 320px; }
   .landing-details-item h3 button { padding:16px 24px; }
-  .landing-details-item[data-active="true"] { min-height:248px; }
   .landing-details-body { padding-inline:24px; }
   .landing-details-media { border-left:0; border-top:1px solid var(--landing-border); padding:20px; }
-  .landing-details-image { min-height:240px; }
-  .landing-details-image img { max-height:320px; }
   .landing-details-summary { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .landing-details-summary article:nth-child(3) { border-left:0; }
   .landing-details-summary article:nth-child(n+3) { border-top:1px solid var(--landing-border); }
