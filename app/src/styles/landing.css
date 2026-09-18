@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖共享 Button/Blueprint DOM、四项真实功能细节、BrandMark 母图、创作者署名头像、页面私有参考字体与 Figma 素材、独立 Demo iframe 和 ShowcaseBackdrop
- * [OUTPUT]: 对外提供英文参考字体与 DS 中文回退的文字层级、共轴导轨、APP 外壳平滑轮廓、三处产品展示共用的矩形细点阵后景、功能细节展开与文章分栏、信纸、评价与页脚的响应式版面；仅 Landing 禁止纵向越界回弹，页尾止于 Footer
+ * [OUTPUT]: 对外提供英文参考字体与 DS 中文回退的文字层级、共轴导轨、APP 外壳平滑轮廓、三处产品展示共用的矩形细点阵后景、功能细节分级字号/垂直居中展开/紧凑摘要、信纸、评价与页脚的响应式版面；仅 Landing 禁止纵向越界回弹，页尾止于 Footer
  * [POS]: styles 的 Landing 局部样式；Footer 淡字位于细密斜纹之下，按钮材质与品牌墨蓝直接消费 DS，背景和纹理保留基线；功能区按参考稿使用 40px 卡片纵向留白与外扩 6px 虚线图片框
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -136,52 +136,46 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
 /* ---- 功能细节：展开说明与实景图同源，移动端把图接在完整说明之后 ---- */
 .landing-feature-details .landing-section-heading { min-height:185px; }
 .landing-blueprint .landing-feature-details h2 { color:var(--landing-accent); }
+.landing-feature-details .landing-section-heading p { color:var(--muted-foreground); font-size:var(--type-ui); line-height:24px; }
 .landing-details-showcase { display:grid; grid-template-columns:5fr 7fr; min-height:456px; }
 .landing-details-accordion { align-self:stretch; display:flex; flex-direction:column; }
 .landing-details-item { border-bottom:1px solid var(--landing-border); }
 .landing-details-item:last-child { border-bottom:0; }
-.landing-details-item[data-active="true"] { flex:1; padding-top:24px; }
-.landing-details-item h3 button { display:flex; align-items:center; justify-content:space-between; gap:16px; width:100%; padding:18px 48px; border:0; border-radius:0; background:transparent; color:var(--landing-ink); text-align:left; font:14px/24px var(--landing-body); cursor:pointer; }
+.landing-details-item[data-active="true"] { flex:1; display:flex; flex-direction:column; justify-content:center; min-height:272px; padding-block:32px; }
+.landing-details-item h3 button { display:flex; align-items:center; justify-content:space-between; gap:16px; width:100%; padding:18px 48px; border:0; border-radius:0; background:transparent; color:var(--muted-foreground); text-align:left; font:var(--type-ui)/24px var(--landing-body); cursor:pointer; }
 .landing-details-item h3 button:hover { color:var(--landing-accent); }
 .landing-details-item h3 button:focus-visible { outline-offset:-5px; }
 .landing-details-item h3 button svg { flex:none; }
-.landing-details-item[data-active="true"] h3 button { color:var(--landing-accent); font:400 21px/30px var(--landing-heading); cursor:default; }
-.landing-details-body { padding:0 48px 32px; }
-.landing-details-body p { font-size:15px; line-height:26px; text-wrap:pretty; }
-.landing-blueprint .landing-details-body a { display:inline-flex; align-items:center; gap:8px; margin-top:20px; color:var(--landing-accent); font-size:14px; text-decoration:underline; text-underline-offset:4px; }
+.landing-details-item[data-active="true"] h3 button { padding-block:0; color:var(--foreground); font:400 var(--type-heading)/28px var(--landing-heading); cursor:default; }
+.landing-details-body { padding:0 48px; }
+.landing-details-body p { margin-top:12px; color:var(--muted-foreground); font-size:var(--type-label); line-height:22px; text-wrap:pretty; }
+.landing-blueprint .landing-details-body a { display:inline-flex; align-items:center; gap:8px; margin-top:16px; color:var(--landing-accent); font-size:var(--type-label); line-height:20px; text-decoration:underline; text-underline-offset:4px; }
 .landing-details-media { position:relative; isolation:isolate; display:flex; flex-direction:column; min-width:0; padding:24px; border-left:1px solid var(--landing-border); overflow:hidden; background:color-mix(in srgb,var(--primary) 3%,var(--landing-bg)); }
 .landing-details-image { position:relative; z-index:1; flex:1; display:grid; place-items:center; min-height:340px; }
 .landing-details-image img { display:block; width:auto; max-width:100%; max-height:380px; height:auto; border:1px solid var(--landing-border); box-shadow:0 2px 7px #0000000d; }
 .landing-details-media figcaption { position:relative; z-index:1; margin-top:16px; color:#656c73; font-size:11px; line-height:18px; text-align:center; text-wrap:pretty; }
-.landing-details-guides { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); }
-.landing-details-guides>a { display:flex; flex-direction:column; padding:28px 32px; }
-.landing-details-guides>a+a { border-left:1px solid var(--landing-border); }
-.landing-details-number { color:#656c73; font:10px/18px Landing Mono,var(--font-sans); letter-spacing:.04em; }
-.landing-blueprint .landing-details-guides h3 { margin-top:12px; font-size:16px; line-height:25px; text-wrap:pretty; }
-.landing-details-guides p { margin-top:8px; font-size:12px; line-height:21px; color:#656c73; text-wrap:pretty; }
-.landing-details-read { display:flex; align-items:center; gap:8px; padding-top:24px; margin-top:auto; color:var(--landing-accent); font-size:12px; }
-.landing-details-guides>a:hover h3 { color:var(--landing-accent); }
-.landing-details-guides>a:focus-visible { outline-offset:-5px; }
+.landing-details-summary { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); }
+.landing-details-summary article { padding:24px 48px; }
+.landing-details-summary article+article { border-left:1px solid var(--landing-border); }
+.landing-blueprint .landing-details-summary h3 { color:var(--foreground); font-size:var(--type-ui); line-height:22px; text-wrap:pretty; }
+.landing-details-summary p { margin-top:4px; color:var(--muted-foreground); font-size:var(--type-label); line-height:20px; text-wrap:pretty; }
 @media (max-width:1100px) {
   .landing-details-item h3 button { padding-inline:32px; }
   .landing-details-body { padding-inline:32px; }
-  .landing-details-guides>a { padding:24px; }
+  .landing-details-summary article { padding:24px; }
 }
 @media (max-width:767px) {
   .landing-feature-details .landing-section-heading { min-height:0; }
   .landing-details-showcase { grid-template-columns:1fr; }
   .landing-details-item h3 button { padding:16px 24px; }
-  .landing-details-item[data-active="true"] { padding-top:12px; }
-  .landing-details-item[data-active="true"] h3 button { font-size:20px; }
-  .landing-details-body { padding:0 24px 28px; }
-  .landing-details-body p { font-size:14px; line-height:25px; }
+  .landing-details-item[data-active="true"] { min-height:248px; }
+  .landing-details-body { padding-inline:24px; }
   .landing-details-media { border-left:0; border-top:1px solid var(--landing-border); padding:20px; }
   .landing-details-image { min-height:240px; }
   .landing-details-image img { max-height:320px; }
-  .landing-details-guides { grid-template-columns:repeat(2,minmax(0,1fr)); }
-  .landing-details-guides>a { padding:24px 20px; }
-  .landing-details-guides>a:nth-child(3) { border-left:0; }
-  .landing-details-guides>a:nth-child(n+3) { border-top:1px solid var(--landing-border); }
+  .landing-details-summary { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .landing-details-summary article:nth-child(3) { border-left:0; }
+  .landing-details-summary article:nth-child(n+3) { border-top:1px solid var(--landing-border); }
 }
 /* 信纸：完整错位纸层承载外影，内纸独立承载内容，避免边角拼缝。 */
 .landing-letter-section { padding:48px; }

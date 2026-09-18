@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖细节与文章同源数据、Router 查询/历史状态、共享 Collapse、语义图标和 ShowcaseBackdrop
- * [OUTPUT]: 对外提供四项可展开的功能细节、对应实景图与四个完整文章入口
+ * [OUTPUT]: 对外提供四项垂直居中的功能细节、对应实景图、随选中项切换的文章入口与紧凑四格摘要
  * [POS]: widgets 的第 11 个 Landing 区块；query 保存当前项，替换历史且保持滚动，博客沿既有 fromBlog 协议返回
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -58,11 +58,10 @@ export function LandingFeatureDetails() {
       </figure>
     </div>
     <BlueprintDivider compact />
-    <nav className="landing-details-guides" aria-label="功能细节使用指南">
-      {detailStories.map((item, i) => <Link key={item.id} to={`/blog/${item.post.slug}`} state={{ fromBlog: true }}>
-        <span className="landing-details-number">0{i + 1} / {item.post.category}</span>
-        <h3>{item.post.title}</h3><p>{item.takeaway}</p><span className="landing-details-read">阅读全文 <ArrowRightIcon size={14} /></span>
-      </Link>)}
-    </nav>
+    <div className="landing-details-summary">
+      {detailStories.map(item => <article key={item.id}>
+        <h3>{item.title}</h3><p>{item.takeaway}</p>
+      </article>)}
+    </div>
   </section>;
 }

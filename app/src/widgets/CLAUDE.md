@@ -19,7 +19,7 @@ BlueprintFrame.tsx: Landing 纵向导轨容器；导航、1120px 正文与页脚
 BlueprintDivider.tsx: Landing 横向导轨；14px 分隔带上下两条边分别共置横线与菱形，flush 提供零高度边界，compact 保留 7px 内部分隔带而不添加参考中没有的节点
 AuthDialog.tsx: 复用 BrandMark 原图的登录/注册统一认证 Dialog，复用共享内凹 Input/PasswordInput 承载邮箱、双密码与显隐控制，并提供协议提示、六格 OTP 自动校验与 Google OAuth 入口
 LandingHero.tsx: 中文公告、居中 Hero、三列价值条与真实 UI 互动插槽；LandingActions 共用 DS 两字「打开」与两字待发布下载（全站同一动作同一词，2+2 等密度），auth query 交给 MarketingHeader 唯一认证弹窗；分区仍复用通栏 BlueprintDivider
-LandingFeatureDetails.tsx: 第 11 区块的四项展开说明、对应实景图与底部四列文章入口；复用 Collapse，detail query 保留选中项，切换替换历史但保留锚点/其他查询/滚动，博客沿 fromBlog 协议返回
+LandingFeatureDetails.tsx: 第 11 区块的四项垂直居中展开说明、对应实景图与底部紧凑四格摘要；标题区和展开正文保留文章入口，底部只含标题和说明；复用 Collapse，detail query 保留选中项，切换替换历史但保留锚点/其他查询/滚动，博客沿 fromBlog 协议返回
 landingDetailData.ts: 归档线、引用选择、同一份原文、Markdown 导出四项细节与完整指南；实景图与文章数据同源，BlogPost 仅类型依赖，不建立运行时反向导入
 LandingSections.tsx: 保留 Grid/Flex 分区与信纸骨架；功能区以真实整理/Canvas/Paper/@引用/正文搜索截图一一对应五项能力，两颗入口直达整理/画布博客并保留来路；补充自动保存、原文引用和 Markdown 导出。AI 分区保留 AiSplitFeature 参考图，功能细节交给 LandingFeatureDetails；评价机构和引语仍是版式占位，社区/扩展标明参考来源，创作者信件与其他分区独立保留
 LandingFooter.tsx: 共用 DS 墨蓝的品牌区与产品/资源/关于/连接四组导航；16 项预留入口（产品 2、资源 8、关于 3、连接 3）以 aria-disabled link 语义展示且不跳转，打开网页版保留博客来路并复用本地认证；品牌与入口置顶、作者与版权置底；保留 Folune 淡描边与细纹层序，不放 PNG，BlueprintFrame 延续导轨
