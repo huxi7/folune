@@ -140,7 +140,7 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
 .landing-details-accordion { display:flex; flex-direction:column; height:var(--details-height); min-width:0; }
 .landing-details-item { flex:0 0 var(--details-row-height); min-height:0; display:flex; flex-direction:column; justify-content:center; overflow:clip; border-bottom:1px solid var(--landing-border); transition:flex-grow var(--motion-tree) var(--ease-tree); }
 .landing-details-item:last-child { border-bottom:0; }
-.landing-details-item[data-active="true"] { flex-grow:1; background:radial-gradient(circle,color-mix(in srgb,var(--primary) 12%,transparent) .6px,transparent .8px) 0 0/8px 8px; }
+.landing-details-item[data-active="true"] { flex-grow:1; background:radial-gradient(circle,color-mix(in srgb,var(--primary) 13%,transparent) .6px,transparent .8px) 0 0/8px 8px; }
 .landing-details-item h3 { flex:none; }
 .landing-details-item h3 button { display:flex; align-items:center; justify-content:space-between; gap:16px; width:100%; padding:18px 48px; border:0; border-radius:0; background:transparent; color:var(--muted-foreground); text-align:left; font:400 var(--type-ui)/24px var(--landing-heading); cursor:pointer; transition:font-size var(--motion-tree) var(--ease-tree),line-height var(--motion-tree) var(--ease-tree),padding-block var(--motion-tree) var(--ease-tree),color var(--motion-tree) var(--ease-tree); }
 .landing-details-item h3 button:hover { color:var(--landing-accent); }
