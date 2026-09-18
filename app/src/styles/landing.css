@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖共享 Button/Blueprint DOM、四项真实功能细节、BrandMark 母图、创作者署名头像、页面私有参考字体与 Figma 素材、独立 Demo iframe 和 ShowcaseBackdrop
  * [OUTPUT]: 对外提供英文参考字体与 DS 中文回退的文字层级、共轴导轨、APP 外壳平滑轮廓、三处产品展示共用的矩形细点阵后景、功能细节分级字号/垂直居中展开/紧凑摘要、信纸、评价与页脚的响应式版面；仅 Landing 禁止纵向越界回弹，页尾止于 Footer
- * [POS]: styles 的 Landing 局部样式；Footer 淡字位于细密斜纹之下，按钮材质与品牌墨蓝直接消费 DS，背景和纹理保留基线；功能区按参考稿使用 40px 卡片纵向留白与外扩 6px 虚线图片框，细节交互栏仅当前展开项显示细点阵，收起项保持原底色
+ * [POS]: styles 的 Landing 局部样式；Footer 淡字位于细密斜纹之下，按钮材质与品牌墨蓝直接消费 DS，背景和纹理保留基线；功能区按参考稿使用 40px 卡片纵向留白与外扩 6px 虚线图片框，细节交互栏仅当前展开项显示与博客标题区同规格的细点阵，收起项保持原底色
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 @font-face { font-family: Landing Writer; src: url('/landing-reference/iAWriterQuattroS_Regular.woff2') format('woff2'); font-display: swap; }
@@ -140,7 +140,7 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
 .landing-details-accordion { display:flex; flex-direction:column; height:var(--details-height); min-width:0; }
 .landing-details-item { flex:0 0 var(--details-row-height); min-height:0; display:flex; flex-direction:column; justify-content:center; overflow:clip; border-bottom:1px solid var(--landing-border); transition:flex-grow var(--motion-tree) var(--ease-tree); }
 .landing-details-item:last-child { border-bottom:0; }
-.landing-details-item[data-active="true"] { flex-grow:1; background:radial-gradient(circle,color-mix(in srgb,var(--primary) 12%,transparent) .6px,transparent .8px) 0 0/8px 8px; }
+.landing-details-item[data-active="true"] { flex-grow:1; background:radial-gradient(circle,color-mix(in srgb,var(--primary) 14%,transparent) .8px,transparent 1px) 0 0/8px 8px; }
 .landing-details-item h3 { flex:none; }
 .landing-details-item h3 button { display:flex; align-items:center; justify-content:space-between; gap:16px; width:100%; padding:18px 48px; border:0; border-radius:0; background:transparent; color:var(--muted-foreground); text-align:left; font:400 var(--type-ui)/24px var(--landing-heading); cursor:pointer; transition:font-size var(--motion-tree) var(--ease-tree),line-height var(--motion-tree) var(--ease-tree),padding-block var(--motion-tree) var(--ease-tree),color var(--motion-tree) var(--ease-tree); }
 .landing-details-item h3 button:hover { color:var(--landing-accent); }
