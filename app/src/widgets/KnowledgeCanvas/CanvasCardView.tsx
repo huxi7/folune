@@ -35,6 +35,7 @@ import {
   TrashIcon,
 } from "../../shared/design-system/icons";
 import { NotePaper } from "../NotePaper";
+import { CanvasSelectionBorder } from "./CanvasSelectionBorder";
 import { useCanvasActions } from "./canvasActions";
 import {
   CANVAS_TEXT_DEFAULT_HEIGHT,
@@ -363,6 +364,9 @@ export const CanvasCardView = memo(function CanvasCardView({
           }
         : undefined}
     >
+      {selected && !previewing && connectionSourceId === null ? (
+        <CanvasSelectionBorder />
+      ) : null}
       <Handle
         className="canvas-card-center-handle"
         isConnectable={false}

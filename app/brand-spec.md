@@ -234,3 +234,9 @@ The motion language is part of the Design System. `src/shared/design-system/moti
 2026-09-07 Menu consistency: All App popup menus (approval, More, create, context, mentions, Select and user menu) share one material rule in design-system.css: opaque Popover, semantic border/foreground, Menu radius, 4px inset and shadow-sm. Approval selection uses a check mark; only hover and keyboard focus paint the neutral row surface.
 
 2026-09-07 Scrollbar refinement: Scrollbars use a transparent track and a quiet neutral-gray thumb (Light rgb(96 96 96) at 11% alpha, Dark rgb(190 190 190) at 13% alpha). Keep native thin scrollbars and system forced-colors behavior. Library and conversation scrollports reach the Panel edge; their 12px content padding stays inside the scrollport, so overlay thumbs never cover text. Other text/list scrollports reserve a stable native gutter without adding another painted track.
+
+## Canvas selection (2026-09-19)
+
+- Selected memo cards use a restrained Electric Border adaptation: a 1px Soft Ink filament at 68% alpha, a 3px edge glow at 12%, and a 14-second eased noise cycle with 2.4px displacement. Both themes consume `--primary`; the paper surface stays unchanged.
+- The native Panel radius and squircle remain authoritative. Only the decorative border is filtered; text, hit targets, card size and React Flow zoom keep their existing geometry.
+- Selection is still owned by React Flow. Preview and connection gestures suppress the filament so their existing feedback stays clear. Unselected cards have no effect mounted; offscreen/background cards stop animating, and Reduced Motion keeps a static outline.
