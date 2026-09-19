@@ -1,65 +1,116 @@
 /**
- * [INPUT]: 依赖已安装的 Paper Shaders GrainGradient/Warp/GodRays/Dithering、React 生命周期与首屏播放状态
- * [OUTPUT]: 对外提供四种真实 WebGL2 Shader 背景与运行/失败反馈
- * [POS]: 独立首屏 Demo 的背景组件；直接使用库组件，局部参数控制蓝灰色场，单实例且不修改正式展示背景
+ * [INPUT]: 依赖 Paper 0.0.80 的 ShaderMount/GrainGradient/Dithering/Warp、局部 GLSL 与参数协议
+ * [OUTPUT]: 对外提供四版背景、A/B/D 原始参照、运行状态及可读取的连续时间
+ * [POS]: Lab 的单画布装配边界；遮罩负责阅读区，参数变更只更新 uniforms，不重建上下文
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
-import { useEffect, useRef, useState } from "react";
-import { GrainGradient, Warp, GodRays, Dithering } from "@paper-design/shaders-react";
+import { useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
+import type { CSSProperties, Ref } from "react";
+import { GrainGradient, Warp, Dithering, ShaderMount } from "@paper-design/shaders-react";
+import type { PaperShaderElement } from "@paper-design/shaders";
+import { inkFragmentShader } from "./inkShader";
+import { isVariant } from "./presets";
+import type { Choice, Snapshot } from "./presets";
 
-export type ShaderConcept = "grain" | "silk" | "rays" | "dither";
 export type ShaderStatus = "loading" | "ready" | "unavailable";
+export type ArtworkHandle = { getFrame: () => number; setFrame: (frame: number) => void };
+const PAPER = "#f4f4f2";
+const ORIGINAL_GRAIN = ["#7695ab", "#c5d2d7", "#e5e4db"];
+const ORIGINAL_SILK = [PAPER, "#8ba7ba", "#e0e6e6", "#b2c5ce"];
+const NEW_GRAIN = ["#7c96a6", "#b8c6cb", PAPER];
 
-const GRAIN_COLORS = ["#7695ab", "#c5d2d7", "#e5e4db"];
-const RAY_COLORS = ["#839fb2", "#bdcbd2", "#e0ded4"];
-const SILK_COLORS = ["#f4f4f2", "#8ba7ba", "#e0e6e6", "#b2c5ce"];
-
-export function HeroArtwork({ concept, running, onStatus }: {
-  concept: ShaderConcept;
-  running: boolean;
-  onStatus: (status: ShaderStatus) => void;
+export function HeroArtwork({ snapshot, running, onStatus, ref }: {
+  snapshot: Snapshot; running: boolean; onStatus: (status: ShaderStatus) => void; ref?: Ref<ArtworkHandle>;
 }) {
   const host = useRef<HTMLDivElement>(null);
-  const [supported, setSupported] = useState<boolean | null>(null);
+  const shader = useRef<PaperShaderElement>(null);
+  const [supported, setSupported] = useState(false);
+  const [size, setSize] = useState([1440, 600]);
+  const [attempt, setAttempt] = useState(0);
+  const { choice, params: p, frame } = snapshot;
+  const original = !isVariant(choice);
+  useImperativeHandle(ref, () => ({
+    getFrame: () => shader.current?.paperShaderMount?.getCurrentFrame() ?? frame,
+    setFrame: value => shader.current?.paperShaderMount?.setFrame(value),
+  }), [frame]);
 
   useEffect(() => {
-    // ---- 探测失败必须明确反馈，不能把静态底色当作已运行的 Shader ----
     let context: WebGL2RenderingContext | null = null;
-    try { context = document.createElement("canvas").getContext("webgl2"); } catch { /* 无图形上下文 */ }
+    try { context = document.createElement("canvas").getContext("webgl2"); } catch { /* 保留纸色备用面 */ }
     setSupported(Boolean(context));
     if (!context) onStatus("unavailable");
     context?.getExtension("WEBGL_lose_context")?.loseContext();
   }, [onStatus]);
 
   useEffect(() => {
-    if (!supported || !host.current) return;
-    const element = host.current;
-    let canvas: HTMLCanvasElement | null = null;
-    const lost = () => onStatus("unavailable");
-    const inspect = () => {
-      const next = element.querySelector("canvas");
-      if (!next || next.width < 2) return;
-      if (canvas !== next) {
-        canvas?.removeEventListener("webglcontextlost", lost);
-        canvas = next;
-        canvas.addEventListener("webglcontextlost", lost);
-      }
-      onStatus("ready");
-    };
-    const observer = new MutationObserver(inspect);
-    observer.observe(element, { subtree:true, childList:true, attributes:true, attributeFilter:["width", "height"] });
-    inspect();
-    return () => { observer.disconnect(); canvas?.removeEventListener("webglcontextlost", lost); };
-  }, [supported, onStatus]);
+    const node = host.current;
+    if (!node) return;
+    const observer = new ResizeObserver(([entry]) => {
+      if (entry) setSize([entry.contentRect.width, entry.contentRect.height]);
+    });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
 
-  const shared = { width:"100%", height:"100%", minPixelRatio:1, maxPixelCount:1_400_000, frame:12000, className:"hero-lab-shader-canvas" };
-  return <div ref={host} className={`hero-lab-art hero-lab-art-${concept}`} aria-hidden="true">
-    {supported && <>
-      {concept === "grain" && <GrainGradient {...shared} colors={GRAIN_COLORS} colorBack="#f4f4f2" shape="wave" softness={0.55} intensity={0.35} noise={0.12} scale={0.7} rotation={-18} speed={running ? 0.8 : 0} />}
-      {concept === "silk" && <Warp {...shared} colors={SILK_COLORS} shape="edge" shapeScale={0.6} softness={0.85} proportion={0.3} distortion={0.18} swirl={0.48} swirlIterations={5} scale={1.3} rotation={-25} speed={running ? 1.2 : 0} />}
-      {concept === "rays" && <GodRays {...shared} colors={RAY_COLORS} colorBack="#f4f4f2" colorBloom="#f4f4f2" bloom={0} intensity={0.75} density={0.26} spotty={0.28} midSize={0} midIntensity={0} offsetX={-0.35} offsetY={-0.9} rotation={-12} scale={1} speed={running ? 0.85 : 0} />}
-      {concept === "dither" && <Dithering {...shared} colorBack="#f4f4f2" colorFront="#a5bac5" shape="ripple" type="4x4" size={1.2} scale={0.65} offsetY={0.45} rotation={-18} speed={running ? 0.65 : 0} />}
-    </>}
-    <div className="hero-lab-reading-veil" />
+  useEffect(() => {
+    if (!supported) return;
+    onStatus("loading");
+    let canvas: HTMLCanvasElement | null = null;
+    let timer = 0;
+    let tries = 0;
+    const lost = (event: Event) => { event.preventDefault(); onStatus("unavailable"); };
+    const restored = () => setAttempt(value => value + 1);
+    const inspect = () => {
+      const next = host.current?.querySelector("canvas") ?? null;
+      if (next !== canvas) {
+        canvas?.removeEventListener("webglcontextlost", lost);
+        canvas?.removeEventListener("webglcontextrestored", restored);
+        canvas = next;
+        canvas?.addEventListener("webglcontextlost", lost);
+        canvas?.addEventListener("webglcontextrestored", restored);
+      }
+      // ---- 确认链接成功；仅出现 canvas 不等于 shader 已就绪 ----
+      const gl = canvas?.getContext("webgl2");
+      const program = gl?.getParameter(gl.CURRENT_PROGRAM) as WebGLProgram | null;
+      if (gl && program && gl.getProgramParameter(program, gl.LINK_STATUS) && (canvas?.width ?? 0) > 1) onStatus("ready");
+      else if (++tries < 40) timer = window.setTimeout(inspect, 200);
+      else onStatus("unavailable");
+    };
+    timer = window.setTimeout(inspect, 100);
+    return () => {
+      window.clearTimeout(timer);
+      canvas?.removeEventListener("webglcontextlost", lost);
+      canvas?.removeEventListener("webglcontextrestored", restored);
+    };
+  }, [supported, choice, attempt, onStatus]);
+
+  const uniforms = useMemo(() => ({
+    u_cssSize: size, u_mode: choice === "mist" ? 1 : 0,
+    u_grain: p.grain, u_patternScale: p.scale, u_density: p.density,
+    u_disorder: p.disorder, u_seed: p.seed, u_position: [p.x, p.y], u_angle: p.rotation,
+    // 顶点底座尺寸显式给出，局部 shader 自行解耦材质与形态尺度。
+    u_scale: 1, u_originX: 0.5, u_originY: 0.5, u_offsetX: 0, u_offsetY: 0,
+    u_worldWidth: 0, u_worldHeight: 0, u_fit: 0, u_rotation: 0,
+  }), [size, choice, p]);
+  const shared = { ref: shader, width: "100%", height: "100%", minPixelRatio: 1, maxPixelCount: 1_400_000, frame, className: "grain-lab-canvas" };
+  const style = { "--grain-strength": original ? 1 : p.strength, "--grain-clear": original ? 0.93 : p.clear } as CSSProperties;
+  return <div ref={host} className="grain-lab-art" data-choice={choice} data-original={original} aria-hidden="true" style={style}>
+    <div className="grain-lab-pigment">
+      {supported && <ShaderChoice key={`${choice}-${attempt}`} choice={choice} snapshot={snapshot} shared={shared} uniforms={uniforms} running={running} />}
+    </div>
+    <div className="grain-lab-reading-veil" />
   </div>;
+}
+
+type SharedProps = { ref: Ref<PaperShaderElement>; width: string; height: string; minPixelRatio: number; maxPixelCount: number; frame: number; className: string };
+function ShaderChoice({ choice, snapshot, shared, uniforms, running }: {
+  choice: Choice; snapshot: Snapshot; shared: SharedProps; uniforms: Record<string, number | number[]>; running: boolean;
+}) {
+  const p = snapshot.params;
+  if (choice === "grain") return <GrainGradient {...shared} colors={ORIGINAL_GRAIN} colorBack={PAPER} shape="wave" softness={0.55} intensity={0.35} noise={0.12} scale={0.7} rotation={-18} speed={running ? 0.8 : 0} />;
+  if (choice === "silk") return <Warp {...shared} colors={ORIGINAL_SILK} shape="edge" shapeScale={0.6} softness={0.85} proportion={0.3} distortion={0.18} swirl={0.48} swirlIterations={5} scale={1.3} rotation={-25} speed={running ? 1.2 : 0} />;
+  if (choice === "dither") return <Dithering {...shared} colorBack={PAPER} colorFront="#a5bac5" shape="ripple" type="4x4" size={1.2} scale={0.65} offsetY={0.45} rotation={-18} speed={running ? 0.65 : 0} />;
+  if (choice === "paper") return <GrainGradient {...shared} colors={NEW_GRAIN} colorBack={PAPER} shape="wave" softness={0.8} intensity={p.disorder * 0.5} noise={0.19} scale={p.scale} rotation={p.rotation} offsetX={p.x} offsetY={p.y} speed={running ? p.speed : 0} />;
+  if (choice === "print") return <Dithering {...shared} colorBack={PAPER} colorFront="#7894a7" shape="warp" type="4x4" size={p.grain} scale={p.scale} rotation={p.rotation} offsetX={p.x} offsetY={p.y} speed={running ? p.speed : 0} />;
+  return <ShaderMount {...shared} fragmentShader={inkFragmentShader} uniforms={uniforms} speed={running ? p.speed : 0} />;
 }

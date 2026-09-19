@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖本目录中的 React Bits Waves 与 Aceternity Background Beams 实际组件源码
  * [OUTPUT]: 对外提供 E/F 背景装配和对应渲染状态
- * [POS]: 首屏 Demo 的组件库适配层；颜色/密度/波幅在此确定，暂停由首屏统一运行状态驱动，不引入自画替代效果
+ * [POS]: 已淘汰 E/F 的历史适配层，不再被当前 Lab 导入；仅保留源码及许可追溯
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { useEffect, useRef } from "react";

@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖共享 Button、BlueprintDivider、参考原始素材与 LandingEditor
- * [OUTPUT]: 对外提供渐变公告、居中 Hero、三列能力条与真实 UI 互动展示；公告及能力条边界复用通栏导轨和交点
+ * [OUTPUT]: 对外提供渐变公告、居中 Hero、已定稿的记录/归档/连接三列价值条与真实 UI 互动展示；公告及价值条边界复用通栏导轨和交点
  * [POS]: widgets 的中文首页首屏；共享行动区与顶栏共用同一个两字动词「打开」，与「下载」构成 2+2 等密度并列，经既有 auth query 打开唯一登录/注册弹窗，下载仅展示待发布状态
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -31,9 +31,9 @@ export function LandingHero() {
     </section>
     <BlueprintDivider flush fullBleed />
     <div className="landing-value-strip">
-      <div><h2>专注记录</h2><p>像在纸上写字一样自然，让灵感先落下来，不必急着分类。</p></div>
-      <div><h2>智能整理</h2><p>与 AI 一起梳理内容，让零散记录逐渐沉淀为有序的知识。</p></div>
-      <div><h2>连接想法</h2><p>在笔记与画布之间自由切换，看见内容之间的新联系。</p></div>
+      <div><h2>专注记录</h2><p>先把想法写下来，不必想好标题，也不必急着选文件夹。</p></div>
+      <div><h2>有序归档</h2><p>让 AI 按内容整理笔记；归档去向看得见，不合适可以撤销。</p></div>
+      <div><h2>连接想法</h2><p>把相关笔记放进画布，连一连、补几句，让思路继续展开。</p></div>
     </div>
     <BlueprintDivider flush fullBleed />
     <section className="landing-editor-section" aria-label="Folune 互动体验"><LandingEditor /></section>

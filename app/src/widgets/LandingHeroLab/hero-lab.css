@@ -1,130 +1,118 @@
 /**
- * [INPUT]: 依赖生产 DS 色彩/字体/按钮、Blueprint 主轨与 LandingHeroLab DOM
- * [OUTPUT]: 对外提供六套真实 Shader/组件库居中首屏、比较控件与响应式和减少动态效果降级
- * [POS]: hero-lab.html 专用样式，不被正式入口导入；WebGL 只作用于装饰，文字和骨架始终静止
+ * [INPUT]: 依赖生产 Landing 的排版/主轨/按钮，以及独立 Lab DOM 和参数变量
+ * [OUTPUT]: 对外提供连续颗粒舞台、响应式高度、可收起面板与全宽对照控件
+ * [POS]: 仅 hero-lab.html 导入；正文沿用生产样式，实验控件不占预览布局
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
-
-/* ---- 实验台：方案切换始终在产品画面之外 ---- */
-body:has(.hero-lab) { margin:0; background:#eaece9; }
-.hero-lab { --lab-ink:#395875; color:#393d45; font-family:var(--font-sans); }
-.hero-lab-controls { min-height:64px; display:flex; align-items:center; justify-content:space-between; gap:20px; padding:10px 32px; background:#eaece9; border-bottom:1px solid #d6dbdd; font-size:12px; }
-.hero-lab-control-label { display:flex; align-items:center; gap:12px; font:11px/1.5 var(--font-mono); letter-spacing:.1em; color:#61717a; white-space:nowrap; }
-.hero-lab-control-label span { font-family:var(--font-sans); letter-spacing:.05em; }
-.hero-lab-tabs { display:flex; gap:6px; }
-.hero-lab-tabs button,.hero-lab-pause { border:1px solid transparent; border-radius:8px; corner-shape:var(--corner-shape-smooth); background:transparent; padding:9px 13px; cursor:pointer; color:#647077; font:12px/18px var(--font-sans); white-space:nowrap; }
-.hero-lab-tabs button span { margin-right:7px; font:11px var(--font-mono); color:#7b8a90; }
-.hero-lab-tabs button[aria-pressed=true] { color:#304d67; background:#f8f9f6; border-color:#cbd2d4; box-shadow:0 1px 2px #263e4510; }
-.hero-lab-tabs button:hover,.hero-lab-pause:hover { background:#f3f5f1; }
-.hero-lab-controls :focus-visible,.hero-lab-caption a:focus-visible { outline:2px solid #395875; outline-offset:3px; }
-.hero-lab-pause { border-color:#cbd2d4; padding-inline:12px; }
-.hero-lab-caption { display:flex; justify-content:space-between; gap:20px; align-items:center; padding:18px 32px; font-size:12px; color:#657078; }
-.hero-lab-caption>span:first-child { color:#395875; }
-.hero-lab-caption a { color:inherit; text-decoration:none; }
-
-/* ---- 共用舞台：生产 1120px 主轨、墨蓝与中文宋体继续贯穿 ---- */
-.hero-lab-screen { --landing-bg:#f4f4f2; --landing-border:#d5dce0; }
-.hero-lab-header { position:relative; height:65px; }
-.hero-lab-header .marketing-nav { height:64px; gap:48px; padding-inline:24px; }
-.hero-lab-header .marketing-nav>nav { gap:28px; }
-.hero-lab-header .marketing-nav-link { font-size:13px; color:#58636a; }
-.hero-lab-header-actions { display:flex; align-items:center; gap:10px; margin-left:auto; }
-.hero-lab-header .marketing-brand { --brand-size:37px; gap:7px; }
-.hero-lab-header .ds-brand p { font-size:15px; font-weight:560; color:#34454b; }
-.hero-lab-announcement { font-size:12px; height:36px; background:linear-gradient(90deg,transparent,#e8edf0a6,transparent); }
-.hero-lab-announcement>span,.hero-lab-announcement a { font:12px/20px var(--landing-body); letter-spacing:.03em; }
-.hero-lab-announcement>span { margin-right:6px; }
-.hero-lab-hero { position:relative; height:480px; isolation:isolate; display:flex; align-items:center; justify-content:center; }
-.hero-lab-copy { position:relative; z-index:2; width:100%; text-align:center; padding-inline:24px; }
-.hero-lab-copy h1 { font:400 48px/1.4 var(--landing-heading); letter-spacing:.045em; color:var(--primary); }
-.hero-lab-title-break { display:none; }
-.hero-lab-copy .hero-lab-description { margin:17px auto 0; font-size:15px; line-height:26px; color:#626e78; }
-.hero-lab-actions { margin-top:28px; }
-.hero-lab-actions .landing-actions { gap:12px; }
-.hero-lab-actions .landing-actions .ds-button { min-width:106px; height:38px; }
-.hero-lab-actions .landing-action-note { margin-top:14px!important; color:#77818a; font-size:11px; letter-spacing:.04em; }
-.hero-lab-values { min-height:140px; background:linear-gradient(180deg,#f6f7f480,#f4f4f2); position:relative; z-index:2; }
-.hero-lab-values>div { padding:18px 28px 20px; }
-.hero-lab-values h2 { color:#344a58; font-size:18px; line-height:26px; }
-.hero-lab-values p { font-size:12px; line-height:21px; margin-top:6px; color:#69737a; max-width:295px; }
-/* ---- 真实 Shader：一个画布延伸到侧轨，中心用纸色薄雾保护文字 ---- */
-.hero-lab-art { position:absolute; top:0; bottom:0; left:calc(48px - var(--blueprint-main-inset)); right:calc(48px - var(--blueprint-main-inset)); z-index:0; pointer-events:none; overflow:hidden; background:#f4f4f2; }
-.hero-lab-shader-canvas { position:absolute!important; inset:0; }
-.hero-lab-shader-canvas canvas { display:block; }
-.hero-lab-reading-veil { position:absolute; inset:0; background:radial-gradient(ellipse 37% 49% at 50% 43%,#f4f4f2ed 0,#f4f4f2bb 38%,#f4f4f22b 73%,transparent 100%),linear-gradient(180deg,#f4f4f26b,transparent 24%,transparent 80%,#f4f4f247); }
-.hero-lab-margin-ticks { position:absolute; inset:0; pointer-events:none; }
-.hero-lab-margin-ticks::before,.hero-lab-margin-ticks::after { content:""; position:absolute; top:36%; height:130px; width:6px; background:repeating-linear-gradient(to bottom,#617b8d66 0 1px,transparent 1px 13px); }
-.hero-lab-margin-ticks::before { right:calc(100% + 12px); }.hero-lab-margin-ticks::after { left:calc(100% + 12px); }
-.hero-lab-hero { height:490px; }
-.hero-lab-copy h1 { font-size:50px; letter-spacing:.02em; }
-.hero-lab-copy .hero-lab-description { color:#536573; font-size:15px; line-height:27px; margin-top:20px; }
-.hero-lab-actions { margin-top:30px; }
-.hero-lab-values { min-height:112px; background:#f4f4f2; }
-.hero-lab-values>div { padding:22px 26px; }
-.hero-lab-values h2 { font-size:17px; }
-.hero-lab-values p { margin-top:5px; }
-.hero-lab-caption [data-status=unavailable] { color:#9b4034; }
-
-@media(max-width:1200px) {
-  .hero-lab-control-label { display:none; }
-  .hero-lab-controls { justify-content:center; }
+/* ---- 舞台：只改变高度与后景，不另造文字和导航尺度 ---- */
+body:has(.grain-lab) { margin:0; background:#f4f4f2; }
+.grain-lab { color:#393d45; font-family:var(--font-sans); }
+.grain-lab-screen { --lab-surrounding-height:256px; min-height:100svh; }
+.grain-lab-screen .grain-lab-hero {
+  min-height:clamp(440px,min(var(--lab-requested-height),calc(100svh - var(--lab-surrounding-height))),800px);
+  isolation:isolate; overflow:visible; background:none;
 }
-@media(max-width:767px) {
-  .hero-lab-controls { padding:9px 10px; gap:8px; min-height:56px; }
-  .hero-lab-tabs { gap:3px; }
-  .hero-lab-tabs button { font-size:11px; padding:7px 9px; }
-  .hero-lab-tabs button span { margin-right:4px; }
-  .hero-lab-pause { font-size:10px; padding:6px 9px; }
-  .hero-lab-screen { --landing-gutter:16px; --blueprint-edge-inset:8px; }
-  .hero-lab-header { height:61px; }
-  .hero-lab-header .marketing-nav { height:60px; padding-inline:12px; }
-  .hero-lab-header .marketing-nav>nav { display:none; }
-  .hero-lab-header .marketing-brand { --brand-size:32px; }
-  .hero-lab-header .ds-brand p { font-size:14px; }
-  .hero-lab-header-actions { gap:3px; }
-  .hero-lab-header .ds-button { padding-inline:12px; font-size:12px; }
-  .hero-lab-announcement>span,.hero-lab-announcement a { font-size:10px; letter-spacing:0; }
-  .hero-lab-announcement>span { margin-right:0; }
-  .hero-lab-hero { height:470px; }
-  .hero-lab-copy { padding:0 12px; }
-  .hero-lab-copy h1 { font-size:36px; line-height:1.55; }
-  .hero-lab-title-break { display:block; }
-  .hero-lab-copy .hero-lab-description { font-size:12px; line-height:23px; margin-top:18px; }
-  .hero-lab-actions { margin-top:26px; }
-  .hero-lab-actions .landing-action-note { font-size:10px; }
-  .hero-lab-art { left:-8px; right:-8px; }
-  .hero-lab-reading-veil { background:radial-gradient(ellipse 65% 45% at 50% 42%,#f4f4f2e8 5%,#f4f4f2a6 50%,#f4f4f21a 100%); }
-  .hero-lab-values { display:grid; grid-template-columns:1fr; }
-  .hero-lab-values>div { padding:18px 22px; border-right:0; border-bottom:1px solid var(--landing-border); }
-  .hero-lab-values h2 { font-size:17px; }
-  .hero-lab-values p { font-size:12px; line-height:21px; max-width:none; }
-  .hero-lab-caption { padding:16px; font-size:10px; gap:10px; flex-wrap:wrap; }
-  .hero-lab-caption>span:nth-child(2) { order:3; width:100%; }
+.grain-lab-screen[data-immersive=true] .grain-lab-hero { min-height:clamp(440px,var(--lab-requested-height),800px); }
+.grain-lab-hero .landing-hero-copy,.grain-lab-hero .grain-lab-actions { z-index:2; }
+.grain-lab-screen .grain-lab-values { position:relative; background:var(--landing-bg); z-index:2; }
+.grain-lab-screen .grain-lab-art {
+  position:absolute; top:0; bottom:0; left:calc(var(--blueprint-edge-inset) - var(--blueprint-main-inset)); right:calc(var(--blueprint-edge-inset) - var(--blueprint-main-inset));
+  pointer-events:none; overflow:hidden; z-index:0; background:var(--landing-bg);
 }
+.grain-lab-pigment { position:absolute; inset:0; opacity:var(--grain-strength); }
+.grain-lab-canvas { position:absolute!important; inset:0; }
+.grain-lab-canvas canvas { display:block; }
+/* 中央阅读区不画硬边，外围和下沿缓慢融入下一段纸色。 */
+.grain-lab-reading-veil {
+  position:absolute; inset:0;
+  background:radial-gradient(ellipse min(36vw,480px) 210px at 50% 49%,rgb(244 244 242 / var(--grain-clear)) 0%,rgb(244 244 242 / var(--grain-clear)) 26%,transparent 100%),
+    linear-gradient(180deg,#f4f4f25c,transparent 22%,transparent 72%,#f4f4f2),
+    linear-gradient(90deg,#f4f4f28c,transparent 17%,transparent 83%,#f4f4f28c);
+}
+.grain-lab-art[data-original=true] .grain-lab-reading-veil { background:radial-gradient(ellipse 37% 49% at 50% 43%,#f4f4f2ed 0,#f4f4f2bb 38%,#f4f4f22b 73%,transparent 100%),linear-gradient(180deg,#f4f4f26b,transparent 24%,transparent 80%,#f4f4f247); }
+.grain-lab-art[data-choice=dither] .grain-lab-reading-veil { background:radial-gradient(ellipse 43% 70% at 50% 37%,#f4f4f2 4%,#f4f4f2dd 36%,#f4f4f230 78%,transparent 100%),linear-gradient(#f4f4f250,transparent 50%); }
+.grain-lab-app-loading { height:738px; display:grid; place-items:center; color:#7a8389; font-size:13px; }
+.grain-lab-footer { min-height:110px; padding:24px 32px 90px; display:flex; justify-content:space-between; gap:16px; font-size:11px; color:#798087; border-top:1px solid #dadde2; }
+.grain-lab-footer>span:first-child { font-family:var(--font-mono); font-size:10px; letter-spacing:.08em; }
 
-/* ---- 六版比较：两版新增 Shader 与两版真实组件库背景 ---- */
-.hero-lab-tabs { gap:3px; }
-.hero-lab-tabs button { padding-inline:10px; }
-.hero-lab-controls { gap:12px; padding-inline:24px; }
-.hero-lab-control-label { gap:8px; }
-.hero-lab-control-label span { display:none; }
-.hero-lab-art-rays .hero-lab-reading-veil { background:radial-gradient(ellipse 38% 49% at 50% 44%,#f4f4f2ce, #f4f4f270 48%,transparent 100%); }
-.hero-lab-art-dither .hero-lab-reading-veil { background:radial-gradient(ellipse 43% 70% at 50% 37%,#f4f4f2 4%,#f4f4f2dd 36%,#f4f4f230 78%,transparent 100%),linear-gradient(#f4f4f250,transparent 50%); }
-.hero-lab-art-waves { background:linear-gradient(180deg,#f4f4f2,#e6ecec); }
-.hero-lab-waves-canvas { display:block; width:100%; height:100%; }
-.hero-lab-art-waves .hero-lab-reading-veil { background:radial-gradient(ellipse 37% 60% at 50% 44%,#f4f4f2 12%,#f4f4f2ed 38%,#f4f4f210 89%,transparent 100%); }
-.hero-lab-beams-component { position:absolute; inset:0; background:radial-gradient(ellipse at bottom,#dce6eb55,transparent 70%); }
-.hero-lab-beams-svg { position:absolute; inset:0; width:100%; height:100%; }
-.hero-lab-art-beams .hero-lab-reading-veil { background:radial-gradient(ellipse 37% 65% at 50% 44%,#f4f4f2 5%,#f4f4f2dd 38%,#f4f4f218 90%,transparent 100%); }
-@media(max-width:767px) {
-  .hero-lab-controls { flex-wrap:wrap; padding:8px 10px; gap:6px; }
-  .hero-lab-tabs { display:grid; grid-template-columns:repeat(3,1fr); width:100%; }
-  .hero-lab-tabs button { padding:7px 8px; }
-  .hero-lab-pause { margin-left:auto; padding-block:3px; }
-  .hero-lab-art-waves .hero-lab-reading-veil,.hero-lab-art-beams .hero-lab-reading-veil { background:radial-gradient(ellipse 65% 65% at 50% 42%,#f4f4f2 5%,#f4f4f2dc 48%,#f4f4f21a 100%); }
-  .hero-lab-art-dither .hero-lab-reading-veil { background:radial-gradient(ellipse 75% 62% at 50% 37%,#f4f4f2 15%,#f4f4f2cb 50%,#f4f4f21a 100%); }
-}
+/* ---- 操作层：低矮浮条与纸色面板，预览仍占完整视口 ---- */
+.grain-lab-dock,.grain-lab-panel { position:fixed; z-index:80; background:#fafbf8; border:1px solid #d8ddde; box-shadow:0 8px 32px #293c5012,0 1px 3px #293c5009; }
+.grain-lab-dock { bottom:20px; left:50%; transform:translateX(-50%); display:flex; align-items:center; gap:6px; padding:6px; border-radius:12px; corner-shape:var(--corner-shape-smooth); white-space:nowrap; }
+.grain-lab-dock>div { display:flex; gap:3px; }
+.grain-lab-dock-label { font-size:11px; color:#7b858d; padding:0 10px; }
+.grain-lab-dock button,.grain-lab-panel button { cursor:pointer; font:inherit; transition:background-color .15s,color .15s; }
+.grain-lab-dock button { border:0; border-radius:7px; background:transparent; color:#697681; font-size:12px; min-width:34px; height:32px; padding:0 9px; }
+.grain-lab-dock button[aria-pressed=true] { background:#e7edf0; color:#395875; }
+.grain-lab-dock button:hover { background:#edf0ee; }
+.grain-lab-dock .grain-lab-dock-edit { background:#395875; color:#fff; padding-inline:14px; }
+.grain-lab-dock .grain-lab-dock-edit:hover { background:#304d67; }
+.grain-lab-dock-pause { border-left:1px solid #dce1e2!important; border-radius:0!important; }
+.grain-lab-panel { width:340px; max-width:calc(100vw - 24px); right:18px; top:72px; bottom:78px; display:flex; flex-direction:column; border-radius:12px; corner-shape:var(--corner-shape-smooth); overflow:hidden; font-size:12px; }
+.grain-lab-panel-heading { padding:20px; display:flex; justify-content:space-between; gap:12px; align-items:center; border-bottom:1px solid #e2e5e4; }
+.grain-lab-eyebrow { font:9px/1.5 var(--font-mono); letter-spacing:.09em; color:#879198; }
+.grain-lab-panel-heading h2 { margin:6px 0 0; font-size:16px; font-weight:500; color:#344e62; }
+.grain-lab-panel-heading>button { color:#6c7881; border:0; background:none; padding:6px; }
+.grain-lab-panel-scroll { overflow-y:auto; overscroll-behavior:contain; padding:16px 20px; scrollbar-width:thin; }
+.grain-lab-choices { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.grain-lab-choices button { text-align:left; display:flex; flex-direction:column; padding:0; overflow:hidden; border:1px solid #e0e4e3; background:transparent; border-radius:8px; }
+.grain-lab-choices button[aria-pressed=true] { border-color:#708997; background:#edf1f2; }
+.grain-lab-choices button>span:last-child { padding:9px 10px 10px; }
+.grain-lab-choices small { font:10px var(--font-mono); color:#83929b; margin-right:7px; }
+.grain-lab-choices strong { font-size:12px; font-weight:500; color:#435c6c; }
+.grain-lab-choices em { font-style:normal; display:block; margin-top:5px; font-size:10px; line-height:1.5; color:#818a90; }
+/* 选项色样仅用于导航，真实动态只在首屏单画布呈现。 */
+.grain-lab-swatch { height:38px; width:100%; background-color:#eff0ec; }
+.grain-lab-swatch-ink { background-image:radial-gradient(circle,#69879766 .5px,transparent .8px),linear-gradient(135deg,#f4f4f2 10%,#aebfc944 70%,#f4f4f2); background-size:3px 3px,100% 100%; }
+.grain-lab-swatch-paper { background-image:radial-gradient(ellipse at 30% 100%,#8fa5af55,transparent 80%),radial-gradient(circle,#8498a236 .5px,transparent .8px); background-size:100% 100%,2px 2px; }
+.grain-lab-swatch-print { background-image:radial-gradient(circle,#738e9f60 .7px,transparent 1px); background-size:4px 4px; }
+.grain-lab-swatch-mist { background-image:radial-gradient(circle,#8098a74a .5px,transparent .9px); background-size:7px 5px; }
+.grain-lab-description { margin:14px 0 20px; }
+.grain-lab-description>span { color:#849096; font-size:10px; }
+.grain-lab-description p { margin:6px 0 0; font-size:12px; line-height:1.8; color:#66757f; }
+.grain-lab-control-section { margin:0; padding:17px 0; border:0; border-top:1px solid #e0e4e3; min-width:0; }
+.grain-lab-control-section legend { float:left; width:100%; padding:0; margin-bottom:15px; color:#415a6a; font-size:12px; font-weight:500; }
+.grain-lab-control-section legend+* { clear:both; }
+.grain-lab-section-title { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+.grain-lab-section-title h3 { font:500 12px var(--font-sans); margin:0; color:#415a6a; }
+.grain-lab-section-title>span { font:10px var(--font-mono); color:#879198; }
+.grain-lab-height-presets { display:grid; grid-template-columns:repeat(3,1fr); gap:5px; margin-bottom:16px; }
+.grain-lab-height-presets button { padding:8px 5px; border:1px solid #dce2e3; color:#697a84; border-radius:6px; background:transparent; font-size:11px; }
+.grain-lab-height-presets small { margin-left:6px; color:#94a0a6; font-size:10px; }
+.grain-lab-height-presets button[aria-pressed=true] { background:#eaf0f2; border-color:#a7b8c2; color:#395875; }
+.grain-lab-slider { display:block; margin:0 0 17px; }
+.grain-lab-slider>span { display:flex; align-items:center; justify-content:space-between; margin-bottom:9px; font-size:11px; color:#586b78; }
+.grain-lab-slider output { font:10px var(--font-mono); color:#8a979e; font-variant-numeric:tabular-nums; }
+.grain-lab-slider input { display:block; width:100%; height:14px; margin:0; accent-color:#58758b; cursor:pointer; }
+.grain-lab-slider small,.grain-lab-help { display:block; font-size:10px; line-height:1.75; color:#899299; margin:7px 0 0; }
+.grain-lab-check { display:flex; align-items:center; gap:8px; color:#667882; font-size:11px; cursor:pointer; }
+.grain-lab-check input { accent-color:#58758b; }
+.grain-lab-advanced { margin:12px 0; }
+.grain-lab-advanced summary { color:#6b7f8b; font-size:11px; cursor:pointer; padding:5px 0; }
+.grain-lab-advanced[open] summary { margin-bottom:14px; }
+.grain-lab-button-row { display:flex; gap:7px; flex-wrap:wrap; }
+.grain-lab-button-row button,.grain-lab-compare,.grain-lab-config>button { background:transparent; border:1px solid #d7dfe2; border-radius:6px; padding:8px 11px; font-size:11px; color:#526d7f; }
+.grain-lab-panel button:hover { background-color:#edf1f1; }
+.grain-lab-panel button:disabled { opacity:.45; cursor:default; }
+.grain-lab-compare { margin-top:8px; width:100%; }
+.grain-lab-compare[aria-pressed=true] { background:#e7eef1; border-color:#9fB1bc; }
+.grain-lab-panel .grain-lab-text-button { border:0; padding:6px 0; background:none; font-size:11px; color:#7a8992; }
+.grain-lab-config { margin-top:16px; }
+.grain-lab-config label { color:#76848d; font-size:11px; }
+.grain-lab-config textarea { width:100%; min-height:160px; margin:8px 0; padding:10px; resize:vertical; border:1px solid #d8dfe1; border-radius:6px; background:#f3f5f2; color:#526d7f; font:10px/1.6 var(--font-mono); }
+.grain-lab-notice { color:#526d7f; font-size:11px; line-height:1.75; }
+.grain-lab-notice:empty { display:none; }
+.grain-lab-production { display:inline-block; margin-top:14px; font-size:11px; color:#647f91; text-decoration:none; }
+.grain-lab-dock :focus-visible,.grain-lab-panel :focus-visible { outline:2px solid #69899f; outline-offset:3px; }
 
 @media(max-width:767px) {
-  .hero-lab-art-beams .hero-lab-reading-veil { background:radial-gradient(ellipse 63% 43% at 50% 43%,#f4f4f2 3%,#f4f4f2c9 48%,transparent 100%); }
+  .grain-lab-screen .grain-lab-hero,.grain-lab-screen[data-immersive=true] .grain-lab-hero { min-height:clamp(400px,var(--lab-requested-height),700px); padding-block:64px; }
+  .grain-lab-screen .grain-lab-art { left:-8px; right:-8px; }
+  .grain-lab-reading-veil { background:radial-gradient(ellipse 70% 210px at 50% 49%,rgb(244 244 242 / var(--grain-clear)) 0%,rgb(244 244 242 / var(--grain-clear)) 26%,transparent 100%),linear-gradient(180deg,#f4f4f260,transparent 22%,transparent 70%,#f4f4f2); }
+  .grain-lab-art[data-original=true] .grain-lab-reading-veil { background:radial-gradient(ellipse 65% 45% at 50% 42%,#f4f4f2e8 5%,#f4f4f2a6 50%,#f4f4f21a 100%); }
+  .grain-lab-art[data-choice=dither] .grain-lab-reading-veil { background:radial-gradient(ellipse 75% 62% at 50% 37%,#f4f4f2 15%,#f4f4f2cb 50%,#f4f4f21a 100%); }
+  .grain-lab-panel { top:68px; right:12px; bottom:76px; width:340px; }
+  .grain-lab-dock { bottom:14px; padding:5px; gap:3px; }
+  .grain-lab-dock-label { display:none; }
+  .grain-lab-dock button { min-width:30px; padding-inline:8px; }
+  .grain-lab-footer { font-size:10px; flex-wrap:wrap; padding:20px 16px 100px; }
 }

@@ -2,6 +2,7 @@
 > L2 | 父级: ../CLAUDE.md
 
 成员清单
+hero-grain-lab-plan.md: 结合 A 的纸粒、B 的不规则形变与 D 的网点的 Hero Lab 计划与实施状态；四版和调参已写入独立 Demo，E/F 淘汰，等待用户视觉验收，正式背景未改
 details-content.md: 第 11 区块四项细节、真实截图来源、文章路由与返回/键盘/响应式验收记录
 details-desktop.png: 1440px 字号精修阶段的历史画面，早于图注删除、收放修复和黑色标题调整
 details-mobile.png: 首轮 390px 功能细节历史画面，早于字号/居中精修

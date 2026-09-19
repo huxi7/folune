@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖共享 Button/Blueprint DOM、四项真实功能细节、BrandMark 母图、创作者署名头像、页面私有参考字体与 Figma 素材、独立 Demo iframe 和 ShowcaseBackdrop
- * [OUTPUT]: 对外提供英文参考字体与 DS 中文回退的文字层级、共轴导轨、APP 外壳平滑轮廓、三处产品展示共用的矩形细点阵后景、功能细节分级字号/垂直居中展开/紧凑摘要、信纸、评价与页脚的响应式版面；仅 Landing 禁止纵向越界回弹，页尾止于 Footer
+ * [OUTPUT]: 对外提供英文参考字体与 DS 中文回退的文字层级、Hero 墨蓝主标题与浅灰副标题、共轴导轨、APP 外壳平滑轮廓、三处产品展示共用的矩形细点阵后景、功能细节分级字号/垂直居中展开/紧凑摘要、信纸、评价与页脚的响应式版面；仅 Landing 禁止纵向越界回弹，页尾止于 Footer
  * [POS]: styles 的 Landing 局部样式；Footer 淡字位于细密斜纹之下，按钮材质与品牌墨蓝直接消费 DS，背景和纹理保留基线；功能区按参考稿使用 40px 卡片纵向留白与外扩 6px 虚线图片框，细节交互栏仅当前展开项显示细点阵，收起项保持原底色
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -64,7 +64,7 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
 .landing-hero-pattern { position:absolute; width:1008px; height:1008px; top:50%; left:50%; transform:translate(-50%,-50%); background:url('/landing-reference/hero-geometry.svg') center/contain; mask:url('/landing-reference/hero-imgFrame1.svg') center/contain; pointer-events:none; }
 .landing-hero-copy,.landing-hero>div:last-child { position:relative; }
 .landing-hero h1 { font-size:42.9px; line-height:1.4; letter-spacing:.02em; text-align:center; color:var(--landing-accent); }
-.landing-hero-copy p { max-width:440px; margin:8px auto 0; text-align:center; font-size:16px; line-height:24px; letter-spacing:0; }
+.landing-hero-copy p { max-width:440px; margin:8px auto 0; text-align:center; font-size:16px; line-height:24px; letter-spacing:0; color:color-mix(in srgb,var(--landing-ink) 55%,var(--landing-bg)); }
 .landing-actions { display:flex; justify-content:center; gap:12px; }
 .landing-actions .ds-button { min-width:112px; }
 /* ---- 中文共用 DS 字体回退，英文保留原稿；按钮材质完全交还 DS ---- */
