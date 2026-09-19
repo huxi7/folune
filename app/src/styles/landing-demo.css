@@ -41,8 +41,8 @@ html[data-demo-variant="original"] .demo-root { --demo-column-gap:32px; }
  * 画布是全视口的，面板浮在它上面——与生产一致，也是 Canvas 宪法要求的：
  * 「开合不得改变 React Flow 几何」。demo 曾经按面板宽度给 stage 加左右 margin，
  * 于是每收一次面板 stage 就变宽、ResizeObserver 重取一次景、卡片跟着变大。
- * 代价是左上角那排 chrome 会被面板盖住，而「回到笔记」是 demo 里回纸张的唯一
- * 入口，所以它的左内缩得跟着面板走。生产那边画布标题本来就住在面板下面，不动。
+ * 笔记工具条进入后才显示「回到笔记」；文件树始终可直接切换空间。
+ * chrome 左内缩跟着面板走，让有来路时的返回入口始终可达。
  */
 .demo-workspace-frame .canvas-stage { height:100%; }
 .demo-workspace-frame .canvas-chrome-start { left:calc(var(--workspace-panel-inset) + var(--demo-column-gap)); }

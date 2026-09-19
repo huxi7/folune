@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖 React Flow、生产 CanvasCardView/Cord/NotePaper/Dialog 与本地节点正文
- * [OUTPUT]: 对外提供可阅读、回原文的固定关系的受控示例画布
+ * [INPUT]: 依赖 React Flow、生产 CanvasCardView/Cord/NotePaper/Dialog、本地节点正文与可空的笔记来路
+ * [OUTPUT]: 对外提供固定关系的静态示例画布，只有笔记工具条入口提供返回该笔记
  * [POS]: 仅替换 Canvas 的会话/数据适配；卡片、关系线、预览纸与 Transition 沿生产实现
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -18,7 +18,7 @@ import { MarkdownReadingView } from "../MarkdownReadingView";
 import { Button, Dialog } from "../../shared/design-system/components";
 import { ArrowLeftIcon, PencilSimpleIcon, XIcon, SidebarSimpleIcon, AssistantPanelOpenIcon } from "../../shared/design-system/icons";
 import { EdgeDock } from "../EdgeDock";
-import { demoExcerpt } from "./model";
+import { demoExcerpt, INITIAL_MEMO } from "./model";
 
 function DemoNode(props: NodeProps<CanvasFlowNode>) {
   return <CanvasCardView {...props} editing={false} previewing={false} aiLoading={false} connectionSourceId={null} validConnectionTarget={false} />;
@@ -50,7 +50,7 @@ const sceneBounds = (count: number) => {
   };
 };
 function CanvasScene({ notes, active, origin, onEdit, onHint, libraryOpen, assistantOpen, onLibrary, onAssistant }: {
-  notes: Record<string, MemoDetailNode>; active: boolean; origin: string;
+  notes: Record<string, MemoDetailNode>; active: boolean; origin: string | null;
   onEdit: (id: string) => void; onHint: () => void;
   libraryOpen: boolean; assistantOpen: boolean; onLibrary: () => void; onAssistant: () => void;
 }) {
@@ -68,7 +68,10 @@ function CanvasScene({ notes, active, origin, onEdit, onHint, libraryOpen, assis
     onExpand: async () => onHint(), onOpenMemo: onEdit, onPrefetchMemo: nothing,
     onPreview: openPreview, onRemove: async () => onHint(), onRemoveEdge: async () => onHint(), onResize: completed,
   }), [onEdit, onHint, openPreview]);
-  const sceneIds = useMemo(() => [origin, ...ids.filter(id => id !== origin).slice(0, 2)], [origin]);
+  const sceneIds = useMemo(() => {
+    const source = origin ?? INITIAL_MEMO;
+    return [source, ...ids.filter(id => id !== source).slice(0, 2)];
+  }, [origin]);
   /*
    * 可见带的两端直接量面板自己：宽度规则住在 CSS（百分比 + 上下限），在这里再写一遍
    * 就成了第二份真相，而面板始终挂载，随时量得到。
@@ -123,7 +126,7 @@ function CanvasScene({ notes, active, origin, onEdit, onHint, libraryOpen, assis
           className="demo-canvas-flow" zoomOnScroll={false} zoomOnDoubleClick={false} preventScrolling={false} proOptions={{ hideAttribution: true }} />
       </div></CanvasActionsProvider>
       <div className="canvas-chrome canvas-chrome-start"><span className="canvas-chrome-slot">
-        <Button aria-label="回到笔记" title="回到笔记" icon={ArrowLeftIcon} variant="ghost" size="square" onClick={() => onEdit(origin)} />
+        {origin !== null && <Button aria-label="回到笔记" title="回到笔记" icon={ArrowLeftIcon} variant="ghost" size="square" onClick={() => onEdit(origin)} />}
         {!libraryOpen && <EdgeDock icon={<SidebarSimpleIcon size={16} />} label="文件库" onClick={onLibrary} side="left" />}
       </span><span className="canvas-title">{title}</span></div>
       <div className="canvas-chrome canvas-chrome-end"><span className="canvas-chrome-slot">

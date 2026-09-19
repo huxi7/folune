@@ -1,14 +1,14 @@
 /**
  * [INPUT]: 依赖生产 ChatMessage/Header/MentionInput、活动判定、输入判据、滚动 Hook 与 Demo 对话脚本
- * [OUTPUT]: 对外提供可发送/取消、按工具脚本逐步揭示并真实归档的 Demo AI Panel
- * [POS]: 只模拟消息传输；输入、工具芯片与消息渲染保持生产同源，单计时器在取消/卸载时失效
+ * [OUTPUT]: 对外提供点击/回车共用发送、可取消、按工具脚本逐步揭示并真实归档的 Demo AI Panel
+ * [POS]: 只模拟消息传输；引用保留生产 @ 图标与标题，图标按根字号同比缩放；发送不依赖 iframe 禁止的原生表单提交
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { useEffect, useRef, useState } from "react";
 import { useReducedMotion } from "motion/react";
 import type { AiCommand, SuperNoteUIMessage } from "../../shared/api/ai";
 import { Button, MentionInput } from "../../shared/design-system/components";
-import { ArrowUpIcon, StopIcon } from "../../shared/design-system/icons";
+import { ArrowUpIcon, AtIcon, StopIcon } from "../../shared/design-system/icons";
 import { AgentPanelHeader } from "../AgentPanel/AgentPanelHeader";
 import { ChatMessage, LiveAssistantTurn } from "../AgentPanel/ChatMessage";
 import { deriveAssistantActivity } from "../AgentPanel/activityState";
@@ -92,16 +92,16 @@ export function DemoAssistant({ memoId, title, filedAt, onClose, onHint, onOrgan
         {messages.map(m => <ChatMessage key={m.id} activity="none" message={m} onUndo={onUndo} />)}
         {status !== "ready" && <LiveAssistantTurn activity={activity} message={live} onProgress={scrollToLatestAuto} onUndo={onUndo} />}
       </div>
-      <form className="agent-composer" onSubmit={e => { e.preventDefault(); send(); }}>
-        <div className="agent-composer-sources"><span><strong>{title}</strong></span></div>
+      <div className="agent-composer">
+        <div className="agent-composer-sources"><span title={title}><AtIcon aria-hidden="true" size={14} style={{ width: "0.875rem", height: "0.875rem", flexShrink: 0 }} /><strong>{title}</strong></span></div>
         <MentionInput aria-label="输入消息" className="agent-chat-input" mentions={[]} value={input}
           onValueChange={value => setInput(value.slice(0,1200))} placeholder="试着问问这些笔记…"
           onKeyDown={e => { if (isComposerSubmitKey({ ...e, isComposing: e.nativeEvent.isComposing, keyCode: e.nativeEvent.keyCode })) { e.preventDefault(); send(); } }} />
         <div className="agent-composer-footer">
-          {status === "ready" ? <Button aria-label="发送消息" className="agent-composer-action" disabled={!canSubmitComposer(input,false)} icon={ArrowUpIcon} size="square" type="submit" variant="primary" />
+          {status === "ready" ? <Button aria-label="发送消息" className="agent-composer-action" disabled={!canSubmitComposer(input,false)} icon={ArrowUpIcon} onClick={send} size="square" type="button" variant="primary" />
             : <Button aria-label="停止生成" className="agent-composer-action" icon={StopIcon} onClick={stop} size="square" variant="primary" />}
         </div>
-      </form>
+      </div>
     </div>
   </aside>;
 }

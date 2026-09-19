@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖生产 PaperWorkspaceShell/Toolbar/Markdown/Panel/归档线与确定性 Demo 数据
- * [OUTPUT]: 对外提供切换笔记、内存编辑、整理、Canvas 与本页会话
- * [POS]: Demo 唯一状态所有者；纸面复用真实 View Transition，左右 Panel 不随空间切换卸载
+ * [OUTPUT]: 对外提供笔记/画布直接切换、工具条进入与返回的纸面过渡、内存编辑、整理和本页会话
+ * [POS]: Demo 唯一状态所有者；文件树导航清除笔记来路，工具条入口才记录返回对象，左右 Panel 持续挂载
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
@@ -50,7 +50,7 @@ export function DemoWorkspace({ variant = "uniform" }: { variant?: DemoVariant }
   const [notes, setNotes] = useState(createNotes);
   const [selected, setSelected] = useState(INITIAL_MEMO);
   const [canvas, setCanvas] = useState(false);
-  const [canvasOrigin, setCanvasOrigin] = useState(INITIAL_MEMO);
+  const [canvasOrigin, setCanvasOrigin] = useState<string | null>(null);
   const [libraryOpen, setLibrary] = useState(() => window.innerWidth >= 760);
   const [assistantOpen, setAssistant] = useState(() => window.innerWidth >= 1024);
   const [width, setWidth] = useState(window.innerWidth);
@@ -81,10 +81,14 @@ export function DemoWorkspace({ variant = "uniform" }: { variant?: DemoVariant }
     if (!runViewTransition(() => flushSync(update), kind)) update();
   }, []);
   const select = useCallback((id: string) => {
-    if (id === "demo-canvas") { changeSpace(() => setCanvas(true), "to-canvas"); return; }
-    const update = () => { setSelected(id); setCanvas(false); if (window.innerWidth < 760) setLibrary(false); };
-    if (canvas) changeSpace(update, "to-editor"); else update();
-  }, [canvas, changeSpace]);
+    setCanvasOrigin(null);
+    if (id === "demo-canvas") { setCanvas(true); return; }
+    setSelected(id); setCanvas(false);
+    if (window.innerWidth < 760) setLibrary(false);
+  }, []);
+  const openMemo = useCallback((id: string) => {
+    changeSpace(() => select(id), "to-editor");
+  }, [changeSpace, select]);
   const locate = () => { setExpanded(old => new Set([...old, ...getAncestorFolderIds(tree, selected)])); openLibrary(); };
   /** 工具条与 AI 对话共用的唯一归档入口；返回的 Promise 在树真正落定后兑现。 */
   const organize = useCallback((memoId: string, commandId?: string) => new Promise<void>(resolve => {
@@ -123,7 +127,7 @@ export function DemoWorkspace({ variant = "uniform" }: { variant?: DemoVariant }
   return <div className="demo-root" style={style} data-canvas={canvas}>
     <div className="demo-workspace-frame">
       <div className="demo-canvas-layer" hidden={!canvas} inert={!canvas} aria-hidden={!canvas}>
-        <DemoCanvas notes={notes} active={canvas} origin={canvasOrigin} onEdit={select} onHint={hint}
+        <DemoCanvas notes={notes} active={canvas} origin={canvasOrigin} onEdit={openMemo} onHint={hint}
           libraryOpen={libraryOpen} assistantOpen={assistantOpen} onLibrary={openLibrary} onAssistant={openAssistant} />
       </div>
       {!canvas && <PaperWorkspaceShell style={style} assistantOpen={assistantOpen} libraryOpen={libraryOpen}
