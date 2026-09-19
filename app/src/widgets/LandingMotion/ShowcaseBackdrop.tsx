@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 Paper Shaders Dithering、Motion 视口观察、DS 动效偏好与展示区的品牌颜色
- * [OUTPUT]: 对外提供铺满宿主矩形的低对比细点阵流动背景，三处展示共用同一组视觉参数
- * [POS]: LandingEditor、LandingSections AI 分区与 LandingFeatureDetails 共用的装饰层；按需加载 shader，离屏/后台由库暂停，减少动态效果时保留静态点阵
+ * [OUTPUT]: 对外提供铺满宿主矩形的低对比细点阵流动背景，两处展示共用同一组视觉参数
+ * [POS]: LandingEditor 与 LandingFeatureDetails 共用的装饰层；按需加载 shader，离屏/后台由库暂停，减少动态效果时保留静态点阵
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { lazy, Suspense, useEffect, useRef, useState } from "react";

@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖共享 Button/Blueprint DOM、四项真实功能细节、BrandMark 母图、创作者署名头像、页面私有参考字体与 Figma 素材、独立 Demo iframe 和 ShowcaseBackdrop
- * [OUTPUT]: 对外提供英文参考字体与 DS 中文回退的文字层级、Hero 墨蓝主标题与浅灰副标题、共轴导轨、APP 外壳平滑轮廓、三处产品展示共用的矩形细点阵后景、功能细节分级字号/垂直居中展开/紧凑摘要、信纸、评价与页脚的响应式版面；仅 Landing 禁止纵向越界回弹，页尾止于 Footer
+ * [INPUT]: 依赖共享 Button/Blueprint DOM、真实关联截图与 SegmentedControl、静态使用场景、四项真实功能细节、BrandMark、参考字体/纹理、独立 Demo iframe 和 ShowcaseBackdrop
+ * [OUTPUT]: 对外提供同源文字与共轴导轨、APP 外壳、两处动态展示后景、关联截图的固定比例淡换、三行使用场景、功能细节展开、信纸、评价与页脚的响应式版面；仅 Landing 禁止纵向越界回弹，页尾止于 Footer
  * [POS]: styles 的 Landing 局部样式；Footer 淡字位于细密斜纹之下，按钮材质与品牌墨蓝直接消费 DS，背景和纹理保留基线；功能区按参考稿使用 40px 卡片纵向留白与外扩 6px 虚线图片框，细节交互栏仅当前展开项显示细点阵，收起项保持原底色
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -77,7 +77,7 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
 .landing-value-strip > div { padding:16px 24px; border-right:1px solid var(--landing-border); }.landing-value-strip>div:last-child { border:0; }
 .landing-value-strip h2 { font-size:15px; line-height:22.5px; letter-spacing:0; }.landing-value-strip p { margin-top:4px; font-size:13px; line-height:19.5px; max-width:325px; }
 .landing-editor-section { --showcase-inset:16px; padding:var(--showcase-inset); }
-.landing-editor-section,.landing-split-media { position:relative; isolation:isolate; overflow:hidden; border-radius:0; background:color-mix(in srgb,var(--primary) 3%,var(--landing-bg)); }
+.landing-editor-section { position:relative; isolation:isolate; overflow:hidden; border-radius:0; background:color-mix(in srgb,var(--primary) 3%,var(--landing-bg)); }
 .landing-showcase-backdrop { position:absolute; inset:0; z-index:0; pointer-events:none; color:var(--primary); border-radius:0; overflow:hidden; background:radial-gradient(circle,color-mix(in srgb,currentColor 9%,transparent) .45px,transparent .6px) 0 0/4px 4px; }
 .landing-showcase-backdrop:has(canvas) { background:none; }
 .landing-showcase-shader { opacity:.2; }
@@ -122,17 +122,61 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
 .landing-section-heading p,.landing-feature-grid p,.landing-small-features p { text-wrap:balance; }
 .landing-feature-grid { display:grid; grid-template-columns:repeat(6,1fr); }.landing-feature-grid article { grid-column:span 2; padding:40px 48px; border-bottom:1px solid var(--landing-border); border-right:1px solid var(--landing-border); }.landing-feature-grid article[data-wide=true] { grid-column:span 3; }.landing-feature-grid article:nth-child(2),.landing-feature-grid article:last-child { border-right:0; }.landing-feature-grid img { width:100%; height:auto; aspect-ratio:16/9; object-fit:cover; border:1px solid var(--landing-border); border-radius:0; outline:1px dashed #cbcfd4; outline-offset:6px; margin-bottom:16px; }.landing-feature-grid p { margin-top:4px; font-size:13px; line-height:19.5px; }
 .landing-small-features { display:grid; grid-template-columns:repeat(3,1fr); }.landing-small-features article { padding:40px 48px; }.landing-small-features p { margin-top:4px; font-size:13px; line-height:19.5px; }
-.landing-open-source { padding:83px 0; min-height:450px; text-align:center; background:linear-gradient(rgb(244 244 242 / 95%),rgb(244 244 242 / 95%)),url('/landing-reference/19-2757-imgImage.png') center/cover; }.landing-open-source h2 { font-size:25.6px; color:var(--landing-accent); }.landing-open-source>p { margin:8px auto 32px; font-size:16px; line-height:24px; letter-spacing:0; }.landing-avatar-strip { display:flex; height:36px; align-items:center; gap:14px; overflow:hidden; }.landing-contributor-brand { --brand-size:18px; flex:none; }
-.landing-avatar-strip img { width:18px; height:18px; flex:none; object-fit:cover; }.landing-stats { display:grid; grid-template-columns:repeat(4,1fr); padding:16px 0; margin:0; border-block:1px solid var(--landing-border); }.landing-stats dt { font:24px/32px Landing Mono,monospace; color:#000; }.landing-stats dd { margin:0; font-size:13px; }
-.landing-split { display:grid; grid-template-columns:5fr 7fr; min-height:381.81px; grid-auto-rows:381.81px; }.landing-split-copy { padding-top:64px; display:flex; flex-direction:column; }.landing-split-copy>div:first-child { padding:0 48px 32px; }.landing-split-copy p { margin:12px 0; font-size:16px; line-height:24px; letter-spacing:0; text-wrap:balance; }.landing-split-copy>div:first-child a { color:var(--landing-accent); font-size:14px; line-height:20px; text-decoration:underline; text-underline-offset:2px; }.landing-split-options { margin-top:auto; }.landing-split-options a { display:flex; justify-content:space-between; padding:8px 48px; border-top:1px solid var(--landing-border); font-size:14px; line-height:20px; }.landing-split-media { min-height:0; min-width:0; padding:16px; }.landing-split-media img { position:relative; z-index:1; width:100%; height:100%; object-fit:cover; object-position:bottom; box-shadow:0 2px 7px #0003; }
-.landing-split-copy h3 { font-size:16.8px; line-height:18.48px; }
-.landing-blueprint #extensions .landing-section-heading { min-height:209px; }
-.landing-extensions { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; padding:48px; height:546px; overflow:hidden; mask-image:linear-gradient(#000 50%,transparent 95%); }.landing-extensions article { border:1px solid var(--landing-border); padding:12px; background:#ffffff70; height:86px; overflow:hidden; }.landing-extensions header { display:flex; justify-content:space-between; gap:4px; }.landing-extensions h3 { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font:14px/20px var(--landing-body); }.landing-extensions header span { display:flex; align-items:center; gap:4px; flex:none; font-size:12px; line-height:16px; color:var(--landing-ink); }.landing-extensions p,.landing-extensions small { font-size:12px; line-height:18px; display:block; white-space:nowrap; text-overflow:ellipsis; overflow:hidden; }.landing-extensions small { color:var(--landing-ink); }.landing-extensions small img { display:inline-block; vertical-align:-2px; margin-right:4px; }
 /* ---- 补齐内容网格的边线，叠在既有格子内，不挤动文字或图片 ---- */
 .landing-small-features article { position:relative; }
 .landing-small-features article:not(:last-child)::after { content:""; position:absolute; inset:0; pointer-events:none; }
 .landing-small-features article:not(:last-child)::after { border-right:1px solid var(--landing-border); }
-.landing-split-media { box-shadow:inset 1px 0 var(--landing-border); }
+/* ---- 关联展示：真实截图只淡换；所有状态共用同一个固定比例舞台 ---- */
+.landing-connections .landing-section-heading>div:first-child { max-width:680px; }
+.landing-connections .landing-section-heading p { max-width:640px; }
+.landing-connections-figure { padding:32px 48px 28px; }
+.landing-connections-stage { position:relative; isolation:isolate; width:100%; max-width:864px; aspect-ratio:8/5; margin-inline:auto; overflow:hidden; border:1px solid var(--landing-border); background:var(--workspace-stage); }
+.landing-connections-stage picture { position:absolute; inset:0; display:block; opacity:0; transition:opacity var(--motion-fast) var(--ease-standard); }
+.landing-connections-stage img { display:block; width:100%; height:100%; object-fit:contain; }
+.landing-connections-stage picture[data-active="true"] { opacity:1; z-index:1; }
+.landing-connections-figure figcaption { display:flex; flex-direction:column; align-items:center; gap:12px; padding-top:24px; text-align:center; }
+.landing-connections-caption { min-height:24px; font-size:14px; line-height:24px; color:var(--landing-ink); }
+.landing-connections-figure small { font-size:12px; line-height:20px; color:var(--muted-foreground); }
+.landing-connections-reading { display:none; }
+/* ---- 日常场景：用途、原始材料、继续写出的内容，沿同一水平阅读线展开 ---- */
+.landing-use-cases { position:relative; }
+.landing-legacy-anchor { position:absolute; top:0; left:0; width:1px; height:1px; scroll-margin-top:64px; pointer-events:none; }
+.landing-use-cases .landing-section-heading>div:first-child { max-width:660px; }
+.landing-use-cases .landing-section-heading p { max-width:600px; }
+.landing-use-cases-label { flex:none; color:var(--muted-foreground); font-size:12px; }
+.landing-use-case { display:grid; grid-template-columns:1fr 2fr; gap:40px; padding:40px 48px; }
+.landing-use-case+.landing-use-case { border-top:1px solid var(--landing-border); }
+.landing-use-case-copy { min-width:0; }
+.landing-use-case-copy>small { display:block; color:var(--landing-accent); font-size:12px; line-height:20px; }
+.landing-blueprint .landing-use-case-copy h3 { margin-top:8px; font-size:18px; line-height:28px; text-wrap:pretty; }
+.landing-use-case-copy>p { margin-top:12px; font-size:13px; line-height:23px; color:var(--muted-foreground); text-wrap:pretty; }
+.landing-use-case-materials { display:grid; grid-template-columns:1fr 1fr; align-items:center; gap:32px; min-width:0; }
+.landing-use-case-materials small { display:block; margin-bottom:12px; font-size:12px; line-height:20px; color:var(--muted-foreground); }
+.landing-use-case-materials p { font:400 16px/28px var(--landing-heading); text-wrap:pretty; }
+.landing-use-case-source p+p { margin-top:12px; padding-top:12px; border-top:1px solid var(--landing-border); }
+.landing-use-case-outcome { padding:24px; background:color-mix(in srgb,var(--card) 70%,transparent); border-left:2px solid color-mix(in srgb,var(--landing-accent) 28%,transparent); }
+@media (max-width:1023px) {
+  .landing-use-case { gap:24px; padding:32px; }
+  .landing-use-case-materials { gap:20px; }
+  .landing-use-case-outcome { padding:20px; }
+}
+@media (max-width:767px) {
+  .landing-connections-figure { padding:20px 16px 24px; }
+  .landing-connections-figure figcaption { padding-top:20px; }
+  .landing-connections-caption { min-height:48px; text-wrap:pretty; }
+  .landing-connections-reading { display:grid; gap:20px; padding:0 24px 32px; }
+  .landing-connections-reading small { display:block; margin-bottom:6px; font-size:12px; line-height:20px; color:var(--muted-foreground); }
+  .landing-connections-reading p { font-size:14px; line-height:24px; }
+  .landing-connections-rationale { border-top:1px solid var(--landing-border); padding-top:20px; }
+  .landing-use-case { grid-template-columns:1fr; gap:24px; padding:32px 24px; }
+  .landing-use-case-materials { grid-template-columns:1fr; gap:20px; }
+  .landing-use-case-copy>p { font-size:14px; line-height:24px; }
+  .landing-use-case-materials p { font-size:16px; line-height:28px; }
+  .landing-use-case-outcome { padding:20px; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .landing-connections-stage picture { transition:none; }
+}
 /* ---- 功能细节：展开说明与实景图同源，移动端把图接在完整说明之后 ---- */
 .landing-feature-details .landing-section-heading { min-height:185px; }
 .landing-feature-details .landing-section-heading p { color:var(--muted-foreground); font-size:var(--type-ui); line-height:24px; }
@@ -258,11 +302,7 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
   .landing-quotes { display:flex; flex-direction:column; gap:16px; }.landing-quotes figure { min-height:auto; }.landing-quotes figure[data-featured=true] { order:-1; }
   .landing-section-heading { flex-direction:column; align-items:flex-start; min-height:0; gap:24px; padding:32px 24px; }.landing-section-heading h2 { font-size:26px; }.landing-section-heading p { font-size:13px; }
   .landing-feature-grid { display:flex; flex-direction:column; }.landing-feature-grid article { padding:24px; border-right:0; }.landing-small-features { grid-template-columns:1fr; }.landing-small-features article { padding:24px; }
-  .landing-open-source { padding:48px 0; min-height:0; }.landing-open-source>p { padding:0 24px; }.landing-open-source br { display:none; }.landing-stats { grid-template-columns:repeat(2,1fr); gap:24px; }
-  .landing-split { grid-template-columns:1fr; grid-auto-rows:auto; }.landing-split-copy { padding-top:32px; }.landing-split-copy>div:first-child { padding:0 24px 32px; }.landing-split-options a { padding:12px 24px; }.landing-split-media { aspect-ratio:16/10; }
-  .landing-extensions { grid-template-columns:repeat(2,1fr); padding:24px; gap:8px; height:520px; }
   .landing-small-features article:not(:last-child)::after { border-right:0; border-bottom:1px solid var(--landing-border); }
-  .landing-split-media { box-shadow:inset 0 1px var(--landing-border); }
   .landing-letter-section { padding:24px 16px; }.landing-letter { padding:8px; }.landing-letter-paper { padding:24px 12px; }.landing-letter-seal { display:none; }.landing-letter-body { font-size:13px; }.landing-letter small { overflow-wrap:anywhere; }
   .landing-letter-subtitle { padding-right:0; }.landing-letter-body { line-height:24px; }
   .landing-footer-wordmark { height:150px; }

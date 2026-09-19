@@ -2,7 +2,12 @@
 > L2 | 父级: ../CLAUDE.md
 
 成员清单
-remaining-sections-plan.md: 社区删除、笔记关联展示与日常场景的待执行计划，明确主题/顺序/截图与交互形式、产品事实边界、文件范围和验收；不代表页面已修改
+remaining-sections-plan.md: 社区删除、笔记关联展示与日常场景的原始计划，明确主题/顺序/截图与交互形式、产品事实边界、文件范围和验收；已于 2026-09-19 执行，结果见 remaining-sections-content.md
+remaining-sections-content.md: 社区删除、关联展示与日常场景的执行记录：真实 AI 拓展链路与理由原文、四幅截图裁切来源、场景文案、锚点/键盘/响应式验收与未处理项
+connections-desktop.png: 1440px 关联展示区默认「查看理由」态验收截图
+use-cases-desktop.png: 1440px 三行日常场景验收截图
+connections-mobile.png: 390px 关联展示区窄幅理由实景与图下原句验收截图
+use-cases-mobile.png: 390px 日常场景首行上下排列验收截图
 hero-grain-lab-plan.md: 结合 A 的纸粒、B 的不规则形变与 D 的网点的 Hero Lab 计划与实施状态；四版和调参已写入独立 Demo，E/F 淘汰，等待用户视觉验收，正式背景未改
 details-content.md: 第 11 区块四项细节、真实截图来源、文章路由与返回/键盘/响应式验收记录
 details-desktop.png: 1440px 字号精修阶段的历史画面，早于图注删除、收放修复和黑色标题调整

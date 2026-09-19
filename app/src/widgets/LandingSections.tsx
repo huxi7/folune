@@ -1,23 +1,22 @@
 /**
- * [INPUT]: 依赖真实 APP 功能截图、Router Link、LandingFeatureDetails、LandingBlog、BlueprintDivider、ShowcaseBackdrop、共享 BrandMark/Button、huxi 头像及其余分区的参考素材
- * [OUTPUT]: 对外提供五项图文一一对应的 Folune 功能与整理/画布文章入口，以及独立功能细节、评价占位、参考分区、创作者信件和博客
+ * [INPUT]: 依赖真实 APP 功能截图、Router Link、LandingConnections、LandingUseCases、LandingFeatureDetails、LandingBlog、BlueprintDivider、共享 BrandMark 与 huxi 头像
+ * [OUTPUT]: 对外提供五项图文一一对应的 Folune 功能与整理/画布文章入口，以及真实关联展示、独立功能细节、日常场景、评价占位、创作者信件和博客
  * [POS]: widgets 的营销叙事组合；创作者信件沿用首稿叙事，与 Laper 参考同构：问候与自我介绍各占一行，再以长短有别的段落分承初衷、打磨、AI 分寸与期待，一段只说一件事，由 huxi 个人署名
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
+import { LandingConnections } from "./LandingConnections";
+import { LandingUseCases } from "./LandingUseCases";
 import { LandingBlog } from "./LandingBlog";
 import { LandingFeatureDetails } from "./LandingFeatureDetails";
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { BrandMark, Button } from "../shared/design-system/components";
+import { BrandMark } from "../shared/design-system/components";
 import { BlueprintDivider } from "./BlueprintDivider";
 import { LandingActions } from "./LandingHero";
-import { ShowcaseBackdrop } from "./LandingMotion/ShowcaseBackdrop";
-import { referenceAssets as assets, referenceExtensions } from "./landingReferenceData";
 
 export function LandingSectionHeading({title,body,children}: {title:string;body:string;children?:ReactNode}) {
   return <header className="landing-section-heading"><div><h2>{title}</h2><p>{body}</p></div><div className="landing-section-links">{children}</div></header>;
 }
-const LinkButton = ({children,href="https://zed.dev/features"}:{children:ReactNode;href?:string}) => <Button variant="secondary" onClick={() => {window.location.href=href;}}>{children} ›</Button>;
 const features = [
   {
     title: "让 AI 整理笔记",
@@ -71,11 +70,7 @@ const quotes = [
   { name: "@zhouzhou_lab", avatar: "zz", role: "策划 / 自由撰稿人", studio: "周五内容社", quote: "“我愿意让 AI 帮忙归档，但也想知道笔记去了哪里。能看清整理后的目录，不合适还能撤销，我才敢把这一步交出去。”" },
   { name: "王磊", avatar: "王", role: "软件工程师", studio: "小步科技", quote: "“排查问题时随手记的几句话，过几天往往又会用上。记不清放在哪个文件夹，就搜正文里的关键词，接着上次的思路往下做。”" },
 ];
-function AiSplitFeature(){
- return <div className="landing-split"><div className="landing-split-copy"><div><h3>AI 协作</h3><p>把任务交给 AI，跟进处理进度，并检查修改内容。</p><a href="https://zed.dev/docs">了解更多 ›</a></div><div className="landing-split-options">{["连接知识","内联助手","智能体与工具"].map(t=><a href="https://zed.dev/features" key={t}>{t} <span>⌄</span></a>)}</div></div><div className="landing-split-media"><ShowcaseBackdrop /><img src={assets["19-3464/imgImage1"]} alt="AI 编辑参考画面" loading="lazy" /></div></div>;
-}
 export function LandingSections(){
- const avatars=Object.entries(assets).filter(([key])=>key.startsWith("19-2760/"));
  return <>
   <section className="landing-trust" id="community" aria-labelledby="landing-trust-title">
     <h2 id="landing-trust-title">为认真记录的个人与创作团队而做</h2>
@@ -121,13 +116,11 @@ export function LandingSections(){
     </div>
   </section>
   <BlueprintDivider fullBleed />
-  <section className="landing-open-source"><h2>开放协作的力量</h2><p>好的工具，离不开持续的交流与打磨。<br />以下保留 Zed 参考稿的社区数据展示。</p><div className="landing-avatar-strip" aria-hidden="true">{avatars.map(([key,src])=>key === "19-2760/imgZed" ? <BrandMark key={key} className="landing-contributor-brand" iconOnly /> : <img key={key} src={src} alt="" width="18" height="18" loading="lazy" />)}</div><dl className="landing-stats">{[["10,406","分支"],["89,634","星标"],["2,214","贡献者"],["490","上月合并请求"]].map(([n,t])=><div key={t}><dt>{n}</dt><dd>{t}</dd></div>)}</dl><div className="landing-avatar-strip" aria-hidden="true">{[...avatars].reverse().map(([key,src])=>key === "19-2760/imgZed" ? <BrandMark key={key} className="landing-contributor-brand" iconOnly /> : <img key={key} src={src} alt="" width="18" height="18" loading="lazy" />)}</div></section>
-  <BlueprintDivider fullBleed />
-  <section id="workflow"><LandingSectionHeading title="顺着你的思路，与 AI 协作" body="提问、写作、梳理或整理笔记，把重复的工作交给 AI，把判断留给自己。"><LinkButton>查看 AI 参考</LinkButton></LandingSectionHeading><AiSplitFeature /></section>
-  <BlueprintDivider fullBleed />
-  <section id="extensions"><LandingSectionHeading title="更多扩展，更多可能" body="这里保留参考稿的扩展展示，呈现语言、主题与工具的丰富可能；并非 Folune 已上线的扩展商店。"><a href="https://zed.dev/docs/extensions">扩展开发参考 ›</a><LinkButton href="https://zed.dev/extensions">浏览参考扩展</LinkButton></LandingSectionHeading><div className="landing-extensions">{referenceExtensions.map(([title,count,body,author])=><article key={title}><header><h3>{title}</h3><span><img src={assets["19-3558/imgFrame1"]} alt="" width="12" height="12" />{count}</span></header><p>{body}</p><small><img src={assets["19-3558/imgFrame2"]} alt="" width="12" height="12" />{author}</small></article>)}</div></section>
+  <LandingConnections />
   <BlueprintDivider fullBleed />
   <LandingFeatureDetails />
+  <BlueprintDivider fullBleed />
+  <LandingUseCases />
   <BlueprintDivider fullBleed />
   <section className="landing-letter-section" id="resources" aria-labelledby="landing-letter-title">
     <article className="landing-letter">
