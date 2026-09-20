@@ -1,6 +1,6 @@
 /**
- * [INPUT]: React Bits ElectricBorder 原始 color/speed/chaos/borderRadius 与 React Canvas；增加线宽、暂停、平滑圆角及 electricBorderFlow 方向映射
- * [OUTPUT]: 对外提供 ElectricBorder；保留上游 random/noise2D/octavedNoise，按可选 flow 将噪声从右下沿两路传播到左上
+ * [INPUT]: React Bits ElectricBorder 原始 color/speed/chaos/borderRadius 与 React Canvas；增加线宽、暂停、平滑圆角、方向映射及 maxDisplacement 位移上限
+ * [OUTPUT]: 对外提供 ElectricBorder；保留上游噪声，按 flow 定向传播并在描边前以 maxDisplacement 平滑约束局部尖刺
  * [POS]: Canvas 按住反馈使用的上游组件副本；方向只映射采样坐标，不重写波形/速度乘数/Chaos；另适配 Flow 本地尺寸、DS 曲率/颜色和动画生命周期
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  * 来源：https://github.com/DavidHDev/react-bits/blob/eae800a74f6455ba5afaedc4cdd8700e5a159c33/src/ts-default/Animations/ElectricBorder/ElectricBorder.tsx
@@ -8,7 +8,7 @@
  */
 
 import React, { useEffect, useRef, useCallback, type CSSProperties, type ReactNode } from 'react';
-import { electricBorderFlow } from './electricBorderFlow';
+import { electricBorderFlow, limitElectricBorderOffset } from './electricBorderFlow';
 import './ElectricBorder.css';
 
 interface ElectricBorderProps {
@@ -18,6 +18,7 @@ interface ElectricBorderProps {
   chaos?: number;
   borderRadius?: number;
   thickness?: number;
+  maxDisplacement?: number;
   paused?: boolean;
   squircle?: boolean;
   flow?: 'bottom-right-to-top-left';
@@ -32,6 +33,7 @@ const ElectricBorder: React.FC<ElectricBorderProps> = ({
   chaos = 0.12,
   borderRadius = 24,
   thickness = 1,
+  maxDisplacement = Infinity,
   paused = false,
   squircle = false,
   flow,
@@ -288,8 +290,13 @@ const ElectricBorder: React.FC<ElectricBorderProps> = ({
         );
 
         const envelope = directed?.envelope ?? 1;
-        const displacedX = point.x + xNoise * scale * envelope;
-        const displacedY = point.y + yNoise * scale * envelope;
+        const offset = limitElectricBorderOffset(
+          xNoise * scale * envelope,
+          yNoise * scale * envelope,
+          maxDisplacement,
+        );
+        const displacedX = point.x + offset.x;
+        const displacedY = point.y + offset.y;
 
         if (i === 0) {
           ctx.moveTo(displacedX, displacedY);
@@ -336,7 +343,7 @@ const ElectricBorder: React.FC<ElectricBorderProps> = ({
       intersection?.disconnect();
       document.removeEventListener('visibilitychange', syncAnimation);
     };
-  }, [color, speed, chaos, borderRadius, thickness, paused, flow, octavedNoise, getRoundedRectPoint]);
+  }, [color, speed, chaos, borderRadius, thickness, maxDisplacement, paused, flow, octavedNoise, getRoundedRectPoint]);
 
   const vars = {
     '--electric-border-color': color,
