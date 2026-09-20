@@ -1,13 +1,14 @@
 /**
- * [INPUT]: React Bits ElectricBorder 原始 color/speed/chaos/borderRadius 与 React Canvas；增加线宽、暂停、平滑圆角适配
- * [OUTPUT]: 对外提供 ElectricBorder；保留上游 random/noise2D/octavedNoise 与二维时间推进
- * [POS]: Canvas 按住反馈使用的上游组件副本；仅修正 Flow 本地尺寸、DS 曲率/颜色和动画生命周期，不再实现另一套波形
+ * [INPUT]: React Bits ElectricBorder 原始 color/speed/chaos/borderRadius 与 React Canvas；增加线宽、暂停、平滑圆角及 electricBorderFlow 方向映射
+ * [OUTPUT]: 对外提供 ElectricBorder；保留上游 random/noise2D/octavedNoise，按可选 flow 将噪声从右下沿两路传播到左上
+ * [POS]: Canvas 按住反馈使用的上游组件副本；方向只映射采样坐标，不重写波形/速度乘数/Chaos；另适配 Flow 本地尺寸、DS 曲率/颜色和动画生命周期
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  * 来源：https://github.com/DavidHDev/react-bits/blob/eae800a74f6455ba5afaedc4cdd8700e5a159c33/src/ts-default/Animations/ElectricBorder/ElectricBorder.tsx
  * Copyright (c) 2026 David Haz；许可见 ElectricBorder.LICENSE.md。
  */
 
 import React, { useEffect, useRef, useCallback, type CSSProperties, type ReactNode } from 'react';
+import { electricBorderFlow } from './electricBorderFlow';
 import './ElectricBorder.css';
 
 interface ElectricBorderProps {
@@ -19,6 +20,7 @@ interface ElectricBorderProps {
   thickness?: number;
   paused?: boolean;
   squircle?: boolean;
+  flow?: 'bottom-right-to-top-left';
   className?: string;
   style?: CSSProperties;
 }
@@ -32,6 +34,7 @@ const ElectricBorder: React.FC<ElectricBorderProps> = ({
   thickness = 1,
   paused = false,
   squircle = false,
+  flow,
   className,
   style
 }) => {
@@ -255,32 +258,38 @@ const ElectricBorder: React.FC<ElectricBorderProps> = ({
         const progress = i / sampleCount;
 
         const point = getRoundedRectPoint(progress, left, top, borderWidth, borderHeight, radius);
+        const directed = flow === 'bottom-right-to-top-left'
+          ? electricBorderFlow(progress, borderWidth, borderHeight, radius, timeRef.current)
+          : null;
+        const noisePosition = directed?.position ?? progress * 8;
+        const noiseTime = directed === null ? timeRef.current : 0;
 
         const xNoise = octavedNoise(
-          progress * 8,
+          noisePosition,
           octaves,
           lacunarity,
           gain,
           amplitude,
           frequency,
-          timeRef.current,
+          noiseTime,
           0,
           baseFlatness
         );
         const yNoise = octavedNoise(
-          progress * 8,
+          noisePosition,
           octaves,
           lacunarity,
           gain,
           amplitude,
           frequency,
-          timeRef.current,
+          noiseTime,
           1,
           baseFlatness
         );
 
-        const displacedX = point.x + xNoise * scale;
-        const displacedY = point.y + yNoise * scale;
+        const envelope = directed?.envelope ?? 1;
+        const displacedX = point.x + xNoise * scale * envelope;
+        const displacedY = point.y + yNoise * scale * envelope;
 
         if (i === 0) {
           ctx.moveTo(displacedX, displacedY);
@@ -327,7 +336,7 @@ const ElectricBorder: React.FC<ElectricBorderProps> = ({
       intersection?.disconnect();
       document.removeEventListener('visibilitychange', syncAnimation);
     };
-  }, [color, speed, chaos, borderRadius, thickness, paused, octavedNoise, getRoundedRectPoint]);
+  }, [color, speed, chaos, borderRadius, thickness, paused, flow, octavedNoise, getRoundedRectPoint]);
 
   const vars = {
     '--electric-border-color': color,
