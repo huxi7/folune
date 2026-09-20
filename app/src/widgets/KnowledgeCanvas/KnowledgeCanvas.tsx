@@ -93,6 +93,7 @@ import {
 } from "./canvasMotionReceipts";
 import { runViewTransition } from "../../pages/viewTransition";
 import { CanvasSelectionBounds } from "./CanvasSelectionBounds";
+import { CanvasManipulationFeedback } from "./CanvasManipulationFeedback";
 import {
   useCanvasSessionCoordinator,
   type CanvasSessionControls,
@@ -1457,6 +1458,7 @@ export function KnowledgeCanvas({
         >
           <Background gap={26} size={1} variant={BackgroundVariant.Dots} />
           <CanvasSelectionBounds nodes={nodes} />
+          {previewNodeId === null && connectionSourceId === null ? <CanvasManipulationFeedback /> : null}
           <CanvasControls
             onAdd={openPalette}
             onFit={fitView}

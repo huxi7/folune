@@ -5,9 +5,14 @@
 CLAUDE.md: 记录 Canvas V2 交互子域成员、职责边界与 GEB 回环协议
 KnowledgeCanvas.tsx: Canvas 会话内容根；禁用 React Flow 默认 deleteKeyCode，删除只进入既有 requestNodeRemoval 确认/回执协议，节点/关系撤销时长共用 Toast 的六秒默认值，弹层键盘事件不穿透画布；始终挂载受控 React Flow，bootstrap/网络加载、选择、视口、WAL 与 mutation 沿原系统；响应式视口校准以稳定 resize/ResizeObserver 读取 latest nodes，节点拖动不重建 observer且校准不写回持久 viewport；nodesConnectable 只向右下 source/整卡 target 开放，拖/点都委托 useCanvasConnectionSession，临时绳不进文档，合法结束只签发一次 motion receipt + upsert_edge。Card→Preview 仍是纯本地 DOM 视图过渡，删除仍先拍无身份快照再入 WAL，hydration/rebase/save/rerender 不签发动画 图投影按文档引用缓存并由首帧/更新共用，初始化 Flow 只建一次，拖拽与选择不会重复重建初始化图。
 CanvasCardView.tsx: 显式输入交互状态的共享纯 UI，完整保留卡片/空间文字/纸面过渡，不导入业务 Store；生产与 Demo 共用
-CanvasCardNode.tsx: memo 化的 280x360 memo_ref 卡与 native 空间文字；选中 memo_ref 在非 Preview/连接会话时挂载 CanvasSelectionBorder，选择仍只读 React Flow；可用 memo_ref 把可聚焦 Grip source 放在元信息行最右端（宪法 10.3 的「柄只服从最不干扰」——挂在卡片右下角外的小凸起正是最干扰的那种，它破坏纸的完整轮廓；行尾槽位不暗示任何出线方向，且与两个内容动作严格等距——抓手不同族由点阵图标、grab 光标与 hover 变 primary 表达，用间距表达只会被读成没对齐），whole-card target 仍是会话期直接子元素。元信息状态只剩墓碑与回收站两种：两者都是「指向的东西不在库里了」，用户必须知道也有出路；曾经的第三条「原文已更新」比的是入画布那天的 revision 快照，而标题与摘录本来就读最新内容，因此它警告的不一致用户看不见，又因快照只在创建时写一次而永久消不掉。抓手拖拽时由 React Flow connectingfrom 隐藏；正式中心 Handle/CanvasCordEdge 浮动端点不变，正文 hover/focus 仍只预取 memoDocumentStore
+CanvasCardNode.tsx: memo 化的 280x360 memo_ref 卡与 native 空间文字；静态选中只读 React Flow；可用 memo_ref 把可聚焦 Grip source 放在元信息行最右端（宪法 10.3 的「柄只服从最不干扰」——挂在卡片右下角外的小凸起正是最干扰的那种，它破坏纸的完整轮廓；行尾槽位不暗示任何出线方向，且与两个内容动作严格等距——抓手不同族由点阵图标、grab 光标与 hover 变 primary 表达，用间距表达只会被读成没对齐），whole-card target 仍是会话期直接子元素。元信息状态只剩墓碑与回收站两种：两者都是「指向的东西不在库里了」，用户必须知道也有出路；曾经的第三条「原文已更新」比的是入画布那天的 revision 快照，而标题与摘录本来就读最新内容，因此它警告的不一致用户看不见，又因快照只在创建时写一次而永久消不掉。抓手拖拽时由 React Flow connectingfrom 隐藏；正式中心 Handle/CanvasCordEdge 浮动端点不变，正文 hover/focus 仍只预取 memoDocumentStore
 CanvasSelectionBorder.tsx: 选中卡片的 Soft Ink 撕纸边装饰；3.5px 实色边缘通过三层噪声与 10px 位移及 0.35px 膨胀形成可见的不规则纸边，以 6 秒周期缓慢起伏。仅过滤原生 squircle 边缘；DS 动态偏好、离屏与后台门禁停掉 animate 但保留静态纸边，不持有选择、不测屏幕尺寸、不写画布状态或布局
 ElectricBorder.LICENSE.md: React Bits Electric Border 参考实现的原始版权与 MIT + Commons Clause 许可
+CanvasManipulationFeedback.tsx: Flow 内的单一按住手势观察器；按下卡片或已选组时只读 nodeLookup，把边缘 Portal 挂到实际参与搬动的卡片，释放/取消/失焦立即卸载；排除命令、连接、修饰键和 Space 平移，不改变选择与 WAL
+CanvasManipulationFeedback.test.tsx: 真实 React Flow 下验证按下/释放、取消/失焦、多选共享、命令与平移排除，并确认视觉不改写静态选择
+CanvasManipulationBorder.tsx: 按住期间的单向 Soft Ink 纸边；局部几何与 React Flow 缩放分离，单一帧循环写 SVG path，离屏/后台停绘、Reduced Motion 静态
+manipulationBorderGeometry.ts: 按圆角/平滑轮廓采样双向同源边界，噪声随距离与时间连续向左上行进，端点收敛闭合
+manipulationBorderGeometry.test.ts: 验证单向传播、双路端点、静态路径与窄尺寸有限值
 CanvasCardNode.test.tsx: 卡片结构回归门禁，锁定两个正式中心 Handle、抓手必须落在元信息行之内且排在两个内容动作之后、整卡 target、嵌套纸张、常驻展开入口、AI 忙碌选择器、元信息只剩墓碑/回收站两种状态，以及墓碑/回收站绝不暴露连接命中面
 CanvasTitle.tsx: Canvas 顶层安静标题；两种画布共用同一改名分支，只在 draft 从空进入编辑态时聚焦并全选，敲字本身不重复抢焦点；来源语义仍归 memo_ref 卡片
 CanvasControls.tsx: React Flow 底部中央命令条，内容/视口动作保持两组同材质；操作说明 Dialog 常驻宿主以完成退出，不读取或修改图数据

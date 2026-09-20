@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖设计系统的半径/曲线配对规则与 workspace.css 的全屏 Stage、独立浮层 Panel、--workspace-panel-inset 与 Panel Header 中心线公式、note-paper.css 的共享纸面 variant、Quiet Editorial 语义 token、@xyflow/react 定位层与 Canvas V2 交互组件
  * [OUTPUT]: 对外提供全视口 Canvas 壳、可越过窄屏 backdrop 切换互斥 Panel 的顶部 Dock、统一坐标、独立居中且高于卡片的关系说明层、点阵舞台、同材质但以留白分组的图标内容动作/视口动作双 surface、单纸面延迟占位、文件拖入、融入卡片底栏行尾且仍压住整卡 target 的连接抓手、候选/预连上两档只改轮廓的目标反馈、因果节点/关系动效，以及四方向纸面视图过渡的唯一节奏源（只有纸与纸内正文命名、纸壳等比取景、正文永不缩放只被取景框裁切、交接严格互补、世界先落定、零过冲）
- * [POS]: app/src/styles 的 Canvas V2 视觉边界；选中卡片以同源 Soft Ink 实体撕纸边表达，滤镜只作用于边缘且不改变几何/命中；桌面保留空间画布，窄屏保留可达操作，不覆盖 React Flow 的业务状态
+ * [POS]: app/src/styles 的 Canvas V2 视觉边界；静止选择保留细边，按住期以 2.5px Soft Ink 单向纸边临时替代外框，不改变几何/命中；桌面保留空间画布，窄屏保留可达操作，不覆盖 React Flow 的业务状态
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -166,34 +166,31 @@
   .canvas-card[data-motion-state="source-confirm"] { animation: canvas-source-confirm 180ms var(--ease-standard) var(--canvas-motion-delay, 0ms) both; }
   .canvas-card[data-selected="true"] { border-color: color-mix(in srgb, var(--primary) 42%, var(--border)); box-shadow: var(--shadow-sm), 0 0 0 1px color-mix(in srgb, var(--primary) 8%, transparent); }
 
-  /* 撕纸边替代选中细线，避免规则内框与起伏外框重叠；纸面和命中面不进入滤镜。 */
-  .canvas-card:has(> .canvas-selection-border) { border-color: transparent; box-shadow: var(--shadow-sm); }
-  .canvas-selection-border {
+  /* 动态轮廓只表达“正在拿着”；松手卸载即恢复静态选择，不做延迟退场。 */
+  .canvas-card:has(> .canvas-manipulation-border) { border-color: transparent; box-shadow: var(--shadow-sm); transition: none; }
+  .canvas-manipulation-border {
     position: absolute;
     z-index: 3;
-    inset: -3px;
-    border-radius: inherit;
-    corner-shape: inherit;
-    pointer-events: none;
-    animation: canvas-reduced-fade var(--motion-panel-enter) var(--ease-standard) both;
-  }
-  .canvas-selection-edge {
-    position: absolute;
-    inset: 0;
-    border: 3.5px solid color-mix(in srgb, var(--primary) 92%, transparent);
-    border-radius: inherit;
-    corner-shape: inherit;
-    box-shadow: 0 0 12px color-mix(in srgb, var(--primary) 20%, transparent);
+    inset: -1px;
+    width: calc(100% + 2px);
+    height: calc(100% + 2px);
+    overflow: visible;
+    color: var(--primary);
     pointer-events: none;
   }
-  .canvas-selection-filter { position: absolute; width: 0; height: 0; pointer-events: none; }
-
-  @media (prefers-reduced-motion: reduce) {
-    .canvas-selection-border { animation: none; }
+  .canvas-manipulation-edge {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.5px;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-opacity: 0.92;
+    filter: drop-shadow(0 0 3px color-mix(in srgb, var(--primary) 12%, transparent));
   }
   @media (forced-colors: active) {
-    .canvas-selection-border { display: none; }
-    .canvas-card[data-selected="true"] { outline: 2px solid Highlight; outline-offset: 2px; }
+    .canvas-manipulation-border { display: none; }
+    .canvas-card[data-selected="true"],
+    .canvas-card:has(> .canvas-manipulation-border) { outline: 2px solid Highlight; outline-offset: 2px; }
   }
   .canvas-card[data-connection-target="valid"] { border-color: color-mix(in srgb, var(--primary) 46%, var(--border)); box-shadow: var(--shadow-xs), 0 0 0 1px color-mix(in srgb, var(--primary) 8%, transparent); }
   /*
