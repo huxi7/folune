@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖共享 Button、BlueprintFrame/Divider、BrandMark 与 Figma 原始功能符号与既有 query 驱动认证弹窗
- * [OUTPUT]: 对外提供中文导航、共享 DS 行动按钮、56px 导航及底边交点、跨页首页功能/场景锚点、博客入口与按需加载的 AuthDialog
+ * [OUTPUT]: 对外提供中文导航、共享 DS 行动按钮、56px 导航及底边交点、跨页首页功能/指南锚点、博客入口与按需加载的 AuthDialog
  * [POS]: widgets 的共享营销导航；认证成功仍经现有路由进入工作区，不改变登录协议
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -24,7 +24,7 @@ const navItems = [
   { href: "/#features", label: "功能", dropdown: true },
   { href: "/blog", label: "博客" },
   { href: "/#resources", label: "关于", dropdown: true },
-  { href: "/#use-cases", label: "使用场景" },
+  { href: "/#guides", label: "指南" },
   { href: "https://zed.dev/docs", label: "参考文档" },
   { href: "https://zed.dev/pricing", label: "参考定价" },
   { href: "https://zed.dev/delta", label: "Delta", icon: "19-4560/imgFrame2" },

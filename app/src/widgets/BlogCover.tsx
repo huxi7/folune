@@ -1,9 +1,10 @@
 /**
- * [INPUT]: 依赖 React useId 和博客封面主题，不使用图片请求或运行时动画
- * [OUTPUT]: 对外提供散页、枝条、关系三种原创 SVG 蓝图封面
+ * [INPUT]: 依赖 React useId、GuideIllustration 和博客封面主题，不使用图片请求或运行时动画
+ * [OUTPUT]: 对外提供保留散页、枝条、关系封面，并为六篇指南复用 GuideIllustration
  * [POS]: widgets 的博客插画；共享细网格、标尺与墨蓝轴，每篇以不同几何构图表达内容
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
+import { GuideIllustration, type GuideCoverKind } from "./GuideIllustration";
 import { useId } from "react";
 import type { BlogCoverKind } from "./landingBlogData";
 
@@ -17,6 +18,7 @@ function Branch({ x, y, length, angle, depth }: { x: number; y: number; length: 
 }
 export function BlogCover({ kind }: { kind: BlogCoverKind }) {
   const id = useId();
+  if (kind.startsWith("guide-")) return <div className="blog-cover blog-guide-cover"><GuideIllustration kind={kind as GuideCoverKind} /></div>;
   return <svg className={`blog-cover blog-cover-${kind}`} viewBox="0 0 640 360" fill="none" aria-hidden="true">
     <defs>
       <pattern id={`${id}-grid`} width="24" height="24" patternUnits="userSpaceOnUse"><path d="M24 0H0V24" stroke="currentColor" strokeOpacity=".09" /><circle cx="12" cy="12" r=".8" fill="currentColor" fillOpacity=".17" /></pattern>

@@ -1,12 +1,14 @@
 /**
- * [INPUT]: 依赖 landingDetailData 四篇细节文章，依据当前 Paper、已实测的整理/引用/搜索/Canvas 能力与写作研究演示截图，不读取账号数据
- * [OUTPUT]: 对外提供三篇首页精选与四篇功能细节中文博客、稳定 slug、可选章节实景图、封面主题与统一作者信息；整理与画布指南承接功能区入口
+ * [INPUT]: 依赖 landingDetailData 四篇细节文章与 guidePosts 六篇指南，依据当前 Paper、已实测的整理/引用/搜索/Canvas 能力与写作研究演示截图，不读取账号数据
+ * [OUTPUT]: 对外提供三篇首页精选、四篇功能细节与六篇方法指南及同组阅读推荐、稳定 slug、可选章节实景图、封面主题与统一作者信息；整理与画布指南承接功能区入口
  * [POS]: widgets 的公开编辑内容源；首页卡片、博客目录与阅读页共读，避免标题摘要与正文各自维护
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
+import { guidePosts } from "./guidePosts";
+import type { GuideCoverKind } from "./GuideIllustration";
 import { detailStories } from "./landingDetailData";
 
-export type BlogCoverKind = "paper" | "branches" | "connections";
+export type BlogCoverKind = "paper" | "branches" | "connections" | GuideCoverKind;
 export type BlogPost = {
   slug: string;
   title: string;
@@ -119,4 +121,10 @@ export const featuredBlogPosts: BlogPost[] = [
   },
 ];
 
-export const blogPosts: BlogPost[] = [...featuredBlogPosts, ...detailStories.map(item => item.post)];
+export const blogPosts: BlogPost[] = [...featuredBlogPosts, ...detailStories.map(item => item.post), ...guidePosts];
+
+// ---- 继续阅读按当前集合选择，保持原顺序，避免每篇末尾铺满整个目录 ----
+export function relatedBlogPosts(slug: string): BlogPost[] {
+  const inGuides = guidePosts.some(post => post.slug === slug);
+  return blogPosts.filter(post => post.slug !== slug && guidePosts.some(guide => guide.slug === post.slug) === inGuides).slice(0, 3);
+}

@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 MarketingLayout 的 Landing 字体、墨蓝、导轨 token 与共享 Button 材质
- * [OUTPUT]: 对外提供首页博客卡片、目录与含实景图/图注的单篇阅读响应式排版
+ * [OUTPUT]: 对外提供保留首页博客卡片、为指南目录复用线稿，并提供单篇阅读响应式排版
  * [POS]: styles 的博客局部表现层；原创 SVG 共用底材，首页与目录使用原创 SVG；阅读页以点阵标题舞台、居中返回和约 36 个汉字的窄栏正文承载内容
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -12,6 +12,8 @@
   .blog-card-link { display:flex; flex-direction:column; height:100%; }
   .blog-card-cover { padding:10px; border-bottom:1px solid var(--landing-border); }
   .blog-cover { display:block; width:100%; height:auto; aspect-ratio:16/9; color:var(--landing-accent); }
+  .blog-guide-cover { display:grid; place-items:center; background:linear-gradient(135deg,#fafbf9,#e5ecef); border:1px solid var(--landing-border); }
+  .blog-guide-cover .guide-illustration { width:70%; height:auto; }
   .blog-cover-branches { color:#53756e; }
   .blog-cover-connections { color:#626f83; }
   .blog-card-copy { display:flex; flex:1; flex-direction:column; padding:20px 16px 16px; }

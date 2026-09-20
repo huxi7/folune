@@ -2,11 +2,13 @@
 > L2 | 父级: ../../CLAUDE.md
 
 成员清单
-LandingConnections.tsx: 真实 AI 拓展的三状态截图展示，默认展示关联理由；复用 SegmentedControl 键盘切换，手机补全文字证据，不装配业务会话或请求 AI
-LandingUseCases.tsx: 灵感/学习/项目三行原创材料与产出，静态呈现日常用途；use-cases 为新入口，保留旧 extensions 定位别名
+LandingConnections.tsx: 已保存 AI 关系的两张 NotePaper 局部与一句依据，静态构图无需操作，不装配业务会话
+LandingGuides.tsx: 六篇方法指南的三列两行目录，共读文章标题摘要；guides 为入口，保留 use-cases/extensions 锚点，返回复用博客协议
+guidePosts.ts: 六篇完整记录方法文章，独立于首页三篇精选，以 BlogPost 类型加入同一公开目录
+GuideIllustration.tsx: 六种纸张/段落/路径静态 SVG 线稿，由指南卡片与目录封面共同消费，useId 隔离渐隐定义
 LandingHeroLab/: 独立颗粒首屏研究，四版复用正式 Header/Hero/三栏排版，支持高度/材质调节、定格对照、本地配置及可选 LandingEditor 衔接；原 A/B/D 仅作参照，E/F 已淘汰，仅 hero-lab.html 加载，不改写正式 Landing
-landingBlogData.ts: 三篇首页精选与四篇细节文章的公开集合；首页精选独立导出，细节内容从 landingDetailData 汇入；整理与画布指南使用功能截图中的写作研究示例和可选章节实景图，稳定 slug/摘要/章节供首页、功能入口、目录与正文共读；署名复用 huxi 头像
-BlogCover.tsx: 原创细网格 SVG 封面，散页、递归枝条与笔记关系三种构图对应记录/归档/Canvas；useId 隔离多实例图案引用，无动画和外部图片请求
+landingBlogData.ts: 三篇首页精选、四篇细节与六篇方法指南的公开集合；首页精选独立导出，细节内容从 landingDetailData 汇入；整理与画布指南使用功能截图中的写作研究示例和可选章节实景图，稳定 slug/摘要/章节供首页、功能入口、目录与正文共读；同组继续阅读限制三篇，署名复用 huxi 头像
+BlogCover.tsx: 原创细网格 SVG 封面，散页、递归枝条与笔记关系三种构图对应记录/归档/Canvas；useId 隔离多实例图案引用，另为六篇指南复用 GuideIllustration，原三种封面保持；无动画和外部图片请求
 LandingBlog.tsx: 首页固定三篇精选博客卡片；整卡单一 Router Link，链接携带来路供阅读页返回并恢复滚动，查看博客进入 /blog
 LandingEditor.tsx: 保留原导轨和 738px 展示框，平滑圆角外壳统一裁剪受限 demo.html iframe；ShowcaseBackdrop 独立置于后景，不传递真实账号状态
 LandingDemo/: 无业务会话的内存产品演示，复用 Paper/Toolbar/树/生产工具芯片/Canvas 视图；AI 面板按脚本逐步揭示真实工具调用，唯一的写操作与工具条共用同一归档入口并可真撤销；无底部额外工具栏
@@ -15,7 +17,7 @@ useTreeReorder.ts: AppSidebar 结构重排 FLIP Hook，手势前捕获位置、�
 TreeDisclosure.tsx: 文件树与 DS Collapse 的薄适配，声明可打断、成对释放的归档运动租约，让 Overlay 跟随真实高度几何；不读取业务数据
 .gitkeep: 保留业务组合组件层空目录
 CLAUDE.md: 记录业务组合组件层职责与文档协议
-MarketingHeader.tsx: 首页/博客共享的 56px 中文导航；站内锚点使用根路径 Router Link，博客入口进入 /blog，认证 query 保留博客来路且不重置阅读位置，场景入口指向 /#use-cases，共用 BrandMark/DS Button、参考符号和 BlueprintFrame/Divider；拥有唯一 query 驱动 AuthDialog，成功仍进入后端守卫的 /app，下载只展示禁用态；顶栏认证入口用「打开」承载 Laper 参考的同位文案
+MarketingHeader.tsx: 首页/博客共享的 56px 中文导航；站内锚点使用根路径 Router Link，博客入口进入 /blog，认证 query 保留博客来路且不重置阅读位置，指南入口指向 /#guides，共用 BrandMark/DS Button、参考符号和 BlueprintFrame/Divider；拥有唯一 query 驱动 AuthDialog，成功仍进入后端守卫的 /app，下载只展示禁用态；顶栏认证入口用「打开」承载 Laper 参考的同位文案
 MarketingAnnouncement.tsx: 紧贴粘性导航下方、约为 Header 2/3 高且随页面滚走的无关闭公告栏，在背景全宽、1088px 主轨与正文对齐且宽屏带视口外轨的 BlueprintFrame 中居中呈现标签、正文与 2px 箭头反馈；hover 不填充蓝色背景
 BlueprintFrame.tsx: Landing 纵向导轨容器；导航、1120px 正文与页脚共用主轨/外轨坐标，fullBleed 增加可选外轨，颜色由当前区块局部覆盖
 BlueprintDivider.tsx: Landing 横向导轨；14px 分隔带上下两条边分别共置横线与菱形，flush 提供零高度边界，compact 保留 7px 内部分隔带而不添加参考中没有的节点
@@ -23,7 +25,7 @@ AuthDialog.tsx: 复用 BrandMark 原图的登录/注册统一认证 Dialog，复
 LandingHero.tsx: 中文公告、居中 Hero、三列价值条与真实 UI 互动插槽；三栏采用用户于 2026-09-18 确认的 Demo 定稿「专注记录 / 有序归档 / 连接想法」，说明分别强调先写后分类、归档去向与撤销、画布继续思考；LandingActions 共用 DS 两字「打开」与两字待发布下载（全站同一动作同一词，2+2 等密度），auth query 交给 MarketingHeader 唯一认证弹窗；分区仍复用通栏 BlueprintDivider
 LandingFeatureDetails.tsx: 第 11 区块的四项垂直居中展开说明、对应实景图与底部紧凑四格摘要；标题区和展开正文保留文章入口，底部只含标题和说明；固定展示区内以同源 CSS 时间轴协调行高、标题与正文，正文常驻并在收起时 inert，选中项只保持展开、不显示收起图标，图片不附重复图注；detail query 保留选中项，切换清除已消费的定位锚点，替换历史并保留其他查询/滚动，博客沿 fromBlog 协议返回
 landingDetailData.ts: 归档线、引用选择、同一份原文、Markdown 导出四项细节与完整指南；实景图与文章数据同源，BlogPost 仅类型依赖，不建立运行时反向导入
-LandingSections.tsx: 保留五项真实功能与文章入口、评价和信件；按关联展示→功能细节→使用场景编排，删除社区数据和扩展内容，其他区块独立持有展示与交互
+LandingSections.tsx: 保留五项真实功能与文章入口、评价和信件；按关联展示→功能细节→六格指南编排，删除社区数据和扩展内容，其他区块独立持有展示与交互
 LandingFooter.tsx: 共用 DS 墨蓝的品牌区与产品/资源/关于/连接四组导航；16 项预留入口（产品 2、资源 8、关于 3、连接 3）以 aria-disabled link 语义展示且不跳转，打开网页版保留博客来路并复用本地认证；品牌与入口置顶、作者与版权置底；保留 Folune 淡描边与细纹层序，不放 PNG，BlueprintFrame 延续导轨
 LandingMotion/: Landing 克制反馈模块，提供 CountUp 与 APP/两处图文展示共用的低对比细点阵后景；磁吸、指针聚光不启用，一次性 reveal 仍由共享动效原语承载
 NotebookPreview.tsx: 确定性首屏产品预览，DS 统一缩放淡入与显式卡片 lift 分处不同元素，阴影由 CSS 持有，内部布局不参与独立动画
@@ -66,7 +68,7 @@ CanvasWorkspace.tsx: Canvas 空间壳、标题/边缘工具和窄屏互斥 Panel
 CanvasWorkspace.test.tsx: Canvas 会话壳回归测试，锁定中央 Canvas、共享 Panel、Paper 互斥关系，以及伪返回按钮/Canvas 文字标识/厚重标题卡片确已消失
 KnowledgeCanvas/: Canvas V2 交互内容根，以受控 React Flow 承载持久视口、memo/native 节点、右下抓手的拖/点等效连接与纯 UI 临时编织绳、带撤销回执/来源确认的移除、拖拽/缩放、Picker、Preview、显式 AI expansion、WAL 恢复与保存状态
 DesignSystemWorkspace/: 开发态 Quiet Editorial Design System 工作区，按 Foundations/Primitives/Navigation & Overlays/Editorial/AI & Organize 五层直接陈列生产 Token、Lucide 精选图标示例、Markdown/Reading/Quote/Code 与四种 Signature Components；组件状态由真实预览交互表达，不再铺设重复状态轨；通过 lazy import 只在 import.meta.env.DEV 下暴露
-NotePaper.tsx: 共享纸面原语，以 thumbnail/reader 两个 variant 承载 Canvas 卡片缩略纸与小开本浮纸。transitionIdentity 一个入参同时命名纸壳与纸内正文（paper-/paper-body-），规矩因此住在纸里而不是每个调用方——漏一处就是一次字被当图片拉伸的过渡；不再交出真实 DOM，几何归浏览器，没人再测量这张纸。纸张曲率、纸边、墨色与 thumbnail 渐隐仍只实现一次，reader 纸面静止且正文在纸内滚动
+NotePaper.tsx: 共享纸面原语，以 thumbnail/reader/showcase 三个 variant 承载缩略纸、阅读浮纸与营销自然高度纸面。transitionIdentity 一个入参同时命名纸壳与纸内正文（paper-/paper-body-），规矩因此住在纸里而不是每个调用方——漏一处就是一次字被当图片拉伸的过渡；不再交出真实 DOM，几何归浏览器，没人再测量这张纸。纸张曲率、纸边、墨色与 thumbnail 渐隐仍只实现一次，reader 纸面静止且正文在纸内滚动
 NotePaper.test.tsx: 纸面骨架与视觉契约回归测试，锁定两个 variant 的 DOM 同构、thumbnail 五段透明度且模糊层不填纸色、空摘录占位、children 覆盖摘录与 overlay 不进入正文流，以及一个 transitionIdentity 必须同时命名纸壳与正文、不给身份则一个名字都不留
 MarkdownEditor.tsx: Markdown 存储协议与 CodeMirror 显示协议之间的唯一 adapter；handle 只暴露 focus 与只读 readSelection（剥掉零宽标记后返回选中文字，不触碰选区/撤销/自动保存），GFM language 常驻，live/source 只通过 Compartment 重配显示扩展以共享 EditorState/选区/撤销历史，零宽空行标记和纯文本粘贴继续保证 content_mdx 无损往返
 MarkdownEditor.test.ts: 以 content_mdx 恒等 round-trip 验证普通文本、2/5+ 连续空行、首尾/连续空格、强调段、空白行与 CRLF，约束零宽标记、HTML 空标签和 nbsp 永不离开 adapter

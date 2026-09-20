@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖共享 Button/Blueprint DOM、真实关联截图与 SegmentedControl、静态使用场景、四项真实功能细节、BrandMark、参考字体/纹理、独立 Demo iframe 和 ShowcaseBackdrop
- * [OUTPUT]: 对外提供同源文字与共轴导轨、APP 外壳、两处动态展示后景、关联截图的固定比例淡换、三行使用场景、功能细节展开、信纸、评价与页脚的响应式版面；仅 Landing 禁止纵向越界回弹，页尾止于 Footer
+ * [INPUT]: 依赖共享 Button/Blueprint DOM、NotePaper 展示变体、六格方法指南、四项真实功能细节、BrandMark、参考字体/纹理、独立 Demo iframe 和 ShowcaseBackdrop
+ * [OUTPUT]: 对外提供同源文字与共轴导轨、APP 外壳、两处动态展示后景、静态关联构图、六格指南、功能细节展开、信纸、评价与页脚的响应式版面；仅 Landing 禁止纵向越界回弹，页尾止于 Footer
  * [POS]: styles 的 Landing 局部样式；Footer 淡字位于细密斜纹之下，按钮材质与品牌墨蓝直接消费 DS，背景和纹理保留基线；功能区按参考稿使用 40px 卡片纵向留白与外扩 6px 虚线图片框，细节交互栏仅当前展开项显示细点阵，收起项保持原底色
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -126,56 +126,52 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
 .landing-small-features article { position:relative; }
 .landing-small-features article:not(:last-child)::after { content:""; position:absolute; inset:0; pointer-events:none; }
 .landing-small-features article:not(:last-child)::after { border-right:1px solid var(--landing-border); }
-/* ---- 关联展示：真实截图只淡换；所有状态共用同一个固定比例舞台 ---- */
-.landing-connections .landing-section-heading>div:first-child { max-width:680px; }
-.landing-connections .landing-section-heading p { max-width:640px; }
-.landing-connections-figure { padding:32px 48px 28px; }
-.landing-connections-stage { position:relative; isolation:isolate; width:100%; max-width:864px; aspect-ratio:8/5; margin-inline:auto; overflow:hidden; border:1px solid var(--landing-border); background:var(--workspace-stage); }
-.landing-connections-stage picture { position:absolute; inset:0; display:block; opacity:0; transition:opacity var(--motion-fast) var(--ease-standard); }
-.landing-connections-stage img { display:block; width:100%; height:100%; object-fit:contain; }
-.landing-connections-stage picture[data-active="true"] { opacity:1; z-index:1; }
-.landing-connections-figure figcaption { display:flex; flex-direction:column; align-items:center; gap:12px; padding-top:24px; text-align:center; }
-.landing-connections-caption { min-height:24px; font-size:14px; line-height:24px; color:var(--landing-ink); }
-.landing-connections-figure small { font-size:12px; line-height:20px; color:var(--muted-foreground); }
-.landing-connections-reading { display:none; }
-/* ---- 日常场景：用途、原始材料、继续写出的内容，沿同一水平阅读线展开 ---- */
-.landing-use-cases { position:relative; }
+/* ---- 关联：纸面与依据同屏，线只穿过两张纸之间的留白 ---- */
+.landing-connections .landing-section-heading>div:first-child { max-width:none; }
+.landing-connections .landing-section-heading p { max-width:none; }
+.landing-connection-study { position:relative; isolation:isolate; display:grid; grid-template-columns:38% 24% 38%; align-items:start; padding:56px 48px 64px; }
+.landing-connection-study::before { content:""; position:absolute; inset:24px 24px 20px; z-index:-1; background:radial-gradient(circle,color-mix(in srgb,var(--landing-accent) 17%,transparent) .65px,transparent .85px) 0 0/12px 12px; mask-image:radial-gradient(ellipse at center,#000,transparent 72%); }
+.landing-connection-source { width:100%; }
+.landing-connection-target { width:94%; justify-self:end; margin-top:68px!important; }
+.landing-connection-thread { position:absolute; top:56px; left:48px; width:calc(100% - 96px); height:280px; z-index:-1; overflow:visible; fill:none; stroke:color-mix(in srgb,var(--landing-accent) 55%,transparent); stroke-width:1; }
+.landing-connection-reason { padding:0 20px; margin-top:192px!important; font:14px/24px var(--landing-body); color:var(--landing-accent); text-wrap:pretty; }
+/* ---- 指南：标题主导的六格目录，插画融入背景而非另放封面 ---- */
+.landing-guides { position:relative; padding:48px; }
 .landing-legacy-anchor { position:absolute; top:0; left:0; width:1px; height:1px; scroll-margin-top:64px; pointer-events:none; }
-.landing-use-cases .landing-section-heading>div:first-child { max-width:660px; }
-.landing-use-cases .landing-section-heading p { max-width:600px; }
-.landing-use-cases-label { flex:none; color:var(--muted-foreground); font-size:12px; }
-.landing-use-case { display:grid; grid-template-columns:1fr 2fr; gap:40px; padding:40px 48px; }
-.landing-use-case+.landing-use-case { border-top:1px solid var(--landing-border); }
-.landing-use-case-copy { min-width:0; }
-.landing-use-case-copy>small { display:block; color:var(--landing-accent); font-size:12px; line-height:20px; }
-.landing-blueprint .landing-use-case-copy h3 { margin-top:8px; font-size:18px; line-height:28px; text-wrap:pretty; }
-.landing-use-case-copy>p { margin-top:12px; font-size:13px; line-height:23px; color:var(--muted-foreground); text-wrap:pretty; }
-.landing-use-case-materials { display:grid; grid-template-columns:1fr 1fr; align-items:center; gap:32px; min-width:0; }
-.landing-use-case-materials small { display:block; margin-bottom:12px; font-size:12px; line-height:20px; color:var(--muted-foreground); }
-.landing-use-case-materials p { font:400 16px/28px var(--landing-heading); text-wrap:pretty; }
-.landing-use-case-source p+p { margin-top:12px; padding-top:12px; border-top:1px solid var(--landing-border); }
-.landing-use-case-outcome { padding:24px; background:color-mix(in srgb,var(--card) 70%,transparent); border-left:2px solid color-mix(in srgb,var(--landing-accent) 28%,transparent); }
-@media (max-width:1023px) {
-  .landing-use-case { gap:24px; padding:32px; }
-  .landing-use-case-materials { gap:20px; }
-  .landing-use-case-outcome { padding:20px; }
+.landing-guides-heading { display:flex; justify-content:space-between; gap:32px; align-items:center; margin-bottom:40px; }
+.landing-guides-heading>p { font:14px/24px var(--landing-body); color:var(--muted-foreground); }
+.landing-guides-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; }
+.landing-guides-grid>article { min-width:0; }
+.landing-guide-link { position:relative; isolation:isolate; display:flex; flex-direction:column; min-height:288px; height:100%; padding:24px; border:1px solid var(--landing-border); background:rgb(255 255 255 / 22%); transition:border-color var(--motion-fast) var(--ease-standard); }
+.landing-guide-link::before { content:""; position:absolute; inset:0; z-index:-1; background:linear-gradient(var(--landing-border) 1px,transparent 1px),linear-gradient(90deg,var(--landing-border) 1px,transparent 1px); background-size:24px 24px; opacity:.42; mask-image:linear-gradient(135deg,#000,transparent 77%); }
+.landing-guide-number { position:absolute; top:22px; left:24px; font:12px/20px Landing Mono,var(--font-sans); color:var(--landing-accent); }
+.guide-illustration { display:block; color:var(--landing-accent); }
+.landing-guide-link>.guide-illustration { position:absolute; top:12px; right:8px; width:64%; height:132px; pointer-events:none; opacity:.6; }
+.landing-guide-copy { margin-top:124px; }
+.landing-blueprint .landing-guide-copy h3 { font:400 20px/28px var(--landing-heading); color:var(--foreground); text-wrap:pretty; transition:color var(--motion-fast) var(--ease-standard); }
+.landing-guide-copy>p { margin-top:12px; font:14px/24px var(--landing-body); color:var(--muted-foreground); text-wrap:pretty; }
+.landing-guide-link:hover { border-color:color-mix(in srgb,var(--landing-accent) 45%,var(--landing-border)); }
+.landing-guide-link:hover h3 { color:var(--landing-accent); }
+.landing-guide-link:focus-visible { outline-offset:3px; }
+@media (max-width:1099px) {
+  .landing-guides { padding:32px; }
+  .landing-guides-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .landing-connection-study { padding-inline:32px; }
+  .landing-connection-thread { left:32px; width:calc(100% - 64px); }
+  .landing-connection-reason { padding-inline:12px; }
 }
 @media (max-width:767px) {
-  .landing-connections-figure { padding:20px 16px 24px; }
-  .landing-connections-figure figcaption { padding-top:20px; }
-  .landing-connections-caption { min-height:48px; text-wrap:pretty; }
-  .landing-connections-reading { display:grid; gap:20px; padding:0 24px 32px; }
-  .landing-connections-reading small { display:block; margin-bottom:6px; font-size:12px; line-height:20px; color:var(--muted-foreground); }
-  .landing-connections-reading p { font-size:14px; line-height:24px; }
-  .landing-connections-rationale { border-top:1px solid var(--landing-border); padding-top:20px; }
-  .landing-use-case { grid-template-columns:1fr; gap:24px; padding:32px 24px; }
-  .landing-use-case-materials { grid-template-columns:1fr; gap:20px; }
-  .landing-use-case-copy>p { font-size:14px; line-height:24px; }
-  .landing-use-case-materials p { font-size:16px; line-height:28px; }
-  .landing-use-case-outcome { padding:20px; }
+  .landing-connection-study { grid-template-columns:1fr; padding:24px 24px 40px; }
+  .landing-connection-thread { display:none; }
+  .landing-connection-target { width:100%; margin-top:0!important; }
+  .landing-connection-reason { position:relative; margin:0 0 0 24px!important; padding:24px 0 24px 24px; max-width:260px; border-left:1px solid color-mix(in srgb,var(--landing-accent) 45%,transparent); }
+  .landing-guides { padding:32px 24px; }
+  .landing-guides-heading { flex-direction:column; align-items:flex-start; gap:12px; margin-bottom:28px; }
+  .landing-guides-break { display:none; }
+  .landing-guides-grid { grid-template-columns:1fr; }
 }
 @media (prefers-reduced-motion:reduce) {
-  .landing-connections-stage picture { transition:none; }
+  .landing-guide-link,.landing-blueprint .landing-guide-copy h3 { transition:none; }
 }
 /* ---- 功能细节：展开说明与实景图同源，移动端把图接在完整说明之后 ---- */
 .landing-feature-details .landing-section-heading { min-height:185px; }

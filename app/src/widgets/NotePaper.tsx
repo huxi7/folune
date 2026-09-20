@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖 React ReactNode、pages/viewTransition 的纸壳/正文命名与 styles/note-paper.css 的 .note-paper thumbnail/reader 纸面契约
- * [OUTPUT]: 对外提供共享 NotePaper 纸面原语、NotePaperVariant 类型与 transitionIdentity（纸壳与纸内正文各自成名）；thumbnail 渐隐，reader 自身滚动
+ * [INPUT]: 依赖 React ReactNode、pages/viewTransition 的纸壳/正文命名与 styles/note-paper.css 的 .note-paper thumbnail/reader/showcase 纸面契约
+ * [OUTPUT]: 对外提供共享 NotePaper 纸面原语、NotePaperVariant 类型与 transitionIdentity（纸壳与纸内正文各自成名）；thumbnail 渐隐，reader 自身滚动，showcase 按内容自然展开
  * [POS]: app/src/widgets 的纸张视觉单一入口；Canvas 卡片缩略与全尺寸预览共用同一纸面，任何新的纸张表现都必须扩展 variant 而不是另写一套样式
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -12,7 +12,7 @@ import {
   paperViewTransitionName,
 } from "../pages/viewTransition";
 
-export type NotePaperVariant = "reader" | "thumbnail";
+export type NotePaperVariant = "reader" | "thumbnail" | "showcase";
 
 type NotePaperProps = {
   /** reader 变体作为模态阅读面时的初始焦点目标，复用 Dialog 的 data-dialog-autofocus 契约 */

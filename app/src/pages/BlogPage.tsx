@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Router slug/历史导航、含可选实景图的静态博客文章、BlogCover 与 Blueprint 导轨
- * [OUTPUT]: 对外提供 /blog 目录、图文文章阅读与未知文章回退；功能区/目录进入均保留返回位置，并维护文章元信息
+ * [OUTPUT]: 对外提供 /blog 目录、图文文章阅读与未知文章回退；功能区/目录进入均保留返回位置，同组继续阅读限三篇，并维护文章元信息
  * [POS]: pages 的公开博客内容视图；共享 MarketingLayout 顶栏，标题区以居中字标/标题/摘要/元信息/返回按钮构成独立舞台，下接导读和语义正文，无账号或业务请求
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -10,7 +10,7 @@ import { Button } from "../shared/design-system/components";
 import { BlueprintFrame } from "../widgets/BlueprintFrame";
 import { BlueprintDivider } from "../widgets/BlueprintDivider";
 import { BlogCover } from "../widgets/BlogCover";
-import { blogAuthor, blogPosts } from "../widgets/landingBlogData";
+import { blogAuthor, blogPosts, relatedBlogPosts } from "../widgets/landingBlogData";
 
 export function BlogPage() {
   const { slug } = useParams();
@@ -87,7 +87,7 @@ export function BlogPage() {
           ))}
           <div className="blog-endmark" aria-hidden="true">◇</div>
         </div>
-        <nav className="blog-related" aria-label="继续阅读"><p className="blog-eyebrow">继续阅读</p>{blogPosts.filter(item => item.slug !== slug).map(item => <Link key={item.slug} to={`/blog/${item.slug}`} replace state={location.state}><span>{item.title}</span><span aria-hidden="true">→</span></Link>)}<Link to="/blog">查看全部文章 <span aria-hidden="true">↗</span></Link></nav>
+        <nav className="blog-related" aria-label="继续阅读"><p className="blog-eyebrow">继续阅读</p>{relatedBlogPosts(post.slug).map(item => <Link key={item.slug} to={`/blog/${item.slug}`} replace state={location.state}><span>{item.title}</span><span aria-hidden="true">→</span></Link>)}<Link to="/blog">查看全部文章 <span aria-hidden="true">↗</span></Link></nav>
       </article> : <div className="blog-not-found"><span className="blog-eyebrow">404</span><h1 tabIndex={-1}>这篇文章还不在这里</h1><p>链接可能有误，去博客目录看看其他文章吧。</p><Link to="/blog">返回博客目录 →</Link></div>}
     </main>
   </BlueprintFrame>;

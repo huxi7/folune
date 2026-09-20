@@ -1,11 +1,11 @@
 /**
- * [INPUT]: 依赖真实 APP 功能截图、Router Link、LandingConnections、LandingUseCases、LandingFeatureDetails、LandingBlog、BlueprintDivider、共享 BrandMark 与 huxi 头像
- * [OUTPUT]: 对外提供五项图文一一对应的 Folune 功能与整理/画布文章入口，以及真实关联展示、独立功能细节、日常场景、评价占位、创作者信件和博客
+ * [INPUT]: 依赖真实 APP 功能截图、Router Link、LandingConnections、LandingGuides、LandingFeatureDetails、LandingBlog、BlueprintDivider、共享 BrandMark 与 huxi 头像
+ * [OUTPUT]: 对外提供五项图文一一对应的 Folune 功能与整理/画布文章入口，以及真实关联展示、独立功能细节、六篇方法指南、评价占位、创作者信件和博客
  * [POS]: widgets 的营销叙事组合；创作者信件沿用首稿叙事，与 Laper 参考同构：问候与自我介绍各占一行，再以长短有别的段落分承初衷、打磨、AI 分寸与期待，一段只说一件事，由 huxi 个人署名
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { LandingConnections } from "./LandingConnections";
-import { LandingUseCases } from "./LandingUseCases";
+import { LandingGuides } from "./LandingGuides";
 import { LandingBlog } from "./LandingBlog";
 import { LandingFeatureDetails } from "./LandingFeatureDetails";
 import type { ReactNode } from "react";
@@ -120,7 +120,7 @@ export function LandingSections(){
   <BlueprintDivider fullBleed />
   <LandingFeatureDetails />
   <BlueprintDivider fullBleed />
-  <LandingUseCases />
+  <LandingGuides />
   <BlueprintDivider fullBleed />
   <section className="landing-letter-section" id="resources" aria-labelledby="landing-letter-title">
     <article className="landing-letter">
