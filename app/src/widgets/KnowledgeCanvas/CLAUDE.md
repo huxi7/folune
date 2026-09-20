@@ -8,15 +8,10 @@ CanvasCardView.tsx: 显式输入交互状态的共享纯 UI，完整保留卡片
 CanvasCardNode.tsx: memo 化的 280x360 memo_ref 卡与 native 空间文字；静态选中只读 React Flow；可用 memo_ref 把可聚焦 Grip source 放在元信息行最右端（宪法 10.3 的「柄只服从最不干扰」——挂在卡片右下角外的小凸起正是最干扰的那种，它破坏纸的完整轮廓；行尾槽位不暗示任何出线方向，且与两个内容动作严格等距——抓手不同族由点阵图标、grab 光标与 hover 变 primary 表达，用间距表达只会被读成没对齐），whole-card target 仍是会话期直接子元素。元信息状态只剩墓碑与回收站两种：两者都是「指向的东西不在库里了」，用户必须知道也有出路；曾经的第三条「原文已更新」比的是入画布那天的 revision 快照，而标题与摘录本来就读最新内容，因此它警告的不一致用户看不见，又因快照只在创建时写一次而永久消不掉。抓手拖拽时由 React Flow connectingfrom 隐藏；正式中心 Handle/CanvasCordEdge 浮动端点不变，正文 hover/focus 仍只预取 memoDocumentStore
 CanvasManipulationFeedback.tsx: Flow 内的单一按住手势观察器；按下卡片或已选组时只读 nodeLookup，把边缘 Portal 挂到实际参与搬动的卡片，释放/取消/失焦立即卸载；排除命令、连接、修饰键和 Space 平移，不改变选择与 WAL
 CanvasManipulationFeedback.test.tsx: 真实 React Flow 下验证按下即反馈、松手/取消/失焦清理、组选共享、命令/修饰键/平移排除，以及视觉绝不改写静态选择
-CanvasManipulationBorder.tsx: 2.5px Soft Ink 按住纸边；ResizeObserver 只读本地尺寸/原生曲率，单一 rAF 共用绝对时间直接写 SVG path，离屏/后台停绘，Reduced Motion 静态，卸载取消
-manipulationBorderGeometry.ts: 从右下到左上分两路以 1px 密度采样 round/squircle 轮廓；四层噪声把可见大波与细碎毛边合成同一条纹理，按 d-vt 以 80px/s 连续单向行进，两端衰减确保角点闭合，不变频、不往返、不重置相位
-manipulationBorderGeometry.test.ts: 验证单向传播恒等式、两路共同起终点、静态路径和窄尺寸有限值
-ElectricBorder.LICENSE.md: React Bits Electric Border 参考实现的原始版权与 MIT + Commons Clause 许可
-CanvasManipulationFeedback.tsx: Flow 内的单一按住手势观察器；按下卡片或已选组时只读 nodeLookup，把边缘 Portal 挂到实际参与搬动的卡片，释放/取消/失焦立即卸载；排除命令、连接、修饰键和 Space 平移，不改变选择与 WAL
-CanvasManipulationFeedback.test.tsx: 真实 React Flow 下验证按下/释放、取消/失焦、多选共享、命令与平移排除，并确认视觉不改写静态选择
-CanvasManipulationBorder.tsx: 按住期间的单向 Soft Ink 纸边；局部几何与 React Flow 缩放分离，单一帧循环写 SVG path，离屏/后台停绘、Reduced Motion 静态
-manipulationBorderGeometry.ts: 按圆角/平滑轮廓采样双向同源边界，噪声随距离与时间连续向左上行进，端点收敛闭合
-manipulationBorderGeometry.test.ts: 验证单向传播、双路端点、静态路径与窄尺寸有限值
+CanvasManipulationBorder.tsx: 原始 ElectricBorder 的配置入口，直接传 speed=0.4、chaos=0.04、thickness=2.5、DS 颜色/平滑圆角与 Reduced Motion；不维护任何自定义波形或参数换算
+ElectricBorder.tsx: React Bits 上游组件副本（源码引用见文件头）；保留十层 noise2D/octavedNoise、原始 speed 时间乘数与 chaos 振幅，仅适配 Flow 本地尺寸、线宽、squircle、currentColor 与暂停/离屏生命周期
+ElectricBorder.css: 上游 Canvas/辉光/内容分层样式，放入 components layer；品牌材质覆盖归 knowledge-canvas.css
+ElectricBorder.LICENSE.md: React Bits Electric Border 上游组件的原始版权与 MIT + Commons Clause 许可
 CanvasCardNode.test.tsx: 卡片结构回归门禁，锁定两个正式中心 Handle、抓手必须落在元信息行之内且排在两个内容动作之后、整卡 target、嵌套纸张、常驻展开入口、AI 忙碌选择器、元信息只剩墓碑/回收站两种状态，以及墓碑/回收站绝不暴露连接命中面
 CanvasTitle.tsx: Canvas 顶层安静标题；两种画布共用同一改名分支，只在 draft 从空进入编辑态时聚焦并全选，敲字本身不重复抢焦点；来源语义仍归 memo_ref 卡片
 CanvasControls.tsx: React Flow 底部中央命令条，内容/视口动作保持两组同材质；操作说明 Dialog 常驻宿主以完成退出，不读取或修改图数据
@@ -24,13 +19,8 @@ CanvasControls.test.tsx: 底部命令形制回归测试，锁定一个 Panel、�
 CanvasPersistenceStatus.tsx: 正常保存/排队/恢复静默，仅展示尚未同步、版本冲突或恢复异常；异常说明与重试位于工具条上方并保留可访问播报，只解释协调器事实，不参与排队
 CanvasPreviewOverlay.tsx: 不卸载 Canvas 的小开本 Paper 预览层；按 ID 读取正文，正文在路上时纸里先放卡片那段摘录（同一篇笔记的开头，放大的始终是同一段字，一个字都没到才退回 Skeleton），reader 纸面由 NotePaper 命名壳与正文。Dialog 使用 motion=none 且遮罩绝不拥有过渡身份——它留在 root 那张截图里，磨砂玻璃因此完整可用（backdrop-filter 采样的就是同一次绘制里身后的画布），而给它单独命名会让它排到过渡层末尾、整段盖住正在放大的纸；纸内只有正文，关闭/编辑一律在纸外
 CanvasPreviewOverlay.test.tsx: 预览结构回归门禁，锁定 motion=none bare 表面、单一 reader 纸，以及关闭/编辑原文一律不在纸内
-<<<<<<< HEAD
-CanvasSelectionBounds.tsx: 成组外接框；只在 React Flow 自带 NodesSelection 缺席的两段时间出现——框选拖动中，以及多选静止但它已放手（抓住组里任意卡片就会让它消失）——与它共用同一条变换公式和同一个 --canvas-selection-line，因此松手只是换主人，框不移动也不闪。纯视觉、不接收指针，矩形判据住在 canvasPresentation
-CanvasCordEdge.tsx: 关系路径与理由说明，几何/receipt 仍沿原职责；理由 Popover 用 top placement 的 PresenceSurface 收放，CSS 独立 translate 保持几何居中，保持聚焦/指向/显式展开与删除意图。理由说明有**四条独立理由**可以撑开它——指针在把手上、键盘焦点在把手上、指针在关系线上（命中区 18px 宽，把手就长在它上面）、点一下钉住——因此消散必须一次收掉全部四条，否则"点旁边收起"会经常不生效：那一下落在线上，线的那条仍然成立。**焦点必须与悬浮分开成两个状态**：Escape 会把焦点归还给把手，若焦点直接算作"悬浮"，归还的那一刻它就自己重新打开，Escape 等于没按。线的那条用"压制"而非清空——清了它，指针仍在线上不会重新触发 enter，说明会一直不回来。消散走共享 `useDismissable`（外部 pointerdown + Escape + 焦点归还），与 Select/菜单同一条协议；Escape 分支的 preventDefault 同时是给 PaperWorkspaceShell 壳层守卫让行的仲裁
-=======
 CanvasSelectionBounds.tsx: 选择外接框；单张笔记的选框与卡片同源平滑圆角，多对象范围框保留矩形，原生/补画两层由同一 CSS 选择事实驱动；只在 React Flow 自带 NodesSelection 缺席的两段时间出现——框选拖动中，以及多选静止但它已放手（抓住组里任意卡片就会让它消失）——与它共用同一条变换公式和同一个 --canvas-selection-line，因此松手只是换主人，框不移动也不闪。纯视觉、不接收指针，矩形判据住在 canvasPresentation
-CanvasCordEdge.tsx: 关系路径与理由说明，几何/receipt 仍沿原职责；理由 Popover 用 top placement 的 PresenceSurface 收放，CSS 独立 translate 保持几何居中，保持聚焦/指向/显式展开与删除意图
->>>>>>> bc15d59 (Strengthen traveling paper edges and round single-card selection)
+CanvasCordEdge.tsx: 关系路径与理由说明，几何/receipt 仍沿原职责；理由 Popover 用 top placement 的 PresenceSurface 收放，CSS 独立 translate 保持几何居中，保持聚焦/指向/显式展开与删除意图。理由说明有**四条独立理由**可以撑开它——指针在把手上、键盘焦点在把手上、指针在关系线上（命中区 18px 宽，把手就长在它上面）、点一下钉住——因此消散必须一次收掉全部四条，否则"点旁边收起"会经常不生效：那一下落在线上，线的那条仍然成立。**焦点必须与悬浮分开成两个状态**：Escape 会把焦点归还给把手，若焦点直接算作"悬浮"，归还的那一刻它就自己重新打开，Escape 等于没按。线的那条用"压制"而非清空——清了它，指针仍在线上不会重新触发 enter，说明会一直不回来。消散走共享 `useDismissable`（外部 pointerdown + Escape + 焦点归还），与 Select/菜单同一条协议；Escape 分支的 preventDefault 同时是给 PaperWorkspaceShell 壳层守卫让行的仲裁
 CanvasCordEdge.test.ts: 浮动端点纯几何回归门禁，锁定目标跨象限拖动时端点从左右边切换到上下边、轴向对齐取直而对角线两个控制点分居弦两侧（S）、卡片朝对角方向的端点收进圆角弧上，并覆盖节点尚未测量时的安全兜底
 CanvasElasticConnectionLine.tsx: React Flow 拖拽期纯 UI 渲染层；起点取 fromX/fromY（React Flow 按 handleBounds 算出的抓手中心，因此绳子从被按住的那一点出来），终点取 connection.pointer 并用 viewport transform 反解回画布坐标 —— 绝不消费 toX/toY：本产品的 target handle 覆盖整张卡片，一旦吸附 React Flow 就把 to 换成那个 handle 的中心，线于是贯穿目标正文。吸附对提交是对的（它决定连给谁），对显示是错的（它决定线画到哪）。坐标写 latest ref，单一 rAF 只直接更新三条 path 与 drop cursor 属性，卸载立即取消，Reduced Motion 停相位但继续严格跟手
 CanvasElasticConnectionLine.test.ts: 临时绳的坐标所有权门禁，锁定起点是抓手、终点是真实指针、cordAnchor 不再出现，toX/toY 只作 pointer 缺席时的兜底；珠子半径恒定且小，状态只由颜色表达

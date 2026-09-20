@@ -1,65 +1,37 @@
 /**
- * [INPUT]: 依赖卡片本地布局尺寸、DS 动态偏好与 manipulationBorderGeometry 的单向波形
- * [OUTPUT]: 对外提供 CanvasManipulationBorder；两路纸边由右下流向左上，以单一 rAF 直接写 path
- * [POS]: CanvasManipulationFeedback 的按住期装饰；只有轮廓动，曲率来自卡片 CSS，不改选择/几何/命中，不参与持久化
+ * [INPUT]: React Bits ElectricBorder、卡片 CSS 曲率与 DS 动态偏好
+ * [OUTPUT]: CanvasManipulationBorder，直接配置上游 speed=0.4、chaos=0.04，线宽 2.5px
+ * [POS]: CanvasManipulationFeedback 的按住期品牌适配层；不再维护独立波形与换算参数
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
-import { useLayoutEffect, useRef } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { useMotionPreference } from "../../shared/design-system/useMotionPreference";
-import { createBorderBranches, manipulationBorderPath } from "./manipulationBorderGeometry";
+import ElectricBorder from "./ElectricBorder";
 
-// React Bits Electric Border 的有机边缘适配；参考授权见 ElectricBorder.LICENSE.md。
 export function CanvasManipulationBorder() {
-  const rootRef = useRef<SVGSVGElement>(null);
-  const pathRef = useRef<SVGPathElement>(null);
+  const hostRef = useRef<HTMLDivElement>(null);
+  const [geometry, setGeometry] = useState({ radius: 16, squircle: false });
   const reducedMotion = useMotionPreference();
-
   useLayoutEffect(() => {
-    const root = rootRef.current;
-    const path = pathRef.current;
-    const card = root?.parentElement;
-    if (!root || !path || !card) return;
-    let branches: ReturnType<typeof createBorderBranches> = [];
-    let frame = 0;
-    let visible = true;
-    const paint = (time: number) => {
-      if (branches.length > 0) path.setAttribute("d", manipulationBorderPath(branches, time));
-    };
-    const measure = () => {
-      // offset 尺寸不含 Flow viewport transform，防止重复缩放。
-      const style = card.ownerDocument.defaultView!.getComputedStyle(card);
-      branches = createBorderBranches(card.offsetWidth, card.offsetHeight,
-        Number.parseFloat(style.borderTopLeftRadius) || 0,
-        typeof CSS !== "undefined" && CSS.supports("corner-shape", "squircle"));
-      paint(reducedMotion ? 0 : performance.now() / 1000);
-    };
-    const tick = (time: number) => {
-      paint(time / 1000);
-      frame = requestAnimationFrame(tick);
-    };
-    const sync = () => {
-      cancelAnimationFrame(frame);
-      frame = 0;
-      if (!reducedMotion && visible && !document.hidden) frame = requestAnimationFrame(tick);
-    };
-    measure();
-    const resize = new ResizeObserver(measure);
-    resize.observe(card);
-    const intersection = typeof IntersectionObserver === "undefined" ? null
-      : new IntersectionObserver(([entry]) => { visible = entry?.isIntersecting ?? false; sync(); });
-    intersection?.observe(card);
-    document.addEventListener("visibilitychange", sync);
-    sync();
-    return () => {
-      cancelAnimationFrame(frame);
-      resize.disconnect();
-      intersection?.disconnect();
-      document.removeEventListener("visibilitychange", sync);
-    };
-  }, [reducedMotion]);
+    const card = hostRef.current?.parentElement;
+    if (!card) return;
+    const style = card.ownerDocument.defaultView!.getComputedStyle(card);
+    setGeometry({
+      radius: Number.parseFloat(style.borderTopLeftRadius) || 16,
+      squircle: style.getPropertyValue("corner-shape") === "superellipse(2)",
+    });
+  }, []);
 
-  return <svg aria-hidden="true" className="canvas-manipulation-border" focusable="false" ref={rootRef}>
-    <path className="canvas-manipulation-edge" ref={pathRef} />
-  </svg>;
+  return <div aria-hidden="true" className="canvas-manipulation-border" ref={hostRef}>
+    <ElectricBorder
+      speed={0.4}
+      chaos={0.04}
+      color="currentColor"
+      borderRadius={geometry.radius}
+      squircle={geometry.squircle}
+      thickness={2.5}
+      paused={reducedMotion}
+    />
+  </div>;
 }
