@@ -8,7 +8,7 @@ CanvasCardView.tsx: 显式输入交互状态的共享纯 UI，完整保留卡片
 CanvasCardNode.tsx: memo 化的 280x360 memo_ref 卡与 native 空间文字；静态选中只读 React Flow；可用 memo_ref 把可聚焦 Grip source 放在元信息行最右端（宪法 10.3 的「柄只服从最不干扰」——挂在卡片右下角外的小凸起正是最干扰的那种，它破坏纸的完整轮廓；行尾槽位不暗示任何出线方向，且与两个内容动作严格等距——抓手不同族由点阵图标、grab 光标与 hover 变 primary 表达，用间距表达只会被读成没对齐），whole-card target 仍是会话期直接子元素。元信息状态只剩墓碑与回收站两种：两者都是「指向的东西不在库里了」，用户必须知道也有出路；曾经的第三条「原文已更新」比的是入画布那天的 revision 快照，而标题与摘录本来就读最新内容，因此它警告的不一致用户看不见，又因快照只在创建时写一次而永久消不掉。抓手拖拽时由 React Flow connectingfrom 隐藏；正式中心 Handle/CanvasCordEdge 浮动端点不变，正文 hover/focus 仍只预取 memoDocumentStore
 CanvasManipulationFeedback.tsx: Flow 内的单一按住手势观察器；按下卡片或已选组时只读 nodeLookup，把边缘 Portal 挂到实际参与搬动的卡片，释放/取消/失焦立即卸载；排除命令、连接、修饰键和 Space 平移，不改变选择与 WAL
 CanvasManipulationFeedback.test.tsx: 真实 React Flow 下验证按下即反馈、松手/取消/失焦清理、组选共享、命令/修饰键/平移排除，以及视觉绝不改写静态选择
-CanvasManipulationBorder.tsx: 原始 ElectricBorder 的配置入口，直接传 speed=0.8、chaos=0.04、thickness=2.75、maxDisplacement=2px 局部位移软上限、DS 颜色/平滑圆角、右下至左上 flow 与 Reduced Motion；不维护任何自定义波形或参数换算
+CanvasManipulationBorder.tsx: 原始 ElectricBorder 的配置入口，直接传 speed=0.6、chaos=0.04、thickness=2.75、maxDisplacement=2px 局部位移软上限、DS 颜色/平滑圆角、右下至左上 flow 与 Reduced Motion；不维护任何自定义波形或参数换算
 ElectricBorder.tsx: React Bits 上游组件副本（源码引用见文件头）；保留十层 noise2D/octavedNoise、原始 speed 时间乘数与 chaos 振幅，定向模式仅将采样坐标映射为右下发起、两路向左上收束，同时继续推进原始噪声时间，波纹沿路径移动时仍持续变形；描边前按二维向量长度软限幅，避免偶发大尖刺；另适配 Flow 本地尺寸、线宽、squircle、currentColor 与暂停/离屏生命周期
 electricBorderFlow.ts: 上游顺时针周长到右下/左上两路距离的纯映射；保留 8 倍空间尺度与 0.3 时间频率，端点渐收保证轮廓连接；位移软上限保留阈值一半以内的小毛边，超出后平滑趋近上限，不改上游噪声
 electricBorderFlow.test.ts: 验证右下起点/左上终点、两路单调同步、时间持续前移、闭合接缝，以及全方向限幅/小纹理保真/接点连续

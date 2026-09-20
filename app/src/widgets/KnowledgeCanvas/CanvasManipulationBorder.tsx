@@ -1,6 +1,6 @@
 /**
  * [INPUT]: React Bits ElectricBorder 与右下至左上方向适配、卡片 CSS 曲率与 DS 动态偏好
- * [OUTPUT]: CanvasManipulationBorder，配置 speed=0.8、chaos=0.04、线宽 2.75px 与 2px 局部位移软上限，右下发起/左上收束
+ * [OUTPUT]: CanvasManipulationBorder，配置 speed=0.6、chaos=0.04、线宽 2.75px 与 2px 局部位移软上限，右下发起/左上收束
  * [POS]: CanvasManipulationFeedback 的按住期品牌适配层；不再维护独立波形与换算参数
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -25,7 +25,7 @@ export function CanvasManipulationBorder() {
 
   return <div aria-hidden="true" className="canvas-manipulation-border" ref={hostRef}>
     <ElectricBorder
-      speed={0.8}
+      speed={0.6}
       chaos={0.04}
       flow="bottom-right-to-top-left"
       color="currentColor"
