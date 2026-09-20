@@ -1,6 +1,6 @@
 /**
  * [INPUT]: React Bits ElectricBorder 原始 color/speed/chaos/borderRadius 与 React Canvas；增加线宽、暂停、平滑圆角、方向映射及 maxDisplacement 位移上限
- * [OUTPUT]: 对外提供 ElectricBorder；保留上游噪声，按 flow 定向传播并在描边前以 maxDisplacement 平滑约束局部尖刺
+ * [OUTPUT]: 对外提供 ElectricBorder；上游噪声持续演化且按 flow 定向传播，描边前以 maxDisplacement 平滑约束局部尖刺
  * [POS]: Canvas 按住反馈使用的上游组件副本；方向只映射采样坐标，不重写波形/速度乘数/Chaos；另适配 Flow 本地尺寸、DS 曲率/颜色和动画生命周期
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  * 来源：https://github.com/DavidHDev/react-bits/blob/eae800a74f6455ba5afaedc4cdd8700e5a159c33/src/ts-default/Animations/ElectricBorder/ElectricBorder.tsx
@@ -264,7 +264,8 @@ const ElectricBorder: React.FC<ElectricBorderProps> = ({
           ? electricBorderFlow(progress, borderWidth, borderHeight, radius, timeRef.current)
           : null;
         const noisePosition = directed?.position ?? progress * 8;
-        const noiseTime = directed === null ? timeRef.current : 0;
+        // flow 只决定纹理往哪里走；二维噪声的时间轴必须同时推进，否则只是冻结纹理平移。
+        const noiseTime = timeRef.current;
 
         const xNoise = octavedNoise(
           noisePosition,

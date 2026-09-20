@@ -36,7 +36,7 @@ export function electricBorderFlow(
   const fade = Math.min(1, distance / radius, (halfPerimeter - distance) / radius);
   const envelope = radius > 0 ? fade * fade * (3 - 2 * fade) : 1;
   return {
-    // 同一纹理只向距离增大的方向传播。0.3 沿用上游的时间频率系数，无第二套速度。
+    // 空间采样只向距离增大的方向推进；组件另保留噪声时间轴，让纹理在传播中继续演化。
     position: distance / halfPerimeter * 8 - time * 0.3,
     envelope,
   };
