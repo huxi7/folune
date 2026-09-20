@@ -235,8 +235,8 @@ The motion language is part of the Design System. `src/shared/design-system/moti
 
 2026-09-07 Scrollbar refinement: Scrollbars use a transparent track and a quiet neutral-gray thumb (Light rgb(96 96 96) at 11% alpha, Dark rgb(190 190 190) at 13% alpha). Keep native thin scrollbars and system forced-colors behavior. Library and conversation scrollports reach the Panel edge; their 12px content padding stays inside the scrollport, so overlay thumbs never cover text. Other text/list scrollports reserve a stable native gutter without adding another painted track.
 
-## Canvas selection (2026-09-19)
+## Canvas selection (2026-09-20)
 
-- Selected memo cards use a restrained Electric Border adaptation: a 1px Soft Ink filament at 68% alpha, a 3px edge glow at 12%, and a 14-second eased noise cycle with 2.4px displacement. Both themes consume `--primary`; the paper surface stays unchanged.
-- The native Panel radius and squircle remain authoritative. Only the decorative border is filtered; text, hit targets, card size and React Flow zoom keep their existing geometry.
-- Selection is still owned by React Flow. Preview and connection gestures suppress the filament so their existing feedback stays clear. Unselected cards have no effect mounted; offscreen/background cards stop animating, and Reduced Motion keeps a static outline.
+- Selected memo cards use a visible torn-paper Electric Border adaptation: a 3.5px Soft Ink edge at 92% alpha, a 12px soft edge glow at 20%, and three noise octaves with 10px displacement evolving over a 6-second eased cycle. A 0.35px dilation keeps the contour continuous. The solid contour and irregular paper texture must remain legible at normal Canvas zoom; the previous 1px/2.4px treatment was too faint.
+- Both themes consume `--primary`. The native Panel radius and squircle remain authoritative; only the decorative border is filtered. Text, paper surface, hit targets, card size and React Flow zoom keep their existing geometry. The regular selection line is suppressed while the torn edge is present, preventing a double outline.
+- Selection is still owned by React Flow. Preview and connection gestures suppress the decoration so their existing feedback stays clear. Unselected cards have no effect mounted; offscreen/background cards stop animating. Reduced Motion retains the same torn-paper contour without animation, while forced-colors uses a system outline.
