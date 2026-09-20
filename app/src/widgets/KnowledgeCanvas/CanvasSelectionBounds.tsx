@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 @xyflow/react 的 useStore（视口变换、框选进行中标志、自带成组框标志）与 canvasPresentation 的成组外接框判据
- * [OUTPUT]: 对外提供 CanvasSelectionBounds，在 React Flow 自带 NodesSelection 缺席的两段时间补上同一个成组外接框
+ * [OUTPUT]: 对外提供 CanvasSelectionBounds，在 React Flow 自带 NodesSelection 缺席的两段时间补上同一个外接框；CSS 以真实 selected 共用单卡曲率/多对象矩形
  * [POS]: KnowledgeCanvas 的选择反馈层；矩形判据住在 canvasPresentation，这里只把它放进视口坐标系，纯视觉、不接收指针、不读写图数据
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */

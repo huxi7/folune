@@ -1,12 +1,12 @@
 /**
  * [INPUT]: 卡片本地宽高、设计系统曲率与单调递增时间
- * [OUTPUT]: 对外提供撕纸边轮廓采样、单向波形与闭合 SVG path
+ * [OUTPUT]: 对外提供 1px 轮廓采样、80px/s 单向传播的四层撕纸波形与闭合 SVG path
  * [POS]: CanvasManipulationBorder 的纯几何；两路从右下同点出发、在左上同点收拢，只移动边缘纹理，不移动卡片
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
-export const BORDER_FLOW_SPEED = 32;
-const SAMPLE_STEP = 2;
+export const BORDER_FLOW_SPEED = 80;
+const SAMPLE_STEP = 1;
 const END_FADE = 24;
 type Point = { x: number; y: number };
 type Sample = Point & { distance: number; nx: number; ny: number; envelope: number };
@@ -26,8 +26,9 @@ const noise = (position: number) => {
 export function borderTravelWave(distance: number, seconds: number) {
   // d - vt 的同一段纹理只向 d 增大的方向走；不变频、不反向、不重置相位。
   const travel = distance - seconds * BORDER_FLOW_SPEED;
-  return noise(travel / 38) * 1.65 + noise(travel / 15 + 19) * 0.55
-    + noise(travel / 6 + 47) * 0.2;
+  // 大波负责可见起伏，小波刻出纸纤维毛边；共用 travel，细节随波前进而非原地闪烁。
+  return noise(travel / 38) * 2.8 + noise(travel / 15 + 19) * 1.15
+    + noise(travel / 6 + 47) * 0.65 + noise(travel / 3 + 83) * 0.3;
 }
 
 export function createBorderBranches(width: number, height: number, radius: number, squircle: boolean): Branch[] {

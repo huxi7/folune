@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖设计系统的半径/曲线配对规则与 workspace.css 的全屏 Stage、独立浮层 Panel、--workspace-panel-inset 与 Panel Header 中心线公式、note-paper.css 的共享纸面 variant、Quiet Editorial 语义 token、@xyflow/react 定位层与 Canvas V2 交互组件
  * [OUTPUT]: 对外提供全视口 Canvas 壳、可越过窄屏 backdrop 切换互斥 Panel 的顶部 Dock、统一坐标、独立居中且高于卡片的关系说明层、点阵舞台、同材质但以留白分组的图标内容动作/视口动作双 surface、单纸面延迟占位、文件拖入、融入卡片底栏行尾且仍压住整卡 target 的连接抓手、候选/预连上两档只改轮廓的目标反馈、因果节点/关系动效，以及四方向纸面视图过渡的唯一节奏源（只有纸与纸内正文命名、纸壳等比取景、正文永不缩放只被取景框裁切、交接严格互补、世界先落定、零过冲）
- * [POS]: app/src/styles 的 Canvas V2 视觉边界；静止选择保留细边，按住期以 2.5px Soft Ink 单向纸边临时替代外框，不改变几何/命中；桌面保留空间画布，窄屏保留可达操作，不覆盖 React Flow 的业务状态
+ * [POS]: app/src/styles 的 Canvas V2 视觉边界；单卡选框跟随卡片平滑圆角，多对象范围框保持矩形；按住期以 2.5px Soft Ink 单向纸边临时替代外框，不改变几何/命中；桌面保留空间画布，窄屏保留可达操作，不覆盖 React Flow 的业务状态
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -119,6 +119,16 @@
   .knowledge-canvas[data-memo-drop-active]::after { content: ""; position: absolute; z-index: 7; inset: var(--space-3); border: 1px solid color-mix(in srgb, var(--primary) 42%, transparent); border-radius: var(--radius-panel); corner-shape: var(--corner-shape-smooth); background: color-mix(in srgb, var(--primary) 3%, transparent); pointer-events: none; }
   /* 内层框罩住内容, 必须干净: 同一个变量在这一层改回透明, 只留线 */
   .knowledge-canvas .react-flow__nodesselection { --xy-selection-background-color: transparent; }
+  /* Flow 的真实 selected 同时决定原生选框与补画选框的形状，避免单卡框选交接跳成直角。 */
+  .knowledge-canvas:has(.react-flow__node.selected > .canvas-card):not(:has(.react-flow__node.selected ~ .react-flow__node.selected)) {
+    --canvas-object-selection-radius: var(--radius-panel);
+    --canvas-object-selection-corner: var(--corner-shape-smooth);
+  }
+  .knowledge-canvas .react-flow__nodesselection-rect,
+  .canvas-selection-bounds-rect {
+    border-radius: var(--canvas-object-selection-radius, 0px);
+    corner-shape: var(--canvas-object-selection-corner, round);
+  }
   .knowledge-canvas .react-flow { background: transparent; }
   .knowledge-canvas .react-flow__handle { opacity: 0; pointer-events: none; }
   /* Handle 只负责向 React Flow 登记 source/target；CanvasCordEdge 直接读取两个
@@ -233,7 +243,7 @@
    * 框选进行中、以及多选静止但 React Flow 已经放手时补画的成组外接框。位于
    * renderer 同层而 DOM 在其后, 因此盖在被抬高 z-index 的选中卡片之上, 又留在
    * 每个 Panel 之下; 它是纯反馈, 不接收指针, 拖动仍然由节点和 React Flow 自己
-   * 的框承担。锐角矩形: 贴着圆角卡片的直线边界正是 Excalidraw/tldraw 的样子。
+   * 的框承担。单张笔记的框跟随纸卡平滑圆角，多对象范围框与自由文字仍保持矩形。
    */
   .canvas-selection-bounds { position: absolute; z-index: 4; top: 0; left: 0; transform-origin: left top; pointer-events: none; }
   .canvas-selection-bounds-rect { position: absolute; top: 0; left: 0; box-sizing: border-box; border: var(--canvas-selection-line); }
