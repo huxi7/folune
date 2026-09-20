@@ -2,8 +2,8 @@
 > L2 | 父级: ../../CLAUDE.md
 
 成员清单
-LandingConnections.tsx: 已保存 AI 关系的两张 NotePaper 局部与一句依据，静态构图无需操作，不装配业务会话
-LandingGuides.tsx: 六篇方法指南的三列两行目录，共读文章标题摘要；guides 为入口，保留 use-cases/extensions 锚点，返回复用博客协议
+LandingConnections.tsx: 左侧叙述方法与实践，右侧两张相邻 NotePaper 标出支持关系的原句；短线随纸面布局连接，静态公开材料不装配业务会话
+LandingGuides.tsx: 六篇方法指南的紧凑三列两行目录，共读分类、标题与摘要，序号列于右上；guides 为入口，保留 use-cases/extensions 锚点，返回复用博客协议
 guidePosts.ts: 六篇完整记录方法文章，独立于首页三篇精选，以 BlogPost 类型加入同一公开目录
 GuideIllustration.tsx: 六种纸张/段落/路径静态 SVG 线稿，由指南卡片与目录封面共同消费，useId 隔离渐隐定义
 LandingHeroLab/: 独立颗粒首屏研究，四版复用正式 Header/Hero/三栏排版，支持高度/材质调节、定格对照、本地配置及可选 LandingEditor 衔接；原 A/B/D 仅作参照，E/F 已淘汰，仅 hero-lab.html 加载，不改写正式 Landing

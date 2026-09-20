@@ -2,6 +2,11 @@
 > L2 | 父级: ../CLAUDE.md
 
 成员清单
+compact-sections-review.md: 三张截图反馈后的密度精修，记录关联叙述与原句标记、240px 指南、实际尺寸和验证边界
+compact-connections-1440.png: 2026-09-20 密度精修后关联区桌面局部实景
+compact-guides-1440.png: 2026-09-20 密度精修后三列两行指南桌面局部实景
+compact-connections-390.png: 2026-09-20 密度精修后手机单列关联与相邻区块实景
+compact-guides-390.png: 2026-09-20 密度精修后手机指南前三篇实景
 refined-sections-content.md: 两区精修的实际内容、真实关联理由、六篇指南、响应式/导航/工程验收与旧测试失效边界
 refined-connections-1440.png: 2026-09-20 两区精修的当前页面验收截图，尺寸与局部/全页范围见文件名
 refined-connections-390.png: 2026-09-20 两区精修的当前页面验收截图，尺寸与局部/全页范围见文件名
