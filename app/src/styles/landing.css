@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖共享 Button/Blueprint DOM、NotePaper 展示变体、六格方法指南、四项真实功能细节、BrandMark、参考字体/纹理、独立 Demo iframe 和 ShowcaseBackdrop
+ * [INPUT]: 依赖共享 Button/Blueprint DOM、营销顶栏导航/双动作分组、NotePaper 展示变体、六格方法指南、四项真实功能细节、BrandMark、参考字体/纹理、独立 Demo iframe 和 ShowcaseBackdrop
  * [OUTPUT]: 对外提供同源文字与共轴导轨、APP 外壳、两处动态展示后景、侧栏叙述与原句标记的双纸面、分类序号横向六格、功能细节展开、信纸、评价与页脚的响应式版面；仅 Landing 禁止纵向越界回弹，页尾止于 Footer
  * [POS]: styles 的 Landing 局部样式；Footer 淡字位于细密斜纹之下，按钮材质与品牌墨蓝直接消费 DS，背景和纹理保留基线；功能区按参考稿使用 40px 卡片纵向留白与外扩 6px 虚线图片框，细节交互栏仅当前展开项显示细点阵，收起项保持原底色
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -25,17 +25,20 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
 .landing-skip-link { position:fixed; left:16px; top:-100px; z-index:100; padding:12px; background:var(--landing-bg); }
 .landing-skip-link:focus { top:8px; }
 .marketing-header { position:sticky; top:0; z-index:30; height:57px; background:var(--landing-bg); }
-.marketing-nav { height:56px; max-width:var(--landing-width); padding:0 16px; display:flex; align-items:center; gap:16px; }
+.marketing-nav { height:56px; max-width:var(--landing-width); padding:0 16px; display:flex; align-items:center; gap:32px; }
 .marketing-header .blueprint-frame { width:100%; }
 .marketing-header .blueprint-rails { width:var(--blueprint-content-width); margin-inline:auto; }
 .marketing-header .blueprint-rail-edge-start,.marketing-header .blueprint-rail-edge-end { background:var(--landing-border); }
 .marketing-brand { --brand-size:36px; gap:4px; }
-.marketing-nav > nav { display:flex; gap:16px; margin-right:auto; }
-.marketing-nav-link { display:inline-flex; align-items:center; gap:6px; font-size:14px; line-height:20px; letter-spacing:0; white-space:nowrap; }
+.marketing-nav > nav { display:flex; align-items:center; gap:24px; margin-right:auto; }
+.marketing-nav-link { display:inline-flex; align-items:center; min-height:36px; gap:6px; padding:0; border:0; background:transparent; color:inherit; cursor:pointer; font-size:14px; line-height:20px; letter-spacing:0; white-space:nowrap; }
+.marketing-nav-link:hover { color:var(--landing-accent); }
+.marketing-nav-link:focus-visible { outline:2px solid var(--ring); outline-offset:4px; }
+.marketing-nav-actions { display:flex; align-items:center; flex-shrink:0; gap:8px; }
 .marketing-nav-link img,.marketing-edition img { flex:none; }
 .marketing-edition { display:inline-flex; align-items:center; gap:8px; color:#727a89; font:11px/15.71px Menlo,monospace; }
 .marketing-edition kbd { width:auto; gap:2px; padding-inline:4px; }
-.marketing-header .ds-button { font-size:14px; height:32px; min-height:32px; }
+.marketing-header .ds-button { font-size:14px; height:36px; min-height:36px; }
 .blueprint-frame { position:relative; width:var(--blueprint-content-width); margin-inline:auto; }
 .blueprint-rails { position:absolute; inset:0; pointer-events:none; z-index:2; }
 .blueprint-rail { position:absolute; top:0; bottom:0; width:1px; background:var(--landing-border); transform:translateX(-50%); }
@@ -292,7 +295,7 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
   .blueprint-rail-edge-start,.blueprint-rail-edge-end,.blueprint-pin-edge-start,.blueprint-pin-edge-end { display:none; }
 }
 @media(max-width:1199px) {
-  .marketing-edition { display:none; }.marketing-nav>nav { gap:12px; }.landing-section-heading,.landing-trust,.landing-letter-section { padding:32px; }
+  .marketing-edition { display:none; }.marketing-nav { gap:20px; }.marketing-nav>nav { gap:16px; }.landing-section-heading,.landing-trust,.landing-letter-section { padding:32px; }
   .landing-feature-grid article { padding:32px; }.landing-small-features article { padding:24px; }.landing-section-links { gap:8px; }
   .reference-editor { grid-template-columns:200px 1fr; }.reference-working-body { grid-template-columns:42% 58%; }.reference-agent-messages { font-size:10px; }
 }
@@ -301,7 +304,11 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
 }
 @media(max-width:767px) {
   .landing-blueprint { --landing-gutter:16px; }
-  .marketing-nav { padding:0 24px; justify-content:space-between; gap:8px; }.marketing-nav>nav { display:none; }
+  .marketing-header { height:auto; }
+  .marketing-nav { height:auto; padding:8px 16px 0; flex-wrap:wrap; justify-content:space-between; column-gap:8px; row-gap:0; }
+  .marketing-nav>nav { order:3; flex:0 0 100%; height:44px; gap:20px; overflow-x:auto; scrollbar-width:none; }
+  .marketing-nav>nav::-webkit-scrollbar { display:none; }
+  .landing-blueprint section[id],.landing-legacy-anchor { scroll-margin-top:108px; }
   .landing-announcement { height:auto; min-height:44px; padding:8px 16px; font-size:11px; text-align:center; }.landing-announcement>span { display:none; }
   .landing-hero { min-height:400px; padding:64px 24px; }.landing-hero h1 { font-size:clamp(26px,7vw,36px); line-height:1.4; }.landing-hero-copy p { font-size:14px; line-height:22px; }.landing-action-note { font-size:11px; }
   .landing-value-strip { grid-template-columns:1fr; }.landing-value-strip>div { border-right:0; border-bottom:1px solid var(--landing-border); padding:16px 24px; }.landing-value-strip p { max-width:none; }

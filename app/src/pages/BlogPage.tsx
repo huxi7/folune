@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 Router slug/历史导航、含可选实景图的静态博客文章、BlogCover 与 Blueprint 导轨
- * [OUTPUT]: 对外提供 /blog 目录、图文文章阅读与未知文章回退；功能区/目录进入均保留返回位置，同组继续阅读限三篇，并维护文章元信息
- * [POS]: pages 的公开博客内容视图；共享 MarketingLayout 顶栏，标题区以居中字标/标题/摘要/元信息/返回按钮构成独立舞台，下接导读和语义正文，无账号或业务请求
+ * [INPUT]: 依赖 Router slug/历史导航、独立的博客与动态集合、BlogCover 与 Blueprint 导轨
+ * [OUTPUT]: 对外提供 /blog 与 /updates 的共用目录/阅读页、空集合与未知文章回退；来路返回和元信息沿现有协议，跨分区不混用内容或推荐
+ * [POS]: pages 的公开文章视图；section 选择内容与文案，动态使用无封面的列表，标题、阅读正文与共享营销壳只有一套实现
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { useEffect } from "react";
@@ -11,14 +11,22 @@ import { BlueprintFrame } from "../widgets/BlueprintFrame";
 import { BlueprintDivider } from "../widgets/BlueprintDivider";
 import { BlogCover } from "../widgets/BlogCover";
 import { blogAuthor, blogPosts, relatedBlogPosts } from "../widgets/landingBlogData";
+import { updatePosts } from "../widgets/updatePosts";
 
-export function BlogPage() {
+const sections = {
+  blog: { path: "/blog", title: "Folune 博客", mark: "FOLUNE JOURNAL", eyebrow: "记录 · 整理 · 连接", description: "写下一点想法，让下一次思考有迹可循。", home: "/#blog", directory: "博客目录", posts: blogPosts },
+  updates: { path: "/updates", title: "最新动态", mark: "FOLUNE NEWS", eyebrow: "FOLUNE 快讯", description: "产品更新、开发手记与新的想法。", home: "/", directory: "最新动态", posts: updatePosts },
+};
+
+export function BlogPage({ section = "blog" }: { section?: keyof typeof sections }) {
+  const config = sections[section];
   const { slug } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const post = blogPosts.find(item => item.slug === slug);
-  const title = slug ? post?.title ?? "文章未找到" : "Folune 博客";
-  const description = post?.description ?? "关于记录、整理，以及想法之间的联系。";
+  const post = config.posts.find(item => item.slug === slug);
+  const title = slug ? post?.title ?? "文章未找到" : config.title;
+  const description = post?.description ?? config.description;
+  const relatedPosts = post ? section === "blog" ? relatedBlogPosts(post.slug) : config.posts.filter(item => item.slug !== post.slug).slice(0, 3) : [];
   useEffect(() => {
     const meta = document.querySelector<HTMLMetaElement>('meta[name="description"]');
     const previousDescription = meta?.content;
@@ -34,24 +42,25 @@ export function BlogPage() {
 
   function goBack() {
     if (location.state?.fromBlog === true) navigate(-1);
-    else navigate("/blog");
+    else navigate(config.path);
   }
 
   return <BlueprintFrame className="landing-spine blog-spine" fullBleed>
     <main id="main-content">
       {!slug ? <>
         <div className="blog-navigation">
-          <Link to="/#blog">← 返回首页</Link>
-          <Link to="/blog" aria-current="page">FOLUNE JOURNAL</Link>
+          <Link to={config.home}>← 返回首页</Link>
+          <Link to={config.path} aria-current="page">{config.mark}</Link>
         </div>
         <BlueprintDivider flush fullBleed />
-        <header className="blog-index-heading"><span className="blog-eyebrow">记录 · 整理 · 连接</span><h1 tabIndex={-1}>Folune 博客</h1><p>写下一点想法，让下一次思考有迹可循。</p></header>
+        <header className="blog-index-heading"><span className="blog-eyebrow">{config.eyebrow}</span><h1 tabIndex={-1}>{config.title}</h1><p>{config.description}</p></header>
         <BlueprintDivider fullBleed />
-        <div className="blog-index-list">
-          {blogPosts.map(item => <article key={item.slug}>
-            <Link to={`/blog/${item.slug}`} state={{ fromBlog: true }} className="blog-index-link">
+        <div className="blog-index-list" data-section={section}>
+          {config.posts.length === 0 ? <div className="blog-index-empty"><p>新的动态，正在酝酿。</p><span>关于 Folune 的进展，会在这里与你分享。</span></div> : null}
+          {config.posts.map(item => <article key={item.slug}>
+            <Link to={`${config.path}/${item.slug}`} state={{ fromBlog: true }} className="blog-index-link">
               <div className="blog-index-copy"><div className="blog-index-meta"><span className="blog-eyebrow">{item.category}</span><time dateTime={item.date}>{item.date}</time></div><h2>{item.title}</h2><p>{item.description}</p><span className="blog-read-link">阅读全文 <span aria-hidden="true">→</span></span></div>
-              <BlogCover kind={item.cover} />
+              {section === "blog" ? <BlogCover kind={item.cover} /> : null}
             </Link>
           </article>)}
         </div>
@@ -59,7 +68,7 @@ export function BlogPage() {
         <div className="blog-article-prelude" aria-hidden="true" />
         <BlueprintDivider flush fullBleed />
         <header className="blog-article-heading">
-          <Link className="blog-eyebrow blog-journal-mark" to="/blog">FOLUNE JOURNAL</Link>
+          <Link className="blog-eyebrow blog-journal-mark" to={config.path}>{config.mark}</Link>
           <h1 tabIndex={-1}>{post.title}</h1>
           <p>{post.description}</p>
           <div className="blog-article-meta">
@@ -87,8 +96,8 @@ export function BlogPage() {
           ))}
           <div className="blog-endmark" aria-hidden="true">◇</div>
         </div>
-        <nav className="blog-related" aria-label="继续阅读"><p className="blog-eyebrow">继续阅读</p>{relatedBlogPosts(post.slug).map(item => <Link key={item.slug} to={`/blog/${item.slug}`} replace state={location.state}><span>{item.title}</span><span aria-hidden="true">→</span></Link>)}<Link to="/blog">查看全部文章 <span aria-hidden="true">↗</span></Link></nav>
-      </article> : <div className="blog-not-found"><span className="blog-eyebrow">404</span><h1 tabIndex={-1}>这篇文章还不在这里</h1><p>链接可能有误，去博客目录看看其他文章吧。</p><Link to="/blog">返回博客目录 →</Link></div>}
+        <nav className="blog-related" aria-label="继续阅读">{relatedPosts.length > 0 ? <p className="blog-eyebrow">继续阅读</p> : null}{relatedPosts.map(item => <Link key={item.slug} to={`${config.path}/${item.slug}`} replace state={location.state}><span>{item.title}</span><span aria-hidden="true">→</span></Link>)}<Link to={config.path}>查看全部{section === "updates" ? "动态" : "文章"} <span aria-hidden="true">↗</span></Link></nav>
+      </article> : <div className="blog-not-found"><span className="blog-eyebrow">404</span><h1 tabIndex={-1}>这篇文章还不在这里</h1><p>链接可能有误，去{config.directory}看看吧。</p><Link to={config.path}>返回{config.directory} →</Link></div>}
     </main>
   </BlueprintFrame>;
 }

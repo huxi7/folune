@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Router Outlet/ScrollRestoration 与现有营销 Header/Footer
- * [OUTPUT]: 对外提供首页、博客目录与阅读页持续挂载的公开布局及原生历史滚动恢复
+ * [OUTPUT]: 对外提供首页、博客/动态目录与阅读页持续挂载的公开布局及原生历史滚动恢复
  * [POS]: pages 的营销路由壳；认证 query 由同一顶栏拥有，内容路由只替换 Outlet，不进入工作区生命周期
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */

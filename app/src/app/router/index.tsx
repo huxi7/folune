@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 React lazy/Suspense、react-router-dom loader/redirect/useLocation、共享 Skeleton/延迟策略、Supabase Auth token 读取与后端 Profile API
- * [OUTPUT]: 对外提供共享营销壳的 /、/blog、/blog/:slug、OAuth 回调、受保护 /app 与 /app/notes/:noteId 路由、仅开发态 /motion-lab、/color-lab 与 /archive-cord-lab，以及区分索引/详情深链的首屏等待面
+ * [OUTPUT]: 对外提供共享营销壳的首页、/blog 与 /updates 目录和各自 :slug 阅读页、OAuth 回调、受保护 /app 与 /app/notes/:noteId 路由、仅开发态实验页，以及区分索引/详情深链的首屏等待面
  * [POS]: app/src/app/router 的路由装配文件；静态身份、Profile 与轻量 tree loader 并行装配，Dashboard 直接消费 bootstrap；/app 索引等待由 Paper 壳承接，详情深链先用中性全屏面；左右工具偏好在 Dashboard 获得用户后恢复
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -167,6 +167,8 @@ export const router = createBrowserRouter([
       { index: true, element: <LandingPage /> },
       { path: "blog", element: <BlogPage /> },
       { path: "blog/:slug", element: <BlogPage /> },
+      { path: "updates", element: <BlogPage section="updates" /> },
+      { path: "updates/:slug", element: <BlogPage section="updates" /> },
     ],
   },
   {

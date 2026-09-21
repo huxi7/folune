@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖共享 Button、BlueprintFrame/Divider、BrandMark、Router 站内导航与既有 query 驱动认证弹窗
- * [OUTPUT]: 对外提供 56px 营销顶栏、功能/指南/博客/关于四个真实站内入口与「打开网页版」认证动作
+ * [OUTPUT]: 对外提供品牌、六项内容导航与打开/下载双动作；价格与下载保留正常可点击外观，更多进入独立动态分区
  * [POS]: widgets 的共享营销导航；认证成功仍经现有路由进入工作区，不改变登录协议
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -20,10 +20,12 @@ const AuthDialog = lazy(() =>
 );
 
 const navItems = [
-  { href: "/#features", label: "功能" },
-  { href: "/#guides", label: "指南" },
+  { href: "/#features", label: "核心功能" },
   { href: "/blog", label: "博客" },
+  { href: "/#guides", label: "使用指南" },
+  { href: null, label: "价格" },
   { href: "/#resources", label: "关于" },
+  { href: "/updates", label: "更多" },
 ];
 
 export function MarketingHeader() {
@@ -61,25 +63,27 @@ export function MarketingHeader() {
           >
             <BrandMark className="marketing-brand" />
           </Link>
-          <nav aria-label="主导航" className="hidden items-center gap-1 md:flex">
+          <nav aria-label="主导航">
             {navItems.map((item) => (
-              <Link
+              item.href ? <Link
                 className="marketing-nav-link"
                 to={item.href}
                 key={item.href}
               >
                 {item.label}
-              </Link>
+              </Link> : <button className="marketing-nav-link" type="button" key={item.label}>{item.label}</button>
             ))}
           </nav>
-          <div className="flex items-center gap-2">
+          <div className="marketing-nav-actions">
             <Button
               className="marketing-login-button"
               onClick={() => handleAuthDialogOpenChange(true)}
               variant="secondary"
             >
-              打开网页版
+              打开
             </Button>
+            {/* ---- 下载地址后续接入；预留动作保持正常外观，不跳转或触发占位提示 ---- */}
+            <Button variant="primary">下载</Button>
           </div>
         </div>
         </BlueprintFrame>
