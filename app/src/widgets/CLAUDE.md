@@ -17,7 +17,7 @@ useTreeReorder.ts: AppSidebar 结构重排 FLIP Hook，手势前捕获位置、�
 TreeDisclosure.tsx: 文件树与 DS Collapse 的薄适配，声明可打断、成对释放的归档运动租约，让 Overlay 跟随真实高度几何；不读取业务数据
 .gitkeep: 保留业务组合组件层空目录
 CLAUDE.md: 记录业务组合组件层职责与文档协议
-MarketingHeader.tsx: 首页/博客共享的 56px 中文导航；站内锚点使用根路径 Router Link，博客入口进入 /blog，认证 query 保留博客来路且不重置阅读位置，指南入口指向 /#guides，共用 BrandMark/DS Button、参考符号和 BlueprintFrame/Divider；拥有唯一 query 驱动 AuthDialog，成功仍进入后端守卫的 /app，下载只展示禁用态；顶栏认证入口用「打开」承载 Laper 参考的同位文案
+MarketingHeader.tsx: 首页/博客共享的 56px 站内导航；只保留功能 /#features、指南 /#guides、博客 /blog、关于 /#resources（创作者的信），均用根路径 Router Link；右侧「打开网页版」复用 DS Button 与唯一 query 驱动 AuthDialog，保留博客来路和阅读位置，成功仍进入后端守卫的 /app；不展示外链、无内容入口、假下拉或搜索快捷键，共用 BrandMark 与 BlueprintFrame/Divider
 MarketingAnnouncement.tsx: 紧贴粘性导航下方、约为 Header 2/3 高且随页面滚走的无关闭公告栏，在背景全宽、1088px 主轨与正文对齐且宽屏带视口外轨的 BlueprintFrame 中居中呈现标签、正文与 2px 箭头反馈；hover 不填充蓝色背景
 BlueprintFrame.tsx: Landing 纵向导轨容器；导航、1120px 正文与页脚共用主轨/外轨坐标，fullBleed 增加可选外轨，颜色由当前区块局部覆盖
 BlueprintDivider.tsx: Landing 横向导轨；14px 分隔带上下两条边分别共置横线与菱形，flush 提供零高度边界，compact 保留 7px 内部分隔带而不添加参考中没有的节点

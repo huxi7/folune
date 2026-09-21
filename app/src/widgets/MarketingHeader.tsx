@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖共享 Button、BlueprintFrame/Divider、BrandMark 与 Figma 原始功能符号与既有 query 驱动认证弹窗
- * [OUTPUT]: 对外提供中文导航、共享 DS 行动按钮、56px 导航及底边交点、跨页首页功能/指南锚点、博客入口与按需加载的 AuthDialog
+ * [INPUT]: 依赖共享 Button、BlueprintFrame/Divider、BrandMark、Router 站内导航与既有 query 驱动认证弹窗
+ * [OUTPUT]: 对外提供 56px 营销顶栏、功能/指南/博客/关于四个真实站内入口与「打开网页版」认证动作
  * [POS]: widgets 的共享营销导航；认证成功仍经现有路由进入工作区，不改变登录协议
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -10,7 +10,6 @@ import { Link, useLocation, useNavigate, useSearchParams } from "react-router-do
 
 import { BrandMark, Button } from "../shared/design-system/components";
 
-import { referenceAssets as assets } from "./landingReferenceData";
 import { BlueprintDivider } from "./BlueprintDivider";
 import { BlueprintFrame } from "./BlueprintFrame";
 
@@ -21,13 +20,10 @@ const AuthDialog = lazy(() =>
 );
 
 const navItems = [
-  { href: "/#features", label: "功能", dropdown: true },
-  { href: "/blog", label: "博客" },
-  { href: "/#resources", label: "关于", dropdown: true },
+  { href: "/#features", label: "功能" },
   { href: "/#guides", label: "指南" },
-  { href: "https://zed.dev/docs", label: "参考文档" },
-  { href: "https://zed.dev/pricing", label: "参考定价" },
-  { href: "https://zed.dev/delta", label: "Delta", icon: "19-4560/imgFrame2" },
+  { href: "/blog", label: "博客" },
+  { href: "/#resources", label: "关于" },
 ];
 
 export function MarketingHeader() {
@@ -72,25 +68,18 @@ export function MarketingHeader() {
                 to={item.href}
                 key={item.href}
               >
-                {item.icon ? <img src={assets[item.icon]} alt="" width="14" height="14" /> : null}
                 {item.label}
-                {item.dropdown ? <img src={assets["19-4560/imgFrame1"]} alt="" width="14" height="14" /> : null}
               </Link>
             ))}
           </nav>
           <div className="flex items-center gap-2">
-            <span className="marketing-edition" aria-label="搜索快捷键示意：Command Shift P">
-              <img src={assets["19-4560/imgFrame3"]} alt="" width="12" height="12" />
-              <kbd><img src={assets["19-4560/imgFrame4"]} alt="Command" width="10" height="10" /><img src={assets["19-4560/imgFrame5"]} alt="Shift" width="14" height="14" />P</kbd>
-            </span>
             <Button
               className="marketing-login-button"
               onClick={() => handleAuthDialogOpenChange(true)}
-              variant="ghost"
+              variant="secondary"
             >
-              打开
+              打开网页版
             </Button>
-            <Button variant="secondary" disabled title="桌面版即将推出" aria-label="下载，桌面版即将推出">下载</Button>
           </div>
         </div>
         </BlueprintFrame>
