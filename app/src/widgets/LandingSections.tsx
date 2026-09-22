@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖真实 APP 功能截图、Router Link、LandingConnections、LandingGuides、LandingFeatureDetails、LandingBlog、LandingRailTexture、BlueprintDivider、共享 BrandMark 图字组合/独立印章与 huxi 头像
- * [OUTPUT]: 对外提供五项图文一一对应的 Folune 功能与整理/画布文章入口，以及真实关联展示、独立功能细节、六篇方法指南、评价占位、创作者信件和博客
- * [POS]: widgets 的营销叙事组合；创作者信件沿用首稿叙事，与 Laper 参考同构：问候与自我介绍各占一行，再以长短有别的段落分承初衷、打磨、AI 分寸与期待，一段只说一件事，由 huxi 个人署名
+ * [OUTPUT]: 对外提供五项图文一一对应的 Folune 功能与整理/画布文章入口，以及真实关联展示、独立功能细节、六篇方法指南、评价占位、创作者信件和博客；评价前后与功能细节后各设一条章节空轨
+ * [POS]: widgets 的营销叙事组合；章节空轨只由此处编排，复用 BlueprintDivider 的贴边线与既有斜纹边界，避免相邻区块重复留白；创作者信件沿用首稿叙事，与 Laper 参考同构：问候与自我介绍各占一行，再以长短有别的段落分承初衷、打磨、AI 分寸与期待，一段只说一件事，由 huxi 个人署名
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { LandingConnections } from "./LandingConnections";
@@ -18,6 +18,16 @@ import { LandingRailTexture } from "./LandingRailTexture";
 export function LandingSectionHeading({title,body,children}: {title:string;body:string;children?:ReactNode}) {
   return <header className="landing-section-heading"><div><h2>{title}</h2><p>{body}</p></div><div className="landing-section-links">{children}</div></header>;
 }
+
+// ---- 空轨只补靠近内容的一条边，另一端沿用相邻斜纹带的边界 ----
+function LandingChapterGap({ edge }: { edge: "start" | "end" }) {
+  return (
+    <div className="landing-chapter-gap" data-edge={edge} aria-hidden="true">
+      <BlueprintDivider flush fullBleed />
+    </div>
+  );
+}
+
 const features = [
   {
     title: "让 AI 整理笔记",
@@ -73,6 +83,7 @@ const quotes = [
 ];
 export function LandingSections(){
  return <>
+  <LandingChapterGap edge="end" />
   <section className="landing-trust landing-rail-section" id="community" aria-labelledby="landing-trust-title">
     <LandingRailTexture variant="paper" />
     <h2 id="landing-trust-title">为认真记录的个人与创作团队而做</h2>
@@ -95,6 +106,7 @@ export function LandingSections(){
       ))}
     </div>
   </section>
+  <LandingChapterGap edge="start" />
   <BlueprintDivider fullBleed />
   <section id="features" aria-label="Folune 产品功能">
     <LandingSectionHeading title="写下来，理清楚，连起来" body="从一张纸开始，让 AI 帮忙归档，在画布上接着思考。">
@@ -121,6 +133,7 @@ export function LandingSections(){
   <LandingConnections />
   <BlueprintDivider fullBleed />
   <LandingFeatureDetails />
+  <LandingChapterGap edge="start" />
   <BlueprintDivider fullBleed />
   <LandingGuides />
   <BlueprintDivider fullBleed />
