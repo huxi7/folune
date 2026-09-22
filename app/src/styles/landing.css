@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖共享 Button/Blueprint DOM、营销顶栏品牌/导航/双动作分组与 DS compact 尺寸、LandingRailTexture、HeroBackdrop、NotePaper 展示变体、六格方法指南、四项真实功能细节、BrandMark 紧边界组合及旧印章可见体量；顶栏只把共享 5:4 图字比缩至 20px 图高，参考字体/纹理、独立 Demo iframe 和 ShowcaseBackdrop
  * [OUTPUT]: 对外提供 60svh 颗粒 Hero 的 78% 后景与 65% 中央阅读层、同源文字与共轴导轨、APP 外壳、两处动态展示后景、侧栏叙述与原句标记的双纸面、分类序号横向六格、细节展开、信纸、评价、CTA 暖白双层平滑底座、放大标题与紧凑按钮和页脚；仅 Landing 禁止纵向越界回弹
- * [POS]: styles 的 Landing 局部样式；三条章节空轨共用桌面 72px / 移动 40px 高度，底色与连续竖轨沿用页面骨架；每侧七条纸缘线与两端空隙等分轨间，三组大小明显交替的扁平横纹与回环以 15:16 纵横周期排列，与密格点贯穿内容区块，左右各 16% 渐隐；Footer 淡字位于细密斜纹之下，按钮与墨蓝消费 DS；功能区维持 40px 留白与外扩 6px 虚线框，细节仅展开项显示点阵
+ * [POS]: styles 的 Landing 局部样式；两组各一对章节空轨共用桌面 40px / 移动 24px 高度，底色与连续竖轨沿用页面骨架；每侧七条纸缘线与两端空隙等分轨间，三组大小明显交替的扁平横纹与回环以 15:16 纵横周期排列，与密格点贯穿内容区块，左右各 16% 渐隐；Footer 淡字位于细密斜纹之下，按钮与墨蓝消费 DS；功能区维持 40px 留白与外扩 6px 虚线框，细节仅展开项显示点阵
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 @font-face { font-family: Landing Writer; src: url('/landing-reference/iAWriterQuattroS_Regular.woff2') format('woff2'); font-display: swap; }
@@ -62,7 +62,7 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
 .blueprint-divider[data-full-bleed] .blueprint-pin-start { left:var(--blueprint-main-inset); }.blueprint-divider[data-full-bleed] .blueprint-pin-end { left:calc(100% - var(--blueprint-main-inset)); }
 .blueprint-pin-edge-start { left:var(--blueprint-edge-inset); }.blueprint-pin-edge-end { left:calc(100% - var(--blueprint-edge-inset)); }
 /* ---- 章节空轨：只占据独立留白，竖轨由 BlueprintFrame 连续绘制 ---- */
-.landing-chapter-gap { position:relative; height:72px; pointer-events:none; }
+.landing-chapter-gap { position:relative; height:40px; pointer-events:none; }
 .landing-chapter-gap > .blueprint-divider { position:absolute; top:0; }
 .landing-chapter-gap[data-edge="end"] > .blueprint-divider { top:100%; }
 /* ---- 侧轨纹理：仅三处装配；显隐由轨间宽度驱动，不增加测量状态 ---- */
@@ -402,7 +402,7 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
 }
 @media(max-width:767px) {
   .landing-blueprint { --landing-gutter:16px; }
-  .landing-chapter-gap { height:40px; }
+  .landing-chapter-gap { height:24px; }
   .marketing-header { height:auto; }
   .marketing-nav { height:auto; padding:8px 16px 0; flex-wrap:wrap; justify-content:space-between; column-gap:8px; row-gap:0; }
   .marketing-brand p { font-size:20px; }

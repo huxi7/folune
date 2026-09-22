@@ -27,7 +27,7 @@ AuthDialog.tsx: 复用 BrandMark 紧边界图的登录/注册统一认证 Dialog
 LandingHero.tsx: 中文公告、60svh 居中 Hero、三列价值条与真实 UI 互动插槽；装配选定 02A HeroBackdrop，并量取 Header/公告/三栏高度为矮屏保留 64px 产品露出；三栏沿用用户定稿「专注记录 / 有序归档 / 连接想法」，LandingActions 与顶栏统一为 Secondary「打开」与 Primary「下载」预留动作，auth query 交给 MarketingHeader 唯一认证弹窗；边界复用通栏 BlueprintDivider
 LandingFeatureDetails.tsx: 第 11 区块的四项垂直居中展开说明、对应实景图与底部紧凑四格摘要；标题区和展开正文保留文章入口，底部只含标题和说明；固定展示区内以同源 CSS 时间轴协调行高、标题与正文，正文常驻并在收起时 inert，选中项只保持展开、不显示收起图标，图片不附重复图注；detail query 保留选中项，切换清除已消费的定位锚点，替换历史并保留其他查询/滚动，博客沿 fromBlog 协议返回
 landingDetailData.ts: 归档线、引用选择、同一份原文、Markdown 导出四项细节与完整指南；实景图与文章数据同源，BlogPost 仅类型依赖，不建立运行时反向导入
-LandingSections.tsx: 保留五项真实功能与文章入口、评价和信件；统一在 APP 展示后、评价后、功能细节后编排三条独立空轨，复用 BlueprintDivider 贴边线并保留既有斜纹带，避免相邻区块叠加留白；评价装配纸缘侧纹，按关联展示→功能细节→六格指南编排，其余区块独立持有展示与交互
+LandingSections.tsx: 保留五项真实功能与文章入口、评价和信件；私有 LandingChapter 成对生成上下空轨，分别包围评价区与核心功能→关联展示→功能细节整组，共四条空轨；两章共用中间一条斜纹带，复用 BlueprintDivider 贴边线，禁止孤立空轨；评价装配纸缘侧纹，其余区块独立持有展示与交互
 LandingFooter.tsx: 共用 DS 墨蓝的品牌区与产品/资源/关于/连接四组导航；16 项预留入口（产品 2、资源 8、关于 3、连接 3）以 aria-disabled link 语义展示且不跳转，打开网页版保留博客来路并复用本地认证；品牌与入口置顶、作者与版权置底；保留 Folune 淡描边与细纹层序，不放 PNG，BlueprintFrame 延续导轨
 LandingMotion/: Landing 克制反馈模块，HeroBackdrop 承载已选 02A 颗粒首屏，ShowcaseBackdrop 为 APP 与功能细节提供点阵后景，CountUp 处理数字变化；一次性 reveal 由共享动效原语承载
 NotebookPreview.tsx: 确定性首屏产品预览，DS 统一缩放淡入与显式卡片 lift 分处不同元素，阴影由 CSS 持有，内部布局不参与独立动画
