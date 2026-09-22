@@ -3,7 +3,7 @@
 
 成员清单
 updatePosts.ts: 独立动态内容源，复用 BlogPost 类型并由 /updates 的共用列表/阅读页消费；初始为空，后续只需填充文章，不混入首页或博客集合
-LandingRailTexture.tsx: 首页三处侧纹与 RailVariant 类型；Motion inView 在进入视口 96px 后一次触发左右同步向下显现，模块 Set 按纹样记录当前文档已播放项，路由往返不重播、刷新重置；DS 动态偏好切换时直接显示。章节外框内各装配一次，纸缘/编织/格点连续覆盖上下空轨和正文，绘制与动画由 landing.css 拥有
+LandingRailTexture.tsx: 首页三处侧纹与 RailVariant 类型；paper/weave 由 Motion inView 在进入视口 96px 后一次触发 1450ms 向下显现，index 由 useScroll 在区块顶部从视口 90% 走到 25% 时单向推进遮罩，避免末章滚动速度吞掉显现过程。模块 Set 按纹样记录当前文档已触发项，向上回滚不倒放、路由往返不重播、刷新重置；章节外框内各装配一次，纸缘/编织/格点连续覆盖上下空轨和正文
 LandingConnections.tsx: 左侧叙述方法与实践，右侧两张相邻 NotePaper 标出支持关系的原句；短线随纸面布局连接，静态公开材料不装配业务会话
 LandingGuides.tsx: 六篇方法指南的紧凑三列两行目录，共读分类、标题与摘要，序号列于右上；上下空轨和交织侧纹交由 LandingSections 的章节外框装配，guides 为入口，保留 use-cases/extensions 锚点，返回复用博客协议
 guidePosts.ts: 六篇完整记录方法文章，独立于首页三篇精选，以 BlogPost 类型加入同一公开目录

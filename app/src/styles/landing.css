@@ -83,7 +83,7 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
   user-select:none;
 }
 /* ---- 只推进显现边缘，花纹保持原比例；一个进度同时驱动左右侧 ---- */
-.landing-rail-texture[data-reveal="revealing"] { animation:landing-rail-reveal 1450ms cubic-bezier(.42,0,.58,1) both; }
+.landing-rail-texture[data-reveal="revealing"]:not([data-variant="index"]) { animation:landing-rail-reveal 1450ms cubic-bezier(.42,0,.58,1) both; }
 .landing-rail-texture[data-reveal="complete"] { --rail-reveal-position:112%; }
 @keyframes landing-rail-reveal {
   from { --rail-reveal-position:0%; }
