@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 Router slug/历史导航、独立的博客与动态集合、BlogCover 与 Blueprint 导轨
+ * [INPUT]: 依赖 Router slug/历史导航、独立的博客与动态集合、LandingRailTexture 与 Blueprint 导轨
  * [OUTPUT]: 对外提供 /blog 与 /updates 的共用目录/阅读页、空集合与未知文章回退；来路返回和元信息沿现有协议，跨分区不混用内容或推荐
- * [POS]: pages 的公开文章视图；section 选择内容与文案，动态使用无封面的列表，标题、阅读正文与共享营销壳只有一套实现
+ * [POS]: pages 的公开文章视图；section 选择内容与文案，目录使用上下空轨与波浪侧轨包裹的无封面列表，标题、阅读正文与共享营销壳只有一套实现
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { useEffect } from "react";
@@ -9,7 +9,7 @@ import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { Button } from "../shared/design-system/components";
 import { BlueprintFrame } from "../widgets/BlueprintFrame";
 import { BlueprintDivider } from "../widgets/BlueprintDivider";
-import { BlogCover } from "../widgets/BlogCover";
+import { LandingRailTexture } from "../widgets/LandingRailTexture";
 import { blogAuthor, blogPosts, relatedBlogPosts } from "../widgets/landingBlogData";
 import { updatePosts } from "../widgets/updatePosts";
 
@@ -48,22 +48,26 @@ export function BlogPage({ section = "blog" }: { section?: keyof typeof sections
   return <BlueprintFrame className="landing-spine blog-spine" fullBleed>
     <main id="main-content">
       {!slug ? <>
-        <div className="blog-navigation">
+        <nav className="blog-navigation" aria-label="返回导航">
           <Link to={config.home}>← 返回首页</Link>
-          <Link to={config.path} aria-current="page">{config.mark}</Link>
-        </div>
-        <BlueprintDivider flush fullBleed />
+        </nav>
+        <BlueprintDivider flush />
         <header className="blog-index-heading"><span className="blog-eyebrow">{config.eyebrow}</span><h1 tabIndex={-1}>{config.title}</h1><p>{config.description}</p></header>
         <BlueprintDivider fullBleed />
-        <div className="blog-index-list" data-section={section}>
-          {config.posts.length === 0 ? <div className="blog-index-empty"><p>新的动态，正在酝酿。</p><span>关于 Folune 的进展，会在这里与你分享。</span></div> : null}
-          {config.posts.map(item => <article key={item.slug}>
-            <Link to={`${config.path}/${item.slug}`} state={{ fromBlog: true }} className="blog-index-link">
-              <div className="blog-index-copy"><div className="blog-index-meta"><span className="blog-eyebrow">{item.category}</span><time dateTime={item.date}>{item.date}</time></div><h2>{item.title}</h2><p>{item.description}</p><span className="blog-read-link">阅读全文 <span aria-hidden="true">→</span></span></div>
-              {section === "blog" ? <BlogCover kind={item.cover} /> : null}
-            </Link>
-          </article>)}
+        <div className="landing-chapter blog-index-chapter">
+          <LandingRailTexture variant="weave" />
+          <div className="landing-chapter-gap" data-edge="end" aria-hidden="true"><BlueprintDivider flush /></div>
+          <div className="blog-index-list">
+            {config.posts.length === 0 ? <div className="blog-index-empty"><p>新的动态，正在酝酿。</p><span>关于 Folune 的进展，会在这里与你分享。</span></div> : null}
+            {config.posts.map(item => <article key={item.slug}>
+              <Link to={`${config.path}/${item.slug}`} state={{ fromBlog: true }} className="blog-index-link">
+                <div className="blog-index-copy"><div className="blog-index-meta"><span className="blog-eyebrow">{item.category}</span><time dateTime={item.date}>{item.date}</time></div><h2>{item.title}</h2><p>{item.description}</p><span className="blog-read-link">阅读全文 <span aria-hidden="true">→</span></span></div>
+              </Link>
+            </article>)}
+          </div>
+          <div className="landing-chapter-gap" data-edge="start" aria-hidden="true"><BlueprintDivider flush /></div>
         </div>
+        <BlueprintDivider fullBleed />
       </> : post ? <article className="blog-article">
         <div className="blog-article-prelude" aria-hidden="true" />
         <BlueprintDivider flush fullBleed />

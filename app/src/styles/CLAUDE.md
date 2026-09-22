@@ -19,7 +19,7 @@ Hero 背景定稿（2026-09-19）：正式页采用 02A GrainGradient wave，60s
 
 成员清单
 landing-demo.css: 独立 Demo 入口专用，限定视口与三栏等高、Paper/Canvas 互斥显示；不增加底部工具栏或新视觉皮肤
-blog.css: 博客与动态分区共用的目录/阅读样式，动态使用整行文字列表及空集合状态；index.css 在 Landing 后同层加载的博客样式，首页三列卡片保持原样，指南目录复用六幅 SVG、点阵标题区与居中返回、导读框和窄栏阅读；正文实景图保留原比例并附简短图注，继承 Landing 字体/墨蓝，768px 以下单列，无卡片位移动画
+blog.css: 博客与动态分区共用的目录/阅读样式，目录统一整行文字列表及空集合状态，Hero 顶部空轨放返回首页，列表复用 landing-chapter-gap 成对空轨和 weave 侧纹，hover/focus 为中性灰底与主题色标题；index.css 在 Landing 后同层加载的博客样式，首页三列卡片保持原样，阅读页保留点阵标题区与居中返回、导读框和窄栏阅读；正文实景图保留原比例并附简短图注，继承 Landing 字体/墨蓝，768px 以下单列，无卡片位移动画
 motion.css: 通用 Motion 消费与验收布局层，Panel 内容窗口裁剪顶部浮现但不改变自身高度，保留式视图定位、通用浮层单一动画所有权、普通路由淡换及共享 Canvas/Select/User press；原 Paper 方向的几何节奏继续由 knowledge-canvas.css 拥有
 .gitkeep: 保留产品样式目录
 CLAUDE.md: 记录样式层职责与文档协议
