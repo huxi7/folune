@@ -3,14 +3,14 @@
 
 成员清单
 CLAUDE.md: 记录 Canvas V2 交互子域成员、职责边界与 GEB 回环协议
-KnowledgeCanvas.tsx: Canvas 会话内容根；禁用 React Flow 默认 deleteKeyCode，删除只进入既有 requestNodeRemoval 确认/回执协议，弹层键盘事件不穿透画布；始终挂载受控 React Flow，bootstrap/网络加载、选择、视口、WAL 与 mutation 沿原系统；响应式视口校准以稳定 resize/ResizeObserver 读取 latest nodes，节点拖动不重建 observer且校准不写回持久 viewport；nodesConnectable 只向右下 source/整卡 target 开放，拖/点都委托 useCanvasConnectionSession，临时绳不进文档，合法结束只签发一次 motion receipt + upsert_edge。Card→Preview 仍是纯本地 DOM 视图过渡，删除仍先拍无身份快照再入 WAL，hydration/rebase/save/rerender 不签发动画 图投影按文档引用缓存并由首帧/更新共用，初始化 Flow 只建一次，拖拽与选择不会重复重建初始化图。
+KnowledgeCanvas.tsx: Canvas 会话内容根；禁用 React Flow 默认 deleteKeyCode，删除只进入既有 requestNodeRemoval 确认/回执协议，节点/关系撤销时长共用 Toast 的六秒默认值，弹层键盘事件不穿透画布；始终挂载受控 React Flow，bootstrap/网络加载、选择、视口、WAL 与 mutation 沿原系统；响应式视口校准以稳定 resize/ResizeObserver 读取 latest nodes，节点拖动不重建 observer且校准不写回持久 viewport；nodesConnectable 只向右下 source/整卡 target 开放，拖/点都委托 useCanvasConnectionSession，临时绳不进文档，合法结束只签发一次 motion receipt + upsert_edge。Card→Preview 仍是纯本地 DOM 视图过渡，删除仍先拍无身份快照再入 WAL，hydration/rebase/save/rerender 不签发动画 图投影按文档引用缓存并由首帧/更新共用，初始化 Flow 只建一次，拖拽与选择不会重复重建初始化图。
 CanvasCardView.tsx: 显式输入交互状态的共享纯 UI，完整保留卡片/空间文字/纸面过渡，不导入业务 Store；生产与 Demo 共用
 CanvasCardNode.tsx: 读取细粒度业务 Store 并适配到 CanvasCardView； memo 化的 280x360 memo_ref 卡与 native 空间文字；可用 memo_ref 把可聚焦 Grip source 放在元信息行最右端（宪法 10.3 的「柄只服从最不干扰」——挂在卡片右下角外的小凸起正是最干扰的那种，它破坏纸的完整轮廓；行尾槽位不暗示任何出线方向，且与两个内容动作严格等距——抓手不同族由点阵图标、grab 光标与 hover 变 primary 表达，用间距表达只会被读成没对齐），whole-card target 仍是会话期直接子元素。元信息状态只剩墓碑与回收站两种：两者都是「指向的东西不在库里了」，用户必须知道也有出路；曾经的第三条「原文已更新」比的是入画布那天的 revision 快照，而标题与摘录本来就读最新内容，因此它警告的不一致用户看不见，又因快照只在创建时写一次而永久消不掉。抓手拖拽时由 React Flow connectingfrom 隐藏；正式中心 Handle/CanvasCordEdge 浮动端点不变，正文 hover/focus 仍只预取 memoDocumentStore
 CanvasCardNode.test.tsx: 卡片结构回归门禁，锁定两个正式中心 Handle、抓手必须落在元信息行之内且排在两个内容动作之后、整卡 target、嵌套纸张、常驻展开入口、AI 忙碌选择器、元信息只剩墓碑/回收站两种状态，以及墓碑/回收站绝不暴露连接命中面
 CanvasTitle.tsx: Canvas 顶层安静标题；两种画布共用同一改名分支，只在 draft 从空进入编辑态时聚焦并全选，敲字本身不重复抢焦点；来源语义仍归 memo_ref 卡片
 CanvasControls.tsx: React Flow 底部中央命令条，内容/视口动作保持两组同材质；操作说明 Dialog 常驻宿主以完成退出，不读取或修改图数据
 CanvasControls.test.tsx: 底部命令形制回归测试，锁定一个 Panel、两个同材质 surface、加入动作只保留语义图标/可访问名称且无 Tonal 常驻底色，以及四个视口动作顺序
-CanvasPersistenceStatus.tsx: 显示保存、恢复、冲突和显式重试状态，只解释协调器事实，不参与排队
+CanvasPersistenceStatus.tsx: 正常保存/排队/恢复静默，仅展示尚未同步、版本冲突或恢复异常；异常说明与重试位于工具条上方并保留可访问播报，只解释协调器事实，不参与排队
 CanvasPreviewOverlay.tsx: 不卸载 Canvas 的小开本 Paper 预览层；按 ID 读取正文，正文在路上时纸里先放卡片那段摘录（同一篇笔记的开头，放大的始终是同一段字，一个字都没到才退回 Skeleton），reader 纸面由 NotePaper 命名壳与正文。Dialog 使用 motion=none 且遮罩绝不拥有过渡身份——它留在 root 那张截图里，磨砂玻璃因此完整可用（backdrop-filter 采样的就是同一次绘制里身后的画布），而给它单独命名会让它排到过渡层末尾、整段盖住正在放大的纸；纸内只有正文，关闭/编辑一律在纸外
 CanvasPreviewOverlay.test.tsx: 预览结构回归门禁，锁定 motion=none bare 表面、单一 reader 纸，以及关闭/编辑原文一律不在纸内
 CanvasSelectionBounds.tsx: 成组外接框；只在 React Flow 自带 NodesSelection 缺席的两段时间出现——框选拖动中，以及多选静止但它已放手（抓住组里任意卡片就会让它消失）——与它共用同一条变换公式和同一个 --canvas-selection-line，因此松手只是换主人，框不移动也不闪。纯视觉、不接收指针，矩形判据住在 canvasPresentation
@@ -31,7 +31,7 @@ canvasMotionReceipts.ts: 本地手势的瞬时因果动效边界；生成 AI/人
 canvasMotionReceipts.test.ts: 锁定来源确认、节点方向偏移、关系 draw、32ms/128ms 编排，以及特殊 node ID 查找、删除快照身份清理与按布局尺寸乘 zoom 的落位
 spatialTextGeometry.ts: 空间文字宽高、内容基准尺寸与 text_scale（0.25–8）的约束及等比缩放纯函数，隔离对象自身缩放和 Canvas viewport zoom
 spatialTextGeometry.test.ts: 空间文字几何不变量测试，覆盖基准边界、拖拽等比换算和缩放上下限
-KnowledgeCanvas.interaction.test.tsx: 真实组件纵向交互测试；覆盖文件树拖入到 add_memo/WAL、移除/撤销、来源确认、Pane 双击、空间文字、多选成框、关系与 Esc 收束，并锁定左右 Panel 开合不重挂输入、不挪动选择与外接框、不提前入队
+KnowledgeCanvas.interaction.test.tsx: 真实组件纵向交互测试；验证正常持久化静默、同步异常保留重试，覆盖文件树拖入到 add_memo/WAL、移除/撤销、来源确认、Pane 双击、空间文字、多选成框、关系与 Esc 收束，并锁定左右 Panel 开合不重挂输入、不挪动选择与外接框、不提前入队
 useCanvasSessionCoordinator.ts: Canvas 会话基础设施 Hook；优先一次消费 canvas/user/token 均匹配且未过期的 bootstrap detail，否则读取 Canvas，再建立 Store 会话、恢复 IndexedDB WAL、注册 pagehide 与 flush 控制。一次会话的身份只有 (登录用户, 这张画布)，别的东西一律不许结束它：进入语境（bootstrap/entryChrome/restore）与回调都走渲染期 latest ref，写进 deps 的代价是真实的——上层记录一次返回描述就会清理整条 effect，resetSession() 清空文档与预览、dispose() 掐掉正在飞的保存，用户看到的是「点了编辑原文，预览凭空消失，页面直接弹出来」。409/rebase 后续重取仍归 Coordinator，不重播首屏进入
 index.ts: 模块稳定出口，隔离 WorkspaceAuxViews 与内部文件布局
 

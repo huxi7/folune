@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 PresenceSurface 的统一入退场、 shared/api/ai settings GET/PATCH、AgentPanel 权限设置缓存、后端确认状态、全局 Toast、当前用户/access token 与 busy 状态
- * [OUTPUT]: 对外提供账号全局“每次询问/智能审批实验/完全访问”切换、勾选标记与统一中性菜单表面、精简模式说明、紧凑图标入口、加载/保存错误明示及失败不漂移语义
+ * [OUTPUT]: 对外提供账号全局“每次询问/智能审批实验/完全访问”切换、勾选标记与统一中性菜单表面；成功以模式更新反馈，加载/保存失败通过 Toast 明示且模式不漂移
  * [POS]: AgentPanel Composer 的 AI 权限偏好控制器；界面只展示 API 已确认模式，不用乐观假象代替持久化事实
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -90,7 +90,6 @@ export function PermissionModeControl({
       if (sequence !== requestSequence.current) return;
       writeAiSettings(userId, settings);
       resolvePermission(settings.permission_mode);
-      toast({ title: `审批模式已切换为“${labels[settings.permission_mode]}”`, variant: "success" });
     } catch (error) {
       if (sequence !== requestSequence.current) return;
       const message = error instanceof Error ? error.message : "无法保存审批设置。";

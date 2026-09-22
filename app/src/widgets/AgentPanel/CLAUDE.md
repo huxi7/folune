@@ -62,4 +62,4 @@ index.ts: AgentPanel 模块稳定出口，隔离 AppDashboard 与内部文件布
 
 2026-09-07 视觉收口：回复末尾撤销入口使用 Undo2、短标签「撤销」与共享 Label 字阶。
 
-2026-09-07 Menu consistency: PermissionModeControl 当前模式以 CheckIcon 标记；共享菜单表面，不常驻 hover 填色，权限请求与确认状态协议不变。
+2026-09-07 Menu consistency: PermissionModeControl 当前模式以 CheckIcon 标记，成功切换不重复弹 Toast；共享菜单表面，不常驻 hover 填色，权限请求与确认状态协议不变。

@@ -88,11 +88,11 @@ WorkspaceCommandPalette.tsx: 全局对象命令面板，始终保留 Dialog 宿�
 WorkspaceCommandPalette.test.tsx: 键盘状态机门禁，使用最小 Bun test 依赖覆盖开合、焦点、方向键/Enter/Tab/Esc、IME、Canvas 连续加入、正文补入稳定与提示条状态 验证树变化过滤正文命中但不重发相同查询。
 commandResults.ts: 全局搜索唯一排序纯函数；六档命中顺序与同档内确定性 tie-break，两种画布都独立成行且画布行携带来源笔记标题，同档同名时按「本体先于派生物」让笔记恒排在它的画布之前
 commandResults.test.ts: 排序契约门禁，锁定六档顺序、两种画布都独立成行、同名时笔记先于画布、画布行的血缘、文件夹可导航与空查询最近项
-TrashWorkspace.tsx: /app 回收站控制器，读取真实顶层删除根并编排重试、恢复、永久删除和当前用户原子清空，结果统一进入根级 Toast
+TrashWorkspace.tsx: /app 回收站控制器，读取真实顶层删除根并编排重试、恢复、永久删除和当前用户原子清空，成功由列表变化反馈，失败进入根级 Toast
 TrashWorkspaceView.tsx: 回收站纯视图，稳定 presence 宿主承接最后一项退出；条目只做 opacity 与 layout=position，退出即 inert，列表/空态和确认 Dialog 不持有网络状态
 TrashWorkspace.test.tsx: 回收站纯视图回归测试，覆盖状态页、Folder 根不展开、永久删除/清空确认文案与防重复提交
 AccountDialog.tsx: 共享账户/外观 4:3 模态，后台刷新继续保留资料；栏目用 PersistentView 淡换且保留表单实例，Profile 保存协议不变
-AccountProfilePanel.tsx: AccountDialog 的账户资料栏；后台 Profile 刷新只以 bio/username 字段合并草稿，头像/email 等无关身份变化不重跑文字合并；停止输入 800ms 后串行 PATCH，头像即时上传并经 Toast 回执
+AccountProfilePanel.tsx: AccountDialog 的账户资料栏；后台 Profile 刷新只以 bio/username 字段合并草稿，头像/email 等无关身份变化不重跑文字合并；停止输入 800ms 后串行 PATCH，头像即时上传；成功保留本地可访问反馈，只有异常进入 Toast
 AccountSettingsPanel.tsx: AccountDialog 的外观栏，在“主题”同一行消费 Design System SegmentedControl 提供系统/白天/黑夜偏好；system 实时跟随设备并仍只解析到同一套 light/dark token
 SubscriptionWorkspace.tsx: /app 订阅入口工作区，以纯白画布、三档可选方案、权益清单与选中回执展示 5/20/100 美金订阅
 AgentPanel/: Paper 与 Canvas 共用的右侧思考空间；AI SDK useChat 承载对话/工具/审批/撤销，organize client 服务 Paper，Canvas expansion client 只取可信候选并把最终 intent 交还统一 Canvas 保存协调器

@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖可后台刷新的后端 Profile、shared/api/profile 的 username/bio PATCH 与 5MB 头像上传、React 受控草稿/800ms 防抖副作用/原生文件 input、本地 UI 与 共享 Lucide 图标
- * [OUTPUT]: 对外提供 AccountDialog 内的账户资料面板、仅按 bio/username 合并后台 Profile 与本地草稿、静默自动保存、头像即时上传与全局 Toast 反馈
+ * [OUTPUT]: 对外提供 AccountDialog 内的账户资料面板、仅按 bio/username 合并后台 Profile 与本地草稿、静默自动保存、头像即时上传，成功仅本地可访问反馈、异常进入全局 Toast
  * [POS]: app/src/widgets 的账户资料栏，以 stale-while-revalidate 字段级冲突保护和串行防抖保存消除整页 Loading 与显式提交区
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -108,12 +108,6 @@ export function AccountProfilePanel({
           : currentDraft,
       );
       setAutosaveMessage("个人资料已自动保存");
-      toast({
-        description: "用户名与简介已同步。",
-        duration: 2800,
-        title: "已自动保存",
-        variant: "success",
-      });
     } catch (error) {
       const description = error instanceof Error
         ? error.message
@@ -208,11 +202,6 @@ export function AccountProfilePanel({
       onProfileChange(updatedProfile);
       lastSavedDraft.current = normalizeProfileDraft(createProfileDraft(updatedProfile));
       setAutosaveMessage("头像已更新");
-      toast({
-        description: "新头像已同步到您的账户。",
-        title: "头像已更新",
-        variant: "success",
-      });
     } catch (error) {
       const description = error instanceof Error
         ? error.message

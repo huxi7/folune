@@ -1,66 +1,69 @@
 /**
- * [INPUT]: 依赖设计系统的半径/曲线配对规则与 Kumo Toast Parts 的堆叠/滑动状态、本地 Button 与 index.css 的中性 Popover、Radius、Elevation、Motion token
- * [OUTPUT]: 对外提供不玻璃化、不使用彩色状态容器的轻量 Toast、克制状态符号、单一回执动作与 reduced-motion 降级
+ * [INPUT]: 依赖设计系统的半径/曲线配对规则与 Kumo Toast Parts 的堆叠/滑动状态、共享动作时钟、本地 Button 与 index.css 的中性 Popover、Radius、Elevation、Motion token
+ * [OUTPUT]: 对外提供随内容收紧的顶部居中 Toast、三条悬停展开堆叠、细边柔影的行内倒计时撤销与 reduced-motion 降级
  * [POS]: app/src/styles 的瞬时反馈视觉层；Kumo 负责队列交互，SuperNote 定义安静纸面材质与本地动作层级
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 @layer components {
   .ds-toast-viewport {
     position: fixed;
-    right: var(--space-4);
-    bottom: var(--space-4);
+    top: max(var(--space-4), env(safe-area-inset-top));
+    left: 50%;
+    transform: translateX(-50%);
     z-index: 1200;
-    width: min(21.5rem, calc(100vw - var(--space-8)));
+    width: min(22rem, calc(100vw - var(--space-6)));
     pointer-events: none;
   }
 
   .ds-toast {
-    --toast-color: var(--info);
+    --toast-color: var(--muted-foreground);
     --toast-gap: var(--space-2);
     --toast-height-current: var(--toast-frontmost-height, var(--toast-height));
     --toast-offset-expanded: calc(
-      var(--toast-offset-y) * -1 +
-      var(--toast-index) * var(--toast-gap) * -1 +
+      var(--toast-offset-y) +
+      var(--toast-index) * var(--toast-gap) +
       var(--toast-swipe-movement-y)
     );
     --toast-scale: calc(max(0, 1 - var(--toast-index) * 0.04));
     --toast-shrink: calc(1 - var(--toast-scale));
     position: absolute;
-    right: 0;
-    bottom: 0;
-    left: auto;
+    top: 0;
+    left: 50%;
+    translate: -50% 0;
     z-index: calc(1000 - var(--toast-index));
-    width: 100%;
+    width: max-content;
+    max-width: 100%;
     height: var(--toast-height-current);
-    overflow: hidden;
+    /* 展开后的条目间隙由 ::after 接住指针；不能在外层裁掉它。 */
+    overflow: visible;
     border: 1px solid color-mix(in srgb, var(--foreground) 9%, transparent);
     border-radius: var(--radius-menu);
     corner-shape: var(--corner-shape-smooth);
     background: var(--popover);
     color: var(--popover-foreground);
-    box-shadow: var(--shadow-lg);
+    box-shadow: 0 1px 3px -1px var(--button-shadow-neutral-rest), var(--shadow-sm);
     pointer-events: auto;
     transform:
       translateX(var(--toast-swipe-movement-x))
       translateY(
         calc(
-          var(--toast-swipe-movement-y) -
-          var(--toast-index) * var(--space-2) -
+          var(--toast-swipe-movement-y) +
+          var(--toast-index) * var(--space-2) +
           var(--toast-shrink) * var(--toast-height-current)
         )
       )
       scale(var(--toast-scale));
-    transform-origin: bottom;
+    transform-origin: top;
     transition:
-      height 150ms var(--ease-standard),
+      height var(--motion-fast) var(--ease-standard),
       opacity var(--motion-normal) var(--ease-standard),
-      transform 520ms var(--ease-standard);
+      transform var(--motion-normal) var(--ease-standard);
   }
 
   .ds-toast::after {
     content: "";
     position: absolute;
-    top: 100%;
+    bottom: 100%;
     right: 0;
     left: 0;
     height: calc(var(--toast-gap) + 1px);
@@ -89,7 +92,7 @@
   .ds-toast[data-starting-style],
   .ds-toast[data-ending-style] {
     opacity: 0;
-    transform: translateY(calc(100% + var(--space-4)));
+    transform: translateY(calc(-100% - var(--space-4)));
   }
 
   .ds-toast[data-ending-style][data-swipe-direction="right"] {
@@ -98,8 +101,8 @@
       translateY(var(--toast-offset-expanded));
   }
 
-  .ds-toast[data-ending-style][data-swipe-direction="down"] {
-    transform: translateY(calc(var(--toast-swipe-movement-y) + 120%));
+  .ds-toast[data-ending-style][data-swipe-direction="up"] {
+    transform: translateY(calc(var(--toast-swipe-movement-y) - 120%));
   }
 
   .ds-toast[data-variant="success"] {
@@ -119,13 +122,14 @@
     z-index: 1;
     display: grid;
     width: 100%;
-    min-height: 100%;
     grid-template-columns: auto minmax(0, 1fr) auto;
-    align-items: start;
-    gap: var(--space-3);
+    align-items: center;
+    gap: var(--space-2);
     overflow: hidden;
-    padding: var(--space-3) var(--space-3) var(--space-3)
-      calc(var(--space-3) + var(--space-1));
+    border-radius: inherit;
+    corner-shape: inherit;
+    padding: var(--space-2) var(--space-2) var(--space-2) var(--space-3);
+    min-height: calc(var(--space-10) + var(--space-1));
     transition: opacity var(--motion-normal) var(--ease-standard);
   }
 
@@ -157,10 +161,11 @@
   .ds-toast-title {
     display: block;
     color: var(--foreground);
-    font-size: 0.8125rem;
-    font-weight: 650;
+    font-size: var(--type-label);
+    font-weight: 560;
     letter-spacing: -0.006em;
-    line-height: 1.35;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
   }
 
   .ds-toast-description {
@@ -170,18 +175,37 @@
     line-height: 1.45;
   }
 
-  .ds-toast-actions {
-    display: flex;
-    margin-top: var(--space-2);
+  .ds-toast[data-action="true"] .ds-toast-content {
+    grid-template-columns: minmax(0, 1fr) auto auto;
   }
 
   .ds-toast-action.ds-button {
+    --button-border-rest: color-mix(in srgb, var(--foreground) 7%, transparent);
+    --button-state-shadow: inset 0 1px 0 var(--button-face-highlight-rest), 0 1px 3px -1px var(--button-shadow-neutral-rest);
+    --button-state-shadow-hover: inset 0 1px 0 var(--button-face-highlight-hover), 0 2px 5px -2px var(--button-shadow-neutral-hover);
+    --button-radius: var(--radius-compact);
+    --button-content-gap: var(--space-1);
     width: auto;
-    height: var(--space-7);
+    height: calc(var(--control-height-compact) - var(--space-1));
+    min-height: calc(var(--control-height-compact) - var(--space-1));
     padding-inline: var(--space-2);
-    color: var(--foreground);
-    font-size: 0.75rem;
+    color: var(--primary);
+    font-size: var(--type-label);
+    white-space: nowrap;
   }
+
+  .ds-toast-countdown {
+    width: 1rem;
+    height: 1rem;
+    flex: none;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    transform: rotate(-90deg);
+  }
+
+  .ds-toast-countdown-track { opacity: 0.18; }
+  .ds-toast-countdown-progress { stroke-dasharray: 1; stroke-dashoffset: 0; stroke-linecap: round; }
 
   .ds-toast-dismiss {
     display: inline-flex;
@@ -192,9 +216,9 @@
     border: 0;
     border-radius: var(--radius-compact);
     corner-shape: var(--corner-shape-smooth);
-    background: color-mix(in srgb, var(--foreground) 5%, transparent);
+    background: transparent;
     color: var(--muted-foreground);
-    opacity: 0.72;
+    opacity: 0.55;
     transition:
       background var(--motion-fast) var(--ease-standard),
       color var(--motion-fast) var(--ease-standard),
@@ -216,9 +240,7 @@
 @media (max-width: 639px) {
   @layer components {
     .ds-toast-viewport {
-      right: var(--space-3);
-      bottom: var(--space-3);
-      width: calc(100vw - var(--space-6));
+      top: max(var(--space-3), env(safe-area-inset-top));
     }
   }
 }

@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 React Router Profile/token、Canvas bootstrap、轻量 tree/正文/Workspace Store、删除编排、惰性 AI、持久左右工具宿主、按当前树重算的归档 presentation、useOverlayPanels 响应式判据与 Paper/Canvas Workspace
- * [OUTPUT]: 对外提供 useAppDashboardController 状态与命令投影，支撑互斥 Paper/Canvas 舞台、跨路由不卸载且普通笔记切换不参与整页快照的文件库 React 实例、细粒度正文订阅、当前树节点缓存与正文就绪后的预取、Canvas 离场 flush、网络策略约束的 Canvas 预载、归档 canonical 目标下传与账户/视图编排
+ * [OUTPUT]: 对外提供 useAppDashboardController 状态与命令投影，支撑互斥 Paper/Canvas 舞台、跨路由不卸载且普通笔记切换不参与整页快照的文件库 React 实例、细粒度正文订阅、当前树节点缓存与正文就绪后的预取、Canvas 离场 flush、网络策略约束的 Canvas 预载、归档 canonical 目标下传与账户/视图编排，改名与文件夹创建成功静默
  * [POS]: app/src/pages 的 /app 状态协调 Hook，由 AppDashboard 单次持有；跨 Paper/Canvas 的数据与视觉交接只在此建立一次，深链刷新先确认节点类型，普通业务状态仍留在各自 Store/Workspace，文件库作为共享 Chrome 留在两种内容壳之外。它是「现在是不是覆盖式布局」的唯一持有者并下传给 Paper 壳与归档 Overlay：同一个断点算两遍就会出现两个都自称正确的布局；归档只交出 canonical memo，屏幕上由谁代表它归 AppSidebar
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -545,7 +545,6 @@ export function useAppDashboardController() {
   async function handleRenameNode(nodeId: string, title: string) {
     try {
       await renameNode(accessToken, nodeId, title);
-      toast({ title: "名称已更新", variant: "success" });
     } catch (error) {
       // 唯一约束是并发下的最终真相: 预检查放过的名字仍可能在这里被驳回,
       // 此时要说清"重名"而不是笼统的"保存失败"。
@@ -607,7 +606,6 @@ export function useAppDashboardController() {
         parent_id: memoDialog.parentId,
         title,
       });
-      toast({ title: "文件夹已创建", variant: "success" });
     } catch (error) {
       toast({
         description: error instanceof Error ? error.message : undefined,

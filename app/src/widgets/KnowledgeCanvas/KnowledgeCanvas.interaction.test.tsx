@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 happy-dom、Testing Library、真实 KnowledgeCanvas/React Flow 节点层与可观测 Canvas 协调器替身
- * [OUTPUT]: 覆盖 Pane 双击/空间文字、文件树 memo 精准落入统一 WAL、框选、移除/撤销、来源确认、Esc 收束与 Panel 开合不穿透画布
+ * [OUTPUT]: 覆盖 Pane 双击/空间文字、文件树 memo 精准落入统一 WAL、框选、移除/撤销、来源确认、Esc 收束与 Panel 开合不穿透画布，以及正常保存静默/异常可重试
  * [POS]: KnowledgeCanvas 的浏览器 DOM 纵向交互测试；不绕过组件去单测 reducer/RPC，锁定 selectionOnDrag 下空间文字、来源确认与移除回执从真实 DOM 到 WAL/协调器/mutation 的完整链路，并证明左右 Panel 只是 Stage 浮层、开合不进入画布状态。键盘事件一律从 document.body 派发而不是 window：真实浏览器里 keydown 落在焦点元素上再冒泡 document → window，直接打在 window 上会跳过 document 这一层，而 Escape 的层级仲裁恰恰依赖这一层先于壳层
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -306,6 +306,26 @@ const buttonWithText = async (text: string) => await waitFor(() => {
     .find((candidate) => candidate.textContent?.trim() === text);
   expect(button).not.toBeUndefined();
   return button!;
+});
+
+describe("KnowledgeCanvas 持久化反馈", () => {
+  for (const status of ["idle", "saving", "recovering"] as const) {
+    test(`${status} 与待提交队列保持静默`, () => {
+      useCanvasWorkspaceStore.getState().replaceServer(emptyCanvas(), []);
+      useCanvasWorkspaceStore.getState().setPersistence(status, 2);
+      renderCanvas();
+      expect(document.querySelector(".canvas-save-state")).toBeNull();
+    });
+  }
+  test("同步失败保留可访问的异常说明和重试入口", () => {
+    useCanvasWorkspaceStore.getState().replaceServer(emptyCanvas(), []);
+    useCanvasWorkspaceStore.getState().setPersistence("unsaved", 2, "网络连接失败");
+    renderCanvas();
+    const status = document.querySelector('.canvas-save-state[role="status"]');
+    expect(status?.textContent).toContain("尚未同步");
+    expect(status?.textContent).toContain("网络连接失败");
+    expect(status?.querySelector("button")?.textContent).toBe("重试");
+  });
 });
 
 describe("KnowledgeCanvas 文件树拖入", () => {

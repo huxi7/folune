@@ -7,7 +7,7 @@ BlogPage.tsx: /blog 与 /updates 两个分区共用目录和 :slug 阅读页；s
 workspacePreload.ts: 正文邻居与 Canvas 代码预热共用的在线/前台/省流/慢网判据，只约束非必要预取，不阻止主动打开
 workspacePreload.test.ts: 验证弱网、省流、后台与离线不预取，以及缺失 Network Information 时的兼容行为
 MotionLabPage.tsx: DEV /motion-lab 无鉴权验收入口，复用生产 MotionSpecimen，所有交互只更新本地 fixture 状态，并链接真实 AppSidebar/归档线验收台
-useAppDashboardController.ts: 普通笔记导航禁用整页快照以保持文件库视觉稳定； Dashboard 单次持有的状态/命令协调 Hook，保持 Profile/正文订阅、乐观事务、flush/导航、工具预载、唯一响应式判据与归档 canonical 目标；普通本地辅助视图走 transitionContent，跨路由快照交给 Router 当前节点查询按 tree/路由 ID 缓存，相邻正文预取等当前正文就绪。
+useAppDashboardController.ts: 普通笔记导航禁用整页快照以保持文件库视觉稳定； Dashboard 单次持有的状态/命令协调 Hook，保持 Profile/正文订阅、乐观事务、flush/导航、工具预载、唯一响应式判据与归档 canonical 目标；普通本地辅助视图走 transitionContent，跨路由快照交给 Router 当前节点查询按 tree/路由 ID 缓存，相邻正文预取等当前正文就绪；文件夹创建和改名成功静默，失败保持原有 Toast。
 .gitkeep: 保留页面层空目录
 CLAUDE.md: 记录页面层职责与文档协议
 LandingPage.tsx: MarketingLayout 内的公开首页正文，以 1120px 主轨和流式分区组合居中 Hero、大幅编辑器、图文叙事；顶栏与全宽 Footer 由父布局持有；声明中文语言，复用 DS 字体回退、圆角按钮和品牌墨蓝，保留参考布局与背景
@@ -21,14 +21,14 @@ appDashboardTypes.ts: Dashboard 私有状态类型边界，集中定义含首屏
 memoDeletion.ts: 删除导航纯算法，区分“当前路由被影响需要导航离开”与“当前路由是 memo 需要等 autosave flush”两件事（画布没有编辑会话可等），并从剩余 active tree 选择下一路由
 memoDeletion.test.ts: 覆盖删除当前 Memo/祖先影响判定、删除正在打开的 Canvas 只导航不 flush，及有/无下一 Memo 的路由选择
 useMemoNodeDeletion.ts: 软删编排 Hook；沿用调用方共享的 mutating 门禁，删除前对 memo 会话做 required flush、成功后清理正文缓存与 last-memo 记录并按落点导航，失败恢复编辑会话且不改变任何状态
-useOptimisticMemoCreation.ts: 人工新建路由协调器；同步进入临时备忘录并独立跟踪每个并发提交，乱序成功只替换自己的 ID，失败只撤销对应节点并在仍处当前页时回退
+useOptimisticMemoCreation.ts: 人工新建路由协调器；同步进入临时备忘录并独立跟踪每个并发提交，乱序成功只替换自己的 ID 且不弹成功通知，失败只撤销对应节点并在仍处当前页时回退
 useMemoDocumentLoad.ts: 当前笔记正文请求生命周期边界；目录 ready 后只为未缓存的选中 ID 发起单篇读取，并可复用已在途的意图预取，失败统一送入 Toast
 useMemoDocumentPreload.ts: 正文按需架构的空闲预热 Hook；只预取当前笔记阅读顺序相邻的前后两篇，点击/键盘意图预热仍由文件树触发，不扩大目录载荷 执行时跳过后台页、离线、省流和 2G/3G 网络，优先把带宽留给正在打开的正文。
 useAccountProfileRefresh.ts: 账户资料生命周期协调器；每次打开只后台刷新一次并保留现有资料，栏目切换不重复请求
 useMemoOrganize.ts: AI 整理生命周期协调器；发送前 required flush，按用户恢复最近 Run，编排 plan/apply/reject/undo，并把成功或撤销结果局部归并到 Memo Store、把 stale 诚实反馈给用户。刷新取回的最近 succeeded/undone 以 restored 交回展示层：刷新不是语义事件，因此不重播 fresh、也不强行展开文件库。切 memo 才清除 presentation，而「首帧还没有 currentMemo」不算切换——恢复请求是异步的，把它当切换会在树刚到达时把刚恢复的关系抹掉
 useMemoOrganize.test.ts: 锁定 succeeded/undone 唤醒文件库、canonical 目标恒为 memo、路径按当前树重算（memo 被移动后 run 快照不再作为落点来源）、fresh/restored 原样透传、根级人话落点，以及 awaiting_confirmation 唤醒 AI、stale/failed/过程态与 memo 已不在树中都不产生归档展示
 useMemoCanvasEntry.ts: memo↔默认 Canvas 路由协调器；真实点击后先 required flush，再依次取得默认 Canvas 身份与完整 detail，等待期间保留原 Paper；detail 写入对应一次性 bootstrap 后才由 navigate 带 viewTransition 导航，失败则留在原页恢复入口状态。返回画布复用同一 memo 纸面名字，且同样先预取 detail 再导航——否则卡片要等画布自己请求完才出现在 DOM 里，浏览器拍新截图时落点那张纸还不存在，整段就只剩硬切；预取失败退回普通跳转，返回本身不被动画绑架
-useStandaloneCanvasCreation.ts: standalone Canvas 创建协调器；重复提交门禁后只接受服务器事务返回的真实身份，再局部并入 tree、登记 standalone 进入语境并导航
+useStandaloneCanvasCreation.ts: standalone Canvas 创建协调器；重复提交门禁后只接受服务器事务返回的真实身份，再局部并入 tree、登记 standalone 进入语境并导航；创建成功以页面切换反馈，失败才 Toast
 canvasIncrementalLayout.ts: Canvas 候选增量布局纯策略；复用既有分支向外生长并以确定性角度/半径寻找无碰撞位置，人工加入和 AI expansion 共用且永不移动旧节点
 canvasIncrementalLayout.test.ts: 锁定候选稳定排序、分支外向生长、无碰撞与旧节点对象/坐标不变
 canvasEntryBootstrap.ts: Paper→Canvas 的短命数据交接边界；按 canvasId/userId/token 暂存已经取得的 Canvas detail，30s 后自动失效且只允许对应 Coordinator 消费一次，不持久化也不替代后续重取

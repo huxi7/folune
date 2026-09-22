@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 shared/api/memo 的真实回收站 API、上层 Store restore 命令、根级 Toast 与纯 TrashWorkspaceView
- * [OUTPUT]: 对外提供 TrashWorkspace，编排加载/重试/恢复/永久删除/当前用户清空
+ * [OUTPUT]: 对外提供 TrashWorkspace，编排加载/重试/恢复/永久删除/当前用户清空，列表呈现成功结果、Toast 仅报告失败
  * [POS]: app/src/widgets 的回收站控制器；只保存 Trash 列表视图状态，不复制 active tree，恢复结果必须交回唯一 Store
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -77,7 +77,6 @@ export function TrashWorkspace({
     try {
       await onRestore(item.id);
       removeItem(item.id);
-      toast({ title: "已恢复到原位置", variant: "success" });
     } catch (error) {
       toast({
         description: error instanceof Error ? error.message : undefined,
@@ -100,7 +99,6 @@ export function TrashWorkspace({
       await permanentlyDeleteMemoNode(accessToken, item.id);
       removeItem(item.id);
       setConfirmation(null);
-      toast({ title: "项目已永久删除", variant: "success" });
     } catch (error) {
       toast({
         description: error instanceof Error ? error.message : undefined,
@@ -124,7 +122,6 @@ export function TrashWorkspace({
       setItems([]);
       setStatus("empty");
       setConfirmation(null);
-      toast({ title: "当前用户的回收站已清空", variant: "success" });
     } catch (error) {
       toast({
         description: error instanceof Error ? error.message : undefined,

@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 React、生产 Design System/Lucide 图标边界、FoundationSpecimens、真实 MarkdownEditor/MarkdownReadingView 与 PaperSurface/EdgeDock/ArchiveCord/Cord Signature Components
- * [OUTPUT]: 对外提供 Color/Type/Iconography、Control 内外同心曲率、Primitives、Editorial 与 AI 状态样板；自定义 Input 家族由包裹 label 提供可见名称
+ * [OUTPUT]: 对外提供 Color/Type/Iconography、Control 内外同心曲率、Primitives、Editorial、倒计时撤销与 AI 状态样板；自定义 Input 家族由包裹 label 提供可见名称
  * [POS]: app/src/widgets/DesignSystemWorkspace 的预览层；所有样板只读取生产 Token/API，不建立展示专用视觉系统
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -706,7 +706,7 @@ function DialogPreview() {
 }
 
 function ToastPreview() {
-  const { toast } = useToast();
+  const { dismissToast, toast } = useToast();
 
   return (
     <div className="ds-preview-actions">
@@ -714,6 +714,12 @@ function ToastPreview() {
       <Button onClick={() => toast({ title: "保存成功", variant: "success" })}>Success</Button>
       <Button onClick={() => toast({ title: "请检查输入", variant: "warning" })}>Warning</Button>
       <Button onClick={() => toast({ title: "保存失败", variant: "error" })}>Error</Button>
+      <Button onClick={() => {
+        const id = toast({
+          title: "已从画布移除",
+          action: { label: "撤销", onClick: () => dismissToast(id) },
+        });
+      }}>撤销倒计时</Button>
     </div>
   );
 }

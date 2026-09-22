@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 React Router navigate、用户/access token、memoTreeStore 同步乐观创建、稀疏排序、纸张聚焦回调、删除后目的地与 Toast
- * [OUTPUT]: 对外提供 useOptimisticMemoCreation；一次点击同步进入并聚焦临时纸张，独立跟踪并发提交，成功原位换真实路由，失败只回退对应项
+ * [OUTPUT]: 对外提供 useOptimisticMemoCreation；一次点击同步进入并聚焦临时纸张，独立跟踪并发提交，成功静默原位换真实路由，失败通知并只回退对应项
  * [POS]: app/src/pages 的创建路由协调器；把临时/真实 ID、last-memo 与乱序响应边界从 AppDashboard 拆出，Store 仍独占树事务
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -68,7 +68,6 @@ export function useOptimisticMemoCreation({
             });
           }
 
-          toast({ title: "备忘录已创建", variant: "success" });
         })
         .catch((error) => {
           if (window.localStorage.getItem(lastMemoStorageKey) === optimisticId) {

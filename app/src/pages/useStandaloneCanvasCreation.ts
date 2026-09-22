@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Canvas V2 空白入口、memoTreeStore 服务端节点合并、React Router 导航、canvasChromeStore 进入意图与全局 Toast
- * [OUTPUT]: 对外提供带重复提交门禁的独立 Canvas 创建命令
+ * [OUTPUT]: 对外提供带重复提交门禁的独立 Canvas 创建命令，成功导航即反馈、失败才通知
  * [POS]: AppDashboard 的跨域创建编排 Hook；服务器事务成功后才把同一 Canvas 身份并入树并切换路由
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -40,7 +40,6 @@ export function useStandaloneCanvasCreation({
       // 新对象需要文件树定位与即时命名反馈, 因此只展开文件库
       rememberEntry({ canvasId: result.node.id, intent: "standalone" });
       navigate(`/app/notes/${encodeURIComponent(result.node.id)}`);
-      toast({ title: "Canvas 已创建", variant: "success" });
     } catch (error) {
       toast({
         description: error instanceof Error ? error.message : undefined,

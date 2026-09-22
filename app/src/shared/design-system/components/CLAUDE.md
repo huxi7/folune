@@ -31,7 +31,9 @@ ToolCallBubble.test.tsx: 工具披露最小 DOM 契约测试，锁定执行态 s
 accessibilitySemantics.test.tsx: 基础无障碍语义回归测试，锁定 Thinking 单一播报源、隐藏 Skeleton 不宣告忙碌及 Assistant 正文不伪造具名地标
 BrandMark.tsx: 紧边界 PNG 与已选③字标的唯一组合入口；--brand-size 只表示可见图高，共享样式以 5:4 布局比和 7/22 间距比例派生整组，默认 1.375rem 让 Demo 随根字号缩小；iconOnly 保留原独立图的可见体量，整组只播报一次 Folune
 BrandWordmark.tsx: Source Serif 4 Medium 24pt 的固定 Folune 轮廓，资产内纵向光学收至 94% 并保持宽度/居中，只由 BrandMark 消费并继承 currentColor；不加载字体或复用 UI 字体，尺寸统一归 design-system.css，OFL 许可随 public/brand 分发
-Toast.tsx: Kumo-backed 全局瞬时反馈边界，以 Kumo Toast Provider/Manager/Parts 接管四条可见上限、自动关闭、悬停暂停、焦点、滑动与卸载清理；ToastInput 可携带一个业务回执动作，队列仍由 Kumo 保存但 ToastItem 必须用本地 Button 渲染，避免引入第二套按钮；其余表现采用 Kumo 同源 Root/独立材质层/Content 结构与 Apple-like 中性浮层，以轻量图标传达 info/success/warning/error
+Toast.tsx: 全局瞬时反馈边界，Kumo 独占队列/焦点/滑动；顶部居中最多三条可见，每次触发独立入栈（包括重复内容），悬停展开且移出收回；本地 Button 行内承载倒计时动作，普通提示 2.6 秒、警告 5 秒、错误 6.5 秒、动作默认 6 秒
+useToastCountdown.ts: 动作回执唯一计时，SVG 剩余圆环与到期关闭同源；悬停/键盘展开/页面隐藏/失焦/非最前条时暂停，重新显示续走，Reduced Motion 按秒更新
+Toast.test.tsx: 真实 Provider 的重复入栈/三条上限/悬停展开收回/独立撤销与可控帧时钟门禁，验证暂停续走、隐藏保留与到期关闭
 Select.tsx: combobox/listbox 选择器，键盘焦点保留在 trigger、option 不增加 Tab 停靠点；上/下浮层共用 PresenceSurface 的锚点入退场，选择与关闭语义仍在本组件
 UserButton.tsx: 本地用户身份原子组件，提供可复用 UserAvatar 与显示头像、姓名、邮箱、展开状态的 UserButton 触发器，不包含业务跳转
 UserMenu.tsx: 账户身份与动作菜单，向上浮层共用 PresenceSurface；点击身份/设置前归还 trigger 焦点，再交给同一个 AccountDialog，退出即不再可操作
