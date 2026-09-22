@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 Motion inView/useScroll/useMotionValueEvent、DS 实时动态偏好与 landing.css 的 Blueprint 坐标、纹样、水平渐隐和纵向显现遮罩
- * [OUTPUT]: 对外提供 paper / weave 进入视口后的缓慢揭示、index 跟随首页滚动的单向揭示，以及 RailVariant 类型
- * [POS]: widgets 的首页侧轨装饰层；连续覆盖上下空轨与正文，两侧共用显现进度；paper/weave 保留计时动画，index 在区块顶部从视口 90% 走到 25% 时随滚动单向完成；模块内存按纹样记录本次文档已播放项，路由往返不重播、刷新重置
+ * [OUTPUT]: 对外提供 paper / weave 进入视口后的缓慢揭示、index 跟随首页滚动的柔边与浓度双重浮现，以及 RailVariant 类型
+ * [POS]: widgets 的首页侧轨装饰层；连续覆盖上下空轨与正文，两侧共用显现进度；paper/weave 保留计时动画，index 在区块顶部从视口 90% 走到 25% 时随滚动单向完成，遮罩柔边保留在视口下沿且格点浓度在前 55% 进程渐显；模块内存按纹样记录本次文档已播放项，路由往返不重播、刷新重置
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { useCallback, useEffect, useRef, useState, type AnimationEventHandler, type RefObject } from "react";
@@ -15,7 +15,9 @@ type RevealPhase = "pending" | "revealing" | "complete";
 const revealedRails = new Set<RailVariant>();
 const revealViewport = { margin: "0px 0px -96px 0px" } as const;
 const indexRevealOffset: ["start 90%", "start 25%"] = ["start 90%", "start 25%"];
-const revealEnd = 112;
+const completedRevealPosition = 112;
+const indexRevealTravel = 90;
+const indexFadeCompletion = .55;
 
 export function LandingRailTexture({ variant }: { variant: RailVariant }) {
   return variant === "index"
@@ -79,15 +81,21 @@ function ScrollLinkedIndexRail() {
 
     revealedRails.add("index");
     if (reducedMotion) {
-      element.style.setProperty("--rail-reveal-position", `${revealEnd}%`);
+      element.style.setProperty("--rail-reveal-position", `${completedRevealPosition}%`);
+      element.style.setProperty("--rail-reveal-opacity", "1");
       setPhase("complete");
       return;
     }
 
     furthestProgressRef.current = progress;
-    element.style.setProperty("--rail-reveal-position", `${progress * revealEnd}%`);
+    element.style.setProperty("--rail-reveal-position", `${progress * indexRevealTravel}%`);
+    element.style.setProperty("--rail-reveal-opacity", `${Math.min(1, progress / indexFadeCompletion)}`);
     if (phase === "pending") setPhase("revealing");
-    if (progress >= 1) setPhase("complete");
+    if (progress >= 1) {
+      element.style.setProperty("--rail-reveal-position", `${completedRevealPosition}%`);
+      element.style.setProperty("--rail-reveal-opacity", "1");
+      setPhase("complete");
+    }
   }, [phase, reducedMotion]);
 
   useMotionValueEvent(scrollYProgress, "change", updateReveal);

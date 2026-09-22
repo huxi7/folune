@@ -103,10 +103,14 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
   inset:0;
   mask-image:linear-gradient(to bottom,#000 calc(var(--rail-reveal-position) - 12%),transparent var(--rail-reveal-position));
 }
+.landing-rail-texture[data-variant="index"] .landing-rail-texture-pattern { opacity:var(--rail-reveal-opacity,0); }
+.landing-rail-texture[data-variant="index"][data-reveal="revealing"] .landing-rail-texture-pattern { transition:opacity 120ms linear; }
+.landing-rail-texture[data-variant="index"][data-reveal="complete"] .landing-rail-texture-pattern { opacity:1; }
 .landing-rail-texture[data-reveal="complete"] .landing-rail-texture-pattern { mask-image:none; }
 @media (prefers-reduced-motion:reduce) {
   .landing-rail-texture[data-reveal="revealing"] { animation:none; }
   .landing-rail-texture-pattern { mask-image:none; }
+  .landing-rail-texture[data-variant="index"] .landing-rail-texture-pattern { opacity:1; transition:none; }
 }
 .landing-rail-texture-side[data-side="end"] .landing-rail-texture-pattern { transform:scaleX(-1); }
 .landing-rail-texture-pattern > span { position:absolute; inset:0; }
