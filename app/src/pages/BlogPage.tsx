@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 Router slug/历史导航、独立的博客与动态集合、LandingRailTexture 与 Blueprint 导轨
  * [OUTPUT]: 对外提供 /blog 与 /updates 的共用目录/阅读页、空集合与未知文章回退；来路返回和元信息沿现有协议，跨分区不混用内容或推荐
- * [POS]: pages 的公开文章视图；section 选择内容与文案，目录使用上下留白空轨与仅覆盖列表的波浪侧轨，标题、阅读正文与共享营销壳只有一套实现
+ * [POS]: pages 的公开文章视图；section 选择内容与文案，目录使用上下留白空轨与仅覆盖列表的波浪侧轨，空轨边界横线延伸到两侧外轨，标题、阅读正文与共享营销壳只有一套实现
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { useEffect } from "react";
@@ -55,7 +55,7 @@ export function BlogPage({ section = "blog" }: { section?: keyof typeof sections
         <header className="blog-index-heading"><span className="blog-eyebrow">{config.eyebrow}</span><h1 tabIndex={-1}>{config.title}</h1><p>{config.description}</p></header>
         <BlueprintDivider fullBleed />
         <div className="landing-chapter blog-index-chapter">
-          <div className="landing-chapter-gap" data-edge="end" aria-hidden="true"><BlueprintDivider flush /></div>
+          <div className="landing-chapter-gap" data-edge="end" aria-hidden="true"><BlueprintDivider flush fullBleed /></div>
           <div className="blog-index-list">
             <LandingRailTexture variant="weave" />
             {config.posts.length === 0 ? <div className="blog-index-empty"><p>新的动态，正在酝酿。</p><span>关于 Folune 的进展，会在这里与你分享。</span></div> : null}
@@ -65,7 +65,7 @@ export function BlogPage({ section = "blog" }: { section?: keyof typeof sections
               </Link>
             </article>)}
           </div>
-          <div className="landing-chapter-gap" data-edge="start" aria-hidden="true"><BlueprintDivider flush /></div>
+          <div className="landing-chapter-gap" data-edge="start" aria-hidden="true"><BlueprintDivider flush fullBleed /></div>
         </div>
         <BlueprintDivider fullBleed />
       </> : post ? <article className="blog-article">
