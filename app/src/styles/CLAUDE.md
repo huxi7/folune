@@ -17,6 +17,8 @@ Hero 背景定稿（2026-09-19）：正式页采用 02A GrainGradient wave，60s
 
 营销顶栏：56px 高度内增强品牌字标与导航间距，右侧打开/下载使用 DS 32px compact 高度、12px 横向留白与等宽列，保留共享材质和 14px 文字；手机导航换成独立横向第二行，锚点避让相应增加。
 
+登录公告骨架：LoginPage 的 auth-announcement-frame 复用 fullBleed BlueprintFrame，与首页保持相同主轨宽度和外轨坐标；auth.css 只防止该框架在单屏布局中被压缩，正文布局不依赖公告宽度。
+
 成员清单
 marketing-motion.css: 首页/博客/动态/登录共用 8px、360ms 正文浮现，32ms 错峰最多 128ms；原生路由快照中顶栏固定、导轨只淡换，可视正文独立入场，普通滚动用同一 CSS 曲线只播一次，减少动态立即显示，Paper 过渡不受影响
 landing-demo.css: 独立 Demo 入口专用，限定视口与三栏等高、Paper/Canvas 互斥显示；不增加底部工具栏或新视觉皮肤
