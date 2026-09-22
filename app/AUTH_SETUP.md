@@ -43,3 +43,14 @@ https://buauzrzxifgdacntisfq.supabase.co/auth/v1/callback
 然后在 Supabase `Authentication > Sign In / Providers > Google` 中填入 Google Client ID 与 Client Secret 并启用 provider。
 
 用户授权完成后，Supabase 会回到前端 `/auth/callback`；前端使用 PKCE `exchangeCodeForSession` 建立会话并进入 `/app`。
+
+## 4. Cloudflare Turnstile（尚未启用）
+
+登录页部署后不会自动出现人机验证。启用需要前端组件、站点密钥和 Supabase Auth 后台配置一起完成：
+
+- 在 Cloudflare Turnstile 创建站点并绑定正式域名，选择 Managed 模式；是否要求点击由 Turnstile 判断，不能保证每次都显示复选框。
+- 公开 Site Key 交给前端组件；Secret Key 只配置在 Supabase Auth 的 CAPTCHA Protection 中，provider 选择 Turnstile，不能放入浏览器环境变量。
+- 前端收到验证 token 后，随邮箱登录、注册及未来的密码重置请求传入 `options.captchaToken`；处理验证失败、过期、请求后重置与重发验证码的流程，再开启服务端强制校验。
+- 当前只保留「忘记密码？」的无动作按钮，未渲染模拟验证框，未启用 Turnstile 或修改线上认证配置。
+
+配置依据：[Supabase CAPTCHA 文档](https://supabase.com/docs/guides/auth/auth-captcha)与[Cloudflare Turnstile](https://developers.cloudflare.com/turnstile/)。

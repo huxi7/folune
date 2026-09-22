@@ -2,7 +2,8 @@
 > L2 | 父级: ../../CLAUDE.md
 
 成员清单
-MarketingLayout.tsx: 首页、博客和动态持续挂载的公共壳，持有唯一 MarketingHeader/AuthDialog、Footer 与 Router ScrollRestoration；仅正文 Outlet 切换，路径变化聚焦主标题；useMarketingMotion 在滚动恢复后编排可视正文，路径/锚点原生过渡与一次性滚动浮现共用节奏，query 不重播
+MarketingLayout.tsx: 首页、登录、博客和动态持续挂载的公共壳，持有唯一 MarketingHeader 与 Router ScrollRestoration；登录内容使用弹性单屏布局并省去 Footer，其余页面保留 Footer，路径变化聚焦主标题；useMarketingMotion 在滚动恢复后编排可视正文，路径/锚点原生过渡与一次性滚动浮现共用节奏，query 不重播
+LoginPage.tsx: /login 公开认证页，384px 表单与完整 3:4 插画左右并置，共享首页公告和 Header；标题去除行末标点以视觉居中，视频作为无控件背景静音自动循环；AuthForm 独占认证步骤，成功仍经 /app Profile 守卫准入
 BlogPage.tsx: /blog 与 /updates 两个分区共用目录和 :slug 阅读页；section 选择独立内容集合、标题与目录路径，动态复用点阵标题及无封面整行列表并提供空状态；来路返回、正文、元信息、404 与同分区推荐共用实现，目录统一为无封面整行列表，Hero 上方空轨承载返回首页，列表由主页同高上下空轨包围，共享波浪侧纹仅覆盖列表高度、不进入空轨，空轨边界横线延伸到两侧外轨；博客保留同组阅读规则；全部文章/目录链接复用 MarketingLink，标题与阅读正文标记交给营销壳浮现，返回继续使用原历史状态
 workspacePreload.ts: 正文邻居与 Canvas 代码预热共用的在线/前台/省流/慢网判据，只约束非必要预取，不阻止主动打开
 workspacePreload.test.ts: 验证弱网、省流、后台与离线不预取，以及缺失 Network Information 时的兼容行为
@@ -41,7 +42,7 @@ viewTransition.ts: 同文档过渡唯一入口，也是纸面命名的唯一真�
 workspaceMotion.ts: 工作台领域适配层，从 DS motion.ts 重导出基础配置；只额外提供 tree FLIP 的 CSS 曲线与 JS 求值，使结构重排、树展开与归档端点共用 210ms 时间轴
 workspaceMotion.test.ts: 锁定唯一语义时长/spring/stagger 与纸面过渡规矩——承载正文的表面零过冲（控制点 ≤ 1）、纸壳等比取景（cover，非等比会把圆角拉成椭圆）、纸内正文永不缩放只被 image-pair 取景框裁切（object-fit: none + overflow: clip）、两端排版的交接严格互补（浏览器用 plus-lighter 混合，不互补就发灰或叠字）、四个方向的世界都不长于纸的形变、当前 300ms/240ms 曲线保持不变、预览→编辑区与编辑区→Canvas 都必须由路由纸面通道接管、入口 bootstrap 在单次 Canvas 挂载内保持不可变、只有纸与纸内正文拥有过渡身份；另锁画布会话的 deps 只认 (登录用户, 画布)，防止上层记录一次返回描述就 reset Store 并让预览在取景前消失；并跨 Canvas/Panel/Dialog/Cord 样式证明 reduced-motion 只保留 90ms 淡入
 
-职责: 页面层，承载 URL 级 Landing、OAuth 回调、受保护 Dashboard 与不进入生产状态的开发态视觉决策边界；Paper/Canvas 路由编排与 Canvas 增量布局/投影以协调 Hook 和纯函数收口，组件只消费结果。
+职责: 页面层，承载 URL 级 Landing、独立登录、OAuth 回调、受保护 Dashboard 与不进入生产状态的开发态视觉决策边界；Paper/Canvas 路由编排与 Canvas 增量布局/投影以协调 Hook 和纯函数收口，组件只消费结果。
 
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 

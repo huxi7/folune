@@ -19,16 +19,17 @@ useTreeReorder.ts: AppSidebar 结构重排 FLIP Hook，手势前捕获位置、�
 TreeDisclosure.tsx: 文件树与 DS Collapse 的薄适配，声明可打断、成对释放的归档运动租约，让 Overlay 跟随真实高度几何；不读取业务数据
 .gitkeep: 保留业务组合组件层空目录
 CLAUDE.md: 记录业务组合组件层职责与文档协议
-MarketingHeader.tsx: 首页/博客/动态共享的 56px 品牌、内容导航和双动作顶栏；核心功能、博客、使用指南、价格、关于、更多构成六项导航，更多直接进入 /updates，价格与下载正常可点但暂不执行动作；打开用 Secondary 复用唯一认证弹窗，下载用 Primary，query 保留博客来路和阅读位置；手机以第二行横向导航保留全部入口
-MarketingAnnouncement.tsx: 紧贴粘性导航下方、约为 Header 2/3 高且随页面滚走的无关闭公告栏，在背景全宽、1088px 主轨与正文对齐且宽屏带视口外轨的 BlueprintFrame 中居中呈现标签、正文与 2px 箭头反馈；hover 不填充蓝色背景
+MarketingHeader.tsx: 首页/登录/博客/动态共享的 56px 品牌、内容导航和双动作顶栏；六项导航及下载原样保留，打开用 Secondary 导航至 /login；认证状态归页面，顶栏不再挂载弹窗；手机以第二行横向导航保留全部入口
+MarketingAnnouncement.tsx: 首页与登录页共用的 37px 公告栏，保持既有文案、浅蓝渐变和 BlueprintDivider；链接统一指向首页工作流，可选 ref 只供 Hero 量取高度
 BlueprintFrame.tsx: Landing 纵向导轨容器；导航、1120px 正文与页脚共用主轨/外轨坐标，fullBleed 增加可选外轨，颜色由当前区块局部覆盖
 BlueprintDivider.tsx: Landing 横向导轨；14px 分隔带上下两条边分别共置横线与菱形，flush 提供零高度边界，compact 保留 7px 内部分隔带而不添加参考中没有的节点
-AuthDialog.tsx: 复用 BrandMark 紧边界图的登录/注册统一认证 Dialog，复用共享内凹 Input/PasswordInput 承载邮箱、双密码与显隐控制，并提供协议提示、六格 OTP 自动校验与 Google OAuth 入口
-LandingHero.tsx: 中文公告、60svh 居中 Hero、三列价值条与真实 UI 互动插槽；装配选定 02A HeroBackdrop，并量取 Header/公告/三栏高度为矮屏保留 64px 产品露出；三栏沿用用户定稿「专注记录 / 有序归档 / 连接想法」，LandingActions 与顶栏统一为 Secondary「打开」与 Primary「下载」预留动作，auth query 交给 MarketingHeader 唯一认证弹窗；边界复用通栏 BlueprintDivider
+AuthForm.tsx: LoginPage 的唯一认证表单，复用共享 Input/PasswordInput 承载邮箱、双密码与显隐控制；登录态增加无提交/导航行为的忘记密码占位，保留协议提示、六格 OTP 自动校验与 Google OAuth，认证成功通过回调交还页面导航
+AuthForm.test.tsx: 真实表单事件覆盖登录成功/失败、双密码校验和注册→六格 OTP 粘贴验证；仅替换认证服务，不发送真实认证请求
+LandingHero.tsx: 共享公告、60svh 居中 Hero、三列价值条与真实 UI 互动插槽；装配选定 02A HeroBackdrop，并量取 Header/公告/三栏高度为矮屏保留 64px 产品露出；三栏沿用定稿文案，LandingActions 的打开进入 /login，下载继续预留；边界复用通栏 BlueprintDivider
 LandingFeatureDetails.tsx: 第 11 区块的四项垂直居中展开说明、对应实景图与底部紧凑四格摘要；标题区和展开正文保留文章入口，底部只含标题和说明；固定展示区内以同源 CSS 时间轴协调行高、标题与正文，正文常驻并在收起时 inert，选中项只保持展开、不显示收起图标，图片不附重复图注；detail query 保留选中项，切换清除已消费的定位锚点，替换历史并保留其他查询/滚动，博客沿 fromBlog 协议返回
 landingDetailData.ts: 归档线、引用选择、同一份原文、Markdown 导出四项细节与完整指南；实景图与文章数据同源，BlogPost 仅类型依赖，不建立运行时反向导入
 LandingSections.tsx: 保留五项真实功能与文章入口、评价和信件；私有 LandingChapter 成对包围评价、产品功能组、指南和精选博客，共八条空轨；其中三种侧纹各在章节外框装配一次，连续贯穿空轨与正文，内侧横线仅画在主轨内；产品功能→关联展示→功能细节维持一章，相邻章节共用斜纹边界，其余区块独立持有展示与交互
-LandingFooter.tsx: 共用 DS 墨蓝的品牌区与产品/资源/关于/连接四组导航；16 项预留入口（产品 2、资源 8、关于 3、连接 3）以 aria-disabled link 语义展示且不跳转，打开网页版保留博客来路并复用本地认证；品牌与入口置顶、作者与版权置底；保留 Folune 淡描边与细纹层序，不放 PNG，BlueprintFrame 延续导轨
+LandingFooter.tsx: 共用 DS 墨蓝的品牌区与产品/资源/关于/连接四组导航；16 项预留入口以 aria-disabled link 语义展示且不跳转，打开网页版进入 /login；品牌与入口置顶、作者与版权置底；保留 Folune 淡描边与细纹层序，BlueprintFrame 延续导轨
 LandingMotion/: Landing 克制反馈模块；MarketingLink/useMarketingMotion 统一公开页面/锚点过渡与正文浮现，参数复用 DS，HeroBackdrop/ShowcaseBackdrop 保留背景职责，CountUp 处理数字变化
 NotebookPreview.tsx: 确定性首屏产品预览，DS 统一缩放淡入与显式卡片 lift 分处不同元素，阴影由 CSS 持有，内部布局不参与独立动画
 AppSidebar.tsx: 右键菜单通过 Portal 锚定视口，避免 Panel transform 改写 fixed 坐标；文件库内容与展开偏好的唯一所有者，负责创建/搜索、树/重命名/拖放意图、底部导航和唯一有效归档代表；重排交给 useTreeReorder，结构键按不可变树引用复用以跳过标题/摘要更新时的整树 FLIP 判据，子级尺寸交给 TreeDisclosure，业务事务仍由 Dashboard 持有

@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 React 的登录/注册/密码显隐/验证码局部状态与输入框引用，依赖本地 design-system 的 BrandMark、Button、Dialog、Input、PasswordInput，依赖 shared/supabase 认证服务
- * [OUTPUT]: 对外提供可切换登录与双密码注册、密码显隐、协议提示、六格邮箱验证码与 Google OAuth 的统一 Dialog
- * [POS]: app/src/widgets 的统一认证组件，被 MarketingHeader 消费；不直接持有 Supabase client
+ * [INPUT]: 依赖 React 的登录/注册/验证码局部状态与输入框引用、共享 Button/Input/PasswordInput，以及 shared/supabase 认证服务
+ * [OUTPUT]: 对外提供登录、双密码注册、六格邮箱验证码与 Google OAuth 共用的 AuthForm；忘记密码仅保留无动作按钮，认证成功只通知页面进入工作区
+ * [POS]: widgets 的唯一认证表单，由 LoginPage 承载；表单负责认证步骤，页面负责布局和导航，不直接持有 Supabase client
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import {
@@ -26,9 +26,7 @@ import {
   verifyEmailOtp,
 } from "../shared/supabase/auth";
 import {
-  BrandMark,
   Button,
-  Dialog,
   Input,
   PasswordInput,
 } from "../shared/design-system/components";
@@ -38,21 +36,15 @@ const OTP_LENGTH = 6;
 type AuthStep = "credentials" | "verification";
 type AuthMode = "login" | "register";
 
-type AuthDialogProps = {
+type AuthFormProps = {
   onAuthenticated: () => void;
-  onOpenChange: (open: boolean) => void;
-  open: boolean;
 };
 
 function createEmptyOtp() {
   return Array.from({ length: OTP_LENGTH }, () => "");
 }
 
-export function AuthDialog({
-  onAuthenticated,
-  onOpenChange,
-  open,
-}: AuthDialogProps) {
+export function AuthForm({ onAuthenticated }: AuthFormProps) {
   const [step, setStep] = useState<AuthStep>("credentials");
   const [mode, setMode] = useState<AuthMode>("login");
   const [email, setEmail] = useState("");
@@ -72,29 +64,6 @@ export function AuthDialog({
       otpInputRefs.current[0]?.focus();
     }
   }, [step]);
-
-  function resetDialog() {
-    setStep("credentials");
-    setMode("login");
-    setEmail("");
-    setPassword("");
-    setConfirmPassword("");
-    setShowPassword(false);
-    setShowConfirmPassword(false);
-    setOtp(createEmptyOtp());
-    setBusy(false);
-    setErrorMessage(null);
-    setNoticeMessage(null);
-    verificationInFlightRef.current = false;
-  }
-
-  function handleOpenChange(nextOpen: boolean) {
-    if (!nextOpen) {
-      resetDialog();
-    }
-
-    onOpenChange(nextOpen);
-  }
 
   async function handleCredentialsSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -258,23 +227,13 @@ export function AuthDialog({
   const isRegisterMode = mode === "register";
 
   return (
-    <Dialog
-      description={
-        isVerificationStep
-          ? `验证码已发送至 ${email.trim().toLowerCase()}`
-          : undefined
-      }
-      onOpenChange={handleOpenChange}
-      open={open}
-      title={
-        isVerificationStep
-          ? "验证邮箱"
-          : isRegisterMode
-            ? "注册 Folune"
-            : "登录 Folune"
-      }
-    >
-      <BrandMark className="justify-center" iconOnly />
+    <section aria-labelledby="auth-form-title" className="auth-card">
+      <h2 className={isVerificationStep ? "auth-verification-title" : "sr-only"} id="auth-form-title">
+        {isVerificationStep ? "验证邮箱" : isRegisterMode ? "注册 Folune" : "登录 Folune"}
+      </h2>
+      {isVerificationStep ? (
+        <p className="auth-verification-description">验证码已发送至 {email.trim().toLowerCase()}</p>
+      ) : null}
       {isVerificationStep ? (
         <div className="mt-5 space-y-4">
           <div className="grid grid-cols-6 gap-2" role="group" aria-label="六位邮箱验证码">
@@ -336,9 +295,7 @@ export function AuthDialog({
           </Button>
 
           <div className="auth-divider" aria-hidden="true">
-            <span />
             或
-            <span />
           </div>
 
           <label className="sr-only" htmlFor="auth-email">
@@ -347,7 +304,6 @@ export function AuthDialog({
           <Input
             autoComplete="username"
             className="auth-input w-full"
-            data-dialog-autofocus
             disabled={busy}
             id="auth-email"
             name="username"
@@ -400,6 +356,12 @@ export function AuthDialog({
             </>
           ) : null}
 
+          {!isRegisterMode ? (
+            <button className="auth-forgot-password" disabled={busy} type="button">
+              忘记密码？
+            </button>
+          ) : null}
+
           {errorMessage ? (
             <p aria-live="polite" className="text-sm leading-5 text-destructive">
               {errorMessage}
@@ -430,6 +392,6 @@ export function AuthDialog({
           </p>
         </form>
       )}
-    </Dialog>
+    </section>
   );
 }

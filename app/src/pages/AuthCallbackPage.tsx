@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 React effect/ref/state，依赖 react-router-dom 导航，依赖 shared/supabase 的 PKCE code 换取会话能力，依赖本地 design-system
- * [OUTPUT]: 对外提供 /auth/callback OAuth 回调页面，成功后直接进入 /app，失败时展示可恢复入口，并让会话 Spinner 尊重 reduced-motion
+ * [OUTPUT]: 对外提供 /auth/callback OAuth 回调页面，成功后直接进入 /app，失败时返回 /login，并让会话 Spinner 尊重 reduced-motion
  * [POS]: app/src/pages 的 Google OAuth 回调边界，被 app/router 引用
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -60,7 +60,7 @@ export function AuthCallbackPage() {
             <p className="mt-3 text-sm leading-6 text-muted-foreground">{errorMessage}</p>
             <Button
               className="mt-5"
-              onClick={() => navigate("/?auth=login", { replace: true })}
+              onClick={() => navigate("/login", { replace: true })}
               variant="primary"
             >
               返回登录

@@ -1,21 +1,22 @@
 /**
- * [INPUT]: 依赖共享 Button、BlueprintDivider、HeroBackdrop 与 LandingEditor；公告复用 MarketingLink，正文标记交给 MarketingLayout 编排浮现
+ * [INPUT]: 依赖共享 Button、MarketingAnnouncement、BlueprintDivider、HeroBackdrop 与 LandingEditor；/login 走原生过渡，正文标记交给 MarketingLayout 编排浮现
  * [OUTPUT]: 对外提供渐变公告、60svh 居中 Hero、定稿三列价值条与真实 UI 展示；量取顶栏/公告/三栏为矮屏保留产品露出空间
  * [POS]: widgets 的中文首页首屏；02A 背景独立加载，打开复用认证、下载以主按钮预留，与顶栏保持相同动作层级，分区边界复用通栏导轨和交点
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { Button } from "../shared/design-system/components";
 import { useEffect, useRef } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { BlueprintDivider } from "./BlueprintDivider";
 import { LandingEditor } from "./LandingEditor";
 import { HeroBackdrop } from "./LandingMotion/HeroBackdrop";
-import { MarketingLink as Link } from "./LandingMotion/MarketingLink";
+import { MarketingAnnouncement } from "./MarketingAnnouncement";
+import { supportsMarketingTransition } from "./LandingMotion/useMarketingMotion";
 
 export function LandingActions() {
-  const [, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   return <div className="landing-actions">
-    <Button variant="secondary" onClick={() => setSearchParams(previous => { const next = new URLSearchParams(previous); next.set("auth", "login"); return next; }, { replace: true, preventScrollReset: true })}>
+    <Button variant="secondary" onClick={() => navigate("/login", { viewTransition: supportsMarketingTransition() })}>
       打开
     </Button>
     <Button variant="primary">
@@ -46,7 +47,7 @@ export function LandingHero() {
   }, []);
 
   return <>
-    <div ref={announcementRef} className="landing-announcement"><span>认识 Folune：</span> <Link to="/#workflow">让记录自然发生，让想法有序生长 <span>→</span></Link><BlueprintDivider flush fullBleed /></div>
+    <MarketingAnnouncement ref={announcementRef} />
     <section ref={heroRef} className="landing-hero" aria-labelledby="landing-title">
       <HeroBackdrop />
       <div className="landing-hero-copy"><h1 data-marketing-reveal id="landing-title" tabIndex={-1}>随手记下，自然有序。</h1><p data-marketing-reveal>在 Folune，专注记录当下的想法。<br />让 AI 帮你整理、连接，再次发现。</p></div>

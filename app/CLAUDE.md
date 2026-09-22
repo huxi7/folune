@@ -8,17 +8,17 @@
 Canvas 已落地为一级持久 Workspace。memo 默认 Canvas 与 standalone Canvas 共用 React Flow 会话、WAL 与单一保存协调器；用户可从命令面板或文件树拖入 memo，预览/编辑原文、创建自由文字、连接/删除/拖拽/缩放并显式 AI 拓展。连接使用卡片底栏行尾抓手的拖/点等效路径（三个入口严格等距），临时弹性绳只活在 UI 且两端只有抓手与指针，并沉在卡片之下与已成立的关系线同层；路由离场先 flush，本地已持久但未同步时允许继续并诚实提示；页面重开、冲突、响应丢失和 pagehide 沿同一恢复协议处理。
 
 成员清单
-public/: 统一品牌母图、PNG Favicon、参考 Frame 素材/字体与 landing-features/landing-details/landing-connections 真实 APP 截图；功能网格、可展开细节与配套博客共用产品截图
+public/: 登录页 3:4 书房花园本地循环视频/首帧、统一品牌母图、PNG Favicon、参考 Frame 素材/字体与 landing-features/landing-details/landing-connections 真实 APP 截图；功能网格、可展开细节与配套博客共用产品截图
 MOTION_SYSTEM.md: A/B 全量源码取舍、统一 Motion Design 规范与实际验收记录
 demo.html: Landing 独立 UI 演示入口，CSP 禁止连接与表单提交；不装配 Auth/Router/持久化主题，和 index.html 一同构建
 hero-lab.html: 独立首屏实验入口，01A/02A 可调材质/高度，否决 B 版退出主选择；多组本地收藏及备份、旧配置兼容、可选既有 APP 衔接，不进入正式路由或构建清单
 index.html: Vite HTML 宿主页面，声明 V1 Classic Blueprint 默认画布、同步解析 App 的 system/light/dark 与 Landing 浅色画布 pre-paint bootstrap、提供 root 挂载点并引用品牌母图等比缩放的 PNG Favicon
 .env.example: app 浏览器环境变量模板，声明业务 API、chat 服务 base URL 与 Supabase 公开连接配置
-AUTH_SETUP.md: Supabase 邮箱确认模板、URL allow list、自定义 SMTP 限制与 Google OAuth 后台配置说明
+AUTH_SETUP.md: Supabase 邮箱确认模板、URL allow list、自定义 SMTP 限制与 Google OAuth 后台配置；记录尚未启用的 Turnstile 前后端接入要求及忘记密码占位边界
 brand-spec.md: SuperNote 品牌真相源，记录已选 Soft Ink Light/Dark 轴、Saving Processing 状态、8/10/12/16/20px 同心曲率、Button 微雾材质及历史候选
 vite.config.ts: Vite 配置，从 app/.env.local 加载浏览器环境，将开发服务器严格固定到 10000，连接 React/Tailwind 插件，并用 Rolldown 按 Markdown、Language、Features 与其余 CodeMirror/Lezer 拆分 chunk（React 不再单独成 chunk，避免把编辑器 vendor 焊进首屏闭包）
 bunfig.toml: bun test 配置，声明 preload 在任何测试文件之前补齐浏览器公开环境变量，使裸跑 `bun test` 即为真实结果
-src/main.tsx: React 挂载入口，注入 DS motion.ts 生成的 CSS 时长/曲线，以 MotionConfig reducedMotion=user 包围 ThemeProvider/ToastProvider/RouterProvider 并加载全局样式
+src/main.tsx: React 挂载入口，先加载 index.css 建立 theme/base/components/utilities 层序，避免路由局部样式先于全局样式到达时被 Preflight 覆盖；注入 DS motion.ts 生成的 CSS 时长/曲线，以 MotionConfig reducedMotion=user 包围 ThemeProvider/ToastProvider/RouterProvider 并加载全局样式
 src/testEnv.ts: 测试期浏览器公开配置的唯一兜底，只补立刻拒连的回环 Supabase 占位值且不覆盖已注入的真实值；产品代码永不导入
 src/index.css: Kumo/Tailwind v4 主题与样式入口（通用 Motion 的时长/曲线由 shared/design-system/motion.ts 单独生成），冻结 Quiet Editorial Color/Type/Spacing/Radius/Elevation/Motion、Paper 几何、Paper First 中性画布/纯净纸张及 light/dark 同轴语义，并隔离声明不写入生产主题的 Color Lab 蓝色终选候选、导入职责样式模块；浏览器元素基础规则下沉 global-base.css
 src/styles/: UI 样式实现层，以 global-base.css 收口文档根与 reduced-motion、landing.css 与 blog.css 隔离营销首页和公开博客、workspace.css 隔离 Paper/Panel/共享业务布局、note-paper.css 收口 Canvas 卡片缩略纸与全尺寸阅读纸共用的唯一纸面、knowledge-canvas.css 隔离 Canvas V2 Workspace 并收敛 React Flow 默认视觉，其余模块分别维护 design system、AI 消息、连线、认证、菜单与 CodeMirror；跨样式颜色插值统一使用 sRGB
@@ -33,11 +33,11 @@ bun.lock: Bun 锁定依赖版本
 tsconfig.json: TypeScript 编辑器与编译约束
 .gitignore: app 模块忽略规则
 
-2026-09-22 营销动效：首页、博客与动态继续共用一个 MarketingLayout，公开链接经 MarketingLink 接入 Router 原生 View Transition，历史返回和锚点在滚动落位后仅捕获可视正文。文字以 8px/360ms 上浮淡入、32ms 错峰且上限 128ms，顶栏固定、导轨和卡片骨架不位移；首次访问/无原生过渡时由同一 CSS 入场兜底，滚动按内容首次入视口播放。query 与 detail 清除已消费锚点不重播，减少动态立即呈现。此处覆盖旧版仅允许 3–4px reveal 的限制。
+2026-09-22 营销动效：首页、博客、动态及登录继续共用一个 MarketingLayout，公开链接经 MarketingLink 接入 Router 原生 View Transition，历史返回和锚点在滚动落位后仅捕获可视正文。文字以 8px/360ms 上浮淡入、32ms 错峰且上限 128ms，顶栏固定、导轨和卡片骨架不位移；首次访问/无原生过渡时由同一 CSS 入场兜底，滚动按内容首次入视口播放。query 与 detail 清除已消费锚点不重播，减少动态立即呈现。此处覆盖旧版仅允许 3–4px reveal 的限制。
 
 Landing 的 Zed 参考基线已于 2026-09-14 获用户确认冻结：代码节点 1e34367，Git 标记 landing-zed-baseline；后续在 codex/landing-supernote-stepwise 按用户指示逐项替换，默认保持已确认视觉关系。导航、1120px 正文与 Footer 复用 BlueprintFrame 的导轨坐标，公告保留参考浅蓝渐变；下文旧版 Landing 的纯白公告、1088px 主轨及无 BlueprintFrame 页脚描述不适用于该基线。首页仅禁止文档根的纵向越界回弹，正常滚动保留；Footer 下没有导入稿的 64px 留白。用户明确确认前，不将本次细节修正视为基线冻结。
 
-2026-09-14 中文化增量：Landing 主文案与元信息使用中文；英文继续使用原稿字体，中文回退既有 DS 的 Songti SC / PingFang SC 等字体栈。移除 Landing 私有按钮材质，复用现有 16px 平滑圆角与交互；Footer 与主按钮共读 --primary（浅色 #395875），背景、导轨、4px 细斜纹和 8% 字标保持。Hero/末端 CTA 登录通过 auth query 打开 MarketingHeader 唯一 AuthDialog，认证和后端 Profile 准入沿现有链路；Hero/末端 CTA 与顶栏统一为浅色打开与墨蓝下载，下载暂为正常可点击的预留动作。评价区为模拟机构字标与虚构账号引语组成的版式占位，文案以现有能力为依据，尚无真实用户背书；按用户要求不显示说明副标题。Footer 四组精简导航仅预留入口且不跳转，打开网页版复用现有认证。博客区保留三篇 Folune 精选文章与 SVG 封面；第 11 区块改为归档线、引用选择、同一份原文、Markdown 导出四项真实细节及独立指南，新增六篇独立记录方法指南，完整博客目录共十三篇，/blog 和 /blog/:slug 复用 MarketingLayout 顶栏、Footer 及 Router 滚动恢复，单篇使用独立居中点阵标题区、元信息下方返回按钮与导读正文；社区数据和扩展区已移除，替换为静态双纸面 AI 关联展示与六格指南；原三篇首页博客仍独立保留；顶栏按完整产品形态展示核心功能、博客、使用指南、价格、关于、更多；价格与下载先保留正常可点击外观且不执行动作，打开复用认证，下载使用墨蓝 Primary。更多直接进入 /updates 最新动态，其目录与阅读页复用 BlogPage，内容集合独立且暂为空；不恢复 Zed 外链、搜索占位或假下拉。
+2026-09-14 中文化增量：Landing 主文案与元信息使用中文；英文继续使用原稿字体，中文回退既有 DS 的 Songti SC / PingFang SC 等字体栈。移除 Landing 私有按钮材质，复用现有 16px 平滑圆角与交互；Footer 与主按钮共读 --primary（浅色 #395875），背景、导轨、4px 细斜纹和 8% 字标保持。Hero/末端 CTA、顶栏与 Footer 的打开统一导航到 /login，旧 auth=login 查询重定向到同一页面；LoginPage 复用 Header 与公告，以左侧 AuthForm 和右侧完整 3:4 本地循环视频承载认证，邮箱/注册/OTP/Google OAuth 和后端 Profile 准入沿现有链路；Hero/末端 CTA 与顶栏统一为浅色打开与墨蓝下载，下载暂为正常可点击的预留动作。评价区为模拟机构字标与虚构账号引语组成的版式占位，文案以现有能力为依据，尚无真实用户背书；按用户要求不显示说明副标题。Footer 四组精简导航仅预留入口且不跳转，打开网页版复用现有认证。博客区保留三篇 Folune 精选文章与 SVG 封面；第 11 区块改为归档线、引用选择、同一份原文、Markdown 导出四项真实细节及独立指南，新增六篇独立记录方法指南，完整博客目录共十三篇，/blog 和 /blog/:slug 复用 MarketingLayout 顶栏、Footer 及 Router 滚动恢复，单篇使用独立居中点阵标题区、元信息下方返回按钮与导读正文；社区数据和扩展区已移除，替换为静态双纸面 AI 关联展示与六格指南；原三篇首页博客仍独立保留；顶栏按完整产品形态展示核心功能、博客、使用指南、价格、关于、更多；价格与下载先保留正常可点击外观且不执行动作，打开复用认证，下载使用墨蓝 Primary。更多直接进入 /updates 最新动态，其目录与阅读页复用 BlogPage，内容集合独立且暂为空；不恢复 Zed 外链、搜索占位或假下拉。
 
 交互组件约束: 侧栏导航必须复用 SidebarButton；文件库 Header 左侧保留紧凑 BrandMark，右侧只放 32px Ghost 收起图标；根级新建与搜索固定同排且整行 32px：搜索是中性 SidebarButton 占据弹性槽，只负责打开全局 Command Palette，文件库内不得再拥有本地输入框或独立搜索结果树；新建是右侧约 96px 的 Primary split 控件，64px 主区带图标与「新建」文字直接新建备忘录，32px 下拉区显式选择备忘录/Canvas/文件夹，两区共享同一 10px 平滑外轮廓并以 1px 低对比线分隔。这一行在搜索打开后不消失、不换成输入框、不发生布局跳动，也禁止扩张为整行实心长条。Design System 与回收站位于文件树之外的同一底部导航列表，各占一行、规格一致且不显示额外分组标题；二者复用 12px/16px Label 角色与 560 字重，只靠位置、16px 图标和状态色建立安静层级，禁止额外插入 13px 字号。标准 APP/设置动作与 Input/Select 使用 36px 高度，侧栏导航、文件树与 Header 命令使用 32px compact 高度，二者共享 smooth-corner、16px 图标和交互材质而不强制等高；递归文件树的 folder/memo 行通过 12px/16px 文字、字重、颜色与逐级缩进承载高频浏览密度，不绘制永久父子导轨。文件夹开合只允许 Folder/FolderOpen 单一状态图标，不额外添加 Caret；同层文件夹与文件共享固定图标槽，标题必须严格对齐。树行单击只负责导航或开合，双击任意 folder/memo、右键重命名或聚焦后 F2 均进入同一原地 input；Enter/blur 提交，Escape 取消。文件树节点是固定位置的扁平列表项，hover/press 不得产生位移或抬升。原生拖拽预览按节点身份分型：folder 必须显示纯文件夹图标与单行截断名称，memo 只显示纯 SVG 图标；二者都禁止胶囊、方框、按钮背景或实体阴影，仅允许图标/文字底层的极淡虚化光晕。拖拽源保留原位并弱化到 40%。拖拽命中区不得改变行高、层间距或整体高度；before/after/root-end 使用 8px 起始圆点+2px 插入线，folder 中段只显示原位放入态，实际位置变化统一用约 210ms Web Animations FLIP。除文件树的扁平交互例外外，其他 SidebarButton 的选中态和 prominent 态必须直接复用无明显描边 Secondary Button 的自然表面与内外阴影，不得维护第二套材质；Button、SidebarButton、UserButton 与 Select 的 hover/open 状态必须固定原位和静止深度，仅允许通过颜色或边框反馈，Button/SidebarButton 只有 press 可保留 1px 下压。UserButton、Select 动作和侧栏工具按钮同样消费统一平滑圆角，不得使用局部曲率。账户入口统一打开小尺寸 4:3 AccountDialog；192px 左栏不绘制重复的大标题栏，只以小型分组标题组织真实页面，当前“通用”只包含账户与外观，新增能力时再增加栏目或分组。每次打开只后台刷新一次真实 Profile，并继续展示 loader 或本地更新维护的旧资料；返回时仅合并未被用户修改的字段，禁止清空为 Skeleton，栏目切换不得重复请求。账户 username/bio 在停止输入 800ms 后静默自动保存，仅异常通过 Toast 提示，不显示独立保存区或大按钮；模态框不得扩张为全屏设置页。瞬时业务反馈必须经根级 ToastProvider 发出，不在页面重复实现通知浮层。
 

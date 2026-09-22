@@ -18,7 +18,7 @@ Hero 背景定稿（2026-09-19）：正式页采用 02A GrainGradient wave，60s
 营销顶栏：56px 高度内增强品牌字标与导航间距，右侧打开/下载使用 DS 32px compact 高度、12px 横向留白与等宽列，保留共享材质和 14px 文字；手机导航换成独立横向第二行，锚点避让相应增加。
 
 成员清单
-marketing-motion.css: 首页/博客/动态共用 8px、360ms 正文浮现，32ms 错峰最多 128ms；原生路由快照中顶栏固定、导轨只淡换，可视正文独立入场，普通滚动用同一 CSS 曲线只播一次，减少动态立即显示，Paper 过渡不受影响
+marketing-motion.css: 首页/博客/动态/登录共用 8px、360ms 正文浮现，32ms 错峰最多 128ms；原生路由快照中顶栏固定、导轨只淡换，可视正文独立入场，普通滚动用同一 CSS 曲线只播一次，减少动态立即显示，Paper 过渡不受影响
 landing-demo.css: 独立 Demo 入口专用，限定视口与三栏等高、Paper/Canvas 互斥显示；不增加底部工具栏或新视觉皮肤
 blog.css: 博客与动态分区共用的目录/阅读样式，目录统一整行文字列表及空集合状态，Hero 顶部空轨放返回首页，列表复用 landing-chapter-gap 成对留白空轨，weave 侧纹以列表为定位边界、不覆盖上下空轨，空轨靠列表一侧的横线以 fullBleed 贯穿左右外轨，hover/focus 为中性灰底与主题色标题；index.css 在 Landing 后同层加载的博客样式，首页三列卡片保持原样，阅读页保留点阵标题区与居中返回、导读框和窄栏阅读；正文实景图保留原比例并附简短图注，继承 Landing 字体/墨蓝，768px 以下单列，无卡片位移动画
 motion.css: 通用 Motion 消费与验收布局层，Panel 内容窗口裁剪顶部浮现但不改变自身高度，保留式视图定位、通用浮层单一动画所有权、普通路由淡换及共享 Canvas/Select/User press；原 Paper 方向的几何节奏继续由 knowledge-canvas.css 拥有
@@ -34,7 +34,7 @@ paperGeometry.test.ts: 主 Paper 几何契约测试，锁定桌面 7:9 重叠基
 mobileToolbar.test.ts: 窄屏 Paper Toolbar 几何契约，锁定 479px 以下内边距/间距收紧；顶栏只剩 Quiet Accent 整理还带文字，因此需要收紧内边距的也只剩它一个
 ai-message.css: AgentPanel 与 Design System 共用的 AI 消息视觉层，承载 Primary 同源用户气泡、无卡片最终正文、最多五词常数节点错峰模糊拖尾、Formation ThinkingIndicator，以及带人话详情、灰阶结果符号和活动态 shimmer 的 Secondary 同源工具披露控件；流式正文不提供光标，非末条历史消息使用原生 content-visibility 降低长会话布局成本，末条保持完整测量，过程与正文之间只使用自然留白，不绘制固定分隔线
 aiMessagePerformance.test.ts: 静态锁定 Chat 历史消息 content-visibility 只作用于非末条，防止流式末尾滚动测量回归
-auth.css: 登录/注册 Dialog 专用样式，承载共享平面 Input/PasswordInput 的认证尺寸、自动填充、模式切换与协议提示
+auth.css: 独立登录页的 384px 表单/96px 桌面栏距与完整 3:4 背景视频布局，复用 Landing 纸色和 DS 材质；卡片以接触影/环境影/下投影构成轻实体表面，输入框 hover/focus 共用 3px 低透明度墨蓝光圈并覆盖通用外轮廓，眼睛无底色且只灰黑变化；标准窗口增加纵向留白，矮屏收紧至完整首屏，959px 以下保留单列表单
 design-system.css: Quiet Editorial 基础组件视觉层、BrandMark 已选③紧边界图/固定 SVG 字标的 5:4 布局比、94% 字形纵向光学收缩与统一间距比例（22px 图高基准，Demo 跟随 rem）与 ThinkingMark Formation Motion；Dialog 提供 panel/bare 表面及 motion=none 模式，而 motion=none 连遮罩都不自带淡入——遮罩自己淡入会被视图过渡拍成「新状态里没有磨砂」，于是背后内容整段清清楚楚、过渡结束才一下盖上来，磨砂因此交给 root 那对截图去带，只有不支持视图过渡的浏览器才由 @supports 兜一次 140ms。也正因为遮罩属于 root 那张截图而不是自带过渡身份，磨砂玻璃在这里是完整可用的，不必为了截图退化成一块不透明色；Input/Select、Skeleton/Loading 与 reduced-motion 规则继续由本层统一
 button.css: Button 专用视觉层；统一 36px 标准命令高度、14px/18px UI 文字、14px 横向留白、6px 图文间距、16px Control 曲率，以极轻 180deg 同色明度坡度、短中性落地阴影和不成环的宽淡面光恢复实体材质；hover 固定原位并放宽外影，press 共读 scale(var(--press-scale)) 且撤掉外影只留浅内压，Primary/Danger 仅有极弱同色环境层，Secondary 保持中性，Ghost 无实体阴影，Saving 继续使用 16 度倾斜窄光带
 sidebar-button.css: SidebarButton 专用 32px compact 平面视觉层，APP/账户导航与 36px 标准 Button 共享 16px Control 曲率而不强制等高；hover 消费全局中性 interactive-hover，active 只使用轻中性表面和墨色并共读全局 press 收紧比例，hover/press/选中不抬升，侧栏底部 Design System/回收站以 12px/16px Label 文字和 primary 前景色表达当前位置

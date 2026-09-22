@@ -1,9 +1,9 @@
 # SuperNote Motion System
 > 共同基线 `47dc927` · A `ec6d999` · B `3e1d344` · 实施分支 `codex/motion-system`
 
-2026-09-22 营销页面现行补充：公开导航通过 Router 原生 View Transition 接通首页/锚点/博客/文章/动态；MarketingLayout 在 ScrollRestoration 后仅为可视正文分配临时名称，顶栏固定，导轨只淡换。文字上浮 8px、360ms，32ms 错峰最多 128ms，原生快照与滚动 CSS 入场互斥；query 和 detail 清除锚点不重播。减少动态直接呈现，能力缺失则只保留正文 CSS 入场。参考 [Laper](https://laper.ai/) 的内容层入场与 [IBM Carbon](https://carbondesignsystem.com/elements/motion/choreography/) 的共享壳、有限错峰原则；不引入新动画依赖。
+2026-09-22 营销页面现行补充：公开导航通过 Router 原生 View Transition 接通首页/锚点/博客/文章/动态/登录；MarketingLayout 在 ScrollRestoration 后仅为可视正文分配临时名称，顶栏固定，导轨只淡换。文字上浮 8px、360ms，32ms 错峰最多 128ms，原生快照与滚动 CSS 入场互斥；query 和 detail 清除锚点不重播。减少动态直接呈现，能力缺失则只保留正文 CSS 入场。参考 [Laper](https://laper.ai/) 的内容层入场与 [IBM Carbon](https://carbondesignsystem.com/elements/motion/choreography/) 的共享壳、有限错峰原则；不引入新动画依赖。
 
-本次实现验证（2026-09-22）：真实浏览器已确认首页→博客→文章→返回、首页锚点、动态、连续导航、390px 窄屏、减少动态及缺失 View Transition 时的 CSS 兜底；文章返回原首页位置误差 0px，顶栏实例保持，detail query 更新未启动 reveal，滚动回已读区块未重播。浏览器读取到正文关键帧 8px→0、360ms、错峰 0–128ms。测试浏览器在无动画页面的 requestAnimationFrame 也约每秒一次，截图请求超时，因此上述是交互/关键帧/布局证据，不代表完整播放流畅度和视觉验收。构建、类型检查、现有 Motion 生命周期五项测试通过；lint 只有独立 Hero Lab Controls 的既有标签警告。
+本次实现验证（2026-09-22）：真实浏览器已确认首页→博客→文章→返回、首页锚点、动态、登录、连续导航、390px 窄屏、减少动态及缺失 View Transition 时的 CSS 兜底；文章返回原首页位置误差 0px，顶栏实例保持，detail query 更新未启动 reveal，滚动回已读区块未重播。浏览器读取到正文关键帧 8px→0、360ms、错峰 0–128ms。测试浏览器在无动画页面的 requestAnimationFrame 也约每秒一次，截图请求超时，因此上述是交互/关键帧/布局证据，不代表完整播放流畅度和视觉验收。构建、类型检查、现有 Motion 生命周期五项测试通过；lint 只有独立 Hero Lab Controls 的既有标签警告。
 
 ## A/B 评估与取舍
 

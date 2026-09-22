@@ -1,10 +1,9 @@
 /**
- * [INPUT]: 依赖 MarketingLink、Router 来路状态与认证入口、BlueprintFrame/Divider 与局部 Footer 样式
+ * [INPUT]: 依赖 MarketingLink 的 /login 过渡、BlueprintFrame/Divider 与局部 Footer 样式
  * [OUTPUT]: 对外提供品牌区、长短错落的四组 Folune 导航、上下分置的品牌署名与居中描边字标；待接通入口无跳转行为
- * [POS]: widgets 的营销页收尾；沿用正文导轨与 DS 墨蓝，认证复用首页弹窗，其余入口仅预留展示
+ * [POS]: widgets 的营销页收尾；沿用正文导轨与 DS 墨蓝，打开网页版进入统一登录页，其余入口仅预留展示
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
-import { useLocation } from "react-router-dom";
 import { MarketingLink as Link } from "./LandingMotion/MarketingLink";
 import { BlueprintDivider } from "./BlueprintDivider";
 import { BlueprintFrame } from "./BlueprintFrame";
@@ -17,7 +16,6 @@ const columns = [
 ];
 
 export function LandingFooter() {
-  const { state } = useLocation();
   return (
     <footer className="landing-footer">
       <BlueprintDivider flush fullBleed />
@@ -26,7 +24,7 @@ export function LandingFooter() {
           <div className="landing-footer-brand">
             <p className="landing-footer-title">Folune</p>
             <div className="landing-footer-auth">
-              <Link to="?auth=login" replace preventScrollReset state={state}>打开网页版</Link>
+              <Link to="/login">打开网页版</Link>
             </div>
             <div className="landing-footer-colophon">
               <p>由 huxi 设计与构建</p>

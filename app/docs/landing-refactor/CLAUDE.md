@@ -2,6 +2,7 @@
 > L2 | 父级: ../CLAUDE.md
 
 成员清单
+login-page.md: Laper 登录构图的实际测量、独立 /login 与本地 3:4 视频接入、认证迁移边界和浏览器/工程验证结果
 compact-sections-review.md: 三张截图反馈后的密度精修，记录关联叙述与原句标记、240px 指南、实际尺寸和验证边界
 compact-connections-1440.png: 2026-09-20 密度精修后关联区桌面局部实景
 compact-guides-1440.png: 2026-09-20 密度精修后三列两行指南桌面局部实景

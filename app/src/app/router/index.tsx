@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 React lazy/Suspense、react-router-dom loader/redirect/useLocation、共享 Skeleton/延迟策略、Supabase Auth token 读取与后端 Profile API
- * [OUTPUT]: 对外提供共享营销壳的首页、/blog 与 /updates 目录和各自 :slug 阅读页、OAuth 回调、受保护 /app 与 /app/notes/:noteId 路由、仅开发态实验页，以及区分索引/详情深链的首屏等待面
+ * [OUTPUT]: 对外提供共享营销壳的首页、独立 /login、/blog 与 /updates 目录和各自 :slug 阅读页、旧 auth query 重定向、OAuth 回调、受保护工作区与仅开发态实验页
  * [POS]: app/src/app/router 的路由装配文件；静态身份、Profile 与轻量 tree loader 并行装配，Dashboard 直接消费 bootstrap；/app 索引等待由 Paper 壳承接，详情深链先用中性全屏面；左右工具偏好在 Dashboard 获得用户后恢复
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -141,7 +141,7 @@ async function requireWorkspace({ request }: LoaderFunctionArgs) {
     const accessToken = await getAuthenticatedAccessToken();
 
     if (accessToken === null) {
-      throw redirect("/?auth=login");
+      throw redirect("/login");
     }
 
     const [profile, memoTree] = await Promise.all([
@@ -152,7 +152,7 @@ async function requireWorkspace({ request }: LoaderFunctionArgs) {
     return { accessToken, memoTree, profile };
   } catch (error) {
     if (isUnauthorizedApiError(error)) {
-      throw redirect("/?auth=login");
+      throw redirect("/login");
     }
 
     throw error;
@@ -163,8 +163,14 @@ export const router = createBrowserRouter([
   {
     path: "/",
     element: <MarketingLayout />,
+    hydrateFallbackElement: <RouteFallback />,
+    // ---- 已分享的旧认证地址仍进入同一登录页，不再挂载弹窗 ----
+    loader: ({ request }) => new URL(request.url).searchParams.get("auth") === "login"
+      ? redirect("/login")
+      : null,
     children: [
       { index: true, element: <LandingPage /> },
+      { path: "login", lazy: async () => ({ Component: (await import("../../pages/LoginPage")).LoginPage }) },
       { path: "blog", element: <BlogPage /> },
       { path: "blog/:slug", element: <BlogPage /> },
       { path: "updates", element: <BlogPage section="updates" /> },
