@@ -1,17 +1,15 @@
 /**
- * [INPUT]: 依赖 guidePosts 的同源文章元信息、GuideIllustration 线稿、LandingRailTexture 与 Router Link
- * [OUTPUT]: 对外提供分类与序号同源的紧凑六格 LandingGuides，侧轨延伸横纵交织纹样，与旧锚点兼容
- * [POS]: 功能细节与创作者信之间的方法目录；与信件后的精选博客独立分工，共用文章阅读协议
+ * [INPUT]: 依赖 guidePosts 的同源文章元信息、GuideIllustration 线稿与 Router Link
+ * [OUTPUT]: 对外提供分类与序号同源、兼容旧锚点的紧凑六格 LandingGuides
+ * [POS]: 功能细节与创作者信之间的方法目录；上下空轨与连续交织侧纹由 LandingSections 的章节外框持有；与信件后的精选博客独立分工，共用文章阅读协议
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { Link } from "react-router-dom";
 import { guidePosts } from "./guidePosts";
 import { GuideIllustration } from "./GuideIllustration";
-import { LandingRailTexture } from "./LandingRailTexture";
 
 export function LandingGuides() {
-  return <section id="guides" className="landing-guides landing-rail-section" aria-labelledby="landing-guides-title">
-    <LandingRailTexture variant="weave" />
+  return <section id="guides" className="landing-guides" aria-labelledby="landing-guides-title">
     <span id="use-cases" className="landing-legacy-anchor" aria-hidden="true" />
     <span id="extensions" className="landing-legacy-anchor" aria-hidden="true" />
     <header className="landing-guides-heading">
