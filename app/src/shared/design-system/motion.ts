@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Motion 的 Transition/Variants 类型与 CSS 自定义属性协议
- * [OUTPUT]: 对外提供语义时长、曲线、有限 spring、surface 变体与同源 CSS token 声明
+ * [OUTPUT]: 对外提供语义时长、曲线、有限 spring、surface 变体与含错峰步长/上限的同源 CSS token 声明
  * [POS]: Design System 的唯一通用动效语言；组件不复制数字，纸面/绳线的领域几何仍归 pages/widgets
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -103,7 +103,7 @@ export function surfaceVariants(kind: SurfaceMotion, reduced: boolean, placement
 const cssName = (name: string) => name.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
 export const motionTokenStyles = `:root{${Object.entries(motionDuration)
   .map(([name, seconds]) => `--motion-${cssName(name)}:${seconds * 1000}ms;`).join("")}${Object.entries(motionEase)
-  .map(([name, points]) => `--ease-${name}:cubic-bezier(${points.join(",")});`).join("")}}
+  .map(([name, points]) => `--ease-${name}:cubic-bezier(${points.join(",")});`).join("")}--motion-stagger-step:${staggerStepMs}ms;--motion-stagger-max:${staggerMaxMs}ms;}
 @media(prefers-reduced-motion:reduce){:root{--motion-press:90ms;--motion-micro-enter:90ms;--motion-micro-exit:90ms;--motion-panel-enter:90ms;--motion-panel-exit:90ms;--motion-modal-enter:90ms;--motion-modal-exit:90ms;--motion-view-enter:90ms;--motion-view-exit:90ms;--motion-tree:0ms;--motion-reveal:90ms;}}`;
 
 export function revealVariants(reduced: boolean, scale = false): Variants {

@@ -18,6 +18,7 @@ Hero 背景定稿（2026-09-19）：正式页采用 02A GrainGradient wave，60s
 营销顶栏：56px 高度内增强品牌字标与导航间距，右侧打开/下载使用 DS 32px compact 高度、12px 横向留白与等宽列，保留共享材质和 14px 文字；手机导航换成独立横向第二行，锚点避让相应增加。
 
 成员清单
+marketing-motion.css: 首页/博客/动态共用 8px、360ms 正文浮现，32ms 错峰最多 128ms；原生路由快照中顶栏固定、导轨只淡换，可视正文独立入场，普通滚动用同一 CSS 曲线只播一次，减少动态立即显示，Paper 过渡不受影响
 landing-demo.css: 独立 Demo 入口专用，限定视口与三栏等高、Paper/Canvas 互斥显示；不增加底部工具栏或新视觉皮肤
 blog.css: 博客与动态分区共用的目录/阅读样式，目录统一整行文字列表及空集合状态，Hero 顶部空轨放返回首页，列表复用 landing-chapter-gap 成对留白空轨，weave 侧纹以列表为定位边界、不覆盖上下空轨，空轨靠列表一侧的横线以 fullBleed 贯穿左右外轨，hover/focus 为中性灰底与主题色标题；index.css 在 Landing 后同层加载的博客样式，首页三列卡片保持原样，阅读页保留点阵标题区与居中返回、导读框和窄栏阅读；正文实景图保留原比例并附简短图注，继承 Landing 字体/墨蓝，768px 以下单列，无卡片位移动画
 motion.css: 通用 Motion 消费与验收布局层，Panel 内容窗口裁剪顶部浮现但不改变自身高度，保留式视图定位、通用浮层单一动画所有权、普通路由淡换及共享 Canvas/Select/User press；原 Paper 方向的几何节奏继续由 knowledge-canvas.css 拥有

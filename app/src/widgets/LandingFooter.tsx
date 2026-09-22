@@ -1,10 +1,11 @@
 /**
- * [INPUT]: 依赖 React Router 来路状态与认证入口、BlueprintFrame/Divider 与局部 Footer 样式
+ * [INPUT]: 依赖 MarketingLink、Router 来路状态与认证入口、BlueprintFrame/Divider 与局部 Footer 样式
  * [OUTPUT]: 对外提供品牌区、长短错落的四组 Folune 导航、上下分置的品牌署名与居中描边字标；待接通入口无跳转行为
  * [POS]: widgets 的营销页收尾；沿用正文导轨与 DS 墨蓝，认证复用首页弹窗，其余入口仅预留展示
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
-import { Link, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
+import { MarketingLink as Link } from "./LandingMotion/MarketingLink";
 import { BlueprintDivider } from "./BlueprintDivider";
 import { BlueprintFrame } from "./BlueprintFrame";
 

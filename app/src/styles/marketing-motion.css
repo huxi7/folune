@@ -1,0 +1,57 @@
+/**
+ * [INPUT]: 依赖 MarketingLayout 原生过渡状态、正文 reveal 标记及 DS 同源时长/曲线/错峰 token
+ * [OUTPUT]: 对外提供 8px/360ms 正文浮现、有限错峰、固定顶栏与页面淡换；减少动态直接显示
+ * [POS]: Landing/博客/动态共用的动效表现层；只移动内容，不移动导轨或卡片骨架，不介入 Paper 过渡
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+@layer components {
+  .landing-blueprint [data-marketing-phase="pending"] { opacity:0; translate:0 8px; }
+  .landing-blueprint [data-marketing-phase="entering"] {
+    animation:marketing-reveal var(--motion-spatial) var(--ease-enter) var(--marketing-delay,0ms) both;
+  }
+  .landing-blueprint[data-marketing-transition] .marketing-header { view-transition-name:marketing-header; }
+}
+
+@keyframes marketing-reveal {
+  from { opacity:0; translate:0 8px; }
+  to { opacity:1; translate:0 0; }
+}
+@keyframes marketing-fade-out { from { opacity:1; } to { opacity:0; } }
+@keyframes marketing-fade-in { from { opacity:0; } }
+
+@media (prefers-reduced-motion:no-preference) {
+  html:has([data-marketing-transition])::view-transition { pointer-events:none; }
+  html:has([data-marketing-transition])::view-transition-old(root) {
+    animation:marketing-fade-out var(--motion-micro-enter) linear both;
+  }
+  html:has([data-marketing-transition])::view-transition-new(root) {
+    animation:marketing-fade-in var(--motion-micro-enter) linear both;
+  }
+  ::view-transition-group(marketing-header),
+  ::view-transition-new(marketing-header) { animation:none; }
+  ::view-transition-group(marketing-header) { z-index:1; }
+  ::view-transition-old(marketing-header) { display:none; }
+  ::view-transition-new(marketing-header) { mix-blend-mode:normal; }
+
+  /* 同名表示同一页的 query 更新，保持原位；只有新内容才上浮，旧内容只淡出。 */
+  ::view-transition-group(.marketing-copy) { animation:none; }
+  ::view-transition-old(.marketing-copy) { animation:none; opacity:0; mix-blend-mode:normal; }
+  ::view-transition-new(.marketing-copy) { animation:none; opacity:1; mix-blend-mode:normal; }
+  ::view-transition-old(.marketing-copy):only-child {
+    animation:marketing-fade-out var(--motion-micro-exit) var(--ease-exit) both;
+  }
+  ::view-transition-new(.marketing-copy):only-child {
+    animation:marketing-reveal var(--motion-spatial) var(--ease-enter) both;
+  }
+  ::view-transition-new(.marketing-step-1):only-child { animation-delay:var(--motion-stagger-step); }
+  ::view-transition-new(.marketing-step-2):only-child { animation-delay:calc(var(--motion-stagger-step) * 2); }
+  ::view-transition-new(.marketing-step-3):only-child { animation-delay:calc(var(--motion-stagger-step) * 3); }
+  ::view-transition-new(.marketing-step-4):only-child { animation-delay:var(--motion-stagger-max); }
+}
+
+@media (prefers-reduced-motion:reduce) {
+  .landing-blueprint [data-marketing-reveal] { animation:none !important; opacity:1 !important; translate:none !important; }
+  html:has(.landing-blueprint)::view-transition-group(*),
+  html:has(.landing-blueprint)::view-transition-old(*),
+  html:has(.landing-blueprint)::view-transition-new(*) { animation:none !important; }
+}

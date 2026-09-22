@@ -1,12 +1,13 @@
 /**
- * [INPUT]: 依赖共享 Button、BlueprintFrame/Divider、BrandMark、Router 站内导航与既有 query 驱动认证弹窗
+ * [INPUT]: 依赖共享 Button、BlueprintFrame/Divider、BrandMark、MarketingLink 站内过渡与既有 query 驱动认证弹窗
  * [OUTPUT]: 对外提供品牌、六项内容导航与打开/下载双动作；价格与下载保留正常可点击外观，更多进入独立动态分区
  * [POS]: widgets 的共享营销导航；认证成功仍经现有路由进入工作区，不改变登录协议
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { AnimatePresence } from "motion/react";
 import { lazy, Suspense } from "react";
-import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { MarketingLink as Link } from "./LandingMotion/MarketingLink";
 
 import { BrandMark, Button } from "../shared/design-system/components";
 

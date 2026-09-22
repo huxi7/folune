@@ -2,8 +2,8 @@
 > L2 | 父级: ../../CLAUDE.md
 
 成员清单
-MarketingLayout.tsx: 首页、博客和动态持续挂载的公共壳，持有唯一 MarketingHeader/AuthDialog、Footer 与 Router ScrollRestoration；仅正文 Outlet 切换，路径变化聚焦主标题
-BlogPage.tsx: /blog 与 /updates 两个分区共用目录和 :slug 阅读页；section 选择独立内容集合、标题与目录路径，动态复用点阵标题及无封面整行列表并提供空状态；来路返回、正文、元信息、404 与同分区推荐共用实现，目录统一为无封面整行列表，Hero 上方空轨承载返回首页，列表由主页同高上下空轨包围，共享波浪侧纹仅覆盖列表高度、不进入空轨，空轨边界横线延伸到两侧外轨；博客保留同组阅读规则
+MarketingLayout.tsx: 首页、博客和动态持续挂载的公共壳，持有唯一 MarketingHeader/AuthDialog、Footer 与 Router ScrollRestoration；仅正文 Outlet 切换，路径变化聚焦主标题；useMarketingMotion 在滚动恢复后编排可视正文，路径/锚点原生过渡与一次性滚动浮现共用节奏，query 不重播
+BlogPage.tsx: /blog 与 /updates 两个分区共用目录和 :slug 阅读页；section 选择独立内容集合、标题与目录路径，动态复用点阵标题及无封面整行列表并提供空状态；来路返回、正文、元信息、404 与同分区推荐共用实现，目录统一为无封面整行列表，Hero 上方空轨承载返回首页，列表由主页同高上下空轨包围，共享波浪侧纹仅覆盖列表高度、不进入空轨，空轨边界横线延伸到两侧外轨；博客保留同组阅读规则；全部文章/目录链接复用 MarketingLink，标题与阅读正文标记交给营销壳浮现，返回继续使用原历史状态
 workspacePreload.ts: 正文邻居与 Canvas 代码预热共用的在线/前台/省流/慢网判据，只约束非必要预取，不阻止主动打开
 workspacePreload.test.ts: 验证弱网、省流、后台与离线不预取，以及缺失 Network Information 时的兼容行为
 MotionLabPage.tsx: DEV /motion-lab 无鉴权验收入口，复用生产 MotionSpecimen，所有交互只更新本地 fixture 状态，并链接真实 AppSidebar/归档线验收台

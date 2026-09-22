@@ -33,6 +33,8 @@ bun.lock: Bun 锁定依赖版本
 tsconfig.json: TypeScript 编辑器与编译约束
 .gitignore: app 模块忽略规则
 
+2026-09-22 营销动效：首页、博客与动态继续共用一个 MarketingLayout，公开链接经 MarketingLink 接入 Router 原生 View Transition，历史返回和锚点在滚动落位后仅捕获可视正文。文字以 8px/360ms 上浮淡入、32ms 错峰且上限 128ms，顶栏固定、导轨和卡片骨架不位移；首次访问/无原生过渡时由同一 CSS 入场兜底，滚动按内容首次入视口播放。query 与 detail 清除已消费锚点不重播，减少动态立即呈现。此处覆盖旧版仅允许 3–4px reveal 的限制。
+
 Landing 的 Zed 参考基线已于 2026-09-14 获用户确认冻结：代码节点 1e34367，Git 标记 landing-zed-baseline；后续在 codex/landing-supernote-stepwise 按用户指示逐项替换，默认保持已确认视觉关系。导航、1120px 正文与 Footer 复用 BlueprintFrame 的导轨坐标，公告保留参考浅蓝渐变；下文旧版 Landing 的纯白公告、1088px 主轨及无 BlueprintFrame 页脚描述不适用于该基线。首页仅禁止文档根的纵向越界回弹，正常滚动保留；Footer 下没有导入稿的 64px 留白。用户明确确认前，不将本次细节修正视为基线冻结。
 
 2026-09-14 中文化增量：Landing 主文案与元信息使用中文；英文继续使用原稿字体，中文回退既有 DS 的 Songti SC / PingFang SC 等字体栈。移除 Landing 私有按钮材质，复用现有 16px 平滑圆角与交互；Footer 与主按钮共读 --primary（浅色 #395875），背景、导轨、4px 细斜纹和 8% 字标保持。Hero/末端 CTA 登录通过 auth query 打开 MarketingHeader 唯一 AuthDialog，认证和后端 Profile 准入沿现有链路；Hero/末端 CTA 与顶栏统一为浅色打开与墨蓝下载，下载暂为正常可点击的预留动作。评价区为模拟机构字标与虚构账号引语组成的版式占位，文案以现有能力为依据，尚无真实用户背书；按用户要求不显示说明副标题。Footer 四组精简导航仅预留入口且不跳转，打开网页版复用现有认证。博客区保留三篇 Folune 精选文章与 SVG 封面；第 11 区块改为归档线、引用选择、同一份原文、Markdown 导出四项真实细节及独立指南，新增六篇独立记录方法指南，完整博客目录共十三篇，/blog 和 /blog/:slug 复用 MarketingLayout 顶栏、Footer 及 Router 滚动恢复，单篇使用独立居中点阵标题区、元信息下方返回按钮与导读正文；社区数据和扩展区已移除，替换为静态双纸面 AI 关联展示与六格指南；原三篇首页博客仍独立保留；顶栏按完整产品形态展示核心功能、博客、使用指南、价格、关于、更多；价格与下载先保留正常可点击外观且不执行动作，打开复用认证，下载使用墨蓝 Primary。更多直接进入 /updates 最新动态，其目录与阅读页复用 BlogPage，内容集合独立且暂为空；不恢复 Zed 外链、搜索占位或假下拉。
