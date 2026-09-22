@@ -22,7 +22,7 @@ MarketingHeader.tsx: 首页/博客/动态共享的 56px 品牌、内容导航和
 MarketingAnnouncement.tsx: 紧贴粘性导航下方、约为 Header 2/3 高且随页面滚走的无关闭公告栏，在背景全宽、1088px 主轨与正文对齐且宽屏带视口外轨的 BlueprintFrame 中居中呈现标签、正文与 2px 箭头反馈；hover 不填充蓝色背景
 BlueprintFrame.tsx: Landing 纵向导轨容器；导航、1120px 正文与页脚共用主轨/外轨坐标，fullBleed 增加可选外轨，颜色由当前区块局部覆盖
 BlueprintDivider.tsx: Landing 横向导轨；14px 分隔带上下两条边分别共置横线与菱形，flush 提供零高度边界，compact 保留 7px 内部分隔带而不添加参考中没有的节点
-AuthDialog.tsx: 复用 BrandMark 原图的登录/注册统一认证 Dialog，复用共享内凹 Input/PasswordInput 承载邮箱、双密码与显隐控制，并提供协议提示、六格 OTP 自动校验与 Google OAuth 入口
+AuthDialog.tsx: 复用 BrandMark 紧边界图的登录/注册统一认证 Dialog，复用共享内凹 Input/PasswordInput 承载邮箱、双密码与显隐控制，并提供协议提示、六格 OTP 自动校验与 Google OAuth 入口
 LandingHero.tsx: 中文公告、居中 Hero、三列价值条与真实 UI 互动插槽；三栏采用用户于 2026-09-18 确认的 Demo 定稿「专注记录 / 有序归档 / 连接想法」，说明分别强调先写后分类、归档去向与撤销、画布继续思考；LandingActions 与顶栏统一为 Secondary「打开」与 Primary「下载」预留动作，auth query 交给 MarketingHeader 唯一认证弹窗；分区仍复用通栏 BlueprintDivider
 LandingFeatureDetails.tsx: 第 11 区块的四项垂直居中展开说明、对应实景图与底部紧凑四格摘要；标题区和展开正文保留文章入口，底部只含标题和说明；固定展示区内以同源 CSS 时间轴协调行高、标题与正文，正文常驻并在收起时 inert，选中项只保持展开、不显示收起图标，图片不附重复图注；detail query 保留选中项，切换清除已消费的定位锚点，替换历史并保留其他查询/滚动，博客沿 fromBlog 协议返回
 landingDetailData.ts: 归档线、引用选择、同一份原文、Markdown 导出四项细节与完整指南；实景图与文章数据同源，BlogPost 仅类型依赖，不建立运行时反向导入

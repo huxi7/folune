@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 侧栏滚动区用共享 space-3 抵消父容器内缩；AI 切换加载壳复用 design-system.css 的 Skeleton 材质；依赖设计系统半径/曲线与 index.css 的 Paper First token、4px 空间基线、32/36/48px 控件阶梯及 Tailwind v4 layer
+ * [INPUT]: 侧栏窄宽仅隐藏共享 BrandMark 字标；侧栏滚动区用共享 space-3 抵消父容器内缩；AI 切换加载壳复用 design-system.css 的 Skeleton 材质；依赖设计系统半径/曲线与 index.css 的 Paper First token、4px 空间基线、32/36/48px 控件阶梯及 Tailwind v4 layer
  * [OUTPUT]: 对外提供设置/订阅/回收站、桌面 7:9 Editorial Paper、创建 split、浮动文件库/AI、会话目标窗加载骨架、窄屏抽屉与业务布局
  * [POS]: app/src/styles 的产品工作区布局层；中性 Stage 只衬托唯一 Paper，写作区纸壳与纸内正文分属 .paper/.paper-body 两个视图过渡分类（节奏见 knowledge-canvas.css），左右常驻 Panel 保持各自边缘锚定，Panel 开合不改变 Stage/Paper/Canvas 几何，resize 期间禁用布局动画，删除快照只占视觉层且不接收指针。层序在此显式声明而不交给 DOM 顺序：容器（Panel 60/80、Stage 角标 70）< 归档线 84 < 弹层（85/90+），侧栏 header/footer 2 > 树 1；纸的比例基线与顶栏都不得建立滚动容器或参与列定宽；顶栏凝结只有一个被动画的量（`--toolbar-condense-progress`），实底与下缘软边的高度/模糊/遮罩都在消费点乘它算出来，因此不存在两个能各自被改坏的几何值；铺开的是同一个 `--paper-surface` 而不是第二种表面，且**不画任何 hairline**；实底锚在顶栏下沿向上长满「顶栏 + 一条 inset」，因此顶栏上方那条留白里只有纸而没有正文，软边起点恒为常量
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -333,7 +333,6 @@
    */
   .app-sidebar-header { position: relative; z-index: 2; flex-shrink: 0; padding-bottom: var(--space-1); }
   .app-sidebar-heading { display: flex; height: var(--panel-header-height); min-height: var(--panel-header-height); align-items: center; justify-content: space-between; gap: var(--panel-header-gap); padding-inline: 0.15rem; }
-  .app-sidebar-heading .ds-brand-mark + div > p { font-size: 0.8125rem; font-weight: 620; }
   .sidebar-collapse-button.ds-button.ds-button-size-square,
   .sidebar-collapse-button.ds-button { --button-surface-hover: var(--interactive-hover); --button-face-top-hover: var(--interactive-hover); --button-face-bottom-hover: var(--interactive-hover); }
   .app-sidebar-heading .ds-button-content > svg,
@@ -846,7 +845,7 @@ html[data-panel-resizing="true"] .paper-surface { animation: none !important; tr
 }
 
 @container app-sidebar (max-width: 13.75rem) {
-  .app-sidebar-heading .ds-brand-mark + div {
+  .app-sidebar-heading .ds-brand-wordmark {
     display: none;
   }
 }

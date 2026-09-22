@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖设计系统的半径/曲线配对规则与 index.css 的 Quiet Editorial 语义 Color/Type/Spacing/Radius/Elevation/Motion、统一中性 interactive-hover 与 Tailwind v4 layer
- * [OUTPUT]: 统一业务/Select/账户弹出菜单的唯一材质规则； 对外提供平面 Input/Select/Card、原始透明母图 BrandMark、克制 Dialog panel/bare 与 default|none 入场（motion=none 交出入场编排给 root 视图过渡，因此磨砂玻璃得以保留）、Skeleton/Thinking/loading 信息态；Select 临时指向状态与普通菜单共享中性 hover，Button 由 button.css 独立维护
+ * [OUTPUT]: 统一业务/Select/账户弹出菜单的唯一材质规则； 对外提供平面 Input/Select/Card、紧边界图与 5:4 图字比的固定字标 BrandMark、克制 Dialog panel/bare 与 default|none 入场（motion=none 交出入场编排给 root 视图过渡，因此磨砂玻璃得以保留）、Skeleton/Thinking/loading 信息态；Select 临时指向状态与普通菜单共享中性 hover，Button 由 button.css 独立维护
  * [POS]: app/src/styles 的组件视觉层，被 index.css 统一导入
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -275,13 +275,33 @@
     color: var(--accent-foreground);
   }
 
-  /* 品牌母图保持完整透明画布；只缩放，不叠加主题色或材质。 */
+  /* ---- 统一品牌比例：图标比字标高 25%；22px 基准下保留 7px 净间距 ---- */
+  .ds-brand {
+    --brand-height: var(--brand-size, 1.375rem);
+    display: flex;
+    align-items: center;
+    gap: calc(var(--brand-height) * 7 / 22);
+    flex-shrink: 0;
+  }
+
+  /* 独立图形沿用原 40px 母图的可见体量；场景可覆盖可见高度。 */
+  .ds-brand[data-icon-only="true"] { --brand-height: var(--brand-size, calc(40px * 851 / 1254)); }
+
   .ds-brand-mark {
     display: block;
-    width: var(--brand-size, 40px);
-    height: var(--brand-size, 40px);
+    width: calc(var(--brand-height) * 791 / 851);
+    height: var(--brand-height);
     flex-shrink: 0;
     object-fit: contain;
+  }
+
+  .ds-brand-wordmark {
+    display: block;
+    height: calc(var(--brand-height) * 4 / 5);
+    width: auto;
+    aspect-ratio: 301.7 / 75;
+    flex-shrink: 0;
+    overflow: visible;
   }
 
   .ds-dialog-panel {

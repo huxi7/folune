@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖真实 APP 功能截图、Router Link、LandingConnections、LandingGuides、LandingFeatureDetails、LandingBlog、BlueprintDivider、共享 BrandMark 与 huxi 头像
+ * [INPUT]: 依赖真实 APP 功能截图、Router Link、LandingConnections、LandingGuides、LandingFeatureDetails、LandingBlog、BlueprintDivider、共享 BrandMark 图字组合/独立印章与 huxi 头像
  * [OUTPUT]: 对外提供五项图文一一对应的 Folune 功能与整理/画布文章入口，以及真实关联展示、独立功能细节、六篇方法指南、评价占位、创作者信件和博客
  * [POS]: widgets 的营销叙事组合；创作者信件沿用首稿叙事，与 Laper 参考同构：问候与自我介绍各占一行，再以长短有别的段落分承初衷、打磨、AI 分寸与期待，一段只说一件事，由 huxi 个人署名
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -82,7 +82,7 @@ export function LandingSections(){
     <div className="landing-quotes">
       {quotes.map((q, i) => (
         <figure key={q.name} data-featured={i === 1}>
-          {i === 1 ? <div className="landing-quote-brand"><BrandMark iconOnly /><span>Folune</span></div> : null}
+          {i === 1 ? <div className="landing-quote-brand"><BrandMark /></div> : null}
           <blockquote>{q.quote}{q.emphasis ? <><br /><mark>{q.emphasis}</mark><br />{q.ending}</> : null}</blockquote>
           <figcaption>
             <span className="landing-quote-avatar" aria-hidden="true">{q.avatar}</span>

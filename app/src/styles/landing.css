@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖共享 Button/Blueprint DOM、营销顶栏导航/双动作分组与 DS compact 尺寸、NotePaper 展示变体、六格方法指南、四项真实功能细节、BrandMark、参考字体/纹理、独立 Demo iframe 和 ShowcaseBackdrop
+ * [INPUT]: 依赖共享 Button/Blueprint DOM、营销顶栏导航/双动作分组与 DS compact 尺寸、NotePaper 展示变体、六格方法指南、四项真实功能细节、BrandMark 紧边界组合及旧印章可见体量；顶栏只把共享 5:4 图字比缩至 20px 图高，参考字体/纹理、独立 Demo iframe 和 ShowcaseBackdrop
  * [OUTPUT]: 对外提供同源文字与共轴导轨、APP 外壳、两处动态展示后景、侧栏叙述与原句标记的双纸面、分类序号横向六格、功能细节展开、信纸、评价与页脚的响应式版面；仅 Landing 禁止纵向越界回弹，页尾止于 Footer
  * [POS]: styles 的 Landing 局部样式；Footer 淡字位于细密斜纹之下，按钮材质与品牌墨蓝直接消费 DS，背景和纹理保留基线；功能区按参考稿使用 40px 卡片纵向留白与外扩 6px 虚线图片框，细节交互栏仅当前展开项显示细点阵，收起项保持原底色
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -29,7 +29,9 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
 .marketing-header .blueprint-frame { width:100%; }
 .marketing-header .blueprint-rails { width:var(--blueprint-content-width); margin-inline:auto; }
 .marketing-header .blueprint-rail-edge-start,.marketing-header .blueprint-rail-edge-end { background:var(--landing-border); }
-.marketing-brand { --brand-size:36px; gap:4px; }
+/* ---- 顶栏只改场景尺寸与字色；图字比和间距继续由共享 BrandMark 拥有 ---- */
+.marketing-brand { --brand-size:20px; }
+.marketing-brand .ds-brand-wordmark { color:color-mix(in srgb,var(--landing-ink) 88%,var(--landing-bg)); }
 .marketing-nav > nav { display:flex; align-items:center; gap:24px; margin-right:auto; }
 .marketing-nav-link { display:inline-flex; align-items:center; min-height:36px; gap:6px; padding:0; border:0; background:transparent; color:inherit; cursor:pointer; font-size:14px; line-height:20px; letter-spacing:0; white-space:nowrap; }
 .marketing-nav-link:hover { color:var(--landing-accent); }
@@ -112,8 +114,7 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
 .landing-quote-avatar { display:grid; place-items:center; flex:none; width:32px; height:32px; color:var(--landing-accent); background:color-mix(in srgb,var(--landing-accent) 8%,var(--landing-bg)); border:1px solid color-mix(in srgb,var(--landing-accent) 16%,transparent); font:500 13px/1 var(--landing-body); }
 .landing-quotes figcaption small { display:block; color:#626874; font:11px/16px var(--landing-body); }
 .landing-quote-studio { margin-left:auto; color:#626874; font:500 11px/16px var(--font-sans); }
-.landing-quote-brand { display:flex; align-items:center; gap:8px; margin-bottom:32px; color:var(--landing-accent); font:600 22px/32px var(--font-sans); }
-.landing-quote-brand .ds-brand { --brand-size:28px; }
+.landing-quote-brand { display:flex; align-items:center; min-height:32px; margin-bottom:32px; color:var(--landing-accent); }
 .landing-section-heading { padding:48px; display:flex; gap:32px; align-items:center; justify-content:space-between; border-bottom:1px solid var(--landing-border); min-height:185px; }.landing-section-heading>div:first-child { max-width:512px; }.landing-section-heading p { max-width:512px; margin-top:8px; font-size:16px; line-height:24px; letter-spacing:0; }.landing-section-links { display:flex; flex-wrap:wrap; align-items:center; gap:16px; white-space:nowrap; font-size:14px; line-height:20px; letter-spacing:0; }.landing-section-links .ds-button { height:36px; min-height:36px; font-size:14px; }
 /* ---- 功能区：中文标题按内容定高，图片边框不参与网格尺寸 ---- */
 #features .landing-section-heading { min-height:0; }
@@ -242,13 +243,14 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
 .landing-letter-body { max-width:540px; margin-top:20px; font-size:14px; line-height:24px; letter-spacing:0; }
 .landing-letter-body p + p { margin-top:16px; }
 .landing-letter-body hr { width:160px; max-width:100%; margin:16px 0; border:0; border-top:1px solid #e1e3e7; }
-.landing-letter-seal { --brand-size:104px; position:absolute; right:24px; top:24px; opacity:.6; }
+/* 紧边界替换保留旧母图的可见大小与落点，去圈不放大印章。 */
+.landing-letter-seal { --brand-size:calc(104px * 851 / 1254); position:absolute; right:calc(24px + 104px * 229 / 1254); top:calc(24px + 104px * 202 / 1254); opacity:.6; }
 .landing-signature { margin-top:32px; }
 .landing-signature img { display:block; width:32px; height:32px; object-fit:cover; border-radius:50%; }
 .landing-signature span { display:block; margin-top:8px; font:14px/20px var(--landing-heading); color:#000; }
 .landing-signature small { display:block; margin-top:4px; color:#71717a; font:12px/18px var(--landing-body); }
 
-.landing-final-cta { padding:61px 16px; display:flex; flex-direction:column; align-items:center; gap:32px; text-align:center; min-height:450px; background:radial-gradient(ellipse at center,#e8edf2,transparent 70%); }.landing-app-icon { --brand-size:160px; }.landing-final-cta h2 { font-size:25.6px; color:var(--landing-accent); }.landing-final-cta p { margin-top:8px; font-size:16px; line-height:24px; letter-spacing:0; }
+.landing-final-cta { padding:61px 16px; display:flex; flex-direction:column; align-items:center; gap:32px; text-align:center; min-height:450px; background:radial-gradient(ellipse at center,#e8edf2,transparent 70%); }.landing-app-icon { --brand-size:calc(160px * 851 / 1254); width:160px; height:160px; justify-content:center; }.landing-final-cta h2 { font-size:25.6px; color:var(--landing-accent); }.landing-final-cta p { margin-top:8px; font-size:16px; line-height:24px; letter-spacing:0; }
 /* ---- Footer：品牌占两份宽度，四组导航各占一份 ---- */
 .landing-footer { --landing-border:rgb(255 255 255 / 10%); --landing-footer-hatch:rgb(255 255 255 / 16%); background:var(--landing-accent); color:#e1e3e7; letter-spacing:0; }
 .landing-footer-columns { display:grid; grid-template-columns:2fr repeat(4,minmax(0,1fr)); gap:0; min-height:388.72px; }
@@ -285,7 +287,7 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
 .reference-agent-messages .reference-tool { padding-left:8px; }
 .reference-terminal { padding:0; }
 .reference-terminal-content { display:flex; align-items:center; gap:32px; padding:32px 4px; }
-.reference-terminal-brand { --brand-size:96px; width:196px; height:96px; flex:none; justify-content:center; }
+.reference-terminal-brand { --brand-size:calc(96px * 851 / 1254); width:196px; height:96px; flex:none; justify-content:center; }
 .reference-terminal-content p { white-space:nowrap; font:12px/18px Landing Mono,monospace; }
 .reference-terminal-content p span { color:#009bbb; }
 .reference-palette { display:flex; height:24px; margin-top:10px; }

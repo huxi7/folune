@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 index.css 的 Color Lab scoped Light/Dark、四组蓝色候选 token 与共享组件尺寸/动效语义
+ * [INPUT]: 依赖 index.css 的 Color Lab scoped Light/Dark、四组蓝色候选 token 与共享组件尺寸/动效语义与 BrandMark 整组比例
  * [OUTPUT]: 对外提供 /color-lab 蓝色候选轮择画布、静态 Paper First 缩略工作区、Light/Dark 切换与低频 Saving Shimmer 陈列
  * [POS]: app/src/styles 的开发态色彩决策实验层；只负责候选布局与 token 消费，不定义任何生产或实验颜色值
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -224,8 +224,7 @@
 
   .color-lab-sidebar { display: flex; flex-direction: column; border-right: 1px solid var(--sidebar-border); }
   .color-lab-sidebar-header { display: flex; min-height: 3rem; align-items: center; justify-content: space-between; gap: var(--space-2); border-bottom: 1px solid var(--sidebar-border); padding: 0 var(--space-2); }
-  .color-lab-sidebar-header .ds-brand-mark { transform: scale(0.8); transform-origin: left center; }
-  .color-lab-sidebar-header .ds-brand-mark + div p { font-size: 0.68rem; }
+  .color-lab-sidebar-header .ds-brand { --brand-size: 1.1rem; }
   .color-lab-sidebar-header .ds-button { width: 1.8rem; height: 1.8rem; min-height: 1.8rem; }
   .color-lab-sidebar-search { display: flex; align-items: center; gap: var(--space-2); margin: var(--space-2); border: 1px solid var(--input); border-radius: var(--radius-control); background: var(--card); padding: 0.42rem 0.5rem; color: var(--muted-foreground); font-size: 0.66rem; }
   .color-lab-tree { display: flex; flex: 1; flex-direction: column; gap: 0.15rem; padding: 0 var(--space-2); }

@@ -74,7 +74,7 @@ export const designSystemSamples: DesignSystemSample[] = [
   { category: "Navigation & Overlays", id: "UserMenu", name: "User Menu", summary: "集中承载账户信息与资料、订阅、设置和退出入口。" },
   { category: "Navigation & Overlays", id: "Dialog", name: "Dialog", summary: "20px 曲率和明确层级，暂停当前任务处理一个决定。" },
   { category: "Navigation & Overlays", id: "Toast", name: "Toast", summary: "中性、轻量、无彩色状态容器与玻璃材质。" },
-  { category: "Navigation & Overlays", id: "BrandMark", name: "Brand Mark", summary: "原始透明 PNG 母图，保留纸张纹理与阴影；深浅主题共用，仅等比缩放。" },
+  { category: "Navigation & Overlays", id: "BrandMark", name: "Brand Mark", summary: "紧边界纸标与固定 Source Serif 4 字标共用 5:4 图字比；深浅主题保留原色与纹理。" },
   { category: "Editorial", id: "PaperSurface", name: "Paper Surface", summary: "纯白 Paper、Folio Header、写作列与 Archive Port 组成工作台唯一视觉中心。" },
   { category: "Editorial", id: "Markdown", name: "Markdown", summary: "生产 CodeMirror Live Preview：编辑态保留原文协议，标题使用克制 Editorial 层级。" },
   { category: "Editorial", id: "Reading", name: "Reading", summary: "Paper 阅读正文以 Editorial 字体和自然留白建立连续阅读节奏。" },

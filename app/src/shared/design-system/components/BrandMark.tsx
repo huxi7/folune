@@ -1,9 +1,11 @@
 /**
- * [INPUT]: 依赖 public/brand/supernote.png 原始透明母图与 design-system.css 的品牌尺寸规则
- * [OUTPUT]: 对外提供 iconOnly 图标与图标加 Folune 标题两种 BrandMark，className 允许所在布局等比缩放
+ * [INPUT]: 依赖 public/brand/supernote-tight.png 紧边界图、BrandWordmark 固定轮廓与 design-system.css 的 5:4 图字比
+ * [OUTPUT]: 对外提供 iconOnly 图标与图字组合两种 BrandMark；--brand-size 仅定义可见图高，字高与间距由共享比例派生
  * [POS]: 设计系统唯一品牌图形入口，Landing、工作台、认证与组件预览共用；深浅主题不改变图像
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
+import { BrandWordmark } from "./BrandWordmark";
+
 type BrandMarkProps = {
   iconOnly?: boolean;
   className?: string;
@@ -11,20 +13,16 @@ type BrandMarkProps = {
 
 export function BrandMark({ iconOnly = false, className = "" }: BrandMarkProps) {
   return (
-    <div className={`ds-brand flex items-center gap-2.5 font-sans ${className}`} data-icon-only={iconOnly || undefined}>
+    <div className={`ds-brand ${className}`} role="img" aria-label="Folune" data-icon-only={iconOnly || undefined}>
       <img
         className="ds-brand-mark"
-        src="/brand/supernote.png"
-        alt={iconOnly ? "Folune" : ""}
-        width="1254"
-        height="1254"
+        src="/brand/supernote-tight.png"
+        alt=""
+        width="791"
+        height="851"
         draggable={false}
       />
-      {iconOnly ? null : (
-        <div className="leading-none">
-          <p className="text-sm font-semibold tracking-tight text-foreground">Folune</p>
-        </div>
-      )}
+      {iconOnly ? null : <BrandWordmark />}
     </div>
   );
 }
