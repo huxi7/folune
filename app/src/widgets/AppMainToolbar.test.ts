@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 读取 AppMainToolbar、workspace.css 与 brand-spec 的 Toolbar 命令层级契约
- * [OUTPUT]: 锁定 Toolbar 不再接收拼接路径；整理是排在首位的 Quiet Accent 核心动作（有图标与文字、不是 Filled Primary、静止无容器身体），进入 Canvas 收成无标签 32px 图标，三枚图标组成 4px 紧凑簇，整理与簇以 12px 分开，弹层型「更多」排在簇尾，归档状态是左侧身份段的独立元素，命令不带选中指示，顶栏 control 的 32px 高度只声明一次且中性 hover/press 只有一个答案，sticky 钉在 Panel 内缩线，顶栏与 Paper 同表面同颜色且永远不画底边线，凝结只有一个被动画的进度且下缘软边的高度/模糊/遮罩都乘它
+ * [OUTPUT]: 锁定 Toolbar 不再接收拼接路径；整理是排在首位的 Quiet Accent 核心动作（有图标与文字、不是 Filled Primary、静止无容器身体），进入 Canvas 收成无标签 32px 图标，三枚图标组成 4px 紧凑簇，整理与簇以 8px 分开，弹层型「更多」排在簇尾，归档状态是左侧身份段的独立元素，命令不带选中指示，顶栏 control 的 32px 高度只声明一次且中性 hover/press 只有一个答案，sticky 钉在 Panel 内缩线，顶栏与 Paper 同表面同颜色且永远不画底边线，凝结只有一个被动画的进度且下缘软边的高度/模糊/遮罩都乘它
  * [POS]: Paper Toolbar 结构/样式静态回归门禁；不发起导航、整理请求或文件树事务
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -30,7 +30,7 @@ describe("AppMainToolbar", () => {
 
   test("整理是唯一带文字的核心动作, 但不是 Filled Primary", () => {
     const organize = jsxLineWith(toolbar, 'className="note-organize-button"');
-    expect(organize).toContain(">整理</Button>");
+    expect(organize).toContain('<span className="note-organize-label">整理</span>');
     expect(organize).toContain("icon={OrganizeNoteIcon}");
     expect(organize).toContain('size="default"');
     expect(organize).toContain('variant="ghost"');
@@ -87,8 +87,8 @@ describe("AppMainToolbar", () => {
     expect(/\.note-more-menu \{[^}]*right: 0/.test(workspaceCss)).toBe(true);
   });
 
-  test("整理与图标簇用 12px, 簇内用 4px, 顶栏静止时不多出一条竖线", () => {
-    expect(workspaceCss).toContain(".note-view-actions { display: flex; flex-shrink: 0; align-items: center; gap: var(--space-3); }");
+  test("整理与图标簇用 8px, 簇内用 4px, 顶栏静止时不多出一条竖线", () => {
+    expect(workspaceCss).toContain(".note-view-actions { display: flex; flex-shrink: 0; align-items: center; gap: var(--space-2); }");
     expect(workspaceCss).toContain(".note-view-cluster { display: flex; flex-shrink: 0; align-items: center; gap: var(--space-1); }");
     expect(workspaceCss).toContain(".markdown-view-menu { display: flex; flex-shrink: 0; align-items: center; gap: var(--space-1); }");
     // 分组只由两层 flex gap 表达, 不再让额外 margin 产生第二个答案

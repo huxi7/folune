@@ -88,13 +88,13 @@ Stage 背景        ← 最底层，一张桌面
 - 顶栏**不常驻文件夹路径**。产品卖的就是「用户不用管文件树」，常驻路径每次打开笔记都在把他拉回那件事。落点信息由第 5 节的归档状态承担：它有因果、有时机、有交互，常驻路径三样都没有。同一句话不说两遍，删掉没有语气的那遍。
 - 正文标题滚出视口后，笔记标题淡入顶栏左侧。那一刻它是唯一的身份锚，这是它出现的理由；在标题仍看得见时就出现，只是重复。
 - 命令**靠右，不上中轴**。中轴属于作用于正文每一行的工具（格式、类型切换）；纸上的命令没有一个是这种性质，它们全都是「关于这张纸的」，不是「纸里面的」。左侧是身份（你在哪），两侧是能力（你能做什么）。
-- **命令区内部的顺序由语义决定，不由审美决定。** 核心动作排在命令区最左，是第一个被扫到的内容动作；换空间的入口紧随其后，但不占最右端；弹层型的「更多」永远在最右——它的菜单从右边缘向纸内展开，放在别处只会悬在同侧控件头上。整理与图标簇之间使用 12px 留白，Canvas/阅读编辑/更多簇内使用 4px 留白，视觉区分交给文字/图标 geometry、当前态与菜单行为，不画分隔线。`[决策: 所有者 · 2026-09-04]`
+- **命令区内部的顺序由语义决定，不由审美决定。** 核心动作排在命令区最左，是第一个被扫到的内容动作；换空间的入口紧随其后，但不占最右端；弹层型的「更多」永远在最右——它的菜单从右边缘向纸内展开，放在别处只会悬在同侧控件头上。整理与图标簇之间使用 8px 留白，Canvas/阅读编辑/更多簇内使用 4px 留白，视觉区分交给文字/图标 geometry、当前态与菜单行为，不画分隔线。`[决策: 所有者 · 2026-09-22，收紧原 12px 分组]`
 - 「返回〈Canvas〉」是真来路而非装饰性面包屑，因此可以留在左侧。
 - 状态指示（阅读／编辑等当前态）与命令**不共用视觉语言**：当前态可以用柔光下划线，命令永远不用。选中指示只给状态。
 
-### 4.1 Toolbar spacing refinement (2026-09-04)
+### 4.1 Toolbar spacing refinement (updated 2026-09-22)
 
-The accepted Paper toolbar geometry keeps the semantic split visible without a divider: organize is separated from the Canvas/reading/More icon cluster by 12px, while adjacent controls inside that cluster use 4px. Every toolbar control — organize, the three icon commands and the archive-status element — shares one 32px height, and that height belongs to the toolbar rather than to any individual control: a control added later is aligned by construction, not by someone remembering to align it. The organize label and Quiet Accent color remain unchanged.
+The accepted Paper toolbar geometry keeps the semantic split visible without a divider: organize is separated from the Canvas/reading/More icon cluster by 8px, while adjacent controls inside that cluster use 4px. Every toolbar control — organize, the three icon commands and the archive-status element — shares one 32px height, and that height belongs to the toolbar rather than to any individual control: a control added later is aligned by construction, not by someone remembering to align it. The organize label and Quiet Accent color remain unchanged.
 
 ### 4.2 顶栏没有底边线，纸在顶部连续（2026-09-04）
 
