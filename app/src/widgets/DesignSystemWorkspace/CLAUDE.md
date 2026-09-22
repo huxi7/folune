@@ -7,7 +7,7 @@ MotionSpecimen.tsx: 可重复交互的生产 Motion 样板，涵盖命令/Select
 .gitkeep: 保留 Design System 工作区目录
 CLAUDE.md: 记录开发态 Design System 工作区职责与文档协议
 index.tsx: DesignSystemWorkspace 入口，以真实 ThemeProvider/SegmentedControl 切换 system/light/dark，再按五层信息架构陈列生产 Foundations、组件和 Signature Patterns；并独占导入 styles/design-system-workspace.css，使陈列样式随本入口一起 DEV 懒加载而不进生产 CSS
-componentCatalog.ts: 唯一五层目录，BrandMark 描述与紧边界纸标/Source Serif 4 字标的 5:4 生产契约同步，完整登记 Color/Type/Spacing/Radius/Elevation/Motion、Primitives、Navigation & Overlays、Paper/Markdown/Reading/Quote/Code 与 Prompt Composer/Messages/Thinking/Tool/Panel Toggle/Archive Cord
+componentCatalog.ts: 唯一五层目录，BrandMark 描述与紧边界纸标/Source Serif 4 字标的 5:4 布局比及 94% 纵向光学收缩契约同步，完整登记 Color/Type/Spacing/Radius/Elevation/Motion、Primitives、Navigation & Overlays、Paper/Markdown/Reading/Quote/Code 与 Prompt Composer/Messages/Thinking/Tool/Panel Toggle/Archive Cord
 iconCatalog.ts: 轻量生产图标示例清单，只展示能解释命名规则的代表项，并覆盖加入/缩放/连接/整理/拓展六类互不混用的稳定出口；完整导出仍由 shared/design-system/icons.tsx 维护
 iconCatalog.test.tsx: 图标语义契约测试，锁定六类稳定出口全部进入 Design System 清单且实际渲染字形两两不同
 ComponentTile.tsx: memo 化同构卡片，组合名称、职责与真实预览；状态直接由预览中的交互表达，不额外铺设说明轨
