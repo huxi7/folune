@@ -3,14 +3,15 @@
 
 成员清单
 updatePosts.ts: 独立动态内容源，复用 BlogPost 类型并由 /updates 的共用列表/阅读页消费；初始为空，后续只需填充文章，不混入首页或博客集合
+LandingRailTexture.tsx: 首页三处专用静态侧纹壳，每侧七条等距纸缘/大小明显交替的三组扁平横纹与回环/密网格点阵由 landing.css 统一绘制，上下铺满、左右各 16% 渐隐；无 SVG 引用 ID、骨架或交互状态
 LandingConnections.tsx: 左侧叙述方法与实践，右侧两张相邻 NotePaper 标出支持关系的原句；短线随纸面布局连接，静态公开材料不装配业务会话
-LandingGuides.tsx: 六篇方法指南的紧凑三列两行目录，共读分类、标题与摘要，序号列于右上；guides 为入口，保留 use-cases/extensions 锚点，返回复用博客协议
+LandingGuides.tsx: 六篇方法指南的紧凑三列两行目录，共读分类、标题与摘要，序号列于右上；装配横纵交织侧纹，guides 为入口，保留 use-cases/extensions 锚点，返回复用博客协议
 guidePosts.ts: 六篇完整记录方法文章，独立于首页三篇精选，以 BlogPost 类型加入同一公开目录
 GuideIllustration.tsx: 六种纸张/段落/路径静态 SVG 线稿，由指南卡片与目录封面共同消费，useId 隔离渐隐定义
 LandingHeroLab/: 独立颗粒首屏研究，四版复用正式 Header/Hero/三栏排版，支持高度/材质调节、定格对照、本地配置及可选 LandingEditor 衔接；原 A/B/D 仅作参照，E/F 已淘汰，仅 hero-lab.html 加载，不改写正式 Landing
 landingBlogData.ts: 三篇首页精选、四篇细节与六篇方法指南的公开集合；首页精选独立导出，细节内容从 landingDetailData 汇入；整理与画布指南使用功能截图中的写作研究示例和可选章节实景图，稳定 slug/摘要/章节供首页、功能入口、目录与正文共读；同组继续阅读限制三篇，署名复用 huxi 头像
 BlogCover.tsx: 原创细网格 SVG 封面，散页、递归枝条与笔记关系三种构图对应记录/归档/Canvas；useId 隔离多实例图案引用，另为六篇指南复用 GuideIllustration，原三种封面保持；无动画和外部图片请求
-LandingBlog.tsx: 首页固定三篇精选博客卡片；整卡单一 Router Link，链接携带来路供阅读页返回并恢复滚动，查看博客进入 /blog
+LandingBlog.tsx: 首页固定三篇精选博客卡片与轨间网格点阵；整卡单一 Router Link，链接携带来路供阅读页返回并恢复滚动，查看博客进入 /blog；纹样不扩散到目录或文章页
 LandingEditor.tsx: 保留原导轨和 738px 展示框，平滑圆角外壳统一裁剪受限 demo.html iframe；ShowcaseBackdrop 独立置于后景，不传递真实账号状态
 LandingDemo/: 无业务会话的内存产品演示，复用 Paper/Toolbar/树/生产工具芯片/Canvas 视图；AI 面板按脚本逐步揭示真实工具调用，唯一的写操作与工具条共用同一归档入口并可真撤销；无底部额外工具栏
 landingReferenceData.ts: Figma 素材路径、英文代码分段与中文扩展卡片说明，不读取远程数据
@@ -26,7 +27,7 @@ AuthDialog.tsx: 复用 BrandMark 紧边界图的登录/注册统一认证 Dialog
 LandingHero.tsx: 中文公告、居中 Hero、三列价值条与真实 UI 互动插槽；三栏采用用户于 2026-09-18 确认的 Demo 定稿「专注记录 / 有序归档 / 连接想法」，说明分别强调先写后分类、归档去向与撤销、画布继续思考；LandingActions 与顶栏统一为 Secondary「打开」与 Primary「下载」预留动作，auth query 交给 MarketingHeader 唯一认证弹窗；分区仍复用通栏 BlueprintDivider
 LandingFeatureDetails.tsx: 第 11 区块的四项垂直居中展开说明、对应实景图与底部紧凑四格摘要；标题区和展开正文保留文章入口，底部只含标题和说明；固定展示区内以同源 CSS 时间轴协调行高、标题与正文，正文常驻并在收起时 inert，选中项只保持展开、不显示收起图标，图片不附重复图注；detail query 保留选中项，切换清除已消费的定位锚点，替换历史并保留其他查询/滚动，博客沿 fromBlog 协议返回
 landingDetailData.ts: 归档线、引用选择、同一份原文、Markdown 导出四项细节与完整指南；实景图与文章数据同源，BlogPost 仅类型依赖，不建立运行时反向导入
-LandingSections.tsx: 保留五项真实功能与文章入口、评价和信件；按关联展示→功能细节→六格指南编排，删除社区数据和扩展内容，其他区块独立持有展示与交互
+LandingSections.tsx: 保留五项真实功能与文章入口、评价和信件；评价装配纸缘侧纹，按关联展示→功能细节→六格指南编排，其余区块独立持有展示与交互
 LandingFooter.tsx: 共用 DS 墨蓝的品牌区与产品/资源/关于/连接四组导航；16 项预留入口（产品 2、资源 8、关于 3、连接 3）以 aria-disabled link 语义展示且不跳转，打开网页版保留博客来路并复用本地认证；品牌与入口置顶、作者与版权置底；保留 Folune 淡描边与细纹层序，不放 PNG，BlueprintFrame 延续导轨
 LandingMotion/: Landing 克制反馈模块，提供 CountUp 与 APP/两处图文展示共用的低对比细点阵后景；磁吸、指针聚光不启用，一次性 reveal 仍由共享动效原语承载
 NotebookPreview.tsx: 确定性首屏产品预览，DS 统一缩放淡入与显式卡片 lift 分处不同元素，阴影由 CSS 持有，内部布局不参与独立动画

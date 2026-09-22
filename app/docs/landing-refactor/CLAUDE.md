@@ -7,6 +7,14 @@ compact-connections-1440.png: 2026-09-20 密度精修后关联区桌面局部实
 compact-guides-1440.png: 2026-09-20 密度精修后三列两行指南桌面局部实景
 compact-connections-390.png: 2026-09-20 密度精修后手机单列关联与相邻区块实景
 compact-guides-390.png: 2026-09-20 密度精修后手机指南前三篇实景
+side-rails-plan.md: 三处侧纹的原计划与最终参数；每侧七条等空隙纵线、三组 18/14.25 大小横纹与回环、密网格点阵，纵横周期 15:16、上下铺满且左右各 16% 渐隐，第 12 节区分当前实现与历史验收
+side-rails-final-paper-1920.png: 2026-09-21 前版侧轨实景（疏密与渐隐微调前），1920×1080 DPR 1，评价左右各七线
+side-rails-final-weave-1920.png: 2026-09-21 前版侧轨实景（疏密与渐隐微调前），1920×1080 DPR 1，指南主波纹与横向回环
+side-rails-final-grid-1920.png: 2026-09-21 前版侧轨实景（疏密与渐隐微调前），1920×1080 DPR 1，博客方格与点阵
+side-rails-final-guides-390.png: 2026-09-21 前版侧轨实景（疏密与渐隐微调前），390×900 DPR 1，手机隐藏装饰并保持单列
+side-rails-final-weave-1440-2x.png: 2026-09-21 前版侧轨实景（疏密与渐隐微调前），1440×900 DPR 2，窄轨三组连续曲线
+side-rails-reference-weave.png: 用户提供的 Laper 侧导轨局部参考，记录横向主曲线、纵向淡曲线与左右渐隐，仅用于设计研究
+side-rails-reference-grid.png: 用户提供的 Laper 博客侧导轨局部参考，记录完整方格、双倍密度点阵与左右渐隐，仅用于设计研究
 refined-sections-content.md: 两区精修的实际内容、真实关联理由、六篇指南、响应式/导航/工程验收与旧测试失效边界
 refined-connections-1440.png: 2026-09-20 两区精修的当前页面验收截图，尺寸与局部/全页范围见文件名
 refined-connections-390.png: 2026-09-20 两区精修的当前页面验收截图，尺寸与局部/全页范围见文件名

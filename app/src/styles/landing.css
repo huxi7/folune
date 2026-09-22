@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖共享 Button/Blueprint DOM、营销顶栏导航/双动作分组与 DS compact 尺寸、NotePaper 展示变体、六格方法指南、四项真实功能细节、BrandMark 紧边界组合及旧印章可见体量；顶栏只把共享 5:4 图字比缩至 20px 图高，参考字体/纹理、独立 Demo iframe 和 ShowcaseBackdrop
+ * [INPUT]: 依赖共享 Button/Blueprint DOM、营销顶栏导航/双动作分组与 DS compact 尺寸、LandingRailTexture、NotePaper 展示变体、六格方法指南、四项真实功能细节、BrandMark 紧边界组合及旧印章可见体量；顶栏只把共享 5:4 图字比缩至 20px 图高，参考字体/纹理、独立 Demo iframe 和 ShowcaseBackdrop
  * [OUTPUT]: 对外提供同源文字与共轴导轨、APP 外壳、两处动态展示后景、侧栏叙述与原句标记的双纸面、分类序号横向六格、功能细节展开、信纸、评价、CTA 暖白双层平滑底座、放大标题与紧凑按钮和页脚的响应式版面；仅 Landing 禁止纵向越界回弹，页尾止于 Footer
- * [POS]: styles 的 Landing 局部样式；Footer 淡字位于细密斜纹之下，按钮材质与品牌墨蓝直接消费 DS，背景和纹理保留基线；功能区按参考稿使用 40px 卡片纵向留白与外扩 6px 虚线图片框，细节交互栏仅当前展开项显示细点阵，收起项保持原底色
+ * [POS]: styles 的 Landing 局部样式；每侧七条纸缘线与两端空隙等分轨间，三组大小明显交替的扁平横纹与回环以 15:16 纵横周期排列，与密格点贯穿区块，左右各 16% 渐隐；Footer 淡字位于细密斜纹之下，按钮与墨蓝消费 DS；功能区维持 40px 留白与外扩 6px 虚线框，细节仅展开项显示点阵
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 @font-face { font-family: Landing Writer; src: url('/landing-reference/iAWriterQuattroS_Regular.woff2') format('woff2'); font-display: swap; }
@@ -61,6 +61,64 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
 .blueprint-pin-start { left:0; }.blueprint-pin-end { left:100%; }
 .blueprint-divider[data-full-bleed] .blueprint-pin-start { left:var(--blueprint-main-inset); }.blueprint-divider[data-full-bleed] .blueprint-pin-end { left:calc(100% - var(--blueprint-main-inset)); }
 .blueprint-pin-edge-start { left:var(--blueprint-edge-inset); }.blueprint-pin-edge-end { left:calc(100% - var(--blueprint-edge-inset)); }
+/* ---- 侧轨纹理：仅三处装配；显隐由轨间宽度驱动，不增加测量状态 ---- */
+.landing-rail-section { position:relative; }
+.landing-rail-texture {
+  --rail-space:calc(var(--blueprint-main-inset) - var(--blueprint-edge-inset));
+  --rail-main-alpha:.17;
+  --rail-detail-alpha:.085;
+  --rail-weave-size:calc(var(--rail-space) / 3);
+  display:none;
+  position:absolute;
+  inset:0;
+  z-index:0;
+  color:var(--landing-accent);
+  pointer-events:none;
+  user-select:none;
+}
+.landing-rail-texture-side {
+  position:absolute;
+  inset-block:0;
+  width:max(0px,var(--rail-space));
+  overflow:hidden;
+  mask-image:linear-gradient(90deg,transparent,#000 16%,#000 84%,transparent);
+}
+.landing-rail-texture-side[data-side="start"] { right:100%; }
+.landing-rail-texture-side[data-side="end"] { left:100%; }
+.landing-rail-texture-pattern {
+  position:absolute;
+  inset:0;
+}
+.landing-rail-texture-side[data-side="end"] .landing-rail-texture-pattern { transform:scaleX(-1); }
+.landing-rail-texture-pattern > span { position:absolute; inset:0; }
+.landing-rail-main { opacity:var(--rail-main-alpha); }
+.landing-rail-detail { opacity:var(--rail-detail-alpha); }
+/* ---- 每侧固定七条内线，八等分轨间，端部与内部中心距一致 ---- */
+.landing-rail-texture[data-variant="paper"] {
+  --rail-paper-step:calc(var(--rail-space) / 8);
+}
+.landing-rail-texture[data-variant="paper"] .landing-rail-main {
+  inset-inline:calc(var(--rail-paper-step) - .5px);
+  background:repeating-linear-gradient(90deg,currentColor 0 1px,transparent 1px var(--rail-paper-step));
+}
+/* ---- 每侧三组；15/16 周期仅留窄缝，大小弧振幅 18/14.25 交替，描边保持 1px ---- */
+.landing-rail-texture[data-variant="weave"] .landing-rail-texture-pattern > span {
+  background:currentColor;
+  mask-size:var(--rail-weave-size) calc(var(--rail-weave-size) * 15 / 16);
+  mask-position:center top;
+  mask-repeat:repeat;
+}
+.landing-rail-texture[data-variant="weave"] .landing-rail-main { mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 72' preserveAspectRatio='none'%3E%3Cpath fill='none' stroke='white' stroke-width='1' vector-effect='non-scaling-stroke' d='M0 19.5C32 -4.5 64 -4.5 96 19.5 M0 19.5C32 43.5 64 43.5 96 19.5 M0 55.5C32 36.5 64 36.5 96 55.5 M0 55.5C32 74.5 64 74.5 96 55.5'/%3E%3C/svg%3E"); }
+/* ---- 长幅摆线：x=48+96t/(2π)-32sin(t)，y=收紧后的基线±32cos(t)，回环叠出纵向编织感 ---- */
+.landing-rail-texture[data-variant="weave"] .landing-rail-detail { mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 72' preserveAspectRatio='none'%3E%3Cpath fill='none' stroke='white' stroke-width='1' vector-effect='non-scaling-stroke' d='M0 -48.5C12.378 -48.5 24.704 -45.051 34.627 -39.127C44.551 -33.204 52 -24.878 56 -16.5C60 -8.122 60.551 0.204 58.627 6.127C56.704 12.051 52.378 15.5 48 15.5C43.622 15.5 39.296 12.051 37.373 6.127C35.449 0.204 36 -8.122 40 -16.5C44 -24.878 51.449 -33.204 61.373 -39.127C71.296 -45.051 83.622 -48.5 96 -48.5 M0 51.5C12.378 51.5 24.704 48.051 34.627 42.127C44.551 36.204 52 27.878 56 19.5C60 11.122 60.551 2.796 58.627 -3.127C56.704 -9.051 52.378 -12.5 48 -12.5C43.622 -12.5 39.296 -9.051 37.373 -3.127C35.449 2.796 36 11.122 40 19.5C44 27.878 51.449 36.204 61.373 42.127C71.296 48.051 83.622 51.5 96 51.5 M0 23.5C12.378 23.5 24.704 26.949 34.627 32.873C44.551 38.796 52 47.122 56 55.5C60 63.878 60.551 72.204 58.627 78.127C56.704 84.051 52.378 87.5 48 87.5C43.622 87.5 39.296 84.051 37.373 78.127C35.449 72.204 36 63.878 40 55.5C44 47.122 51.449 38.796 61.373 32.873C71.296 26.949 83.622 23.5 96 23.5 M0 123.5C12.378 123.5 24.704 120.051 34.627 114.127C44.551 108.204 52 99.878 56 91.5C60 83.122 60.551 74.796 58.627 68.873C56.704 62.949 52.378 59.5 48 59.5C43.622 59.5 39.296 62.949 37.373 68.873C35.449 74.796 36 83.122 40 91.5C44 99.878 51.449 108.204 61.373 114.127C71.296 120.051 83.622 123.5 96 123.5'/%3E%3C/svg%3E"); }
+/* ---- 同源格点：20px 方格 + 10px 点距，点单独加深，避免被纸纹吞没 ---- */
+.landing-rail-texture[data-variant="index"] { --rail-main-alpha:.26; --rail-detail-alpha:.09; }
+.landing-rail-texture[data-variant="index"] .landing-rail-detail { background-image:linear-gradient(90deg,currentColor 1px,transparent 1px),linear-gradient(currentColor 1px,transparent 1px); background-size:20px 20px; background-position:0 0; }
+.landing-rail-texture[data-variant="index"] .landing-rail-main { background:radial-gradient(circle at 5.5px 5.5px,currentColor 0 .85px,transparent 1px) -5px -5px/10px 10px repeat; }
+/* ---- 不支持透明遮罩或长度相除时保留空轨，避免无渐隐的硬纹样带 ---- */
+@supports (mask-image:linear-gradient(90deg,transparent,#000)) and (opacity:calc(1px / 1px)) {
+  .landing-rail-texture { display:block; opacity:clamp(0,calc((var(--rail-space) - 48px) / 32px),1); }
+}
 .landing-announcement { position:relative; height:37px; display:flex; align-items:center; justify-content:center; gap:6px; font-size:14px; border-bottom:1px solid transparent; background:linear-gradient(to right,rgb(219 234 254 / 0%),rgb(219 234 254 / 40%) 50%,rgb(219 234 254 / 0%)); }
 .landing-announcement > .blueprint-divider { position:absolute; bottom:0; left:0; }
 .landing-announcement > span { color:var(--landing-accent); }.landing-announcement > span,.landing-announcement a { font:14px/20px var(--landing-heading); letter-spacing:.35px; }
@@ -325,6 +383,7 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
 /* ---- 1120px 主轨 + 两侧 48px 外轨间距与 8px 节点，空间不足时隐藏外轨 ---- */
 @media(max-width:1232px) {
   .blueprint-rail-edge-start,.blueprint-rail-edge-end,.blueprint-pin-edge-start,.blueprint-pin-edge-end { display:none; }
+  .landing-rail-texture { display:none; }
 }
 @media(max-width:1199px) {
   .marketing-edition { display:none; }.marketing-nav { gap:20px; }.marketing-nav>nav { gap:16px; }.landing-section-heading,.landing-trust,.landing-letter-section { padding:32px; }

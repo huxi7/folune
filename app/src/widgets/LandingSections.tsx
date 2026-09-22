@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖真实 APP 功能截图、Router Link、LandingConnections、LandingGuides、LandingFeatureDetails、LandingBlog、BlueprintDivider、共享 BrandMark 图字组合/独立印章与 huxi 头像
+ * [INPUT]: 依赖真实 APP 功能截图、Router Link、LandingConnections、LandingGuides、LandingFeatureDetails、LandingBlog、LandingRailTexture、BlueprintDivider、共享 BrandMark 图字组合/独立印章与 huxi 头像
  * [OUTPUT]: 对外提供五项图文一一对应的 Folune 功能与整理/画布文章入口，以及真实关联展示、独立功能细节、六篇方法指南、评价占位、创作者信件和博客
  * [POS]: widgets 的营销叙事组合；创作者信件沿用首稿叙事，与 Laper 参考同构：问候与自我介绍各占一行，再以长短有别的段落分承初衷、打磨、AI 分寸与期待，一段只说一件事，由 huxi 个人署名
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -13,6 +13,7 @@ import { Link } from "react-router-dom";
 import { BrandMark } from "../shared/design-system/components";
 import { BlueprintDivider } from "./BlueprintDivider";
 import { LandingActions } from "./LandingHero";
+import { LandingRailTexture } from "./LandingRailTexture";
 
 export function LandingSectionHeading({title,body,children}: {title:string;body:string;children?:ReactNode}) {
   return <header className="landing-section-heading"><div><h2>{title}</h2><p>{body}</p></div><div className="landing-section-links">{children}</div></header>;
@@ -72,7 +73,8 @@ const quotes = [
 ];
 export function LandingSections(){
  return <>
-  <section className="landing-trust" id="community" aria-labelledby="landing-trust-title">
+  <section className="landing-trust landing-rail-section" id="community" aria-labelledby="landing-trust-title">
+    <LandingRailTexture variant="paper" />
     <h2 id="landing-trust-title">为认真记录的个人与创作团队而做</h2>
     <ul className="landing-studio-strip" aria-label="工作室与团队">
       {studios.map(({ mark, name }) => (

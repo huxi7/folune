@@ -28,6 +28,10 @@ Landing 中文化（2026-09-14）：保留参考布局、暖灰背景、纹理�
 - Meaning: dried-ink character with enough clarity for a durable digital Primary
 - Contrast: Light Primary with near-white foreground `7.10:1`; Dark Primary with dark foreground `6.38:1`
 
+### Landing 侧轨（2026-09-21 用户修正）
+
+只在评价、指南、首页博客延伸墨蓝结构：每侧固定七条、端部与内部空隙等分的细纵线、每侧三组横向回环编织、完整小方格加密点阵。纹样上下铺满，取消纵向净空与渐隐，左右两端各 16% 范围渐隐。纸缘在轨间八等分点放置七条内线；主横纹以 36 源单位行距排列，大、小弧振幅为 18/14.25，小弧比大弧低约 20.8%，相邻弧最窄留缝 3.75 单位；大弧保持上一版的 18，仅小弧从 15.75 收至 14.25。次层仍为纵向振幅 32 的横向长幅摆线，相邻行翻转。纵向周期为横向的 15/16，SVG 高度为 72，行基线同步收紧。20px 网格/10px 点距保持；主线 17%、回环次曲线 8.5%、网格 9%、点 26%。正文和其他区块留白不变。已收紧至窄缝并拉开大小差异；本次构建与 git diff --check 通过，此前页面参数与小样检查不覆盖此次修正，完整页面视觉仍未验，Safari 与原生 125% 缩放未验，工程与截图证据边界见 `docs/landing-refactor/side-rails-plan.md` 第 12 节。
+
 ## Processing / Saving
 
 - Light Background `#DDE6ED`, Border `#C1CED9`, Foreground `#425E76`, Shimmer `#FFFFFF`
