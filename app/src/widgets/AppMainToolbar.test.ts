@@ -30,7 +30,7 @@ describe("AppMainToolbar", () => {
 
   test("整理是唯一带文字的核心动作, 但不是 Filled Primary", () => {
     const organize = jsxLineWith(toolbar, 'className="note-organize-button"');
-    expect(organize).toContain(">整理笔记</Button>");
+    expect(organize).toContain(">整理</Button>");
     expect(organize).toContain("icon={OrganizeNoteIcon}");
     expect(organize).toContain('size="default"');
     expect(organize).toContain('variant="ghost"');
@@ -40,7 +40,7 @@ describe("AppMainToolbar", () => {
     expect(organize).toContain("loading={props.organizing}");
     expect(organize).toContain('aria-keyshortcuts="Meta+Enter Control+Enter"');
     // 界面陈述用户的结果: 可见文字、tooltip 与可访问名都不写「AI 整理」
-    expect(organize).toContain('title="整理笔记（⌘/Ctrl + Enter）"');
+    expect(organize).toContain('title="整理（⌘/Ctrl + Enter）"');
     expect(toolbarCode).not.toContain("AI 整理");
   });
 

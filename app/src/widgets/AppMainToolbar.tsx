@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 memo 标题/view 状态、可选文件操作能力、持久 Canvas 入口、整理 presentation、文件库定位回调、显式 AI 整理命令与浏览器 scroll timeline 能力
- * [OUTPUT]: 对外提供 sticky Paper Toolbar：左侧 Canvas 返回/归档落点/标题三段身份，右侧按扫描顺序排 Quiet Accent「整理笔记」→ 32px 图标控制簇（Canvas、阅读切换、更多）
+ * [OUTPUT]: 对外提供 sticky Paper Toolbar：左侧 Canvas 返回/归档落点/标题三段身份，右侧按扫描顺序排 Quiet Accent「整理」→ 32px 图标控制簇（Canvas、阅读切换、更多）
  * [POS]: app/src/widgets 的纸张内命令条纯视图；左身份右能力各占稳定槽位，核心动作排首、「更多」只能排在簇尾，归档状态兼作归档线起点故必须留在纸的左上角，全局文件库/AI 开关归工作区控制层。凝结与下缘软边是同一个 CSS 滚动进度的两个读数，首选交给滚动本身，只有不支持 scroll timeline 的浏览器才挂一个哨兵做一次软切；本组件因此不含阈值、不读 scrollTop，也不知道软边有多高
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -118,7 +118,7 @@ export function AppMainToolbar(props: AppMainToolbarProps) {
         */}
       <div className="note-view-actions">
         {props.currentMemo !== null ? <>
-          <Button aria-keyshortcuts="Meta+Enter Control+Enter" className="note-organize-button" icon={OrganizeNoteIcon} loading={props.organizing} onClick={() => void props.onOrganize()} size="default" title="整理笔记（⌘/Ctrl + Enter）" variant="ghost">整理笔记</Button>
+          <Button aria-keyshortcuts="Meta+Enter Control+Enter" className="note-organize-button" icon={OrganizeNoteIcon} loading={props.organizing} onClick={() => void props.onOrganize()} size="default" title="整理（⌘/Ctrl + Enter）" variant="ghost">整理</Button>
           <div className="note-view-cluster">
             <Button aria-keyshortcuts="Meta+E Control+E" aria-label="进入 Canvas" className="note-explore-button" icon={CanvasIcon} loading={props.enteringCanvas} onClick={props.onEnterCanvas} size="square" title="进入 Canvas（⌘/Ctrl + E）" variant="ghost" />
             <MarkdownViewMenu fileActionsEnabled={props.fileActionsEnabled} content={props.currentMemo.memo.content_mdx} documentView={props.documentView} editingMode={props.editingMode} onDocumentViewChange={props.onDocumentViewChange} onEditingModeChange={props.onEditingModeChange} title={props.currentMemoTitle} />

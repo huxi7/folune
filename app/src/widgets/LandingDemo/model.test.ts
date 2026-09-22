@@ -35,7 +35,7 @@ test("重置产生独立且确定的可读数据，树不丢节点", () => {
   walk(demoTree(a));
   expect(new Set(visited).size).toBe(visited.length);
   expect(Object.keys(a).every(id => visited.includes(id))).toBe(true);
-  // 只有一篇留在根目录，工具条的「整理笔记」才有唯一且明确的对象。
+  // 只有一篇留在根目录，工具条的「整理」才有唯一且明确的对象。
   expect(Object.values(a).filter(n => n.parent_id === null).map(n => n.id)).toEqual([INITIAL_MEMO]);
 });
 test("历史对话一律只读，不谎报没真正发生过的写操作", () => {
