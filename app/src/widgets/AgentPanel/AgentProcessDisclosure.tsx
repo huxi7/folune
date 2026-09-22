@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖 Collapse 的保留式高度披露、 React 本地展开状态、共享 Lucide Caret、SuperNote ThinkingMark 与真实生成 active 状态
- * [OUTPUT]: 对外提供顶部 Agent 状态入口、生成期强制展开、完成后可手动收起且不包裹最终正文的 AgentProcessDisclosure
+ * [INPUT]: 依赖 Collapse 的保留式高度披露、React 本地手动展开状态、共享 Lucide Caret、SuperNote ThinkingMark 与思考/工具阶段 active 状态
+ * [OUTPUT]: 对外提供思考/工具阶段强制展开、进入正文或结束时自动收起且可手动回看的 AgentProcessDisclosure
  * [POS]: AgentPanel 回复过程容器，在过程内容之前管理透明度信息的显隐，不拥有工具/正文内容语义
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -27,11 +27,13 @@ export function AgentProcessDisclosure({
   children,
 }: AgentProcessDisclosureProps) {
   const contentId = useId();
-  const [expanded, setExpanded] = useState(true);
+  const [expandedByUser, setExpandedByUser] = useState(false);
+  const expanded = active || expandedByUser;
 
   useEffect(() => {
     if (active) {
-      setExpanded(true);
+      // 新一轮过程接管展开，结束时回到折叠；正文分块更新不覆盖用户回看。
+      setExpandedByUser(false);
     }
   }, [active]);
 
@@ -51,7 +53,7 @@ export function AgentProcessDisclosure({
           aria-controls={contentId}
           aria-expanded={expanded}
           className="agent-process-toggle"
-          onClick={() => setExpanded((value) => !value)}
+          onClick={() => setExpandedByUser((value) => !value)}
           type="button"
         >
           <ThinkingMark aria-hidden="true" size={14} />

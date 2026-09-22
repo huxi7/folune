@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 SuperNoteUIMessage 的 AI SDK 有序文本/reasoning/工具 parts、过程分区与 design-system AI 消息组件
- * [OUTPUT]: 对外提供纯净用户消息、单一过程区及回复末尾 Undo2 图标与「撤销」短标签的 assistant 回复
+ * [OUTPUT]: 对外提供纯净用户消息、正文开始时自动收起的单一过程区及回复末尾 Undo2 图标与「撤销」短标签的 assistant 回复
  * [POS]: AgentPanel 消息语义适配层，只负责对话与过程；人工审批由 AgentConversation 固定在 Composer 上方，冻结上下文不进入对话视觉层
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -66,6 +66,7 @@ function AssistantMessageContent({
 }: AssistantMessageContentProps) {
   const [undoState, setUndoState] = useState<"idle" | "running" | "done">("idle");
   const responseActive = activity !== "none";
+  const processActive = activity === "thinking" || activity === "tool";
   const hasProcess = processParts.length > 0;
 
   return (
@@ -75,7 +76,7 @@ function AssistantMessageContent({
       onProgress={onProgress}
       process={hasProcess ? (
         <AgentProcessDisclosure
-          active={responseActive}
+          active={processActive}
           activeLabel={activity === "tool" ? "正在处理" : "正在思考"}
         >
           {processParts.map((part, index) => {

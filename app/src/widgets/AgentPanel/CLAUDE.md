@@ -30,8 +30,9 @@ threadSelection.test.ts: 覆盖用户偏好隔离、合法恢复和失效 ID 回
 aiThreadCache.ts: 按用户隔离的 30 秒面板快照与最多八个逐会话内容快照；允许陈旧回显并按最久未写入淘汰，只服务 stale-while-revalidate，不替代服务端真相
 aiThreadCache.test.ts: 锁定面板/逐会话快照的用户隔离、TTL、局部更新、目标删除与有界淘汰
 useAiThreads.ts: 会话控制器与显式只读预热入口；首开用 bootstrap，普通切换先同步选择目标摘要，再命中逐会话缓存或展示加载壳，并用单一 content 请求合并 thread/ref/messages；pointer/focus 预取与点击读取共用在途请求，快速连续切换只提交最后选择；流完成本地提交，错误/中止再校准
-AgentProcessDisclosure.tsx: 真实生成过程的透明披露容器，生成期展开、完成后可手动收起，keepMounted Collapse 连续收放且保留内部工具详情状态，不包裹最终正文
-ChatMessage.tsx: SuperNoteUIMessage 适配层；冻结上下文只参与请求而不渲染到用户/assistant 对话，assistant 保持单一过程区且不承载审批控件，同轮成功命令只在最终回复末尾提供一个整轮撤销
+AgentProcessDisclosure.tsx: 真实生成过程的透明披露容器，思考/工具阶段强制展开，进入正文或结束时自动收起，历史默认折叠且可手动回看；keepMounted Collapse 保留内部工具详情状态，不包裹最终正文
+ChatMessage.tsx: SuperNoteUIMessage 适配层；按 thinking/tool 活动驱动过程展开，首段正文到达即收起且不延迟流式文本；冻结上下文不进入对话视觉，单一过程区不承载审批控件，同轮成功命令只在最终回复末尾提供一个整轮撤销
+ChatMessage.interaction.test.tsx: 生产消息 DOM 生命周期回归，覆盖思考持续展开、正文开始即折叠、手动回看不受后续分块干扰、多轮工具续写重新展开与历史默认折叠
 ChatMessage.test.tsx: 完整回复 DOM 契约测试，锁定单一过程区、审批条非模态且与消息解耦、单一整轮撤销、最终正文边界、冻结来源不污染消息与敏感 ID 屏蔽
 composerBehavior.ts: Composer 的纯交互判定，统一非空闲/空白提交保护，并把普通 Enter 与 Shift/修饰键/IME 组合输入严格分流
 composerBehavior.test.ts: Composer 键盘与提交契约测试，覆盖普通 Enter、Shift 换行、中文组合输入、Safari 229 兼容、修饰键和空白内容
