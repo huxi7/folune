@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖共享 Button/Blueprint DOM、营销顶栏导航/双动作分组与 DS compact 尺寸、NotePaper 展示变体、六格方法指南、四项真实功能细节、BrandMark 紧边界组合及旧印章可见体量；顶栏只把共享 5:4 图字比缩至 20px 图高，参考字体/纹理、独立 Demo iframe 和 ShowcaseBackdrop
- * [OUTPUT]: 对外提供同源文字与共轴导轨、APP 外壳、两处动态展示后景、侧栏叙述与原句标记的双纸面、分类序号横向六格、功能细节展开、信纸、评价与页脚的响应式版面；仅 Landing 禁止纵向越界回弹，页尾止于 Footer
+ * [OUTPUT]: 对外提供同源文字与共轴导轨、APP 外壳、两处动态展示后景、侧栏叙述与原句标记的双纸面、分类序号横向六格、功能细节展开、信纸、评价、CTA 暖白双层平滑底座、放大标题与紧凑按钮和页脚的响应式版面；仅 Landing 禁止纵向越界回弹，页尾止于 Footer
  * [POS]: styles 的 Landing 局部样式；Footer 淡字位于细密斜纹之下，按钮材质与品牌墨蓝直接消费 DS，背景和纹理保留基线；功能区按参考稿使用 40px 卡片纵向留白与外扩 6px 虚线图片框，细节交互栏仅当前展开项显示细点阵，收起项保持原底色
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -250,7 +250,37 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
 .landing-signature span { display:block; margin-top:8px; font:14px/20px var(--landing-heading); color:#000; }
 .landing-signature small { display:block; margin-top:4px; color:#71717a; font:12px/18px var(--landing-body); }
 
-.landing-final-cta { padding:61px 16px; display:flex; flex-direction:column; align-items:center; gap:32px; text-align:center; min-height:450px; background:radial-gradient(ellipse at center,#e8edf2,transparent 70%); }.landing-app-icon { --brand-size:calc(160px * 851 / 1254); width:160px; height:160px; justify-content:center; }.landing-final-cta h2 { font-size:25.6px; color:var(--landing-accent); }.landing-final-cta p { margin-top:8px; font-size:16px; line-height:24px; letter-spacing:0; }
+.landing-final-cta { padding:61px 16px; display:flex; flex-direction:column; align-items:center; gap:32px; text-align:center; min-height:450px; background:radial-gradient(ellipse at center,#e8edf2,transparent 70%); }
+/* ---- CTA：外缘与内托同心，纸标占据主体，层次只由薄边和接触影表达 ---- */
+.landing-app-icon {
+  --brand-size:132px;
+  position:relative;
+  isolation:isolate;
+  width:160px;
+  height:160px;
+  flex:none;
+  justify-content:center;
+  border:1px solid rgb(255 255 255 / 85%);
+  border-radius:40px;
+  corner-shape:var(--corner-shape-smooth);
+  background:linear-gradient(145deg,#fffefa,#eeefec);
+  box-shadow:0 2px 3px rgb(57 61 69 / 4%),0 12px 22px -12px rgb(57 61 69 / 24%);
+}
+.landing-app-icon::before {
+  content:"";
+  position:absolute;
+  z-index:-1;
+  inset:6px;
+  border:1px solid rgb(57 61 69 / 5%);
+  border-radius:33px;
+  corner-shape:var(--corner-shape-smooth);
+  background:linear-gradient(150deg,#f7f5ef,#eeece5);
+  box-shadow:inset 0 1px 2px rgb(57 61 69 / 3%),0 1px 0 rgb(255 255 255 / 70%);
+  pointer-events:none;
+}
+.landing-final-cta .landing-actions { --button-height-default:var(--control-height-compact); --button-padding-inline:var(--space-3); gap:8px; }
+.landing-final-cta .landing-actions .ds-button { min-width:0; }
+.landing-final-cta h2 { font-size:clamp(32px,4vw,48px); line-height:1.25; color:var(--landing-accent); }.landing-final-cta p { margin-top:8px; font-size:16px; line-height:24px; letter-spacing:0; }
 /* ---- Footer：品牌占两份宽度，四组导航各占一份 ---- */
 .landing-footer { --landing-border:rgb(255 255 255 / 10%); --landing-footer-hatch:rgb(255 255 255 / 16%); background:var(--landing-accent); color:#e1e3e7; letter-spacing:0; }
 .landing-footer-columns { display:grid; grid-template-columns:2fr repeat(4,minmax(0,1fr)); gap:0; min-height:388.72px; }
