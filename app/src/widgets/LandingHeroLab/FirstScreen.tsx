@@ -19,7 +19,7 @@ import { useAmbientMotion } from "./useAmbientMotion";
 const LandingEditor = lazy(() => import("../LandingEditor").then(module => ({ default: module.LandingEditor })));
 const navItems = [
   { href: "/#features", label: "功能", dropdown: true }, { href: "/blog", label: "博客" },
-  { href: "/#resources", label: "关于", dropdown: true }, { href: "/#extensions", label: "扩展参考" },
+  { href: "/#resources", label: "关于", dropdown: true }, { href: "/#use-cases", label: "使用场景" },
   { href: "https://zed.dev/docs", label: "参考文档" }, { href: "https://zed.dev/pricing", label: "参考定价" },
   { href: "https://zed.dev/delta", label: "Delta", icon: "19-4560/imgFrame2" },
 ];

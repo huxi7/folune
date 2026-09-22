@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 React、生产 DS 字体/样式与 motion token、HeroLab
- * [OUTPUT]: 对外提供只在 hero-lab.html 装配的四版颗粒首屏与可调实验页
+ * [OUTPUT]: 对外提供只在 hero-lab.html 装配的 01A/02A 首屏与多组本地收藏实验页
  * [POS]: LandingHeroLab 独立入口；不导入生产 Router、Auth、主题持久化或业务 Store
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */

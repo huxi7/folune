@@ -11,7 +11,7 @@ Canvas 已落地为一级持久 Workspace。memo 默认 Canvas 与 standalone Ca
 public/: 统一品牌母图、PNG Favicon、参考 Frame 素材/字体与 landing-features/landing-details/landing-connections 真实 APP 截图；功能网格、可展开细节与配套博客共用产品截图
 MOTION_SYSTEM.md: A/B 全量源码取舍、统一 Motion Design 规范与实际验收记录
 demo.html: Landing 独立 UI 演示入口，CSP 禁止连接与表单提交；不装配 Auth/Router/持久化主题，和 index.html 一同构建
-hero-lab.html: 颗粒首屏研究的独立开发入口，四版 Header/Hero/三栏价值条可调高度与材质，保留 A/B/D 参照、定格对照和本地配置，可选只读装配既有 APP 展示；不进入正式路由或构建清单
+hero-lab.html: 独立首屏实验入口，01A/02A 可调材质/高度，否决 B 版退出主选择；多组本地收藏及备份、旧配置兼容、可选既有 APP 衔接，不进入正式路由或构建清单
 index.html: Vite HTML 宿主页面，声明 V1 Classic Blueprint 默认画布、同步解析 App 的 system/light/dark 与 Landing 浅色画布 pre-paint bootstrap、提供 root 挂载点并引用品牌母图等比缩放的 PNG Favicon
 .env.example: app 浏览器环境变量模板，声明业务 API、chat 服务 base URL 与 Supabase 公开连接配置
 AUTH_SETUP.md: Supabase 邮箱确认模板、URL allow list、自定义 SMTP 限制与 Google OAuth 后台配置说明
@@ -27,7 +27,7 @@ src/pages/: 页面层，以 useAppDashboardController 与 AppDashboard 分离状
 src/widgets/: 业务组合组件层，承载 Landing、PaperWorkspaceShell/CanvasWorkspace、共享文件库/AI Panel、memo 编辑会话、账户/订阅/回收站、全局对象命令与 Canvas V2 React Flow 交互
 src/shared/: 前端共享层，承载 memo/AI/Canvas API、轻量 tree、按 ID 正文、Canvas document/WAL/Workspace Store/保存协调器、Paper 与 Canvas 各自独立的 Chrome 状态、design system、纯 Supabase Auth 与主题状态；前端禁止直连业务表或 Storage
 docs/: UI 验收与决策证据目录，保存 Design System 语义说明、computed Token 快照、Paper First V1.1 当前前后对比/验收截图及 Color Lab v0 同构配色快照
-package.json: Bun 包元数据、Vite dev/build/typecheck、Bun test 与 oxlint scripts 及用户端依赖清单；Paper Shaders 仅由 Landing 两处产品展示背景（APP 展示区与功能细节）按需加载
+package.json: Bun 包元数据、Vite dev/build/typecheck、Bun test 与 oxlint scripts 及用户端依赖清单；Paper Shaders 由正式 Hero 的选定颗粒波面及两处产品展示背景（APP 展示区与功能细节）按需加载
 bun.lock: Bun 锁定依赖版本
 .oxlintrc.json: 前端静态检查策略，启用 React Hooks、JSX a11y 与未使用变量诊断；render 期 latest ref 写入等已证明安全的模式只允许带就地中文依据后局部豁免
 tsconfig.json: TypeScript 编辑器与编译约束

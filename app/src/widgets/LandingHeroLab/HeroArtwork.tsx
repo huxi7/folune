@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖 Paper 0.0.80 的 ShaderMount/GrainGradient/Dithering/Warp、局部 GLSL 与参数协议
- * [OUTPUT]: 对外提供四版背景、A/B/D 原始参照、运行状态及可读取的连续时间
+ * [INPUT]: 依赖 Paper 0.0.80 的 ShaderMount/GrainGradient/Dithering/Warp、A/B GLSL 与参数协议
+ * [OUTPUT]: 对外提供 01A/01B/02A/02B、历史配置背景、运行状态及连续时间
  * [POS]: Lab 的单画布装配边界；遮罩负责阅读区，参数变更只更新 uniforms，不重建上下文
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -8,8 +8,11 @@ import { useEffect, useImperativeHandle, useMemo, useRef, useState } from "react
 import type { CSSProperties, Ref } from "react";
 import { GrainGradient, Warp, Dithering, ShaderMount } from "@paper-design/shaders-react";
 import type { PaperShaderElement } from "@paper-design/shaders";
+import { getShaderNoiseTexture } from "@paper-design/shaders";
 import { inkFragmentShader } from "./inkShader";
-import { isVariant } from "./presets";
+import { inkBFragmentShader } from "./inkBShader";
+import { paperBFragmentShader } from "./paperBShader";
+import { isRedesigned, isVariant } from "./presets";
 import type { Choice, Snapshot } from "./presets";
 
 export type ShaderStatus = "loading" | "ready" | "unavailable";
@@ -26,6 +29,7 @@ export function HeroArtwork({ snapshot, running, onStatus, ref }: {
   const shader = useRef<PaperShaderElement>(null);
   const [supported, setSupported] = useState(false);
   const [size, setSize] = useState([1440, 600]);
+  const [readingBox, setReadingBox] = useState([490, 200, 950, 400]);
   const [attempt, setAttempt] = useState(0);
   const { choice, params: p, frame } = snapshot;
   const original = !isVariant(choice);
@@ -45,10 +49,21 @@ export function HeroArtwork({ snapshot, running, onStatus, ref }: {
   useEffect(() => {
     const node = host.current;
     if (!node) return;
-    const observer = new ResizeObserver(([entry]) => {
-      if (entry) setSize([entry.contentRect.width, entry.contentRect.height]);
-    });
+    const measure = () => {
+      const box = node.getBoundingClientRect();
+      setSize(previous => previous[0] === box.width && previous[1] === box.height ? previous : [box.width, box.height]);
+      const blocks = [...(node.parentElement?.querySelectorAll(".landing-hero-copy,.grain-lab-actions") ?? [])].map(element => element.getBoundingClientRect());
+      if (blocks.length) {
+        const next = [Math.min(...blocks.map(rect => rect.left)) - box.left - 14,
+          Math.min(...blocks.map(rect => rect.top)) - box.top - 16,
+          Math.max(...blocks.map(rect => rect.right)) - box.left + 14,
+          Math.max(...blocks.map(rect => rect.bottom)) - box.top + 16];
+        setReadingBox(previous => previous.every((value, i) => value === next[i]) ? previous : next);
+      }
+    };
+    const observer = new ResizeObserver(measure);
     observer.observe(node);
+    node.parentElement?.querySelectorAll(".landing-hero-copy,.grain-lab-actions").forEach(element => observer.observe(element));
     return () => observer.disconnect();
   }, []);
 
@@ -88,15 +103,28 @@ export function HeroArtwork({ snapshot, running, onStatus, ref }: {
     u_cssSize: size, u_mode: choice === "mist" ? 1 : 0,
     u_grain: p.grain, u_patternScale: p.scale, u_density: p.density,
     u_disorder: p.disorder, u_seed: p.seed, u_position: [p.x, p.y], u_angle: p.rotation,
-    // 顶点底座尺寸显式给出，局部 shader 自行解耦材质与形态尺度。
-    u_scale: 1, u_originX: 0.5, u_originY: 0.5, u_offsetX: 0, u_offsetY: 0,
-    u_worldWidth: 0, u_worldHeight: 0, u_fit: 0, u_rotation: 0,
   }), [size, choice, p]);
+  const inkBUniforms = useMemo(() => {
+    const { u_mode: _unused, ...common } = uniforms;
+    return { ...common, u_softness: p.softness, u_clear: p.clear, u_readingBox: readingBox };
+  }, [uniforms, p.softness, p.clear, readingBox]);
+  const paperBUniforms = useMemo(() => ({
+    u_cssSize: size, u_readingBox: readingBox, u_clear: p.clear, u_grainSize: p.grain,
+    u_colorBack: [244 / 255, 244 / 255, 242 / 255, 1],
+    // 深墨/浅灰蓝/纸色是同一印刷色系，保留两层不同浓度。
+    u_colors: [[80 / 255, 113 / 255, 135 / 255, 1], [178 / 255, 196 / 255, 203 / 255, 1], [244 / 255, 244 / 255, 242 / 255, 1]],
+    u_colorsCount: 3, u_softness: p.softness, u_intensity: p.disorder * .5,
+    u_noise: p.noise, u_shape: 1, u_noiseTexture: getShaderNoiseTexture(),
+    u_fit: 0, u_scale: p.scale, u_rotation: p.rotation, u_offsetX: p.x, u_offsetY: p.y,
+    u_originX: .5, u_originY: .5, u_worldWidth: 0, u_worldHeight: 0,
+  }), [size, readingBox, p]);
   const shared = { ref: shader, width: "100%", height: "100%", minPixelRatio: 1, maxPixelCount: 1_400_000, frame, className: "grain-lab-canvas" };
   const style = { "--grain-strength": original ? 1 : p.strength, "--grain-clear": original ? 0.93 : p.clear } as CSSProperties;
-  return <div ref={host} className="grain-lab-art" data-choice={choice} data-original={original} aria-hidden="true" style={style}>
+  return <div ref={host} className="grain-lab-art" data-choice={choice} data-original={original} data-composed={isRedesigned(choice)} aria-hidden="true" style={style}>
     <div className="grain-lab-pigment">
-      {supported && <ShaderChoice key={`${choice}-${attempt}`} choice={choice} snapshot={snapshot} shared={shared} uniforms={uniforms} running={running} />}
+      {supported && (choice === "ink-b" ? <ShaderMount key={`ink-b-${attempt}`} {...shared} fragmentShader={inkBFragmentShader} uniforms={inkBUniforms} speed={running ? p.speed : 0} />
+        : choice === "paper-b" ? <ShaderMount key={`paper-b-${attempt}`} {...shared} fragmentShader={paperBFragmentShader} uniforms={paperBUniforms} speed={running ? p.speed : 0} />
+          : <ShaderChoice key={`${choice}-${attempt}`} choice={choice} snapshot={snapshot} shared={shared} uniforms={uniforms} running={running} />)}
     </div>
     <div className="grain-lab-reading-veil" />
   </div>;

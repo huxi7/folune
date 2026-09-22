@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖生产 Landing 的排版/主轨/按钮，以及独立 Lab DOM 和参数变量
- * [OUTPUT]: 对外提供连续颗粒舞台、响应式高度、可收起面板与全宽对照控件
+ * [OUTPUT]: 对外提供 A/B 颗粒舞台、响应式高度、多组收藏与全宽对照控件
  * [POS]: 仅 hero-lab.html 导入；正文沿用生产样式，实验控件不占预览布局
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -31,6 +31,8 @@ body:has(.grain-lab) { margin:0; background:#f4f4f2; }
 }
 .grain-lab-art[data-original=true] .grain-lab-reading-veil { background:radial-gradient(ellipse 37% 49% at 50% 43%,#f4f4f2ed 0,#f4f4f2bb 38%,#f4f4f22b 73%,transparent 100%),linear-gradient(180deg,#f4f4f26b,transparent 24%,transparent 80%,#f4f4f247); }
 .grain-lab-art[data-choice=dither] .grain-lab-reading-veil { background:radial-gradient(ellipse 43% 70% at 50% 37%,#f4f4f2 4%,#f4f4f2dd 36%,#f4f4f230 78%,transparent 100%),linear-gradient(#f4f4f250,transparent 50%); }
+/* B 版在 shader 内按真实文字几何减墨，不再叠加中央椭圆纸色层。 */
+.grain-lab-art[data-composed=true] .grain-lab-reading-veil { background:linear-gradient(90deg,#f4f4f238,transparent 14%,transparent 86%,#f4f4f238); }
 .grain-lab-app-loading { height:738px; display:grid; place-items:center; color:#7a8389; font-size:13px; }
 .grain-lab-footer { min-height:110px; padding:24px 32px 90px; display:flex; justify-content:space-between; gap:16px; font-size:11px; color:#798087; border-top:1px solid #dadde2; }
 .grain-lab-footer>span:first-child { font-family:var(--font-mono); font-size:10px; letter-spacing:.08em; }
@@ -66,6 +68,8 @@ body:has(.grain-lab) { margin:0; background:#f4f4f2; }
 .grain-lab-swatch-paper { background-image:radial-gradient(ellipse at 30% 100%,#8fa5af55,transparent 80%),radial-gradient(circle,#8498a236 .5px,transparent .8px); background-size:100% 100%,2px 2px; }
 .grain-lab-swatch-print { background-image:radial-gradient(circle,#738e9f60 .7px,transparent 1px); background-size:4px 4px; }
 .grain-lab-swatch-mist { background-image:radial-gradient(circle,#8098a74a .5px,transparent .9px); background-size:7px 5px; }
+.grain-lab-swatch-ink-b { background-image:radial-gradient(circle,#69879766 .5px,transparent .8px),linear-gradient(145deg,#819baa99,transparent 56%); background-size:3px 3px,100% 100%; }
+.grain-lab-swatch-paper-b { background-image:radial-gradient(circle,#6f889944 .5px,transparent .8px),linear-gradient(155deg,#849dac88 15%,#e9eeec 52%,#b6c5ca66 82%); background-size:2px 2px,100% 100%; }
 .grain-lab-description { margin:14px 0 20px; }
 .grain-lab-description>span { color:#849096; font-size:10px; }
 .grain-lab-description p { margin:6px 0 0; font-size:12px; line-height:1.8; color:#66757f; }
@@ -102,6 +106,15 @@ body:has(.grain-lab) { margin:0; background:#f4f4f2; }
 .grain-lab-notice { color:#526d7f; font-size:11px; line-height:1.75; }
 .grain-lab-notice:empty { display:none; }
 .grain-lab-production { display:inline-block; margin-top:14px; font-size:11px; color:#647f91; text-decoration:none; }
+.grain-lab-save-row { display:flex; gap:6px; margin-bottom:12px; }
+.grain-lab-save-row input,.grain-lab-study>input { min-width:0; width:100%; padding:8px; border:1px solid #d8dfe1; border-radius:6px; background:#f5f7f3; color:#526d7f; font:11px var(--font-sans); }
+.grain-lab-save-row button { flex:none; border:1px solid #cad5da; border-radius:6px; padding:6px 9px; color:#395875; background:#eaf0f2; font-size:11px; }
+.grain-lab-studies { list-style:none; margin:14px 0; padding:0; display:grid; gap:10px; max-height:330px; overflow-y:auto; scrollbar-width:thin; }
+.grain-lab-study { border:1px solid #e0e5e4; border-radius:8px; padding:10px; }
+.grain-lab-study[data-active=true] { background:#edf2f2; border-color:#a0b4bf; }
+.grain-lab-study>input { border-color:transparent; padding:2px 0; background:transparent; }
+.grain-lab-study>small { display:block; color:#8a969e; font-size:10px; margin:6px 0 9px; }
+.grain-lab-study .grain-lab-button-row button { padding:5px 8px; }
 .grain-lab-dock :focus-visible,.grain-lab-panel :focus-visible { outline:2px solid #69899f; outline-offset:3px; }
 
 @media(max-width:767px) {

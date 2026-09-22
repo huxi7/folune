@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖共享 Button/Blueprint DOM、营销顶栏导航/双动作分组与 DS compact 尺寸、LandingRailTexture、NotePaper 展示变体、六格方法指南、四项真实功能细节、BrandMark 紧边界组合及旧印章可见体量；顶栏只把共享 5:4 图字比缩至 20px 图高，参考字体/纹理、独立 Demo iframe 和 ShowcaseBackdrop
- * [OUTPUT]: 对外提供同源文字与共轴导轨、APP 外壳、两处动态展示后景、侧栏叙述与原句标记的双纸面、分类序号横向六格、功能细节展开、信纸、评价、CTA 暖白双层平滑底座、放大标题与紧凑按钮和页脚的响应式版面；仅 Landing 禁止纵向越界回弹，页尾止于 Footer
+ * [INPUT]: 依赖共享 Button/Blueprint DOM、营销顶栏品牌/导航/双动作分组与 DS compact 尺寸、LandingRailTexture、HeroBackdrop、NotePaper 展示变体、六格方法指南、四项真实功能细节、BrandMark 紧边界组合及旧印章可见体量；顶栏只把共享 5:4 图字比缩至 20px 图高，参考字体/纹理、独立 Demo iframe 和 ShowcaseBackdrop
+ * [OUTPUT]: 对外提供 60svh 颗粒 Hero 的 78% 后景与 65% 中央阅读层、同源文字与共轴导轨、APP 外壳、两处动态展示后景、侧栏叙述与原句标记的双纸面、分类序号横向六格、细节展开、信纸、评价、CTA 暖白双层平滑底座、放大标题与紧凑按钮和页脚；仅 Landing 禁止纵向越界回弹
  * [POS]: styles 的 Landing 局部样式；每侧七条纸缘线与两端空隙等分轨间，三组大小明显交替的扁平横纹与回环以 15:16 纵横周期排列，与密格点贯穿区块，左右各 16% 渐隐；Footer 淡字位于细密斜纹之下，按钮与墨蓝消费 DS；功能区维持 40px 留白与外扩 6px 虚线框，细节仅展开项显示点阵
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -123,9 +123,12 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
 .landing-announcement > .blueprint-divider { position:absolute; bottom:0; left:0; }
 .landing-announcement > span { color:var(--landing-accent); }.landing-announcement > span,.landing-announcement a { font:14px/20px var(--landing-heading); letter-spacing:.35px; }
 .landing-announcement a span { margin-left:8px; }
-.landing-hero { min-height:448px; padding:60px 16px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:32px; position:relative; overflow:hidden; background:linear-gradient(to top,rgb(219 234 254 / 10%),rgb(244 244 242 / 40%),transparent); }
-.landing-hero-pattern { position:absolute; width:1008px; height:1008px; top:50%; left:50%; transform:translate(-50%,-50%); background:url('/landing-reference/hero-geometry.svg') center/contain; mask:url('/landing-reference/hero-imgFrame1.svg') center/contain; pointer-events:none; }
-.landing-hero-copy,.landing-hero>div:last-child { position:relative; }
+.landing-hero { --landing-hero-surrounding-height:256px; --landing-hero-clear:.65; min-height:clamp(440px,min(60svh,calc(100svh - var(--landing-hero-surrounding-height))),800px); padding:60px 16px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:32px; position:relative; isolation:isolate; overflow:visible; background:none; }
+.landing-hero-backdrop { position:absolute; top:0; bottom:0; left:calc(var(--blueprint-edge-inset) - var(--blueprint-main-inset)); right:calc(var(--blueprint-edge-inset) - var(--blueprint-main-inset)); z-index:0; pointer-events:none; overflow:hidden; background:var(--landing-bg); }
+.landing-hero-shader { position:absolute!important; inset:0; opacity:.78; }
+.landing-hero-shader canvas { display:block; }
+.landing-hero-reading-veil { position:absolute; inset:0; background:radial-gradient(ellipse min(36vw,480px) 210px at 50% 49%,rgb(244 244 242 / var(--landing-hero-clear)) 0%,rgb(244 244 242 / var(--landing-hero-clear)) 26%,transparent 100%),linear-gradient(180deg,#f4f4f25c,transparent 22%,transparent 72%,#f4f4f2),linear-gradient(90deg,#f4f4f28c,transparent 17%,transparent 83%,#f4f4f28c); }
+.landing-hero-copy,.landing-hero>div:last-child { position:relative; z-index:2; }
 .landing-hero h1 { font-size:42.9px; line-height:1.4; letter-spacing:.02em; text-align:center; color:var(--landing-accent); }
 .landing-hero-copy p { max-width:440px; margin:8px auto 0; text-align:center; font-size:16px; line-height:24px; letter-spacing:0; color:color-mix(in srgb,var(--landing-ink) 55%,var(--landing-bg)); }
 .landing-actions { display:flex; justify-content:center; gap:12px; }
@@ -397,11 +400,14 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
   .landing-blueprint { --landing-gutter:16px; }
   .marketing-header { height:auto; }
   .marketing-nav { height:auto; padding:8px 16px 0; flex-wrap:wrap; justify-content:space-between; column-gap:8px; row-gap:0; }
+  .marketing-brand p { font-size:20px; }
   .marketing-nav>nav { order:3; flex:0 0 100%; height:44px; gap:20px; overflow-x:auto; scrollbar-width:none; }
   .marketing-nav>nav::-webkit-scrollbar { display:none; }
   .landing-blueprint section[id],.landing-legacy-anchor { scroll-margin-top:108px; }
   .landing-announcement { height:auto; min-height:44px; padding:8px 16px; font-size:11px; text-align:center; }.landing-announcement>span { display:none; }
-  .landing-hero { min-height:400px; padding:64px 24px; }.landing-hero h1 { font-size:clamp(26px,7vw,36px); line-height:1.4; }.landing-hero-copy p { font-size:14px; line-height:22px; }.landing-action-note { font-size:11px; }
+  .landing-hero { min-height:clamp(400px,60svh,700px); padding:64px 24px; }.landing-hero h1 { font-size:clamp(26px,7vw,36px); line-height:1.4; }.landing-hero-copy p { font-size:14px; line-height:22px; }.landing-action-note { font-size:11px; }
+  .landing-hero-backdrop { left:-8px; right:-8px; }
+  .landing-hero-reading-veil { background:radial-gradient(ellipse 70% 210px at 50% 49%,rgb(244 244 242 / var(--landing-hero-clear)) 0%,rgb(244 244 242 / var(--landing-hero-clear)) 26%,transparent 100%),linear-gradient(180deg,#f4f4f260,transparent 22%,transparent 70%,#f4f4f2); }
   .landing-value-strip { grid-template-columns:1fr; }.landing-value-strip>div { border-right:0; border-bottom:1px solid var(--landing-border); padding:16px 24px; }.landing-value-strip p { max-width:none; }
   .landing-editor-section { --showcase-inset:8px; }.reference-editor { width:740px; height:550px; grid-template-columns:190px 1fr; }.reference-working-body { grid-template-columns:42% 58%; }
   .landing-trust { padding:40px 24px; }.landing-trust>h2 { font-size:22px; }.landing-studio-strip { grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; margin:28px 0; }.landing-studio-strip li { justify-content:flex-start; }

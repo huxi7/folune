@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖统一 FirstScreen、参数控制器、Controls 与系统动态偏好
- * [OUTPUT]: 对外提供四套颗粒首屏及不改变预览宽度的浮动实验控件
+ * [OUTPUT]: 对外提供 01A/02A 首屏与多组本地收藏，否决 B 版退出主选择
  * [POS]: hero-lab.html 独立装配根；正式 Landing 没有反向依赖
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -34,7 +34,7 @@ export function HeroLab() {
     <footer className="grain-lab-footer"><span>FOLUNE / MATERIAL STUDIES</span><span>{choiceName(lab.displayed.choice)} · {height}px</span><span role="status">{status}</span></footer>
     <div className="grain-lab-dock" aria-label="首屏方案切换">
       <span className="grain-lab-dock-label">材质研究</span>
-      <div role="group" aria-label="选择方案">{variants.map(item => <button type="button" key={item.id} aria-label={item.name} title={item.name} aria-pressed={!lab.comparing && lab.current.choice === item.id} onClick={() => lab.select(item.id)}>{item.code}</button>)}</div>
+      <div role="group" aria-label="选择方案">{variants.map(item => <button type="button" key={item.id} aria-label={`${item.code} ${item.name}`} title={`${item.code} ${item.name}`} aria-pressed={!lab.comparing && lab.current.choice === item.id} onClick={() => lab.select(item.id)}>{item.code}</button>)}</div>
       <button type="button" className="grain-lab-dock-pause" aria-label={lab.paused ? "播放动态" : "暂停动态"} onClick={lab.togglePaused}>{lab.paused ? "播放" : "暂停"}</button>
       {lab.pinned && <button type="button" aria-pressed={lab.comparing} onClick={lab.compare}>{lab.comparing ? "返回" : "对照"}</button>}
       <button ref={toggle} type="button" className="grain-lab-dock-edit" aria-expanded={panel} aria-controls="grain-lab-panel" onClick={() => setPanel(value => !value)}>{panel ? "收起" : "调节"}</button>

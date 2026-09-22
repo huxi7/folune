@@ -1,5 +1,13 @@
 # 首屏 Demo 第三方源码
 
+2026-09-19 A/B 深化：paperBShader.ts 使用 Paper 0.0.80 导出的 grainGradientFragmentShader，在运行前替换 wave 场形、加入阅读区减墨、解耦 CSS 颗粒尺寸并明确 shader 精度。保留原纸粒噪声与颜色合成链路，不修改 node_modules。此文件是明确改造版本，完整 Apache-2.0 许可证见 PAPER-LICENSE.txt。
+
+Paper Shaders · Copyright 2026 Paper
+Powered by Paper Shaders: https://shaders.paper.design
+来源：https://github.com/paper-design/shaders （安装版 0.0.80）
+
+grainMaterial.ts 是本项目原 inkShader.ts 的公共函数提取；inkBShader.ts 是本项目新构图，未复制 Paper GLSL。以下“未修改 GLSL”陈述仅描述上一轮历史。
+
 2026-09-19 当前入口使用 Paper Shaders 0.0.80 的 GrainGradient、Dithering、Warp（仅原版参照）和 ShaderMount。inkShader.ts 为本项目本轮编写的局部 GLSL，未复制或修改 Paper Shader 源码。下方 React Bits/Aceternity 源码已退出入口，仅保留历史文件及许可证。
 
 ReactBitsWaves.tsx：复制自 React Bits 官方 TS/CSS Waves，2026-09-18 获取。保留 Perlin、网格点运动和绘制实现，局部修改为确定种子、暂停/恢复、DPR 上限、ResizeObserver、无指针与严格数组边界类型。无 npm 安装步骤，因为 React Bits 以源码分发。

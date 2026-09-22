@@ -1,7 +1,7 @@
 # Folune Hero 颗粒与点阵实验计划
 
-> 2026-09-18 制定，2026-09-19 已实现独立 Demo，等待用户视觉验收。正式 Landing 未更换背景。
-> 依据：用户在本任务中的反馈、关联讨论《优化Landing Page》、当日正式 Hero 与六版 Lab 源码。当前未运行浏览器或测试；视觉判断为待实看验证的设计假设。
+> 2026-09-18 制定，2026-09-19 用户最终选定 02A，并明确授权接入正式 Hero。下文探索范围和候选为历史决策。
+> 正式配置：60svh、浓淡 78%、尺度 .96、速度 .68、中央留白 65%、纹理起伏 14%（intensity .07）、偏移 -.26/.18、方向 -17°；保留 GrainGradient wave 原算法，softness .8、noise .19、frame 12000。实现为 LandingMotion/HeroBackdrop.tsx 和 landing.css，正式页不依赖 Lab。按用户要求未运行测试、构建或浏览器验收。
 
 执行结果（2026-09-19）：四版及参数面板已写入 `/hero-lab.html` 的既有模块。01/04 使用 Paper ShaderMount 与局部颗粒 GLSL，02 使用 GrainGradient wave，03 使用 Dithering warp；A/B/D 原参数保留，E/F 从入口淘汰。支持自动本地保存、复制/载入配置、暂停定格对照和可选真实 APP 衔接。02 保留库原生纸粒尺寸，未伪造颗粒粗细旋钮；各版只展示实际生效的参数。当前默认值与实现限制见 `app/src/widgets/LandingHeroLab/REVIEW.md`。按用户既有要求未运行浏览器、测试或构建，不能把本轮视觉与性能视为已验收。下文保留计划原始决策，实际实现以本段与模块文档为准。
 

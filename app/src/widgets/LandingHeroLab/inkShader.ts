@@ -1,9 +1,11 @@
 /**
- * [INPUT]: 依赖 Paper ShaderMount 的时间/分辨率与 Lab 的 CSS 尺寸、构图、颗粒参数
+ * [INPUT]: 依赖 Paper ShaderMount 的时间/分辨率、grainMaterial 公共采样与 Lab 参数
  * [OUTPUT]: 对外提供散墨/薄雾共用的连续形变与细颗粒缓移 WebGL2 fragment shader
- * [POS]: 局部材质算法；确定种子的微粒随连续坐标缓移，墨面独立形变，不逐帧随机刷新或复制第三方 GLSL
+ * [POS]: 保留 01A 与旧 04 的局部算法；确定种子的微粒缓移，墨面独立形变，01B 构图另由 inkBShader 持有
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
+import { grainMaterialGLSL } from "./grainMaterial";
+
 export const inkFragmentShader = `#version 300 es
 precision highp float;
 uniform float u_time;
@@ -19,49 +21,7 @@ uniform vec2 u_position;
 uniform float u_angle;
 out vec4 fragColor;
 
-// ---- 连续大尺度场与确定种子的微粒分开采样 ----
-float hash(vec2 p) {
-  vec3 p3 = fract(vec3(p.xyx) * .1031);
-  p3 += dot(p3, p3.yzx + 33.33 + u_seed * .013);
-  return fract((p3.x + p3.y) * p3.z);
-}
-float noise(vec2 p) {
-  vec2 i = floor(p), f = fract(p);
-  f = f * f * (3. - 2. * f);
-  return mix(mix(hash(i), hash(i + vec2(1., 0.)), f.x),
-    mix(hash(i + vec2(0., 1.)), hash(i + 1.), f.x), f.y);
-}
-float field(vec2 p) {
-  float value = 0.;
-  float weight = .57;
-  mat2 r = mat2(.8, -.6, .6, .8);
-  for (int i = 0; i < 3; i++) {
-    value += weight * noise(p);
-    p = r * p * 2.03 + vec2(7.3, 2.9);
-    weight *= .47;
-  }
-  return value;
-}
-
-// ---- 邻格合成保持颗粒跨格移动连续，像素覆盖宽度不随哈希边界跳变 ----
-float grains(vec2 coord, float coverage, float ink, float aa) {
-  vec2 base = floor(coord - .5);
-  vec2 local = coord - base;
-  float amount = 0.;
-  for (int y = 0; y < 2; y++) {
-    for (int x = 0; x < 2; x++) {
-      vec2 offset = vec2(float(x), float(y));
-      vec2 cell = base + offset;
-      vec2 center = offset + vec2(hash(cell + 17.), hash(cell + 91.)) * .24 + .38;
-      float random = hash(cell + 53.);
-      float radius = mix(.12, .35, coverage) * mix(.82, 1., random);
-      float dotInk = 1. - smoothstep(radius - aa, radius + aa, length(local - center));
-      float deposit = smoothstep(random - .22, random + .22, coverage + .18);
-      amount += dotInk * mix(.3, 1., ink) * mix(.72, 1., random) * deposit;
-    }
-  }
-  return clamp(amount, 0., 1.);
-}
+${grainMaterialGLSL}
 void main() {
   vec2 uv = gl_FragCoord.xy / u_resolution;
   uv.y = 1. - uv.y;

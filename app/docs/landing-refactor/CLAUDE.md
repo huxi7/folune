@@ -36,7 +36,7 @@ connections-desktop.png: 1440px 关联展示区默认「查看理由」态验收
 use-cases-desktop.png: 1440px 三行日常场景验收截图
 connections-mobile.png: 390px 关联展示区窄幅理由实景与图下原句验收截图
 use-cases-mobile.png: 390px 日常场景首行上下排列验收截图
-hero-grain-lab-plan.md: 结合 A 的纸粒、B 的不规则形变与 D 的网点的 Hero Lab 计划与实施状态；四版和调参已写入独立 Demo，E/F 淘汰，等待用户视觉验收，正式背景未改
+hero-grain-lab-plan.md: 颗粒首屏探索的历史计划与最终接入状态；用户选定 02A 的 60svh/78% 浓淡/65% 阅读层，已接入正式 Hero，其余候选仅保留探索记录
 details-content.md: 第 11 区块四项细节、真实截图来源、文章路由与返回/键盘/响应式验收记录
 details-desktop.png: 1440px 字号精修阶段的历史画面，早于图注删除、收放修复和黑色标题调整
 details-mobile.png: 首轮 390px 功能细节历史画面，早于字号/居中精修
