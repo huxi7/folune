@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 Motion inView、DS 实时动态偏好与 landing.css 的 Blueprint 坐标、纹样、水平渐隐和纵向显现遮罩
+ * [INPUT]: 依赖 Motion inView、DS 实时动态偏好与 landing.css 的 Blueprint 坐标、纹样、水平渐隐和绘制层原生 mask-position 动画
  * [OUTPUT]: 对外提供 paper / weave / index 三种进入视口后由上至下显现的 LandingRailTexture 及 RailVariant 类型
  * [POS]: widgets 的首页侧轨装饰层；连续覆盖上下空轨与正文，两侧共用一次触发；模块内存按纹样记录本次文档已播放项，路由往返不重播、刷新重置，减少动态时直接显示
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -51,7 +51,10 @@ export function LandingRailTexture({ variant }: { variant: RailVariant }) {
     data-reveal={phase}
     aria-hidden="true"
     onAnimationEnd={event => {
-      if (event.animationName === "landing-rail-reveal") setPhase("complete");
+      // 左右动画同帧开始，只由左侧绘制层的结束事件提交共同终态。
+      if (event.animationName === "landing-rail-reveal"
+        && event.target instanceof HTMLElement
+        && event.target.parentElement?.dataset.side === "start") setPhase("complete");
     }}
   >
     {(["start", "end"] as const).map(side => <div className="landing-rail-texture-side" data-side={side} key={side}>
