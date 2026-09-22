@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖共享 Button/Blueprint DOM、营销顶栏品牌/导航/双动作分组与 DS compact 尺寸、LandingRailTexture、HeroBackdrop、NotePaper 展示变体、六格方法指南、四项真实功能细节、BrandMark 紧边界组合及旧印章可见体量；顶栏只把共享 5:4 图字比缩至 20px 图高，参考字体/纹理、独立 Demo iframe 和 ShowcaseBackdrop
+ * [INPUT]: 依赖共享 Button/Blueprint DOM、营销顶栏品牌/导航/双动作分组与 DS compact 尺寸、LandingRailTexture 的一次性显现状态、HeroBackdrop、NotePaper 展示变体、六格方法指南、四项真实功能细节、BrandMark 紧边界组合及旧印章可见体量；顶栏只把共享 5:4 图字比缩至 20px 图高，参考字体/纹理、独立 Demo iframe 和 ShowcaseBackdrop
  * [OUTPUT]: 对外提供 60svh 颗粒 Hero 的 78% 后景与 65% 中央阅读层、同源文字与共轴导轨、APP 外壳、两处动态展示后景、侧栏叙述与原句标记的双纸面、分类序号横向六格、细节展开、信纸、评价、CTA 暖白双层平滑底座、放大标题与紧凑按钮和页脚；仅 Landing 禁止纵向越界回弹
  * [POS]: styles 的 Landing 局部样式；四章各一对空轨共用桌面 48px / 移动 28px 高度，底色与连续竖轨沿用页面骨架；评价/指南/博客的章节外框让侧纹连续覆盖上下空轨与正文，内侧横线止于主轨；每侧七条纸缘线与两端空隙等分轨间，三组大小明显交替的扁平横纹与回环以 15:16 纵横周期排列，密格点同样覆盖整章，左右各 16% 渐隐；Footer 淡字位于细密斜纹之下，按钮与墨蓝消费 DS；功能区维持 40px 留白与外扩 6px 虚线框，细节仅展开项显示点阵
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -7,6 +7,7 @@
 @font-face { font-family: Landing Writer; src: url('/landing-reference/iAWriterQuattroS_Regular.woff2') format('woff2'); font-display: swap; }
 @font-face { font-family: Landing Serif; src: url('/landing-reference/IBMPlexSerif_Var.woff2') format('woff2'); font-display: swap; font-weight:100 900; }
 @font-face { font-family: Landing Mono; src: url('/landing-reference/Lilex_Regular.woff2') format('woff2'); font-display: swap; }
+@property --rail-reveal-position { syntax:"<percentage>"; inherits:true; initial-value:0%; }
 @layer components {
 html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-y:none; }
 .ds-page { min-height:100vh; color:var(--foreground); background:var(--background); font-family:var(--font-sans); }
@@ -68,6 +69,7 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
 .landing-chapter-gap[data-edge="end"] > .blueprint-divider { top:100%; }
 /* ---- 侧轨纹理：仅三处装配；显隐由轨间宽度驱动，不增加测量状态 ---- */
 .landing-rail-texture {
+  --rail-reveal-position:0%;
   --rail-space:calc(var(--blueprint-main-inset) - var(--blueprint-edge-inset));
   --rail-main-alpha:.17;
   --rail-detail-alpha:.085;
@@ -79,6 +81,13 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
   color:var(--landing-accent);
   pointer-events:none;
   user-select:none;
+}
+/* ---- 只推进显现边缘，花纹保持原比例；一个进度同时驱动左右侧 ---- */
+.landing-rail-texture[data-reveal="revealing"] { animation:landing-rail-reveal 1450ms cubic-bezier(.42,0,.58,1) both; }
+.landing-rail-texture[data-reveal="complete"] { --rail-reveal-position:112%; }
+@keyframes landing-rail-reveal {
+  from { --rail-reveal-position:0%; }
+  to { --rail-reveal-position:112%; }
 }
 .landing-rail-texture-side {
   position:absolute;
@@ -92,6 +101,12 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
 .landing-rail-texture-pattern {
   position:absolute;
   inset:0;
+  mask-image:linear-gradient(to bottom,#000 calc(var(--rail-reveal-position) - 12%),transparent var(--rail-reveal-position));
+}
+.landing-rail-texture[data-reveal="complete"] .landing-rail-texture-pattern { mask-image:none; }
+@media (prefers-reduced-motion:reduce) {
+  .landing-rail-texture[data-reveal="revealing"] { animation:none; }
+  .landing-rail-texture-pattern { mask-image:none; }
 }
 .landing-rail-texture-side[data-side="end"] .landing-rail-texture-pattern { transform:scaleX(-1); }
 .landing-rail-texture-pattern > span { position:absolute; inset:0; }
@@ -390,8 +405,9 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
 /* ---- 1120px 主轨 + 两侧 48px 外轨间距与 8px 节点，空间不足时隐藏外轨 ---- */
 @media(max-width:1232px) {
   .blueprint-rail-edge-start,.blueprint-rail-edge-end,.blueprint-pin-edge-start,.blueprint-pin-edge-end { display:none; }
-  .landing-rail-texture { display:none; }
 }
+/* ---- 轨间不足 48px 时原有透明度已为零，同时隐藏以免提前消耗显现 ---- */
+@media(max-width:1312px) { .landing-rail-texture { display:none; } }
 @media(max-width:1199px) {
   .marketing-edition { display:none; }.marketing-nav { gap:20px; }.marketing-nav>nav { gap:16px; }.landing-section-heading,.landing-trust,.landing-letter-section { padding:32px; }
   .landing-feature-grid article { padding:32px; }.landing-small-features article { padding:24px; }.landing-section-links { gap:8px; }
