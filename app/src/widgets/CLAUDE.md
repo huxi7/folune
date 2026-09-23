@@ -50,7 +50,8 @@ useMemoTreeExpansion.ts: 文件树展开偏好的设备级持久化边界；水�
 useMemoTreeExpansion.test.ts: 覆盖展开快照缺失与明确全折叠的区分、损坏/旧版本容错，以及删除清理和新 folder 自动展开规则
 useMemoSearch.ts: Command Palette 与 @菜单共用的正文关键词命中 hook，180ms 防抖、切换中止旧请求，只把仍存在于 active tree 的命中 ID 与 idle/loading/ready/error 状态交给调用方；网络 effect 只依赖查询/身份，tree 变化仅通过一次 ID 索引过滤既有命中，不因保存或改名重新搜索。
 escapeLayering.test.ts: Escape 层级仲裁静态门禁；冒泡链只有 document 恒先于 window 两档可用，因此锁定内层弹层挂 document + preventDefault、两个壳层守卫留在 window 并让行，画布内容层同样留在 window 以免与 Dialog 抢同一档
-PanelResizeHandle.tsx: 左右浮动 Panel 拖拽手柄，支持 Pointer 拖拽、方向键调整、双击复位与 separator ARIA；拖拽期间声明全局 resizing 状态，禁止布局/面板动画干扰 1:1 跟手；文件库手柄随持久宿主保留
+PanelResizeHandle.test.tsx: 双侧方向/宽度边界、主指针隔离、捕获丢失/取消/卸载清理与键盘/复位回归
+PanelResizeHandle.tsx: 左右浮动 Panel 共用 8px 透明热区与 160px 局部渐隐细线，指针坐标直接写 CSS、不触发悬停重渲染，键盘焦点居中；仅主指针左键开始拖动，捕获丢失/取消/卸载均清理全局状态；支持 Pointer 拖拽、方向键调整、双击复位与 separator ARIA；拖拽期间声明全局 resizing 状态，禁止布局/面板动画干扰 1:1 跟手；文件库手柄随持久宿主保留
 ArchiveCord.tsx: 归档线稳定导出边界；只导出 fixed Overlay。目标标记已回归真实 tree row 的 data-archive-representative，这里不再制造零尺寸中转对象——一个不存在的组件不该继续冒充对象
 ArchiveCordOverlay.tsx: 唯一归档几何调度器，消费树上唯一非 inert 代表；滚动/树高度/FLIP/Panel 期间按租约读真实矩形，保持代表迁移时间轴与 settled/fresh 语义，不把几何写进 React state
 ArchiveCordOverlay.test.tsx: Overlay 结构与视觉语法回归测试，锁定 fixed 全屏、三条 path、无中心圆点/方向箭头、首帧一律 settled、关闭与窄屏只隐藏渲染（opacity 而非 display）、旧 marker/organize 连线层/目录高亮死样式确已删除，以及 Reduced Motion 不自绘不流光
