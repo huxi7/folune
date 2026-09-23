@@ -1,12 +1,12 @@
 /**
- * [INPUT]: 依赖入口进度 Store、共享 BrandMark、轻弹进度落定时长、系统减少动态偏好与 workspace-entry.css
+ * [INPUT]: 依赖入口进度 Store、共享 BrandWordmark、轻弹进度落定时长、系统减少动态偏好与 workspace-entry.css
  * [OUTPUT]: 对外提供跨 loader/路由挂载持续存在的品牌加载层；100% 后单次斜纹彩光揭开工作区
  * [POS]: 应用入口的视觉边界；子路由持续装配，加载期间隔离交互，退出后不留下遮罩或重复动画
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { useEffect, type CSSProperties, type ReactNode } from "react";
 import { useMotionPreference } from "../../shared/design-system/useMotionPreference";
-import { BrandMark } from "../../shared/design-system/components/BrandMark";
+import { BrandWordmark } from "../../shared/design-system/components/BrandWordmark";
 import { getWorkspaceEntryProgress, useWorkspaceEntryStore } from "../../shared/store/workspaceEntryStore";
 import "../../styles/workspace-entry.css";
 
@@ -42,7 +42,9 @@ export function WorkspaceEntryTransition({ children }: { children: ReactNode }) 
     {active && <div className="workspace-entry" data-phase={phase} key={id} style={style}>
       <div className="workspace-entry-sheet">
         <div className="workspace-entry-composition">
-          <BrandMark className="workspace-entry-brand" />
+          <div className="ds-brand workspace-entry-brand" role="img" aria-label="Folune">
+            <BrandWordmark />
+          </div>
           <div className="workspace-entry-meter">
             <div className="workspace-entry-track" role="progressbar" aria-label="正在打开 Folune"
               aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress} aria-valuetext={`${label}，${progress}%`}>
