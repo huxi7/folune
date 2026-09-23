@@ -15,7 +15,7 @@ import { MemoAgentContext } from "@/lib/memo-agent-context";
 
 export const memoAgent = new Agent({
   id: "memo-agent",
-  name: "SuperNote 备忘录助手",
+  name: "Folune 备忘录助手",
   instructions: ({ requestContext }) => {
     const context = requestContext.get("memoAgentContext");
     return context instanceof MemoAgentContext

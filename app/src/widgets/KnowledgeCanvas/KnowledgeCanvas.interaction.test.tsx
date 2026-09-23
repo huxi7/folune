@@ -13,7 +13,7 @@ import type {
   CanvasMutationResult,
 } from "../../shared/api/canvas";
 import type { CanvasIntent } from "../../shared/store/canvasDocument";
-import { SUPERNOTE_MEMO_DRAG_MIME } from "../memoLibrary";
+import { FOLUNE_MEMO_DRAG_MIME } from "../memoLibrary";
 import {
   CanvasSaveCoordinator,
   type CanvasCoordinatorSink,
@@ -345,8 +345,8 @@ describe("KnowledgeCanvas 文件树拖入", () => {
     });
     const dataTransfer = {
       dropEffect: "none",
-      getData: (type: string) => type === SUPERNOTE_MEMO_DRAG_MIME ? payload : "",
-      types: [SUPERNOTE_MEMO_DRAG_MIME],
+      getData: (type: string) => type === FOLUNE_MEMO_DRAG_MIME ? payload : "",
+      types: [FOLUNE_MEMO_DRAG_MIME],
     };
 
     fireEvent.dragOver(surface, { dataTransfer });

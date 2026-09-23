@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖浏览器 IndexedDB 与 canvasDocument 的可序列化 CanvasIntent
- * [OUTPUT]: 对外提供按 user_id+canvas_id 隔离的 Canvas V2 WAL 记录、原子草稿封装接口、IndexedDB 实现及测试用内存实现
- * [POS]: shared/store 的 persistenceSlice 持久恢复边界；只保存业务意图和传输状态，严禁保存 JWT、access token 或 UI 组件实例
+ * [OUTPUT]: 对外提供按 user_id+canvas_id 隔离的 Canvas V2 WAL 记录、原子草稿封装接口、旧数据库迁移、Folune IndexedDB 实现及测试用内存实现
+ * [POS]: shared/store 的 persistenceSlice 恢复边界；重命名数据库时先复制未同步意图，再切换到 Folune 命名；严禁保存 JWT、access token 或 UI 组件实例
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -56,7 +56,8 @@ export type CanvasWalStorage = {
   ): Promise<void>;
 };
 
-const DATABASE_NAME = "supernote-canvas-wal-v2";
+const DATABASE_NAME = "folune-canvas-wal-v2";
+const LEGACY_DATABASE_NAME = "supernote-canvas-wal-v2";
 const DATABASE_VERSION = 1;
 const STORE_NAME = "canvas-wal";
 const SCOPE_INDEX = "by-scope";
@@ -74,13 +75,86 @@ export const canvasWalMutationKey = (
 ): string =>
   `${canvasWalScopeKey(scope)}:mutation:${String(createdAt).padStart(16, "0")}:${mutationId}`;
 
-const openDatabase = (): Promise<IDBDatabase> =>
-  new Promise((resolve, reject) => {
-    if (!("indexedDB" in globalThis)) {
-      reject(new Error("当前浏览器不支持 IndexedDB，本机恢复不可用。"));
-      return;
-    }
+const createStoreIfMissing = (database: IDBDatabase) => {
+  if (!database.objectStoreNames.contains(STORE_NAME)) {
+    const store = database.createObjectStore(STORE_NAME, { keyPath: "key" });
+    store.createIndex(SCOPE_INDEX, "scope", { unique: false });
+  }
+};
 
+let legacyMigration: Promise<void> | null = null;
+
+const migrateLegacyDatabase = (): Promise<void> => {
+  if (legacyMigration !== null) return legacyMigration;
+
+  legacyMigration = new Promise((resolve, reject) => {
+    let createdDuringProbe = false;
+    const legacyRequest = indexedDB.open(LEGACY_DATABASE_NAME);
+    legacyRequest.onupgradeneeded = () => {
+      createdDuringProbe = true;
+    };
+    legacyRequest.onerror = () => reject(
+      legacyRequest.error ?? new Error("无法读取旧版 Canvas 本机恢复存储。"),
+    );
+    legacyRequest.onsuccess = () => {
+      const legacyDatabase = legacyRequest.result;
+      if (createdDuringProbe || !legacyDatabase.objectStoreNames.contains(STORE_NAME)) {
+        legacyDatabase.close();
+        if (createdDuringProbe) indexedDB.deleteDatabase(LEGACY_DATABASE_NAME);
+        resolve();
+        return;
+      }
+
+      legacyDatabase.onversionchange = () => legacyDatabase.close();
+      const readRequest = legacyDatabase
+        .transaction(STORE_NAME, "readonly")
+        .objectStore(STORE_NAME)
+        .getAll();
+      readRequest.onerror = () => reject(
+        readRequest.error ?? new Error("无法读取旧版 Canvas 本机恢复记录。"),
+      );
+      readRequest.onsuccess = () => {
+        const records = readRequest.result as CanvasWalRecord[];
+        const currentRequest = indexedDB.open(DATABASE_NAME, DATABASE_VERSION);
+        currentRequest.onupgradeneeded = () => createStoreIfMissing(currentRequest.result);
+        currentRequest.onerror = () => reject(
+          currentRequest.error ?? new Error("无法创建 Folune Canvas 本机恢复存储。"),
+        );
+        currentRequest.onsuccess = () => {
+          const currentDatabase = currentRequest.result;
+          const transaction = currentDatabase.transaction(STORE_NAME, "readwrite");
+          transaction.oncomplete = () => {
+            currentDatabase.close();
+            legacyDatabase.close();
+            indexedDB.deleteDatabase(LEGACY_DATABASE_NAME);
+            resolve();
+          };
+          transaction.onabort = () => {
+            currentDatabase.close();
+            reject(transaction.error ?? new Error("迁移 Canvas 本机恢复记录失败。"));
+          };
+          const store = transaction.objectStore(STORE_NAME);
+          for (const record of records) {
+            const existingRecord = store.get(record.key);
+            existingRecord.onsuccess = () => {
+              if (existingRecord.result === undefined) store.put(record);
+            };
+          }
+        };
+      };
+    };
+  });
+
+  return legacyMigration;
+};
+
+const openDatabase = async (): Promise<IDBDatabase> => {
+  if (!("indexedDB" in globalThis)) {
+    throw new Error("当前浏览器不支持 IndexedDB，本机恢复不可用。");
+  }
+
+  await migrateLegacyDatabase();
+  return new Promise((resolve, reject) => {
     const request = indexedDB.open(DATABASE_NAME, DATABASE_VERSION);
     request.onerror = () => reject(
       request.error ?? new Error("无法打开 Canvas 本机恢复存储。"),
@@ -88,15 +162,10 @@ const openDatabase = (): Promise<IDBDatabase> =>
     request.onblocked = () => reject(
       new Error("Canvas 本机恢复存储被另一个旧页面阻塞。"),
     );
-    request.onupgradeneeded = () => {
-      const database = request.result;
-      if (!database.objectStoreNames.contains(STORE_NAME)) {
-        const store = database.createObjectStore(STORE_NAME, { keyPath: "key" });
-        store.createIndex(SCOPE_INDEX, "scope", { unique: false });
-      }
-    };
+    request.onupgradeneeded = () => createStoreIfMissing(request.result);
     request.onsuccess = () => resolve(request.result);
   });
+};
 
 const transactionDone = (transaction: IDBTransaction): Promise<void> =>
   new Promise((resolve, reject) => {

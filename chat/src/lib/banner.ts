@@ -14,7 +14,7 @@ const reset = "\u001B[0m";
 const WIDTH = 76;
 
 type BannerState = typeof globalThis & {
-  __supernoteChatBannerPrinted?: boolean;
+  __foluneChatBannerPrinted?: boolean;
 };
 
 const colorEnabled = process.env["NO_COLOR"] !== "1";
@@ -39,11 +39,11 @@ export const printStartupBanner = (
 ): void => {
   const state = globalThis as BannerState;
 
-  if (state.__supernoteChatBannerPrinted) {
+  if (state.__foluneChatBannerPrinted) {
     return;
   }
 
-  state.__supernoteChatBannerPrinted = true;
+  state.__foluneChatBannerPrinted = true;
   const border = `+${"-".repeat(WIDTH - 2)}+`;
   const strongBorder = `+${"=".repeat(WIDTH - 2)}+`;
   const runtime = typeof Bun === "undefined"

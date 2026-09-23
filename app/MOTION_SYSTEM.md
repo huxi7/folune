@@ -1,4 +1,4 @@
-# SuperNote Motion System
+# Folune Motion System
 > 共同基线 `47dc927` · A `ec6d999` · B `3e1d344` · 实施分支 `codex/motion-system`
 
 2026-09-22 营销页面现行补充：公开导航通过 Router 原生 View Transition 接通首页/锚点/博客/文章/动态/登录；MarketingLayout 在 ScrollRestoration 后仅为可视正文分配临时名称，顶栏固定，导轨只淡换。文字上浮 8px、360ms，32ms 错峰最多 128ms，原生快照与滚动 CSS 入场互斥；query 和 detail 清除锚点不重播。减少动态直接呈现，能力缺失则只保留正文 CSS 入场。参考 [Laper](https://laper.ai/) 的内容层入场与 [IBM Carbon](https://carbondesignsystem.com/elements/motion/choreography/) 的共享壳、有限错峰原则；不引入新动画依赖。

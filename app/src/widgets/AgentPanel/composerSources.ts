@@ -7,7 +7,7 @@
 
 import type {
   AiMessageContextSnapshot,
-  SuperNoteUIMessageMetadata,
+  FoluneUIMessageMetadata,
 } from "../../shared/api/ai";
 import type { MemoTreeNode } from "../../shared/api/memo";
 import type { MentionResult } from "./MentionMenu";
@@ -121,7 +121,7 @@ export const buildFrozenComposerContext = (
   sources: readonly ComposerSource[],
   tree: readonly MemoTreeNode[],
 ): {
-  context: NonNullable<SuperNoteUIMessageMetadata["context"]>;
+  context: NonNullable<FoluneUIMessageMetadata["context"]>;
   display: AiMessageContextSnapshot;
 } => {
   const references = sources.slice(0, MAX_COMPOSER_SOURCES).flatMap((source) => {

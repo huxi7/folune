@@ -13,7 +13,7 @@ import { explorePrompt } from "@/mastra/prompts/explore";
 
 export const exploreAgent = new Agent({
   id: "explore-agent",
-  name: "SuperNote 关联判断器",
+  name: "Folune 关联判断器",
   instructions: explorePrompt,
   model: toMastraModelConfig(env.DEFAULT_MODEL),
   defaultOptions: {

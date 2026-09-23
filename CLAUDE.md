@@ -1,10 +1,10 @@
 # Folune - AI 自动归档的备忘录软件
 Folune 是面向需要长期积累备忘录的用户的 AI Native 备忘录软件，解决随手记录后难以分类、检索和维护文件树的问题。
 
-展示品牌统一为 Folune；仓库、包名、存储键、接口、域名及部署身份仍保留原标识。品牌母图与展示契约见 app/brand-spec.md。
+项目、品牌、软件包、运行标识与部署命名统一为 Folune；服务 API 路径和 Supabase 项目引用继续承担既有连接契约。品牌母图与展示契约见 app/brand-spec.md。
 
 ## 本质
-SuperNote 的本质不是普通文本收纳，而是把“随手写”转化为“自动有序沉淀”。
+Folune 的本质不是普通文本收纳，而是把“随手写”转化为“自动有序沉淀”。
 
 用户只负责记录。系统在消息级冻结当前笔记、@引用与 revision，由无工具无记忆的独立审批 Agent 和账号权限模式裁决写操作，以可撤销命令台账安全维护文件 tree。模型只在用户显式发送消息或触发整理时运行，autosave 不唤醒模型。
 
@@ -29,7 +29,7 @@ AI 是用户的备忘录协作伙伴与智能档案管理员。
 - api: 业务接口服务，Bun + Hono 4 + zod 4 + Supabase REST/PostgREST/Storage HTTP API；只以用户 JWT 访问数据，禁止 service role、连接串与 ORM
 
 ## 运行形态
-app 跑在本机 Bun/Vite 固定 10000；api 与 chat 由根 Compose 编排为 api-dev(10001)/chat-dev(10002)，各自持有独立健康探针与被 Git 忽略的私有 `.env`。chat 依赖 api 健康后启动，容器内经 `http://api:10001` 访问业务 API；浏览器只接收 `VITE_` 前缀的公开配置。
+app 跑在本机 Bun/Vite 固定 10000；api 与 chat 由 folune Compose 项目编排为 folune-api-dev(10001)/folune-chat-dev(10002)，各自持有独立健康探针与被 Git 忽略的私有 `.env`。chat 依赖 api 健康后启动，容器内经 `http://api:10001` 访问业务 API；浏览器只接收 `VITE_` 前缀的公开配置。
 
 2026-09-02 app 形制投影：Paper 归档线由 fixed `ArchiveCordOverlay` 承载，不再依赖 react-archer；Canvas 连接临时绳与 Paper 归档 Overlay 都是 UI 层，正式持久化仍只经既有 app WAL/Coordinator/API 边界。
 
@@ -43,7 +43,7 @@ Canvas V2 是一级持久知识 Workspace：memo 默认 Canvas 与 standalone Ca
 | chat | AI 能力服务，冻结消息上下文；对话、审批、整理与逐篇关联判断职责分离；Canvas expansion 只从 api 重取可信 context/正文/语料版本，复用 Explore 判断和逐字引文复核后返回候选，最终写入仍由浏览器经 api 统一 mutation 提交 | [chat/CLAUDE.md](chat/CLAUDE.md) |
 | api | 业务接口服务，承载 profile、memo、回收站、AI 状态机与 Canvas V2 默认/空白入口、无正文图读取、expansion context、人工/AI 共用 mutation；owner-only RLS、行锁、version、稳定 intent digest、receipt、原子 checkpoint 与同父同类型标题唯一索引共同构成唯一持久化边界，重名由数据库裁决；两种 Canvas 共用一条命名规则，标题不跟随任何东西 | [api/CLAUDE.md](api/CLAUDE.md) |
 | deploy | 本地部署基础设施，提供 api/chat 的 Bun 开发镜像、固定容器命名与密钥分离契约 | [deploy/CLAUDE.md](deploy/CLAUDE.md) |
-| scripts | 本地开发运维入口，统一启动、停止与查看 api-dev/chat-dev 双服务 Docker 日志 | [scripts/CLAUDE.md](scripts/CLAUDE.md) |
+| scripts | 本地开发运维入口，统一启动、停止与查看 folune-api-dev/folune-chat-dev 双服务 Docker 日志 | [scripts/CLAUDE.md](scripts/CLAUDE.md) |
 
 ## 根配置
 | 文件 | 职责 |
@@ -55,4 +55,4 @@ Canvas V2 是一级持久知识 Workspace：memo 默认 Canvas 与 standalone Ca
 | .env.example | app/api/chat 无密钥变量总览与根 Compose 可选覆盖模板；服务默认使用各自本地环境文件 |
 | .gitignore | 根级本地环境、构建缓存与系统文件忽略规则 |
 | .mcp.json | 团队共享的 Supabase MCP 接入声明。八个 feature 组全开（account/branching/database/debugging/development/docs/functions/storage）；**无 `project_ref`** 故 account 组可用、作用域为账号下全部项目；**无 `read_only`** 故具备完整写能力。`[决策: 所有者 · 2026-08-23]` —— 「api 是唯一持久化边界」对**运行时代码**依然绝对有效，MCP 写能力仅是部署与运维动作的通道，不构成绕过 api 读写业务数据的许可。文件不含密钥，OAuth 凭据留在本地 keychain |
-| docker-compose.dev.yml | 从各模块私有 `.env` 注入凭据并编排 api-dev/chat-dev 双服务、独立健康探针、依赖卷与共享网络；集中维护整理自动应用置信阈值，chat 启动前清理容器 PID 复用导致的陈旧 Mastra 开发锁，并直启 CLI 接收停止信号 |
+| docker-compose.dev.yml | 固定 Compose 项目名、容器名、镜像网络和依赖卷前缀为 folune；从各模块私有 `.env` 注入凭据并编排 Folune API/Chat 双服务与独立健康探针；集中维护整理自动应用置信阈值，chat 启动前清理容器 PID 复用导致的陈旧 Mastra 开发锁，并直启 CLI 接收停止信号 |

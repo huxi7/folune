@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 AI SDK DefaultChatTransport、SuperNoteUIMessage、shared/supabase/auth token 与 chatFetch
+ * [INPUT]: 依赖 AI SDK DefaultChatTransport、FoluneUIMessage、shared/supabase/auth token 与 chatFetch
  * [OUTPUT]: 对外提供 createMemoChatTransport，以及 organize/canvas-expand 的统一鉴权 URL/Fetch 边界；普通发送只传增量消息
  * [POS]: AgentPanel 的 AI SDK 会话传输工厂；稳定绑定一个 thread，当前页面 memo 不再作为动态请求状态进入工具续写
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -7,7 +7,7 @@
 
 import { DefaultChatTransport } from "ai";
 
-import type { SuperNoteUIMessage } from "../../shared/api/ai";
+import type { FoluneUIMessage } from "../../shared/api/ai";
 import { getAuthenticatedAccessToken } from "../../shared/supabase/auth";
 import { createAuthenticatedChatFetch } from "./chatFetch";
 
@@ -32,7 +32,7 @@ const authenticatedChatFetch = Object.assign(
 type MemoChatRequestInput = {
   body?: Record<string, unknown>;
   messageId?: string;
-  messages: SuperNoteUIMessage[];
+  messages: FoluneUIMessage[];
   trigger: "submit-message" | "regenerate-message";
 };
 
@@ -105,7 +105,7 @@ export const prepareMemoChatRequest = ({
 
 export const createMemoChatTransport = (
   threadId: string,
-) => new DefaultChatTransport<SuperNoteUIMessage>({
+) => new DefaultChatTransport<FoluneUIMessage>({
   api: chatApiUrl("/v1/chat"),
   fetch: authenticatedChatFetch,
   prepareSendMessagesRequest: (input) => prepareMemoChatRequest({ ...input, threadId }),

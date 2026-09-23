@@ -14,7 +14,7 @@
 在 `Authentication > Email Templates > Confirm signup` 中让正文包含 `{{ .Token }}`，例如：
 
 ```html
-<h2>验证你的 SuperNote 账号</h2>
+<h2>验证你的 Folune 账号</h2>
 <p>你的 6 位验证码是：</p>
 <p>{{ .Token }}</p>
 ```

@@ -186,7 +186,7 @@
   .note-editor-title[data-conflict] { text-decoration: underline wavy color-mix(in srgb, var(--destructive) 62%, transparent); text-decoration-skip-ink: none; text-underline-offset: 0.28em; }
   .note-editor-title-conflict { margin: -0.55rem 0 1rem; color: var(--destructive); font-size: 0.75rem; line-height: 1.5; }
   .note-editor-content { min-width: 0; min-height: 24rem; }
-  .note-editor-canvas .supernote-md-editor { height: 100%; min-height: 0; }
+  .note-editor-canvas .folune-md-editor { height: 100%; min-height: 0; }
   .markdown-reading-view { min-width: 0; color: var(--foreground); font-size: 0.9375rem; line-height: 1.82; overflow-wrap: anywhere; }
   .markdown-reading-view > :first-child { margin-top: 0; }
   .markdown-reading-view > :last-child { margin-bottom: 0; }

@@ -15,7 +15,7 @@ const envSchema = z.object({
   NODE_ENV: z
     .enum(["development", "test", "production"])
     .default("development"),
-  SYSTEM_NAME: z.string().trim().min(1).default("SuperNote API"),
+  SYSTEM_NAME: z.string().trim().min(1).default("Folune API"),
   CORS_ORIGINS: z
     .string()
     .default(DEFAULT_CORS_ORIGINS)

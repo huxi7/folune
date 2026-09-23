@@ -13,7 +13,7 @@ import {
   type CanvasEntryIntent,
 } from "./canvasChromePolicy";
 
-const CANVAS_CHROME_KEY_PREFIX = "supernote:canvas-chrome:v1:";
+const CANVAS_CHROME_KEY_PREFIX = "folune:canvas-chrome:v1:";
 /** 快照是设备级便利而不是业务数据，按最近使用截断，避免无界增长 */
 const MAX_SNAPSHOTS = 40;
 

@@ -20,7 +20,7 @@ import {
   uploadAvatarObject,
 } from "../lib/supabase-storage.ts";
 
-const DEFAULT_PROFILE_NAME_PREFIX = "supernote_";
+const DEFAULT_PROFILE_NAME_PREFIX = "folune_";
 const DEFAULT_PROFILE_RANDOM_DIGITS = 8;
 const UNBIASED_DECIMAL_BYTE_LIMIT = 250;
 const MAX_AVATAR_FILE_BYTES = 5 * 1024 * 1024;

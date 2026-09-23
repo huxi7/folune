@@ -16,7 +16,7 @@ import {
 } from "./request-log.ts";
 
 const REQUEST_ID_HEADER = "X-Request-Id";
-const HEALTH_PROBE_HEADER = "X-SuperNote-Probe";
+const HEALTH_PROBE_HEADER = "X-Folune-Probe";
 const HEALTH_PROBE_VALUE = "docker-health";
 
 const createRequestId = (): string => crypto.randomUUID();

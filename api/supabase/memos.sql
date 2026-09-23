@@ -103,7 +103,7 @@ begin
     or new.parent_id is distinct from old.parent_id
     or new.sort_order is distinct from old.sort_order
     or new.deleted_at is distinct from old.deleted_at
-    or current_setting('supernote.memo_content_revision', true) = 'on'
+    or current_setting('folune.memo_content_revision', true) = 'on'
   then
     new.revision = old.revision + 1;
   else
@@ -121,14 +121,14 @@ set search_path = ''
 as $$
 begin
   if new.content_mdx is distinct from old.content_mdx then
-    perform set_config('supernote.memo_content_revision', 'on', true);
+    perform set_config('folune.memo_content_revision', 'on', true);
 
     update public.memo_nodes
     set revision = revision + 1
     where user_id = new.user_id
       and id = new.node_id;
 
-    perform set_config('supernote.memo_content_revision', 'off', true);
+    perform set_config('folune.memo_content_revision', 'off', true);
   end if;
 
   return new;

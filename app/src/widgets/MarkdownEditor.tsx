@@ -166,7 +166,7 @@ export const MarkdownEditor = forwardRef<
   return (
     <CodeMirror
       basicSetup={markdownBasicSetup}
-      className="supernote-md-editor"
+      className="folune-md-editor"
       extensions={editorExtensions}
       onBlur={onBlur}
       onChange={(nextEditorValue) => {

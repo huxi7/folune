@@ -19,7 +19,7 @@ import {
   type AiThread,
   type AiThreadContent,
   type AiThreadDetail,
-  type SuperNoteUIMessage,
+  type FoluneUIMessage,
 } from "../../shared/api/ai";
 import { selectedThreadStorageKey } from "./threadSelection";
 import {
@@ -64,7 +64,7 @@ const requestThreadContent = (
 };
 
 const localTitleFromMessages = (
-  messages: readonly SuperNoteUIMessage[],
+  messages: readonly FoluneUIMessage[],
 ): string | null => {
   const userMessage = messages.find((message) => message.role === "user");
   if (userMessage === undefined) return null;
@@ -310,7 +310,7 @@ export function useAiThreads({ accessToken, userId }: UseAiThreadsInput) {
   }, [accessToken, refreshLists, userId]);
 
   const commitLocalMessages = useCallback(async (
-    localMessages?: readonly SuperNoteUIMessage[],
+    localMessages?: readonly FoluneUIMessage[],
   ) => {
     const currentThread = selectedThread;
     const threadId = selectedIdRef.current;
@@ -322,7 +322,7 @@ export function useAiThreads({ accessToken, userId }: UseAiThreadsInput) {
     const currentById = new Map(messages.map((message) => [message.id, message]));
     const nextMessages: AiMessage[] = localMessages.map((message, position) => {
       const previous = currentById.get(message.id);
-      const persistedFields = message as SuperNoteUIMessage &
+      const persistedFields = message as FoluneUIMessage &
         Partial<Pick<AiMessage, "context_snapshot" | "status">>;
       return {
         ...(previous ?? {

@@ -27,7 +27,7 @@ import {
   type OrganizePresentationRun,
 } from "./organizePresentation";
 
-const LAST_RUN_KEY_PREFIX = "supernote:last-organize-run:";
+const LAST_RUN_KEY_PREFIX = "folune:last-organize-run:";
 const lastRunStorageKey = (userId: string): string =>
   `${LAST_RUN_KEY_PREFIX}${userId}`;
 

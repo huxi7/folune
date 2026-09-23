@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 SuperNoteUIMessage 的 AI SDK 有序文本/reasoning/工具 parts、过程分区与 design-system AI 消息组件
+ * [INPUT]: 依赖 FoluneUIMessage 的 AI SDK 有序文本/reasoning/工具 parts、过程分区与 design-system AI 消息组件
  * [OUTPUT]: 对外提供纯净用户消息、正文开始时自动收起的单一过程区及回复末尾 Undo2 图标与「撤销」短标签的 assistant 回复
  * [POS]: AgentPanel 消息语义适配层，只负责对话与过程；人工审批由 AgentConversation 固定在 Composer 上方，冻结上下文不进入对话视觉层
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -11,7 +11,7 @@ import { getToolName, isToolUIPart } from "ai";
 
 import type {
   AiCommand,
-  SuperNoteUIMessage,
+  FoluneUIMessage,
 } from "../../shared/api/ai";
 import {
   AssistantMessage,
@@ -28,7 +28,7 @@ import { getAgentToolPresentation } from "./toolPresentation";
 
 type ChatMessageProps = {
   activity: AssistantActivity;
-  message: SuperNoteUIMessage;
+  message: FoluneUIMessage;
   onProgress?: () => void;
   onUndo: (commands: readonly AiCommand[]) => Promise<void>;
 };
@@ -37,19 +37,19 @@ type AssistantMessageContentProps = {
   activity: AssistantActivity;
   finalText: string;
   onProgress?: () => void;
-  processParts: SuperNoteUIMessage["parts"];
+  processParts: FoluneUIMessage["parts"];
   undoCommands: AiCommand[];
   onUndo: ChatMessageProps["onUndo"];
 };
 
 type LiveAssistantTurnProps = {
   activity: AssistantActivity;
-  message?: SuperNoteUIMessage;
+  message?: FoluneUIMessage;
   onProgress?: () => void;
   onUndo?: ChatMessageProps["onUndo"];
 };
 
-function getMessageText(message: SuperNoteUIMessage) {
+function getMessageText(message: FoluneUIMessage) {
   return message.parts
     .filter((part) => part.type === "text")
     .map((part) => part.text)
@@ -137,7 +137,7 @@ function AssistantMessageContent({
   );
 }
 
-function getAssistantPresentation(message: SuperNoteUIMessage) {
+function getAssistantPresentation(message: FoluneUIMessage) {
   const presentation = deriveAgentMessagePresentation(message);
 
   return presentation.finalText || presentation.processParts.length > 0

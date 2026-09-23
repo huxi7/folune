@@ -13,7 +13,8 @@
       (() => {
         const root = document.documentElement;
         try {
-          const storedTheme = window.localStorage.getItem("supernote-theme");
+          const storedTheme = window.localStorage.getItem("folune-theme")
+            ?? window.localStorage.getItem("supernote-theme");
           const theme = ["system", "light", "dark"].includes(storedTheme ?? "")
             ? storedTheme
             : "system";

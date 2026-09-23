@@ -7,7 +7,7 @@
 
 import { describe, expect, test } from "bun:test";
 
-import type { SuperNoteUIMessage } from "../../shared/api/ai";
+import type { FoluneUIMessage } from "../../shared/api/ai";
 import {
   applyApprovalResponse,
   applyToolOutput,
@@ -15,7 +15,7 @@ import {
   findPendingApproval,
 } from "./approvalState";
 
-const approvalMessage = (): SuperNoteUIMessage => ({
+const approvalMessage = (): FoluneUIMessage => ({
   id: "assistant-1",
   parts: [{
     approval: { id: "approval-1" },

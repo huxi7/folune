@@ -60,7 +60,7 @@ begin
     return jsonb_build_object('status', 'thread_not_found');
   end if;
 
-  perform set_config('supernote.ai_run_mutation', 'on', true);
+  perform set_config('folune.ai_run_mutation', 'on', true);
 
   insert into public.ai_runs (
     user_id,
@@ -118,7 +118,7 @@ begin
     );
   end if;
 
-  perform set_config('supernote.ai_run_mutation', 'on', true);
+  perform set_config('folune.ai_run_mutation', 'on', true);
 
   select *
   into target_run
@@ -170,7 +170,7 @@ begin
     return jsonb_build_object('status', 'not_found');
   end if;
 
-  perform set_config('supernote.ai_run_mutation', 'on', true);
+  perform set_config('folune.ai_run_mutation', 'on', true);
 
   select *
   into target_run
@@ -226,7 +226,7 @@ begin
     normalized_error_code := 'AI_RUN_FAILED';
   end if;
 
-  perform set_config('supernote.ai_run_mutation', 'on', true);
+  perform set_config('folune.ai_run_mutation', 'on', true);
 
   update public.ai_runs
   set
@@ -288,8 +288,8 @@ begin
     return jsonb_build_object('status', 'not_found');
   end if;
 
-  perform set_config('supernote.ai_executor', 'on', true);
-  perform set_config('supernote.ai_run_mutation', 'on', true);
+  perform set_config('folune.ai_executor', 'on', true);
+  perform set_config('folune.ai_run_mutation', 'on', true);
 
   select *
   into target_run
@@ -652,8 +652,8 @@ begin
     return jsonb_build_object('status', 'not_found');
   end if;
 
-  perform set_config('supernote.ai_executor', 'on', true);
-  perform set_config('supernote.ai_run_mutation', 'on', true);
+  perform set_config('folune.ai_executor', 'on', true);
+  perform set_config('folune.ai_run_mutation', 'on', true);
 
   select *
   into target_run

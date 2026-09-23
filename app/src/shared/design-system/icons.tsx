@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 lucide-react 的圆角描边图标与 LucideIcon/LucideProps 类型
- * [OUTPUT]: 对外提供含加入/缩放/连接/整理/拓展独立出口的 SuperNote 稳定语义图标别名、14/16/20/24 四档尺寸契约、统一 Icon 类型与本地 Google 品牌标记
+ * [OUTPUT]: 对外提供含加入/缩放/连接/整理/拓展独立出口的 Folune 稳定语义图标别名、14/16/20/24 四档尺寸契约、统一 Icon 类型与本地 Google 品牌标记
  * [POS]: app/src/shared/design-system 的图标语言边界；业务层只依赖领域名称，第三方图形选择与品牌例外在此收口
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */

@@ -1,5 +1,5 @@
 {
-  "name": "@supernote/api",
+  "name": "@folune/api",
   "type": "module",
   "private": true,
   "scripts": {

@@ -1,11 +1,13 @@
 # [INPUT]: 依赖 api/chat 两个 Dockerfile、各自源码与被 Git 忽略的服务端环境文件
-# [OUTPUT]: 提供固定命名 api-dev/chat-dev、独立健康探针、依赖卷与共享 bridge 网络；chat 启动前清理跨容器生命周期失效的 Mastra 开发锁并直启 CLI
+# [OUTPUT]: 提供稳定的 folune Compose 项目名、固定命名 folune-api-dev/folune-chat-dev、独立健康探针、依赖卷与共享 bridge 网络；chat 启动前清理跨容器生命周期失效的 Mastra 开发锁并直启 CLI
 # [POS]: 仓库根开发编排入口；app 留在本机 Bun/Vite，api 与 chat 由同一 Compose 生命周期管理
 # [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 
+name: folune
+
 services:
   api:
-    container_name: api-dev
+    container_name: folune-api-dev
     build:
       context: .
       dockerfile: deploy/docker/api.Dockerfile
@@ -17,7 +19,7 @@ services:
     environment:
       NODE_ENV: "${NODE_ENV:-development}"
       PORT: "10001"
-      SYSTEM_NAME: "${SYSTEM_NAME:-SuperNote API}"
+      SYSTEM_NAME: "${SYSTEM_NAME:-Folune API}"
       CORS_ORIGINS: "${CORS_ORIGINS:-http://localhost:10000,http://127.0.0.1:10000}"
     healthcheck:
       test:
@@ -25,7 +27,7 @@ services:
           "CMD",
           "bun",
           "-e",
-          "fetch('http://localhost:10001/health', { headers: { 'X-SuperNote-Probe': 'docker-health' } }).then((response) => { if (!response.ok) process.exit(1); }).catch(() => process.exit(1));",
+          "fetch('http://localhost:10001/health', { headers: { 'X-Folune-Probe': 'docker-health' } }).then((response) => { if (!response.ok) process.exit(1); }).catch(() => process.exit(1));",
         ]
       interval: 5s
       timeout: 3s
@@ -37,11 +39,11 @@ services:
       - ./api:/workspace/api
       - api_node_modules:/workspace/api/node_modules
     networks:
-      - supernote-dev
+      - folune-dev
     stop_grace_period: 10s
 
   chat:
-    container_name: chat-dev
+    container_name: folune-chat-dev
     build:
       context: .
       dockerfile: deploy/docker/chat.Dockerfile
@@ -53,7 +55,7 @@ services:
     environment:
       NODE_ENV: "${NODE_ENV:-development}"
       PORT: "10002"
-      SYSTEM_NAME: "${CHAT_SYSTEM_NAME:-SuperNote Chat}"
+      SYSTEM_NAME: "${CHAT_SYSTEM_NAME:-Folune Chat}"
       ALLOWED_ORIGINS: "${ALLOWED_ORIGINS:-http://localhost:10000,http://127.0.0.1:10000}"
       BUSINESS_API_BASE_URL: "${BUSINESS_API_BASE_URL:-http://api:10001}"
       ORGANIZE_AUTO_APPLY_CONFIDENCE: "${ORGANIZE_AUTO_APPLY_CONFIDENCE:-0.85}"
@@ -66,7 +68,7 @@ services:
           "CMD",
           "bun",
           "-e",
-          "fetch('http://localhost:10002/health', { headers: { 'X-SuperNote-Probe': 'docker-health' } }).then((response) => { if (!response.ok) process.exit(1); }).catch(() => process.exit(1));",
+          "fetch('http://localhost:10002/health', { headers: { 'X-Folune-Probe': 'docker-health' } }).then((response) => { if (!response.ok) process.exit(1); }).catch(() => process.exit(1));",
         ]
       interval: 5s
       timeout: 3s
@@ -78,7 +80,7 @@ services:
       - ./chat:/workspace/chat
       - chat_node_modules:/workspace/chat/node_modules
     networks:
-      - supernote-dev
+      - folune-dev
     stop_grace_period: 15s
 
 volumes:
@@ -86,5 +88,6 @@ volumes:
   chat_node_modules:
 
 networks:
-  supernote-dev:
+  folune-dev:
+    name: folune-dev
     driver: bridge

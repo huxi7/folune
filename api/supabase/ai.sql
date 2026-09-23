@@ -366,17 +366,17 @@ create policy "ai_runs_insert_from_executor" on public.ai_runs
 for insert to authenticated
 with check (
   (select auth.uid()) = user_id
-  and (select current_setting('supernote.ai_run_mutation', true)) = 'on'
+  and (select current_setting('folune.ai_run_mutation', true)) = 'on'
 );
 create policy "ai_runs_update_from_executor" on public.ai_runs
 for update to authenticated
 using (
   (select auth.uid()) = user_id
-  and (select current_setting('supernote.ai_run_mutation', true)) = 'on'
+  and (select current_setting('folune.ai_run_mutation', true)) = 'on'
 )
 with check (
   (select auth.uid()) = user_id
-  and (select current_setting('supernote.ai_run_mutation', true)) = 'on'
+  and (select current_setting('folune.ai_run_mutation', true)) = 'on'
 );
 
 create policy "ai_actions_select_own" on public.ai_actions
@@ -385,17 +385,17 @@ create policy "ai_actions_insert_from_executor" on public.ai_actions
 for insert to authenticated
 with check (
   (select auth.uid()) = user_id
-  and (select current_setting('supernote.ai_executor', true)) = 'on'
+  and (select current_setting('folune.ai_executor', true)) = 'on'
 );
 create policy "ai_actions_update_from_executor" on public.ai_actions
 for update to authenticated
 using (
   (select auth.uid()) = user_id
-  and (select current_setting('supernote.ai_executor', true)) = 'on'
+  and (select current_setting('folune.ai_executor', true)) = 'on'
 )
 with check (
   (select auth.uid()) = user_id
-  and (select current_setting('supernote.ai_executor', true)) = 'on'
+  and (select current_setting('folune.ai_executor', true)) = 'on'
 );
 
 revoke all privileges on table public.ai_threads, public.ai_messages,

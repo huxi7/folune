@@ -4,20 +4,20 @@
 # [POS]: scripts 的共享运维内核，消除 start/stop/logs 对环境优先级与 Compose 参数的重复实现
 # [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 
-SUPERNOTE_SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-SUPERNOTE_REPO_ROOT="$(cd "$SUPERNOTE_SCRIPT_DIR/.." && pwd)"
-SUPERNOTE_COMPOSE_FILE="$SUPERNOTE_REPO_ROOT/docker-compose.dev.yml"
-SUPERNOTE_ENV_FILE=""
+FOLUNE_SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+FOLUNE_REPO_ROOT="$(cd "$FOLUNE_SCRIPT_DIR/.." && pwd)"
+FOLUNE_COMPOSE_FILE="$FOLUNE_REPO_ROOT/docker-compose.dev.yml"
+FOLUNE_ENV_FILE=""
 
-supernote_prepare_compose() {
-  cd "$SUPERNOTE_REPO_ROOT"
+folune_prepare_compose() {
+  cd "$FOLUNE_REPO_ROOT"
 
   if [[ -f .env.local ]]; then
-    SUPERNOTE_ENV_FILE=".env.local"
+    FOLUNE_ENV_FILE=".env.local"
   elif [[ -f .env ]]; then
-    SUPERNOTE_ENV_FILE=".env"
+    FOLUNE_ENV_FILE=".env"
   elif [[ -f api/.env ]]; then
-    SUPERNOTE_ENV_FILE="api/.env"
+    FOLUNE_ENV_FILE="api/.env"
   else
     cat >&2 <<'EOF'
 未找到 API 环境文件：.env.local、.env 或 api/.env。
@@ -37,22 +37,22 @@ EOF
   fi
 }
 
-supernote_compose() {
+folune_compose() {
   docker compose \
-    --env-file "$SUPERNOTE_ENV_FILE" \
-    -f "$SUPERNOTE_COMPOSE_FILE" \
+    --env-file "$FOLUNE_ENV_FILE" \
+    -f "$FOLUNE_COMPOSE_FILE" \
     "$@"
 }
 
-supernote_print_start_banner() {
+folune_print_start_banner() {
   cat <<'EOF'
 +============================================================================+
-| SUPERNOTE DOCKER DEV STACK                                                 |
+| FOLUNE DOCKER DEV STACK                                                 |
 +------------+----------------+----------+------------------------------------+
 | SERVICE    | CONTAINER      | PORT     | HEALTH                             |
 +------------+----------------+----------+------------------------------------+
-| API        | api-dev        | 10001    | GET /health                        |
-| CHAT       | chat-dev       | 10002    | GET /health / POST /v1/chat SSE    |
+| API        | folune-api-dev | 10001    | GET /health                        |
+| CHAT       | folune-chat-dev| 10002    | GET /health / POST /v1/chat SSE    |
 +------------+----------------+----------+------------------------------------+
 | APP        | host Bun/Vite  | 10000    | outside Compose                    |
 +============================================================================+

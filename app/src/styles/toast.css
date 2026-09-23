@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖设计系统的半径/曲线配对规则与 Kumo Toast Parts 的堆叠/滑动状态、共享动作时钟、本地 Button 与 index.css 的中性 Popover、Radius、Elevation、Motion token
  * [OUTPUT]: 对外提供随内容收紧的顶部居中 Toast、三条悬停展开堆叠、细边柔影的行内倒计时撤销与 reduced-motion 降级
- * [POS]: app/src/styles 的瞬时反馈视觉层；Kumo 负责队列交互，SuperNote 定义安静纸面材质与本地动作层级
+ * [POS]: app/src/styles 的瞬时反馈视觉层；Kumo 负责队列交互，Folune 定义安静纸面材质与本地动作层级
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 @layer components {

@@ -563,12 +563,12 @@ function InputPreview() {
     <div className="ds-preview-form">
       <label>
         <span>Email</span>
-        <Input defaultValue="linus@supernote.dev" />
+        <Input defaultValue="linus@folune.dev" />
       </label>
       <label>
         <span>Password</span>
         <PasswordInput
-          defaultValue="supernote"
+          defaultValue="folune"
           onVisibilityChange={setPasswordVisible}
           visibilityLabel="Design System 密码"
           visible={passwordVisible}
@@ -737,7 +737,7 @@ function UserMenuPreview() {
   return (
     <div className="ds-user-menu-preview">
       <UserMenu
-        email="linus@supernote.dev"
+        email="linus@folune.dev"
         name="Linus"
         onOpenProfile={() => undefined}
         onOpenSettings={() => undefined}

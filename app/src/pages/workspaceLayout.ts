@@ -7,8 +7,8 @@
 
 import { useEffect, useState, type CSSProperties } from "react";
 
-export const SIDEBAR_WIDTH_KEY = "supernote-sidebar-width";
-export const AGENT_WIDTH_KEY = "supernote-agent-width";
+export const SIDEBAR_WIDTH_KEY = "folune-sidebar-width";
+export const AGENT_WIDTH_KEY = "folune-agent-width";
 export const DEFAULT_SIDEBAR_WIDTH = 264;
 export const DEFAULT_AGENT_WIDTH = 360;
 export const SIDEBAR_MIN_WIDTH = 208;

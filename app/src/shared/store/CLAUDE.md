@@ -28,7 +28,7 @@ memoDocumentStore.ts: Zustand 单篇正文共享数据源；按 ID 加载缓存�
 memoDocumentStore.test.ts: 正文生命周期回归测试，锁定按打开 ID 请求、预取/点击合并、缓存复用、reset 门禁与临时 ID 对账 覆盖双向合并、独立取消、取消重开、删除失效与草稿保护。
 canvasDocument.ts: Canvas intent 的纯领域内核；以 isCanvasOriginNode 向乐观投影与 UI 暴露唯一来源卡片判据，并归一连续编辑、空间文字尺寸与 text_scale、服务端回执/alias 对账和冲突 rebase，React、网络与 IndexedDB 禁止进入
 canvasDocument.test.ts: 锁定稳定 UUID 合并、空间文字尺寸与 text_scale、create+remove 由数据库判定 no-op、默认根移除清边、alias 对账与 dropped 不固化
-canvasWal.ts: 按 user_id+canvas_id 隔离的 IndexedDB WAL；原子保存 draft/queued mutation 与发送状态，不保存 JWT、access token 或组件实例，并提供内存实现供测试
+canvasWal.ts: 按 user_id+canvas_id 隔离的 Folune IndexedDB WAL；首次打开时安全迁移旧数据库中的 draft/queued mutation，原子保存发送状态，不保存 JWT、access token 或组件实例，并提供内存实现供测试
 canvasWorkspaceStore.ts: Canvas Workspace 唯一客户端状态源；把服务端文档、交互会话和持久化状态分组三个 slice，不持有网络计时器或 memo 正文
 CanvasSaveCoordinator.ts: 单 Canvas 单标签页保存协调器；enqueueMany 让「一次手势」成为原子入账单位（整组拖动共用一条 WAL 记录，要么整组幸存要么整组不存在，enqueue 只是长度为 1 的它），600ms 封装、100 操作/48KiB 限额、WAL-first、人工先于随后 AI 的严格顺序、稳定 mutation_id、串行重试、receipt 重放、单次 409 rebase、AI stale 丢弃与 pagehide 首批发送均在此收口
 CanvasSaveCoordinator.test.ts: 锁定空 WAL 恢复、WAL 失败不伪成功、整组手势只写一条 WAL 记录且一次 mutation 携带全部 intent、空间文字幂等、响应丢失重试、409 保留远端事实、pagehide 有界与 source revision 漂移不留 AI 幽灵节点

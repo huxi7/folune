@@ -9,12 +9,12 @@ import { afterEach, beforeAll, describe, expect, test } from "bun:test";
 
 import "../../testEnv";
 
-import type { AiMessage, SuperNoteUIMessage } from "./ai";
+import type { AiMessage, FoluneUIMessage } from "./ai";
 
 let syncAiMessages: (
   accessToken: string,
   threadId: string,
-  messages: readonly SuperNoteUIMessage[],
+  messages: readonly FoluneUIMessage[],
 ) => Promise<AiMessage[]>;
 let getAiThreadBootstrap: typeof import("./ai").getAiThreadBootstrap;
 let getAiThreadContent: typeof import("./ai").getAiThreadContent;
@@ -74,7 +74,7 @@ describe("AI messages API", () => {
   });
 
   test("PUT 持久化 approval-responded，刷新不会重新得到待确认状态", async () => {
-    const messages: SuperNoteUIMessage[] = [{
+    const messages: FoluneUIMessage[] = [{
       id: "assistant-1",
       parts: [{
         approval: { approved: true, id: "approval-1" },

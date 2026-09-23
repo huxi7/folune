@@ -7,7 +7,7 @@
 import { afterEach, expect, test } from "bun:test";
 import { Window } from "happy-dom";
 import type { ChatStatus } from "ai";
-import type { SuperNoteUIMessage } from "../../shared/api/ai";
+import type { FoluneUIMessage } from "../../shared/api/ai";
 
 const browserWindow = new Window();
 Object.assign(globalThis, {
@@ -33,8 +33,8 @@ const tool = {
   state: "input-available",
 } as const;
 
-function turn(parts: SuperNoteUIMessage["parts"], status: ChatStatus = "streaming") {
-  const message: SuperNoteUIMessage = { id: "assistant-1", role: "assistant", parts };
+function turn(parts: FoluneUIMessage["parts"], status: ChatStatus = "streaming") {
+  const message: FoluneUIMessage = { id: "assistant-1", role: "assistant", parts };
   return <ChatMessage
     activity={deriveAssistantActivity(status, message)}
     message={message}

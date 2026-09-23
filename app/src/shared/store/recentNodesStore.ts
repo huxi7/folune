@@ -7,7 +7,7 @@
 
 import { create } from "zustand";
 
-const RECENT_NODES_KEY_PREFIX = "supernote:recent-nodes:v1:";
+const RECENT_NODES_KEY_PREFIX = "folune:recent-nodes:v1:";
 /** 最近项是便利而不是历史档案，越界即丢 */
 const MAX_RECENT = 30;
 

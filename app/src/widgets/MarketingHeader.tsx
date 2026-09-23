@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖共享 Button、BlueprintFrame/Divider、BrandMark 与 MarketingLink/原生过渡能力判据；公开导航共用营销动效
- * [OUTPUT]: 对外提供品牌、六项内容导航与打开/下载双动作；价格与下载保留正常可点击外观，更多进入独立动态分区
- * [POS]: widgets 的共享营销导航，首页、登录页与公开内容页持续复用；打开只导航到 /login，认证生命周期由页面持有
+ * [OUTPUT]: 对外提供品牌、六项内容导航与下载/打开双动作；下载在左用 Secondary，打开在右用 Primary，更多进入独立动态分区
+ * [POS]: widgets 的共享营销导航，首页、登录页与公开内容页持续复用；打开导航到 /login，认证生命周期由页面持有，下载目标待接入
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { useNavigate } from "react-router-dom";
@@ -48,15 +48,14 @@ export function MarketingHeader() {
           ))}
         </nav>
         <div className="marketing-nav-actions">
+          {/* ---- 双动作按主次顺序固定排列：下载为次，打开 Folune 为主 ---- */}
+          <Button variant="secondary">下载</Button>
           <Button
-            className="marketing-login-button"
             onClick={() => navigate("/login", { viewTransition: supportsMarketingTransition() })}
-            variant="secondary"
+            variant="primary"
           >
             打开
           </Button>
-          {/* ---- 下载地址后续接入；预留动作保持正常外观，不跳转或触发占位提示 ---- */}
-          <Button variant="primary">下载</Button>
         </div>
       </div>
       </BlueprintFrame>

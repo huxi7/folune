@@ -73,7 +73,7 @@ describe("主 Paper 开本", () => {
     const codeMirrorCss = readFileSync(join(import.meta.dir, "codemirror.css"), "utf8");
     const scroller = firstDeclarationsFor(
       codeMirrorCss,
-      ".note-editor-canvas .supernote-md-editor .cm-scroller",
+      ".note-editor-canvas .folune-md-editor .cm-scroller",
     );
     expect(scroller).toContain("overflow: visible");
     expect(scroller).toContain("min-height: 24rem");

@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖共享 Button、MarketingAnnouncement、BlueprintDivider、HeroBackdrop 与 LandingEditor；/login 走原生过渡，正文标记交给 MarketingLayout 编排浮现
  * [OUTPUT]: 对外提供渐变公告、60svh 居中 Hero、定稿三列价值条与真实 UI 展示；量取顶栏/公告/三栏为矮屏保留产品露出空间
- * [POS]: widgets 的中文首页首屏；02A 背景独立加载，打开复用认证、下载以主按钮预留，与顶栏保持相同动作层级，分区边界复用通栏导轨和交点
+ * [POS]: widgets 的中文首页首屏；02A 背景独立加载，LandingActions 统一下载在左、打开在右，打开用 Primary 墨蓝引导进入 /login，供首屏与末端 CTA 共用
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { Button } from "../shared/design-system/components";
@@ -16,11 +16,11 @@ import { supportsMarketingTransition } from "./LandingMotion/useMarketingMotion"
 export function LandingActions() {
   const navigate = useNavigate();
   return <div className="landing-actions">
-    <Button variant="secondary" onClick={() => navigate("/login", { viewTransition: supportsMarketingTransition() })}>
-      打开
-    </Button>
-    <Button variant="primary">
+    <Button variant="secondary">
       下载
+    </Button>
+    <Button variant="primary" onClick={() => navigate("/login", { viewTransition: supportsMarketingTransition() })}>
+      打开
     </Button>
   </div>;
 }
@@ -51,7 +51,7 @@ export function LandingHero() {
     <section ref={heroRef} className="landing-hero" aria-labelledby="landing-title">
       <HeroBackdrop />
       <div className="landing-hero-copy"><h1 data-marketing-reveal id="landing-title" tabIndex={-1}>随手记下，自然有序</h1><p data-marketing-reveal>在 Folune，专注记录当下的想法。<br />让 AI 帮你整理、连接，再次发现。</p></div>
-      <div data-marketing-reveal><LandingActions /><p className="landing-action-note">打开即可使用网页版 · 桌面版即将推出</p></div>
+      <div data-marketing-reveal><LandingActions /><p className="landing-action-note">网页版无需安装 · 桌面版随时下载</p></div>
     </section>
     <BlueprintDivider flush fullBleed />
     <div ref={valuesRef} className="landing-value-strip">

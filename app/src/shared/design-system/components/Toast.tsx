@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 Kumo Toast 可访问队列/焦点/滑动、本地 Button、useToastCountdown 动作时钟与 toast.css 的中性反馈材质
  * [OUTPUT]: 对外提供 ToastProvider/useToast/ToastVariant/ToastInput；顶部居中、三条内容自适应堆叠，重复触发独立反馈，悬停展开，动作默认六秒
- * [POS]: app/src/shared/design-system/components 的全局瞬时反馈边界；Kumo 只拥有队列与交互机制，业务动作仍由 SuperNote 本地 Button 渲染，隔离业务和第三方表现实现
+ * [POS]: app/src/shared/design-system/components 的全局瞬时反馈边界；Kumo 只拥有队列与交互机制，业务动作仍由 Folune 本地 Button 渲染，隔离业务和第三方表现实现
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import {
@@ -50,7 +50,7 @@ type KumoManagedToast = ReturnType<typeof useKumoToastManager>["toasts"][number]
 const DEFAULT_TOAST_DURATION = 2600;
 const ACTION_TOAST_DURATION = 6000;
 const MAX_VISIBLE_TOASTS = 3;
-const TOAST_ID_PREFIX = "supernote-toast-";
+const TOAST_ID_PREFIX = "folune-toast-";
 const ToastContext = createContext<ToastContextValue | null>(null);
 
 const variantIcons = {

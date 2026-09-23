@@ -70,7 +70,7 @@ import {
   type WorkspaceStyle,
 } from "./workspaceLayout";
 
-const LAST_MEMO_KEY_PREFIX = "supernote:last-memo:";
+const LAST_MEMO_KEY_PREFIX = "folune:last-memo:";
 const DEFAULT_MEMO_TITLE = "未命名备忘录";
 const lastMemoStorageKey = (userId: string): string =>
   `${LAST_MEMO_KEY_PREFIX}${userId}`;

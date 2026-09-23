@@ -14,7 +14,7 @@ import {
   type SetStateAction,
 } from "react";
 
-const EXPANSION_STORAGE_PREFIX = "supernote:memo-tree-expanded";
+const EXPANSION_STORAGE_PREFIX = "folune:memo-tree-expanded";
 const EXPANSION_STORAGE_VERSION = 1;
 
 type MemoTreeExpansionSnapshot = {

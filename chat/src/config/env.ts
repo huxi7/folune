@@ -11,7 +11,7 @@ const envSchema = z.object({
   NODE_ENV: z
     .enum(["development", "test", "production"])
     .default("development"),
-  SYSTEM_NAME: z.string().trim().min(1).default("SuperNote Chat"),
+  SYSTEM_NAME: z.string().trim().min(1).default("Folune Chat"),
   PORT: z.coerce.number().int().min(1).max(65_535),
   ALLOWED_ORIGINS: z
     .string()

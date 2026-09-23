@@ -7,7 +7,7 @@
 
 import type { AiThread } from "../../shared/api/ai";
 
-const SELECTED_THREAD_KEY_PREFIX = "supernote:selected-ai-thread:";
+const SELECTED_THREAD_KEY_PREFIX = "folune:selected-ai-thread:";
 
 export const selectedThreadStorageKey = (userId: string): string =>
   `${SELECTED_THREAD_KEY_PREFIX}${userId}`;

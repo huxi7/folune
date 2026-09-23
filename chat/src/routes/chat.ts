@@ -332,7 +332,7 @@ export const chatRoute = registerApiRoute("/v1/chat", {
                 if (!required) return;
                 writer.write({
                   type: "tool-approval-request",
-                  approvalId: `supernote::${chunk.toolCallId}`,
+                  approvalId: `folune::${chunk.toolCallId}`,
                   toolCallId: chunk.toolCallId,
                 });
               }),

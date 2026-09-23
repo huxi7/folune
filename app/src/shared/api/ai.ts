@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 shared/api/client 统一 Bearer 请求、AI SDK UIMessage 与 memo DTO mapper
- * [OUTPUT]: 对外提供 SuperNoteUIMessage、首开 bootstrap、单会话 content、增量 assistant message PATCH、无归档状态的 AI thread/message/reference/settings/command CRUD、Run apply/reject/undo/get 类型与响应归一化
+ * [OUTPUT]: 对外提供 FoluneUIMessage、首开 bootstrap、单会话 content、增量 assistant message PATCH、无归档状态的 AI thread/message/reference/settings/command CRUD、Run apply/reject/undo/get 类型与响应归一化
  * [POS]: app/src/shared/api 的 AI Native V2 HTTP 与消息契约边界；首开和会话切换分别使用聚合读取，真实写入只经 api/chat
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -25,7 +25,7 @@ export type AiMessageContextSnapshot = {
   references: AiContextMemoSnapshot[];
 };
 
-export type SuperNoteUIMessageMetadata = {
+export type FoluneUIMessageMetadata = {
   context?: {
     active_memo_id: string | null;
     reference_memo_ids: string[];
@@ -35,7 +35,7 @@ export type SuperNoteUIMessageMetadata = {
   context_snapshot?: AiMessageContextSnapshot;
 };
 
-export type SuperNoteUIMessage = UIMessage<SuperNoteUIMessageMetadata>;
+export type FoluneUIMessage = UIMessage<FoluneUIMessageMetadata>;
 
 export type AiThreadReference = {
   thread_id: string;
@@ -67,7 +67,7 @@ export type AiThreadContent = Pick<AiThreadBootstrap, "messages" | "selectedThre
   selectedThread: AiThreadDetail;
 };
 
-export type AiMessage = SuperNoteUIMessage & {
+export type AiMessage = FoluneUIMessage & {
   thread_id: string;
   user_id: string;
   position: number;
@@ -311,7 +311,7 @@ export const listAiMessages = (
 export const syncAiMessages = (
   accessToken: string,
   threadId: string,
-  messages: readonly SuperNoteUIMessage[],
+  messages: readonly FoluneUIMessage[],
 ): Promise<AiMessage[]> =>
   apiRequest(`/ai-threads/${encodeURIComponent(threadId)}/messages`, {
     body: JSON.stringify(messages),
@@ -322,7 +322,7 @@ export const syncAiMessages = (
 export const syncAiMessage = (
   accessToken: string,
   threadId: string,
-  message: SuperNoteUIMessage,
+  message: FoluneUIMessage,
 ): Promise<Pick<AiMessage, "id" | "updated_at">> =>
   apiRequest<Pick<AiMessage, "id" | "updated_at">>(
     `/ai-threads/${encodeURIComponent(threadId)}/messages/${encodeURIComponent(message.id)}`,

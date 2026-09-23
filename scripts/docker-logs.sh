@@ -26,5 +26,5 @@ case "$SERVICE" in
     ;;
 esac
 
-supernote_prepare_compose
-supernote_compose logs --no-log-prefix -f "${SERVICES[@]}"
+folune_prepare_compose
+folune_compose logs --no-log-prefix -f "${SERVICES[@]}"

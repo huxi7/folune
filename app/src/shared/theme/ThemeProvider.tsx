@@ -24,7 +24,7 @@ type ThemeContextValue = {
   toggleTheme: () => void;
 };
 
-const THEME_STORAGE_KEY = "supernote-theme";
+const THEME_STORAGE_KEY = "folune-theme";
 const SYSTEM_THEME_QUERY = "(prefers-color-scheme: dark)";
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 

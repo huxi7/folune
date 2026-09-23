@@ -4,8 +4,8 @@
  * [POS]: app/src/styles 的第三方编辑器级联边界；写作态交还纵向滚动给 paper-stage-scroll，其他宿主仍保留默认 100% 编辑器协议
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
-.supernote-md-editor,
-.supernote-md-editor .cm-editor {
+.folune-md-editor,
+.folune-md-editor .cm-editor {
   height: 100%;
   background: var(--background);
   color: var(--foreground);
@@ -13,56 +13,56 @@
   font-size: 0.875rem;
 }
 
-.supernote-md-editor .cm-editor.cm-focused {
+.folune-md-editor .cm-editor.cm-focused {
   outline: none;
 }
 
-.supernote-md-editor .cm-editor .cm-scroller {
+.folune-md-editor .cm-editor .cm-scroller {
   background: var(--background);
   color: var(--foreground);
   padding: clamp(1.5rem, 5vw, 3.5rem);
   font-family: var(--font-mono);
 }
 
-.supernote-md-editor .cm-editor .cm-content {
+.folune-md-editor .cm-editor .cm-content {
   min-height: 100%;
   max-width: 48rem;
   margin-inline: auto;
   caret-color: var(--primary);
 }
 
-.supernote-md-editor .cm-editor .cm-cursor,
-.supernote-md-editor .cm-editor .cm-dropCursor {
+.folune-md-editor .cm-editor .cm-cursor,
+.folune-md-editor .cm-editor .cm-dropCursor {
   border-left-color: var(--primary);
 }
 
-.supernote-md-editor .cm-editor .cm-placeholder {
+.folune-md-editor .cm-editor .cm-placeholder {
   color: var(--muted-foreground);
 }
 
-.supernote-md-editor .cm-editor .cm-selectionBackground,
-.supernote-md-editor .cm-editor.cm-focused .cm-selectionBackground {
+.folune-md-editor .cm-editor .cm-selectionBackground,
+.folune-md-editor .cm-editor.cm-focused .cm-selectionBackground {
   background: var(--primary-soft);
 }
 
-.note-editor-canvas .supernote-md-editor,
-.note-editor-canvas .supernote-md-editor .cm-editor {
+.note-editor-canvas .folune-md-editor,
+.note-editor-canvas .folune-md-editor .cm-editor {
   height: auto;
   min-height: 24rem;
   background: transparent;
 }
 
-.note-editor-canvas .supernote-md-editor .cm-scroller {
+.note-editor-canvas .folune-md-editor .cm-scroller {
   min-height: 24rem;
   overflow: visible;
   background: transparent;
 }
 
-.note-editor-canvas .supernote-md-editor .cm-scroller {
+.note-editor-canvas .folune-md-editor .cm-scroller {
   padding: 0;
 }
 
-.note-editor-canvas .supernote-md-editor .cm-content {
+.note-editor-canvas .folune-md-editor .cm-content {
   min-height: 24rem;
   max-width: none;
   margin: 0;
@@ -74,26 +74,26 @@
   white-space: pre-wrap;
 }
 
-.note-editor-canvas .supernote-md-editor .cm-content * {
+.note-editor-canvas .folune-md-editor .cm-content * {
   color: inherit;
 }
 
-.note-editor-canvas .supernote-md-editor .cm-line {
+.note-editor-canvas .folune-md-editor .cm-line {
   padding-inline: 0;
   white-space: pre-wrap;
 }
 
-.note-editor-canvas .supernote-md-editor .cm-editor[data-editing-mode="source"] .cm-content {
+.note-editor-canvas .folune-md-editor .cm-editor[data-editing-mode="source"] .cm-content {
   font-family: var(--font-mono);
   font-size: var(--type-input);
   line-height: var(--leading-body);
 }
 
-.note-editor-canvas .supernote-md-editor .cm-editor[data-editing-mode="live"] .cm-content {
+.note-editor-canvas .folune-md-editor .cm-editor[data-editing-mode="live"] .cm-content {
   font-family: var(--font-sans);
 }
 
-.supernote-md-editor .cm-live-heading {
+.folune-md-editor .cm-live-heading {
   padding-block: 0.22em 0.04em;
   color: var(--foreground);
   font-family: var(--font-serif);
@@ -102,11 +102,11 @@
   text-decoration: none !important;
 }
 
-.supernote-md-editor .cm-live-heading * {
+.folune-md-editor .cm-live-heading * {
   text-decoration: none !important;
 }
 
-.supernote-md-editor .cm-live-heading-marker {
+.folune-md-editor .cm-live-heading-marker {
   color: var(--muted-foreground) !important;
   font-family: var(--font-mono);
   font-size: 0.52em;
@@ -116,19 +116,19 @@
   vertical-align: 0.14em;
 }
 
-.supernote-md-editor .cm-live-heading-1 { font-size: 1.5rem; line-height: 1.4; }
-.supernote-md-editor .cm-live-heading-2 { font-size: 1.25rem; line-height: 1.45; }
-.supernote-md-editor .cm-live-heading-3 { font-size: 1.1rem; line-height: 1.55; }
-.supernote-md-editor .cm-live-heading-4 { font-size: 1rem; line-height: 1.6; }
-.supernote-md-editor .cm-live-heading-5 { font-size: 0.9375rem; line-height: 1.68; }
-.supernote-md-editor .cm-live-heading-6 { font-size: 0.875rem; line-height: 1.7; }
+.folune-md-editor .cm-live-heading-1 { font-size: 1.5rem; line-height: 1.4; }
+.folune-md-editor .cm-live-heading-2 { font-size: 1.25rem; line-height: 1.45; }
+.folune-md-editor .cm-live-heading-3 { font-size: 1.1rem; line-height: 1.55; }
+.folune-md-editor .cm-live-heading-4 { font-size: 1rem; line-height: 1.6; }
+.folune-md-editor .cm-live-heading-5 { font-size: 0.9375rem; line-height: 1.68; }
+.folune-md-editor .cm-live-heading-6 { font-size: 0.875rem; line-height: 1.7; }
 
-.supernote-md-editor .cm-live-strong { font-weight: 720; }
-.supernote-md-editor .cm-live-emphasis { font-style: italic; }
-.supernote-md-editor .cm-live-strikethrough { text-decoration: line-through; text-decoration-thickness: 1px; }
-.supernote-md-editor .cm-live-link { color: var(--primary); text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--primary) 40%, transparent); text-underline-offset: 0.16em; }
+.folune-md-editor .cm-live-strong { font-weight: 720; }
+.folune-md-editor .cm-live-emphasis { font-style: italic; }
+.folune-md-editor .cm-live-strikethrough { text-decoration: line-through; text-decoration-thickness: 1px; }
+.folune-md-editor .cm-live-link { color: var(--primary); text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--primary) 40%, transparent); text-underline-offset: 0.16em; }
 
-.supernote-md-editor .cm-live-inline-code {
+.folune-md-editor .cm-live-inline-code {
   border: 1px solid var(--border);
   border-radius: var(--radius-compact);
     corner-shape: var(--corner-shape-smooth);
@@ -139,16 +139,16 @@
   font-size: 0.88em;
 }
 
-.supernote-md-editor .cm-live-blockquote {
+.folune-md-editor .cm-live-blockquote {
   border-left: 2px solid color-mix(in srgb, var(--primary) 44%, var(--border));
   padding-left: 0.9rem;
   color: var(--muted-foreground);
   font-family: var(--font-serif);
 }
 
-.supernote-md-editor .cm-live-list-line { padding-left: 0.2rem; }
+.folune-md-editor .cm-live-list-line { padding-left: 0.2rem; }
 
-.supernote-md-editor .cm-live-list-marker {
+.folune-md-editor .cm-live-list-marker {
   display: inline-flex;
   min-width: 1.15rem;
   align-items: center;
@@ -157,7 +157,7 @@
   font-family: var(--font-mono);
 }
 
-.supernote-md-editor .cm-live-task-marker {
+.folune-md-editor .cm-live-task-marker {
   display: inline-flex;
   width: 0.95rem;
   height: 0.95rem;
@@ -174,19 +174,19 @@
   vertical-align: -0.08rem;
 }
 
-.supernote-md-editor .cm-live-task-marker-checked {
+.folune-md-editor .cm-live-task-marker-checked {
   border-color: var(--primary);
   background: var(--primary);
 }
 
-.supernote-md-editor .cm-live-horizontal-rule {
+.folune-md-editor .cm-live-horizontal-rule {
   display: inline-block;
   width: 100%;
   border-top: 1px solid var(--border);
   vertical-align: middle;
 }
 
-.supernote-md-editor .cm-live-code-line {
+.folune-md-editor .cm-live-code-line {
   background: var(--surface-neutral);
   padding-inline: 0.85rem;
   color: var(--foreground);
@@ -195,16 +195,16 @@
   line-height: 1.65;
 }
 
-.supernote-md-editor .cm-live-syntax-only-line {
+.folune-md-editor .cm-live-syntax-only-line {
   height: 0;
   min-height: 0;
   overflow: hidden;
   line-height: 0;
 }
 
-.supernote-md-editor .cm-live-table-widget-line { width: 100%; }
+.folune-md-editor .cm-live-table-widget-line { width: 100%; }
 
-.supernote-md-editor .cm-live-table {
+.folune-md-editor .cm-live-table {
   display: inline-grid;
   width: 100%;
   min-width: 22rem;
@@ -218,19 +218,19 @@
   vertical-align: top;
 }
 
-.supernote-md-editor .cm-live-table-row {
+.folune-md-editor .cm-live-table-row {
   display: grid;
   grid-auto-columns: minmax(0, 1fr);
   grid-auto-flow: column;
 }
 
-.supernote-md-editor .cm-live-table-row + .cm-live-table-row { border-top: 1px solid var(--border); }
+.folune-md-editor .cm-live-table-row + .cm-live-table-row { border-top: 1px solid var(--border); }
 
-.supernote-md-editor .cm-live-table-cell {
+.folune-md-editor .cm-live-table-cell {
   min-width: 0;
   padding: 0.45rem 0.6rem;
   overflow-wrap: anywhere;
 }
 
-.supernote-md-editor .cm-live-table-cell + .cm-live-table-cell { border-left: 1px solid var(--border); }
-.supernote-md-editor .cm-live-table-header-cell { background: var(--surface-neutral); font-weight: 680; }
+.folune-md-editor .cm-live-table-cell + .cm-live-table-cell { border-left: 1px solid var(--border); }
+.folune-md-editor .cm-live-table-header-cell { background: var(--surface-neutral); font-weight: 680; }

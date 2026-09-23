@@ -6,7 +6,7 @@
  */
 import { useEffect, useRef, useState } from "react";
 import { useReducedMotion } from "motion/react";
-import type { AiCommand, SuperNoteUIMessage } from "../../shared/api/ai";
+import type { AiCommand, FoluneUIMessage } from "../../shared/api/ai";
 import { Button, MentionInput } from "../../shared/design-system/components";
 import { ArrowUpIcon, AtIcon, StopIcon } from "../../shared/design-system/icons";
 import { AgentPanelHeader } from "../AgentPanel/AgentPanelHeader";
@@ -30,7 +30,7 @@ export function DemoAssistant({ memoId, title, filedAt, onClose, onHint, onOrgan
   const [messages, setMessages] = useState(createMessages);
   const [input, setInput] = useState("");
   const [status, setStatus] = useState<"ready" | "thinking" | "streaming">("ready");
-  const [live, setLive] = useState<SuperNoteUIMessage>();
+  const [live, setLive] = useState<FoluneUIMessage>();
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const busy = useRef(false);
   const serial = useRef(0);
@@ -54,7 +54,7 @@ export function DemoAssistant({ memoId, title, filedAt, onClose, onHint, onOrgan
     const assistantId = `demo-a-${id}`;
     // 收尾正文永远是脚本最后一步；它之前的工具按序逐步揭示。
     const lastIndex = steps.length - 1;
-    const turn = (parts: SuperNoteUIMessage["parts"]): SuperNoteUIMessage => ({ id: assistantId, role: "assistant", parts });
+    const turn = (parts: FoluneUIMessage["parts"]): FoluneUIMessage => ({ id: assistantId, role: "assistant", parts });
     const finish = () => { busy.current = false; setLive(undefined); setStatus("ready"); };
     const streamText = (cursor: number) => {
       const closing = steps[lastIndex];

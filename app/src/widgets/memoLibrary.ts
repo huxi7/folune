@@ -37,7 +37,7 @@ export type MemoDropTarget = {
 
 export type MemoMovePlan = MoveMemoNodeInput;
 
-export const SUPERNOTE_MEMO_DRAG_MIME = "application/x-supernote-memo";
+export const FOLUNE_MEMO_DRAG_MIME = "application/x-folune-memo";
 
 export type MemoCanvasDragPayload = {
   id: string;

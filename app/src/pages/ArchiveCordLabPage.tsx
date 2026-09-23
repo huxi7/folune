@@ -42,7 +42,7 @@ const TIMESTAMP = "2026-09-03T00:00:00.000Z";
  */
 const resetLabExpansion = (): true => {
   try {
-    window.localStorage.removeItem(`supernote:memo-tree-expanded:${LAB_USER_ID}`);
+    window.localStorage.removeItem(`folune:memo-tree-expanded:${LAB_USER_ID}`);
   } catch {
     // 隐私模式下不可写；确定性让位于可用性，其余验收不受影响
   }
@@ -52,7 +52,7 @@ const resetLabExpansion = (): true => {
 const profile: Profile = {
   avatarUrl: null,
   bio: null,
-  email: "lab@supernote.local",
+  email: "lab@folune.local",
   id: LAB_USER_ID,
   username: "Archive Cord Lab",
 };

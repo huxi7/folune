@@ -347,14 +347,14 @@ describe("GET /profile", () => {
     expect(supabase.insertCount).toBe(0);
   });
 
-  test("不存在时创建 supernote_ 数字默认资料", async () => {
+  test("不存在时创建 folune_ 数字默认资料", async () => {
     const response = await requestProfile();
     const payload = (await response.json()) as { data: Profile };
     expect(response.status).toBe(200);
     expect(response.headers.get("X-Request-Id")).toMatch(
       /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
     );
-    expect(payload.data.username).toMatch(/^supernote_\d{8}$/);
+    expect(payload.data.username).toMatch(/^folune_\d{8}$/);
     expect(supabase.insertBodyKeys).toEqual([
       ["email", "id", "username"],
     ]);

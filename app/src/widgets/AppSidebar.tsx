@@ -49,7 +49,7 @@ import {
   getFolderIds,
   findMemoNode,
   serializeMemoCanvasDrag,
-  SUPERNOTE_MEMO_DRAG_MIME,
+  FOLUNE_MEMO_DRAG_MIME,
   type MemoDropTarget,
   type MemoMovePlan,
 } from "./memoLibrary";
@@ -454,7 +454,7 @@ export function AppSidebar({
     event.dataTransfer.setData("text/plain", node.id);
     const canvasPayload = serializeMemoCanvasDrag(node);
     if (canvasPayload !== null) {
-      event.dataTransfer.setData(SUPERNOTE_MEMO_DRAG_MIME, canvasPayload);
+      event.dataTransfer.setData(FOLUNE_MEMO_DRAG_MIME, canvasPayload);
     }
     setMemoDragImage(event, node);
   }

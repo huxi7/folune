@@ -13,7 +13,7 @@ import { organizePlannerPrompt } from "@/mastra/prompts/organize-planner";
 
 export const organizePlannerAgent = new Agent({
   id: "organize-planner-agent",
-  name: "SuperNote 整理规划器",
+  name: "Folune 整理规划器",
   instructions: organizePlannerPrompt,
   model: toMastraModelConfig(env.DEFAULT_MODEL),
   defaultOptions: {

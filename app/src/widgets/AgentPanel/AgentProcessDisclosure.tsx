@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 Collapse 的保留式高度披露、React 本地手动展开状态、共享 Lucide Caret、SuperNote ThinkingMark 与思考/工具阶段 active 状态
+ * [INPUT]: 依赖 Collapse 的保留式高度披露、React 本地手动展开状态、共享 Lucide Caret、Folune ThinkingMark 与思考/工具阶段 active 状态
  * [OUTPUT]: 对外提供思考/工具阶段强制展开、进入正文或结束时自动收起且可手动回看的 AgentProcessDisclosure
  * [POS]: AgentPanel 回复过程容器，在过程内容之前管理透明度信息的显隐，不拥有工具/正文内容语义
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md

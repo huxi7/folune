@@ -30,8 +30,8 @@ type StoredWorkspaceChrome = Pick<
   version: 1;
 };
 
-const WORKSPACE_CHROME_KEY_PREFIX = "supernote:workspace-chrome:v1:";
-const LEGACY_AGENT_PANEL_KEY_PREFIX = "supernote:agent-panel-open:";
+const WORKSPACE_CHROME_KEY_PREFIX = "folune:workspace-chrome:v1:";
+const LEGACY_AGENT_PANEL_KEY_PREFIX = "folune:agent-panel-open:";
 
 export const workspaceChromeStorageKey = (userId: string): string =>
   `${WORKSPACE_CHROME_KEY_PREFIX}${userId}`;

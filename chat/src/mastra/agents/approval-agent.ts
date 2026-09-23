@@ -13,7 +13,7 @@ import { approvalAgentPrompt } from "@/mastra/prompts/approval-agent";
 
 export const approvalAgent = new Agent({
   id: "approval-agent",
-  name: "SuperNote 独立审批器",
+  name: "Folune 独立审批器",
   instructions: approvalAgentPrompt,
   model: toMastraModelConfig(env.DEFAULT_MODEL),
   defaultOptions: {

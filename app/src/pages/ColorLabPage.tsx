@@ -190,7 +190,7 @@ function PreviewPaper() {
         </div>
       </div>
       <article className="color-lab-paper">
-        <p className="color-lab-paper-kicker">SUPERNOTE / PRODUCT NOTE</p>
+        <p className="color-lab-paper-kicker">FOLUNE / PRODUCT NOTE</p>
         <h2>给复杂系统留一张安静的纸</h2>
         <p className="color-lab-lead">复杂工具不应该把复杂度倾倒给人。</p>
         <blockquote>一张纸、一条线、两个在需要时才出现的工具。</blockquote>
@@ -281,7 +281,7 @@ export function ColorLabPage() {
             <ArrowLeftIcon size={16} />
           </Link>
           <div>
-            <p>SUPERNOTE / COLOR STUDY 02</p>
+            <p>FOLUNE / COLOR STUDY 02</p>
             <h1>六种蓝，收束到三种</h1>
             <span>现有蓝只作为对照；真正要选的是 02 灰蓝、04 标准墨蓝、05 柔和墨蓝。</span>
           </div>

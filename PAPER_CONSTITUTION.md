@@ -1,4 +1,4 @@
-# SuperNote Paper 产品宪法
+# Folune Paper 产品宪法
 
 > 常驻文档：Paper Workspace 的产品定律，不随实现进度变化
 > 适用范围：写作区那张纸、纸上的命令层级，以及纸与文件树之间的归档表达

@@ -46,7 +46,7 @@ import {
   type AiCommand,
   type AiRun,
   type AiThreadDetail,
-  type SuperNoteUIMessage,
+  type FoluneUIMessage,
 } from "../../shared/api/ai";
 import type { MemoTreeNode } from "../../shared/api/memo";
 import { Button, MentionInput } from "../../shared/design-system/components";
@@ -120,14 +120,14 @@ type AgentPanelProps = {
 type ConversationProps = {
   accessToken: string;
   currentMemo: MemoTreeNode | null;
-  initialMessages: SuperNoteUIMessage[];
+  initialMessages: FoluneUIMessage[];
   memoTree: readonly MemoTreeNode[];
   onBusyChange: (busy: boolean) => void;
   onApplyOrganize: AgentPanelProps["onApplyOrganize"];
   onPrepareMutation: AgentPanelProps["onPrepareMutation"];
   onRejectOrganize: AgentPanelProps["onRejectOrganize"];
   onReferencesChange: (memoIds: readonly string[]) => Promise<void>;
-  onThreadUpdated: (messages?: readonly SuperNoteUIMessage[]) => Promise<void>;
+  onThreadUpdated: (messages?: readonly FoluneUIMessage[]) => Promise<void>;
   organizeReviewBusy: boolean;
   organizeRun: AiRun | null;
   thread: AiThreadDetail;
@@ -187,7 +187,7 @@ function AgentConversation({
   const reconciledToolStates = useRef(new Map<string, string>());
   const initialReconciliationDone = useRef(false);
   const previousMessageCount = useRef(0);
-  const messagesRef = useRef<SuperNoteUIMessage[]>(initialMessages);
+  const messagesRef = useRef<FoluneUIMessage[]>(initialMessages);
   const transport = useMemo(
     () => createMemoChatTransport(thread.id),
     [thread.id],
@@ -246,7 +246,7 @@ function AgentConversation({
     setMessages,
     status,
     stop,
-  } = useChat<SuperNoteUIMessage>({
+  } = useChat<FoluneUIMessage>({
     id: thread.id,
     messages: initialMessages,
     transport,
@@ -277,7 +277,7 @@ function AgentConversation({
   });
   messagesRef.current = messages;
 
-  async function executePendingClientTools(message: SuperNoteUIMessage) {
+  async function executePendingClientTools(message: FoluneUIMessage) {
     const pending = message.parts.filter(isToolUIPart).filter((part) =>
       part.state === "input-available"
       && isAgentClientToolName(clientTools, getToolName(part))
@@ -287,7 +287,7 @@ function AgentConversation({
 
   async function executeClientToolPart(
     part: AgentToolPart,
-    durableBaseMessages?: readonly SuperNoteUIMessage[],
+    durableBaseMessages?: readonly FoluneUIMessage[],
   ) {
     if (!isToolUIPart(part)) return;
     const toolName = getToolName(part);

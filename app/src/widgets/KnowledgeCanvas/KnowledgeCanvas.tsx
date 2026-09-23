@@ -74,7 +74,7 @@ import type { CanvasReturnDescriptor } from "../../shared/store/canvasReturnStor
 import { expandCanvas } from "../AgentPanel/canvasExpandClient";
 import {
   parseMemoCanvasDrag,
-  SUPERNOTE_MEMO_DRAG_MIME,
+  FOLUNE_MEMO_DRAG_MIME,
 } from "../memoLibrary";
 import { CanvasActionsProvider } from "./canvasActions";
 import { CanvasStageLoading } from "../CanvasStageLoading";
@@ -1402,14 +1402,14 @@ export function KnowledgeCanvas({
           }
         }}
         onDragOver={(event) => {
-          if (!event.dataTransfer.types.includes(SUPERNOTE_MEMO_DRAG_MIME)) return;
+          if (!event.dataTransfer.types.includes(FOLUNE_MEMO_DRAG_MIME)) return;
           event.preventDefault();
           event.dataTransfer.dropEffect = "copy";
           setMemoDropActive(true);
         }}
         onDrop={(event) => {
           const payload = parseMemoCanvasDrag(
-            event.dataTransfer.getData(SUPERNOTE_MEMO_DRAG_MIME),
+            event.dataTransfer.getData(FOLUNE_MEMO_DRAG_MIME),
           );
           setMemoDropActive(false);
           if (payload === null || instanceRef.current === null) return;

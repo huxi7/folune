@@ -7,16 +7,16 @@
 
 import { describe, expect, test } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
-import type { SuperNoteUIMessage } from "../../shared/api/ai";
+import type { FoluneUIMessage } from "../../shared/api/ai";
 
 import { ApprovalCard } from "./ApprovalCard";
 import { ChatMessage, LiveAssistantTurn } from "./ChatMessage";
 
-function assistant(parts: SuperNoteUIMessage["parts"]): SuperNoteUIMessage {
+function assistant(parts: FoluneUIMessage["parts"]): FoluneUIMessage {
   return { id: "assistant-1", parts, role: "assistant" };
 }
 
-function user(text: string): SuperNoteUIMessage {
+function user(text: string): FoluneUIMessage {
   return {
     id: "user-1",
     parts: [{ text, type: "text" }],

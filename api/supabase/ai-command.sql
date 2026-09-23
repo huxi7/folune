@@ -37,7 +37,7 @@ begin
     return jsonb_build_object('status', 'not_found');
   end if;
 
-  perform set_config('supernote.ai_command_mutation', 'on', true);
+  perform set_config('folune.ai_command_mutation', 'on', true);
 
   select *
   into command_record
@@ -411,7 +411,7 @@ begin
     return jsonb_build_object('status', 'not_found');
   end if;
 
-  perform set_config('supernote.ai_command_mutation', 'on', true);
+  perform set_config('folune.ai_command_mutation', 'on', true);
 
   select settings.permission_mode
   into permission_mode
@@ -491,7 +491,7 @@ begin
     return jsonb_build_object('status', 'not_found');
   end if;
 
-  perform set_config('supernote.ai_command_mutation', 'on', true);
+  perform set_config('folune.ai_command_mutation', 'on', true);
 
   update public.ai_commands
   set status = 'approved', approval_source = 'manual'
@@ -529,7 +529,7 @@ begin
     return jsonb_build_object('status', 'not_found');
   end if;
 
-  perform set_config('supernote.ai_command_mutation', 'on', true);
+  perform set_config('folune.ai_command_mutation', 'on', true);
 
   update public.ai_commands
   set status = 'rejected', approval_source = 'manual'
@@ -570,7 +570,7 @@ begin
     return jsonb_build_object('status', 'not_found');
   end if;
 
-  perform set_config('supernote.ai_command_mutation', 'on', true);
+  perform set_config('folune.ai_command_mutation', 'on', true);
 
   select * into command_record
   from public.ai_commands

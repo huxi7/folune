@@ -139,7 +139,7 @@ for insert
 to authenticated
 with check (
   (select auth.uid()) = user_id
-  and current_setting('supernote.ai_command_mutation', true) = 'on'
+  and current_setting('folune.ai_command_mutation', true) = 'on'
 );
 
 create policy "AI command RPC can update owned commands"
@@ -148,11 +148,11 @@ for update
 to authenticated
 using (
   (select auth.uid()) = user_id
-  and current_setting('supernote.ai_command_mutation', true) = 'on'
+  and current_setting('folune.ai_command_mutation', true) = 'on'
 )
 with check (
   (select auth.uid()) = user_id
-  and current_setting('supernote.ai_command_mutation', true) = 'on'
+  and current_setting('folune.ai_command_mutation', true) = 'on'
 );
 
 revoke all on table public.ai_user_settings from anon, authenticated;

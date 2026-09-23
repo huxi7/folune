@@ -5,7 +5,7 @@
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import type { MemoDetailNode, MemoTreeNode } from "../../shared/api/memo";
-import type { SuperNoteUIMessage } from "../../shared/api/ai";
+import type { FoluneUIMessage } from "../../shared/api/ai";
 
 const DATE = "2026-09-15T08:00:00.000Z";
 export const INITIAL_MEMO = "demo-walk";
@@ -76,7 +76,7 @@ export type DemoStep =
 export const stepCommandId = (turnId: string, index: number) => `demo-cmd-${turnId}-${index}`;
 
 /** 把脚本物化成 AI SDK 的有序 parts；`pendingIndex` 让那一步停在执行中，供芯片流光。 */
-export function materializeSteps(steps: readonly DemoStep[], turnId: string, pendingIndex = -1): SuperNoteUIMessage["parts"] {
+export function materializeSteps(steps: readonly DemoStep[], turnId: string, pendingIndex = -1): FoluneUIMessage["parts"] {
   return steps.map((step, index) => {
     if (step.kind === "say") return { type: "text", text: step.text };
     const toolCallId = `${turnId}-${index}`;
@@ -100,8 +100,8 @@ export function materializeSteps(steps: readonly DemoStep[], turnId: string, pen
   });
 }
 
-export const message = (id: string, role: "user" | "assistant", text: string): SuperNoteUIMessage => ({ id, role, parts: [{ type: "text", text }] });
-const script = (id: string, steps: readonly DemoStep[]): SuperNoteUIMessage => ({ id, role: "assistant", parts: materializeSteps(steps, id) });
+export const message = (id: string, role: "user" | "assistant", text: string): FoluneUIMessage => ({ id, role, parts: [{ type: "text", text }] });
+const script = (id: string, steps: readonly DemoStep[]): FoluneUIMessage => ({ id, role: "assistant", parts: materializeSteps(steps, id) });
 
 /** 预置历史：只读工具，且每条结论都能在正文里逐句核对。 */
 export const createMessages = () => [

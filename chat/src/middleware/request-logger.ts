@@ -18,7 +18,7 @@ import {
 type RouteMiddleware = Exclude<Middleware, { path: string }>;
 
 const REQUEST_ID_HEADER = "X-Request-Id";
-const HEALTH_PROBE_HEADER = "X-SuperNote-Probe";
+const HEALTH_PROBE_HEADER = "X-Folune-Probe";
 
 export const requestLogger: RouteMiddleware = async (rawContext, next) => {
   const context = rawContext as ContextWithMastra;
