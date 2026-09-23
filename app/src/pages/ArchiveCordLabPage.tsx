@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖生产 PaperSurface/ArchiveStatus/AppSidebar/WorkspacePanelLayer/PanelResizeHandle/ArchiveCordOverlay、真实 organizePresentation 路径重算、useOverlayPanels 判据、共享主题状态与生产 workspace.css
- * [OUTPUT]: 对外提供仅开发态 `/archive-cord-lab` 归档线验收 fixture，以确定性假树覆盖 fresh/restore、逐层折叠展开、tree 滚动、文件库开关、Panel resize 与窄屏/Light/Dark/Reduced Motion
+ * [OUTPUT]: 对外提供仅开发态 `/archive-cord-lab` 归档线验收 fixture，以确定性假树覆盖 fresh/restore、逐层折叠展开、tree 滚动、文件库开关、裁切层外的 Panel resize 与窄屏/Light/Dark/Reduced Motion
  * [POS]: app/src/pages 的归档线真实交互验收台；只用假 ID 与假内容，不读写 API、数据库、真实用户正文或真实 AI run，也不复制任何展示专用线与展示专用 CSS
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -259,7 +259,22 @@ export function ArchiveCordLabPage() {
         </div>
       </div>
 
-      <WorkspacePanelLayer open={libraryOpen} style={workspaceStyle}>
+      <WorkspacePanelLayer
+        open={libraryOpen}
+        style={workspaceStyle}
+        resizeHandle={
+          <PanelResizeHandle
+            ariaLabel="调整文件侧边栏宽度"
+            direction={1}
+            max={SIDEBAR_MAX_WIDTH}
+            min={SIDEBAR_MIN_WIDTH}
+            onReset={() => setSidebarWidth(DEFAULT_SIDEBAR_WIDTH)}
+            onResize={setSidebarWidth}
+            side="right"
+            size={sidebarWidth}
+          />
+        }
+      >
         <AppSidebar
           activeView="note"
           archiveTarget={presentation === null ? null : {
@@ -291,16 +306,6 @@ export function ArchiveCordLabPage() {
           selectedMemoId={TARGET_MEMO_ID}
           skeletonVisible={false}
           treeStatus="ready"
-        />
-        <PanelResizeHandle
-          ariaLabel="调整文件侧边栏宽度"
-          direction={1}
-          max={SIDEBAR_MAX_WIDTH}
-          min={SIDEBAR_MIN_WIDTH}
-          onReset={() => setSidebarWidth(DEFAULT_SIDEBAR_WIDTH)}
-          onResize={setSidebarWidth}
-          side="right"
-          size={sidebarWidth}
         />
       </WorkspacePanelLayer>
 

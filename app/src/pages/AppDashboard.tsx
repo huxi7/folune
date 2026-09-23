@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 useAppDashboardController 的状态/命令投影、Paper/Canvas 内容壳、持久文件库与统一 Dialog
- * [OUTPUT]: 对外提供 /app 的稳定空间装配，左右工具跨路由保留实例，Paper 与 Canvas 各自拥有内容生命周期
+ * [OUTPUT]: 对外提供 /app 的稳定空间装配，左右工具跨路由保留实例，拖拽边界独立于内容裁切插槽，Paper 与 Canvas 各自拥有内容生命周期
  * [POS]: pages 的 Workspace 视觉组合根；业务/路由/flush 编排归 controller，动画不能通过重挂载这个根来驱动
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -155,16 +155,6 @@ export function AppDashboard() {
         skeletonVisible={treeSkeletonVisible}
         treeStatus={renderedTreeStatus}
       />
-      <PanelResizeHandle
-        ariaLabel="调整文件侧边栏宽度"
-        direction={1}
-        max={SIDEBAR_MAX_WIDTH}
-        min={SIDEBAR_MIN_WIDTH}
-        onReset={() => setSidebarWidth(DEFAULT_SIDEBAR_WIDTH)}
-        onResize={setSidebarWidth}
-        side="right"
-        size={sidebarWidth}
-      />
     </>
   );
 
@@ -240,16 +230,6 @@ export function AppDashboard() {
 
   const assistant = (
     <>
-      <PanelResizeHandle
-        ariaLabel="调整聊天区域宽度"
-        direction={-1}
-        max={AGENT_MAX_WIDTH}
-        min={AGENT_MIN_WIDTH}
-        onReset={() => setAgentWidth(DEFAULT_AGENT_WIDTH)}
-        onResize={setAgentWidth}
-        side="left"
-        size={agentWidth}
-      />
       <Suspense
         fallback={<div className="app-agent-loading" role="status">正在准备 AI</div>}
       >
@@ -314,10 +294,41 @@ export function AppDashboard() {
         />
       )}
 
-      <WorkspacePanelLayer open={activeLibraryOpen} style={workspaceStyle}>
+      <WorkspacePanelLayer
+        open={activeLibraryOpen}
+        style={workspaceStyle}
+        resizeHandle={
+          <PanelResizeHandle
+            ariaLabel="调整文件侧边栏宽度"
+            direction={1}
+            max={SIDEBAR_MAX_WIDTH}
+            min={SIDEBAR_MIN_WIDTH}
+            onReset={() => setSidebarWidth(DEFAULT_SIDEBAR_WIDTH)}
+            onResize={setSidebarWidth}
+            side="right"
+            size={sidebarWidth}
+          />
+        }
+      >
         {library}
       </WorkspacePanelLayer>
-      <WorkspacePanelLayer open={activeAssistantOpen} side="assistant" style={workspaceStyle}>
+      <WorkspacePanelLayer
+        open={activeAssistantOpen}
+        side="assistant"
+        style={workspaceStyle}
+        resizeHandle={
+          <PanelResizeHandle
+            ariaLabel="调整聊天区域宽度"
+            direction={-1}
+            max={AGENT_MAX_WIDTH}
+            min={AGENT_MIN_WIDTH}
+            onReset={() => setAgentWidth(DEFAULT_AGENT_WIDTH)}
+            onResize={setAgentWidth}
+            side="left"
+            size={agentWidth}
+          />
+        }
+      >
         {assistant}
       </WorkspacePanelLayer>
       <ArchiveCordOverlay
