@@ -1,0 +1,109 @@
+<!doctype html>
+<!--
+  [INPUT]: 依赖同源 demo.html 的互动 Demo、默认旧视觉与 data-visual-context=app 新视觉
+  [OUTPUT]: 独立的新旧 APP 对比页，底部按钮即时切换样式，保留同一 Demo 的编辑、会话与当前视图
+  [POS]: 仅供本地视觉验收的 HTML 外壳，不进入生产构建或 Landing 装配；iframe 提供固定视口与现有交互隔离
+  [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+-->
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <meta http-equiv="Content-Security-Policy" content="connect-src 'none'; img-src 'self' data:; media-src 'none'; object-src 'none'; frame-src 'self'; form-action 'none'; base-uri 'none'" />
+    <title>Folune · APP 视觉对比</title>
+    <style>
+      * { box-sizing: border-box; }
+      html { color-scheme: light; }
+      body {
+        margin: 0;
+        height: 100vh;
+        height: 100dvh;
+        display: grid;
+        grid-template-rows: minmax(0, 1fr) auto;
+        background: #f4f4f2;
+        color: #393d45;
+        font: 14px/1.5 'Avenir Next', 'PingFang SC', -apple-system, sans-serif;
+      }
+      iframe { display: block; width: 100%; height: 100%; border: 0; }
+      .comparison-bar {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        align-items: center;
+        gap: 16px;
+        padding: 12px 24px calc(12px + env(safe-area-inset-bottom));
+        border-top: 1px solid #dfe2e5;
+        background: #f4f4f2;
+      }
+      .comparison-label { margin: 0; font-size: 13px; font-weight: 500; }
+      .comparison-switch {
+        display: flex;
+        gap: 4px;
+        padding: 4px;
+        border: 1px solid #dfe2e5;
+        border-radius: 16px;
+        corner-shape: squircle;
+        background: #ebedef;
+      }
+      .comparison-switch button {
+        min-width: 104px;
+        min-height: 36px;
+        padding: 8px 24px;
+        border: 0;
+        border-radius: 12px;
+        corner-shape: squircle;
+        background: transparent;
+        color: #646b75;
+        font: inherit;
+        font-weight: 500;
+        cursor: pointer;
+      }
+      .comparison-switch button:hover { color: #2f333a; }
+      .comparison-switch button[aria-pressed="true"] { background: #fff; color: #395875; }
+      .comparison-switch button:focus-visible { outline: 2px solid #395875; outline-offset: 2px; }
+      .comparison-switch button:disabled { opacity: .5; cursor: wait; }
+      .comparison-hint { margin: 0; text-align: right; font-size: 12px; color: #646b75; }
+      @media (max-width: 640px) {
+        .comparison-bar { grid-template-columns: 1fr; justify-items: center; gap: 8px; padding-inline: 12px; }
+        .comparison-label, .comparison-hint { display: none; }
+        .comparison-switch button { min-height: 44px; }
+      }
+    </style>
+  </head>
+  <body>
+    <iframe id="comparison-demo" src="/demo.html" title="Folune 互动 Demo：更新版" sandbox="allow-scripts allow-same-origin"></iframe>
+    <footer class="comparison-bar">
+      <p class="comparison-label">APP 视觉对比</p>
+      <div class="comparison-switch" role="group" aria-label="选择对比版本">
+        <button type="button" data-version="original" aria-pressed="false" aria-controls="comparison-demo" disabled>原版</button>
+        <button type="button" data-version="updated" aria-pressed="true" aria-controls="comparison-demo" disabled>更新版</button>
+      </div>
+      <p class="comparison-hint">可编辑笔记、体验对话</p>
+    </footer>
+    <script>
+      const frame = document.getElementById('comparison-demo');
+      const buttons = [...document.querySelectorAll('[data-version]')];
+      let selected = 'updated';
+
+      // ---- 仅修改同一文档的样式作用域；不更换 iframe URL 或重建 Demo ----
+      function applyVersion(version) {
+        const root = frame.contentDocument?.documentElement;
+        if (!root) return;
+        selected = version;
+        root.dataset.visualContext = version === 'updated' ? 'app' : 'legacy';
+        frame.title = `Folune 互动 Demo：${version === 'updated' ? '更新版' : '原版'}`;
+        for (const button of buttons) {
+          button.setAttribute('aria-pressed', String(button.dataset.version === version));
+        }
+      }
+
+      frame.addEventListener('load', () => {
+        applyVersion(selected);
+        for (const button of buttons) button.disabled = false;
+      });
+      for (const button of buttons) {
+        button.addEventListener('click', () => applyVersion(button.dataset.version));
+      }
+    </script>
+  </body>
+</html>

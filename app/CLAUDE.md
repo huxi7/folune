@@ -11,6 +11,7 @@ Canvas 已落地为一级持久 Workspace。memo 默认 Canvas 与 standalone Ca
 public/: 登录页 3:4 书房花园本地循环视频/首帧、统一品牌母图、PNG Favicon、参考 Frame 素材/字体与 landing-features/landing-details/landing-connections 真实 APP 截图；功能网格、可展开细节与配套博客共用产品截图
 MOTION_SYSTEM.md: A/B 全量源码取舍、统一 Motion Design 规范与实际验收记录
 demo.html: 文档根独立启用 APP 新视觉，保持浅色与嵌入缩放；Landing 独立 UI 演示入口，CSP 禁止连接与表单提交；不装配 Auth/Router/持久化主题，和 index.html 一同构建
+demo-compare.html: 本地新旧视觉对比入口，固定底部原版/更新版切换；复用同一 demo.html iframe，仅切换根级视觉作用域，保留笔记、对话与视图，使用相同 uniform 尺度；不进入生产构建或 Landing
 hero-lab.html: 独立首屏实验入口，01A/02A 可调材质/高度，否决 B 版退出主选择；多组本地收藏及备份、旧配置兼容、可选既有 APP 衔接，不进入正式路由或构建清单
 index.html: 首绘按 pathname 声明 APP/marketing 文档根场景；Vite HTML 宿主页面，声明 V1 Classic Blueprint 默认画布、同步解析 App 的 system/light/dark 与 Landing 浅色画布 pre-paint bootstrap、提供 root 挂载点并引用品牌母图等比缩放的 PNG Favicon
 .env.example: app 浏览器环境变量模板，声明业务 API、chat 服务 base URL 与 Supabase 公开连接配置
