@@ -42,7 +42,7 @@ canvasMotionReceipts.test.ts: 锁定来源确认、节点方向偏移、关系 d
 spatialTextGeometry.ts: 空间文字宽高、内容基准尺寸与 text_scale（0.25–8）的约束及等比缩放纯函数，隔离对象自身缩放和 Canvas viewport zoom
 spatialTextGeometry.test.ts: 空间文字几何不变量测试，覆盖基准边界、拖拽等比换算和缩放上下限
 KnowledgeCanvas.interaction.test.tsx: 真实组件纵向交互测试；验证正常持久化静默、同步异常保留重试，覆盖文件树拖入到 add_memo/WAL、移除/撤销、来源确认、Pane 双击、空间文字、多选成框、关系与 Esc 收束，并锁定左右 Panel 开合不重挂输入、不挪动选择与外接框、不提前入队
-useCanvasSessionCoordinator.ts: Canvas 会话基础设施 Hook；优先一次消费 canvas/user/token 均匹配且未过期的 bootstrap detail，否则读取 Canvas，再建立 Store 会话、恢复 IndexedDB WAL、注册 pagehide 与 flush 控制。一次会话的身份只有 (登录用户, 这张画布)，别的东西一律不许结束它：进入语境（bootstrap/entryChrome/restore）与回调都走渲染期 latest ref，写进 deps 的代价是真实的——上层记录一次返回描述就会清理整条 effect，resetSession() 清空文档与预览、dispose() 掐掉正在飞的保存，用户看到的是「点了编辑原文，预览凭空消失，页面直接弹出来」。409/rebase 后续重取仍归 Coordinator，不重播首屏进入
+useCanvasSessionCoordinator.ts: 向首次入口过渡报告内容就绪或失败； Canvas 会话基础设施 Hook；优先一次消费 canvas/user/token 均匹配且未过期的 bootstrap detail，否则读取 Canvas，再建立 Store 会话、恢复 IndexedDB WAL、注册 pagehide 与 flush 控制。一次会话的身份只有 (登录用户, 这张画布)，别的东西一律不许结束它：进入语境（bootstrap/entryChrome/restore）与回调都走渲染期 latest ref，写进 deps 的代价是真实的——上层记录一次返回描述就会清理整条 effect，resetSession() 清空文档与预览、dispose() 掐掉正在飞的保存，用户看到的是「点了编辑原文，预览凭空消失，页面直接弹出来」。409/rebase 后续重取仍归 Coordinator，不重播首屏进入
 index.ts: 模块稳定出口，隔离 WorkspaceAuxViews 与内部文件布局
 
 职责: Canvas V2 交互空间，只能由 CanvasWorkspace 承载；服务端图不含 content_mdx，memo 正文按需预览，native 空间文字才归 Canvas。建立关系只有卡片底栏行尾那颗抓手一个入口，拖拽与单指针点击两条路径共用判据/正式提交；临时编织绳纯 UI 且两端只有抓手与指针两个真相，正式 CanvasCordEdge 继续独立。组件只产生 intent，人工与 AI 都经 WAL/Coordinator/统一 mutation；选择所有权仍归 React Flow，一次手势的整组坐标必须整组回写。

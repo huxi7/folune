@@ -2,6 +2,8 @@
 > L2 | 父级: ../CLAUDE.md
 
 成员清单
+workspaceEntryStore.ts: 首次准入的短期 UI 状态；会话/账户/目录/代码/首屏按真实完成累加，编号隔离旧请求，失败/取消与揭幕后释放
+workspaceEntryStore.test.ts: 真实节点乱序、首屏 100% 门禁、重复通知与取消/旧入口隔离回归
 CLAUDE.md: 记录客户端状态层的职责边界、成员地图与 GEB 回环协议
 agentPanelStore.ts: AgentPanel 权限薄状态，只缓存后端已确认审批模式及 loading/saving/error；可见性统一归 WorkspaceChromeState，禁止复制 AI SDK 消息或文件树
 agentPanelStore.test.ts: 锁定审批保存失败保留原值、成功后才更新模式

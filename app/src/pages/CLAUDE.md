@@ -2,13 +2,14 @@
 > L2 | 父级: ../../CLAUDE.md
 
 成员清单
+useWorkspaceEntryReady.ts: Paper/Canvas 共用的一次性首屏就绪桥梁；等待导航空闲与两帧提交，错误撤销覆盖层，入口编号阻止旧页面推进新加载
 MarketingLayout.tsx: 首页、登录、博客和动态持续挂载的公共壳，持有唯一 MarketingHeader 与 Router ScrollRestoration；登录内容使用弹性单屏布局并省去 Footer，其余页面保留 Footer，路径变化聚焦主标题；useMarketingMotion 在滚动恢复后编排可视正文，路径/锚点原生过渡与一次性滚动浮现共用节奏，query 不重播
 LoginPage.tsx: /login 公开认证页，384px 表单与完整 3:4 插画左右并置，共享首页公告和 Header；公告单独包入 fullBleed BlueprintFrame，使主轨/外轨与顶栏及首页同轴；正文铺设终选 01A 极慢散墨，标题去除行末标点以视觉居中，视频静音自动循环；AuthForm 独占认证步骤，成功仍经 /app Profile 守卫准入
 BlogPage.tsx: /blog 与 /updates 两个分区共用目录和 :slug 阅读页；section 选择独立内容集合、标题与目录路径，动态复用点阵标题及无封面整行列表并提供空状态；来路返回、正文、元信息、404 与同分区推荐共用实现，目录统一为无封面整行列表，Hero 上方空轨承载返回首页，列表由主页同高上下空轨包围，共享波浪侧纹仅覆盖列表高度、不进入空轨，空轨边界横线延伸到两侧外轨；博客保留同组阅读规则；全部文章/目录链接复用 MarketingLink，标题与阅读正文标记交给营销壳浮现，返回继续使用原历史状态
 workspacePreload.ts: 正文邻居与 Canvas 代码预热共用的在线/前台/省流/慢网判据，只约束非必要预取，不阻止主动打开
 workspacePreload.test.ts: 验证弱网、省流、后台与离线不预取，以及缺失 Network Information 时的兼容行为
 MotionLabPage.tsx: DEV /motion-lab 无鉴权验收入口，复用生产 MotionSpecimen，所有交互只更新本地 fixture 状态，并链接真实 AppSidebar/归档线验收台
-useAppDashboardController.ts: 普通笔记导航禁用整页快照以保持文件库视觉稳定； Dashboard 单次持有的状态/命令协调 Hook，保持 Profile/正文订阅、乐观事务、flush/导航、工具预载、唯一响应式判据与归档 canonical 目标；普通本地辅助视图走 transitionContent，跨路由快照交给 Router 当前节点查询按 tree/路由 ID 缓存，相邻正文预取等当前正文就绪；文件夹创建和改名成功静默，失败保持原有 Toast。
+useAppDashboardController.ts: 首次准入等待入口解析与正文就绪后报告完成，新账号初始化失败释放加载层；普通笔记导航禁用整页快照以保持文件库视觉稳定； Dashboard 单次持有的状态/命令协调 Hook，保持 Profile/正文订阅、乐观事务、flush/导航、工具预载、唯一响应式判据与归档 canonical 目标；普通本地辅助视图走 transitionContent，跨路由快照交给 Router 当前节点查询按 tree/路由 ID 缓存，相邻正文预取等当前正文就绪；文件夹创建和改名成功静默，失败保持原有 Toast。
 .gitkeep: 保留页面层空目录
 CLAUDE.md: 记录页面层职责与文档协议
 LandingPage.tsx: MarketingLayout 内的公开首页正文，以 1120px 主轨和流式分区组合居中 Hero、大幅编辑器、图文叙事；顶栏与全宽 Footer 由父布局持有；声明中文语言，复用 DS 字体回退、圆角按钮和品牌墨蓝，保留参考布局与背景
@@ -18,7 +19,7 @@ AuthCallbackPage.tsx: /auth/callback 路由页面，交换 Google OAuth PKCE cod
 AppDashboard.tsx: 两侧 resizeHandle 装配于宿主独立插槽，脱离内容裁切； /app 视觉组合根，消费 useAppDashboardController 的状态/命令；装配互斥 Paper/Canvas、跨空间常驻文件库与 AI 面板、归档线与 Dialog，不让动画重建整体业务会话
 CanvasRouteCoordinator.tsx: `/app/notes/:id` 的 Canvas 路由协调器；把入口 Canvas bootstrap 冻结为本次挂载的不可变快照，避免缓存消费后在浏览器拍新帧前撤掉目标纸面身份，也避免下一轮离场 bootstrap 反向注入仍在场的旧 Canvas 并制造重复 transition name；另统一 Canvas→原文→Canvas 返回描述、画布重命名与会话 flush 暴露，不持有图数据、保存队列或跨路由文件库。画布→写作区那一跳由它的 navigate 带 viewTransition 起——路由状态落地是异步的，谁持有 navigate 谁才能在正确的那一刻开始过渡
 DashboardDialogs.tsx: 账户与新建文件夹的纯受控组合，外层 presence 等待 Dialog 自身退出，文件夹落点与重名裁决不变
-appDashboardTypes.ts: Dashboard 私有状态类型边界，集中定义含首屏 tree bootstrap 的 loader、账户/文件夹弹窗、标题草稿与树加载状态，不承载运行时逻辑
+appDashboardTypes.ts: Dashboard 私有状态类型边界，集中定义含首屏 tree bootstrap 与入口编号的 loader、账户/文件夹弹窗、标题草稿与树加载状态，不承载运行时逻辑
 memoDeletion.ts: 删除导航纯算法，区分“当前路由被影响需要导航离开”与“当前路由是 memo 需要等 autosave flush”两件事（画布没有编辑会话可等），并从剩余 active tree 选择下一路由
 memoDeletion.test.ts: 覆盖删除当前 Memo/祖先影响判定、删除正在打开的 Canvas 只导航不 flush，及有/无下一 Memo 的路由选择
 useMemoNodeDeletion.ts: 软删编排 Hook；沿用调用方共享的 mutating 门禁，删除前对 memo 会话做 required flush、成功后清理正文缓存与 last-memo 记录并按落点导航，失败恢复编辑会话且不改变任何状态

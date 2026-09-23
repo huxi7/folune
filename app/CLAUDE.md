@@ -18,9 +18,9 @@ AUTH_SETUP.md: Supabase 邮箱确认模板、URL allow list、自定义 SMTP 限
 brand-spec.md: SuperNote 品牌真相源，记录已选 Soft Ink Light/Dark 轴、Saving Processing 状态、8/10/12/16/20px 同心曲率、Button 微雾材质及历史候选
 vite.config.ts: Vite 配置，从 app/.env.local 加载浏览器环境，将开发服务器严格固定到 10000，连接 React/Tailwind 插件，并用 Rolldown 按 Markdown、Language、Features 与其余 CodeMirror/Lezer 拆分 chunk（React 不再单独成 chunk，避免把编辑器 vendor 焊进首屏闭包）
 bunfig.toml: bun test 配置，声明 preload 在任何测试文件之前补齐浏览器公开环境变量，使裸跑 `bun test` 即为真实结果
-src/main.tsx: React 挂载入口，先加载 index.css 建立 theme/base/components/utilities 层序，避免路由局部样式先于全局样式到达时被 Preflight 覆盖；注入 DS motion.ts 生成的 CSS 时长/曲线，以 MotionConfig reducedMotion=user 包围 ThemeProvider/ToastProvider/RouterProvider 并加载全局样式
+src/main.tsx: React 挂载入口，以 WorkspaceEntryTransition 跨路由保持首次准入品牌过渡，先加载 index.css 建立 theme/base/components/utilities 层序，避免路由局部样式先于全局样式到达时被 Preflight 覆盖；注入 DS motion.ts 生成的 CSS 时长/曲线，以 MotionConfig reducedMotion=user 包围 ThemeProvider/ToastProvider/RouterProvider 并加载全局样式
 src/testEnv.ts: 测试期浏览器公开配置的唯一兜底，只补立刻拒连的回环 Supabase 占位值且不覆盖已注入的真实值；产品代码永不导入
-src/index.css: Kumo/Tailwind v4 主题与样式入口（通用 Motion 的时长/曲线由 shared/design-system/motion.ts 单独生成），冻结 Quiet Editorial Color/Type/Spacing/Radius/Elevation/Motion、Paper 几何、Paper First 中性画布/纯净纸张及 light/dark 同轴语义，并隔离声明不写入生产主题的 Color Lab 蓝色终选候选、导入职责样式模块；浏览器元素基础规则下沉 global-base.css
+src/index.css: Landing 与入口共读原值不变的 landing-paper/landing-text token；Kumo/Tailwind v4 主题与样式入口（通用 Motion 的时长/曲线由 shared/design-system/motion.ts 单独生成），冻结 Quiet Editorial Color/Type/Spacing/Radius/Elevation/Motion、Paper 几何、Paper First 中性画布/纯净纸张及 light/dark 同轴语义，并隔离声明不写入生产主题的 Color Lab 蓝色终选候选、导入职责样式模块；浏览器元素基础规则下沉 global-base.css
 src/styles/: UI 样式实现层，以 global-base.css 收口文档根与 reduced-motion、landing.css 与 blog.css 隔离营销首页和公开博客、workspace.css 隔离 Paper/Panel/共享业务布局、note-paper.css 收口 Canvas 卡片缩略纸与全尺寸阅读纸共用的唯一纸面、knowledge-canvas.css 隔离 Canvas V2 Workspace 并收敛 React Flow 默认视觉，其余模块分别维护 design system、AI 消息、连线、认证、菜单与 CodeMirror；跨样式颜色插值统一使用 sRGB
 src/app/: 应用装配层，承载 OAuth 回调、Profile/access token 登录守卫、`/app` 共享 Dashboard 生命周期及仅 DEV 的无状态 Color Lab / Archive Cord Lab 入口
 src/pages/: 页面层，以 useAppDashboardController 与 AppDashboard 分离状态协调/空间装配，承载共享营销顶栏的 Landing、公开博客与动态目录/阅读页、OAuth Callback、Paper/Canvas 路由协调与仅 DEV 的配色决策页、归档线验收台；编排 flush、删除、整理、默认/空白 Canvas 入口、增量布局和返回恢复
@@ -114,3 +114,5 @@ Paper First V1.1 / Quiet Editorial 覆盖约束: 本节覆盖上文遗留的 V1 
 2026-09-16 APP 展示区投影六（用户报"第三张卡被 AI 栏挡一半"）：画布是全视口的、面板浮在它上面，而 `fitView` 把内容居中在**整块画布**上，于是最右那张卡正好顶到 AI 栏底边。`DemoCanvas` 因此不再用 `fitView`，改为自己算视口（`setViewport`），把"居中于什么"从整块画布换成**两侧面板之间真正看得见的那条带**；带的两端直接量面板元素——宽度规则住在 CSS，在 JS 里再写一遍就是第二份真相。带的两端只依赖 stage 尺寸、不依赖面板开合，所以面板开合仍然不重取景（与投影五同一条约束）。
 
 2026-09-17 展示入口收敛：移除临时三版对比页 demo-compare.html；首页继续通过 demo.html 加载既有互动展示，保留选定的 uniform 尺度与全部既有画布调整。
+
+2026-09-23 首次进入工作区：Landing 同源纸白与浅灰 Folune 图字组合承接营销到 APP；会话、账户、目录、代码、首屏内容以真实完成节点累加进度，100% 后单次 12° 淡彩细斜纹扫光揭幕。加载层跨路由持续挂载且不重建 Dashboard，失败/取消直接释放，减少动态只淡出；后续 Paper/Canvas 内部切换仍走既有过渡。

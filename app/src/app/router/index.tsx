@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 React lazy/Suspense、react-router-dom loader/redirect/useLocation、共享 Skeleton/延迟策略、Supabase Auth token 读取与后端 Profile API
+ * [INPUT]: 依赖 React lazy/Suspense、react-router-dom loader/redirect、真实入口进度 Store、Supabase Auth token 读取与后端 Profile API
  * [OUTPUT]: 对外提供共享营销壳的首页、独立 /login、/blog 与 /updates 目录和各自 :slug 阅读页、旧 auth query 重定向、OAuth 回调、受保护工作区与仅开发态实验页
- * [POS]: app/src/app/router 的路由装配文件；静态身份、Profile 与轻量 tree loader 并行装配，Dashboard 直接消费 bootstrap；/app 索引等待由 Paper 壳承接，详情深链先用中性全屏面；左右工具偏好在 Dashboard 获得用户后恢复
+ * [POS]: app/src/app/router 的路由装配文件；静态身份、Profile 与轻量 tree loader 并行装配，Dashboard 直接消费 bootstrap；/app 首次进入统一由根级品牌过渡覆盖，内容就绪才揭幕；左右工具偏好在 Dashboard 获得用户后恢复
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { lazy, Suspense, type ReactNode } from "react";
@@ -9,17 +9,12 @@ import {
   createBrowserRouter,
   redirect,
   type LoaderFunctionArgs,
-  useLocation,
 } from "react-router-dom";
 
 import { MarketingLayout } from "../../pages/MarketingLayout";
 import { BlogPage } from "../../pages/BlogPage";
 import { LandingPage } from "../../pages/LandingPage";
-import {
-  Skeleton,
-  SkeletonGroup,
-  useDelayedSkeleton,
-} from "../../shared/design-system/components";
+import { useWorkspaceEntryStore } from "../../shared/store/workspaceEntryStore";
 
 const AuthCallbackPage = lazy(() =>
   import("../../pages/AuthCallbackPage").then((module) => ({
@@ -69,93 +64,57 @@ function RouteFallback() {
   return <main className="min-h-screen bg-background" />;
 }
 
-function WorkspaceRouteFallback() {
-  const { pathname } = useLocation();
-  const skeletonVisible = useDelayedSkeleton(true);
-
-  if (pathname.startsWith("/app/notes/")) {
-    return (
-      <main aria-label="正在打开内容" className="canvas-workspace">
-        <div className="canvas-workspace-loading" role="status">
-          正在打开内容…
-        </div>
-      </main>
-    );
-  }
-
-  return (
-    <main
-      aria-label="正在载入 Folune 工作区"
-      className="app-workspace workspace-route-skeleton"
-      data-assistant-open="false"
-      data-library-open="false"
-    >
-      <div className="paper-stage-scroll">
-        <div className="paper-stage-layout">
-          <SkeletonGroup
-            className="app-main-panel paper-surface"
-            label="正在加载备忘录纸张"
-            visible={skeletonVisible}
-          >
-            <header className="app-main-toolbar">
-              <Skeleton className="workspace-route-toolbar-title" shape="text" />
-            </header>
-            <div className="app-main-content">
-              <div className="notes-workspace notes-workspace-loading">
-                <div className="note-editor-canvas note-editor-skeleton">
-                  <Skeleton className="note-skeleton-title" shape="text" />
-                  <div className="note-skeleton-body">
-                    <Skeleton className="note-skeleton-line note-skeleton-line-wide" shape="text" />
-                    <Skeleton className="note-skeleton-line" shape="text" />
-                    <Skeleton className="note-skeleton-line note-skeleton-line-short" shape="text" />
-                    <Skeleton className="note-skeleton-line note-skeleton-line-wide" shape="text" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </SkeletonGroup>
-        </div>
-      </div>
-    </main>
-  );
-}
-
 function WorkspaceRouteLeaf() {
   return null;
 }
 
 async function requireWorkspace({ request }: LoaderFunctionArgs) {
-  const [
-    { getProfile },
-    { getMemoTree },
-    { isUnauthorizedApiError },
-    { getAuthenticatedAccessToken },
-  ] = await Promise.all([
-    import("../../shared/api/profile"),
-    import("../../shared/api/memo"),
-    import("../../shared/api/client"),
-    import("../../shared/supabase/auth"),
-  ]);
+  const entry = useWorkspaceEntryStore.getState();
+  const entryId = entry.begin();
+  const cancelEntry = () => entry.dismiss(entryId);
+  request.signal.addEventListener("abort", cancelEntry, { once: true });
+  if (request.signal.aborted) cancelEntry();
 
   try {
-    const accessToken = await getAuthenticatedAccessToken();
-
-    if (accessToken === null) {
-      throw redirect("/login");
-    }
-
-    const [profile, memoTree] = await Promise.all([
-      getProfile(accessToken, request.signal),
-      getMemoTree(accessToken, request.signal),
+    const [
+      { getProfile },
+      { getMemoTree },
+      { isUnauthorizedApiError },
+      { getAuthenticatedAccessToken },
+    ] = await Promise.all([
+      import("../../shared/api/profile"),
+      import("../../shared/api/memo"),
+      import("../../shared/api/client"),
+      import("../../shared/supabase/auth"),
     ]);
 
-    return { accessToken, memoTree, profile };
-  } catch (error) {
-    if (isUnauthorizedApiError(error)) {
-      throw redirect("/login");
-    }
+    try {
+      const accessToken = await getAuthenticatedAccessToken();
+      if (accessToken === null) throw redirect("/login");
+      entry.finishStep(entryId, "session");
 
+      const [profile, memoTree] = await Promise.all([
+        getProfile(accessToken, request.signal).then((value) => {
+          entry.finishStep(entryId, "profile");
+          return value;
+        }),
+        getMemoTree(accessToken, request.signal).then((value) => {
+          entry.finishStep(entryId, "tree");
+          return value;
+        }),
+        // 与 Router lazy 共享 import 缓存；既保留并行，也覆盖热缓存再次进入。
+        import("../../pages/AppDashboard").then(() => entry.finishStep(entryId, "module")),
+      ]);
+      return { accessToken, memoTree, profile, entryId };
+    } catch (error) {
+      if (isUnauthorizedApiError(error)) throw redirect("/login");
+      throw error;
+    }
+  } catch (error) {
+    cancelEntry();
     throw error;
+  } finally {
+    request.signal.removeEventListener("abort", cancelEntry);
   }
 }
 
@@ -212,7 +171,7 @@ export const router = createBrowserRouter([
   {
     path: "/app",
     lazy: async () => ({ Component: (await import("../../pages/AppDashboard")).AppDashboard }),
-    hydrateFallbackElement: <WorkspaceRouteFallback />,
+    hydrateFallbackElement: <RouteFallback />,
     loader: requireWorkspace,
     shouldRevalidate: () => false,
     children: [
@@ -221,3 +180,13 @@ export const router = createBrowserRouter([
     ],
   },
 ]);
+
+// ---- loader 交接给页面后，离开工作区或路由报错同样释放入口层 ----
+const unsubscribeEntry = router.subscribe((state) => {
+  const destination = state.navigation.location?.pathname ?? state.location.pathname;
+  if (state.errors || (destination !== "/app" && !destination.startsWith("/app/"))) {
+    const entry = useWorkspaceEntryStore.getState();
+    if (entry.phase !== "idle") entry.dismiss(entry.id);
+  }
+});
+if (import.meta.hot) import.meta.hot.dispose(unsubscribeEntry);

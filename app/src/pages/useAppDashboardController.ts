@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 React Router Profile/token、Canvas bootstrap、轻量 tree/正文/Workspace Store、删除编排、惰性 AI、持久左右工具宿主、按当前树重算的归档 presentation、useOverlayPanels 响应式判据与 Paper/Canvas Workspace
+ * [INPUT]: 依赖首次入口就绪桥梁、React Router Profile/token、Canvas bootstrap、轻量 tree/正文/Workspace Store、删除编排、惰性 AI、持久左右工具宿主、按当前树重算的归档 presentation、useOverlayPanels 响应式判据与 Paper/Canvas Workspace
  * [OUTPUT]: 对外提供 useAppDashboardController 状态与命令投影，支撑互斥 Paper/Canvas 舞台、跨路由不卸载且普通笔记切换不参与整页快照的文件库 React 实例、细粒度正文订阅、当前树节点缓存与正文就绪后的预取、Canvas 离场 flush、网络策略约束的 Canvas 预载、归档 canonical 目标下传与账户/视图编排，改名与文件夹创建成功静默
  * [POS]: app/src/pages 的 /app 状态协调 Hook，由 AppDashboard 单次持有；跨 Paper/Canvas 的数据与视觉交接只在此建立一次，深链刷新先确认节点类型，普通业务状态仍留在各自 Store/Workspace，文件库作为共享 Chrome 留在两种内容壳之外。它是「现在是不是覆盖式布局」的唯一持有者并下传给 Paper 壳与归档 Overlay：同一个断点算两遍就会出现两个都自称正确的布局；归档只交出 canonical memo，屏幕上由谁代表它归 AppSidebar
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -11,6 +11,7 @@ import {
   useMatch,
   useNavigate,
 } from "react-router-dom";
+import { useWorkspaceEntryReady } from "./useWorkspaceEntryReady";
 import { transitionContent } from "./viewTransition";
 
 import type { MemoTreeNode } from "../shared/api/memo";
@@ -89,7 +90,7 @@ const scheduleIdle = (work: () => void): (() => void) => {
 };
 
 export function useAppDashboardController() {
-  const { accessToken, memoTree: initialMemoTree, profile: initialProfile } =
+  const { accessToken, entryId, memoTree: initialMemoTree, profile: initialProfile } =
     useLoaderData() as WorkspaceLoaderData;
   const navigate = useNavigate();
   const noteMatch = useMatch("/app/notes/:noteId");
@@ -137,6 +138,7 @@ export function useAppDashboardController() {
   const [documentView, setDocumentView] = useState<DocumentView>("editing");
   const [editingMode, setEditingMode] = useState<EditingMode>("live");
   const [viewTitleDraft, setViewTitleDraft] = useState<ViewTitleDraft>(null);
+  const [entryStatus, setEntryStatus] = useState<TreeStatus>("loading");
   const [treeStatus, setTreeStatus] = useState<TreeStatus>("loading");
   const [accountDialog, setAccountDialog] = useState<AccountDialogState>(null);
   const [accountProfileRefreshing, setAccountProfileRefreshing] = useState(false);
@@ -204,6 +206,10 @@ export function useAppDashboardController() {
     workspaceRef: notesWorkspaceRef,
   });
   const canvasNodeId = resolveCanvasNodeId(selectedMemo);
+  useWorkspaceEntryReady(entryId, selectedMemoDocumentStatus === "error" || entryStatus === "error" ? "error"
+    : canvasNodeId !== null || entryStatus !== "ready" || treeStatus !== "ready" || treeMutating
+      || documentLoading || documentSkeletonVisible || treeSkeletonVisible
+      ? "loading" : "ready");
   /*
    * 文件库是跨 Paper/Canvas 的同一个 UI 实例，开合状态却仍由当前空间各自拥有。
    * Canvas 会话尚未 beginSession 时，用只读 entry 预览让持久宿主先拿到正确终态；
@@ -316,6 +322,7 @@ export function useAppDashboardController() {
 
   useEffect(() => {
     initialTreeHandledRef.current = null;
+    setEntryStatus("loading");
     resetMemoTree();
     hydrateTree(initialMemoTree);
     setTreeStatus("ready");
@@ -345,6 +352,7 @@ export function useAppDashboardController() {
       } else if (resolveCanvasNodeId(routeNode) === null) {
         navigate("/app", { replace: true });
       }
+      setEntryStatus("ready");
       return;
     }
 
@@ -354,6 +362,7 @@ export function useAppDashboardController() {
       navigate(`/app/notes/${encodeURIComponent(lastMemoId)}`, {
         replace: true,
       });
+      setEntryStatus("ready");
       return;
     }
 
@@ -382,8 +391,14 @@ export function useAppDashboardController() {
             title: "初始化备忘录失败",
             variant: "error",
           });
+          setEntryStatus("error");
         })
-        .finally(() => setTreeMutating(false));
+        .finally(() => {
+          setTreeMutating(false);
+          setEntryStatus((status) => status === "error" ? "error" : "ready");
+        });
+    } else {
+      setEntryStatus("ready");
     }
   }, [
     accessToken,

@@ -1,0 +1,123 @@
+/**
+ * [INPUT]: 消费 Landing 同源纸白/墨色、BrandMark 图字比例与入口阶段/真实进度
+ * [OUTPUT]: 大留白浅灰品牌、淡彩进度条与完成后单次全屏斜纹 shimmer，覆盖窄屏与减少动态
+ * [POS]: styles 的工作区首次进入视觉；不参与 Paper/Canvas 内部切换，不更改共享品牌或 Landing
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+@layer components {
+  .workspace-entry {
+    --entry-paper: var(--landing-paper);
+    --entry-ink: var(--landing-text);
+    position: fixed;
+    inset: 0;
+    z-index: var(--layer-dialog);
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .workspace-entry-sheet {
+    position: absolute;
+    inset: 0;
+    background: var(--entry-paper);
+  }
+  .workspace-entry-sheet::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: url("/landing-reference/grain.png") 0 0 / 180px 180px;
+    opacity: .03;
+    pointer-events: none;
+  }
+  .workspace-entry-composition {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: min(100% - 48px, 960px);
+    transform: translate(-50%, -67%);
+  }
+  .workspace-entry-brand {
+    --brand-size: clamp(56px, 12vw, 196px);
+    color: color-mix(in srgb, var(--entry-ink) 6%, var(--entry-paper));
+    user-select: none;
+  }
+  .workspace-entry-brand .ds-brand-mark {
+    filter: grayscale(1);
+    opacity: .085;
+  }
+  .workspace-entry-meter {
+    width: min(100%, 512px);
+    margin-top: clamp(36px, 4.5vw, 72px);
+  }
+  .workspace-entry-track {
+    height: clamp(10px, 1vw, 16px);
+    overflow: hidden;
+    border-radius: 5px;
+    corner-shape: round;
+    background: color-mix(in srgb, var(--entry-ink) 12%, var(--entry-paper));
+  }
+  .workspace-entry-fill {
+    width: var(--entry-progress);
+    height: 100%;
+    border-radius: inherit;
+    corner-shape: round;
+    background: linear-gradient(90deg in srgb, #e6a38d 0%, #e6c78c 24%, #c1cb98 46%, #9cbfbc 70%, #a9b8d1 87%, #beb1ce 100%);
+    box-shadow: inset 0 1px 1px rgb(255 255 255 / 30%);
+    transition: width var(--entry-settle) cubic-bezier(.22, 1, .36, 1);
+  }
+  .workspace-entry-label {
+    margin: clamp(24px, 3vw, 44px) 0 0;
+    color: var(--entry-ink);
+    font-family: var(--font-sans);
+    font-size: clamp(14px, 1.5vw, 20px);
+    font-weight: 500;
+    line-height: 1.5;
+    letter-spacing: .035em;
+    text-align: center;
+  }
+  /* ---- 轻倾 12° 的宽幅柔光；细斜纹只在光经过时显现 ---- */
+  .workspace-entry-shimmer {
+    position: absolute;
+    inset: -25% -80%;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(-65%) skewX(-12deg);
+    background: linear-gradient(90deg in srgb, transparent 30%, rgb(231 192 179 / 16%) 41%, rgb(230 215 175 / 20%) 47%, rgb(255 255 252 / 42%) 50%, rgb(191 216 209 / 20%) 54%, rgb(190 201 222 / 16%) 59%, transparent 70%);
+  }
+  .workspace-entry-shimmer::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(102deg, transparent 0 5px, rgb(113 133 151 / 12%) 5px 6px, transparent 6px 10px);
+    mask-image: linear-gradient(90deg, transparent 35%, #000 46%, #000 54%, transparent 65%);
+  }
+  .workspace-entry[data-phase="complete"] .workspace-entry-sheet {
+    animation: workspace-entry-unveil var(--entry-reveal) cubic-bezier(.4, 0, .2, 1) var(--entry-settle) both;
+  }
+  .workspace-entry[data-phase="complete"] .workspace-entry-shimmer {
+    animation: workspace-entry-sweep var(--entry-reveal) cubic-bezier(.4, 0, .2, 1) var(--entry-settle) both;
+  }
+  @keyframes workspace-entry-unveil {
+    0%, 12% { opacity: 1; }
+    70%, 100% { opacity: 0; }
+  }
+  @keyframes workspace-entry-sweep {
+    0% { transform: translateX(-65%) skewX(-12deg); opacity: 0; }
+    18%, 65% { opacity: 1; }
+    100% { transform: translateX(65%) skewX(-12deg); opacity: 0; }
+  }
+  @media (max-width: 600px) {
+    .workspace-entry-composition { width: calc(100% - 48px); transform: translate(-50%, -64%); }
+    .workspace-entry-meter { width: 78%; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .workspace-entry-fill { transition: none; }
+    .workspace-entry[data-phase="complete"] .workspace-entry-sheet { animation: workspace-entry-unveil var(--entry-reduced) linear both; }
+    .workspace-entry[data-phase="complete"] .workspace-entry-shimmer { animation: none; }
+  }
+  @media (forced-colors: active) {
+    .workspace-entry-track { outline: 1px solid CanvasText; }
+    .workspace-entry-fill { background: Highlight; }
+  }
+}
