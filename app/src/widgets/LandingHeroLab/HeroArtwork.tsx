@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 Paper 0.0.80 的 ShaderMount/GrainGradient/Dithering/Warp、A/B GLSL 与参数协议
+ * [INPUT]: 依赖 Paper 0.0.80 的 ShaderMount/GrainGradient/Dithering/Warp、LandingMotion 共用散墨 GLSL、本地 B GLSL 与参数协议
  * [OUTPUT]: 对外提供 01A/01B/02A/02B、历史配置背景、运行状态及连续时间
  * [POS]: Lab 的单画布装配边界；遮罩负责阅读区，参数变更只更新 uniforms，不重建上下文
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -9,7 +9,7 @@ import type { CSSProperties, Ref } from "react";
 import { GrainGradient, Warp, Dithering, ShaderMount } from "@paper-design/shaders-react";
 import type { PaperShaderElement } from "@paper-design/shaders";
 import { getShaderNoiseTexture } from "@paper-design/shaders";
-import { inkFragmentShader } from "./inkShader";
+import { inkFragmentShader } from "../LandingMotion/inkShader";
 import { inkBFragmentShader } from "./inkBShader";
 import { paperBFragmentShader } from "./paperBShader";
 import { isRedesigned, isVariant } from "./presets";

@@ -12,9 +12,7 @@ useSavedStudies.ts: 一条收藏一个 localStorage 键，监听同源跨标签�
 presets.ts: 候选元信息与默认值、参数范围、v1→v2 Snapshot 校验；保留 ink/paper ID 兼容旧草稿，新增 ink-b/paper-b
 useLabState.ts: 逐方案草稿、共享高度、暂停和收藏预览；v1 只读迁移到 v2，预览不覆盖草稿，载入/继续播放使用副本
 HeroArtwork.tsx: Paper 与 A/B shader 装配，量取实际文案/按钮矩形传给 B 版减墨；单候选 140 万像素、上下文丢失反馈和连续时钟
-inkShader.ts: 01A 增强版和已排除 04 的原算法，仅提取公共函数，保持此前时间/颗粒形态
 inkBShader.ts: 已否决 01B 历史算法，左上主墨面与右下浅呼应，连续场只改变墨岸边缘及内部着墨，真实阅读区在密度内减淡
-grainMaterial.ts: 01A/01B 共用连续噪声与邻格颗粒采样，不拥有构图与时间策略
 paperBShader.ts: 已否决 02B 历史算法，对安装版 Paper GrainGradient 源串做有锚点的有限改造，保留纸粒/调色链路，替换 wave 场形为两层不同速度的斜向墨面，增加实际阅读区衰减与可调粒径；适配器与 0.0.80 绑定
 useAmbientMotion.ts: 系统减少动态、用户暂停、后台/离屏共同决定 speed，逐帧更新不经 React state
 hero-lab.css: 仅 Lab 的高度、侧轨后景、操作条/面板/收藏样式；A 版保留旧遮罩，B 版阅读留白归 shader，不加中央椭圆
@@ -25,6 +23,8 @@ PAPER-LICENSE.txt: Paper Shaders Apache-2.0 完整许可证，随局部改造源
 LibraryArtwork.tsx: 已淘汰 E/F 历史装配，当前入口不加载
 ReactBitsWaves.tsx: 已淘汰 E 官方 Canvas/Perlin 历史适配，保留许可追溯
 AceternityBeams.tsx: 已淘汰 F 官方 Motion 路径历史适配，保留许可追溯
+
+01A 与历史 04 的 inkShader、01A/01B 共用 grainMaterial 已移至 ../LandingMotion/，实验页单向复用正式材质，算法与存量参数不变；登录使用 01A，首页继续使用 02A。
 
 默认：新用户进入 02A，60svh；已否决 B 版参数仅保留用于旧收藏复现：01B 浓淡 .68/粒径 1.65/尺度 1.08/速度 .34/留白 .8/柔和 .58。02B 浓淡 .72/粒径 1.2/尺度 1/速度 .46/留白 .82/柔和 .62/纸粒 .16。02A 无存量草稿时使用用户 12:23 截图参数：78%/.96/.68/80%/纹理14%/偏移-.26,.18/-17°；旧草稿优先，绝不以新默认覆盖用户调整。
 

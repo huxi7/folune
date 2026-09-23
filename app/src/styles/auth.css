@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖 Landing 的纸色/字体与 BlueprintFrame 公告骨架、DS 半径/曲线/表面 token，以及 LoginPage/AuthForm 的 auth-* 结构
- * [OUTPUT]: 对外提供 384px 表单、96px 桌面栏距、完整 3:4 背景视频与手机单列表单；卡片有轻层叠阴影，输入框 hover/focus 共用单圈细光，眼睛仅灰黑变化
+ * [INPUT]: 依赖 Landing 的纸色/字体与 BlueprintFrame 公告骨架、DS token，以及 LoginPage/LoginBackdrop/AuthForm 的 auth-* 结构
+ * [OUTPUT]: 对外提供 01A 散墨正文后景、384px 表单、96px 桌面栏距、完整 3:4 背景视频与手机单列表单；卡片有轻层叠阴影，输入框 hover/focus 共用单圈细光
  * [POS]: styles 的独立登录页视觉层，由 index.css 统一导入；高度不足时自然滚动，绝不让居中内容钻入 Header 或裁切视频
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -18,10 +18,23 @@
   }
 
   .auth-page {
+    position: relative;
+    isolation: isolate;
     display: grid;
     flex: 1;
     align-items: center;
     padding: clamp(24px, 4.8svh, 48px) var(--landing-gutter);
+  }
+
+  /* ---- 01A 散墨铺满正文；顶部淡入，独立后景不影响表单命中 ---- */
+  .auth-backdrop {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    overflow: clip;
+    pointer-events: none;
+    opacity: 0.32;
+    mask-image: linear-gradient(to bottom, transparent, #000 18%, #000 88%, transparent);
   }
 
   .auth-composition {

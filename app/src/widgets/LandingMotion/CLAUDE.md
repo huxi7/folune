@@ -2,6 +2,9 @@
 > L2 | 父级: ../CLAUDE.md
 
 成员清单
+LoginBackdrop.tsx: 登录正文的 01A 散墨背景，沿用终选材质参数，speed .04（原 .28）、初始帧 12000；量取宿主 CSS 尺寸，140 万像素上限，减少动态停帧，无 WebGL2 保留纸面，浓淡与边缘遮罩归 auth.css
+inkShader.ts: 从 Lab 提取的原 01A/历史 04 散墨算法，正式登录和 Lab 共用；只消费 uniforms，不反向读取实验参数或收藏
+grainMaterial.ts: 散墨候选共用连续场与邻格颗粒 GLSL，构图和速度归调用方
 MarketingLink.tsx: 公开导航的 Router Link 适配，路径/锚点变化才启用原生过渡；新标签、历史/state 和减少动态效果沿原语义
 useMarketingMotion.ts: MarketingLayout 的正文编排，路由/锚点在滚动恢复后只命名当前视口内的显式 reveal 内容；原生快照与 CSS 入场互斥，滚动只揭示一次，query/清除已消费锚点不重播，焦点立即显示内容
 CLAUDE.md: 记录 Landing 微动效模块职责与文档协议

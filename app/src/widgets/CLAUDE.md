@@ -30,7 +30,7 @@ LandingFeatureDetails.tsx: 第 11 区块的四项垂直居中展开说明、对�
 landingDetailData.ts: 归档线、引用选择、同一份原文、Markdown 导出四项细节与完整指南；实景图与文章数据同源，BlogPost 仅类型依赖，不建立运行时反向导入
 LandingSections.tsx: 保留五项真实功能与文章入口、评价和信件；私有 LandingChapter 成对包围评价、产品功能组、指南和精选博客，共八条空轨；其中三种侧纹各在章节外框装配一次，连续贯穿空轨与正文，内侧横线仅画在主轨内；产品功能→关联展示→功能细节维持一章，相邻章节共用斜纹边界，其余区块独立持有展示与交互
 LandingFooter.tsx: 共用 DS 墨蓝的品牌区与产品/资源/关于/连接四组导航；16 项预留入口以 aria-disabled link 语义展示且不跳转，打开网页版进入 /login；品牌与入口置顶、作者与版权置底；保留 Folune 淡描边与细纹层序，BlueprintFrame 延续导轨
-LandingMotion/: Landing 克制反馈模块；MarketingLink/useMarketingMotion 统一公开页面/锚点过渡与正文浮现，参数复用 DS，HeroBackdrop/ShowcaseBackdrop 保留背景职责，CountUp 处理数字变化
+LandingMotion/: 营销页克制反馈模块；MarketingLink/useMarketingMotion 统一公开页面/锚点过渡与正文浮现，参数复用 DS；HeroBackdrop/ShowcaseBackdrop/LoginBackdrop 承载各自后景，共用散墨算法供登录与 Lab 消费，CountUp 处理数字变化
 NotebookPreview.tsx: 确定性首屏产品预览，DS 统一缩放淡入与显式卡片 lift 分处不同元素，阴影由 CSS 持有，内部布局不参与独立动画
 AppSidebar.tsx: 右键菜单通过 Portal 锚定视口，避免 Panel transform 改写 fixed 坐标；文件库内容与展开偏好的唯一所有者，负责创建/搜索、树/重命名/拖放意图、底部导航和唯一有效归档代表；重排交给 useTreeReorder，结构键按不可变树引用复用以跳过标题/摘要更新时的整树 FLIP 判据，子级尺寸交给 TreeDisclosure，业务事务仍由 Dashboard 持有
 WorkspacePanelLayer.tsx: 跨 Paper/Canvas 常驻左右工具宿主，8px/220ms 入、8px/170ms 出，不缩放内容或改变 Stage；关闭即 inert，开合运动租约成对归还，保留文件树/AI 会话实例与滚动位置

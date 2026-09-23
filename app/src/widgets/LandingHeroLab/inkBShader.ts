@@ -1,10 +1,10 @@
 /**
- * [INPUT]: 依赖 grainMaterial 的连续场/颗粒采样和 Paper 的时钟/分辨率
+ * [INPUT]: 依赖 LandingMotion/grainMaterial 的连续场/颗粒采样和 Paper 的时钟/分辨率
  * [OUTPUT]: 对外提供 01B 墨岸构图 shader；密度、边缘与速度独立可调
  * [POS]: 替代 01A 的均匀云场，固定左上主墨面与右下浅呼应，阅读区在密度场内留白
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
-import { grainMaterialGLSL } from "./grainMaterial";
+import { grainMaterialGLSL } from "../LandingMotion/grainMaterial";
 
 export const inkBFragmentShader = `#version 300 es
 precision highp float;

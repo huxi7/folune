@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 Paper ShaderMount 的时间/分辨率、grainMaterial 公共采样与 Lab 参数
+ * [INPUT]: 依赖 Paper ShaderMount 的时间/分辨率、grainMaterial 公共采样与调用方 uniforms
  * [OUTPUT]: 对外提供散墨/薄雾共用的连续形变与细颗粒缓移 WebGL2 fragment shader
- * [POS]: 保留 01A 与旧 04 的局部算法；确定种子的微粒缓移，墨面独立形变，01B 构图另由 inkBShader 持有
+ * [POS]: 登录背景与 Lab 01A/历史 04 共用的纯算法；不依赖实验页状态，调用方决定速度与浓淡
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { grainMaterialGLSL } from "./grainMaterial";
