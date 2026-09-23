@@ -24,7 +24,7 @@ export function LoginPage() {
           <div className="auth-panel">
             <div className="auth-intro" data-marketing-reveal>
               <h1 tabIndex={-1}>把此刻的想法<br />写下来</h1>
-              <p>随手记录，让想法自然生长。</p>
+              <p>随手记录，让想法自然生长</p>
             </div>
             <AuthForm onAuthenticated={() => navigate("/app", { replace: true })} />
           </div>
