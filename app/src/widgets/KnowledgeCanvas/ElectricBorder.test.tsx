@@ -1,6 +1,6 @@
 /**
  * [INPUT]: happy-dom、真实 ElectricBorder 与记录 Canvas 绘制点的替身
- * [OUTPUT]: 验证沿传播方向追踪同一段纹理时仍发生形变，暂停时停止帧循环
+ * [OUTPUT]: 验证沿传播方向追踪同一段纹理时仍发生形变，暂停时停止帧循环，以及多卡共享计算、外观隔离和首卡释放接管
  * [POS]: ElectricBorder 时间演化回归门禁；剔除平移后比较真实绘制位移，防止定向模式再次冻结噪声时间
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -10,9 +10,12 @@ import { Window } from 'happy-dom';
 const browser = new Window({ url: 'http://localhost:10010' });
 const frames = new Map<number, FrameRequestCallback>();
 let frameId = 0;
+let strokes = 0;
+let copies = 0;
 let points: Array<{ x: number; y: number }> = [];
 const context = {
-  scale() {}, setTransform() {}, clearRect() {}, closePath() {}, stroke() {},
+  scale() {}, setTransform() {}, clearRect() {}, closePath() {}, stroke() { strokes++; },
+  drawImage() { copies++; },
   beginPath() { points = []; },
   moveTo(x: number, y: number) { points.push({ x, y }); },
   lineTo(x: number, y: number) { points.push({ x, y }); },
@@ -33,6 +36,8 @@ beforeEach(() => {
   descriptors = Object.fromEntries(Object.keys(globals).map((key) => [key, Object.getOwnPropertyDescriptor(globalThis, key)]));
   Object.assign(globalThis, globals);
   frames.clear();
+  strokes = 0;
+  copies = 0;
 });
 const { render, cleanup, act } = await import('@testing-library/react/pure');
 const { default: ElectricBorder } = await import('./ElectricBorder');
@@ -87,4 +92,49 @@ test('暂停保留可见轮廓但不安排动画帧', () => {
   render(<ElectricBorder chaos={0.03} paused flow="bottom-right-to-top-left" />);
   expect(points.length).toBeGreaterThan(100);
   expect(frames.size).toBe(0);
+});
+
+
+test('50 张同规格卡片每帧只计算一份噪声，释放首张后仍连续绘制，全部释放取消 rAF', () => {
+  const views = Array.from({ length: 50 }, () => render(
+    <ElectricBorder chaos={0.04} maxDisplacement={2} thickness={2.75} flow="bottom-right-to-top-left" />,
+  ));
+  expect(frames.size).toBe(1);
+  expect(strokes).toBe(1);
+  expect(copies).toBe(49);
+  const canvas = views[0]!.container.querySelector('canvas')!;
+  expect(canvas.style.width).toBe('290px');
+  expect(canvas.style.height).toBe('370px');
+  nextFrame(performance.now() + 16);
+  expect(strokes).toBe(2);
+  expect(copies).toBe(98);
+  views[0]!.unmount();
+  nextFrame(performance.now() + 32);
+  expect(strokes).toBe(3);
+  expect(copies).toBe(146);
+  views.slice(1).forEach((view) => view.unmount());
+  expect(frames.size).toBe(0);
+});
+
+test('不同外观和暂停状态各自隔离，共用一个调度帧', () => {
+  render(<ElectricBorder color="red" />);
+  render(<ElectricBorder color="blue" />);
+  render(<ElectricBorder color="red" paused />);
+  expect(strokes).toBe(3);
+  expect(frames.size).toBe(1);
+  nextFrame(performance.now() + 16);
+  expect(strokes).toBe(5);
+});
+
+
+test('页面隐藏停止全部帧，恢复后重建共享帧且卸载清理', () => {
+  render(<ElectricBorder />);
+  render(<ElectricBorder />);
+  Object.defineProperty(browser.document, 'hidden', { configurable: true, value: true });
+  act(() => browser.document.dispatchEvent(new browser.Event('visibilitychange')));
+  expect(frames.size).toBe(0);
+  Object.defineProperty(browser.document, 'hidden', { configurable: true, value: false });
+  act(() => browser.document.dispatchEvent(new browser.Event('visibilitychange')));
+  expect(frames.size).toBe(1);
+  Reflect.deleteProperty(browser.document, 'hidden');
 });

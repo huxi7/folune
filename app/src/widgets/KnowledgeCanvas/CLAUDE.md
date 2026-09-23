@@ -9,10 +9,11 @@ CanvasCardNode.tsx: memo 化的 280x360 memo_ref 卡与 native 空间文字；�
 CanvasManipulationFeedback.tsx: Flow 内的单一按住手势观察器；按下卡片或已选组时只读 nodeLookup，把边缘 Portal 挂到实际参与搬动的卡片，释放/取消/失焦立即卸载；排除命令、连接、修饰键和 Space 平移，不改变选择与 WAL
 CanvasManipulationFeedback.test.tsx: 真实 React Flow 下验证按下即反馈、松手/取消/失焦清理、组选共享、命令/修饰键/平移排除，以及视觉绝不改写静态选择
 CanvasManipulationBorder.tsx: 原始 ElectricBorder 的配置入口，直接传 speed=0.6、chaos=0.04、thickness=2.75、maxDisplacement=2px 局部位移软上限、DS 颜色/平滑圆角、右下至左上 flow 与 Reduced Motion；不维护任何自定义波形或参数换算
-ElectricBorder.tsx: React Bits 上游组件副本（源码引用见文件头）；保留十层 noise2D/octavedNoise、原始 speed 时间乘数与 chaos 振幅，定向模式仅将采样坐标映射为右下发起、两路向左上收束，同时继续推进原始噪声时间，波纹沿路径移动时仍持续变形；描边前按二维向量长度软限幅，避免偶发大尖刺；另适配 Flow 本地尺寸、线宽、squircle、currentColor 与暂停/离屏生命周期
+electricBorderFrames.ts: 手势期共享 rAF 与栅格调度；按尺寸、DPR、颜色和波形参数分组，同规格每帧只画一份，其他 Canvas 复制；最后一个订阅释放即取消帧，不留缓存
+ElectricBorder.tsx: React Bits 上游组件副本（源码引用见文件头）；保留十层 noise2D/octavedNoise、原始 speed 时间乘数与 chaos 振幅；同规格通过 electricBorderFrames 共享逐帧栅格，有限位移按描边外溢缩小缓冲区，定向模式仅将采样坐标映射为右下发起、两路向左上收束，同时继续推进原始噪声时间，波纹沿路径移动时仍持续变形；描边前按二维向量长度软限幅，避免偶发大尖刺；另适配 Flow 本地尺寸、线宽、squircle、currentColor 与暂停/离屏生命周期
 electricBorderFlow.ts: 上游顺时针周长到右下/左上两路距离的纯映射；保留 8 倍空间尺度与 0.3 时间频率，端点渐收保证轮廓连接；位移软上限保留阈值一半以内的小毛边，超出后平滑趋近上限，不改上游噪声
 electricBorderFlow.test.ts: 验证右下起点/左上终点、两路单调同步、时间持续前移、闭合接缝，以及全方向限幅/小纹理保真/接点连续
-ElectricBorder.test.tsx: 记录真实 Canvas 绘制点，扣除方向平移后验证波形仍改变，锁定暂停不排帧
+ElectricBorder.test.tsx: 另锁定 50 卡单帧一次噪声绘制、移除主绘制卡后的连续接管、全部释放取消帧及不同外观/暂停隔离； 记录真实 Canvas 绘制点，扣除方向平移后验证波形仍改变，锁定暂停不排帧
 ElectricBorder.css: 上游 Canvas/辉光/内容分层样式，放入 components layer；品牌材质覆盖归 knowledge-canvas.css
 ElectricBorder.LICENSE.md: React Bits Electric Border 上游组件的原始版权与 MIT + Commons Clause 许可
 CanvasCardNode.test.tsx: 卡片结构回归门禁，锁定两个正式中心 Handle、抓手必须落在元信息行之内且排在两个内容动作之后、整卡 target、嵌套纸张、常驻展开入口、AI 忙碌选择器、元信息只剩墓碑/回收站两种状态，以及墓碑/回收站绝不暴露连接命中面

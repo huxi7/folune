@@ -1,7 +1,7 @@
 /**
- * [INPUT]: React Bits ElectricBorder 原始 color/speed/chaos/borderRadius 与 React Canvas；增加线宽、暂停、平滑圆角、方向映射及 maxDisplacement 位移上限
+ * [INPUT]: React Bits ElectricBorder 原始 color/speed/chaos/borderRadius 与 React Canvas、electricBorderFrames 共享帧调度；增加线宽、暂停、平滑圆角、方向映射及 maxDisplacement 位移上限
  * [OUTPUT]: 对外提供 ElectricBorder；上游噪声持续演化且按 flow 定向传播，描边前以 maxDisplacement 平滑约束局部尖刺
- * [POS]: Canvas 按住反馈使用的上游组件副本；方向只映射采样坐标，不重写波形/速度乘数/Chaos；另适配 Flow 本地尺寸、DS 曲率/颜色和动画生命周期
+ * [POS]: Canvas 按住反馈使用的上游组件副本；方向只映射采样坐标，不重写波形/速度乘数/Chaos；另适配 Flow 本地尺寸、DS 曲率/颜色；同规格共享单一帧循环与栅格，位移上限收紧透明缓冲区
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  * 来源：https://github.com/DavidHDev/react-bits/blob/eae800a74f6455ba5afaedc4cdd8700e5a159c33/src/ts-default/Animations/ElectricBorder/ElectricBorder.tsx
  * Copyright (c) 2026 David Haz；许可见 ElectricBorder.LICENSE.md。
@@ -10,6 +10,7 @@
 import React, { useEffect, useRef, useCallback, type CSSProperties, type ReactNode } from 'react';
 import { electricBorderFlow, limitElectricBorderOffset } from './electricBorderFlow';
 import './ElectricBorder.css';
+import { subscribeElectricBorderFrame } from './electricBorderFrames';
 
 interface ElectricBorderProps {
   children?: ReactNode;
@@ -42,9 +43,6 @@ const ElectricBorder: React.FC<ElectricBorderProps> = ({
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const animationRef = useRef<number | null>(null);
-  const timeRef = useRef(0);
-  const lastFrameTimeRef = useRef(0);
 
   const random = useCallback((x: number): number => {
     return (Math.sin(x * 12.9898) * 43758.5453) % 1;
@@ -194,7 +192,9 @@ const ElectricBorder: React.FC<ElectricBorderProps> = ({
     const frequency = 10;
     const baseFlatness = 0;
     const displacement = 60;
-    const borderOffset = 60;
+    // 位移有界时只分配真实描边外溢面积，避免每张卡片清空大块透明像素。
+    const borderOffset = Number.isFinite(maxDisplacement)
+      ? Math.ceil(Math.max(0, maxDisplacement) + thickness / 2 + 1) : 60;
 
     let visible = true;
     let strokeColor = color;
@@ -221,18 +221,9 @@ const ElectricBorder: React.FC<ElectricBorderProps> = ({
     const drawElectricBorder = (currentTime: number) => {
       if (!canvas || !ctx) return;
 
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      if (dpr !== lastDpr) {
-        lastDpr = dpr;
-        const newSize = updateSize();
-        width = newSize.width;
-        height = newSize.height;
-      }
+      const dpr = lastDpr;
 
-      const deltaTime = paused || lastFrameTimeRef.current === 0
-        ? 0 : (currentTime - lastFrameTimeRef.current) / 1000;
-      timeRef.current += deltaTime * speed;
-      lastFrameTimeRef.current = currentTime;
+      const time = paused ? 0 : currentTime / 1000 * speed;
 
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -261,11 +252,11 @@ const ElectricBorder: React.FC<ElectricBorderProps> = ({
 
         const point = getRoundedRectPoint(progress, left, top, borderWidth, borderHeight, radius);
         const directed = flow === 'bottom-right-to-top-left'
-          ? electricBorderFlow(progress, borderWidth, borderHeight, radius, timeRef.current)
+          ? electricBorderFlow(progress, borderWidth, borderHeight, radius, time)
           : null;
         const noisePosition = directed?.position ?? progress * 8;
         // flow 只决定纹理往哪里走；二维噪声的时间轴必须同时推进，否则只是冻结纹理平移。
-        const noiseTime = timeRef.current;
+        const noiseTime = time;
 
         const xNoise = octavedNoise(
           noisePosition,
@@ -308,25 +299,31 @@ const ElectricBorder: React.FC<ElectricBorderProps> = ({
 
       ctx.closePath();
       ctx.stroke();
-
-      animationRef.current = !paused && visible && !document.hidden
-        ? requestAnimationFrame(drawElectricBorder) : null;
     };
 
-    const resizeObserver = new ResizeObserver(() => {
+    let unsubscribe: (() => void) | null = null;
+    const syncAnimation = () => {
+      unsubscribe?.();
+      unsubscribe = null;
+      if (!visible || document.hidden) return;
+      const key = JSON.stringify([
+        width, height, lastDpr, strokeColor, speed, chaos, borderRadius,
+        thickness, maxDisplacement, squircle, flow,
+      ]);
+      unsubscribe = subscribeElectricBorderFrame(key, {
+        canvas, context: ctx, draw: drawElectricBorder,
+      }, !paused);
+    };
+    const resize = () => {
       const newSize = updateSize();
       width = newSize.width;
       height = newSize.height;
-      if (paused) drawElectricBorder(performance.now());
-    });
-    resizeObserver.observe(container);
-
-    const syncAnimation = () => {
-      if (animationRef.current !== null) cancelAnimationFrame(animationRef.current);
-      animationRef.current = null;
-      lastFrameTimeRef.current = 0;
-      if (visible && !document.hidden) drawElectricBorder(performance.now());
+      lastDpr = Math.min(window.devicePixelRatio || 1, 2);
+      syncAnimation();
     };
+    const resizeObserver = new ResizeObserver(resize);
+    resizeObserver.observe(container);
+    window.addEventListener('resize', resize);
     const intersection = typeof IntersectionObserver === 'undefined' ? null
       : new IntersectionObserver(([entry]) => {
         visible = entry?.isIntersecting ?? false;
@@ -337,14 +334,13 @@ const ElectricBorder: React.FC<ElectricBorderProps> = ({
     syncAnimation();
 
     return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
+      unsubscribe?.();
       resizeObserver.disconnect();
+      window.removeEventListener('resize', resize);
       intersection?.disconnect();
       document.removeEventListener('visibilitychange', syncAnimation);
     };
-  }, [color, speed, chaos, borderRadius, thickness, maxDisplacement, paused, flow, octavedNoise, getRoundedRectPoint]);
+  }, [color, speed, chaos, borderRadius, thickness, maxDisplacement, paused, flow, squircle, octavedNoise, getRoundedRectPoint]);
 
   const vars = {
     '--electric-border-color': color,
