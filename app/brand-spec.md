@@ -19,15 +19,17 @@ Folune is a quiet editorial instrument that lets users write first and allows AI
 - Type system: Interface `14/18px` for 36px commands, `14/20px` for 36px fields, compact tree navigation and sidebar utilities `12/16px` inside 32px rows, `15/27px` for Paper body, `18px` for section headings, `24–30px` for Paper titles, and `32–56px` only for editorial/display titles
 - Material: Paper is the only obvious depth; panels stay flat and Buttons use only a restrained tactile mist shadow
 
-## APP 视觉更新（2026-09-23）
+## APP 视觉收敛（2026-09-23）
 
-- 场景边界：index.css 保留营销既有默认值；styles/app-visual.css 在 html[data-visual-context="app"] 下拥有 APP 浅暗色及文字角色，颜色不在各面板重复定义。index.html 首绘与路由提交同步场景，body Portal 和拖拽预览共同继承；Demo 在独立文档启用同一场景，外部 Landing、博客、登录不变。
-- 浅色：Stage #F4F4F2，Paper/Panel/Popover #FFFFFF，Ink #2F333A，次级字 #646B75，边界 #DFE2E5，输入边界 #8A919B，品牌 #395875。次级字与输入边界较计划起点略加深，以满足浅底文字 4.5:1、必要控件边界 3:1；内部辅助线继续低对比。
-- 对话：用户消息 #EEF2F5 浅蓝灰配深色字，AI 正文无卡片；双方 14px/24px。文件树 13px/18px、行高保持 32px，普通/选中 500/600；必要辅助文字 12px/18px，时间戳保留 11px。Demo 沿既有 rem 比例缩小，不另设一套字号。
-- 交互：hover #F1F2F3；当前位置 #EAF0F4 配墨蓝且经过/按下不丢失；键盘焦点是独立 2px 实色轮廓。拖放与归档沿既有几何语义。普通控件 500 字重、主要动作 650。Control 16px 平滑圆角、Paper/Menu 12px 与既有触感均保留。
-- 暗色：Stage #191C20，Panel #22262B，Paper #24282D，Popover #2B3036，正文 #E5E8EC，次级字 #A5ADB8，边界 #3A424C，输入 #6F7986；hover #2C3138，选中 #2F3D4B，用户消息 #29343F，品牌 #91ABC4。账户弹窗不再拥有私有暗色表。
-- 状态：日常成功用中性提示，Processing 保留原蓝灰；警告前景浅色 #8A5B1C / 暗色 #D5B06C，错误/危险使用红色并保留文字与图标。纸影和浮层投影保留几何，色调中性化，不增加发光或纹理。
-- 下文旧版颜色与密度记录只作为营销默认值或历史决策；APP 以本节及 app-visual.css 为准。
+- 场景边界：styles/app-visual.css 仅作用于 html[data-visual-context="app"]，Portal 与 Demo 共同继承；Landing、博客、登录继续沿用默认值。
+- 浅色恢复原版暖白 Stage #F2F1EE，白色纸面/面板，正文 #292927、次级字 #706E68、边界 #E2E1DD；保留自然色温，不把阅读空间染成冷蓝灰。
+- 密度继承原组件：对话正文与文件树恢复 12px，原行距、32px 树行、辅助字号与字重不再被统一覆盖；编辑正文保持原样。Demo 沿原 rem 比例缩放。
+- 普通 hover 使用 #F1F0ED，当前项使用稍深的 #E9E8E4 与深色文字；菜单、个人资料、文件树、列表和工具按钮不借品牌蓝表达经过或选中。圆角、位置与按压动作沿原组件。
+- 用户气泡为近白 #F7F8F8，内侧 1px #E8EAEA 细线不占内容宽度；暗色为 #292929 与 #363636，AI 正文继续无卡片。
+- AI 输入边框默认 #DEDDD8、hover #BEBDB7、focus #656660，聚焦仅附极轻暗影，不加突出的外环；暗色分别 #424242、#5C5C5C、#94948F。键盘导航仍保留组件原有灰阶可见焦点。
+- 暗色保持黑灰轴：Stage #181818、Panel #222222、Paper #242424、Popover #292929、边界 #393939；hover #2D2D2D、当前项 #353535，正文 #E8E7E4、次级字 #AAA9A5。
+- Canvas 的边框、选择、拖放、连线与操作反馈统一消费根级 canvas-interaction-ink（浅色 #666660 / 暗色 #AAA9A5），原有几何与业务状态不变；其他场景回退原 primary。
+- 品牌墨蓝仅留给明确的主动作与有意义的内容强调；警告/危险保留语义色。此节取代上一轮冷灰背景、蓝色选中与字号放大的方案，下文历史记录不构成重新引入这些效果的依据。
 
 ## Selected system — Soft Ink
 

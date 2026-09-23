@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 读取 workspace.css 与 knowledge-canvas.css 的工作区布局与选择反馈契约
+ * [INPUT]: 读取 workspace.css 与 knowledge-canvas.css 的工作区布局与场景中性色选择反馈契约
  * [OUTPUT]: 锁定左右 Panel 开合不创建侧边轨道、Canvas 对侧 Dock 可越过窄屏 backdrop 直接切换互斥 Panel、跨路由文件库使用固定持久宿主、Paper/Canvas 始终占据唯一全屏 Stage、容器<归档线<弹层的层序，以及两个选择框的不对称（外层框选框带极淡底，内层成组框只留线）
  * [POS]: styles 的浮层 Sidebar 回归测试；防止视觉上独立的 Panel 再次通过父网格挤压背景或被路由壳重新挂载
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -117,8 +117,8 @@ describe("Canvas 选择反馈", () => {
     .join("\n");
   const groupBox = declarationsFor(canvasCss, ".react-flow__nodesselection").join("\n");
 
-  test("外层框选框有极淡底色，且底色来自品牌墨蓝而不是第三方默认蓝", () => {
-    expect(root).toContain("--canvas-marquee-fill: color-mix(in srgb, var(--primary)");
+  test("外层框选框有极淡底色，优先使用场景交互色并保留旧场景回退", () => {
+    expect(root).toContain("--canvas-marquee-fill: color-mix(in srgb, var(--canvas-interaction-ink, var(--primary))");
     expect(root).toContain("--xy-selection-background-color: var(--canvas-marquee-fill)");
   });
 

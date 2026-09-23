@@ -1,7 +1,7 @@
 <!doctype html>
 <!--
   [INPUT]: 依赖同源 demo.html 的互动 Demo、默认旧视觉与 data-visual-context=app 新视觉
-  [OUTPUT]: 独立的新旧 APP 对比页，底部按钮即时切换样式，保留同一 Demo 的编辑、会话与当前视图
+  [OUTPUT]: 沿用暖白中性外壳的独立新旧 APP 对比页，底部按钮即时切换样式，保留同一 Demo 的编辑、会话与当前视图
   [POS]: 仅供本地视觉验收的 HTML 外壳，不进入生产构建或 Landing 装配；iframe 提供固定视口与现有交互隔离
   [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 -->
@@ -21,8 +21,8 @@
         height: 100dvh;
         display: grid;
         grid-template-rows: minmax(0, 1fr) auto;
-        background: #f4f4f2;
-        color: #393d45;
+        background: #f2f1ee;
+        color: #292927;
         font: 14px/1.5 'Avenir Next', 'PingFang SC', -apple-system, sans-serif;
       }
       iframe { display: block; width: 100%; height: 100%; border: 0; }
@@ -32,18 +32,18 @@
         align-items: center;
         gap: 16px;
         padding: 12px 24px calc(12px + env(safe-area-inset-bottom));
-        border-top: 1px solid #dfe2e5;
-        background: #f4f4f2;
+        border-top: 1px solid #e2e1dd;
+        background: #f2f1ee;
       }
       .comparison-label { margin: 0; font-size: 13px; font-weight: 500; }
       .comparison-switch {
         display: flex;
         gap: 4px;
         padding: 4px;
-        border: 1px solid #dfe2e5;
+        border: 1px solid #e2e1dd;
         border-radius: 16px;
         corner-shape: squircle;
-        background: #ebedef;
+        background: #e9e8e4;
       }
       .comparison-switch button {
         min-width: 104px;
@@ -53,16 +53,16 @@
         border-radius: 12px;
         corner-shape: squircle;
         background: transparent;
-        color: #646b75;
+        color: #706e68;
         font: inherit;
         font-weight: 500;
         cursor: pointer;
       }
-      .comparison-switch button:hover { color: #2f333a; }
-      .comparison-switch button[aria-pressed="true"] { background: #fff; color: #395875; }
-      .comparison-switch button:focus-visible { outline: 2px solid #395875; outline-offset: 2px; }
+      .comparison-switch button:hover { color: #292927; }
+      .comparison-switch button[aria-pressed="true"] { background: #fff; color: #484842; }
+      .comparison-switch button:focus-visible { outline: 2px solid #484842; outline-offset: 2px; }
       .comparison-switch button:disabled { opacity: .5; cursor: wait; }
-      .comparison-hint { margin: 0; text-align: right; font-size: 12px; color: #646b75; }
+      .comparison-hint { margin: 0; text-align: right; font-size: 12px; color: #706e68; }
       @media (max-width: 640px) {
         .comparison-bar { grid-template-columns: 1fr; justify-items: center; gap: 8px; padding-inline: 12px; }
         .comparison-label, .comparison-hint { display: none; }

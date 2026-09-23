@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 index.css 的共享几何/材质/动效，文档根 data-visual-context 与 html.dark，以及生产 Workspace/DS/Canvas 类名
- * [OUTPUT]: APP 与独立 Demo 的浅色/暗色语义色、阅读字号、选中/悬停/焦点分工和辅助文字角色
+ * [OUTPUT]: APP 与独立 Demo 的暖白/黑灰语义色、中性选中/悬停与渐进输入焦点；字号继承原组件
  * [POS]: APP 视觉唯一场景映射；根级 token 同时覆盖 body Portal，营销文档不命中此作用域，圆角与布局继续由原组件拥有
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -8,40 +8,39 @@
 /* ---- 色彩只在文档根定义；不在面板或 Dialog 内创建第二份主题 ---- */
 html:root[data-visual-context="app"] {
   --background: #ffffff;
-  --foreground: #2f333a;
-  --workspace-stage: #f4f4f2;
+  --foreground: #292927;
+  --workspace-stage: #f2f1ee;
   --paper-surface: #ffffff;
   --paper-foreground: var(--foreground);
-  --paper-edge: #dfe2e5;
+  --paper-edge: #e2e1dd;
   --card: #ffffff;
   --card-foreground: var(--foreground);
   --popover: #ffffff;
   --popover-foreground: var(--foreground);
-  --secondary: #f1f2f3;
+  --secondary: #f1f0ed;
   --secondary-foreground: var(--foreground);
-  --muted: #f5f6f7;
-  /* 计划起点 #6c727c 在浅蓝灰上不足 4.5:1，向深处收一档。 */
-  --muted-foreground: #646b75;
-  --surface-neutral: #f1f2f3;
-  --surface-accent-subtle: #eef2f5;
-  --interactive-hover: #f1f2f3;
+  --muted: #f6f5f2;
+  --muted-foreground: #706e68;
+  --surface-neutral: #f1f0ed;
+  --surface-accent-subtle: #f7f8f8;
+  --interactive-hover: #f1f0ed;
   --interactive-hover-foreground: var(--foreground);
-  --accent: #eaf0f4;
-  --accent-foreground: #395875;
+  --accent: #e9e8e4;
+  --accent-foreground: var(--foreground);
   --primary: #395875;
   --primary-foreground: #f8fafc;
   --primary-hover: #304d67;
   --primary-active: #284158;
   --primary-soft: var(--accent);
   --primary-soft-foreground: var(--accent-foreground);
-  --border: #dfe2e5;
-  --border-strong: #8a919b;
+  --border: #e2e1dd;
+  --border-strong: #aaa8a1;
   /* 输入边界承担可操作区域辨识，独立于仅供分组的弱分割线。 */
-  --input: #8a919b;
-  --ring: #395875;
+  --input: #deddd8;
+  --ring: #656660;
   --sidebar: var(--card);
   --sidebar-foreground: var(--foreground);
-  --sidebar-primary: var(--primary);
+  --sidebar-primary: var(--foreground);
   --sidebar-primary-foreground: var(--primary-foreground);
   --sidebar-accent: var(--accent);
   --sidebar-accent-foreground: var(--accent-foreground);
@@ -57,22 +56,18 @@ html:root[data-visual-context="app"] {
   --destructive-foreground: #ffffff;
   --destructive-soft: #f9e8ea;
   --archive-cord: #474d55;
-  --overlay: rgb(25 28 32 / 38%);
-  --weight-ui: 500;
-  --weight-label: 500;
-  --app-message-surface: #eef2f5;
+  --overlay: rgb(24 24 24 / 38%);
+  --app-message-surface: #f7f8f8;
+  --app-message-border: #e8eaea;
+  --app-input-hover: #bebdb7;
+  --canvas-interaction-ink: #666660;
   --app-selected-surface: var(--accent);
   --app-selected-foreground: var(--accent-foreground);
   --app-divider: color-mix(in srgb, var(--border) 65%, transparent);
-  --app-type-conversation: 0.875rem;
-  --app-leading-conversation: 1.5rem;
-  --app-type-tree: 0.8125rem;
-  --app-type-support: 0.75rem;
-  --app-leading-support: 1.125rem;
-  --app-shadow-rgb: 47 51 58;
-  --shadow-color: #2f333a;
-  --button-shadow-neutral-rest: rgb(47 51 58 / 16%);
-  --button-shadow-neutral-hover: rgb(47 51 58 / 21%);
+  --app-shadow-rgb: 42 40 36;
+  --shadow-color: #292927;
+  --button-shadow-neutral-rest: rgb(42 40 36 / 16%);
+  --button-shadow-neutral-hover: rgb(42 40 36 / 21%);
   --paper-shadow:
     0 1px 2px rgb(var(--app-shadow-rgb) / 4%),
     -0.15rem 0.35rem 0.7rem -0.45rem rgb(var(--app-shadow-rgb) / 18%),
@@ -98,29 +93,29 @@ html:root[data-visual-context="app"] {
 }
 
 html:root.dark[data-visual-context="app"] {
-  --background: #191c20;
-  --foreground: #e5e8ec;
-  --workspace-stage: #191c20;
-  --paper-surface: #24282d;
-  --paper-edge: #3a424c;
-  --card: #22262b;
-  --popover: #2b3036;
-  --secondary: #2c3138;
-  --muted: #262b31;
-  --muted-foreground: #a5adb8;
-  --surface-neutral: #2c3138;
-  --surface-accent-subtle: #29343f;
-  --interactive-hover: #2c3138;
-  --accent: #2f3d4b;
-  --accent-foreground: #c0cedc;
+  --background: #181818;
+  --foreground: #e8e7e4;
+  --workspace-stage: #181818;
+  --paper-surface: #242424;
+  --paper-edge: #393939;
+  --card: #222222;
+  --popover: #292929;
+  --secondary: #2d2d2d;
+  --muted: #262626;
+  --muted-foreground: #aaa9a5;
+  --surface-neutral: #2d2d2d;
+  --surface-accent-subtle: #292929;
+  --interactive-hover: #2d2d2d;
+  --accent: #353535;
+  --accent-foreground: #e8e7e4;
   --primary: #91abc4;
   --primary-foreground: #1b2732;
   --primary-hover: #a0b8ce;
   --primary-active: #7b95ae;
-  --border: #3a424c;
-  --border-strong: #6f7986;
-  --input: #6f7986;
-  --ring: #91abc4;
+  --border: #393939;
+  --border-strong: #626262;
+  --input: #424242;
+  --ring: #94948f;
   --warning: #d5b06c;
   --warning-soft: #393123;
   --destructive: #e18e98;
@@ -128,9 +123,12 @@ html:root.dark[data-visual-context="app"] {
   --destructive-soft: #3c292e;
   --button-danger-hover-background: #eca2aa;
   --button-danger-active-background: #d27d87;
-  --archive-cord: #b4beca;
-  --overlay: rgb(9 12 16 / 54%);
-  --app-message-surface: #29343f;
+  --archive-cord: #b8b7b3;
+  --overlay: rgb(0 0 0 / 54%);
+  --app-message-surface: #292929;
+  --app-message-border: #363636;
+  --app-input-hover: #5c5c5c;
+  --canvas-interaction-ink: #aaa9a5;
   --app-shadow-rgb: 0 0 0;
   --shadow-color: #000000;
   --button-shadow-neutral-rest: rgb(0 0 0 / 42%);
@@ -139,57 +137,23 @@ html:root.dark[data-visual-context="app"] {
 }
 
 @layer components {
-  /* ---- 高频阅读：正文、导航与辅助说明各有自己的角色，不放大全局 Label ---- */
-  :root[data-visual-context="app"] :is(.ds-user-message-bubble, .ds-streaming-text) {
-    font-size: var(--app-type-conversation);
-    line-height: var(--app-leading-conversation);
-  }
+  /* ---- 恢复组件原有字号与行距；气泡仅留下近白底和内侧细线，不挤占正文 ---- */
   :root[data-visual-context="app"] .ds-user-message-bubble {
     background: var(--app-message-surface);
     color: var(--foreground);
+    box-shadow: inset 0 0 0 1px var(--app-message-border);
   }
-  :root[data-visual-context="app"] .ds-assistant-message .markdown-reading-view :is(h1, h2, h3, h4, h5, h6) {
-    font-size: var(--app-type-conversation);
-    line-height: var(--app-leading-conversation);
-  }
-  :root[data-visual-context="app"] .ds-sidebar-button.sidebar-tree-row[data-size="default"] {
-    font-size: var(--app-type-tree);
-    line-height: var(--app-leading-support);
-    font-weight: 500;
-  }
-  :root[data-visual-context="app"] .ds-button { font-weight: 500; }
-  :root[data-visual-context="app"] :is(.ds-button-primary, .ds-button-danger, .sidebar-create-main) { font-weight: 650; }
-  :root[data-visual-context="app"] :is(
-    .agent-process-text, .agent-process-status, .agent-process-toggle, .ds-tool-call-details,
-    .agent-composer-sources > span, .agent-permission-menu small, .agent-permission-trigger.ds-button,
-    .agent-approval-dock-copy strong, .agent-approval-dock-copy p, .agent-approval-dock-actions .ds-button,
-    .agent-error-state strong, .agent-error-state p, .agent-history-empty, .agent-mention-menu > p,
-    .account-dialog-section-description, .account-dialog-avatar-actions > span, .account-dialog-meta,
-    .ui-section-description, .memo-node-dialog-label, .memo-node-dialog-error, .sidebar-tree-empty,
-    .note-explore-notice, .explore-result-panel-empty
-  ) {
-    font-size: var(--app-type-support);
-    line-height: var(--app-leading-support);
-  }
-  :root[data-visual-context="app"] .agent-thread-select span {
-    font-size: var(--type-caption);
-    line-height: var(--leading-caption);
-  }
-  :root[data-visual-context="app"] .agent-approval-dock { flex-wrap: wrap; row-gap: var(--space-2); }
-  :root[data-visual-context="app"] .agent-approval-dock-actions { margin-left: auto; }
 
   /* ---- 当前位置持续存在；悬停不覆盖选中，拖放继续沿用几何反馈 ---- */
   :root[data-visual-context="app"] .ds-sidebar-button[data-active="true"],
   :root[data-visual-context="app"] .ds-sidebar-button[data-active="true"]:is(:hover, :active) {
     background: var(--app-selected-surface);
     color: var(--app-selected-foreground);
-    font-weight: 600;
     border-color: transparent;
   }
   :root[data-visual-context="app"] .sidebar-tree-row[data-active="true"] .ds-sidebar-button-leading {
     color: currentColor;
   }
-  :root[data-visual-context="app"] .ds-sidebar-button.sidebar-tree-row[data-active="true"] { font-weight: 600; }
   :root[data-visual-context="app"] .command-row[data-active="true"] {
     background: var(--app-selected-surface);
   }
@@ -199,7 +163,6 @@ html:root.dark[data-visual-context="app"] {
   :root[data-visual-context="app"] .ds-segmented-control-indicator { background: var(--app-selected-surface); }
   :root[data-visual-context="app"] .ds-segmented-control-option[data-active="true"] {
     color: var(--app-selected-foreground);
-    font-weight: 600;
   }
   :root[data-visual-context="app"] :is(.agent-thread-row[data-active="true"], .ds-select-option[aria-selected="true"]:not([data-tone="danger"])) {
     background: var(--app-selected-surface);
@@ -208,28 +171,57 @@ html:root.dark[data-visual-context="app"] {
   :root[data-visual-context="app"] .agent-thread-row[data-active="true"] .agent-thread-select strong {
     color: var(--app-selected-foreground);
   }
-  :root[data-visual-context="app"] .canvas-card[data-selected="true"] { border-color: var(--primary); }
-  :root[data-visual-context="app"] .canvas-card:has(> .canvas-manipulation-border) { border-color: transparent; }
-  :root[data-visual-context="app"] .knowledge-canvas { --canvas-selection-line: 1px solid var(--primary); }
+  :root[data-visual-context="app"] .sidebar-tree-row[data-drop-placement="inside"] {
+    outline-color: var(--ring);
+    color: var(--foreground);
+  }
+  :root[data-visual-context="app"] :is(.memo-tree-drop-zone, .memo-tree-root-drop-area)::after {
+    background: radial-gradient(circle at 0.25rem 50%, var(--ring) 0 0.25rem, transparent 0.26rem),
+      linear-gradient(var(--ring), var(--ring)) 0.25rem 50% / calc(100% - 0.25rem) 0.125rem no-repeat;
+  }
+  :root[data-visual-context="app"] .memo-tree-rename-input { border-color: var(--ring); }
+  :root[data-visual-context="app"] .memo-tree-drag-preview::before {
+    background: color-mix(in srgb, var(--foreground) 8%, transparent);
+  }
 
-  /* ---- 非交互分隔线安静退后；输入与键盘焦点使用明确轮廓 ---- */
+  /* ---- 普通操作保持灰阶；品牌只留给明确的主要动作 ---- */
+  :root[data-visual-context="app"] :is(.toolbar-icon-button, .ds-password-toggle):hover,
+  :root[data-visual-context="app"] .toolbar-icon-button[data-active="true"],
+  :root[data-visual-context="app"] .note-more-menu-item[aria-checked="true"],
+  :root[data-visual-context="app"] .note-more-menu-item[aria-checked="true"] > svg {
+    color: var(--foreground);
+  }
+  :root[data-visual-context="app"] .note-organize-button.ds-button {
+    --button-surface-hover: var(--interactive-hover);
+    --button-face-top-hover: var(--interactive-hover);
+    --button-face-bottom-hover: var(--interactive-hover);
+    --button-surface-active: var(--accent);
+    --button-face-top-active: var(--accent);
+    --button-face-bottom-active: var(--accent);
+  }
+  :root[data-visual-context="app"] .note-organize-button.ds-button:not(:disabled):hover { color: var(--foreground); }
+  :root[data-visual-context="app"] .agent-approval-dock { border-color: var(--border); }
+
+  /* ---- 输入保持同一条边界，从默认到悬停到聚焦连续加深，不叠加选中外框 ---- */
   :root[data-visual-context="app"] :is(.agent-panel-header, .account-center-main-header) {
     border-bottom-color: var(--app-divider);
   }
-  :root[data-visual-context="app"] .agent-composer { border-color: var(--input); }
-  :root[data-visual-context="app"] .ds-select-trigger { border-color: var(--input); }
-  :root[data-visual-context="app"] .ds-select-trigger:is(:hover, [data-open="true"]) { border-color: var(--ring); }
-  :root[data-visual-context="app"] :is(button, [role="button"], [role="option"], [role="menuitem"], a):focus-visible {
-    outline: 2px solid var(--ring);
-    outline-offset: 2px;
+  :root[data-visual-context="app"] :is(.agent-composer, .ds-input, .ds-select-trigger) {
+    border-color: var(--input);
   }
-  :root[data-visual-context="app"] .ds-input:focus-visible {
-    outline: 2px solid var(--ring);
-    outline-offset: 2px;
+  :root[data-visual-context="app"] :is(.agent-composer, .ds-input, .ds-select-trigger):hover {
+    border-color: var(--app-input-hover);
   }
-  :root[data-visual-context="app"] .agent-composer:has(.agent-chat-input:focus-visible) {
-    outline: 2px solid var(--ring);
-    outline-offset: 2px;
+  :root[data-visual-context="app"] :is(.ds-user-button:hover, .ds-user-button[data-open="true"]) {
+    border-color: var(--app-input-hover);
+    background: var(--interactive-hover);
   }
-  :root[data-visual-context="app"] .ds-input[aria-invalid="true"]:focus-visible { outline-color: var(--destructive); }
+  :root[data-visual-context="app"] .agent-composer:focus-within,
+  :root[data-visual-context="app"] .ds-input:focus-visible,
+  :root[data-visual-context="app"] .ds-select-trigger:is(:focus-visible, [data-open="true"]) {
+    border-color: var(--ring);
+    outline: none;
+    box-shadow: 0 1px 4px rgb(var(--app-shadow-rgb) / 8%);
+  }
+  :root[data-visual-context="app"] .ds-input[aria-invalid="true"] { border-color: var(--destructive); }
 }
