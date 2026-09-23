@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 消费 Landing 同源纸白/墨色、BrandMark 图字比例与入口阶段/真实进度
- * [OUTPUT]: 大留白浅灰品牌、淡彩进度条与完成后单次全屏斜纹 shimmer，覆盖窄屏与减少动态
+ * [OUTPUT]: 居中紧凑浅灰品牌、加厚流彩进度条与轻弹推进与完成后单次全屏斜纹 shimmer，覆盖窄屏与减少动态
  * [POS]: styles 的工作区首次进入视觉；不参与 Paper/Canvas 内部切换，不更改共享品牌或 Landing
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -34,11 +34,11 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: min(100% - 48px, 960px);
-    transform: translate(-50%, -67%);
+    width: min(100% - 48px, 520px);
+    transform: translate(-50%, -50%);
   }
   .workspace-entry-brand {
-    --brand-size: clamp(56px, 12vw, 196px);
+    --brand-size: clamp(48px, 6.1vw, 112px);
     color: color-mix(in srgb, var(--entry-ink) 6%, var(--entry-paper));
     user-select: none;
   }
@@ -47,34 +47,42 @@
     opacity: .085;
   }
   .workspace-entry-meter {
-    width: min(100%, 512px);
-    margin-top: clamp(36px, 4.5vw, 72px);
+    width: min(100%, clamp(216px, 16vw, 296px));
+    margin-top: clamp(24px, 2.1vw, 36px);
   }
   .workspace-entry-track {
-    height: clamp(10px, 1vw, 16px);
+    height: 18px;
     overflow: hidden;
-    border-radius: 5px;
+    border-radius: 6px;
     corner-shape: round;
-    background: color-mix(in srgb, var(--entry-ink) 12%, var(--entry-paper));
+    background: color-mix(in srgb, var(--entry-ink) 15%, var(--entry-paper));
   }
   .workspace-entry-fill {
     width: var(--entry-progress);
     height: 100%;
     border-radius: inherit;
     corner-shape: round;
-    background: linear-gradient(90deg in srgb, #e6a38d 0%, #e6c78c 24%, #c1cb98 46%, #9cbfbc 70%, #a9b8d1 87%, #beb1ce 100%);
+    /* 色带按固定距离向右平移，首尾同色保证无缝，不随进度伸缩或重新起播。 */
+    background: linear-gradient(90deg in srgb, #e99475 0%, #e3bb61 17%, #a4b976 34%, #68b1ab 50%, #788fc9 67%, #b78cbe 83%, #e99475 100%) 0 0 / 240px 100%;
+    animation: workspace-entry-flow 3s linear infinite;
     box-shadow: inset 0 1px 1px rgb(255 255 255 / 30%);
     transition: width var(--entry-settle) cubic-bezier(.22, 1, .36, 1);
+    /* 轻微越过落点后回稳；轨道裁切保证视觉宽度不超过 100%。 */
+    transition-timing-function: linear(0, .12 8%, .38 20%, .7 36%, .91 52%, 1.015 72%, 1.005 88%, 1);
   }
   .workspace-entry-label {
-    margin: clamp(24px, 3vw, 44px) 0 0;
+    margin: 22px 0 0;
     color: var(--entry-ink);
     font-family: var(--font-sans);
-    font-size: clamp(14px, 1.5vw, 20px);
+    font-size: 13px;
     font-weight: 500;
     line-height: 1.5;
     letter-spacing: .035em;
     text-align: center;
+  }
+  @keyframes workspace-entry-flow {
+    from { background-position: -240px 0; }
+    to { background-position: 0 0; }
   }
   /* ---- 轻倾 12° 的宽幅柔光；细斜纹只在光经过时显现 ---- */
   .workspace-entry-shimmer {
@@ -108,11 +116,10 @@
     100% { transform: translateX(65%) skewX(-12deg); opacity: 0; }
   }
   @media (max-width: 600px) {
-    .workspace-entry-composition { width: calc(100% - 48px); transform: translate(-50%, -64%); }
-    .workspace-entry-meter { width: 78%; }
+    .workspace-entry-track { height: 16px; }
   }
   @media (prefers-reduced-motion: reduce) {
-    .workspace-entry-fill { transition: none; }
+    .workspace-entry-fill { transition: none; animation: none; }
     .workspace-entry[data-phase="complete"] .workspace-entry-sheet { animation: workspace-entry-unveil var(--entry-reduced) linear both; }
     .workspace-entry[data-phase="complete"] .workspace-entry-shimmer { animation: none; }
   }

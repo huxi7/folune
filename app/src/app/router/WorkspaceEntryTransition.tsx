@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖入口进度 Store、共享 BrandMark、系统减少动态偏好与 workspace-entry.css
+ * [INPUT]: 依赖入口进度 Store、共享 BrandMark、轻弹进度落定时长、系统减少动态偏好与 workspace-entry.css
  * [OUTPUT]: 对外提供跨 loader/路由挂载持续存在的品牌加载层；100% 后单次斜纹彩光揭开工作区
  * [POS]: 应用入口的视觉边界；子路由持续装配，加载期间隔离交互，退出后不留下遮罩或重复动画
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -11,7 +11,7 @@ import { getWorkspaceEntryProgress, useWorkspaceEntryStore } from "../../shared/
 import "../../styles/workspace-entry.css";
 
 // ---- 完成阶段先让进度条抵达终点，再揭幕；只控制表现，不伪造加载进度 ----
-export const WORKSPACE_ENTRY_MOTION = { settle: 320, reveal: 1000, reduced: 120 } as const;
+export const WORKSPACE_ENTRY_MOTION = { settle: 640, reveal: 1000, reduced: 120 } as const;
 
 export function WorkspaceEntryTransition({ children }: { children: ReactNode }) {
   const { id, phase, completed, dismiss } = useWorkspaceEntryStore();
