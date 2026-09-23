@@ -50,7 +50,7 @@ export function LandingHero() {
     <MarketingAnnouncement ref={announcementRef} />
     <section ref={heroRef} className="landing-hero" aria-labelledby="landing-title">
       <HeroBackdrop />
-      <div className="landing-hero-copy"><h1 data-marketing-reveal id="landing-title" tabIndex={-1}>随手记下，自然有序。</h1><p data-marketing-reveal>在 Folune，专注记录当下的想法。<br />让 AI 帮你整理、连接，再次发现。</p></div>
+      <div className="landing-hero-copy"><h1 data-marketing-reveal id="landing-title" tabIndex={-1}>随手记下，自然有序</h1><p data-marketing-reveal>在 Folune，专注记录当下的想法。<br />让 AI 帮你整理、连接，再次发现。</p></div>
       <div data-marketing-reveal><LandingActions /><p className="landing-action-note">打开即可使用网页版 · 桌面版即将推出</p></div>
     </section>
     <BlueprintDivider flush fullBleed />
