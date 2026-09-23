@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 Kumo 样式表 @import（全站 --text-sm/base/lg 与 --default-transition-duration 实际由它定值，不可删）、Tailwind v4，并按层序导入 Landing/博客及营销动效、AI 消息与 Design System 等生产样式模块消费本文件语义 token
- * [OUTPUT]: 对外提供 Landing/工作区入口同源纸白与墨色 token、Kumo 基础样式、Landing Light、Quiet Editorial Instrument 与隔离 Color Lab 蓝色终选候选：16px Control/12px inner、中性灰阶 Skeleton、低对比滚动条与设置暗色映射、唯一静态语义 Color/Type/Spacing/Radius/Elevation 与 DS motion.ts 时长/曲线的消费别名、全站命令控件共读的单一 press 收紧比例（Reduced Motion 在此归 1）、极轻纵向同色面光与中性落地阴影构成的 Button 材质、Paper First Stage/Paper/Panel Toggle/Archive Cord/Cord、Tailwind 映射及样式模块入口
- * [POS]: app/src 的主题入口，被 main.tsx 引入并约束 Kumo 与本地设计系统共享同一全局视觉来源
+ * [INPUT]: 依赖 Kumo 样式表 @import、Tailwind v4，按层序导入生产样式及 app-visual.css 的 APP 场景 token 与角色映射；Kumo 继续拥有 --text-sm/base/lg 与默认过渡时长
+ * [OUTPUT]: 对外提供 Landing/工作区入口同源纸白与墨色 token、Kumo 基础样式、Landing Light、Quiet Editorial Instrument 与隔离 Color Lab 蓝色终选候选：16px Control/12px inner、中性灰阶 Skeleton、低对比滚动条与 APP 场景样式入口、唯一静态语义 Color/Type/Spacing/Radius/Elevation 与 DS motion.ts 时长/曲线的消费别名、全站命令控件共读的单一 press 收紧比例（Reduced Motion 在此归 1）、极轻纵向同色面光与中性落地阴影构成的 Button 材质、Paper First Stage/Paper/Panel Toggle/Archive Cord/Cord、Tailwind 映射及样式模块入口
+ * [POS]: app/src 的主题入口，被 main.tsx 引入；全局旧基线供营销使用，app-visual.css 仅在 APP 文档根覆盖语义颜色与角色排版
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 @import "@cloudflare/kumo/styles";
@@ -24,6 +24,7 @@
 @import "./styles/blog.css";
 @import "./styles/motion.css";
 @import "./styles/marketing-motion.css";
+@import "./styles/app-visual.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -447,23 +448,6 @@
   --skeleton-base: #363636;
   --skeleton-highlight: #454545;
   --archive-cord: #d4d2ca;
-}
-
-/* 设置只在暗色模态内部映射中性材质，品牌动作与焦点继续使用全局语义。 */
-:root.dark .account-dialog-panel {
-  --popover: #1c1c1c;
-  --popover-foreground: #ededed;
-  --foreground: #ededed;
-  --card: #242424;
-  --card-foreground: #ededed;
-  --surface-neutral: #262626;
-  --secondary: #303030;
-  --muted: #292929;
-  --muted-foreground: #a3a3a3;
-  --border: #3c3c3c;
-  --input: #484848;
-  --interactive-hover: #333333;
-  --interactive-hover-foreground: #ededed;
 }
 
 

@@ -14,6 +14,8 @@ model.test.ts: 数据一致性、整理保真、历史只读、工具名不越�
 
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 
+视觉场景：demo.html 首绘声明 data-visual-context=app，同步 APP 配色、对话/树字号与状态；保持独立浅色与既有 87.5% rem 缩放，不影响父级 Landing。
+
 展示边界：无底部引导/重置栏；三栏共用顶部/底部内缩。Paper/Canvas 通过 hidden 互斥可见，面板保持实例。AI 会话最多保留 14 条消息，取消清理计时器。demo.html 的 CSP 禁止连接、外部图像和表单提交；source 导入门禁仅允许 store 目录中的纯 memoTree 算法。
 
 展示尺度：三个数各管一件事，互不干扰。

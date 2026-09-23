@@ -21,9 +21,10 @@ Hero 背景定稿（2026-09-19）：正式页采用 02A GrainGradient wave，60s
 登录背景：auth.css 在正文独立层叠上下文内承载 01A 散墨，32% 浓淡、上下边缘淡出；背景不占文档流且不截获指针，卡片与视频保持原布局。
 
 成员清单
+app-visual.css: 文档根 APP 作用域下的浅色/暗色语义色、14/24 对话正文、13/18 文件树、12/18 辅助说明及独立选中/悬停/焦点；继承共享几何，Portal 同源，营销不命中
 workspace-entry.css: 首次进入 APP 的 Landing 同源纸白与紧凑浅灰字标，整组上下左右居中；180–232px 宽、8px 高（窄屏 7px）的纤细鲜艳流彩条配 11px 状态文字，间距收紧；色带每 1.6s 向右流动 240px，真实进度以 640ms 轻弹落定，完成后以 1.8s 播放 12° 高饱和全屏斜纹单次扫光；减少动态静止色带并淡出，不影响内部切换
 marketing-motion.css: 首页/博客/动态/登录共用 8px、360ms 正文浮现，32ms 错峰最多 128ms；原生路由快照中顶栏固定、导轨只淡换，可视正文独立入场，普通滚动用同一 CSS 曲线只播一次，减少动态立即显示，Paper 过渡不受影响
-landing-demo.css: 独立 Demo 入口专用，限定视口与三栏等高、Paper/Canvas 互斥显示；不增加底部工具栏或新视觉皮肤
+landing-demo.css: Demo 的颜色与角色排版由宿主 app 视觉作用域同步生产，本文件只管嵌入几何；独立 Demo 入口专用，限定视口与三栏等高、Paper/Canvas 互斥显示；不增加底部工具栏或新视觉皮肤
 blog.css: 博客与动态分区共用的目录/阅读样式，目录统一整行文字列表及空集合状态，Hero 顶部空轨放返回首页，列表复用 landing-chapter-gap 成对留白空轨，weave 侧纹以列表为定位边界、不覆盖上下空轨，空轨靠列表一侧的横线以 fullBleed 贯穿左右外轨，hover/focus 为中性灰底与主题色标题；index.css 在 Landing 后同层加载的博客样式，首页三列卡片保持原样，阅读页保留点阵标题区与居中返回、导读框和窄栏阅读；正文实景图保留原比例并附简短图注，继承 Landing 字体/墨蓝，768px 以下单列，无卡片位移动画
 motion.css: 通用 Motion 消费与验收布局层，Panel 内容窗口裁剪顶部浮现但不改变自身高度，保留式视图定位、通用浮层单一动画所有权、普通路由淡换及共享 Canvas/Select/User press；原 Paper 方向的几何节奏继续由 knowledge-canvas.css 拥有
 .gitkeep: 保留产品样式目录
@@ -36,12 +37,12 @@ workspaceLayout.test.ts: 工作区浮层 Sidebar 的 CSS 契约测试，锁定 P
 designSystemContracts.test.ts: 设计系统 Radius 与 press 静态契约测试，锁定 16px Control、显式 12px inner、Button 继续引用共享 token、AI Composer 32px send/stop 的 round 圆形例外，以及 .ds-button/SidebarButton/EdgeDock/Toolbar icon/创建 split 共读同一份 --press-scale 且 Reduced Motion 归 1；创建 split 的 hover 与 press 两条都必须点名 .sidebar-create-main/.sidebar-create-more，宽 `button` 会把展开的菜单项算成这颗 split 的一部分，让反馈落在指针根本不在的控件上
 paperGeometry.test.ts: 主 Paper 几何契约测试，锁定桌面 7:9 重叠基线、基线以 min-width: 0 退出列定宽、编辑列无第二条 vh 公式、CodeMirror 交还纵向滚动、窄屏取消比例，并保护 reader 1:√2
 mobileToolbar.test.ts: 窄屏 Paper Toolbar 几何契约，锁定 479px 以下内边距/间距收紧；顶栏只剩 Quiet Accent 整理还带文字，因此需要收紧内边距的也只剩它一个
-ai-message.css: AgentPanel 与 Design System 共用的 AI 消息视觉层，承载 Primary 同源用户气泡、无卡片最终正文、最多五词常数节点错峰模糊拖尾、Formation ThinkingIndicator，以及带人话详情、灰阶结果符号和活动态 shimmer 的 Secondary 同源工具披露控件；流式正文不提供光标，非末条历史消息使用原生 content-visibility 降低长会话布局成本，末条保持完整测量，过程与正文之间只使用自然留白，不绘制固定分隔线
+ai-message.css: AgentPanel 与 Design System 共用的 AI 消息视觉层，默认承载 Primary 同源用户气泡，APP 由 app-visual.css 映射为极淡蓝灰与 14/24 排版、无卡片最终正文、最多五词常数节点错峰模糊拖尾、Formation ThinkingIndicator，以及带人话详情、灰阶结果符号和活动态 shimmer 的 Secondary 同源工具披露控件；流式正文不提供光标，非末条历史消息使用原生 content-visibility 降低长会话布局成本，末条保持完整测量，过程与正文之间只使用自然留白，不绘制固定分隔线
 aiMessagePerformance.test.ts: 静态锁定 Chat 历史消息 content-visibility 只作用于非末条，防止流式末尾滚动测量回归
 auth.css: 独立登录页的 384px 表单/96px 桌面栏距与完整 3:4 背景视频布局；01A 散墨在正文后层以 32% 浓淡和上下遮罩融入纸面，不截获交互；卡片以接触影/环境影/下投影构成轻实体表面，输入框 hover/focus 共用 3px 低透明度墨蓝光圈，眼睛只作灰黑变化；959px 以下保留单列表单
 design-system.css: Quiet Editorial 基础组件视觉层、BrandMark 已选③紧边界图/固定 SVG 字标的 5:4 布局比、94% 字形纵向光学收缩与统一间距比例（22px 图高基准，Demo 跟随 rem）与 ThinkingMark Formation Motion；Dialog 提供 panel/bare 表面及 motion=none 模式，而 motion=none 连遮罩都不自带淡入——遮罩自己淡入会被视图过渡拍成「新状态里没有磨砂」，于是背后内容整段清清楚楚、过渡结束才一下盖上来，磨砂因此交给 root 那对截图去带，只有不支持视图过渡的浏览器才由 @supports 兜一次 140ms。也正因为遮罩属于 root 那张截图而不是自带过渡身份，磨砂玻璃在这里是完整可用的，不必为了截图退化成一块不透明色；Input/Select、Skeleton/Loading 与 reduced-motion 规则继续由本层统一
 button.css: Button 专用视觉层；统一 36px 标准命令高度、14px/18px UI 文字、14px 横向留白、6px 图文间距、16px Control 曲率，以极轻 180deg 同色明度坡度、短中性落地阴影和不成环的宽淡面光恢复实体材质；hover 固定原位并放宽外影，press 共读 scale(var(--press-scale)) 且撤掉外影只留浅内压，Primary/Danger 仅有极弱同色环境层，Secondary 保持中性，Ghost 无实体阴影，Saving 继续使用 16 度倾斜窄光带
-sidebar-button.css: SidebarButton 专用 32px compact 平面视觉层，APP/账户导航与 36px 标准 Button 共享 16px Control 曲率而不强制等高；hover 消费全局中性 interactive-hover，active 只使用轻中性表面和墨色并共读全局 press 收紧比例，hover/press/选中不抬升，侧栏底部 Design System/回收站以 12px/16px Label 文字和 primary 前景色表达当前位置
+sidebar-button.css: SidebarButton 专用 32px compact 平面视觉层，APP/账户导航与 36px 标准 Button 共享 16px Control 曲率而不强制等高；hover 消费全局中性 interactive-hover，默认 active 使用轻中性表面和墨色，APP 当前项由 app-visual.css 映射为独立浅蓝灰并共读全局 press 收紧比例，hover/press/选中不抬升，侧栏底部 Design System/回收站以 12px/16px Label 文字和 primary 前景色表达当前位置
 segmented-control.css: 分段选择的静态文字/轨道材质与独立选中底片，底片布局迁移由组件 Motion 独占，文字不位移或缩放
 toast.css: Kumo Toast Parts 的顶部居中三条轻堆叠，条目随内容定宽且不超过 22rem，消费展开/滑动状态；中性不透明 Popover、12px 曲率与柔和阴影，行内倒计时/细边柔影 Secondary 撤销按钮、轻量图标和无底色关闭，裁剪只属于 Content 以保留条目间隙的悬停衔接，窄屏保留安全区；禁止玻璃、彩色容器与第二套按钮
 user-menu.css: 账户菜单材质与中性 hover，入退场统一交给 PresenceSurface，不再保留 CSS keyframe 的第二动画通道

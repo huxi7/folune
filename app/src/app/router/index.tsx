@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖 React lazy/Suspense、react-router-dom loader/redirect、真实入口进度 Store、Supabase Auth token 读取与后端 Profile API
- * [OUTPUT]: 对外提供共享营销壳的首页、独立 /login、/blog 与 /updates 目录和各自 :slug 阅读页、旧 auth query 重定向、OAuth 回调、受保护工作区与仅开发态实验页
+ * [INPUT]: 依赖 React lazy/Suspense、react-router-dom loader/redirect、theme/visualContext 场景同步、真实入口进度 Store、Supabase Auth token 读取与后端 Profile API
+ * [OUTPUT]: 对外提供共享营销壳的首页、独立 /login、/blog 与 /updates 目录和各自 :slug 阅读页、旧 auth query 重定向、OAuth 回调、受保护工作区与仅开发态实验页；已提交路由同步根级视觉作用域
  * [POS]: app/src/app/router 的路由装配文件；静态身份、Profile 与轻量 tree loader 并行装配，Dashboard 直接消费 bootstrap；/app 首次进入统一由根级品牌过渡覆盖，内容就绪才揭幕；左右工具偏好在 Dashboard 获得用户后恢复
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -15,6 +15,7 @@ import { MarketingLayout } from "../../pages/MarketingLayout";
 import { BlogPage } from "../../pages/BlogPage";
 import { LandingPage } from "../../pages/LandingPage";
 import { useWorkspaceEntryStore } from "../../shared/store/workspaceEntryStore";
+import { applyVisualContext } from "../../shared/theme/visualContext";
 
 const AuthCallbackPage = lazy(() =>
   import("../../pages/AuthCallbackPage").then((module) => ({
@@ -181,8 +182,11 @@ export const router = createBrowserRouter([
   },
 ]);
 
+// ---- 只跟随已提交路由：loader 等待期间仍保留当前页面的视觉 ----
+applyVisualContext(router.state.location.pathname);
 // ---- loader 交接给页面后，离开工作区或路由报错同样释放入口层 ----
 const unsubscribeEntry = router.subscribe((state) => {
+  applyVisualContext(state.location.pathname);
   const destination = state.navigation.location?.pathname ?? state.location.pathname;
   if (state.errors || (destination !== "/app" && !destination.startsWith("/app/"))) {
     const entry = useWorkspaceEntryStore.getState();

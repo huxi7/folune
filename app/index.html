@@ -1,7 +1,7 @@
 <!doctype html>
 <!--
   [INPUT]: 依赖 src/main.tsx 的浏览器端 React 入口、ThemeProvider 存储键、prefers-color-scheme 与 Vite MODE 替换，依赖品牌母图等比缩放的 PNG favicon
-  [OUTPUT]: 对外提供 V1 Classic Blueprint 默认画布、App 首屏同步解析 system/light/dark、Landing 预绘浅色画布、品牌 favicon 和 root 挂载点
+  [OUTPUT]: 对外提供营销/APP 根级视觉场景、App 首屏同步解析 system/light/dark、Landing 预绘浅色画布、品牌 favicon 和 root 挂载点
   [POS]: app 根 HTML 入口，被 Vite dev/build 消费
   [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 -->
@@ -12,6 +12,9 @@
     <script>
       (() => {
         const root = document.documentElement;
+        const pathname = window.location.pathname;
+        root.dataset.visualContext = pathname === "/app" || pathname.startsWith("/app/")
+          ? "app" : "marketing";
         try {
           const storedTheme = window.localStorage.getItem("folune-theme")
             ?? window.localStorage.getItem("supernote-theme");

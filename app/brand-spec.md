@@ -19,6 +19,16 @@ Folune is a quiet editorial instrument that lets users write first and allows AI
 - Type system: Interface `14/18px` for 36px commands, `14/20px` for 36px fields, compact tree navigation and sidebar utilities `12/16px` inside 32px rows, `15/27px` for Paper body, `18px` for section headings, `24–30px` for Paper titles, and `32–56px` only for editorial/display titles
 - Material: Paper is the only obvious depth; panels stay flat and Buttons use only a restrained tactile mist shadow
 
+## APP 视觉更新（2026-09-23）
+
+- 场景边界：index.css 保留营销既有默认值；styles/app-visual.css 在 html[data-visual-context="app"] 下拥有 APP 浅暗色及文字角色，颜色不在各面板重复定义。index.html 首绘与路由提交同步场景，body Portal 和拖拽预览共同继承；Demo 在独立文档启用同一场景，外部 Landing、博客、登录不变。
+- 浅色：Stage #F4F4F2，Paper/Panel/Popover #FFFFFF，Ink #2F333A，次级字 #646B75，边界 #DFE2E5，输入边界 #8A919B，品牌 #395875。次级字与输入边界较计划起点略加深，以满足浅底文字 4.5:1、必要控件边界 3:1；内部辅助线继续低对比。
+- 对话：用户消息 #EEF2F5 浅蓝灰配深色字，AI 正文无卡片；双方 14px/24px。文件树 13px/18px、行高保持 32px，普通/选中 500/600；必要辅助文字 12px/18px，时间戳保留 11px。Demo 沿既有 rem 比例缩小，不另设一套字号。
+- 交互：hover #F1F2F3；当前位置 #EAF0F4 配墨蓝且经过/按下不丢失；键盘焦点是独立 2px 实色轮廓。拖放与归档沿既有几何语义。普通控件 500 字重、主要动作 650。Control 16px 平滑圆角、Paper/Menu 12px 与既有触感均保留。
+- 暗色：Stage #191C20，Panel #22262B，Paper #24282D，Popover #2B3036，正文 #E5E8EC，次级字 #A5ADB8，边界 #3A424C，输入 #6F7986；hover #2C3138，选中 #2F3D4B，用户消息 #29343F，品牌 #91ABC4。账户弹窗不再拥有私有暗色表。
+- 状态：日常成功用中性提示，Processing 保留原蓝灰；警告前景浅色 #8A5B1C / 暗色 #D5B06C，错误/危险使用红色并保留文字与图标。纸影和浮层投影保留几何，色调中性化，不增加发光或纹理。
+- 下文旧版颜色与密度记录只作为营销默认值或历史决策；APP 以本节及 app-visual.css 为准。
+
 ## Selected system — Soft Ink
 
 Landing 中文化（2026-09-14）：保留参考布局、暖灰背景、纹理和导轨；英文标题/正文/代码继续使用 IBM Plex Serif / iA Writer Quattro S / Lilex，中文分别回退 `--font-serif` 与 `--font-sans`，不额外下载字体。实际中文字体取决于设备，macOS 优先 Songti SC / PingFang SC。Landing Button 直接继承生产 DS 的 16px 平滑圆角、微弱面光和按压反馈；主按钮与 Footer 共用 `--primary`，首页继续固定浅色，因此使用 #395875。Footer Folune 字形、8% 描边与 4px/16% 细斜纹维持原层序。品牌 PNG 不作任何变换。
@@ -228,7 +238,7 @@ The motion language is part of the Design System. `src/shared/design-system/moti
 
 - Secondary uses a restrained, visible 1px neutral border in rest and hover; tool calls consume the same material. Result icons contain their own circular outline, with no additional status box.
 - Skeleton base/highlight are achromatic: Light #ebebeb/#f6f6f6, Dark #363636/#454545. Loading placeholders never borrow brand blue. Canvas entry keeps only its clean Stage and accessible busy state, with no pretend paper card.
-- Dark settings scope neutral charcoal surfaces (#1c1c1c main, #262626 sidebar), gray borders and neutral navigation states to the account dialog. Brand actions and keyboard focus retain their semantic color.
+- Dark settings consume the same APP Popover/Panel/neutral tokens as other overlays; the previous account-only charcoal map was removed on 2026-09-23.
 - Assistant undo uses Undo2 and the short label 撤销, with the shared 12px/16px Label typography.
 
 2026-09-07 Menu consistency: All App popup menus (approval, More, create, context, mentions, Select and user menu) share one material rule in design-system.css: opaque Popover, semantic border/foreground, Menu radius, 4px inset and shadow-sm. Approval selection uses a check mark; only hover and keyboard focus paint the neutral row surface.
