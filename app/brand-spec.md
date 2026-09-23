@@ -19,17 +19,18 @@ Folune is a quiet editorial instrument that lets users write first and allows AI
 - Type system: Interface `14/18px` for 36px commands, `14/20px` for 36px fields, compact tree navigation and sidebar utilities `12/16px` inside 32px rows, `15/27px` for Paper body, `18px` for section headings, `24–30px` for Paper titles, and `32–56px` only for editorial/display titles
 - Material: Paper is the only obvious depth; panels stay flat and Buttons use only a restrained tactile mist shadow
 
-## APP 视觉收敛（2026-09-23）
+## APP 灰白视觉（2026-09-24）
 
 - 场景边界：styles/app-visual.css 仅作用于 html[data-visual-context="app"]，Portal 与 Demo 共同继承；Landing、博客、登录继续沿用默认值。
-- 浅色恢复原版暖白 Stage #F2F1EE，白色纸面/面板，正文 #292927、次级字 #706E68、边界 #E2E1DD；保留自然色温，不把阅读空间染成冷蓝灰。
-- 密度继承原组件：对话正文与文件树恢复 12px，原行距、32px 树行、辅助字号与字重不再被统一覆盖；编辑正文保持原样。Demo 沿原 rem 比例缩放。
-- 普通 hover 使用 #F1F0ED，当前项使用稍深的 #E9E8E4 与深色文字；菜单、个人资料、文件树、列表和工具按钮不借品牌蓝表达经过或选中。圆角、位置与按压动作沿原组件。
-- 用户气泡为近白 #F7F8F8，内侧 1px #E8EAEA 细线不占内容宽度；暗色为 #292929 与 #363636，AI 正文继续无卡片。
-- AI 输入边框默认 #DEDDD8、hover #BEBDB7、focus #656660，聚焦仅附极轻暗影，不加突出的外环；暗色分别 #424242、#5C5C5C、#94948F。键盘导航仍保留组件原有灰阶可见焦点。
-- 暗色保持黑灰轴：Stage #181818、Panel #222222、Paper #242424、Popover #292929、边界 #393939；hover #2D2D2D、当前项 #353535，正文 #E8E7E4、次级字 #AAA9A5。
-- Canvas 的边框、选择、拖放、连线与操作反馈统一消费根级 canvas-interaction-ink（浅色 #666660 / 暗色 #AAA9A5），原有几何与业务状态不变；其他场景回退原 primary。
-- 品牌墨蓝仅留给明确的主动作与有意义的内容强调；警告/危险保留语义色。此节取代上一轮冷灰背景、蓝色选中与字号放大的方案，下文历史记录不构成重新引入这些效果的依据。
+- 浅色：Stage #F1F2F2，纸面/面板为白色，正文 #292B2B、次级字 #707676、边界 #E2E5E5。移除上轮米黄、褐灰与暖色阴影，使用近中性灰白；品牌墨蓝仍只用于明确动作和内容强调。
+- 密度继承原组件：对话正文与文件树保持 12px，原行距、32px 树行与辅助文字不统一放大；Demo 沿原 rem 比例缩放。
+- 文件树 hover 与 selected/active 共用 #ECEEEE，暗色共用 #2D2D2D；选中后仍持续显示同一背景，经过当前项不加深、不变蓝。普通菜单与列表继续使用中性灰。
+- 固定笔记/@引用胶囊使用独立浅灰 #F5F6F6、常规细边与 10px 平滑圆角，避免继承选中底色形成厚重色块；暗色沿中性表面。
+- 用户气泡为近白 #F6F8F8，内侧 1px #E4E8E8 细线；暗色 #292929 与 #363636。气泡、输入框及 Panel 的平滑圆角统一到 20px；输入内层继续按内缩量推导，Paper 保持 12px，常规控件保持 16px。
+- 输入边界浅色默认 #DCDEDE、hover #B9BEBE、focus #666E6E；暗色 #424242、#5C5C5C、#949494。聚焦只附极轻中性暗影，不叠明显外环。
+- 暗色保留黑灰轴：Stage #181818、Panel #222222、Paper #242424、Popover #292929、边界 #393939，正文 #E8E8E8、次级字 #AAAAAA。
+- Canvas 选择/连线/拖放继续消费中性 canvas-interaction-ink（浅色 #686E6E / 暗色 #AAAAAA）；警告和危险动作保留语义色。
+- 本节取代上轮暖黄灰与分色选中方案；参考图用于借鉴灰白层次、轻边界与圆润轮廓，不引入整套青苔绿主题。
 
 ## Selected system — Soft Ink
 
