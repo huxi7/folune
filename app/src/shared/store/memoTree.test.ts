@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun test、MemoTreeNode 与 memoTree 的不可变树算法
- * [OUTPUT]: 验证嵌套查找、未变化分支引用保留、同级排序、插入/移除/替换/更新、根与文件夹移动和后代防环
+ * [OUTPUT]: 验证默认名最大编号及嵌套查找、未变化分支引用保留、同级排序、插入/移除/替换/更新、根与文件夹移动和后代防环
  * [POS]: app/src/shared/store 的领域算法回归测试，为 Zustand 乐观事务提供无浏览器的确定性底座
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -10,6 +10,7 @@ import { describe, expect, test } from "bun:test";
 import type { MemoTreeNode } from "../api/memo";
 import {
   findNode,
+  nextDefaultMemoTitle,
   findSiblings,
   insertNode,
   isDescendant,
@@ -172,4 +173,12 @@ describe("memoTree", () => {
     );
     expect(findNode(invalid, "root-folder")?.parent_id).toBeNull();
   });
+});
+
+test("默认编号只取同级 memo 最大值，不填空号、不跨文件夹且不受同名文件夹影响", () => {
+  const note = (title: string) => ({ ...makeNode(title, "memo", null, "1000"), title });
+  expect(nextDefaultMemoTitle([])).toBe("未命名备忘录");
+  expect(nextDefaultMemoTitle([note("未命名备忘录 2")])).toBe("未命名备忘录 3");
+  expect(nextDefaultMemoTitle([note("未命名备忘录"), note("未命名备忘录 28"), note("未命名备忘录 7")])).toBe("未命名备忘录 29");
+  expect(nextDefaultMemoTitle([makeNode("未命名备忘录 99", "folder", null, "1000", [note("未命名备忘录 100")])])).toBe("未命名备忘录");
 });

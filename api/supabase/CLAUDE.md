@@ -22,7 +22,9 @@ remove-ai-thread-archive.sql: 一次性删除 public.ai_threads.status 与旧归
 ai-organize.sql: 提供 Run 创建/规划/失败/拒绝状态机和 SECURITY INVOKER 的 apply/undo 原子执行器；固定锁顺序、revision 门禁、真实目录复核、动作倒序恢复与幂等结果共同保护 AI 写操作
 ai-organize-grants.sql: 收口 AI 整理六个 SECURITY INVOKER 函数的显式权限；撤销 public/anon/service_role 默认执行权，只向 authenticated 开放 Run 状态机入口
 ai-v2.sql: 已部署的默认 ask 账号级 ai_user_settings 与通用 ai_commands 台账契约，以 owner-only RLS、幂等键、状态/操作/revision 约束及显式 grants 分离审批偏好和写审计事实
-ai-command.sql: 已部署的 SECURITY INVOKER Command 创建/批准/拒绝/apply/undo 状态机；按账号权限校验审批来源，并以固定锁、expected_revision、软删除与撤销冲突保护真实 memo 写入
+ai-command.sql: 已部署的 SECURITY INVOKER Command 创建/批准/拒绝/apply/undo 状态机；按账号权限校验审批来源，删除/恢复先按 ID 锁整树再锁目标，避免并发删除交叉等待；保留 expected_revision/owner/撤销门禁，失败保留目标快照并区分死锁/序列化/锁超时
+
+ai-command-lock-order.sql: 已部署函数的增量升级补丁，只替换删除/恢复锁顺序和错误分类，保留远端 mutation GUC 与 RLS 契约；20260924040636 已应用到 Folune-staging
 
 职责: 保存可审阅、可顺序部署的 Database/Storage SQL 契约；画布沿用备忘录树而不新建第二套结构；重名的最终裁决在唯一索引而非应用层预检查；业务表以 owner-only RLS 与显式 grants 隔离租户，AI 方案只经受控状态机和单事务执行器落地，远端是否已部署必须单独验证，禁止把仓库文件存在误报为线上已应用。
 

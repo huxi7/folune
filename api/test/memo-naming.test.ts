@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun test、Hono app、test/support 的内存 Supabase mock（忠实复刻两条标题唯一索引）与 service/auth 的身份缓存测试清空口
- * [OUTPUT]: 覆盖默认名撞名顺位让开、用户输入撞名只回稳定业务冲突、跨类型同名合法、标题冲突不连坐正文、根节点作用域、soft-delete 后名称可复用、来源笔记改名与默认画布同一次写入同步，以及并发只成功一个
+ * [OUTPUT]: 覆盖默认名最大编号分配、无逐号失败请求与并发冲突兜底、用户输入撞名只回稳定业务冲突、跨类型同名合法、标题冲突不连坐正文、根节点作用域、soft-delete 后名称可复用、来源笔记改名与默认画布同一次写入同步，以及并发只成功一个
  * [POS]: api/test 的命名边界契约测试；唯一约束的最终裁决在数据库，这里锁定 api 把 23505 翻译成 MEMO_TITLE_CONFLICT 之后的可观测行为
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -326,4 +326,27 @@ describe("同父同类型重名", () => {
       [...mock.nodes.values()].filter((node) => node.title === "并发目录"),
     ).toHaveLength(1);
   });
+});
+
+test("默认名直接取现存最大编号加一，超过 20 篇也只尝试一次插入", async () => {
+  for (let index = 2; index <= 35; index++) {
+    const id = `aaaaaaaa-aaaa-4aaa-8aaa-${String(index).padStart(12, "0")}`;
+    mock.nodes.set(id, nodeFixture(id, { title: `未命名备忘录 ${index}`, node_type: "memo" }));
+  }
+  const response = await app.fetch(authenticatedRequest("/memos", {
+    method: "POST", body: JSON.stringify({ parent_id: null, title: "未命名备忘录" }),
+  }));
+  expect(response.status).toBe(200);
+  expect((await response.json()).data.title).toBe("未命名备忘录 36");
+  expect(mock.operations.filter(op => op === "nodes:post")).toHaveLength(1);
+});
+
+test("已占号客户端直接创建，两个客户端撞号只在冲突后跳到最大编号", async () => {
+  const create = () => app.fetch(authenticatedRequest("/memos", {
+    method: "POST", body: JSON.stringify({ parent_id: null, title: "未命名备忘录 3", sort_order: 1000 }),
+  }));
+  const results = await Promise.all([create(), create()]);
+  expect(results.map(result => result.status)).toEqual([200, 200]);
+  const titles = await Promise.all(results.map(async result => (await result.json()).data.title));
+  expect(titles.sort()).toEqual(["未命名备忘录 3", "未命名备忘录 4"]);
 });

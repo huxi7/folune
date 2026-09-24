@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 TreeDisclosure 连续层级开合、后端 MemoTreeNode、memoLibrary 落点、紧凑 SidebarButton、archiveCordPolicy 的 ArchiveRepresentative 与上层展开/拖拽/原地重命名命令
- * [OUTPUT]: 对外提供递归树、folder/memo 落点、笔记正文意图预热、稳定 tree row、至多一个 data-archive-representative 标记、拖拽状态、原地重命名与重名提示
- * [POS]: app/src/widgets 的纯树交互渲染器；只表达可见层级、HTML5 DnD 几何与真实目标 DOM，不解析代表、不拥有树数据、连线生命周期或 API
+ * [INPUT]: 依赖 TreeDisclosure 连续层级开合、后端 MemoTreeNode、memoLibrary 落点、紧凑 SidebarButton、archiveCordPolicy 的 ArchiveRepresentative、上层展开/拖拽/原地重命名命令与把临时/真实 id 折叠成稳定身份的 resolveClientKey
+ * [OUTPUT]: 对外提供递归树、folder/memo 落点、笔记正文意图预热、client-key 稳定 tree row（乐观新建落库换 id 不重挂不闪灭高亮）、至多一个 data-archive-representative 标记、拖拽状态、原地重命名与重名提示
+ * [POS]: app/src/widgets 的纯树交互渲染器；只表达可见层级、HTML5 DnD 几何与真实目标 DOM，不解析代表、不拥有树数据、连线生命周期或 API。React key 与选中判定走 resolveClientKey，data-memo-tree-row-id 仍留真实 id 供 FLIP/归档在真实 id 空间取矩形
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -51,6 +51,13 @@ type MemoTreeBranchProps = {
   onBeginRename: (node: MemoTreeNode) => void;
   onCancelRename: () => void;
   onCommitRename: () => void;
+  /**
+   * 把节点当前 id 折叠回它出生时的稳定客户端 key。
+   * 乐观新建的临时 id 落库后会被换成真实 id；若 React key 或选中判定
+   * 直接读 node.id，这一次替换就让整行卸载重挂 + 高亮闪灭。交给它统一
+   * 换算后，临时/真实两个 id 归一到同一身份，替换是纯属性更新而非重挂。
+   */
+  resolveClientKey: (nodeId: string) => string;
   onContextMenu: (
     event: MouseEvent<HTMLElement>,
     node: MemoTreeNode,
@@ -251,8 +258,12 @@ export function MemoTreeBranch(props: MemoTreeBranchProps) {
     onPrefetchMemo,
     onSelectMemo,
     onToggleFolder,
+    resolveClientKey,
     selectedMemoId,
   } = props;
+  const selectedClientKey = selectedMemoId === null
+    ? null
+    : resolveClientKey(selectedMemoId);
   const levelStartTarget: MemoDropTarget = {
     nodeId: null,
     parentId,
@@ -276,7 +287,10 @@ export function MemoTreeBranch(props: MemoTreeBranchProps) {
       {nodes.map((node, index) => {
         const isFolder = node.node_type === "folder";
         const isExpanded = isFolder && expandedFolders.has(node.id);
-        const isActive = !isFolder && notesActive && selectedMemoId === node.id;
+        // 身份用稳定 client key 判定：临时 id 换成真实 id 的那一帧里，
+        // 路由还停在临时 id，直接比 node.id 会让高亮闪灭一下。
+        const clientKey = resolveClientKey(node.id);
+        const isActive = !isFolder && notesActive && selectedClientKey === clientKey;
         const FolderComponent = isExpanded ? FolderOpenIcon : FolderIcon;
         const rowStyle: TreeRowStyle = { "--memo-tree-depth": depth };
         const beforeTarget: MemoDropTarget = {
@@ -306,7 +320,7 @@ export function MemoTreeBranch(props: MemoTreeBranchProps) {
             aria-posinset={index + 1}
             aria-setsize={nodes.length}
             className="memo-tree-item"
-            key={node.id}
+            key={clientKey}
             role="treeitem"
           >
             {renamingNodeId === node.id ? (

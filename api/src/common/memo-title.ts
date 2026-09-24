@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 common/HttpError 与 lib/supabase-rest 的 postgrestErrorCode 原始 SQLSTATE
- * [OUTPUT]: 对外提供 MEMO_TITLE_CONFLICT 业务错误、isMemoTitleConflict 判据、withTitleConflictTranslation 翻译、默认名候选序列与 createWithAvailableTitle 有界分配器
+ * [OUTPUT]: 对外提供 MEMO_TITLE_CONFLICT 业务错误、isMemoTitleConflict 判据、withTitleConflictTranslation 翻译、默认名候选序列、通用分配器与按同级最大编号分配的 createWithDefaultMemoTitle
  * [POS]: common 层的命名冲突边界；唯一约束的最终裁决在数据库，本模块只负责把 23505 翻译成稳定业务错误，并让系统生成的默认名在冲突时顺位让开
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -13,8 +13,8 @@ const UNIQUE_VIOLATION = "23505";
 /** memo_nodes_title_check 的上限 */
 const TITLE_MAX_LENGTH = 500;
 /**
- * 默认名让位的尝试上限。同一目录里堆到 20 个「未命名备忘录 N」时停手并如实
- * 报冲突，而不是无声地一直往上数——那是用户该看见的信号，不是该被隐藏的。
+ * 默认名分配的并发冲突重试上限；备忘录每次直接跳到最新最大编号，
+ * 此上限约束竞争重试次数，不限制已有默认笔记数量。
  */
 const MAX_TITLE_ATTEMPTS = 20;
 
@@ -74,5 +74,35 @@ export const createWithAvailableTitle = async <T>(
     }
   }
 
+  throw memoTitleConflictError();
+};
+
+/** 客户端已经同步占号时直接尝试；旧客户端的无编号请求与真正的并发撞名才读取同级快照。 */
+export const createWithDefaultMemoTitle = async <T>(
+  proposed: string,
+  readTitles: () => Promise<readonly string[]>,
+  create: (title: string) => Promise<T>,
+): Promise<T> => {
+  const defaultPattern = /^未命名备忘录(?: ([1-9]\d*))?$/;
+  if (!defaultPattern.test(proposed)) return createWithAvailableTitle(proposed, create);
+  const nextTitle = async () => {
+    let maximum = 0n;
+    for (const title of await readTitles()) {
+      const match = defaultPattern.exec(title.trim().replace(/\s+/g, " "));
+      if (match) {
+        const ordinal = BigInt(match[1] ?? "1");
+        if (ordinal > maximum) maximum = ordinal;
+      }
+    }
+    return maximum === 0n ? "未命名备忘录" : `未命名备忘录 ${maximum + 1n}`;
+  };
+  let title = proposed === "未命名备忘录" ? await nextTitle() : proposed;
+  for (let attempt = 0; attempt < MAX_TITLE_ATTEMPTS; attempt++) {
+    try { return await create(title); }
+    catch (error) {
+      if (!isMemoTitleConflict(error)) throw error;
+      title = await nextTitle();
+    }
+  }
   throw memoTitleConflictError();
 };

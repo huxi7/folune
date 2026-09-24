@@ -1,5 +1,5 @@
 -- [INPUT]: 依赖 public.ai_commands/public.memo_nodes/public.memos、auth.uid()、memo 软删除/恢复 RPC 与 revision triggers
--- [OUTPUT]: 提供默认 ask 的命令创建、批准、拒绝、执行和撤销 RPC，以事务锁、owner、幂等与 expected_revision 保护全部 AI 写操作
+-- [OUTPUT]: 提供默认 ask 的命令创建、批准、拒绝、执行和撤销 RPC，以统一树锁顺序、owner、幂等与 expected_revision 保护全部 AI 写操作
 -- [POS]: api/supabase 的 AI Native V2 可信执行核心；模型只提交意图，数据库在原子事务内决定能否改变真实备忘录状态
 -- [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 
@@ -68,6 +68,15 @@ begin
   set status = 'executing', error_code = null
   where user_id = p_user_id and id = p_command_id
   returning * into command_record;
+
+  -- 删除/恢复会锁整棵树，必须先按相同顺序取得树锁，再锁目标。
+  -- 否则并发命令各持一个目标锁，进入回收站 RPC 后形成交叉等待。
+  if command_record.operation = 'trash_node' then
+    perform 1 from public.memo_nodes
+    where user_id = p_user_id
+    order by id
+    for update;
+  end if;
 
   if command_record.operation <> 'create_node' then
     select *
@@ -372,7 +381,14 @@ begin
     returning * into command_record;
   exception when others then
     update public.ai_commands
-    set status = 'failed', error_code = 'AI_COMMAND_FAILED'
+    set status = 'failed',
+      before_state = coalesce(command_before_state, jsonb_build_object('node', to_jsonb(target))),
+      error_code = case SQLSTATE
+        when '40P01' then 'AI_COMMAND_DEADLOCK'
+        when '40001' then 'AI_COMMAND_SERIALIZATION_FAILURE'
+        when '55P03' then 'AI_COMMAND_LOCK_TIMEOUT'
+        else 'AI_COMMAND_FAILED'
+      end
     where user_id = p_user_id and id = p_command_id
     returning * into command_record;
   end;
@@ -583,6 +599,15 @@ begin
   end if;
   if command_record.status <> 'succeeded' then
     return jsonb_build_object('status', 'invalid_status', 'command', to_jsonb(command_record));
+  end if;
+
+  -- 删除/恢复会锁整棵树，必须先按相同顺序取得树锁，再锁目标。
+  -- 否则并发命令各持一个目标锁，进入回收站 RPC 后形成交叉等待。
+  if command_record.operation = 'trash_node' then
+    perform 1 from public.memo_nodes
+    where user_id = p_user_id
+    order by id
+    for update;
   end if;
 
   after_revision := (command_record.after_state #>> '{node,revision}')::bigint;

@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖唯一 supabase-rest 适配器、memo DTO 行校验、memo 领域创建/更新类型与请求期用户 access token
- * [OUTPUT]: 对外提供强制 user_id 的轻量 tree/回收站查询、memo_nodes/memos CRUD、关键词与混合召回两个检索 RPC、删除生命周期 RPC 与脱敏存储错误；恢复撞上同级重名时回 MEMO_TITLE_CONFLICT 而不是折叠成 502
+ * [OUTPUT]: 对外提供强制 user_id 的轻量 tree/回收站查询、同级 memo 命名快照、memo_nodes/memos CRUD、关键词与混合召回两个检索 RPC、删除生命周期 RPC 与脱敏存储错误；恢复撞上同级重名时回 MEMO_TITLE_CONFLICT 而不是折叠成 502
  * [POS]: repository 层备忘录 PostgREST 数据访问器，只表达表/RPC 操作与返回校验，不判断树、恢复可见性或业务状态；中文检索一律走 PGroonga RPC，因为 `&@*` 相似检索只在索引扫描下生效，PostgREST 的行过滤无法表达
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -147,6 +147,15 @@ export const memoRepository = {
     );
 
     return parseNodeRows(payload);
+  },
+
+  async listActiveSiblingMemos(userId: string, parentId: string | null, accessToken: string): Promise<MemoNode[]> {
+    const query = createPostgrestQuery({
+      select: "*",
+      eq: { user_id: userId, node_type: "memo", ...(parentId === null ? {} : { parent_id: parentId }) },
+      is: { deleted_at: null, ...(parentId === null ? { parent_id: null } : {}) },
+    });
+    return parseNodeRows(await supabaseRest<unknown>(`memo_nodes${query}`, { accessToken }));
   },
 
   async listContentSummaries(

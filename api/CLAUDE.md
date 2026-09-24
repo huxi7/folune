@@ -18,7 +18,7 @@ src/common/: 通用层，提供 HttpError、统一响应 helper 与命名冲突�
 src/config/: 配置层，集中校验 API 环境变量
 src/lib/: 基础设施层，提供 Supabase Auth/PostgREST 共享完整响应期限/只读重试、Storage HTTP 适配器与启动横幅
 supabase/: 数据库契约层，保存 profiles、memo tree/检索/命名唯一约束（画布命名零特例，标题不跟随任何东西）、AI 状态机、Canvas V2 schema/入口/统一 mutation/cutover/rollback、owner-only RLS 与原子 RPC；旧 Canvas SQL 定义仅为显式代码回滚面
-test/: Bun 内置 API 回归测试，使用共享内存 Supabase HTTP/RPC mock 验证认证、profile、memo/Trash/命名重名、AI 生命周期与 Canvas V2 唯一写内核契约
+test/: Bun 内置 API 回归测试与显式 Docker PostgreSQL 并发锁门禁，使用共享内存 Supabase HTTP/RPC mock 验证认证、profile、memo/Trash/命名重名、AI 生命周期与 Canvas V2 唯一写内核契约
 .env.example: 无真实凭据的本地环境变量模板，使用 Supabase Publishable key、后端端口 10001、前端 CORS 来源端口 10000
 .gitignore: api 模块忽略规则
 package.json: Bun scripts（含 typecheck/test）与 hono、zod 运行依赖清单

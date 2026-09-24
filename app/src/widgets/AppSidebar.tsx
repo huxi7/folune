@@ -15,6 +15,7 @@ import {
   TrashIcon,
 } from "../shared/design-system/icons";
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -34,6 +35,7 @@ import {
   UserMenu,
 } from "../shared/design-system/components";
 import { memoNodeTitleTaken } from "../shared/store/memoTitleRules";
+import { useMemoTreeStore } from "../shared/store/memoTreeStore";
 import { useTreeReorder } from "./useTreeReorder";
 import { AnimatePresence } from "motion/react";
 import { createPortal } from "react-dom";
@@ -49,6 +51,7 @@ import {
   getFolderIds,
   findMemoNode,
   serializeMemoCanvasDrag,
+  treeStructureKey,
   FOLUNE_MEMO_DRAG_MIME,
   type MemoDropTarget,
   type MemoMovePlan,
@@ -133,29 +136,8 @@ const dropTargetsMatch = (
   left.parentId === right.parentId &&
   left.placement === right.placement;
 
-// Zustand 的不可变更新只会替换变更路径。按节点/子数组引用缓存结构键，
-// 标题或摘要更新因此只需重算变更路径，不再为 FLIP 扫描整棵树。
-const treeStructureNodeKeys = new WeakMap<MemoTreeNode, string>();
-const treeStructureArrayKeys = new WeakMap<readonly MemoTreeNode[], string>();
-
-const treeStructureKey = (nodes: readonly MemoTreeNode[]): string => {
-  const cached = treeStructureArrayKeys.get(nodes);
-  if (cached !== undefined) return cached;
-
-  const parts: string[] = [];
-  for (const node of nodes) {
-    let nodeKey = treeStructureNodeKeys.get(node);
-    if (nodeKey === undefined) {
-      nodeKey = `${node.id}[${treeStructureKey(node.children)}]`;
-      treeStructureNodeKeys.set(node, nodeKey);
-    }
-    parts.push(nodeKey);
-  }
-
-  const key = parts.join("|");
-  treeStructureArrayKeys.set(nodes, key);
-  return key;
-};
+// Zustand 的不可变更新只会替换变更路径。结构键 (treeStructureKey) 已随 memoLibrary
+// 抽出为纯函数并按节点/子数组引用缓存；此处仅在渲染层消费。
 
 const setMemoDragImage = (
   event: DragEvent<HTMLElement>,
@@ -244,7 +226,17 @@ export function AppSidebar({
     renamingNode,
     renameValue,
   );
-  const layoutKey = useMemo(() => treeStructureKey(memoTree), [memoTree]);
+  // 乐观新建的临时 id 落库后会被换成真实 id；用它把两者折叠回同一稳定身份，
+  // React key、选中判定、结构键与定位 effect 都据此不把一次 id 替换看成
+  // "换了一个对象"——否则每新建一篇都闪一下、卡一下，选中还会重放一次。
+  const resolveClientKey = useCallback(
+    (nodeId: string) => useMemoTreeStore.getState().getMemoClientKey(nodeId),
+    [],
+  );
+  const layoutKey = useMemo(
+    () => treeStructureKey(memoTree, resolveClientKey),
+    [memoTree, resolveClientKey],
+  );
   const captureFlipPositions = useTreeReorder(treeRef, layoutKey);
   const folderIds = useMemo(() => getFolderIds(memoTree), [memoTree]);
   const { expandedFolders, setExpandedFolders } = useMemoTreeExpansion({
@@ -280,13 +272,18 @@ export function AppSidebar({
   const focusKey = reveal === null
     ? (freshArchiveMemoId === null ? layoutKey : archiveTarget?.runId ?? layoutKey)
     : `reveal:${reveal.seq}`;
+  // 定位 effect 的触发身份也走 client key：optimistic→real 只是同一篇笔记换了 id，
+  // 不该被当成"选中移到了新目标"而把展开/滚动重放一次。effect 内部仍按当前真实
+  // id 查行（data-memo-tree-row-id 是真实 id），这里只让"要不要重跑"变稳。
+  const focusClientKey = focusNodeId === null ? null : resolveClientKey(focusNodeId);
 
   /*
-   * focusKey/layoutKey 是定位与树结构的语义触发器；标题等 memoTree 身份变化不应反复抢占
+   * focusKey/focusClientKey/layoutKey 是定位与树结构的语义触发器；标题等 memoTree 身份变化不应反复抢占
    * 展开状态。展开的只有目标 memo 的祖先 —— canonical 目标是 memo, 没有第二个「目标目录」
    * 需要额外撑开。用户随后手动收起时 focusKey 不变, 因此这个 effect 不会把它再撑回来。
+   * 三个键都按 client key 折叠, 所以乐观新建落库那一帧的 id 替换不会让"选中刚移过去"重放一次。
    */
-  // oxlint-disable react-hooks/exhaustive-deps -- setter 稳定，archiveTarget 已折叠进 focusNodeId/focusKey
+  // oxlint-disable react-hooks/exhaustive-deps -- 触发身份走 focusClientKey/layoutKey（已折叠 client key），effect 内按当前真实 focusNodeId 查行，setter/archiveTarget 已折叠进键
   useEffect(() => {
     if (focusNodeId === null) {
       return;
@@ -299,8 +296,7 @@ export function AppSidebar({
         new Set([...currentFolders, ...ancestorIds]),
       );
     }
-  }, [focusKey, focusNodeId, layoutKey]);
-  // oxlint-enable react-hooks/exhaustive-deps
+  }, [focusKey, focusClientKey, layoutKey]);
 
   useEffect(() => {
     if (focusNodeId === null || treeRef.current === null) {
@@ -315,7 +311,8 @@ export function AppSidebar({
     });
 
     return () => window.cancelAnimationFrame(frame);
-  }, [focusKey, focusNodeId, layoutKey]);
+  }, [focusKey, focusClientKey, layoutKey]);
+  // oxlint-enable react-hooks/exhaustive-deps
 
 
 
@@ -608,6 +605,7 @@ export function AppSidebar({
               renameConflict={renameConflict}
               renameValue={renameValue}
               renamingNodeId={renamingNodeId}
+              resolveClientKey={resolveClientKey}
               selectedMemoId={selectedMemoId}
             />
           )}

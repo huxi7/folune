@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 shared/api/memo 的后端树类型与 shared/store/memoTree 的唯一树算法
- * [OUTPUT]: 对外提供首个 memo、祖先/路径、全文搜索、跨视图笔记拖拽载荷与统一 DropTarget 校验/稀疏排序计划
+ * [OUTPUT]: 对外提供首个 memo、祖先/路径、全文搜索、跨视图笔记拖拽载荷、统一 DropTarget 校验/稀疏排序计划与按 client key 折叠的结构键（treeStructureKey，供 FLIP/定位判定「结构是否真的变了」）
  * [POS]: app/src/widgets 的 memo tree 视图模型，只解释可见路径和拖拽意图；实际树变更、乐观事务与回滚归 Zustand Store
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -367,4 +367,36 @@ export function createMemoMovePlan(
     parent_id: target.parent_id,
     sort_order: betweenSortOrders(previous, next),
   };
+}
+
+// Zustand 的不可变更新只替换变更路径。按节点/子数组引用缓存结构键，标题或摘要
+// 更新因此只重算变更路径，不为 FLIP/定位扫描整棵树。
+//
+// 关键：节点 id 一律经 resolveClientKey 折叠成稳定身份再入键。乐观新建落库后
+// 临时 id 会被换成真实 id，但那是同一篇笔记；折叠后这一帧的结构键保持不变，于是
+// FLIP 不空跑、定位/展开也不把"选中刚移过去"重放一次。节点对象不可变、且
+// realId→clientKey 映射在真实 id 节点入树前就已登记，缓存不会读到旧值。
+const treeStructureNodeKeys = new WeakMap<MemoTreeNode, string>();
+const treeStructureArrayKeys = new WeakMap<readonly MemoTreeNode[], string>();
+
+export function treeStructureKey(
+  nodes: readonly MemoTreeNode[],
+  resolveClientKey: (nodeId: string) => string,
+): string {
+  const cached = treeStructureArrayKeys.get(nodes);
+  if (cached !== undefined) return cached;
+
+  const parts: string[] = [];
+  for (const node of nodes) {
+    let nodeKey = treeStructureNodeKeys.get(node);
+    if (nodeKey === undefined) {
+      nodeKey = `${resolveClientKey(node.id)}[${treeStructureKey(node.children, resolveClientKey)}]`;
+      treeStructureNodeKeys.set(node, nodeKey);
+    }
+    parts.push(nodeKey);
+  }
+
+  const key = parts.join("|");
+  treeStructureArrayKeys.set(nodes, key);
+  return key;
 }

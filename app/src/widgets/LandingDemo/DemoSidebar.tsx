@@ -32,7 +32,7 @@ export function DemoSidebar({ tree, selected, expanded, onExpanded, onSelect, on
         onCancelRename={noop} onCommitRename={noop} onContextMenu={e => e.preventDefault()}
         onDragEnd={noop} onDragOverTarget={noop} onDragStart={e => e.preventDefault()} onDropTarget={noop}
         onRenameValueChange={noop} onPrefetchMemo={noop} onSelectMemo={onSelect}
-        onToggleFolder={id => { const next = new Set(expanded); if (next.has(id)) next.delete(id); else next.add(id); onExpanded(next); }} selectedMemoId={selected} />
+        onToggleFolder={id => { const next = new Set(expanded); if (next.has(id)) next.delete(id); else next.add(id); onExpanded(next); }} resolveClientKey={id => id} selectedMemoId={selected} />
     </div>
     <div className="app-sidebar-footer"><UserButton name="林间" email="把日常写成自己的故事" onClick={onHint} /></div>
   </aside>;

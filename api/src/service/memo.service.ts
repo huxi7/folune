@@ -1,13 +1,13 @@
 /**
  * [INPUT]: 依赖可信 AuthUser、请求期 access token、memo DTO 输入、memo repository、领域模型与 HttpError
- * [OUTPUT]: 对外提供 nextSortOrder/memoContentData 派生规则、轻量 tree/单篇读取、检索与 CRUD；正文替换不下载旧正文，标题单独更新仍读取原文返回完整详情
+ * [OUTPUT]: 对外提供 nextSortOrder/memoContentData 派生规则、轻量 tree/单篇读取、检索与 CRUD、默认名直接占号/冲突按最大编号兜底；正文替换不下载旧正文，标题单独更新仍读取原文返回完整详情
  * [POS]: service 层 active 备忘录写入与读取编排边界；独立的节点/正文读取并发启动以消除首开瀑布，树组装委托 memo-tree.service，正文原样存储并派生摘要；检索 RPC 的失败在此收敛为稳定 HTTP 错误，且相似候选只出摘录不出正文。PATCH /memos 固定先写正文后写标题——标题会撞唯一约束、正文不会，先写正文才让重名只挂起 title 而不连坐正文，也就不再需要半写回滚
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
 import { HttpError } from "../common/http-error.ts";
 import {
-  createWithAvailableTitle,
+  createWithDefaultMemoTitle,
   withTitleConflictTranslation,
 } from "../common/memo-title.ts";
 import type {
@@ -261,12 +261,10 @@ const createMemo = async (
   await validateParentFolder(authUser, accessToken, parentId);
   const sortOrder = input.sort_order
     ?? (await nextSortOrder(authUser, accessToken, parentId));
-  /*
-   * 新建备忘录的标题永远是系统默认名（「未命名备忘录」）。同一目录里连着新建
-   * 两次时它必然撞上同父同类型唯一约束, 所以默认名在冲突时顺位让开, 拿到
-   * 「未命名备忘录 2」而不是让最高频的动作直接失败。
-   */
-  const node = await createWithAvailableTitle(input.title, (title) =>
+  // 前端已占用完整默认名时直接写入；旧客户端和并发冲突只读一次同级最大编号。
+  const node = await createWithDefaultMemoTitle(input.title,
+    async () => (await memoRepository.listActiveSiblingMemos(authUser.id, parentId, accessToken)).map(node => node.title),
+    (title) =>
     memoRepository.createNode(
       {
         user_id: authUser.id,

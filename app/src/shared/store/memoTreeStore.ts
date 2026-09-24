@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Zustand、轻量 memo/ai API、memoTree 算法、memoTitleRules 的默认画布标题跟随、memoDocumentStore 与 AI Command 投影/事实对账
- * [OUTPUT]: 对外提供不含正文的 active tree、真人乐观结构 CRUD、AI tool_call 结构投影/回滚与 command 幂等对账
+ * [OUTPUT]: 对外提供不含正文的 active tree、同级默认名同步占号的真人乐观结构 CRUD、AI tool_call 结构投影/回滚与 command 幂等对账
  * [POS]: app/src/shared/store 的目录结构唯一状态源；正文交给 memoDocumentStore，api command output 才是 AI 写事实。任何本地改标题都顺带镜像数据库的默认画布同步触发器，否则文件树会显示一个服务端已经改掉的旧画布名
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -29,6 +29,7 @@ import {
   betweenSortOrders,
   findNode,
   findSiblings,
+  nextDefaultMemoTitle,
   insertNode,
   isDescendant,
   moveNodeInTree,
@@ -241,6 +242,10 @@ export const useMemoTreeStore = create<MemoTreeState>()((set, get) => ({
       throw new Error("目标文件夹不存在。");
     }
 
+    if (input.title === "未命名备忘录") {
+      input = { ...input, title: nextDefaultMemoTitle(findSiblings(previousNodes, input.parent_id) ?? []) };
+    }
+
     const optimistic = optimisticNode(previousNodes, "memo", input);
     useMemoDocumentStore.getState().primeMemo({
       ...optimistic,
@@ -356,6 +361,9 @@ export const useMemoTreeStore = create<MemoTreeState>()((set, get) => ({
 
     try {
       const created = await createMemoFolder(accessToken, input);
+
+      // 文件夹同样把临时 id 折叠成稳定 client key，落库换 id 时树行不重挂。
+      memoClientKeys.set(created.id, optimistic.id);
 
       if (generation === treeGeneration) {
         set((state) => ({

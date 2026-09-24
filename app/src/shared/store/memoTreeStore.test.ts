@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun mock/test、可控 memo API Promise、MemoTreeNode fixture 与 memoTreeStore
- * [OUTPUT]: 验证可并发创建、临时/真实 ID 替换、草稿保存、精确回滚、移动即时更新，以及 AI 工具调用投影/失败回滚/命令对账
+ * [OUTPUT]: 验证完整默认名同步占号与可并发创建、临时/真实 ID 替换、草稿保存、精确回滚、移动即时更新，以及 AI 工具调用投影/失败回滚/命令对账
  * [POS]: app/src/shared/store 的乐观事务回归测试，专门保护 UI 不等待接口、连续创建互不阻塞与并发编辑不丢字三条核心不变量
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -619,4 +619,26 @@ describe("memoTreeStore optimistic transactions", () => {
 
     expect(useMemoTreeStore.getState().nodes[0]?.title).toBe("旧标题");
   });
+});
+
+test("连续点击同步占用最大编号后的完整名称，网络未完成也不闪无编号标题", async () => {
+  useMemoTreeStore.getState().hydrateTree([{ ...makeNode("existing", "memo", null, "1000"), title: "未命名备忘录 2" }]);
+  const pending: Array<{ request: Deferred<MemoDetailNode>; input: CreateMemoInput }> = [];
+  createMemoHandler = (_token, input) => {
+    const request = deferred<MemoDetailNode>();
+    pending.push({ request, input });
+    return request.promise;
+  };
+  const creations = Array.from({ length: 8 }, () => useMemoTreeStore.getState().beginCreateMemo("token", {
+    parent_id: null, title: "未命名备忘录",
+  }));
+  const titles = Array.from({ length: 8 }, (_, index) => `未命名备忘录 ${index + 3}`);
+  expect(creations.map(item => item.optimistic.title)).toEqual(titles);
+  expect(pending.map(item => item.input.title)).toEqual(titles);
+  expect(getTreeCallCount).toBe(0);
+  for (let index = pending.length - 1; index >= 0; index--) {
+    pending[index]!.request.resolve({ ...makeDetail(`created-${index}`, null, "1000"), title: titles[index]! });
+  }
+  await Promise.all(creations.map(item => item.committed));
+  expect(useMemoTreeStore.getState().nodes.map(node => node.title).sort()).toEqual(["未命名备忘录 2", ...titles].sort());
 });

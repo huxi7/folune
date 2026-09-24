@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun test、snake_case MemoTreeNode 与 memoLibrary 路径/搜索/树内及跨视图拖拽协议
- * [OUTPUT]: 验证无限嵌套检索、稀疏移动、防环与仅 memo 可生成/解析 Canvas 拖拽载荷
+ * [OUTPUT]: 验证无限嵌套检索、稀疏移动、防环、仅 memo 可生成/解析 Canvas 拖拽载荷，以及结构键按 client key 折叠使临时→真实 id 替换不改键
  * [POS]: app/src/widgets 的拖拽视图模型回归测试，不访问浏览器、Supabase、Store 或远端 API
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -22,6 +22,7 @@ import {
   replaceNodeInMemoTree,
   searchMemoTree,
   serializeMemoCanvasDrag,
+  treeStructureKey,
   updateNodeInMemoTree,
 } from "./memoLibrary";
 
@@ -222,5 +223,43 @@ describe("memo tree view model", () => {
         placement: "after",
       }),
     ).toBeNull();
+  });
+});
+
+describe("treeStructureKey 按 client key 折叠", () => {
+  const identity = (id: string) => id;
+  // 落库那一刻的映射：真实 id 折回它出生时的临时 client key
+  const fold = (id: string) => (id === "real-1" ? "opt-1" : id);
+
+  test("临时 id 换成真实 id、client key 不变时结构键不变——FLIP/定位不空跑一次", () => {
+    const before = [
+      node("opt-1", "未命名备忘录 3", "memo", null, 500),
+      node("m2", "读书", "memo", null, 1000),
+    ];
+    const after = [
+      node("real-1", "未命名备忘录 3", "memo", null, 500),
+      node("m2", "读书", "memo", null, 1000),
+    ];
+    expect(treeStructureKey(after, fold)).toBe(treeStructureKey(before, fold));
+  });
+
+  test("不折叠时同一次 id 替换就会改键——证明稳定来自折叠而非巧合", () => {
+    const before = [node("opt-1", "x", "memo", null, 500)];
+    const after = [node("real-1", "x", "memo", null, 500)];
+    expect(treeStructureKey(after, identity)).not.toBe(
+      treeStructureKey(before, identity),
+    );
+  });
+
+  test("真实重排仍改变结构键，FLIP 照常触发", () => {
+    const a = [
+      node("m1", "a", "memo", null, 500),
+      node("m2", "b", "memo", null, 1000),
+    ];
+    const b = [
+      node("m2", "b", "memo", null, 1000),
+      node("m1", "a", "memo", null, 500),
+    ];
+    expect(treeStructureKey(a, identity)).not.toBe(treeStructureKey(b, identity));
   });
 });
