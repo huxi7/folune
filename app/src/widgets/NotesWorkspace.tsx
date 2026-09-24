@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 PersistentView 的实例保留式读写淡换、按需加载的 MemoDetailNode、跨临时/真实 ID 保持不变的 memoClientKey、新建聚焦意图、正文加载状态、DocumentView/EditingMode、useMemoAutosave、MarkdownEditor/ReadingView、ThemeProvider 与 Toast
+ * [INPUT]: 依赖 PersistentView 的实例保留式读写淡换、按需加载的 MemoDetailNode、跨临时/真实 ID 保持不变的 memoClientKey、新建聚焦意图、正文加载状态、DocumentView/EditingMode、useMemoAutosave、MarkdownEditor/ReadingView、ThemeProvider 与 Toast；空/错误占位复用 design-system 语义图标
  * [OUTPUT]: 对外提供临时节点提交期间不重挂载的纸张内本地草稿写作/阅读列与 NotesWorkspaceHandle，并仅在笔记身份切换时聚焦新纸标题/编辑器
  * [POS]: app/src/widgets 的备忘录编辑会话边界；Paper 外壳不拥有编辑状态，客户端身份隔离后端 ID 置换，Dashboard 只能经显式 handle 跨越自动保存边界；按需正文未到达前绝不把空标题反写轻量树；同级重名在标题区原位提示且不阻断正文自动保存
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -16,6 +16,7 @@ import {
   useRef,
   type FormEvent,
   type KeyboardEvent,
+  type ReactNode,
 } from "react";
 
 import type { MemoDetailNode } from "../shared/api/memo";
@@ -24,6 +25,11 @@ import {
   SkeletonGroup,
   useToast,
 } from "../shared/design-system/components";
+import {
+  AddNoteIcon,
+  NotePencilIcon,
+  WarningCircleIcon,
+} from "../shared/design-system/icons";
 import { useTheme } from "../shared/theme/ThemeProvider";
 import {
   MarkdownEditor,
@@ -91,6 +97,36 @@ function NotesWorkspaceSkeleton({ visible }: { visible: boolean }) {
           <Skeleton className="note-skeleton-line note-skeleton-line-medium" shape="text" />
         </div>
       </SkeletonGroup>
+    </main>
+  );
+}
+
+// 纸内空/错误占位: 一枚安静的圆形标记 + 编辑体同源的衬线标题 + 一句暖场引导,
+// 稳稳落在纸的正中而不是漂在上三分之一。视觉规则归 workspace.css。
+function NotesWorkspacePlaceholder({
+  description,
+  icon,
+  title,
+  tone = "muted",
+}: {
+  description: string;
+  icon: ReactNode;
+  title: string;
+  tone?: "error" | "muted";
+}) {
+  return (
+    <main
+      className="notes-workspace-state"
+      data-tone={tone}
+      role={tone === "error" ? "status" : undefined}
+    >
+      <span className="notes-empty-figure" aria-hidden="true">
+        {icon}
+      </span>
+      <div className="notes-empty-copy">
+        <strong>{title}</strong>
+        <span>{description}</span>
+      </div>
     </main>
   );
 }
@@ -267,23 +303,28 @@ export const NotesWorkspace = forwardRef<
 
   if (treeStatus === "error") {
     return (
-      <main className="notes-workspace-state" role="status">
-        <strong>暂时无法加载备忘录</strong>
-        <span>请检查网络或后端服务，恢复后重新进入工作区。</span>
-      </main>
+      <NotesWorkspacePlaceholder
+        description="请检查网络或后端服务，恢复后重新进入工作区。"
+        icon={<WarningCircleIcon size={24} />}
+        title="暂时无法加载备忘录"
+        tone="error"
+      />
     );
   }
 
   if (memo === null) {
-    return (
-      <main className="notes-workspace-state">
-        <strong>{emptyTree ? "还没有备忘录" : "选择一条备忘录"}</strong>
-        <span>
-          {emptyTree
-            ? "点击侧边栏标题栏右侧的“新建备忘录”，或在侧边栏空白处右键创建。"
-            : "从左侧文件树选择一条备忘录后开始编辑。"}
-        </span>
-      </main>
+    return emptyTree ? (
+      <NotesWorkspacePlaceholder
+        description="在左侧点「新建」写下第一个想法，其余的交给 Folune。"
+        icon={<AddNoteIcon size={24} />}
+        title="从这里开始记录"
+      />
+    ) : (
+      <NotesWorkspacePlaceholder
+        description="从左侧选一条继续书写，或新建一条开始记录。"
+        icon={<NotePencilIcon size={24} />}
+        title="选择一条备忘录"
+      />
     );
   }
 
