@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖可信 AuthUser、请求期 JWT、resolve DTO、AI/memo repositories 与 MemoNode/MemoContent
  * [OUTPUT]: 对外提供服务端可信的 primary/references 正文、路径、revision 与失效引用解析结果，并暴露可并行启动的 context resolver
- * [POS]: service 层 AI 上下文边界，按本轮冻结当前笔记、显式引用、会话置顶引用的顺序分配字符预算；普通 resolve 校验 thread，Chat prepare 可在 thread/settings 校验同时读取正文
+ * [POS]: service 层 AI 上下文边界；无引用时不读取文件树，冻结显式引用时不重读会话偏好；有引用则按真实节点/revision 分配正文预算，Chat prepare 与 thread/settings 并行
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -63,9 +63,14 @@ const resolveForThread = async (
   accessToken: string,
   input: ResolveAiContextInput,
 ): Promise<ResolvedAiContext> => {
+    if (input.active_memo_id === null && input.reference_memo_ids.length === 0 && !input.include_thread_references) {
+      return { primary: null, references: [], missing_reference_ids: [] };
+    }
     const [nodes, references] = await Promise.all([
       memoRepository.listActiveNodes(authUser.id, accessToken),
-      aiRepository.listReferences(authUser.id, input.thread_id, accessToken),
+      input.include_thread_references
+        ? aiRepository.listReferences(authUser.id, input.thread_id, accessToken)
+        : Promise.resolve([]),
     ]);
     const nodesById = new Map(nodes.map((node) => [node.id, node]));
     // 当前笔记已收敛为 Composer 的默认 @引用；本轮显式 ID 一经发送，

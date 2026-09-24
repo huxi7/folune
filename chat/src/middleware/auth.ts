@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 Mastra 路由上下文、config/env 的 Supabase URL/Publishable key 与请求 Bearer JWT
+ * [INPUT]: 依赖 Mastra 路由上下文、config/env、请求 Bearer JWT 与 upstream-http 的完整响应期限/只读重试
  * [OUTPUT]: 对外提供 authMiddleware，将 Supabase Auth 验证后的可信 userId 写入 RequestContext
  * [POS]: middleware 层身份信任边界，只接受 Authorization，拒绝 body 身份并且不记录用户 token；已完成 userId 按 SHA-256(token) 键入 45 秒 TTL 缓存，原始 token 不作缓存键，撤销延迟上限即 TTL
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -9,6 +9,7 @@ import type { ContextWithMastra, Middleware } from "@mastra/core/server";
 import { z } from "zod";
 
 import { env } from "@/config/env";
+import { fetchUpstreamResponse } from "@/lib/upstream-http";
 
 type RouteMiddleware = Exclude<Middleware, { path: string }>;
 
@@ -63,13 +64,14 @@ export const authMiddleware: RouteMiddleware = async (rawContext, next) => {
   let response: Response;
 
   try {
-    response = await fetch(`${env.SUPABASE_URL}/auth/v1/user`, {
+    response = await fetchUpstreamResponse(`${env.SUPABASE_URL}/auth/v1/user`, {
       method: "GET",
+      signal: context.req.raw.signal,
       headers: {
         Authorization: `Bearer ${accessToken}`,
         apikey: env.SUPABASE_PUBLISHABLE_KEY,
       },
-    });
+    }, { timeoutMs: 6_000, retryRead: true });
   } catch {
     return context.json(
       {

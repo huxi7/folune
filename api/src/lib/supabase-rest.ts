@@ -1,12 +1,13 @@
 /**
- * [INPUT]: 依赖 config/env 的 Supabase URL/Publishable key、调用方传入的已验证用户 access token、common/HttpError 与 Web fetch API
- * [OUTPUT]: 对外提供唯一 supabaseRest<T> 请求函数、可组合 Prefer header、强制 accessToken 的 SupabaseRestOptions、含 on_conflict/eq/is/in 的查询 helper 与 postgrestErrorCode 原始 SQLSTATE 取回
- * [POS]: lib 层 Supabase REST/PostgREST 适配器，以 authenticated 用户身份触发 RLS，为 repository 统一组装请求与冲突参数
+ * [INPUT]: 依赖 config/env、用户 access token、common/HttpError 与 supabase-http 的完整响应期限/只读重试
+ * [OUTPUT]: 对外提供唯一 supabaseRest<T> 请求函数、可组合 Prefer header、强制 accessToken 的 SupabaseRestOptions、查询 helper 与 postgrestErrorCode；网络故障收敛为 503 SUPABASE_UNREACHABLE
+ * [POS]: lib 层 Supabase REST/PostgREST 适配器，以 authenticated 用户身份触发 RLS，为 repository 统一组装请求与冲突参数；上限/重试只护网络层，业务错误与 SQLSTATE 仍原样上抛，调用方主动取消如实透传不当故障
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
 import { HttpError } from "../common/http-error.ts";
 import { env } from "../config/env.ts";
+import { fetchSupabaseResponse } from "./supabase-http.ts";
 
 type PostgrestValue = string | number | boolean;
 
@@ -74,6 +75,16 @@ export const postgrestErrorCode = (error: unknown): string | null => {
   return typeof code === "string" ? code : null;
 };
 
+const isCallerAbort = (signal: AbortSignal | null | undefined): boolean =>
+  signal != null && signal.aborted;
+
+const supabaseUnreachable = (): HttpError =>
+  new HttpError(
+    503,
+    "SUPABASE_UNREACHABLE",
+    "数据库连接超时，请稍后重试。",
+  );
+
 export const supabaseRest = async <T>(
   path: string,
   options: SupabaseRestOptions,
@@ -105,10 +116,14 @@ export const supabaseRest = async <T>(
     );
   }
 
-  const response = await fetch(endpoint, {
-    ...requestInit,
-    headers,
-  });
+  const callerSignal = requestInit.signal ?? undefined;
+  let response: Response;
+  try {
+    response = await fetchSupabaseResponse(endpoint, { ...requestInit, headers });
+  } catch (error) {
+    if (isCallerAbort(callerSignal)) throw error;
+    throw supabaseUnreachable();
+  }
 
   if (!response.ok) {
     const failure = await readError(response);

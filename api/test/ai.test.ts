@@ -709,6 +709,48 @@ describe("AI threads and messages", () => {
     expect(mock.upsertMatched).toBe(true);
   });
 
+  test("普通问答没有引用时不读文件树、正文或会话引用", async () => {
+    mock.threads.set(THREAD_ID, threadFixture());
+    mock.requests.length = 0;
+    const result = await request("/ai-context/prepare-chat", "POST", {
+      thread_id: THREAD_ID, active_memo_id: null, reference_memo_ids: [],
+      expected_revisions: {}, include_thread_references: false,
+      response_message_id: "msg_plain",
+      message: { id: "plain", role: "user", parts: [{ type: "text", text: "你好" }] },
+    });
+    expect(result.status).toBe(200);
+    expect(mock.requests.filter((call) => ["/rest/v1/memo_nodes", "/rest/v1/memos", "/rest/v1/ai_thread_refs"].includes(call.path))).toHaveLength(0);
+  });
+
+  test("历史读取先失败时立即返回错误，不被其他挂起查询拖住或变成未处理拒绝", async () => {
+    mock.threads.set(THREAD_ID, threadFixture());
+    let release!: () => void;
+    const blocked = new Promise<void>((resolve) => { release = resolve; });
+    globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      const path = new URL(typeof input === "string" ? input : input instanceof URL ? input.href : input.url).pathname;
+      if (path === "/rest/v1/ai_messages") throw new TypeError("network disconnected");
+      if (path === "/rest/v1/ai_threads") await blocked;
+      return mock.fetch(input, init);
+    }) as unknown as typeof fetch;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+      const result = await Promise.race([
+        request("/ai-context/prepare-chat", "POST", {
+          thread_id: THREAD_ID, active_memo_id: null, reference_memo_ids: [],
+          expected_revisions: {}, include_thread_references: false,
+          response_message_id: "msg_failure",
+          message: { id: "failure", role: "user", parts: [{ type: "text", text: "你好" }] },
+        }),
+        new Promise<Response>((_, reject) => { timer = setTimeout(() => reject(new Error("仍在等待无关查询")), 100); }),
+      ]);
+      expect(result.status).toBe(503);
+    } finally {
+      clearTimeout(timer);
+      release();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    }
+  });
+
   test("Chat prepare 支持首轮完整消息与续写增量，并只创建一个稳定 assistant", async () => {
     mock.threads.set(THREAD_ID, threadFixture());
     mock.nodes.set(MEMO_A, memoNodeFixture(MEMO_A));
@@ -741,6 +783,7 @@ describe("AI threads and messages", () => {
     }));
 
     expect(first.context.primary.memo_id).toBe(MEMO_A);
+    expect(mock.requests.some((call) => call.path === "/rest/v1/ai_thread_refs")).toBe(false);
     expect(first.messages.map((message) => message.id)).toEqual([
       "user-first",
       "msg_user-first",

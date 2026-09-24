@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 FoluneUIMessage 的 AI SDK 有序文本/reasoning/工具 parts、过程分区与 design-system AI 消息组件
- * [OUTPUT]: 对外提供纯净用户消息、正文开始时自动收起的单一过程区及回复末尾 Undo2 图标与「撤销」短标签的 assistant 回复
+ * [OUTPUT]: 对外提供纯净用户消息、首 token 前失败时退出空回复占位、正文开始时自动收起的单一过程区及回复末尾 Undo2 图标与「撤销」短标签的 assistant 回复
  * [POS]: AgentPanel 消息语义适配层，只负责对话与过程；人工审批由 AgentConversation 固定在 Composer 上方，冻结上下文不进入对话视觉层
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -202,6 +202,7 @@ export function LiveAssistantTurn({
   onUndo = async () => undefined,
 }: LiveAssistantTurnProps) {
   const presentation = message ? getAssistantPresentation(message) : undefined;
+  if (activity === "none" && !presentation) return null;
 
   return (
     <article className="agent-chat-turn">
@@ -216,7 +217,7 @@ export function LiveAssistantTurn({
         />
       ) : (
         <ThinkingIndicator
-          active
+          active={activity !== "none"}
           className="agent-live-thinking"
           label="备忘录助手正在思考"
         />

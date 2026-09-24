@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun test、React 静态渲染、AI SDK UIMessage 与 ChatMessage
- * [OUTPUT]: 验证单一过程区、Composer 紧凑审批条、自动执行轻量撤销、最终正文独立、冻结来源不污染对话及普通回复无空过程入口
+ * [OUTPUT]: 验证单一过程区、首 token 前失败退出空占位、Composer 紧凑审批条、自动执行轻量撤销、最终正文独立、冻结来源不污染对话及普通回复无空过程入口
  * [POS]: AgentPanel 回复与审批 DOM 契约测试，连接 part 分区、非模态裁决、纯净消息展示、工具人话展示与回复动作槽位
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -99,6 +99,13 @@ describe("ChatMessage", () => {
     expect(submittedHtml).toBe(emptyAssistantHtml);
     expect(submittedHtml).toContain("ds-thinking-indicator");
     expect(submittedHtml).not.toContain("agent-process-disclosure");
+  });
+
+  test("首 token 前失败后清除空回复思考占位", () => {
+    expect(renderToStaticMarkup(<LiveAssistantTurn activity="none" />)).toBe("");
+    expect(renderToStaticMarkup(
+      <LiveAssistantTurn activity="none" message={assistant([])} />,
+    )).toBe("");
   });
 
   test("用户与助手回复都不重复显示身份标题", () => {

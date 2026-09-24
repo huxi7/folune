@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 config/env 的 BUSINESS_API_BASE_URL、调用方当前 Bearer JWT、Web fetch 与 zod
+ * [INPUT]: 依赖 config/env、当前 Bearer JWT、upstream-http 的完整响应期限与 zod
  * [OUTPUT]: 对外提供 thread/消息/冻结 context、一次性 Chat turn prepare、轻量 tree、单篇正文、Canvas expansion 可信上下文、账号权限、命令与 Run 的 authenticated Business API client
  * [POS]: lib 层 chat→api 唯一业务边界，每次请求临时转发用户 JWT，统一解析信封且绝不记录或持久化凭据；canvas 可穿过资源校验，再由各模型投影显式过滤
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -9,6 +9,7 @@ import type { UIMessage } from "ai";
 import { z } from "zod";
 
 import { env } from "@/config/env";
+import { fetchUpstreamResponse } from "@/lib/upstream-http";
 import {
   organizePlanSchema,
   type OrganizePlan,
@@ -228,7 +229,7 @@ const request = async <T>(
 
   let response: Response;
   try {
-    response = await fetch(`${env.BUSINESS_API_BASE_URL}${path}`, {
+    response = await fetchUpstreamResponse(`${env.BUSINESS_API_BASE_URL}${path}`, {
       ...init,
       headers,
     });

@@ -31,9 +31,9 @@ aiThreadCache.ts: 按用户隔离的 30 秒面板快照与最多八个逐会话�
 aiThreadCache.test.ts: 锁定面板/逐会话快照的用户隔离、TTL、局部更新、目标删除与有界淘汰
 useAiThreads.ts: 会话控制器与显式只读预热入口；首开用 bootstrap，普通切换先同步选择目标摘要，再命中逐会话缓存或展示加载壳，并用单一 content 请求合并 thread/ref/messages；pointer/focus 预取与点击读取共用在途请求，快速连续切换只提交最后选择；流完成本地提交，错误/中止再校准
 AgentProcessDisclosure.tsx: 真实生成过程的透明披露容器，思考/工具阶段强制展开，进入正文或结束时自动收起，历史默认折叠且可手动回看；keepMounted Collapse 保留内部工具详情状态，不包裹最终正文
-ChatMessage.tsx: FoluneUIMessage 适配层；按 thinking/tool 活动驱动过程展开，首段正文到达即收起且不延迟流式文本；冻结上下文不进入对话视觉，单一过程区不承载审批控件，同轮成功命令只在最终回复末尾提供一个整轮撤销
+ChatMessage.tsx: 空回复占位按 activity 退出，首 token 前失败不再永久显示思考； FoluneUIMessage 适配层；按 thinking/tool 活动驱动过程展开，首段正文到达即收起且不延迟流式文本；冻结上下文不进入对话视觉，单一过程区不承载审批控件，同轮成功命令只在最终回复末尾提供一个整轮撤销
 ChatMessage.interaction.test.tsx: 生产消息 DOM 生命周期回归，覆盖思考持续展开、正文开始即折叠、手动回看不受后续分块干扰、多轮工具续写重新展开与历史默认折叠
-ChatMessage.test.tsx: 完整回复 DOM 契约测试，锁定单一过程区、审批条非模态且与消息解耦、单一整轮撤销、最终正文边界、冻结来源不污染消息与敏感 ID 屏蔽
+ChatMessage.test.tsx: 首 token 前失败移除空思考占位；完整回复 DOM 契约测试，锁定单一过程区、审批条非模态且与消息解耦、单一整轮撤销、最终正文边界、冻结来源不污染消息与敏感 ID 屏蔽
 composerBehavior.ts: Composer 的纯交互判定，统一非空闲/空白提交保护，并把普通 Enter 与 Shift/修饰键/IME 组合输入严格分流
 composerBehavior.test.ts: Composer 键盘与提交契约测试，覆盖普通 Enter、Shift 换行、中文组合输入、Safari 229 兼容、修饰键和空白内容
 celebration.ts: 独立于 memoTool Worker 的“庆祝”视觉执行器，忠实保留用户 count；1–32 次渲染等量逻辑波次，更大次数压缩为 32 波性能有界批处理；复用 canvas-confetti 托管的唯一全屏 Canvas 与可用时的内部渲染 Worker，左/中/右三源从网页底边下方少量起步，以 EDGE_START_VELOCITY/CENTER_START_VELOCITY 控制初始射程、以 CELEBRATION_DECAY 收短后续最远端，再以窄锥角先集中上升再自然扩散；count:10 采用 32ms 间隔、约 288ms 完成的无停顿点射，超大次数的释放窗口封顶 400ms；动画可由 cancelCelebration 即时复位，亦会自然完成或由 3 秒看门狗兜底

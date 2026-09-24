@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 authMiddleware、Business API、冻结 memo context、独立审批协调器、四个客户端 memo 工具、Mastra 流桥与 AI SDK UI stream 生命周期
+ * [INPUT]: 依赖 authMiddleware、Business API、冻结 memo context、独立审批协调器、客户端工具、Mastra 流桥与 chat-stream 的终态/静默超时协调
  * [OUTPUT]: 对外提供消息级上下文冻结、一次性 turn prepare、三档写审批、同轮 assistant 续写、胖工具流转与增量 parts 持久化的 POST /v1/chat
  * [POS]: routes 层 AI Native V2 HTTP 协调边界；审批/工具续跑复用同一回复 ID，先完成审批再让浏览器 Worker 规划，最终安全仍由 api command 决定
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -11,7 +11,6 @@ import {
 } from "@mastra/ai-sdk";
 import { registerApiRoute } from "@mastra/core/server";
 import {
-  createUIMessageStream,
   createUIMessageStreamResponse,
   type UIMessage,
 } from "ai";
@@ -27,10 +26,7 @@ import { MemoAgentContext } from "@/lib/memo-agent-context";
 import { celebrationTool } from "@/mastra/tools/celebration";
 import { createMemoClientTools, resolveMemoWriteToolName } from "@/mastra/tools/memo";
 import { authMiddleware } from "@/middleware/auth";
-import {
-  persistWithOneRetry,
-  responseStartChunk,
-} from "@/routes/chat-persistence";
+import { createChatResponseStream } from "@/routes/chat-stream";
 import {
   isAssistantContinuation,
   readFrozenTurnContext,
@@ -104,7 +100,7 @@ const chatParamsSchema = z.object({
 
 type ChatParams = ChatStreamHandlerParams<UIMessage>;
 
-type BusinessApiFailureStatus = 400 | 401 | 403 | 404 | 409 | 422 | 502;
+type BusinessApiFailureStatus = 400 | 401 | 403 | 404 | 409 | 422 | 502 | 503 | 504;
 
 const readAccessToken = (authorization: string | undefined): string | null =>
   authorization?.match(/^Bearer\s+(\S+)$/i)?.[1] ?? null;
@@ -117,6 +113,8 @@ const normalizeFailureStatus = (status: number): BusinessApiFailureStatus => {
     case 404:
     case 409:
     case 422:
+    case 503:
+    case 504:
       return status;
     default:
       return 502;
@@ -134,8 +132,8 @@ const businessApiFailure = (error: unknown) => {
         code,
         message:
           status === 404
-            ? "AI thread was not found"
-            : "AI persistence service is unavailable",
+            ? "这段对话已不存在，请新建对话。"
+            : "暂时无法准备对话，请稍后重新发送。",
       },
     },
   };
@@ -259,104 +257,45 @@ export const chatRoute = registerApiRoute("/v1/chat", {
       celebration: celebrationTool,
       ...createMemoClientTools(),
     };
-    let streamFailed = false;
-    let mastraStream;
-    try {
-      mastraStream = await handleChatStream<UIMessage>({
+    const stream = createChatResponseStream({
+      messages: inputMessages,
+      messageId: assistantMessageId,
+      signal: context.req.raw.signal,
+      createStream: (signal) => handleChatStream<UIMessage>({
         mastra: context.get("mastra"),
         agentId: "memo-agent",
         version: "v6",
         sendStart: false,
+        sendReasoning: true,
+        onError: () => "AI 回复中断，请重新发送消息。",
         params: {
           ...params,
           clientTools,
           requestContext,
-          abortSignal: context.req.raw.signal,
+          abortSignal: signal,
           maxSteps: env.MAX_STEPS,
           modelSettings: {
             maxOutputTokens: env.MAX_OUTPUT_TOKENS,
           },
         },
-      });
-    } catch {
-      const responseMessage = inputMessages.find(
-        (message) => message.id === assistantMessageId,
-      );
-      if (responseMessage !== undefined) {
-        await persistWithOneRetry(() =>
-          businessApi.syncMessage(
-            threadId,
-            responseMessage,
-            "error",
-            accessToken,
-          ),
-        );
-      }
-      return context.json(
-        {
-          error: {
-            code: "AI_GENERATION_FAILED",
-            message: "AI generation could not be started",
-          },
-        },
-        502,
-      );
-    }
-
-    const stream = createUIMessageStream<UIMessage>({
-      originalMessages: inputMessages,
-      generateId: () => assistantMessageId,
-      execute: async ({ writer }) => {
-        try {
-          writer.write(responseStartChunk(assistantMessageId));
-          const approvalTasks: Promise<void>[] = [];
-          const seenToolCalls = new Set<string>();
-          for await (const chunk of mastraStream) {
-            writer.write(chunk);
-            if (chunk.type !== "tool-input-available" || seenToolCalls.has(chunk.toolCallId)) {
-              continue;
-            }
-            seenToolCalls.add(chunk.toolCallId);
-            const writeToolName = resolveMemoWriteToolName(chunk.toolName);
-            if (writeToolName === null) continue;
-            const input = chunk.input !== null && typeof chunk.input === "object" && !Array.isArray(chunk.input)
-              ? chunk.input as Record<string, unknown>
-              : {};
-            // 模型仍在流式输出时就启动树读取/审批；execute 会等待任务完成，
-            // 因此 writer 的可见顺序仍然稳定。
-            approvalTasks.push(
-              requireWriteApproval(
-                writeToolName as "edit_node" | "edit_memo",
-                input,
-              ).then((required) => {
-                if (!required) return;
-                writer.write({
-                  type: "tool-approval-request",
-                  approvalId: `folune::${chunk.toolCallId}`,
-                  toolCallId: chunk.toolCallId,
-                });
-              }),
-            );
-          }
-          await Promise.all(approvalTasks);
-        } catch (error) {
-          streamFailed = true;
-          throw error;
-        }
+      }),
+      approveTool: async (chunk) => {
+        const toolName = resolveMemoWriteToolName(chunk.toolName);
+        if (toolName === null) return null;
+        const input = chunk.input !== null && typeof chunk.input === "object" && !Array.isArray(chunk.input)
+          ? chunk.input as Record<string, unknown>
+          : {};
+        return await requireWriteApproval(toolName as "edit_node" | "edit_memo", input)
+          ? { type: "tool-approval-request", approvalId: `folune::${chunk.toolCallId}`, toolCallId: chunk.toolCallId }
+          : null;
       },
-      onFinish: async ({ responseMessage, isAborted }) => {
-        // 只等待当前 assistant 的定点写入；它远小于旧的全量消息同步，
-        // 同时保证用户切换会话时服务端已经拥有最新回复。
-        await persistWithOneRetry(() =>
-          businessApi.syncMessage(
-            threadId,
-            responseMessage,
-            isAborted ? "aborted" : streamFailed ? "error" : "complete",
-            accessToken,
-          ),
-        );
-      },
-      onError: () => "AI generation failed",
+      persist: (message, status) => businessApi.syncMessage(threadId, message, status, accessToken),
+      onPersistenceError: () => context.get("mastra").getLogger().error(
+        "Chat response persistence failed", { threadId, assistantMessageId },
+      ),
+      onGenerationError: (detail) => context.get("mastra").getLogger().warn(
+        "Chat generation interrupted", { threadId, assistantMessageId, ...detail },
+      ),
     });
 
     return createUIMessageStreamResponse({
