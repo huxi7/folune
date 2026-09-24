@@ -22,7 +22,7 @@ DashboardDialogs.tsx: 账户与新建文件夹的纯受控组合，外层 presen
 appDashboardTypes.ts: Dashboard 私有状态类型边界，集中定义含首屏 tree bootstrap 与入口编号的 loader、账户/文件夹弹窗、标题草稿与树加载状态，不承载运行时逻辑
 memoDeletion.ts: 删除导航纯算法，区分“当前路由被影响需要导航离开”与“当前路由是 memo 需要等 autosave flush”两件事（画布没有编辑会话可等），并从剩余 active tree 选择下一路由
 memoDeletion.test.ts: 覆盖删除当前 Memo/祖先影响判定、删除正在打开的 Canvas 只导航不 flush，及有/无下一 Memo 的路由选择
-useMemoNodeDeletion.ts: 软删编排 Hook；沿用调用方共享的 mutating 门禁，删除前对 memo 会话做 required flush、成功后清理正文缓存与 last-memo 记录并按落点导航，失败恢复编辑会话且不改变任何状态
+useMemoNodeDeletion.ts: 软删编排 Hook；沿用调用方共享的 mutating 门禁，删除前对 memo 会话做 required flush；乐观移除与导航落在同一 React 批次、网络确认置于其后，删当前笔记时路由从被删项直接跳到落点、不经过 memo===null 的空态闪帧，成功确认后才清正文缓存与 last-memo；失败随 store 回滚原路退回并恢复编辑会话
 useOptimisticMemoCreation.ts: 人工新建路由协调器；同步进入临时备忘录并独立跟踪每个并发提交，乱序成功只替换自己的 ID 且不弹成功通知，失败只撤销对应节点并在仍处当前页时回退
 useMemoDocumentLoad.ts: 当前笔记正文请求生命周期边界；目录 ready 后只为未缓存的选中 ID 发起单篇读取，并可复用已在途的意图预取，失败统一送入 Toast
 useMemoDocumentPreload.ts: 正文按需架构的空闲预热 Hook；只预取当前笔记阅读顺序相邻的前后两篇，点击/键盘意图预热仍由文件树触发，不扩大目录载荷 执行时跳过后台页、离线、省流和 2G/3G 网络，优先把带宽留给正在打开的正文。
