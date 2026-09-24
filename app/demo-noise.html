@@ -1,0 +1,86 @@
+<!doctype html>
+<!--
+  [INPUT]: 依赖同源 demo.html 的生产组件、landing-paper 与 Landing 的 grain.png
+  [OUTPUT]: 1:1 字号和默认面板宽度的纸白背景对照；切换纹理时保留内容、焦点与视图
+  [POS]: 本地独立验收页；只向自身 iframe 注入背景实验，不进入正式构建或生产主题
+  [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+-->
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex" />
+  <meta http-equiv="Content-Security-Policy" content="connect-src 'none'; img-src 'self' data:; media-src 'none'; object-src 'none'; frame-src 'self'; form-action 'none'; base-uri 'none'" />
+  <title>Folune · 纸白纹理对照</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; height: 100vh; height: 100dvh; display: grid; grid-template-rows: minmax(0, 1fr) auto; background: #f4f4f2; color: #292b2b; font: 13px/1.5 'Avenir Next', 'PingFang SC', sans-serif; }
+    iframe { display: block; width: 100%; height: 100%; border: 0; }
+    footer { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 10px 20px calc(10px + env(safe-area-inset-bottom)); border-top: 1px solid #e2e5e5; }
+    p { margin: 0; }
+    .switch { display: flex; gap: 4px; padding: 4px; background: #eceeee; border: 1px solid #e2e5e5; border-radius: 16px; corner-shape: squircle; }
+    button { padding: 8px 16px; min-height: 36px; border: 0; border-radius: 12px; corner-shape: squircle; background: transparent; color: #707676; font: inherit; cursor: pointer; }
+    button:hover { color: #292b2b; }
+    button[aria-pressed="true"] { background: white; color: #292b2b; }
+    button:focus-visible { outline: 2px solid #666e6e; outline-offset: 2px; }
+    button:disabled { opacity: .5; cursor: wait; }
+    .hint { color: #707676; }
+    @media (max-width: 760px) { footer { flex-direction: column; gap: 6px; padding-inline: 8px; } .intro { display: none; } button { min-height: 44px; padding-inline: 12px; } .hint { font-size: 11px; } }
+  </style>
+</head>
+<body>
+  <iframe id="demo" src="/demo.html" title="Folune：无噪点纸白背景" sandbox="allow-scripts allow-same-origin"></iframe>
+  <footer>
+    <p class="intro">纸白纹理对照 · 原尺寸</p>
+    <div class="switch" role="group" aria-label="背景纹理">
+      <button type="button" data-noise="none" aria-pressed="true" aria-controls="demo" disabled>无噪点</button>
+      <button type="button" data-noise="subtle" aria-pressed="false" aria-controls="demo" disabled>极淡 1.5%</button>
+      <button type="button" data-noise="landing" aria-pressed="false" aria-controls="demo" disabled>Landing 3%</button>
+    </div>
+    <p class="hint" id="status" aria-live="polite">纸白底 · 无噪点</p>
+  </footer>
+  <script>
+    const frame = document.getElementById('demo');
+    const buttons = [...document.querySelectorAll('[data-noise]')];
+    const status = document.getElementById('status');
+    const variants = { none: { opacity: '0', label: '无噪点' }, subtle: { opacity: '.015', label: '极淡 1.5%' }, landing: { opacity: '.03', label: 'Landing 3%' } };
+    let selected = 'none';
+
+    function applyNoise(value) {
+      const root = frame.contentDocument?.documentElement;
+      if (!root || !Object.hasOwn(variants, value)) return;
+      selected = value;
+      root.style.setProperty('--preview-grain-opacity', variants[value].opacity);
+      frame.title = `Folune：${variants[value].label}纸白背景`;
+      status.textContent = `纸白底 · ${variants[value].label}`;
+      for (const button of buttons) button.setAttribute('aria-pressed', String(button.dataset.noise === value));
+    }
+
+    frame.addEventListener('load', () => {
+      const doc = frame.contentDocument;
+      if (!doc) return;
+      const sheet = doc.createElement('style');
+      sheet.id = 'noise-preview-style';
+      // ---- 固定真实 UI 密度；面板宽度对应工作区当前默认 264/360px，内容仍为 Demo ----
+      sheet.textContent = `
+        html:root[data-visual-context="app"] { font-size: 100%; --workspace-stage: var(--landing-paper); }
+        .demo-root { --demo-column-gap: 32px; }
+        .demo-root, .demo-root .app-workspace, .demo-root .workspace-persistent-panel { --workspace-sidebar-track: 264px !important; --workspace-agent-track: 360px !important; }
+        .canvas-workspace { isolation: isolate; }
+        /* 纹理在父背景之上、内容之下；没有覆盖纸张、面板或文字的整屏蒙层。 */
+        .app-workspace::before, .canvas-workspace::before {
+          content: ''; position: absolute; inset: 0; z-index: -1;
+          pointer-events: none;
+          background: url('/landing-reference/grain.png') 0 0 / 180px 180px;
+          opacity: var(--preview-grain-opacity, 0);
+        }
+      `;
+      doc.getElementById(sheet.id)?.remove();
+      doc.head.append(sheet);
+      applyNoise(selected);
+      for (const button of buttons) button.disabled = false;
+    });
+    for (const button of buttons) button.addEventListener('click', () => applyNoise(button.dataset.noise));
+  </script>
+</body>
+</html>

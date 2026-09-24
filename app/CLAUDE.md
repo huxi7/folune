@@ -12,6 +12,7 @@ public/: 登录页 3:4 书房花园本地循环视频/首帧、统一品牌母�
 MOTION_SYSTEM.md: A/B 全量源码取舍、统一 Motion Design 规范与实际验收记录
 demo.html: 文档根独立启用 APP 新视觉，保持浅色与嵌入缩放；Landing 独立 UI 演示入口，CSP 禁止连接与表单提交；不装配 Auth/Router/持久化主题，和 index.html 一同构建
 demo-compare.html: 本地三档视觉对比入口：原版/当前灰白/纸白，默认纸白；同一 demo.html iframe 保留笔记、对话与视图，纸白仅以 landing-paper 覆盖 workspace-stage，切回立即清除；当前 APP 与独立 Demo 默认值不变，不进入生产构建或 Landing
+demo-noise.html: 本地 1:1 字号/默认面板宽度的噪点对照；单一 Demo iframe 固定纸白底，切换无噪点/1.5%/3% 静态颗粒，只覆盖工作区空白背景，保留内容与视图；不进入生产构建或改变正式背景
 hero-lab.html: 独立首屏实验入口，01A/02A 可调材质/高度，否决 B 版退出主选择；多组本地收藏及备份、旧配置兼容、可选既有 APP 衔接，不进入正式路由或构建清单
 index.html: 首绘按 pathname 声明 APP/marketing 文档根场景；Vite HTML 宿主页面，声明 V1 Classic Blueprint 默认画布、同步解析 App 的 system/light/dark 与 Landing 浅色画布 pre-paint bootstrap、提供 root 挂载点并引用品牌母图等比缩放的 PNG Favicon
 .env.example: app 浏览器环境变量模板，声明业务 API、chat 服务 base URL 与 Supabase 公开连接配置

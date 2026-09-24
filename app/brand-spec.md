@@ -29,7 +29,7 @@ Folune is a quiet editorial instrument that lets users write first and allows AI
 - 用户气泡为近白 #F6F8F8，内侧 1px #E4E8E8 细线；暗色 #292929 与 #363636。气泡、输入框及 Panel 的平滑圆角统一到 20px；输入内层继续按内缩量推导，Paper 保持 12px，常规控件保持 16px。
 - 输入边界浅色默认 #DCDEDE、hover #B9BEBE、focus #666E6E；暗色 #424242、#5C5C5C、#949494。聚焦只附极轻中性暗影，不叠明显外环。
 - 暗色保留黑灰轴：Stage #181818、Panel #222222、Paper #242424、Popover #292929、边界 #393939，正文 #E8E8E8、次级字 #AAAAAA。
-- Canvas 选择/连线/拖放继续消费中性 canvas-interaction-ink（浅色 #686E6E / 暗色 #AAAAAA）；警告和危险动作保留语义色。
+- Canvas 静态边框与选择继续消费中性 canvas-interaction-ink（浅色 #686E6E / 暗色 #AAAAAA）；按住/拖动卡片的波纹、临时连线、连接抓手及有效目标提示恢复品牌 primary（浅色 #395875 / 暗色 #91ABC4），沿用 70% 透明度、2.75px 线宽和既有柔光，不新增蓝色色阶；警告和危险动作保留语义色。
 - 本节取代上轮暖黄灰与分色选中方案；参考图用于借鉴灰白层次、轻边界与圆润轮廓，不引入整套青苔绿主题。
 
 ## Selected system — Soft Ink
