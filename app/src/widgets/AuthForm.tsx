@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖 React 的登录/注册/验证码局部状态与输入框引用、共享 Button/Input/PasswordInput，以及 shared/supabase 认证服务
- * [OUTPUT]: 对外提供登录、双密码注册、六格邮箱验证码与 Google OAuth 共用的 AuthForm；忘记密码仅保留无动作按钮，认证成功只通知页面进入工作区
+ * [INPUT]: 依赖 React 的登录/注册/验证码局部状态与输入框引用、共享 Button/GlowButton/Input/PasswordInput，以及 shared/supabase 认证服务
+ * [OUTPUT]: 对外提供登录、双密码注册、六格邮箱验证码与 Google OAuth 共用的 AuthForm；主提交动作用墨蓝流光 GlowButton 承载，忘记密码仅保留无动作按钮，认证成功只通知页面进入工作区
  * [POS]: widgets 的唯一认证表单，由 LoginPage 承载；表单负责认证步骤，页面负责布局和导航，不直接持有 Supabase client
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -27,6 +27,7 @@ import {
 } from "../shared/supabase/auth";
 import {
   Button,
+  GlowButton,
   Input,
   PasswordInput,
 } from "../shared/design-system/components";
@@ -368,14 +369,13 @@ export function AuthForm({ onAuthenticated }: AuthFormProps) {
             </p>
           ) : null}
 
-          <Button
+          <GlowButton
             className="auth-submit-button w-full"
             disabled={busy}
             type="submit"
-            variant="primary"
           >
             {busy ? "处理中…" : isRegisterMode ? "注册" : "登录"}
-          </Button>
+          </GlowButton>
 
           <p className="auth-mode-switch">
             {isRegisterMode ? "已有账号？" : "还没有账号？"}

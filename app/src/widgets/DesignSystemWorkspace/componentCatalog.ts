@@ -12,6 +12,7 @@ export type DesignSystemSampleId =
   | "SpatialRhythm"
   | "RadiusElevationMotion"
   | "Button"
+  | "GlowButton"
   | "Skeleton"
   | "SegmentedControl"
   | "Input"
@@ -65,6 +66,7 @@ export const designSystemSamples: DesignSystemSample[] = [
   { category: "Foundations", id: "SpatialRhythm", name: "Spacing", summary: "4px 基线与 4/8/12/16/24/32/48/64/96 主节奏，32/36/48px 固定界面尺寸。" },
   { category: "Foundations", id: "RadiusElevationMotion", name: "Radius · Elevation · Motion", summary: "8/16/12/16/20px 配套曲率、16px Control 与冻结的 12px inner 同心样板，以及 160/260/320/600ms 时间层级。" },
   { category: "Primitives", id: "Button", name: "Button", summary: "Soft Ink Primary、Paper Secondary、Ghost 与唯一实心红色 Danger；极轻同色面光、中性落地影，press 原地收紧 scale(0.98)。" },
+  { category: "Primitives", id: "GlowButton", name: "Glow CTA", summary: "登录/升级一类强调 CTA：墨蓝底色 + WebGL2 半分辨率流光 + 顶部玻璃高光三层合成；光色取品牌 --primary，减少动态呈静态一帧，无 WebGL2 静默降级为底色+高光。" },
   { category: "Primitives", id: "Input", name: "Input", summary: "纯 Paper、Hairline 和清晰 focus ring；无 inset shadow。" },
   { category: "Primitives", id: "Select", name: "Select", summary: "键盘可达选择器，菜单使用 12px 曲率和克制浮层层级。" },
   { category: "Primitives", id: "SegmentedControl", name: "Segmented Control", summary: "平整轨道，选中项只依靠 Paper 与文字对比。" },

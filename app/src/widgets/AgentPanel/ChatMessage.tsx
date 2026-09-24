@@ -1,13 +1,13 @@
 /**
- * [INPUT]: 依赖 FoluneUIMessage 的 AI SDK 有序文本/reasoning/工具 parts、过程分区与 design-system AI 消息组件
- * [OUTPUT]: 对外提供纯净用户消息、首 token 前失败时退出空回复占位、正文开始时自动收起的单一过程区及回复末尾 Undo2 图标与「撤销」短标签的 assistant 回复
+ * [INPUT]: 依赖 FoluneUIMessage 的 AI SDK 有序 parts、覆盖工具续写间隙的整轮 activity、本轮读取快照的工具命名、过程分区与 design-system AI 消息组件
+ * [OUTPUT]: 对外提供用户/assistant 回复、按真实 activity 退出的空回复占位、隔离披露/撤销状态的过程区及整轮结束后的撤销入口
  * [POS]: AgentPanel 消息语义适配层，只负责对话与过程；人工审批由 AgentConversation 固定在 Composer 上方，冻结上下文不进入对话视觉层
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
 import { ArrowUUpLeftIcon } from "../../shared/design-system/icons";
-import { memo, useState } from "react";
-import { getToolName, isToolUIPart } from "ai";
+import { memo, useMemo, useState } from "react";
+import { isToolUIPart } from "ai";
 
 import type {
   AiCommand,
@@ -24,7 +24,7 @@ import { MarkdownReadingView } from "../MarkdownReadingView";
 import { AgentProcessDisclosure } from "./AgentProcessDisclosure";
 import type { AssistantActivity } from "./activityState";
 import { deriveAgentMessagePresentation } from "./messagePresentation";
-import { getAgentToolPresentation } from "./toolPresentation";
+import { getAgentToolPresentations } from "./toolPresentation";
 
 type ChatMessageProps = {
   activity: AssistantActivity;
@@ -35,10 +35,8 @@ type ChatMessageProps = {
 
 type AssistantMessageContentProps = {
   activity: AssistantActivity;
-  finalText: string;
+  message: FoluneUIMessage;
   onProgress?: () => void;
-  processParts: FoluneUIMessage["parts"];
-  undoCommands: AiCommand[];
   onUndo: ChatMessageProps["onUndo"];
 };
 
@@ -58,15 +56,22 @@ function getMessageText(message: FoluneUIMessage) {
 
 function AssistantMessageContent({
   activity,
-  finalText,
+  message,
   onProgress,
   onUndo = async () => undefined,
-  processParts,
-  undoCommands,
 }: AssistantMessageContentProps) {
   const [undoState, setUndoState] = useState<"idle" | "running" | "done">("idle");
+  const [publishedAnswerIndexes, setPublishedAnswerIndexes] = useState<readonly number[]>([]);
   const responseActive = activity !== "none";
   const processActive = activity === "thinking" || activity === "tool";
+  const { finalText, processParts, undoCommands, answerPartIndexes } = deriveAgentMessagePresentation(
+    message, processActive, publishedAnswerIndexes,
+  );
+  // 已经给用户读到的正文不能再搬回折叠区；只保存 part 位置，文本仍以 SDK 最新值为准。
+  if (answerPartIndexes.some((index) => !publishedAnswerIndexes.includes(index))) {
+    setPublishedAnswerIndexes(answerPartIndexes);
+  }
+  const toolPresentations = useMemo(() => getAgentToolPresentations(message.parts), [message.parts]);
   const hasProcess = processParts.length > 0;
 
   return (
@@ -77,7 +82,9 @@ function AssistantMessageContent({
       process={hasProcess ? (
         <AgentProcessDisclosure
           active={processActive}
+          autoExpand={publishedAnswerIndexes.length === 0}
           activeLabel={activity === "tool" ? "正在处理" : "正在思考"}
+          onProgress={onProgress}
         >
           {processParts.map((part, index) => {
             if (part.type === "text" || part.type === "reasoning") {
@@ -96,8 +103,7 @@ function AssistantMessageContent({
               return null;
             }
 
-            const toolName = getToolName(part);
-            const presentation = getAgentToolPresentation(toolName, part);
+            const presentation = toolPresentations.get(part.toolCallId)!;
 
             return (
               <div className="agent-tool-stack" key={part.toolCallId}>
@@ -115,7 +121,7 @@ function AssistantMessageContent({
       )}
       streaming={activity === "streaming"}
       />
-      {undoCommands.length > 0 ? (
+      {undoCommands.length > 0 && !responseActive ? (
         <div aria-label="回复操作" className="agent-response-actions">
           <Button
             className="agent-response-action"
@@ -137,12 +143,9 @@ function AssistantMessageContent({
   );
 }
 
-function getAssistantPresentation(message: FoluneUIMessage) {
-  const presentation = deriveAgentMessagePresentation(message);
-
-  return presentation.finalText || presentation.processParts.length > 0
-    ? presentation
-    : undefined;
+function hasAssistantContent(message: FoluneUIMessage) {
+  return message.parts.some((part) => isToolUIPart(part)
+    || ((part.type === "text" || part.type === "reasoning") && part.text.trim().length > 0));
 }
 
 // memo 化: 历史回复在正文编辑时不应重跑 remark/rehype 全量解析。
@@ -175,21 +178,18 @@ export const ChatMessage = memo(function ChatMessage({
     return null;
   }
 
-  const presentation = getAssistantPresentation(message);
-
-  if (!presentation) {
+  if (!hasAssistantContent(message)) {
     return null;
   }
 
   return (
     <article className="agent-chat-turn">
       <AssistantMessageContent
+        key={message.id}
         activity={activity}
-        finalText={presentation.finalText}
+        message={message}
         onProgress={onProgress}
         onUndo={onUndo}
-        processParts={presentation.processParts}
-        undoCommands={presentation.undoCommands}
       />
     </article>
   );
@@ -201,19 +201,16 @@ export function LiveAssistantTurn({
   onProgress,
   onUndo = async () => undefined,
 }: LiveAssistantTurnProps) {
-  const presentation = message ? getAssistantPresentation(message) : undefined;
-  if (activity === "none" && !presentation) return null;
-
+  if (activity === "none" && (!message || !hasAssistantContent(message))) return null;
   return (
     <article className="agent-chat-turn">
-      {presentation ? (
+      {message && hasAssistantContent(message) ? (
         <AssistantMessageContent
+          key={message?.id}
           activity={activity}
-          finalText={presentation.finalText}
+          message={message}
           onProgress={onProgress}
           onUndo={onUndo}
-          processParts={presentation.processParts}
-          undoCommands={presentation.undoCommands}
         />
       ) : (
         <ThinkingIndicator

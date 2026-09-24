@@ -148,6 +148,9 @@
     border-radius: var(--radius-control);
     corner-shape: var(--corner-shape-smooth);
     background: transparent;
+    /* 负外边距抵消内边距：图标左缘因此与正文左缘对齐，hover 药丸仍保留内边距，
+     * 使收起的胶囊与下面的正文看起来是同一条左轨，而不是缩进一块。 */
+    margin-inline-start: calc(var(--spacing) * -1.25);
     padding: 0 calc(var(--spacing) * 1.25);
     color: var(--muted-foreground);
     cursor: pointer;
@@ -184,7 +187,7 @@
   }
 
   .agent-process-disclosure + .ds-streaming-text {
-    margin-top: calc(var(--spacing) * 4);
+    margin-top: calc(var(--spacing) * 2);
   }
 
   .ds-thinking-indicator {

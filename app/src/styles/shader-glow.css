@@ -1,0 +1,131 @@
+/**
+ * [INPUT]: 消费 index.css 的 --primary 系列、--button-radius/--corner-shape-smooth、--press-scale/--motion-* 与 button.css 暴露的 --button-font-size/--button-line-height/--button-content-gap 控件文字 token；所有表面继承宿主曲线，中间流光层由 ShaderGlow 的 canvas 提供，底色提供 GPU 不可用时的静态柔光
+ * [OUTPUT]: 对外提供 .glow-button 及其 base/flow/canvas/sheen/content 合成层的深蓝强调 CTA 视觉与三态反馈，底层蓝色柔光与低白度高光不冲淡底色
+ * [POS]: app/src/styles 的强调 CTA 专用视觉层，与 button.css 平级；以「墨蓝底色渐变 + 半分辨率 blur 流光 + 玻璃高光」三层叠加，由 GlowButton 组合，不改动标准 Button 材质
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+@layer components {
+  .glow-button {
+    --glow-button-height: 2.75rem;
+    --glow-sheen-top: rgba(255, 255, 255, 0.1);
+    --glow-sheen-hairline: rgba(255, 255, 255, 0.22);
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    height: var(--glow-button-height);
+    min-height: var(--glow-button-height);
+    padding: 0 var(--glow-button-padding-inline, 1.25rem);
+    border: 0;
+    border-radius: var(--button-radius);
+    corner-shape: var(--corner-shape-smooth);
+    background: transparent;
+    color: var(--primary-foreground);
+    font-size: var(--button-font-size);
+    font-weight: var(--weight-action, 650);
+    line-height: var(--button-line-height);
+    letter-spacing: 0.006em;
+    white-space: nowrap;
+    cursor: pointer;
+    transform: scale(1);
+    box-shadow:
+      inset 0 0 0 1px rgba(0, 0, 0, 0.14),
+      0 1px 2px -1px rgba(0, 0, 0, 0.18),
+      0 3px 8px -4px color-mix(in srgb, var(--primary) 35%, transparent);
+    transition:
+      transform var(--motion-fast) var(--ease-standard),
+      box-shadow var(--motion-fast) var(--ease-standard),
+      filter var(--motion-fast) var(--ease-standard);
+  }
+
+  .glow-button-base,
+  .glow-button-flow,
+  .glow-button-sheen {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    corner-shape: inherit;
+  }
+
+  /* 1) 底: 品牌墨蓝对角渐变 */
+  .glow-button-base {
+    z-index: 0;
+    /* 稳定柔光托底：着色器暗相位或 GPU 不可用时仍有完整材质。 */
+    background:
+      radial-gradient(ellipse at 32% 100%, color-mix(in srgb, var(--primary) 85%, var(--primary-hover)), transparent 65%),
+      linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--primary) 88%, black) 0%,
+      var(--primary) 52%,
+      var(--primary-hover) 100%
+    );
+  }
+
+  /* 2) 流光: 半分辨率 canvas 交给 6px 模糊糊成流动光 */
+  .glow-button-flow {
+    z-index: 1;
+    overflow: hidden;
+  }
+
+  .glow-button-canvas {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    filter: blur(6px);
+  }
+
+  /* 3) 玻璃高光: 顶部 1px 亮边 + 向下衰减 */
+  .glow-button-sheen {
+    z-index: 2;
+    background: linear-gradient(to bottom, var(--glow-sheen-top), transparent 62%);
+    box-shadow: inset 0 1px 0 0 var(--glow-sheen-hairline);
+  }
+
+  .glow-button-content {
+    position: relative;
+    z-index: 3;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--button-content-gap);
+  }
+
+  /* hover 只提亮玻璃高光与外发光, 不位移 */
+  .glow-button:not(:disabled):hover {
+    --glow-sheen-top: rgba(255, 255, 255, 0.18);
+    box-shadow:
+      inset 0 0 0 1px rgba(0, 0, 0, 0.14),
+      0 2px 4px -1px rgba(0, 0, 0, 0.2),
+      0 4px 10px -4px color-mix(in srgb, var(--primary) 40%, transparent);
+  }
+
+  /* 按下原地收紧, 与全站 Button 共读同一份 press token */
+  .glow-button:not(:disabled):active {
+    transform: scale(var(--press-scale));
+    transition-duration: var(--motion-press);
+  }
+
+  .glow-button:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--ring) 66%, transparent);
+    outline-offset: 3px;
+  }
+
+  .glow-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.62;
+  }
+
+  .glow-button.glow-button-loading {
+    cursor: wait;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .glow-button:not(:disabled):active { transform: none; }
+  }
+}

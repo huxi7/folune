@@ -1,9 +1,11 @@
 /**
  * [INPUT]: 依赖 AgentPanel 客户端工具协议、AI SDK 工具状态与 共享 Lucide 极简图标
- * [OUTPUT]: 对外提供基于真实 input/output 的人话动作名称、安全轻量详情及未知工具中性回退
+ * [OUTPUT]: 对外提供基于本轮读取快照与真实 input/output 的人话动作名称、安全轻量详情及未知工具中性回退
  * [POS]: AgentPanel 工具展示适配层，隔离协议载荷与 Message UI，禁止 UUID、正文、Token 和原始 JSON 进入界面
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
+
+import { getToolName, isToolUIPart, type UIMessage } from "ai";
 
 import {
   ConfettiIcon,
@@ -132,6 +134,7 @@ export const normalizeAgentToolName = (toolName: string): string =>
 export function getAgentToolPresentation(
   toolName: string,
   part: ToolPartLike,
+  targetTitle?: string,
 ): AgentToolPresentation {
   toolName = normalizeAgentToolName(toolName);
   if (toolName === "celebration") {
@@ -156,7 +159,10 @@ export function getAgentToolPresentation(
   }
 
   if (toolName === "read_memo") {
-    const title = readTitle(part.output);
+    const title = readTitle(part.output)
+      ?? readTitle(asRecord(asRecord(part.output)?.after_state)?.node)
+      ?? readTitle(asRecord(asRecord(part.output)?.before_state)?.node)
+      ?? safeText(targetTitle, MAX_TITLE_LENGTH);
     return {
       details: withTarget(
         title ? `「${title}」` : undefined,
@@ -168,7 +174,10 @@ export function getAgentToolPresentation(
   }
 
   if (toolName === "edit_memo") {
-    const title = readTitle(part.output);
+    const title = readTitle(part.output)
+      ?? readTitle(asRecord(asRecord(part.output)?.after_state)?.node)
+      ?? readTitle(asRecord(asRecord(part.output)?.before_state)?.node)
+      ?? safeText(targetTitle, MAX_TITLE_LENGTH);
     return {
       details: withTarget(
         title ? `「${title}」` : undefined,
@@ -183,7 +192,8 @@ export function getAgentToolPresentation(
     const input = asRecord(part.input);
     const output = asRecord(part.output);
     const op = readField(input, "op");
-    const title = readTitle(input) ?? readTitle(asRecord(output?.after_state)?.node);
+    const title = readTitle(input) ?? readTitle(asRecord(output?.after_state)?.node)
+      ?? readTitle(asRecord(output?.before_state)?.node) ?? safeText(targetTitle, MAX_TITLE_LENGTH);
     const operation = op === "create" ? "创建笔记"
       : op === "rename" ? "重命名笔记"
       : op === "move" ? "移动笔记"
@@ -200,7 +210,8 @@ export function getAgentToolPresentation(
   if (["create_node", "rename_node", "move_node", "reorder_node", "trash_node"].includes(toolName)) {
     const input = asRecord(part.input);
     const output = asRecord(part.output);
-    const title = readTitle(input) ?? readTitle(asRecord(output?.after_state)?.node);
+    const title = readTitle(input) ?? readTitle(asRecord(output?.after_state)?.node)
+      ?? readTitle(asRecord(output?.before_state)?.node) ?? safeText(targetTitle, MAX_TITLE_LENGTH);
     const base = agentClientToolPresentation[toolName as keyof typeof agentClientToolPresentation];
     return {
       details: withTarget(title ? `「${title}」` : undefined, resultDetails(part, "命令已安全执行。")),
@@ -214,4 +225,33 @@ export function getAgentToolPresentation(
     icon: ToolboxIcon,
     name: "执行操作",
   };
+}
+
+// 已读取的结构随消息持久化；删除的乐观投影或失败不会抹掉动作名称。
+// 单次顺序扫描，禁止为每个工具重新请求整棵树或扫描全部笔记。
+export function getAgentToolPresentations(parts: UIMessage["parts"]) {
+  const titles = new Map<string, string>();
+  const presentations = new Map<string, AgentToolPresentation>();
+  const rememberNode = (value: unknown) => {
+    const node = asRecord(value);
+    const title = readTitle(node);
+    if (typeof node?.id === "string" && title) titles.set(node.id, title);
+  };
+  for (const part of parts) {
+    if (!isToolUIPart(part)) continue;
+    const toolName = getToolName(part);
+    const output = asRecord(part.output);
+    if (normalizeAgentToolName(toolName) === "read_tree" && Array.isArray(output?.nodes)) {
+      for (const node of output.nodes) rememberNode(node);
+    }
+    rememberNode(asRecord(output?.before_state)?.node);
+    rememberNode(output);
+    const input = asRecord(part.input);
+    const targetId = input?.node_id ?? output?.target_node_id;
+    presentations.set(part.toolCallId, getAgentToolPresentation(
+      toolName, part, typeof targetId === "string" ? titles.get(targetId) : undefined,
+    ));
+    rememberNode(asRecord(output?.after_state)?.node);
+  }
+  return presentations;
 }

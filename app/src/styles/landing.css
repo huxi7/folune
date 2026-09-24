@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖全局同源 landing-paper/landing-text（保持既有色值）、共享 Button/Blueprint DOM、营销顶栏品牌/导航/双动作分组与 DS compact 尺寸、LandingRailTexture 的一次性显现状态；三种侧纹直接动画化各自 mask-position；HeroBackdrop、NotePaper 展示变体、六格方法指南、四项真实功能细节、BrandMark 紧边界组合及旧印章可见体量；顶栏只把共享 5:4 图字比缩至 20px 图高，参考字体/纹理、独立 Demo iframe 和 ShowcaseBackdrop
- * [OUTPUT]: 对外提供 60svh 颗粒 Hero 的 78% 后景与 65% 中央阅读层、同源文字与共轴导轨、APP 外壳、两处动态展示后景、侧栏叙述与原句标记的双纸面、分类序号横向六格、细节展开、信纸、评价、CTA 暖白双层平滑底座、放大标题与紧凑按钮和页脚；仅 Landing 禁止纵向越界回弹
+ * [OUTPUT]: 对外提供 60svh 颗粒 Hero 的 78% 后景与 65% 中央阅读层、同源文字与共轴导轨、APP 外壳、两处动态展示后景、侧栏叙述与原句标记的双纸面、分类序号横向六格、细节展开、信纸、评价、CTA 暖白双层平滑底座、放大标题与紧凑按钮和页脚；整页噪点位于隔离背景层，不覆盖正文/控件/视频；仅 Landing 禁止纵向越界回弹
  * [POS]: styles 的 Landing 局部样式；四章各一对空轨共用桌面 48px / 移动 28px 高度，底色与连续竖轨沿用页面骨架；评价/指南/博客的章节外框让侧纹连续覆盖上下空轨与正文，内侧横线止于主轨；每侧七条纸缘线与两端空隙等分轨间，三组大小明显交替的扁平横纹与回环以 15:16 纵横周期排列，密格点同样覆盖整章，左右各 16% 渐隐；Footer 淡字位于细密斜纹之下，按钮与墨蓝消费 DS；功能区维持 40px 留白与外扩 6px 虚线框，细节仅展开项显示点阵
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -12,7 +12,8 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
 .ds-page { min-height:100vh; color:var(--foreground); background:var(--background); font-family:var(--font-sans); }
 .ds-container { width:100%; max-width:var(--layout-page-max); padding-inline:var(--layout-page-gutter); margin-inline:auto; }
 .landing-blueprint { position:relative; --landing-width:1120px; --landing-gutter:48px; --blueprint-content-width:min(var(--landing-width),calc(100vw - 2 * var(--landing-gutter))); --blueprint-main-inset:calc((100vw - var(--blueprint-content-width)) / 2); --blueprint-edge-inset:48px; --blueprint-pin-size:8px; --landing-border:#dadde2; --landing-bg:var(--landing-paper); --landing-ink:var(--landing-text); --landing-accent:var(--primary); --landing-heading:Landing Serif,var(--font-serif); --landing-body:Landing Writer,var(--font-sans); overflow-x:clip; background:var(--landing-bg); color:var(--landing-ink); font-family:var(--landing-body); font-size:13px; line-height:1.5; }
-.landing-reference::before { content:""; position:absolute; inset:0; z-index:5; pointer-events:none; opacity:.03; background:url("/landing-reference/grain.png") 0 0/180px 180px; }
+.landing-reference { isolation:isolate; }
+.landing-reference::before { content:""; position:absolute; inset:0; z-index:-1; pointer-events:none; opacity:.03; background:url("/landing-reference/grain.png") 0 0/180px 180px; }
 .landing-blueprint h1,.landing-blueprint h2,.landing-blueprint h3,.landing-blueprint p,.landing-blueprint figure { margin:0; }
 .landing-blueprint h1,.landing-blueprint h2 { font-family:var(--landing-heading); font-weight:400; }
 .landing-blueprint h2 { font-size:25.4px; line-height:32px; letter-spacing:0; color:#000; }
@@ -40,7 +41,9 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
 .marketing-nav-link img,.marketing-edition img { flex:none; }
 .marketing-edition { display:inline-flex; align-items:center; gap:8px; color:#727a89; font:11px/15.71px Menlo,monospace; }
 .marketing-edition kbd { width:auto; gap:2px; padding-inline:4px; }
-.marketing-nav-actions .ds-button { width:100%; }
+.marketing-nav-actions .ds-button,.marketing-nav-actions .glow-button { width:100%; }
+.marketing-nav-actions .glow-button { --glow-button-height:var(--control-height-compact); --glow-button-padding-inline:var(--space-3); }
+.landing-actions .glow-button { --glow-button-height:var(--button-height-default); --glow-button-padding-inline:var(--button-padding-inline); }
 .blueprint-frame { position:relative; width:var(--blueprint-content-width); margin-inline:auto; }
 .blueprint-rails { position:absolute; inset:0; pointer-events:none; z-index:2; }
 .blueprint-rail { position:absolute; top:0; bottom:0; width:1px; background:var(--landing-border); transform:translateX(-50%); }
@@ -152,7 +155,7 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
 .landing-hero h1 { font-size:42.9px; line-height:1.4; letter-spacing:.02em; text-align:center; color:var(--landing-accent); }
 .landing-hero-copy p { max-width:440px; margin:8px auto 0; text-align:center; font-size:16px; line-height:24px; letter-spacing:0; color:color-mix(in srgb,var(--landing-ink) 55%,var(--landing-bg)); }
 .landing-actions { display:flex; justify-content:center; gap:12px; }
-.landing-actions .ds-button { min-width:112px; }
+.landing-actions .ds-button,.landing-actions .glow-button { min-width:112px; }
 /* ---- 中文共用 DS 字体回退，英文保留原稿；按钮材质完全交还 DS ---- */
 .landing-blueprint .ds-button { font-family:var(--landing-body); }
 .landing-blueprint p,.landing-blueprint blockquote { letter-spacing:0; }
@@ -361,6 +364,7 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
 }
 .landing-final-cta .landing-actions { --button-height-default:var(--control-height-compact); --button-padding-inline:var(--space-3); gap:8px; }
 .landing-final-cta .landing-actions .ds-button { min-width:0; }
+.landing-final-cta .landing-actions .glow-button { --glow-button-height:var(--control-height-compact); --glow-button-padding-inline:var(--space-3); min-width:0; }
 .landing-final-cta h2 { font-size:clamp(32px,4vw,48px); line-height:1.25; color:var(--landing-accent); }.landing-final-cta p { margin-top:8px; font-size:16px; line-height:24px; letter-spacing:0; }
 /* ---- Footer：品牌占两份宽度，四组导航各占一份 ---- */
 .landing-footer { --landing-border:rgb(255 255 255 / 10%); --landing-footer-hatch:rgb(255 255 255 / 16%); background:var(--landing-accent); color:#e1e3e7; letter-spacing:0; }

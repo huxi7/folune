@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖真实 APP 功能截图、MarketingLink、LandingConnections、LandingGuides、LandingFeatureDetails、LandingBlog、LandingRailTexture、BlueprintDivider、共享 BrandMark 图字组合/独立印章与 huxi 头像
+ * [INPUT]: 依赖真实 APP 功能截图、MarketingLink、LandingConnections、LandingGuides、LandingFeatureDetails、LandingBlog、LandingRailTexture、BlueprintDivider、共享 BrandMark 图字组合/独立印章、LandingActions 单个箭头开始 CTA 与 huxi 头像
  * [OUTPUT]: 正文浮现标记交给营销壳，章节/导轨/卡片骨架静止；对外提供五项图文一一对应的 Folune 功能与整理/画布文章入口，以及真实关联展示、独立功能细节、六篇方法指南、评价占位、创作者信件和博客；评价、产品功能组、指南、精选博客各由一对上下空轨包围
  * [POS]: widgets 的营销叙事组合；LandingChapter 成对生成上下空轨，并让评价/指南/博客的一层侧纹贯穿空轨与正文，内侧横线仅落在主轨内，外侧仍共用斜纹边界；产品功能、关联展示与功能细节作为完整章节，内部不插空轨；创作者信件沿用首稿叙事，与 Laper 参考同构：问候与自我介绍各占一行，再以长短有别的段落分承初衷、打磨、AI 分寸与期待，一段只说一件事，由 huxi 个人署名
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -176,6 +176,6 @@ export function LandingSections(){
   <LandingBlog />
   </LandingChapter>
   <BlueprintDivider fullBleed />
-  <section className="landing-final-cta"><BrandMark className="landing-app-icon" iconOnly /><div data-marketing-reveal><h2>从今天，开始记录</h2><p>让想法落在纸上，让积累慢慢生长。</p></div><LandingActions /></section>
+  <section className="landing-final-cta"><BrandMark className="landing-app-icon" iconOnly /><div data-marketing-reveal><h2>从今天，开始记录</h2><p>让想法落在纸上，让积累慢慢生长。</p></div><LandingActions startOnly /></section>
  </>;
 }

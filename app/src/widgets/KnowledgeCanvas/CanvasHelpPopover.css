@@ -1,0 +1,41 @@
+/**
+ * [INPUT]: 依赖底部工具栏的真实视口坐标、共享键帽及项目表面/文字/空间 token
+ * [OUTPUT]: 提供无背景遮罩的帮助面板、动作与手势两列排版、连接说明及窄屏滚动
+ * [POS]: CanvasHelpPopover 的局部视觉边界，与主画布几何和通用 Dialog 相互独立
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+@layer components {
+  .canvas-help-popover {
+    position: fixed;
+    z-index: calc(var(--layer-dialog) - 1);
+    display: flex;
+    width: min(24rem, calc(100vw - var(--space-3) * 2));
+    flex-direction: column;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-panel);
+    corner-shape: var(--corner-shape-smooth);
+    background: var(--card);
+    box-shadow: var(--shadow-sm);
+    color: var(--foreground);
+    outline: none;
+    translate: -50% 0;
+    text-align: left;
+  }
+  .canvas-help-header { display: flex; flex: 0 0 auto; align-items: center; justify-content: space-between; padding: var(--space-2) var(--space-3) var(--space-1) var(--space-4); }
+  .canvas-help-header h2 { display: flex; align-items: center; gap: var(--space-2); font-size: var(--type-ui); font-weight: var(--weight-section); line-height: var(--leading-ui); }
+  .canvas-help-header h2 > svg { color: var(--muted-foreground); }
+  .canvas-help-close { width: var(--control-height-compact); height: var(--control-height-compact); flex: 0 0 auto; }
+  .canvas-help-body { min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 0 var(--space-4) var(--space-3); }
+  .canvas-help-section + .canvas-help-section { margin-top: var(--space-3); }
+  .canvas-help-section h3 { margin: var(--space-2) 0 var(--space-1); color: var(--muted-foreground); font-size: var(--type-caption); font-weight: var(--weight-caption); line-height: var(--leading-caption); }
+  .canvas-help-row { display: flex; min-height: var(--control-height-compact); align-items: center; justify-content: space-between; gap: var(--space-3); font-size: var(--type-label); line-height: var(--leading-label); }
+  .canvas-help-row dt { flex: 0 0 auto; font-weight: var(--weight-input); }
+  .canvas-help-row dd { display: flex; min-width: 0; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: var(--space-1); color: var(--muted-foreground); text-align: right; }
+  .canvas-help-context { margin-right: var(--space-1); font-size: var(--type-caption); }
+  .canvas-help-connection { display: flex; align-items: flex-start; gap: var(--space-2); margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--border); color: var(--muted-foreground); font-size: var(--type-label); line-height: 1.7; }
+  .canvas-help-connection > svg { flex: 0 0 auto; margin-top: 2px; }
+  .canvas-help-connection p { margin: 0; }
+  .canvas-help-connection span { font-size: var(--type-caption); }
+  .canvas-help-footer { display: flex; flex: 0 0 auto; align-items: center; justify-content: space-between; gap: var(--space-2); border-top: 1px solid var(--border); padding: var(--space-2) var(--space-4); color: var(--muted-foreground); font-size: var(--type-caption); line-height: var(--leading-caption); }
+  .canvas-help-footer > span { display: inline-flex; align-items: center; gap: var(--space-1); }
+}

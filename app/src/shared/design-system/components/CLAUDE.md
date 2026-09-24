@@ -3,12 +3,15 @@
 
 成员清单
 motionLifecycle.test.tsx: 验证父面板退出不连带折叠常驻详情； 真实 DOM 行为门禁，覆盖菜单快速反向开关、退出交互隔离、input 实例/光标保留、菜单/模态分层 Escape 与嵌套滚动锁；动画完成时间另由浏览器测量
-Collapse.tsx: 常驻详情同样使用独立且不传播父退出的 presence 边界，防止 Panel 退出使内部高度归零； Tree/披露控件的高度生命周期原语，210ms 同源曲线、可打断、退出立即 inert；keepMounted 保留工具详情状态，减少动态效果即时改变高度
+Collapse.tsx: 常驻详情同样使用独立且不传播父退出的 presence 边界，防止 Panel 退出使内部高度归零； Tree/披露控件的高度生命周期原语，默认 210ms tree 或 160/130ms micro 同源曲线、逐帧回调支持滚动对齐、可打断、退出立即 inert；keepMounted 保留工具详情状态，减少动态效果即时改变高度
 PresenceSurface.tsx: Menu/Popover/Panel 共用的无额外定位包装入退场基础件；关闭即 inert、完成后卸载，MotionSurface 支持外层 presence，定位和焦点策略留给语义组件
 PersistentView.tsx: 保留实例的视图基础件；motion=from-left 选择从左侧进入的 24px 承接，fill 以四边定位维持 Panel 退出高度，默认仍为轻淡换；旧视图立即脱离布局并 inert、淡出完成 hidden，切回复用原实例和草稿，父容器提供相对定位
 .gitkeep: 保留本地组件目录
 CLAUDE.md: 记录本地组件目录职责与文档协议
 Button.tsx: 本地 36px 标准命令组件，使用 14px/18px UI 字体、14px 横向留白与 6px 图文间距，封装 primary、弱边缘 secondary、ghost、实心红色 danger、square 与正交 loading 状态；以统一 16px smooth corner、极轻纵向同色面光和短中性落地阴影形成克制实体层级，不绘制清晰全周内环，hover 固定原位并放宽外影，按下原地收紧且撤回外影（共读 index.css 的 --press-scale，Reduced Motion 归 1），Ghost 始终无实体阴影；非 Danger loading 自动切换为独立蓝灰 Processing 状态面，继续联动原生 disabled/aria-busy，并以 spinner 配合带 16 度倾角的 3.2s 低频窄 shimmer
+ShaderGlow.tsx: 唯一 WebGL2 光线步进原语；从宿主品牌 token 构建渐变，立即绘制非空初始相位并保留静态帧；ResizeObserver 独立负责布局尺寸，离屏/隐藏/减少动态共同控制唯一 RAF，恢复上下文重建资源，所有退出路径释放资源；GPU 不可用时由消费方底色托底
+ShaderGlow.test.tsx: 使用可控 WebGL/Observer/RAF 验证 StrictMode 首帧、暂停续播、静态尺寸重绘、上下文恢复与失败清理；不替代真实 GPU 和视觉验收
+GlowButton.tsx: 与 Button 平级、材质独立的强调型 CTA，仅用于登录/升级一类主动作；以「墨蓝底色对角渐变 + ShaderGlow 流光 + 玻璃高光」三层在同一 overflow 裁剪的 squircle 内叠加合成质感，复用全站 --press-scale 与 ds-button-spinner，视觉数值全部落在 styles/shader-glow.css，不侵入也不改动标准 Button 的四个变体
 Skeleton.tsx: 统一低对比占位加载原语，提供 rect/text/circle 形状、单组宽光带 SkeletonGroup 与 180ms 延迟出现/360ms 最短可见时长的 useDelayedSkeleton；业务只按真实内容结构组合，不自建动画或计时器
 SidebarButton.tsx: 本地 32px compact 侧栏导航原子组件，以 active、default/icon 等高尺寸、default/prominent 层级和 leading/label/trailing 槽位统一 APP 与账户模态框导航；与 36px Button 共享平滑圆角和材质语言但不强制等高，hover 固定原位，选中态和 prominent 态直接复用弱边缘的 Secondary Button 材质
 SegmentedControl.tsx: 紧凑互斥选择，保留 radiogroup/radio、单一 Tab 入口和方向键；只有共享选中底片做 layout 迁移，文字固定原位，减少动态效果取消底片滑动
@@ -17,6 +20,11 @@ MentionInput.tsx: 原生 contenteditable 多行输入件，以受控纯文本和
 MentionInput.test.ts: MentionInput 纯文本分段回归测试，锁定中文标题、最长标题优先和特殊字符标题的内联 token 边界
 PasswordInput.tsx: Input 家族的隐私输入组合件，复用 Input 内凹表面，提供受控明文/掩码切换、显隐图标按钮、aria-label/aria-pressed 与原生 input 属性/ref
 Card.tsx: 静态信息表面默认不动；显式 motion=lift 才启用 4px/1.012 的 hover 层级反馈，几何由 Motion、阴影由 CSS 单独拥有，减少动态效果取消空间变化
+WarmTooltip.tsx: React Bits 上游共享浮层适配，首次等待 360ms、温热窗口 300ms、同组 220ms 无回弹滑动；12px 字号、160ms/0.98/1px 淡入，无倾斜/箭头/引线；悬停与键盘焦点可达，点击/Escape/失焦/卸载结束提示，减少动态取消空间变化
+WarmTooltip.css: 提示定位层/表面分层与主题 token 接线，Portal 低于 Dialog，键帽独立由 KeyboardShortcut 提供
+WarmTooltip.LICENSE.md: React Bits WarmTooltip 的原始版权与 MIT + Commons Clause 许可
+KeyboardShortcut.tsx: 共享快捷键表现层，把组合键拆成真实键帽；Mac 使用 Command/Delete 符号，其他平台使用 Ctrl/Backspace，只呈现不绑定行为
+KeyboardShortcut.css: 22px 紧凑键帽、浅边框与底部细阴影，提示和帮助面板共用浅暗色语义
 Dialog.tsx: 全站唯一模态基础件，Portal 脱离祖先 transform、--layer-dialog 置于归档线/侧栏之上，独立 AnimatePresence 负责完整入退场；空嵌套 Dialog 不注册父退出以免悬挂，语义/焦点/滚动锁归 useModalLifecycle。默认 10px/0.985 浮现，motion=none 将纸面与遮罩完全交给原生 View Transition，遮罩永不命名
 AssistantMessage.tsx: AI 消息正文根，不绘制“助手”等可见身份标题，以零卡片表面依次组合可选过程槽、独立 StreamingText 最终正文与兼容 children 工具区；向纯文本/Markdown 渲染器透传统一词级动效状态，不拥有过程分区或折叠状态
 StreamingText.tsx: 首个真实 text part 后把 SSE 目标文本在同次上游更新中完整直出，不设置逐词显示队列、全文时间轴、冗余 performance 时钟或 useLayoutEffect 状态；历史正文保持原生文本，只有尾部最多 5 个词使用常数动画节点
@@ -37,9 +45,9 @@ Toast.test.tsx: 真实 Provider 的重复入栈/三条上限/悬停展开收回/
 Select.tsx: combobox/listbox 选择器，键盘焦点保留在 trigger、option 不增加 Tab 停靠点；上/下浮层共用 PresenceSurface 的锚点入退场，选择与关闭语义仍在本组件
 UserButton.tsx: 本地用户身份原子组件，提供可复用 UserAvatar 与显示头像、姓名、邮箱、展开状态的 UserButton 触发器，不包含业务跳转
 UserMenu.tsx: 账户身份与动作菜单，向上浮层共用 PresenceSurface；点击身份/设置前归还 trigger 焦点，再交给同一个 AccountDialog，退出即不再可操作
-index.ts: 基础组件稳定出口，包含 PresenceSurface/MotionSurface、PersistentView、Collapse 与 CardMotion；业务界面组合生产原语，不建立第二套动画
+index.ts: 基础组件稳定出口，包含 WarmTooltip/KeyboardShortcut、PresenceSurface/MotionSurface、PersistentView、Collapse 与 CardMotion；业务界面组合生产原语，不建立第二套动画
 
-职责: 本地组件目录；APP 文字按 app-typography.css 角色消费，Button/action、Input/Select/input、UserButton/navigation、Dialog/section；禁止组件新增局部数字字重，营销继续使用共享样式回退；首次无旧内容的稳定结构才使用统一 Skeleton，已有内容刷新必须优先保留内容，业务组件不得复制 shimmer；AI 最终正文永远不得拥有卡片表面，用户消息复用 Primary 主题，过程与正文的语义分区由业务层决定，ToolCallBubble 只消费已净化的人话详情；所有组件只消费 app/src/index.css 的静态语义 token 与 design-system/motion.ts 的统一动效与组件层 class，不得在组件中硬编码颜色值或引入第二套 UI 系统。
+职责: 本地组件目录；APP 文字按 app-typography.css 角色消费，Button/action、Input/Select/input、UserButton/navigation、Dialog/section；禁止组件新增局部数字字重，营销继续使用共享样式回退；首次无旧内容的稳定结构才使用统一 Skeleton，已有内容刷新必须优先保留内容，业务组件不得复制 shimmer；AI 最终正文永远不得拥有卡片表面，用户消息复用 Primary 主题，过程与正文的语义分区由业务层决定，ToolCallBubble 只消费已净化的人话详情；所有组件只消费 app/src/index.css 的静态语义 token 与 design-system/motion.ts 的统一动效与组件层 class，不得在组件中硬编码颜色值或引入第二套 UI 系统。ShaderGlow 是本层唯一获准持有 WebGL/GPU 表面的组件，其光色仍在运行期从 index.css 的 --primary token 解析派生而非硬编码，深浅主题随之重建纹理，故不构成第二套视觉系统；GlowButton 是唯一消费它的强调 CTA，材质与标准 Button 平级隔离。
 
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 

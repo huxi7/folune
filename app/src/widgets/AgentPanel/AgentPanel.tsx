@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 useConversationScroll 的挂载定位与退出冻结、 DS 实时动态偏好、 PersistentView 的有方向视图承接、DS Skeleton/输入表面浮现语义、useAiThreads、类型化 useChat/原生审批及既有 Composer/工具执行边界
- * [OUTPUT]: 对外提供 AI Native 右侧工作区；会话点击先切目标壳再异步载入，引用源精确对账，已批准工具幂等恢复，流式消息定点同步并以本地快照快速回显
+ * [OUTPUT]: 对外提供 AI Native 右侧工作区；只读工具参数到齐即并发执行，写工具经过流末审批门禁；整轮活动跨客户端工具/审批/续写持续，消息定点同步并以本地快照快速回显
  * [POS]: /app 右侧 AI Native V2 组合根；历史只负责导航，目标会话加载/失败在内容窗承接；api command 是唯一写事实源，Store 只做幂等投影与回滚
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -51,7 +51,7 @@ import {
 import type { MemoTreeNode } from "../../shared/api/memo";
 import { Button, MentionInput } from "../../shared/design-system/components";
 import { useMemoTreeStore } from "../../shared/store/memoTreeStore";
-import { deriveAssistantActivity } from "./activityState";
+import { deriveAssistantActivity, hasAssistantContinuation } from "./activityState";
 import {
   applyApprovalResponse,
   applyToolOutput,
@@ -178,6 +178,7 @@ function AgentConversation({
   const [respondingApprovalId, setRespondingApprovalId] = useState<string | null>(null);
   // 客户端工具 (客户端规划 + createAiCommand) 执行中: 流已结束但会话不空闲
   const [clientToolsRunning, setClientToolsRunning] = useState(false);
+  const [turnContinuing, setTurnContinuing] = useState(false);
   const composerRef = useRef<HTMLDivElement>(null);
   const manuallyApprovedToolCalls = useRef(new Set<string>());
   const memoToolExecutions = useRef(new Map<string, Promise<unknown>>());
@@ -252,13 +253,24 @@ function AgentConversation({
     transport,
     experimental_throttle: 32,
     sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
+    onToolCall: ({ toolCall }) => {
+      // 只读 I/O 与剩余模型流、审批和落账重叠；不 await 阻塞 SDK 消费下一个调用。
+      // 结果仍由 onFinish 统一发布，停止/失败时不把迟到结果写进下一条消息。
+      if (toolCall.toolName === "read_tree" || toolCall.toolName === "read_memo") {
+        void getClientToolExecution({
+          type: "dynamic-tool", toolName: toolCall.toolName,
+          toolCallId: toolCall.toolCallId, input: toolCall.input, state: "input-available",
+        }).catch(() => undefined);
+      }
+    },
     onFinish: ({ message, messages: finishedMessages, isAbort, isError }) => {
+      setTurnContinuing(!isAbort && !isError && hasAssistantContinuation(message));
       // 客户端工具执行期间必须计入 busy: 流已结束 (status=ready), 但客户端
       // 规划 + createAiCommand 两次网络往返还在跑。这几百毫秒内切换会话会
       // 卸载 AgentConversation —— command 已落库、树已改变, tool result 永久
       // 丢失, assistant 回复永远停在 input-available (根因 13)。
-      setClientToolsRunning(true);
-      void executePendingClientTools(message)
+      setClientToolsRunning(!isAbort && !isError);
+      void (isAbort || isError ? Promise.resolve() : executePendingClientTools(message))
         .finally(() => {
           setClientToolsRunning(false);
           if (isAbort || isError) {
@@ -285,23 +297,16 @@ function AgentConversation({
     await Promise.all(pending.map((part) => executeClientToolPart(part)));
   }
 
-  async function executeClientToolPart(
-    part: AgentToolPart,
-    durableBaseMessages?: readonly FoluneUIMessage[],
-  ) {
-    if (!isToolUIPart(part)) return;
+  function getClientToolExecution(part: AgentToolPart): Promise<unknown> {
+    const existing = memoToolExecutions.current.get(part.toolCallId);
+    if (existing !== undefined) return existing;
     const toolName = getToolName(part);
-    if (!isAgentClientToolName(clientTools, toolName)) return;
-    try {
+    // 同步 schema/Planner 失败也进入已记忆 promise，同一调用只能执行一次。
+    const execution = (async () => {
+      if (!isAgentClientToolName(clientTools, toolName)) throw new Error("未知客户端工具。");
       const normalizedInput = normalizeToolInput(part.input);
-      let execution = memoToolExecutions.current.get(part.toolCallId);
-      if (execution === undefined) {
-        // async IIFE 是必需的而不是风格: planMemoTool 同步抛错(节点不存在/版本已变化/
-        // 非法移动), 裸调用会让异常在 memoToolExecutions.set 之前逃逸, 拒绝态因此不被
-        // 记忆, 恢复扫描可能对同一 toolCallId 再规划再执行。IIFE 把同步抛错转成已记忆
-        // 的 rejected promise, 与原先 Worker 的 promise 语义逐位一致。
-        execution = isMemoClientToolName(toolName)
-          ? (async () => executeMemoToolPlan({
+      return isMemoClientToolName(toolName)
+          ? executeMemoToolPlan({
               accessToken,
               manuallyApproved: manuallyApprovedToolCalls.current.has(part.toolCallId),
               plan: planMemoTool(
@@ -311,11 +316,21 @@ function AgentConversation({
               ),
               threadId: thread.id,
               toolCallId: part.toolCallId,
-            }))()
+            })
           : executeAgentClientTool(clientTools, toolName, normalizedInput);
-        memoToolExecutions.current.set(part.toolCallId, execution);
-      }
-      const output = await execution;
+    })();
+    memoToolExecutions.current.set(part.toolCallId, execution);
+    return execution;
+  }
+
+  async function executeClientToolPart(
+    part: AgentToolPart,
+    durableBaseMessages?: readonly FoluneUIMessage[],
+  ) {
+    const toolName = getToolName(part);
+    if (!isAgentClientToolName(clientTools, toolName)) return;
+    try {
+      const output = await getClientToolExecution(part);
       const completedMessages = durableBaseMessages === undefined
         ? undefined
         : applyToolOutput(durableBaseMessages, part.toolCallId, {
@@ -376,6 +391,7 @@ function AgentConversation({
   const activity = deriveAssistantActivity(
     status,
     lastMessage?.role === "assistant" ? lastMessage : undefined,
+    turnContinuing || clientToolsRunning || respondingApprovalId !== null,
   );
   const liveAssistantIndex = lastMessage?.role === "assistant" ? messages.length - 1 : -1;
   const liveAssistantMessage = liveAssistantIndex >= 0 ? messages[liveAssistantIndex] : undefined;
@@ -436,6 +452,7 @@ function AgentConversation({
       || respondedMessages === undefined) return;
 
     respondingApprovalIds.current.add(id);
+    setTurnContinuing(true);
     setRespondingApprovalId(id);
     setApprovalError(null);
 
@@ -453,11 +470,13 @@ function AgentConversation({
         manuallyApprovedToolCalls.current.add(approvalPart.toolCallId);
         await executeClientToolPart(approvalPart, respondedMessages);
       } else {
+        setTurnContinuing(false);
         manuallyApprovedToolCalls.current.delete(approvalPart.toolCallId);
         rollbackAiToolCall(approvalPart.toolCallId);
       }
       await onThreadUpdated(respondedMessages);
     })().catch(() => {
+      setTurnContinuing(false);
       if (!settledApprovalIds.current.has(id)) {
         setMessages(previousMessages);
         setApprovalError("确认结果未能保存，请检查网络后重试。");
@@ -478,6 +497,7 @@ function AgentConversation({
         || respondingApprovalIds.current.has(part.approval.id)) continue;
 
       recoveredToolCalls.current.add(part.toolCallId);
+      setTurnContinuing(true);
       manuallyApprovedToolCalls.current.add(part.toolCallId);
       void executeClientToolPart(part, messages);
     }
@@ -495,6 +515,7 @@ function AgentConversation({
   const { messageListRef, scrollToLatestAuto } = useConversationScroll(messages, status, reduceMotion, present);
 
   const handleStop = useCallback(() => {
+    setTurnContinuing(false);
     cancelCelebration();
     void stop();
     composerRef.current?.focus({ preventScroll: true });
@@ -585,6 +606,7 @@ function AgentConversation({
       return;
     }
     setInputValue("");
+    setTurnContinuing(true);
     setMentionOpen(false);
     setMentionStart(null);
     const frozen = buildFrozenComposerContext(

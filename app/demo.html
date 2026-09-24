@@ -1,6 +1,6 @@
 <!doctype html>
 <!--
-  [INPUT]: 依赖 LandingDemo 入口与生产 APP 场景样式
+  [INPUT]: 依赖 LandingDemo 脚本入口；HTML 顺序加载生产 index.css、React Flow 与 Demo 布局样式
   [OUTPUT]: 独立浅色 APP Demo 文档，首绘即启用 APP 视觉，不访问网络或持久化状态
   [POS]: Landing iframe 宿主；场景标记只影响本页，不进入外部营销文档
   [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -12,6 +12,10 @@
   <meta http-equiv="Content-Security-Policy" content="connect-src 'none'; img-src 'self' data:; media-src 'none'; object-src 'none'; frame-src 'none'; form-action 'none'; base-uri 'none'" />
   <meta name="robots" content="noindex" />
   <title>Folune · 互动体验</title>
+  <!-- 基础层序先于任何组件样式建立；样式不再等待 JS 依赖图执行。 -->
+  <link rel="stylesheet" href="/src/index.css" />
+  <link rel="stylesheet" href="/node_modules/@xyflow/react/dist/style.css" />
+  <link rel="stylesheet" href="/src/styles/landing-demo.css" />
 </head>
 <body><div id="root"></div><script type="module" src="/src/widgets/LandingDemo/main.tsx"></script></body>
 </html>

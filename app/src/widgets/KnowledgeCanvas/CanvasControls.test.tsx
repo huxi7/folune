@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 React 服务端渲染、ReactFlowProvider 与真实 CanvasControls
- * [OUTPUT]: 锁定一个 Panel、两个同材质独立 surface、图标化加入动作及 fit/ZoomOut/ZoomIn/info 视口顺序
+ * [OUTPUT]: 锁定一个 Panel、两个同材质独立 surface、真实加入快捷键、悬浮提示替代 title 及 fit/ZoomOut/ZoomIn/info 视口顺序
  * [POS]: KnowledgeCanvas 的底部命令形制回归门禁；不挂载 Canvas 数据，不测试 React Flow 视口实现
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -32,7 +32,8 @@ describe("CanvasControls", () => {
 
   test("加入笔记只保留语义图标与可访问名称，不再常驻 Tonal 底色", () => {
     expect(html).toContain('aria-label="加入笔记"');
-    expect(html).toContain('title="加入笔记"');
+    expect(html).toContain('aria-keyshortcuts="Meta+K Control+K"');
+    expect(html).not.toContain('title="加入笔记"');
     expect(html).not.toContain('data-variant="tonal"');
     expect(html).not.toContain("加入笔记</span>");
     expect(html).not.toContain("canvas-control-group-content");

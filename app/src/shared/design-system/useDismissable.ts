@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 react 的 useEffect/useRef，依赖 DOM 的 document 级 pointerdown/keydown 事件
- * [OUTPUT]: 对外提供 useDismissable hook，统一弹层的外部点击关闭、Escape 关闭与焦点归还
+ * [OUTPUT]: 对外提供 useDismissable，统一弹层的外部点击关闭、Escape 关闭与焦点归还，可包含 Portal 内的独立内容
  * [POS]: app/src/shared/design-system 的弹层消散原语，被 Select/UserMenu/MarkdownViewMenu/PermissionModeControl 等一切"点外部或按 Escape 就该收起"的浮层共同消费；它同时是 Escape 层级仲裁协议的下半部分——每次消散都 preventDefault，使 PaperWorkspaceShell 的壳层守卫得以让行
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -11,6 +11,8 @@ type UseDismissableInput = {
   open: boolean;
   /** 弹层外壳（触发器 + 浮层）的容器，用于判定点击是否落在外部 */
   shellRef: RefObject<HTMLElement | null>;
+  /** Portal 内容与触发器不在同一 DOM 子树时，同样算作浮层内部 */
+  contentRef?: RefObject<HTMLElement | null>;
   /** 请求关闭 */
   onDismiss: () => void;
   /** 关闭后接收焦点的元素（通常是触发器）；不传则不归还 */
@@ -31,6 +33,7 @@ type UseDismissableInput = {
 export function useDismissable({
   open,
   shellRef,
+  contentRef,
   onDismiss,
   focusRef,
 }: UseDismissableInput): void {
@@ -40,7 +43,7 @@ export function useDismissable({
     }
 
     const handlePointerDown = (event: PointerEvent) => {
-      if (!shellRef.current?.contains(event.target as Node)) {
+      if (!shellRef.current?.contains(event.target as Node) && !contentRef?.current?.contains(event.target as Node)) {
         onDismiss();
       }
     };
@@ -61,5 +64,5 @@ export function useDismissable({
       document.removeEventListener("pointerdown", handlePointerDown);
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [focusRef, onDismiss, open, shellRef]);
+  }, [contentRef, focusRef, onDismiss, open, shellRef]);
 }

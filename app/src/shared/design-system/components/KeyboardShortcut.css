@@ -1,0 +1,28 @@
+/**
+ * [INPUT]: 依赖 KeyboardShortcut 的键帽结构与项目文字/颜色/空间 token
+ * [OUTPUT]: 提供紧凑的实体键帽、组合键间距与统一图标对齐
+ * [POS]: 快捷键唯一视觉来源，帮助面板与悬浮提示共用，浅暗色从宿主继承
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+@layer components {
+  .ds-keyboard-shortcut { display: inline-flex; flex: 0 0 auto; align-items: center; gap: var(--space-1); color: var(--muted-foreground); }
+  .ds-keycap {
+    display: inline-flex;
+    min-width: 1.375rem;
+    height: 1.375rem;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-1);
+    padding: 0 var(--space-1);
+    border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+    border-radius: calc(var(--radius-compact) / 2);
+    background: color-mix(in srgb, currentColor 4%, transparent);
+    box-shadow: inset 0 -1px 0 color-mix(in srgb, currentColor 10%, transparent);
+    font-family: var(--font-sans);
+    font-size: var(--type-caption);
+    font-weight: var(--weight-mono);
+    line-height: 1;
+    white-space: nowrap;
+  }
+  .ds-keycap svg { flex: 0 0 auto; }
+}

@@ -4,7 +4,7 @@
 独立 HTML 入口只装配无 Auth、API、业务 Store、持久化的 UI；内存数据随刷新消失。iframe 给生产布局、Portal 与 View Transition 一个真实且独立的视口。展示品牌遵循 Folune。
 
 成员清单
-main.tsx: 独立入口，注入生产样式、Motion 与 Toast，不挂载生产 Router/ThemeProvider
+main.tsx: 独立脚本入口，生产 index.css → React Flow → Demo 布局由 demo.html 的 stylesheet 按顺序预载，脚本只注入 Motion 与 Toast，不挂载生产 Router/ThemeProvider
 DemoWorkspace.tsx: Paper 与 Canvas 的状态装配，左右 Panel 持续挂载；文件树直接切换笔记/画布并清除笔记来路，只有笔记工具条进入才记录返回对象并运行纸面过渡；归档是工具条与 AI 对话共用的唯一入口（`organize(memoId, commandId?)` 在树真正落定后兑现 Promise），命令台账 ref 只登记从对话发出的写操作，因此只有它能被撤销
 DemoSidebar.tsx: 复用 MemoTreeBranch、SidebarCreateMenu 和用户身份组件；仅展开和选择在内存中完成；搜索禁用，新建保留正常点击反馈但不执行创建
 DemoAssistant.tsx: 复用生产 Header、ChatMessage、MentionInput、deriveAssistantActivity 与输入/滚动规则；点击和回车直接共用发送动作，不依赖 iframe 禁止的原生表单提交；引用保留生产 @ 图标、标题与容器，14px 图标换算为 0.875rem 跟随演示根字号同比缩放，不增加置顶/移除管理。把对话脚本逐步物化成 AI SDK parts——工具先以 input-available 亮起流光、落定后翻成 output-available，写操作等文件树真正落定才打勾，最后才流式吐正文。发送时的 memoId 随脚本冻结，回复中途换笔记也不会写错对象

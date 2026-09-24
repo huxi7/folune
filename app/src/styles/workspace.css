@@ -815,8 +815,12 @@
   .agent-approval-dock-copy p { margin-top: 0.1rem; color: var(--muted-foreground); font-size: 0.625rem; line-height: 1.45; text-wrap: pretty; }
   .agent-approval-dock-actions { display: flex; flex: 0 0 auto; align-items: center; gap: var(--space-1); }
   .agent-approval-dock-actions .ds-button { min-height: var(--control-height-compact); height: var(--control-height-compact); padding-inline: var(--space-2); font-size: 0.625rem; }
-  .agent-response-actions { display: flex; align-items: center; gap: var(--space-1); margin-top: var(--space-1); }
-  .agent-response-action.ds-button { min-height: 1.6rem; height: 1.6rem; padding-inline: 0.35rem; color: var(--muted-foreground); font-size: var(--type-label); font-weight: var(--weight-label); line-height: var(--leading-label); box-shadow: none; }
+  /* 撤销与思考过程胶囊同族：同高、同字阶、同图文间距，图标 14px，左缘都对齐正文，
+   * 于是"胶囊—正文—撤销"共用一条左轨、上下呼应，不再各自歪一处。 */
+  .agent-response-actions { display: flex; align-items: center; gap: var(--space-1); margin-top: calc(var(--spacing) * 2); margin-inline-start: calc(var(--spacing) * -1.25); }
+  .agent-response-action.ds-button { min-height: calc(var(--spacing) * 6); height: calc(var(--spacing) * 6); padding-inline: calc(var(--spacing) * 1.25); color: var(--muted-foreground); font-size: 0.65625rem; font-weight: var(--weight-control-label, 600); line-height: 1; box-shadow: none; }
+  .agent-response-action.ds-button > .ds-button-content { gap: calc(var(--spacing) * 1.25); }
+  .agent-response-action.ds-button > .ds-button-content > svg { width: 0.875rem; height: 0.875rem; }
   .agent-response-action.ds-button:hover { color: var(--foreground); }
   .agent-composer-action.ds-button.ds-button-size-square { width: var(--control-height-compact); min-width: var(--control-height-compact); height: var(--control-height-compact); min-height: var(--control-height-compact); flex-shrink: 0; border-radius: var(--radius-pill); corner-shape: round; }
   /* ---- 宿主保留 1px 边框，热区中心向外补偿半像素以与框线重合；避开圆角 ---- */

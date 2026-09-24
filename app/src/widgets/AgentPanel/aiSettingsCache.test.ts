@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 aiSettingsCache 的用户缓存/在途合并接口与测试替身 API
- * [OUTPUT]: 覆盖审批设置读取的并发合并、用户隔离、TTL 命中与写入更新
+ * [OUTPUT]: 覆盖审批设置读取的并发合并、用户隔离、TTL 命中、写入更新与写命令实时权限合并
  * [POS]: AgentPanel 权限设置缓存的纯行为回归；不触达真实网络或 UI
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -18,6 +18,7 @@ mock.module("../../shared/api/ai", () => ({
 const {
   AI_SETTINGS_CACHE_FRESH_MS,
   readAiSettings,
+  readFreshAiSettings,
   resetAiSettingsCacheForTests,
   writeAiSettings,
 } = await import("./aiSettingsCache");
@@ -85,4 +86,29 @@ describe("aiSettingsCache", () => {
 
     expect(await readAiSettings("token", "user-a", 2_000)).toEqual(settings("auto_approve"));
   });
+  test("写命令只合并同凭据在途请求，完成后重读且不借用侧栏缓存", async () => {
+    const resolvers: Array<(value: AiUserSettings) => void> = [];
+    getAiSettingsHandler = () => new Promise(resolve => resolvers.push(resolve));
+    writeAiSettings("user-a", settings("full_access"));
+    const first = readFreshAiSettings("token-a");
+    expect(readFreshAiSettings("token-a")).toBe(first);
+    const other = readFreshAiSettings("token-b");
+    expect(resolvers).toHaveLength(2);
+    resolvers[0]!(settings("ask"));
+    resolvers[1]!(settings("auto_approve", "user-b"));
+    expect((await first).permission_mode).toBe("ask");
+    expect((await other).user_id).toBe("user-b");
+    const next = readFreshAiSettings("token-a");
+    expect(resolvers).toHaveLength(3);
+    resolvers[2]!(settings("auto_approve"));
+    expect((await next).permission_mode).toBe("auto_approve");
+  });
+
+  test("写权限读取失败后释放在途请求，下一次可以重试", async () => {
+    getAiSettingsHandler = async () => { throw new Error("offline"); };
+    await expect(readFreshAiSettings("token-a")).rejects.toThrow("offline");
+    getAiSettingsHandler = async () => settings("ask");
+    expect((await readFreshAiSettings("token-a")).permission_mode).toBe("ask");
+  });
+
 });

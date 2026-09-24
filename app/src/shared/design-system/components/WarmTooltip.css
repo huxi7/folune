@@ -1,0 +1,165 @@
+/**
+ * [INPUT]: 依赖 WarmTooltip 的定位/动态变量与项目 card、foreground、border、shadow 主题 token
+ * [OUTPUT]: 提供同组提示的轻量表面、短文字与可选箭头/长按反馈；键帽由 KeyboardShortcut 单独拥有
+ * [POS]: React Bits WarmTooltip 的主题适配，Portal 从文档根继承浅色与暗色语义，不改变触发器几何
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ * 来源：https://reactbits.dev/r/WarmTooltip-TS-CSS.json；许可见 WarmTooltip.LICENSE.md。
+ */
+@layer components {
+.warm-tooltip__trigger {
+  --wt-surface: var(--card);
+  --wt-fuse-ms: 400ms;
+  --wt-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+
+  position: relative;
+  display: inline-flex;
+  vertical-align: middle;
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.warm-tooltip__trigger[data-pressing] {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.warm-tooltip__fuse {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--wt-surface);
+  opacity: 0;
+  transform: scaleX(0);
+  transform-origin: left center;
+  pointer-events: none;
+  transition:
+    transform 125ms var(--wt-ease-out),
+    opacity 125ms var(--wt-ease-out);
+}
+
+.warm-tooltip__fuse[data-side='top'] {
+  top: -4px;
+}
+
+.warm-tooltip__fuse[data-side='bottom'] {
+  bottom: -4px;
+}
+
+.warm-tooltip__fuse[data-side='left'],
+.warm-tooltip__fuse[data-side='right'] {
+  top: 4px;
+  bottom: 4px;
+  left: auto;
+  right: auto;
+  width: 2px;
+  height: auto;
+  transform: scaleY(0);
+  transform-origin: center top;
+}
+
+.warm-tooltip__fuse[data-side='left'] {
+  left: -4px;
+}
+
+.warm-tooltip__fuse[data-side='right'] {
+  right: -4px;
+}
+
+.warm-tooltip__fuse[data-fuse='arming'] {
+  opacity: 1;
+  transform: scaleX(1);
+  transition:
+    transform var(--wt-fuse-ms) linear,
+    opacity 80ms var(--wt-ease-out);
+}
+
+.warm-tooltip__fuse[data-side='left'][data-fuse='arming'],
+.warm-tooltip__fuse[data-side='right'][data-fuse='arming'] {
+  transform: scaleY(1);
+}
+
+.warm-tooltip {
+  --wt-surface: var(--card);
+  --wt-ink: var(--foreground);
+  --wt-radius: 8px;
+  --wt-font: 12px;
+  --wt-origin: center bottom;
+
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: calc(var(--layer-dialog) - 1);
+  display: block;
+  pointer-events: auto;
+  font-family: inherit;
+}
+
+.warm-tooltip__box {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--wt-radius);
+  border: 1px solid var(--border);
+  background: var(--wt-surface);
+  color: var(--wt-ink);
+  box-shadow: var(--shadow-sm);
+  corner-shape: var(--corner-shape-smooth);
+  transform-origin: var(--wt-origin);
+}
+
+.warm-tooltip__layer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.warm-tooltip__text {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--wt-font);
+  font-weight: var(--weight-mono);
+  line-height: var(--leading-label);
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+
+.warm-tooltip__shortcut { display: inline-flex; align-items: center; }
+
+.warm-tooltip__arrow {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  margin: -4px;
+  border-radius: 2px;
+  background: var(--wt-surface);
+  transform: rotate(45deg);
+}
+
+.warm-tooltip__arrow[data-side='top'] {
+  bottom: 1px;
+}
+
+.warm-tooltip__arrow[data-side='bottom'] {
+  top: 1px;
+}
+
+.warm-tooltip__arrow[data-side='left'] {
+  right: 1px;
+}
+
+.warm-tooltip__arrow[data-side='right'] {
+  left: 1px;
+}
+
+@media (prefers-contrast: more) {
+  .warm-tooltip__box {
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--wt-ink) 40%, transparent);
+  }
+}
+
+}

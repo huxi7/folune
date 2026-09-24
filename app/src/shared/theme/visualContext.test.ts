@@ -7,7 +7,7 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { runInNewContext } from "node:vm";
-import { applyVisualContext } from "./visualContext";
+import { applyThemeAppearance, applyVisualContext } from "./visualContext";
 
 const html = readFileSync(new URL("../../../index.html", import.meta.url), "utf8");
 const bootstrap = html.match(/<script>([\s\S]*?)<\/script>/)?.[1];
@@ -34,7 +34,10 @@ describe("APP 文档根视觉作用域", () => {
         window: { location: { pathname }, localStorage: { getItem: () => "dark" }, matchMedia: () => ({ matches: false }) },
       });
       const runtime = rootFixture();
+      runtime.dataset.resolvedTheme = "dark";
       applyVisualContext(pathname, runtime as unknown as HTMLElement);
+      expect(runtime.classList.contains("dark")).toBe(initial.classList.contains("dark"));
+      expect(runtime.classList.contains("dark")).toBe(pathname === "/app" || pathname.startsWith("/app/"));
       expect(runtime.dataset.visualContext).toBe(initial.dataset.visualContext);
       expect(runtime.dataset.visualContext).toBe(/^\/app(?:\/|$)/.test(pathname) ? "app" : "marketing");
     });
@@ -42,11 +45,12 @@ describe("APP 文档根视觉作用域", () => {
 
   test("路由往返切换根标记，不改变主题偏好解析结果", () => {
     const root = rootFixture();
-    root.classList.toggle("dark", true);
+    root.dataset.resolvedTheme = "dark";
     for (const pathname of ["/app/notes/a", "/blog", "/app", "/login"]) {
       applyVisualContext(pathname, root as unknown as HTMLElement);
       expect(root.dataset.visualContext).toBe(pathname.startsWith("/app") ? "app" : "marketing");
-      expect(root.classList.contains("dark")).toBe(true);
+      expect(root.classList.contains("dark")).toBe(pathname.startsWith("/app"));
+      expect(root.dataset.resolvedTheme).toBe("dark");
     }
   });
 
@@ -64,5 +68,21 @@ describe("APP 文档根视觉作用域", () => {
     const demo = readFileSync(new URL("../../../demo.html", import.meta.url), "utf8");
     expect(demo).toMatch(/<html[^>]+data-visual-context="app"/);
     expect(demo).toContain("connect-src 'none'");
+    const styles = [...demo.matchAll(/<link rel="stylesheet" href="([^"]+)"/g)].map(match => match[1]);
+    expect(styles).toEqual(["/src/index.css", "/node_modules/@xyflow/react/dist/style.css", "/src/styles/landing-demo.css"]);
+    expect(demo.indexOf('/src/index.css')).toBeLessThan(demo.indexOf('<script type="module"'));
   });
+});
+
+test("系统切暗不影响营销页面，返回 APP 仍恢复暗色", () => {
+  const root = rootFixture();
+  applyVisualContext("/login", root as unknown as HTMLElement);
+  root.dataset.resolvedTheme = "dark";
+  applyThemeAppearance(root as unknown as HTMLElement);
+  expect(root.classList.contains("dark")).toBe(false);
+  applyVisualContext("/app", root as unknown as HTMLElement);
+  expect(root.classList.contains("dark")).toBe(true);
+  root.dataset.resolvedTheme = "light";
+  applyThemeAppearance(root as unknown as HTMLElement);
+  expect(root.classList.contains("dark")).toBe(false);
 });

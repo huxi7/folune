@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun 测试运行器、共享 Lucide 图标与基于工具 part 的展示适配器
- * [OUTPUT]: 验证自然动作命名、安全详情、状态结果及未知协议不外露
+ * [OUTPUT]: 验证读取快照支持执行中/失败动作的目标名、自然动作命名、安全详情、状态结果及未知协议不外露
  * [POS]: AgentPanel 工具 Message UI 的展示契约测试，防止协议名、UUID、正文或原始 JSON 回流界面
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -15,6 +15,7 @@ import {
 import {
   agentClientToolPresentation,
   getAgentToolPresentation,
+  getAgentToolPresentations,
 } from "./toolPresentation";
 
 describe("agent tool presentation", () => {
@@ -96,4 +97,25 @@ describe("agent tool presentation", () => {
       name: "执行操作",
     });
   });
+});
+
+it("并发删除在执行中和失败后沿用本轮结构中的笔记名，历史回放无需活动树", () => {
+  const parts = [
+    { type: "dynamic-tool" as const, toolName: "read_tree", toolCallId: "tree", state: "output-available" as const, input: {}, output: { nodes: [
+      { id: "a", title: "未命名备忘录 14" }, { id: "b", title: "未命名备忘录 13" },
+    ] } },
+    { type: "dynamic-tool" as const, toolName: "edit_node", toolCallId: "delete-a", state: "input-available" as const, input: { op: "delete", node_id: "a" } },
+    { type: "dynamic-tool" as const, toolName: "edit_node", toolCallId: "delete-b", state: "output-error" as const, input: { op: "delete", node_id: "b" }, errorText: "失败" },
+  ];
+  const names = getAgentToolPresentations(parts);
+  expect(names.get("delete-a")?.name).toBe("移入回收站「未命名备忘录 14」");
+  expect(names.get("delete-b")?.name).toBe("移入回收站「未命名备忘录 13」");
+});
+
+it("失败命令仍可通过 before_state 命名，更新正文读取命令节点标题", () => {
+  for (const tool of ["edit_node", "edit_memo"]) {
+    expect(getAgentToolPresentation(tool, {
+      input: { op: "delete" }, output: { before_state: { node: { title: "研究笔记" } } }, state: "output-error",
+    }).name).toContain("研究笔记");
+  }
 });

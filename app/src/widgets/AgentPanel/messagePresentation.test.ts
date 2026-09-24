@@ -90,6 +90,45 @@ describe("deriveAgentMessagePresentation", () => {
     expect(presentation.undoCommands).toEqual([]);
   });
 
+  test("工具所在步骤的过渡文字留在过程，只有新步骤正文独立展示", () => {
+    const parts: UIMessage["parts"] = [
+      { type: "step-start" },
+      { type: "text", text: "先读取。" },
+      { type: "dynamic-tool", toolName: "read_tree", toolCallId: "read-1", state: "output-available", input: {}, output: {} },
+      { type: "text", text: "读取后继续分析。" },
+    ];
+    expect(deriveAgentMessagePresentation(assistant(parts)).finalText).toBe("");
+    const result = deriveAgentMessagePresentation(assistant([
+      ...parts, { type: "step-start" }, { type: "reasoning", text: "分析完成。" },
+      { type: "text", text: "最终结果。" },
+    ]));
+    expect(result.finalText).toBe("最终结果。");
+    expect(result.processParts.filter((part) => part.type === "text").map((part) => part.text))
+      .toEqual(["先读取。", "读取后继续分析。"]);
+  });
+
+  test("新的 reasoning 或 step 开始后，上一段文字不残留在正文", () => {
+    for (const boundary of [
+      { type: "step-start" },
+      { type: "reasoning", text: "继续核实。" },
+    ] as const) {
+      const result = deriveAgentMessagePresentation(assistant([
+        { type: "text", text: "中间说明。" }, boundary,
+      ]));
+      expect(result.finalText).toBe("");
+      expect(result.processParts[0]).toEqual({ type: "text", text: "中间说明。" });
+    }
+  });
+
+  test("活动工具期间旧协议尾部文字也不与过程区争抢正文", () => {
+    const result = deriveAgentMessagePresentation(assistant([
+      { type: "dynamic-tool", toolName: "read_tree", toolCallId: "read-1", state: "input-available", input: {} },
+      { type: "text", text: "等待读取。" },
+    ]), true);
+    expect(result.finalText).toBe("");
+    expect(result.processParts).toHaveLength(2);
+  });
+
   test("同一 toolCall 只展示一次，成功命令只进入回复末尾撤销区", () => {
     const command = {
       id: "command-1",

@@ -29,6 +29,7 @@ import {
   Button,
   Card,
   Dialog,
+  GlowButton,
   Input,
   MentionInput,
   PasswordInput,
@@ -238,6 +239,18 @@ function ButtonPreview() {
         <Button disabled variant="secondary">Disabled</Button>
       </div>
       <p>Hover · Press · Tab focus</p>
+    </div>
+  );
+}
+
+function GlowButtonPreview() {
+  return (
+    <div className="ds-button-preview">
+      <div aria-label="Glow CTA" className="ds-button-preview-row">
+        <GlowButton>登录</GlowButton>
+        <GlowButton icon={ArrowUpIcon}>立即开始</GlowButton>
+      </div>
+      <p>WebGL2 光线步进 · 半分辨率 blur 流光 · 顶部玻璃高光；光色取品牌 --primary，press 原地收紧，减少动态呈静态一帧</p>
     </div>
   );
 }
@@ -697,6 +710,7 @@ export const ComponentPreview = memo(function ComponentPreview({
     case "SpatialRhythm": return <SpatialRhythmPreview />;
     case "RadiusElevationMotion": return <RadiusElevationMotionPreview />;
     case "Button": return <ButtonPreview />;
+    case "GlowButton": return <GlowButtonPreview />;
     case "Skeleton": return <SkeletonPreview />;
     case "Composer": return <ComposerPreview />;
     case "Messages": return <AssistantMessagePreview />;

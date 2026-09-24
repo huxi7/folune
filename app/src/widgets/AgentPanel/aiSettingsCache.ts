@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 AI 权限设置 DTO 与共享 API 的读取函数
  * [OUTPUT]: 对外提供按用户隔离、短时新鲜且可合并在途请求的审批设置读取/写入缓存
- * [POS]: AgentPanel 权限设置的数据边界；只减少侧栏重复挂载的读取，不替代服务端确认事实
+ * [POS]: AgentPanel 权限设置的数据边界；侧栏使用短时快照，写命令仅合并在途请求，不替代服务端确认事实
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -19,6 +19,18 @@ type AiSettingsSnapshot = {
 
 const snapshots = new Map<string, AiSettingsSnapshot>();
 const pendingReads = new Map<string, Promise<AiUserSettings>>();
+const pendingFreshReads = new Map<string, Promise<AiUserSettings>>();
+
+// 写命令只合并同一凭据的在途读取，不复用已完成快照；后续操作仍检查最新权限。
+export const readFreshAiSettings = (accessToken: string): Promise<AiUserSettings> => {
+  const pending = pendingFreshReads.get(accessToken);
+  if (pending !== undefined) return pending;
+  const request = getAiSettings(accessToken).finally(() => {
+    pendingFreshReads.delete(accessToken);
+  });
+  pendingFreshReads.set(accessToken, request);
+  return request;
+};
 
 export const readAiSettings = (
   accessToken: string,
@@ -56,4 +68,5 @@ export const writeAiSettings = (
 export const resetAiSettingsCacheForTests = () => {
   snapshots.clear();
   pendingReads.clear();
+  pendingFreshReads.clear();
 };

@@ -18,8 +18,11 @@ ElectricBorder.css: 上游 Canvas/辉光/内容分层样式，放入 components 
 ElectricBorder.LICENSE.md: React Bits Electric Border 上游组件的原始版权与 MIT + Commons Clause 许可
 CanvasCardNode.test.tsx: 卡片结构回归门禁，锁定两个正式中心 Handle、抓手必须落在元信息行之内且排在两个内容动作之后、整卡 target、嵌套纸张、常驻展开入口、AI 忙碌选择器、元信息只剩墓碑/回收站两种状态，以及墓碑/回收站绝不暴露连接命中面
 CanvasTitle.tsx: Canvas 顶层安静标题；两种画布共用同一改名分支，只在 draft 从空进入编辑态时聚焦并全选，敲字本身不重复抢焦点；来源语义仍归 memo_ref 卡片
-CanvasControls.tsx: React Flow 底部中央命令条，内容/视口动作保持两组同材质；操作说明 Dialog 常驻宿主以完成退出，不读取或修改图数据
-CanvasControls.test.tsx: 底部命令形制回归测试，锁定一个 Panel、两个同材质 surface、加入动作只保留语义图标/可访问名称且无 Tonal 常驻底色，以及四个视口动作顺序
+CanvasControls.tsx: React Flow 底部中央命令条，两个中性 surface 共用 WarmTooltip 的连续提示，加入笔记显示真实 mod+K 键帽；帮助开合/外部点击/Escape/焦点归还统一由命令条协调，不读取图数据或另设快捷键
+CanvasControls.test.tsx: 底部命令形制门禁，锁定一个 Panel、两个同材质 surface、图标语义与真实加入快捷键；浏览器提示替代原生 title，动作顺序保持
+CanvasHelpPopover.tsx: 工具栏上方的非模态操作速查，区分画布手势/搜索结果中的加入/选中笔记后的命令；两列短句与共享键帽，不呈现存储实现，不注册业务按键
+CanvasHelpPopover.css: 帮助面板 384px 最大宽度、短行对齐与窄屏/短屏内部滚动；底部锚定、无全屏遮罩，与主画布样式分离
+CanvasHelpPopover.interaction.test.tsx: 命令条帮助层的 Portal 开合回归，锁定内容内点击、外部消散、Escape 焦点归还与不触及后端的键位说明
 CanvasPersistenceStatus.tsx: 正常保存/排队/恢复静默，仅展示尚未同步、版本冲突或恢复异常；异常说明与重试位于工具条上方并保留可访问播报，只解释协调器事实，不参与排队
 CanvasPreviewOverlay.tsx: 不卸载 Canvas 的小开本 Paper 预览层；按 ID 读取正文，正文在路上时纸里先放卡片那段摘录（同一篇笔记的开头，放大的始终是同一段字，一个字都没到才退回 Skeleton），reader 纸面由 NotePaper 命名壳与正文。Dialog 使用 motion=none 且遮罩绝不拥有过渡身份——它留在 root 那张截图里，磨砂玻璃因此完整可用（backdrop-filter 采样的就是同一次绘制里身后的画布），而给它单独命名会让它排到过渡层末尾、整段盖住正在放大的纸；纸内只有正文，关闭/编辑一律在纸外
 CanvasPreviewOverlay.test.tsx: 预览结构回归门禁，锁定 motion=none bare 表面、单一 reader 纸，以及关闭/编辑原文一律不在纸内

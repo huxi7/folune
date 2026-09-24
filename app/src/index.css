@@ -12,6 +12,7 @@
 @import "./styles/auth.css";
 @import "./styles/design-system.css";
 @import "./styles/button.css";
+@import "./styles/shader-glow.css";
 @import "./styles/ai-message.css";
 @import "./styles/sidebar-button.css";
 @import "./styles/segmented-control.css";

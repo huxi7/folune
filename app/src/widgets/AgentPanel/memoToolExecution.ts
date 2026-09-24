@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 Planner 类型化 plan、单篇 memo/AI Command API、账号权限设置与 tree/document Store 乐观事务
+ * [INPUT]: 依赖 Planner 类型化 plan、单篇 memo/AI Command API、仅合并在途的实时账号权限读取与 tree/document Store 乐观事务
  * [OUTPUT]: 对外提供 executeMemoToolPlan，按 ID 读取单篇全文，或把写计划映射为内部原子命令并完成双 Store 对账
  * [POS]: AgentPanel 胖工具运行链的主线程协调器；Planner 只计算，本模块不裁决 RLS/revision，最终事实完全服从 api command
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -7,7 +7,6 @@
 
 import {
   createAiCommand,
-  getAiSettings,
   type AiCommand,
   type AiCommandOperation,
   type AiPermissionMode,
@@ -16,6 +15,7 @@ import { useMemoTreeStore } from "../../shared/store/memoTreeStore";
 import type { MemoToolPlan } from "./memoToolPlanner";
 import { getMemo } from "../../shared/api/memo";
 import { useMemoDocumentStore } from "../../shared/store/memoDocumentStore";
+import { readFreshAiSettings } from "./aiSettingsCache";
 
 type CommandDraft = {
   expectedRevision: number | null;
@@ -128,7 +128,7 @@ export async function executeMemoToolPlan(input: {
     draft.projectionInput,
   );
   try {
-    const settings = await getAiSettings(input.accessToken);
+    const settings = await readFreshAiSettings(input.accessToken);
     const command = await createAiCommand(input.accessToken, {
       thread_id: input.threadId,
       tool_call_id: input.toolCallId,

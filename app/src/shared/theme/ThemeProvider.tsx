@@ -1,9 +1,10 @@
 /**
- * [INPUT]: 依赖 React Context、index.html 的 pre-paint 根状态、浏览器 localStorage 与 prefers-color-scheme 媒体查询
+ * [INPUT]: 依赖 React Context、index.html 的 pre-paint 根状态、浏览器 localStorage 与 prefers-color-scheme 媒体查询、visualContext 的场景主题展示策略
  * [OUTPUT]: 对外提供 system/light/dark 用户偏好、解析后的 light/dark 主题、ThemeProvider、useTheme 及主题类型守卫
  * [POS]: app/src/shared/theme 的全局主题状态入口，统一解析并同步 html.dark，被 AccountSettingsPanel、Markdown 编辑器与产品工作区消费
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
+import { applyThemeAppearance } from "./visualContext";
 import {
   createContext,
   useCallback,
@@ -49,7 +50,8 @@ function persistValue(key: string, value: string) {
 }
 
 function applyTheme(theme: ResolvedTheme) {
-  document.documentElement.classList.toggle("dark", theme === "dark");
+  document.documentElement.dataset.resolvedTheme = theme;
+  applyThemeAppearance();
 }
 
 function getSystemTheme(): ResolvedTheme {
