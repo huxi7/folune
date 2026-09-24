@@ -1,17 +1,21 @@
 /**
  * [INPUT]: 依赖设计系统的半径/曲线配对规则与 Kumo Toast Parts 的堆叠/滑动状态、共享动作时钟、本地 Button 与 index.css 的中性 Popover、Radius、Elevation、Motion token
- * [OUTPUT]: 对外提供随内容收紧的顶部居中 Toast、三条悬停展开堆叠、细边柔影的行内倒计时撤销与 reduced-motion 降级
+ * [OUTPUT]: 对外提供贴近视口顶部居中并从上沿滑入的内容自适应 Toast、三条等宽悬停展开堆叠、文字动作下沿的剩余时间细线；安全区与 reduced-motion 同源适配
  * [POS]: app/src/styles 的瞬时反馈视觉层；Kumo 负责队列交互，Folune 定义安静纸面材质与本地动作层级
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 @layer components {
   .ds-toast-viewport {
+    --toast-top: max(var(--space-4), env(safe-area-inset-top));
     position: fixed;
-    top: max(var(--space-4), env(safe-area-inset-top));
+    top: var(--toast-top);
     left: 50%;
     transform: translateX(-50%);
     z-index: 1200;
-    width: min(22rem, calc(100vw - var(--space-6)));
+    display: grid;
+    align-items: start;
+    width: max-content;
+    max-width: min(22rem, calc(100vw - var(--space-6)));
     pointer-events: none;
   }
 
@@ -26,12 +30,16 @@
     );
     --toast-scale: calc(max(0, 1 - var(--toast-index) * 0.04));
     --toast-shrink: calc(1 - var(--toast-scale));
-    position: absolute;
-    top: 0;
-    left: 50%;
-    translate: -50% 0;
+    --toast-translate-y: calc(
+      var(--toast-swipe-movement-y) +
+      var(--toast-index) * var(--space-2) +
+      var(--toast-shrink) * var(--toast-height-current)
+    );
+    /* 同一网格单元贡献自然宽度，折叠层因此不会比最前条更宽。 */
+    position: relative;
+    grid-area: 1 / 1;
     z-index: calc(1000 - var(--toast-index));
-    width: max-content;
+    width: 100%;
     max-width: 100%;
     height: var(--toast-height-current);
     /* 展开后的条目间隙由 ::after 接住指针；不能在外层裁掉它。 */
@@ -41,17 +49,11 @@
     corner-shape: var(--corner-shape-smooth);
     background: var(--popover);
     color: var(--popover-foreground);
-    box-shadow: 0 1px 3px -1px var(--button-shadow-neutral-rest), var(--shadow-sm);
+    box-shadow: var(--shadow-xs), var(--shadow);
     pointer-events: auto;
     transform:
       translateX(var(--toast-swipe-movement-x))
-      translateY(
-        calc(
-          var(--toast-swipe-movement-y) +
-          var(--toast-index) * var(--space-2) +
-          var(--toast-shrink) * var(--toast-height-current)
-        )
-      )
+      translateY(var(--toast-translate-y))
       scale(var(--toast-scale));
     transform-origin: top;
     transition:
@@ -69,30 +71,32 @@
     height: calc(var(--toast-gap) + 1px);
   }
 
-  .ds-toast-material {
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    corner-shape: inherit;
-    background: var(--popover);
-  }
-
   .ds-toast[data-expanded] {
+    --toast-scale: 1;
+    --toast-translate-y: var(--toast-offset-expanded);
     height: var(--toast-height);
-    transform:
-      translateX(var(--toast-swipe-movement-x))
-      translateY(var(--toast-offset-expanded));
   }
 
   .ds-toast[data-limited] {
+    position: absolute;
     opacity: 0;
     pointer-events: none;
   }
 
-  .ds-toast[data-starting-style],
+  .ds-toast[data-starting-style] {
+    opacity: 0;
+    transform:
+      translateX(var(--toast-swipe-movement-x))
+      translateY(calc(-100% - var(--toast-top)))
+      scale(var(--toast-scale));
+  }
+
   .ds-toast[data-ending-style] {
     opacity: 0;
-    transform: translateY(calc(-100% - var(--space-4)));
+    transform:
+      translateX(var(--toast-swipe-movement-x))
+      translateY(calc(var(--toast-translate-y) - var(--space-2)))
+      scale(calc(var(--toast-scale) * 0.98));
   }
 
   .ds-toast[data-ending-style][data-swipe-direction="right"] {
@@ -120,15 +124,14 @@
   .ds-toast-content {
     position: relative;
     z-index: 1;
-    display: grid;
+    display: flex;
     width: 100%;
-    grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: center;
-    gap: var(--space-2);
+    gap: var(--space-3);
     overflow: hidden;
     border-radius: inherit;
     corner-shape: inherit;
-    padding: var(--space-2) var(--space-2) var(--space-2) var(--space-3);
+    padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4);
     min-height: calc(var(--space-10) + var(--space-1));
     transition: opacity var(--motion-normal) var(--ease-standard);
   }
@@ -145,8 +148,9 @@
 
   .ds-toast-icon {
     display: inline-flex;
-    width: var(--space-5);
-    height: var(--space-5);
+    width: var(--space-4);
+    height: var(--space-4);
+    flex: none;
     align-items: center;
     justify-content: center;
     color: var(--toast-color);
@@ -154,58 +158,89 @@
   }
 
   .ds-toast-copy {
+    flex: 1;
     min-width: 0;
-    padding-top: 0.0625rem;
   }
 
   .ds-toast-title {
     display: block;
     color: var(--foreground);
-    font-size: var(--type-label);
-    font-weight: 560;
-    letter-spacing: -0.006em;
-    line-height: 1.5;
+    font-size: var(--type-ui);
+    font-weight: 500;
+    letter-spacing: 0;
+    line-height: var(--leading-input);
     overflow-wrap: anywhere;
   }
 
   .ds-toast-description {
     margin-top: var(--space-1);
     color: var(--muted-foreground);
-    font-size: 0.75rem;
-    line-height: 1.45;
+    font-size: var(--type-label);
+    line-height: 1.6;
+    overflow-wrap: anywhere;
   }
 
-  .ds-toast[data-action="true"] .ds-toast-content {
-    grid-template-columns: minmax(0, 1fr) auto auto;
+  .ds-toast-controls {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: var(--space-1);
   }
 
   .ds-toast-action.ds-button {
-    --button-border-rest: color-mix(in srgb, var(--foreground) 7%, transparent);
-    --button-state-shadow: inset 0 1px 0 var(--button-face-highlight-rest), 0 1px 3px -1px var(--button-shadow-neutral-rest);
-    --button-state-shadow-hover: inset 0 1px 0 var(--button-face-highlight-hover), 0 2px 5px -2px var(--button-shadow-neutral-hover);
+    --button-border-rest: color-mix(in srgb, var(--foreground) 6%, transparent);
+    --button-border-hover: color-mix(in srgb, var(--foreground) 10%, transparent);
+    --button-face-top-rest: var(--muted);
+    --button-face-bottom-rest: var(--muted);
+    --button-face-top-hover: var(--interactive-hover);
+    --button-face-bottom-hover: var(--interactive-hover);
+    --button-state-shadow: var(--shadow-2xs);
+    --button-state-shadow-hover: var(--shadow-xs);
     --button-radius: var(--radius-compact);
-    --button-content-gap: var(--space-1);
     width: auto;
     height: calc(var(--control-height-compact) - var(--space-1));
     min-height: calc(var(--control-height-compact) - var(--space-1));
-    padding-inline: var(--space-2);
-    color: var(--primary);
+    padding-inline: var(--space-3);
+    color: var(--foreground);
     font-size: var(--type-label);
+    font-weight: 600;
+    letter-spacing: 0;
     white-space: nowrap;
   }
 
-  .ds-toast-countdown {
-    width: 1rem;
-    height: 1rem;
-    flex: none;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.5;
-    transform: rotate(-90deg);
+  .ds-toast-action .ds-button-content {
+    position: static;
   }
 
-  .ds-toast-countdown-track { opacity: 0.18; }
-  .ds-toast-countdown-progress { stroke-dasharray: 1; stroke-dashoffset: 0; stroke-linecap: round; }
+  .ds-toast-action.ds-button:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--foreground) 40%, transparent);
+    outline-offset: 2px;
+  }
+
+  /* 细线只属于动作的有效期，不占文字行，也不冒充任务加载进度。 */
+  .ds-toast-countdown {
+    position: absolute;
+    right: var(--space-2);
+    bottom: calc(var(--space-1) - 1px);
+    left: var(--space-2);
+    height: 2px;
+    overflow: hidden;
+    border-radius: var(--radius-pill);
+    corner-shape: round;
+    background: color-mix(in srgb, var(--foreground) 7%, transparent);
+    pointer-events: none;
+  }
+
+  .ds-toast-countdown-progress {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    corner-shape: inherit;
+    background: color-mix(in srgb, var(--foreground) 40%, transparent);
+    transform: scaleX(1);
+    transform-origin: left;
+  }
 
   .ds-toast-dismiss {
     display: inline-flex;
@@ -218,7 +253,7 @@
     corner-shape: var(--corner-shape-smooth);
     background: transparent;
     color: var(--muted-foreground);
-    opacity: 0.55;
+    opacity: 0.65;
     transition:
       background var(--motion-fast) var(--ease-standard),
       color var(--motion-fast) var(--ease-standard),
@@ -226,13 +261,13 @@
   }
 
   .ds-toast-dismiss:hover {
-    background: color-mix(in srgb, var(--foreground) 10%, transparent);
+    background: var(--interactive-hover);
     color: var(--foreground);
     opacity: 1;
   }
 
   .ds-toast-dismiss:focus-visible {
-    outline: 2px solid color-mix(in srgb, var(--ring) 44%, transparent);
+    outline: 2px solid color-mix(in srgb, var(--foreground) 40%, transparent);
     outline-offset: 1px;
   }
 }
@@ -240,7 +275,7 @@
 @media (max-width: 639px) {
   @layer components {
     .ds-toast-viewport {
-      top: max(var(--space-3), env(safe-area-inset-top));
+      --toast-top: max(var(--space-3), env(safe-area-inset-top));
     }
   }
 }

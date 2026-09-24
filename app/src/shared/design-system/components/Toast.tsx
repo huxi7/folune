@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Kumo Toast 可访问队列/焦点/滑动、本地 Button、useToastCountdown 动作时钟与 toast.css 的中性反馈材质
- * [OUTPUT]: 对外提供 ToastProvider/useToast/ToastVariant/ToastInput；顶部居中、三条内容自适应堆叠，重复触发独立反馈，悬停展开，动作默认六秒
+ * [OUTPUT]: 对外提供 ToastProvider/useToast/ToastVariant/ToastInput；贴近视口顶部居中并从上沿滑入、三条内容自适应等宽堆叠，文字动作下沿细线表示六秒剩余时间
  * [POS]: app/src/shared/design-system/components 的全局瞬时反馈边界；Kumo 只拥有队列与交互机制，业务动作仍由 Folune 本地 Button 渲染，隔离业务和第三方表现实现
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -76,9 +76,10 @@ function ToastItem({ toast, frontmost }: { toast: KumoManagedToast; frontmost: b
   const variant = getToastVariant(toast.variant);
   const IconComponent = variantIcons[variant];
   const rootRef = useRef<HTMLDivElement>(null);
-  const progressRef = useRef<SVGCircleElement>(null);
+  const progressRef = useRef<HTMLSpanElement>(null);
   const { close } = useKumoToastManager();
   const action = toast.actions?.[0];
+  const showIcon = !action || variant === "error" || variant === "warning";
   const duration = (toast.data?.actionDuration as number | undefined) ?? 0;
   const onExpire = useCallback(() => close(toast.id), [close, toast.id]);
   useToastCountdown({ duration, frontmost, onExpire, progressRef, rootRef });
@@ -92,11 +93,12 @@ function ToastItem({ toast, frontmost }: { toast: KumoManagedToast; frontmost: b
       swipeDirection={["up", "right"]}
       toast={toast}
     >
-      <span aria-hidden="true" className="ds-toast-material" />
       <KumoToast.Content className="ds-toast-content">
-        {action ? null : <span aria-hidden="true" className="ds-toast-icon">
-          <IconComponent size={16} />
-        </span>}
+        {showIcon ? (
+          <span aria-hidden="true" className="ds-toast-icon">
+            <IconComponent size={16} />
+          </span>
+        ) : null}
         <div className="ds-toast-copy">
           <KumoToast.Title className="ds-toast-title">
             {toast.title}
@@ -107,20 +109,21 @@ function ToastItem({ toast, frontmost }: { toast: KumoManagedToast; frontmost: b
             </KumoToast.Description>
           ) : null}
         </div>
-        {action ? (
-          <Button className="ds-toast-action" onClick={action.onClick} variant="secondary">
-            {duration > 0 ? (
-              <svg aria-hidden="true" className="ds-toast-countdown" viewBox="0 0 16 16">
-                <circle className="ds-toast-countdown-track" cx="8" cy="8" r="6" />
-                <circle ref={progressRef} className="ds-toast-countdown-progress" cx="8" cy="8" r="6" pathLength="1" />
-              </svg>
-            ) : null}
-            {action.children}
-          </Button>
-        ) : null}
-        <KumoToast.Close aria-label="关闭提示" className="ds-toast-dismiss">
-          <XIcon aria-hidden="true" size={14} />
-        </KumoToast.Close>
+        <div className="ds-toast-controls">
+          {action ? (
+            <Button className="ds-toast-action" onClick={action.onClick} variant="secondary">
+              {action.children}
+              {duration > 0 ? (
+                <span aria-hidden="true" className="ds-toast-countdown">
+                  <span ref={progressRef} className="ds-toast-countdown-progress" />
+                </span>
+              ) : null}
+            </Button>
+          ) : null}
+          <KumoToast.Close aria-label="关闭提示" className="ds-toast-dismiss">
+            <XIcon aria-hidden="true" size={14} />
+          </KumoToast.Close>
+        </div>
       </KumoToast.Content>
     </KumoToast.Root>
   );

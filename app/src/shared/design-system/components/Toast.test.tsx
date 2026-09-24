@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 happy-dom、Testing Library 与真实 ToastProvider/useToast/useToastCountdown
  * [OUTPUT]: 验证重复触发保留、三条可见、悬停展开/收回、独立撤销及倒计时在交互/隐藏/失焦后准确续走
- * [POS]: 全局瞬时反馈行为门禁；以可控帧时钟验证到期和圆环共享时间，不依赖真实等待
+ * [POS]: 全局瞬时反馈行为门禁；以可控帧时钟验证到期和剩余细线共享时间，不依赖真实等待
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { afterEach, expect, test, spyOn } from "bun:test";
@@ -60,12 +60,12 @@ test("重复触发正常入栈，最多三条可见并保留独立撤销", () =>
 
 function Countdown({ frontmost, onExpire }: { frontmost: boolean; onExpire: () => void }) {
   const rootRef = useRef<HTMLDivElement>(null);
-  const progressRef = useRef<SVGCircleElement>(null);
+  const progressRef = useRef<HTMLSpanElement>(null);
   useToastCountdown({ duration: 1000, frontmost, onExpire, progressRef, rootRef });
-  return <div ref={rootRef} data-testid="countdown"><svg><circle ref={progressRef} /></svg></div>;
+  return <div ref={rootRef} data-testid="countdown"><span ref={progressRef} /></div>;
 }
 
-test("圆环与到期共用剩余时间，反复暂停和隐藏后不重置、不提前关闭", async () => {
+test("剩余细线与到期共用时间，反复暂停和隐藏后不重置、不提前关闭", async () => {
   let now = 0;
   let nextFrame = 0;
   let expired = 0;
@@ -87,16 +87,17 @@ test("圆环与到期共用剩余时间，反复暂停和隐藏后不重置、�
   try {
     const view = render(<Countdown frontmost onExpire={onExpire} />);
     const root = view.getByTestId("countdown");
-    const progress = root.querySelector("circle")!;
+    const progress = root.querySelector("span")!;
+    const remainingFraction = () => Number(progress.style.transform.match(/scaleX\(([^)]+)\)/)?.[1]);
     advance(300);
-    expect(Number(progress.style.strokeDashoffset)).toBeCloseTo(0.3);
+    expect(remainingFraction()).toBeCloseTo(0.7);
     await act(async () => {
       root.setAttribute("data-expanded", "");
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
     advance(2000);
     expect(expired).toBe(0);
-    expect(Number(progress.style.strokeDashoffset)).toBeCloseTo(0.3);
+    expect(remainingFraction()).toBeCloseTo(0.7);
     await act(async () => {
       root.removeAttribute("data-expanded");
       await new Promise((resolve) => setTimeout(resolve, 0));
@@ -114,7 +115,7 @@ test("圆环与到期共用剩余时间，反复暂停和隐藏后不重置、�
     expect(expired).toBe(0);
     advance(1);
     expect(expired).toBe(1);
-    expect(Number(progress.style.strokeDashoffset)).toBe(1);
+    expect(remainingFraction()).toBe(0);
     view.unmount();
     expect(frames.size).toBe(0);
   } finally {
