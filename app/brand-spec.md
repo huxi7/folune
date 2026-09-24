@@ -19,10 +19,10 @@ Folune is a quiet editorial instrument that lets users write first and allows AI
 - Type system: Interface `14/18px` for 36px commands, `14/20px` for 36px fields, compact tree navigation and sidebar utilities `12/16px` inside 32px rows, `15/27px` for Paper body, `18px` for section headings, `24–30px` for Paper titles, and `32–56px` only for editorial/display titles
 - Material: Paper is the only obvious depth; panels stay flat and Buttons use only a restrained tactile mist shadow
 
-## APP 灰白视觉（2026-09-24）
+## APP 纸白视觉定稿（2026-09-24）
 
 - 场景边界：styles/app-visual.css 仅作用于 html[data-visual-context="app"]，Portal 与 Demo 共同继承；Landing、博客、登录继续沿用默认值。
-- 浅色：Stage #F1F2F2，纸面/面板为白色，正文 #292B2B、次级字 #707676、边界 #E2E5E5。移除上轮米黄、褐灰与暖色阴影，使用近中性灰白；品牌墨蓝仍只用于明确动作和内容强调。
+- 浅色定稿：Stage 复用 landing-paper 的微暖纸白 #F4F4F2，正式 APP 工作区不加噪点；纸面/面板为白色，正文 #292B2B、次级字 #707676、边界 #E2E5E5 保持。温度由背景承担，控件保持中性；Landing 与首次加载过渡继续保留既有颗粒，Demo 默认同步无噪点纸白。
 - 密度继承原组件：对话正文与文件树保持 12px，原行距、32px 树行与辅助文字不统一放大；Demo 沿原 rem 比例缩放。
 - 文件树 hover 与 selected/active 共用 #ECEEEE，暗色共用 #2D2D2D；选中后仍持续显示同一背景，经过当前项不加深、不变蓝。普通菜单与列表继续使用中性灰。
 - 固定笔记/@引用胶囊复用用户气泡的底色与细线 token：浅色 #F6F8F8 / #E4E8E8，暗色 #292929 / #363636；保留 1px 边框与 10px 平滑圆角，身份由尺寸、图标和位置表达。

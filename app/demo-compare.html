@@ -1,7 +1,7 @@
 <!doctype html>
 <!--
-  [INPUT]: 依赖同源 demo.html 的互动 Demo、默认旧视觉、data-visual-context=app 当前视觉与 landing-paper 纸白 token
-  [OUTPUT]: 原版/当前灰白/纸白三档独立 APP 对比页，底部按钮即时切换样式，保留同一 Demo 的编辑、会话与当前视图
+  [INPUT]: 依赖同源 demo.html 的互动 Demo、默认旧视觉、data-visual-context=app 纸白定稿与此前灰白参照
+  [OUTPUT]: 原版/此前灰白/纸白定稿三档独立 APP 对比页，底部按钮即时切换样式，保留同一 Demo 的编辑、会话与当前视图
   [POS]: 仅供本地视觉验收的 HTML 外壳，不进入生产构建或 Landing 装配；iframe 提供固定视口与现有交互隔离
   [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 -->
@@ -72,21 +72,21 @@
     </style>
   </head>
   <body>
-    <iframe id="comparison-demo" src="/demo.html" title="Folune 互动 Demo：纸白" sandbox="allow-scripts allow-same-origin"></iframe>
+    <iframe id="comparison-demo" src="/demo.html" title="Folune 互动 Demo：纸白定稿" sandbox="allow-scripts allow-same-origin"></iframe>
     <footer class="comparison-bar">
       <p class="comparison-label">APP 视觉对比</p>
       <div class="comparison-switch" role="group" aria-label="选择对比版本">
         <button type="button" data-version="original" aria-pressed="false" aria-controls="comparison-demo" disabled>原版</button>
-        <button type="button" data-version="updated" aria-pressed="false" aria-controls="comparison-demo" disabled>当前灰白</button>
-        <button type="button" data-version="paper" aria-pressed="true" aria-controls="comparison-demo" disabled>纸白</button>
+        <button type="button" data-version="updated" aria-pressed="false" aria-controls="comparison-demo" disabled>此前灰白</button>
+        <button type="button" data-version="paper" aria-pressed="true" aria-controls="comparison-demo" disabled>纸白定稿</button>
       </div>
-      <p id="comparison-hint" class="comparison-hint" aria-live="polite">纸白 · #F4F4F2</p>
+      <p id="comparison-hint" class="comparison-hint" aria-live="polite">纸白定稿 · #F4F4F2</p>
     </footer>
     <script>
       const frame = document.getElementById('comparison-demo');
       const buttons = [...document.querySelectorAll('[data-version]')];
       const hint = document.getElementById('comparison-hint');
-      const labels = { original: '原版', updated: '当前灰白', paper: '纸白' };
+      const labels = { original: '原版', updated: '此前灰白', paper: '纸白定稿' };
       let selected = 'paper';
 
       // ---- 仅修改同一文档的样式作用域；不更换 iframe URL 或重建 Demo ----
@@ -96,10 +96,9 @@
         selected = version;
         root.style.removeProperty('--workspace-stage');
         root.dataset.visualContext = version === 'original' ? 'legacy' : 'app';
-        // ---- 纸白档仅替换舞台底色；退出即清除，不污染当前视觉与独立 Demo ----
-        if (version === 'paper') {
-          const paper = frame.contentWindow.getComputedStyle(root).getPropertyValue('--landing-paper').trim();
-          root.style.setProperty('--workspace-stage', paper);
+        // ---- 灰白仅保留为历史参照；纸白直接消费正式 APP 默认值 ----
+        if (version === 'updated') {
+          root.style.setProperty('--workspace-stage', '#f1f2f2');
         }
         const stage = frame.contentWindow.getComputedStyle(root).getPropertyValue('--workspace-stage').trim();
         frame.title = `Folune 互动 Demo：${labels[version]}`;
