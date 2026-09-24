@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Kumo Toast 可访问队列/焦点/滑动、本地 Button、useToastCountdown 动作时钟与 toast.css 的中性反馈材质
- * [OUTPUT]: 对外提供 ToastProvider/useToast/ToastVariant/ToastInput；贴近视口顶部居中并从上沿滑入、三条内容自适应等宽堆叠，文字动作下沿细线表示六秒剩余时间
+ * [OUTPUT]: 对外提供 ToastProvider/useToast/ToastVariant/ToastInput；贴近视口顶部居中并从上沿滑入、三条内容自适应等宽堆叠，倒计时动作回执只保留业务按钮与整条底边进度，到期自动消失
  * [POS]: app/src/shared/design-system/components 的全局瞬时反馈边界；Kumo 只拥有队列与交互机制，业务动作仍由 Folune 本地 Button 渲染，隔离业务和第三方表现实现
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -89,6 +89,7 @@ function ToastItem({ toast, frontmost }: { toast: KumoManagedToast; frontmost: b
       className="ds-toast"
       ref={rootRef}
       data-action={action ? "true" : undefined}
+      data-countdown={duration > 0 ? "true" : undefined}
       data-variant={variant}
       swipeDirection={["up", "right"]}
       toast={toast}
@@ -113,17 +114,19 @@ function ToastItem({ toast, frontmost }: { toast: KumoManagedToast; frontmost: b
           {action ? (
             <Button className="ds-toast-action" onClick={action.onClick} variant="secondary">
               {action.children}
-              {duration > 0 ? (
-                <span aria-hidden="true" className="ds-toast-countdown">
-                  <span ref={progressRef} className="ds-toast-countdown-progress" />
-                </span>
-              ) : null}
             </Button>
           ) : null}
-          <KumoToast.Close aria-label="关闭提示" className="ds-toast-dismiss">
-            <XIcon aria-hidden="true" size={14} />
-          </KumoToast.Close>
+          {duration <= 0 ? (
+            <KumoToast.Close aria-label="关闭提示" className="ds-toast-dismiss">
+              <XIcon aria-hidden="true" size={14} />
+            </KumoToast.Close>
+          ) : null}
         </div>
+        {duration > 0 ? (
+          <span aria-hidden="true" className="ds-toast-countdown">
+            <span ref={progressRef} className="ds-toast-countdown-progress" />
+          </span>
+        ) : null}
       </KumoToast.Content>
     </KumoToast.Root>
   );

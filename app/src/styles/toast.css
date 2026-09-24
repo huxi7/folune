@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 消费 APP app-typography.css 文字角色，变量回退保持非 APP 原排版； 依赖设计系统的半径/曲线配对规则与 Kumo Toast Parts 的堆叠/滑动状态、共享动作时钟、本地 Button 与 index.css 的中性 Popover、Radius、Elevation、Motion token
- * [OUTPUT]: 对外提供贴近视口顶部居中并从上沿滑入的内容自适应 Toast、三条等宽悬停展开堆叠、文字动作下沿的剩余时间细线；安全区与 reduced-motion 同源适配
+ * [OUTPUT]: 对外提供贴近视口顶部居中并从上沿滑入的内容自适应 Toast、三条等宽悬停展开堆叠、整条底边的剩余时间进度条与 24px 紧凑动作；倒计时隐藏关闭后独立平衡尾部留白，安全区与 reduced-motion 同源适配
  * [POS]: app/src/styles 的瞬时反馈视觉层；Kumo 负责队列交互，Folune 定义安静纸面材质与本地动作层级
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -141,6 +141,10 @@
     pointer-events: none;
   }
 
+  .ds-toast[data-countdown] .ds-toast-content {
+    padding-inline-end: var(--space-3);
+  }
+
   .ds-toast-content[data-expanded] {
     opacity: 1;
     pointer-events: auto;
@@ -198,9 +202,9 @@
     --button-state-shadow-hover: var(--shadow-xs);
     --button-radius: var(--radius-compact);
     width: auto;
-    height: calc(var(--control-height-compact) - var(--space-1));
-    min-height: calc(var(--control-height-compact) - var(--space-1));
-    padding-inline: var(--space-3);
+    height: var(--space-6);
+    min-height: var(--space-6);
+    padding-inline: var(--space-2);
     color: var(--foreground);
     font-size: var(--type-label);
     font-weight: var(--weight-action, 600);
@@ -208,25 +212,19 @@
     white-space: nowrap;
   }
 
-  .ds-toast-action .ds-button-content {
-    position: static;
-  }
-
   .ds-toast-action.ds-button:focus-visible {
     outline: 2px solid color-mix(in srgb, var(--foreground) 40%, transparent);
     outline-offset: 2px;
   }
 
-  /* 细线只属于动作的有效期，不占文字行，也不冒充任务加载进度。 */
+  /* 倒计时贴满卡片底边，由 Content 的同源圆角裁切，动作按钮保持独立。 */
   .ds-toast-countdown {
     position: absolute;
-    right: var(--space-2);
-    bottom: calc(var(--space-1) - 1px);
-    left: var(--space-2);
+    right: 0;
+    bottom: 0;
+    left: 0;
     height: 2px;
     overflow: hidden;
-    border-radius: var(--radius-pill);
-    corner-shape: round;
     background: color-mix(in srgb, var(--foreground) 7%, transparent);
     pointer-events: none;
   }

@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Toast Root 的展开/退场状态、可见顺序、页面可见性与同源 performance 时钟
- * [OUTPUT]: 对外提供 useToastCountdown，让动作下沿的剩余长度和关闭共享唯一计时，隐藏/悬停/键盘操作/失焦时暂停
+ * [OUTPUT]: 对外提供 useToastCountdown，让 Toast 整条底边的剩余长度和关闭共享唯一计时，隐藏/悬停/键盘操作/失焦时暂停
  * [POS]: Toast 的动作寿命边界；动作 Toast 禁用 Kumo 自动关闭，Kumo 仍独占队列、焦点、展开与滑动
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */

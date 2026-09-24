@@ -46,7 +46,7 @@ design-system.css: Quiet Editorial 基础组件视觉层、BrandMark 已选③�
 button.css: Button 专用视觉层；统一 36px 标准命令高度、14px/18px UI 文字、14px 横向留白、6px 图文间距、16px Control 曲率，以极轻 180deg 同色明度坡度、短中性落地阴影和不成环的宽淡面光恢复实体材质；hover 固定原位并放宽外影，press 共读 scale(var(--press-scale)) 且撤掉外影只留浅内压，Primary/Danger 仅有极弱同色环境层，Secondary 保持中性，Ghost 无实体阴影，Saving 继续使用 16 度倾斜窄光带
 sidebar-button.css: SidebarButton 专用 32px compact 平面视觉层，APP/账户导航与 36px 标准 Button 共享 16px Control 曲率而不强制等高；hover 消费全局中性 interactive-hover，默认 active 使用轻中性表面和墨色，APP 当前项由 app-visual.css 映射为独立浅蓝灰并共读全局 press 收紧比例，hover/press/选中不抬升，侧栏底部 Design System/回收站以 12px/16px Label 文字和 primary 前景色表达当前位置
 segmented-control.css: 分段选择的静态文字/轨道材质与独立选中底片，底片布局迁移由组件 Motion 独占，文字不位移或缩放
-toast.css: Kumo Toast Parts 的视口顶部居中三条轻堆叠，桌面 16px/窄屏 12px 顶部留白与上沿滑入共用安全区偏移；Grid 让可见条目共享内容自然宽度且不超过 22rem，候补条目不参与定宽；14px 正文、中性不透明 Popover、12px 曲率与双层轻影，Secondary 文字动作下沿以 2px 细线表达剩余时间；动作与关闭合成紧凑命令簇，hover/focus 共用中性灰阶，裁剪只属于 Content 以保留条目间隙的悬停衔接，减少动态时取消空间过渡
+toast.css: Kumo Toast Parts 的视口顶部居中三条轻堆叠，桌面 16px/窄屏 12px 顶部留白与上沿滑入共用安全区偏移；Grid 让可见条目共享内容自然宽度且不超过 22rem，候补条目不参与定宽；14px 正文、中性不透明 Popover、12px 曲率与双层轻影，动作回执的 2px 中性进度条贴满整条底边并随剩余时间缩减；倒计时回执去掉关闭按钮，24px 高动作配 8px 横向内距、12px 尾部留白，hover/focus 共用中性灰阶，裁剪只属于 Content 以保留条目间隙的悬停衔接，减少动态时取消空间过渡
 user-menu.css: 账户菜单材质与中性 hover，入退场统一交给 PresenceSurface，不再保留 CSS keyframe 的第二动画通道
 codemirror.css: 未分层的 CodeMirror 6 适配层；写作 Paper 覆盖 height/overflow 让编辑器按正文自然增长并把唯一纵向滚动交还 paper-stage-scroll，其他宿主仍使用 100% 高度。继续维护 light/dark、14px source/15px live、Editorial 标题/引用与 GFM 显示，pre-wrap 保真空白
 cord.css: Cord Signature 表现层，按语境把 --cord-color 映射到既有 --archive-cord/--primary，承载 pathLength 归一化的出场自绘、虚实区分与自中点向两端流动的双层白光；外发光用更宽更淡的第二条描边而非 feGaussianBlur，reduced-motion 直接静态
