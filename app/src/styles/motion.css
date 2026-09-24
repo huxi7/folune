@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖设计系统的半径/曲线配对规则与 Design System motion.ts 注入的同源 CSS token 与生产组件语义标记
+ * [INPUT]: 陈列标题消费 section 文字角色； 依赖设计系统的半径/曲线配对规则与 Design System motion.ts 注入的同源 CSS token 与生产组件语义标记
  * [OUTPUT]: 对外提供视图淡换容器、通用浮层动画所有权、普通导航及减少动态效果适配
  * [POS]: styles 的通用 Motion 消费层；纸面签名仍由 knowledge-canvas.css 解释，定位/材质仍归各组件
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -35,7 +35,7 @@ html:not([data-paper-transition]) { --paper-world: var(--motion-micro-enter); --
   .motion-specimen-tokens { display: flex; flex-wrap: wrap; gap: 16px; font-size: 12px; }
   .motion-specimen-tokens strong { margin-left: 4px; font-family: var(--font-mono); }
   .motion-specimen-section { min-width: 0; border-top: 1px solid var(--border); padding-top: 24px; }
-  .motion-specimen-section > h3 { margin-bottom: 16px; font-size: 14px; font-weight: 600; }
+  .motion-specimen-section > h3 { margin-bottom: 16px; font-size: 14px; font-weight: var(--weight-section, 600); }
   .motion-specimen-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
   .motion-specimen-controls { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 24px; }
   .motion-specimen-controls > div { flex: 1; min-width: 160px; }

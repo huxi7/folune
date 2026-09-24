@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 React 原生 button 属性、共享 Lucide CaretUpDownIcon 与 index.css 的 ds-user-button/avatar 类
+ * [INPUT]: 账户名消费 navigation 字重角色； 依赖 React 原生 button 属性、共享 Lucide CaretUpDownIcon 与 index.css 的 ds-user-button/avatar 类
  * [OUTPUT]: 对外提供可复用 UserAvatar 与打开账户菜单的 UserButton 触发器
  * [POS]: app/src/shared/design-system/components 的用户身份原子层，被 UserMenu 与收起态 AppSidebar 复用，不承载业务跳转
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -57,7 +57,7 @@ export function UserButton({
     >
       <UserAvatar avatarUrl={avatarUrl} name={name} />
       <span className="min-w-0 flex-1 text-left">
-        <span className="block truncate text-sm font-semibold text-foreground">{name}</span>
+        <span className="block truncate text-sm ds-user-button-name text-foreground">{name}</span>
         <span className="mt-1 block truncate text-xs text-muted-foreground">{email}</span>
       </span>
       <CaretUpDownIcon aria-hidden="true" className="shrink-0 text-muted-foreground" size={16} />

@@ -1,0 +1,79 @@
+/**
+ * [INPUT]: 依赖 index.css 的字体族/字号基线与 APP 文档根场景，品牌规范定义角色职责
+ * [OUTPUT]: APP 的 400/500/600 字重基元、完整文字角色与 data-text-role 消费入口；700 仅用于内容强调
+ * [POS]: 设计系统 APP 排版唯一映射；生产组件和 Typography 样板共读，不改变营销文档的默认排版
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+html:root[data-visual-context="app"] {
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* ---- 既有组件角色保持名称；不再把正文/操作/说明都映射成同一种粗细 ---- */
+  --weight-display: var(--font-weight-medium);
+  --weight-title: var(--font-weight-medium);
+  --weight-heading: var(--font-weight-semibold);
+  --weight-body: var(--font-weight-regular);
+  --weight-input: var(--font-weight-medium);
+  --weight-ui: var(--font-weight-semibold);
+  --weight-label: var(--font-weight-semibold);
+  --weight-caption: var(--font-weight-regular);
+  --weight-mono: var(--font-weight-medium);
+
+  --type-editor: var(--type-body);
+  --leading-editor: var(--leading-body);
+  --weight-editor: var(--weight-body);
+  --weight-editorial-display: var(--font-weight-regular);
+  --type-conversation: var(--type-label);
+  --leading-user-message: 1.7;
+  --leading-assistant-message: 1.78;
+  --weight-conversation: var(--font-weight-medium);
+  --type-navigation: var(--type-label);
+  --leading-navigation: var(--leading-label);
+  --weight-navigation: var(--font-weight-semibold);
+  --weight-action: var(--weight-ui);
+  --weight-control-label: var(--weight-label);
+  --weight-field-value: var(--weight-input);
+  --type-section: 0.8125rem;
+  --leading-section: 1.5;
+  --weight-section: var(--font-weight-semibold);
+  --type-reference: 0.625rem;
+  --leading-reference: 1.5;
+  --weight-reference: var(--font-weight-semibold);
+  --weight-support: var(--font-weight-regular);
+  --weight-emphasis: var(--font-weight-bold);
+  --weight-table-heading: var(--font-weight-semibold);
+  --weight-marker: var(--font-weight-semibold);
+}
+
+@layer components {
+  /* ---- 非标准组件可按角色消费整组属性，不用局部 font-weight 或字号工具类拼装 ---- */
+  :root[data-visual-context="app"] [data-text-role="editor"] { font-size: var(--type-editor); font-weight: var(--weight-editor); line-height: var(--leading-editor); }
+  :root[data-visual-context="app"] [data-text-role="conversation"] { font-size: var(--type-conversation); font-weight: var(--weight-conversation); line-height: var(--leading-assistant-message); }
+  :root[data-visual-context="app"] [data-text-role="navigation"] { font-size: var(--type-navigation); font-weight: var(--weight-navigation); line-height: var(--leading-navigation); }
+  :root[data-visual-context="app"] [data-text-role="input"] { font-size: var(--type-input); font-weight: var(--weight-input); line-height: var(--leading-input); }
+  :root[data-visual-context="app"] [data-text-role="action"] { font-size: var(--type-ui); font-weight: var(--weight-action); line-height: var(--leading-ui); }
+  :root[data-visual-context="app"] [data-text-role="label"] { font-size: var(--type-label); font-weight: var(--weight-label); line-height: var(--leading-label); }
+  :root[data-visual-context="app"] [data-text-role="section"] { font-size: var(--type-section); font-weight: var(--weight-section); line-height: var(--leading-section); }
+  :root[data-visual-context="app"] [data-text-role="caption"] { font-size: var(--type-caption); font-weight: var(--weight-caption); line-height: var(--leading-caption); }
+  :root[data-visual-context="app"] [data-text-role="reference"] { font-size: var(--type-reference); font-weight: var(--weight-reference); line-height: var(--leading-reference); }
+  :root[data-visual-context="app"] [data-text-role="title"] { font-family: var(--font-serif); font-size: var(--type-title); font-weight: var(--weight-title); line-height: var(--leading-title); }
+  :root[data-visual-context="app"] [data-text-role="display"] { font-family: var(--font-serif); font-size: var(--type-display); font-weight: var(--weight-display); line-height: var(--leading-display); }
+  :root[data-visual-context="app"] [data-text-role="mono"] { font-family: var(--font-mono); font-size: var(--type-mono); font-weight: var(--weight-mono); line-height: var(--leading-mono); }
+
+  /* ---- 只有 APP 收口正文与原生强调；营销与代码样式保留自己的上下文 ---- */
+  :root[data-visual-context="app"] .note-reading-surface .markdown-reading-view {
+    font-size: var(--type-editor);
+    font-weight: var(--weight-editor);
+    line-height: var(--leading-editor);
+  }
+  :root[data-visual-context="app"] .markdown-reading-view :is(strong, b) { font-weight: var(--weight-emphasis); }
+  :root[data-visual-context="app"] .ds-assistant-message .ds-streaming-text :is(h1, h2, h3, h4, h5, h6) { font-weight: var(--weight-section); }
+  :root[data-visual-context="app"] :is(.agent-thread-select span, .agent-history-empty, .account-dialog-section-description, .account-dialog-meta, .ui-section-description) {
+    font-size: var(--type-caption);
+    font-weight: var(--weight-caption);
+    line-height: var(--leading-caption);
+  }
+  :root[data-visual-context="app"] :is(.agent-thread-select strong, .ds-select-option, .ds-select-option .ds-select-label) { font-weight: var(--weight-navigation); }
+}

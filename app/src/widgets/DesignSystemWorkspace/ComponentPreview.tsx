@@ -1,11 +1,12 @@
 /**
- * [INPUT]: 依赖 React、生产 Design System/Lucide 图标边界、FoundationSpecimens、真实 MarkdownEditor/MarkdownReadingView 与 PaperSurface/EdgeDock/ArchiveCord/Cord Signature Components
+ * [INPUT]: 依赖 React、生产 Design System/Lucide 图标边界、FoundationSpecimens/读取实际计算值的 TypographyPreview、真实 MarkdownEditor/MarkdownReadingView 与 PaperSurface/EdgeDock/ArchiveCord/Cord Signature Components
  * [OUTPUT]: 对外提供 Color/Type/Iconography、Control 内外同心曲率、Primitives、Editorial、倒计时撤销与 AI 状态样板；自定义 Input 家族由包裹 label 提供可见名称
  * [POS]: app/src/widgets/DesignSystemWorkspace 的预览层；所有样板只读取生产 Token/API，不建立展示专用视觉系统
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
 /* oxlint-disable jsx-a11y/label-has-associated-control -- 预览中的 label 包裹本地 Input/PasswordInput，插件无法穿透自定义组件识别原生控件 */
+import { TypographyPreview } from "./TypographyPreview";
 import { MotionSpecimen } from "./MotionSpecimen";
 import {
   ICON_SIZES,
@@ -77,16 +78,7 @@ const spatialSteps = [
   { step: "8", token: "space-8", value: "32px" },
 ] as const;
 
-const typographyRoles = [
-  { key: "display", role: "展示 Display", token: "--type-display", size: "32–56px", leading: "1.05", weight: "500", family: "Editorial", usage: "Landing / Design System 主标题", sample: "思想先被写下" },
-  { key: "title", role: "标题 Title", token: "--type-title", size: "24–30px", leading: "1.2", weight: "500", family: "Editorial", usage: "Paper 标题 / 页面标题", sample: "让内容成为主角" },
-  { key: "heading", role: "章节 Heading", token: "--type-heading", size: "18px", leading: "1.45", weight: "650", family: "Interface", usage: "分组标题 / 结构层级", sample: "第三章 · 结构与检索" },
-  { key: "body", role: "正文 Body", token: "--type-body", size: "15px", leading: "27px", weight: "450", family: "Interface", usage: "编辑器 / 说明文字", sample: "界面退后，让笔记与智能自然浮现。" },
-  { key: "ui", role: "操作 UI", token: "--type-ui", size: "14px", leading: "18px", weight: "650", family: "Interface", usage: "Button / Sidebar / Menu", sample: "保存 · 文件库 · 整理" },
-  { key: "label", role: "标签 Label", token: "--type-label", size: "12px", leading: "16px", weight: "650", family: "Interface", usage: "字段名 / 小组标题 / 高密度树节点", sample: "产品规划 · 用户访谈" },
-  { key: "caption", role: "辅助 Caption", token: "--type-caption", size: "11px", leading: "16px", weight: "560", family: "Interface", usage: "时间 / 状态 / 辅助说明", sample: "最后保存于 14:32" },
-  { key: "mono", role: "系统 Mono", token: "--type-mono", size: "11px", leading: "16px", weight: "500", family: "Mono", usage: "Token / 路径 / 技术标识", sample: "--primary · memo_2026_08" },
-] as const;
+
 
 function ColorPreview() {
   return (
@@ -121,59 +113,6 @@ function ColorPreview() {
   );
 }
 
-function TypographyPreview() {
-  return (
-    <div className="ds-type-system-preview">
-      <section aria-label="字体家族" className="ds-type-family-grid">
-        <article className="ds-type-family" data-family="interface">
-          <div><strong>Interface / 界面</strong><code>--font-sans</code></div>
-          <p>Folune 文件库</p>
-          <small>Avenir Next × PingFang SC · Noto Sans SC fallback</small>
-        </article>
-        <article className="ds-type-family" data-family="editorial">
-          <div><strong>Editorial / 阅读</strong><code>--font-serif</code></div>
-          <p>让内容成为主角</p>
-          <small>Iowan Old Style × Songti SC · Noto Serif SC fallback</small>
-        </article>
-        <article className="ds-type-family" data-family="mono">
-          <div><strong>Mono / 系统</strong><code>--font-mono</code></div>
-          <p>memo_2026_08</p>
-          <small>SF Mono × Cascadia Code · Menlo fallback</small>
-        </article>
-      </section>
-
-      <section aria-label="字号与行高角色" className="ds-type-scale">
-        <div className="ds-type-scale-header" role="row">
-          <span>角色 / Token</span><span>中文样本</span><span>字号 / 行高</span><span>字重</span><span>职责</span>
-        </div>
-        {typographyRoles.map((item) => (
-          <div className="ds-type-scale-row" data-type-role={item.key} key={item.key} role="row">
-            <div><strong>{item.role}</strong><code>{item.token}</code></div>
-            <p>{item.sample}</p>
-            <code>{item.size} / {item.leading}</code>
-            <code>{item.weight}</code>
-            <small>{item.family} · {item.usage}</small>
-          </div>
-        ))}
-      </section>
-
-      <section aria-label="控件字体配对" className="ds-type-control-pairing">
-        <article>
-          <div className="ds-type-pairing-heading"><strong>Button</strong><code>36px · 14/18</code></div>
-          <div className="ds-type-pairing-demo"><Button variant="primary">保存</Button><small>横向 14px · 图文 6px</small></div>
-        </article>
-        <article>
-          <div className="ds-type-pairing-heading"><strong>Input</strong><code>36px · 14/20</code></div>
-          <div className="ds-type-pairing-demo"><Input aria-label="输入示例" placeholder="输入标题" /><small>文字比 Button 更松</small></div>
-        </article>
-        <article>
-          <div className="ds-type-pairing-heading"><strong>Paper Body</strong><code>15px · 27px</code></div>
-          <div className="ds-type-pairing-demo"><p data-type="body">正文保持清楚、自然。</p><small>阅读优先，不追求紧凑</small></div>
-        </article>
-      </section>
-    </div>
-  );
-}
 
 function IconographyPreview() {
   return (

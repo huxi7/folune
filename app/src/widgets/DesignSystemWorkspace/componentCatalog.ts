@@ -60,7 +60,7 @@ export const designSystemSections: DesignSystemCategory[] = [
 
 export const designSystemSamples: DesignSystemSample[] = [
   { category: "Foundations", id: "Color", name: "Color", summary: "Stage、Paper、Ink、Soft Ink Primary 交互轴、Saving Processing、Focus 与 Danger 的唯一语义颜色系统。" },
-  { category: "Foundations", id: "Typography", name: "Typography", summary: "Interface、Editorial、Mono 三类字族与八级角色；36px Button 使用 14/18px，32px 文件树使用 12/16px 高密度文字。" },
+  { category: "Foundations", id: "Typography", name: "Typography", summary: "Interface、Editorial、Mono 三类字族与按职责消费的 400/500/600 字重；样板读取实际字号/行高，覆盖聊天、导航、输入、动作和引用。" },
   { category: "Foundations", id: "Iconography", name: "Iconography", summary: "Lucide React 圆角描边语言、14/16/20/24px 尺寸阶梯，以及少量真实生产例子和加入/缩放/连接/整理/拓展互不混用的语义出口。" },
   { category: "Foundations", id: "SpatialRhythm", name: "Spacing", summary: "4px 基线与 4/8/12/16/24/32/48/64/96 主节奏，32/36/48px 固定界面尺寸。" },
   { category: "Foundations", id: "RadiusElevationMotion", name: "Radius · Elevation · Motion", summary: "8/16/12/16/20px 配套曲率、16px Control 与冻结的 12px inner 同心样板，以及 160/260/320/600ms 时间层级。" },

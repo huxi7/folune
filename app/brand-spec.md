@@ -23,14 +23,40 @@ Folune is a quiet editorial instrument that lets users write first and allows AI
 
 - 场景边界：styles/app-visual.css 仅作用于 html[data-visual-context="app"]，Portal 与 Demo 共同继承；Landing、博客、登录继续沿用默认值。
 - 浅色定稿：Stage 复用 landing-paper 的微暖纸白 #F4F4F2，正式 APP 工作区不加噪点；纸面/面板为白色，正文 #292B2B、次级字 #707676、边界 #E2E5E5 保持。温度由背景承担，控件保持中性；Landing 与首次加载过渡继续保留既有颗粒，Demo 默认同步无噪点纸白。
-- 密度继承原组件：对话正文与文件树保持 12px，原行距、32px 树行与辅助文字不统一放大；Demo 沿原 rem 比例缩放。
+- 排版按下方文字角色统一消费：主正文 15px/400、聊天 12px/500、导航与动作 600；字号与字重必须一起按角色选择，Demo 沿原 rem 比例缩放。
 - 文件树 hover 与 selected/active 共用 #ECEEEE，暗色共用 #2D2D2D；选中后仍持续显示同一背景，经过当前项不加深、不变蓝。普通菜单与列表继续使用中性灰。
-- 固定笔记/@引用胶囊复用用户气泡的底色与细线 token：浅色 #F6F8F8 / #E4E8E8，暗色 #292929 / #363636；保留 1px 边框与 10px 平滑圆角，身份由尺寸、图标和位置表达。
-- 用户气泡为近白 #F6F8F8，内侧 1px #E4E8E8 细线；暗色 #292929 与 #363636。气泡、输入框及 Panel 的平滑圆角统一到 20px；输入内层继续按内缩量推导，Paper 保持 12px，常规控件保持 16px。
+- 固定笔记/@引用胶囊复用用户气泡的底色与细线 token：浅色以 primary 6% 混白得到约 #F3F5F7、12% 混白得到约 #E7EBEE；暗色分别以 primary 6% 混 card、12% 混 border；保留 1px 边框与 10px 平滑圆角，身份由尺寸、图标和位置表达。
+- 用户气泡使用上述极淡品牌底色与内侧 1px 同色细线；用户文字保持 foreground，AI 正文单独使用浅色 #50585C / 暗色 #C3C7CB，标题、强调、代码与链接保留各自语义色。气泡、输入框及 Panel 的平滑圆角统一到 20px；输入内层继续按内缩量推导，Paper 保持 12px，常规控件保持 16px。
 - 输入边界浅色默认 #DCDEDE、hover #B9BEBE、focus #666E6E；暗色 #424242、#5C5C5C、#949494。聚焦只附极轻中性暗影，不叠明显外环。
 - 暗色保留黑灰轴：Stage #181818、Panel #222222、Paper #242424、Popover #292929、边界 #393939，正文 #E8E8E8、次级字 #AAAAAA。
 - Canvas 静态边框与选择继续消费中性 canvas-interaction-ink（浅色 #686E6E / 暗色 #AAAAAA）；按住/拖动卡片的波纹、临时连线、连接抓手及有效目标提示恢复品牌 primary（浅色 #395875 / 暗色 #91ABC4），沿用 70% 透明度、2.75px 线宽和既有柔光，不新增蓝色色阶；警告和危险动作保留语义色。
 - 本节取代上轮暖黄灰与分色选中方案；参考图用于借鉴灰白层次、轻边界与圆润轮廓，不引入整套青苔绿主题。
+
+## APP 文字消费规范（2026-09-24）
+
+规范参考 [Apple Typography](https://developer.apple.com/design/human-interface-guidelines/typography) 与 [Fluent Typography](https://fluent2.microsoft.design/typography) 的文字角色方法；下表为 Folune 的桌面网页规格，不冒称 Apple 原生 pt 标准。CSS 在 styles/app-typography.css 中定义 APP 场景，营销继续沿既有默认值。
+
+| 文字角色 | 字号 / 行高 | 字重 | 消费位置 |
+| --- | --- | --- | --- |
+| editor | 15px / 27px | Regular 400 | 主编辑正文、普通阅读正文、Canvas 自由文字 |
+| conversation | 12px / 原用户 1.7、AI 1.78 | Medium 500 | 用户消息与 AI 最终回复 |
+| navigation | 12px / 16px，树行仍 32px | Semibold 600 | 文件树、紧凑导航、菜单动作 |
+| input | 14px / 表单 20px、聊天 21px | Medium 500 | Input、Select 值、AI 输入正文 |
+| action | 14px / 18px | Semibold 600 | 标准按钮与操作，紧凑动作复用 label 的 12px / 16px |
+| section | 13px / 既有行距 | Semibold 600 | 面板标题与设置分组标题 |
+| caption | 11px / 16px | Regular 400 | 时间、状态、辅助说明 |
+| reference | 10px / 原行距，最小高度 24px | Semibold 600 | 固定笔记/@引用胶囊名称 |
+| editorial title | 既有标题尺度与行距 | Medium 500 | 衬线笔记标题与章节标题，保留既有层级 |
+| emphasis | 跟随正文 | Bold 700 | Markdown strong 等明确内容强调，不作为默认 UI 字重 |
+
+消费规则：
+- APP 只用 400/500/600 三档常规字重，700 只用于文档语义强调；不在组件新写 450/560/650/680 等局部数值。
+- 组件优先消费已有 --type-* / --leading-* / --weight-* 角色；聊天、导航、分组、引用拥有独立角色变量。现有共享样式中的 var(..., 原数值) 仅保留非 APP 场景原貌，APP 必须由角色变量覆盖。
+- 新的自定义文字可用 data-text-role 消费完整字号/字重/行高组合；组件自身的 geometry、颜色、语义标签与交互状态保持独立，不用 font 简写覆盖字体族。
+- 原生强语义（strong/code/标题）保留区别，hover/selected 不改变文字尺寸；不能通过容器 opacity 让整条 AI 消息变淡。
+- Design System 的 Typography 样板从真实 CSS 读取计算字号、字重和行高；说明文字不得手写另一套数值作为“真相”。
+- 原字号精修例外（思考过程、工具详情、衬线标题）保留原字号/行距，但字重也要消费角色。主写作正文与聊天必须显式声明角色，不能偶然继承 body 的默认 400。
+- 验收在 100% 浏览器缩放下检查中英混排、长回复、浅暗色与窄面板；浏览器放大后仍应可读，不关闭缩放。字体的实际字面可能因平台回退不同，不能只凭 computed font-weight 断言字形相同。
 
 ## Selected system — Soft Ink
 

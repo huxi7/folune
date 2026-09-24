@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖设计系统的半径/曲线配对规则与 index.css 的 primary/foreground/surface/spacing/button 零偏移环绕阴影与 motion 语义 token
+ * [INPUT]: 消费 APP app-typography.css 文字角色，变量回退保持非 APP 原排版； 依赖设计系统的半径/曲线配对规则与 index.css 的 primary/foreground/surface/spacing/button 零偏移环绕阴影与 motion 语义 token
  * [OUTPUT]: 提供用户主色气泡、零卡片最终正文、五词错峰模糊拖尾、可折叠处理过程、Formation ThinkingIndicator 与可展开轻量详情、结果图标不套盒的工具状态样式；长历史使用原生内容可见性优化布局
  * [POS]: app/src/styles 的 AI 消息视觉层，被 AgentPanel 与 DEV Design System 共用；过程和正文只用自然留白过渡，不创建第二套主题或固定分隔线，末条流式消息保持完整测量
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -15,8 +15,9 @@
     background: var(--primary);
     padding: calc(var(--spacing) * 2.5) calc(var(--spacing) * 3);
     color: var(--primary-foreground);
-    font-size: 0.75rem;
-    line-height: 1.7;
+    font-size: var(--type-conversation, 0.75rem);
+    font-weight: var(--weight-conversation, 400);
+    line-height: var(--leading-user-message, 1.7);
     box-shadow: none;
   }
 
@@ -36,8 +37,9 @@
     z-index: 0;
     min-width: 0;
     overflow-wrap: anywhere;
-    font-size: 0.75rem;
-    line-height: 1.78;
+    font-size: var(--type-conversation, 0.75rem);
+    font-weight: var(--weight-conversation, 400);
+    line-height: var(--leading-assistant-message, 1.78);
   }
 
   .ds-streaming-text-content {
@@ -126,6 +128,7 @@
     width: 100%;
     min-width: 0;
     overflow-wrap: anywhere;
+    font-weight: var(--weight-support, 400);
     font-size: 0.71875rem;
     line-height: 1.72;
   }
@@ -150,7 +153,7 @@
     cursor: pointer;
     font: inherit;
     font-size: 0.65625rem;
-    font-weight: 600;
+    font-weight: var(--weight-control-label, 600);
     line-height: 1;
   }
 
@@ -290,7 +293,7 @@
     min-width: 0;
     overflow: hidden;
     font-size: 0.75rem;
-    font-weight: 650;
+    font-weight: var(--weight-control-label, 650);
     letter-spacing: 0.006em;
     line-height: 1;
     text-overflow: ellipsis;

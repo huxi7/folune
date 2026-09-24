@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖设计系统的半径/曲线配对规则与 Kumo Toast Parts 的堆叠/滑动状态、共享动作时钟、本地 Button 与 index.css 的中性 Popover、Radius、Elevation、Motion token
+ * [INPUT]: 消费 APP app-typography.css 文字角色，变量回退保持非 APP 原排版； 依赖设计系统的半径/曲线配对规则与 Kumo Toast Parts 的堆叠/滑动状态、共享动作时钟、本地 Button 与 index.css 的中性 Popover、Radius、Elevation、Motion token
  * [OUTPUT]: 对外提供贴近视口顶部居中并从上沿滑入的内容自适应 Toast、三条等宽悬停展开堆叠、文字动作下沿的剩余时间细线；安全区与 reduced-motion 同源适配
  * [POS]: app/src/styles 的瞬时反馈视觉层；Kumo 负责队列交互，Folune 定义安静纸面材质与本地动作层级
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -166,7 +166,7 @@
     display: block;
     color: var(--foreground);
     font-size: var(--type-ui);
-    font-weight: 500;
+    font-weight: var(--weight-field-value, 500);
     letter-spacing: 0;
     line-height: var(--leading-input);
     overflow-wrap: anywhere;
@@ -203,7 +203,7 @@
     padding-inline: var(--space-3);
     color: var(--foreground);
     font-size: var(--type-label);
-    font-weight: 600;
+    font-weight: var(--weight-action, 600);
     letter-spacing: 0;
     white-space: nowrap;
   }

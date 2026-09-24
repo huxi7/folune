@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖设计系统的半径/曲线配对规则与 index.css 的 Quiet Editorial 语义 Color/Type/Spacing/Radius/Elevation/Motion、统一中性 interactive-hover 与 Tailwind v4 layer
+ * [INPUT]: 消费 APP app-typography.css 文字角色，变量回退保持非 APP 原排版； 依赖设计系统的半径/曲线配对规则与 index.css 的 Quiet Editorial 语义 Color/Type/Spacing/Radius/Elevation/Motion、统一中性 interactive-hover 与 Tailwind v4 layer
  * [OUTPUT]: 统一业务/Select/账户弹出菜单的唯一材质规则； 对外提供平面 Input/Select/Card、紧边界图与 5:4 布局比的固定字标 BrandMark、克制 Dialog panel/bare 与 default|none 入场（motion=none 交出入场编排给 root 视图过渡，因此磨砂玻璃得以保留）、Skeleton/Thinking/loading 信息态；Select 临时指向状态与普通菜单共享中性 hover，Button 由 button.css 独立维护
  * [POS]: app/src/styles 的组件视觉层，被 index.css 统一导入
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -210,7 +210,7 @@
 
   .ds-mention-input-token {
     color: var(--primary);
-    font-weight: 650;
+    font-weight: var(--weight-control-label, 650);
   }
 
   .ds-password-input {
@@ -386,6 +386,10 @@
     width: 100%;
   }
 
+  .ds-dialog-title-text { font-weight: var(--weight-section, 600); }
+  .ds-select-label { font-weight: var(--weight-field-value, 500); }
+  .ds-user-button-name { font-weight: var(--weight-navigation, 600); }
+
   .ds-select-trigger {
     display: flex;
     min-height: var(--control-height-default);
@@ -504,7 +508,7 @@
     background: var(--primary);
     color: var(--primary-foreground);
     font-size: 0.75rem;
-    font-weight: 700;
+    font-weight: var(--weight-control-label, 700);
     box-shadow: none;
   }
 

@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 菜单外壳材质由 design-system.css 统一提供； 依赖设计系统的半径/曲线配对规则与 index.css 的账户、popover、统一中性 interactive-hover、smooth-corner 按钮、边框、阴影与动效 token，复用 design-system.css 的 UserAvatar 表面
+ * [INPUT]: 消费 APP app-typography.css 文字角色，变量回退保持非 APP 原排版； 菜单外壳材质由 design-system.css 统一提供； 依赖设计系统的半径/曲线配对规则与 index.css 的账户、popover、统一中性 interactive-hover、smooth-corner 按钮、边框、阴影与动效 token，复用 design-system.css 的 UserAvatar 表面
  * [OUTPUT]: 对外提供身份卡片式 UserMenu 弹层、与文件树同源的中性分组动作 hover、无红色填充的危险动作与键盘焦点视觉
  * [POS]: app/src/styles 的账户菜单专用视觉层，与通用 Select 分离并被 UserMenu 独占
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -68,7 +68,7 @@
   .ds-user-menu-identity-copy strong {
     color: inherit;
     font-size: 0.8125rem;
-    font-weight: 680;
+    font-weight: var(--weight-section, 680);
   }
 
   .ds-user-menu-identity-copy small {
@@ -94,7 +94,7 @@
     padding: 0.55rem 0.65rem;
     color: var(--foreground);
     font-size: 0.75rem;
-    font-weight: 560;
+    font-weight: var(--weight-navigation, 560);
     text-align: left;
     transition: background var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard);
   }

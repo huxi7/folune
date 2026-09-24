@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 index.css 的 Quiet Editorial Foundations 与 Design System/Signature Components 真实类
+ * [INPUT]: Typography 样本使用 app-typography.css 角色，不再在陈列层复制字号与字重； 依赖 index.css 的 Quiet Editorial Foundations 与 Design System/Signature Components 真实类
  * [OUTPUT]: 对外提供真实主题切换、五层展示页、Lucide 精选图标示例/语义对比、Control 内外同心样板、Editorial 样板及 Paper Surface/Edge Dock/Archive Cord 生产同源预览
  * [POS]: app/src/styles 的开发陈列专用视觉层，只可视化生产 token，不定义第二套颜色、曲率、阴影或 Motion；与 color-lab.css/archive-cord-lab.css 同一条隔离规则，不进 index.css 全局入口，只由 widgets/DesignSystemWorkspace/index.tsx 随 DEV 懒加载独占引入
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -37,7 +37,7 @@
     color: var(--foreground);
     font-family: var(--font-serif);
     font-size: var(--type-display);
-    font-weight: 500;
+    font-weight: var(--weight-title);
     letter-spacing: -0.035em;
     line-height: 0.96;
   }
@@ -107,7 +107,7 @@
   .design-system-section { padding-top: var(--space-16); }
   .design-system-section-header { display: flex; align-items: baseline; gap: var(--space-3); border-bottom: 1px solid var(--border); padding-bottom: var(--space-3); }
   .design-system-section-header span { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--type-caption); }
-  .design-system-section-header h2 { color: var(--foreground); font-family: var(--font-serif); font-size: 1.5rem; font-weight: 500; letter-spacing: -0.02em; }
+  .design-system-section-header h2 { color: var(--foreground); font-family: var(--font-serif); font-size: 1.5rem; font-weight: var(--weight-title); letter-spacing: -0.02em; }
 
   .ds-gallery-card {
     display: flex;
@@ -131,7 +131,7 @@
     color: var(--foreground);
     font-family: var(--font-mono);
     font-size: 0.9375rem;
-    font-weight: 650;
+    font-weight: var(--weight-section);
   }
 
   .ds-gallery-card-header p {
@@ -166,7 +166,7 @@
 
   .ds-color-system-preview { display: grid; width: 100%; gap: var(--space-4); }
   .ds-color-system-note { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-2) var(--space-4); border-bottom: 1px solid var(--border); padding-bottom: var(--space-3); }
-  .ds-color-system-note strong { color: var(--foreground); font-size: var(--type-ui); font-weight: 680; }
+  .ds-color-system-note strong { color: var(--foreground); font-size: var(--type-ui); font-weight: var(--weight-section); }
   .ds-color-system-note span { color: var(--muted-foreground); font-family: var(--font-mono); font-size: 0.5625rem; }
   .ds-color-preview { display: grid; width: 100%; grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr)); gap: var(--space-3); }
   .ds-color-preview > span { display: grid; min-width: 0; gap: var(--space-1); }
@@ -189,7 +189,7 @@
   .ds-iconography-preview { display: grid; width: 100%; gap: var(--space-6); }
   .ds-iconography-intro { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: var(--space-3); border-bottom: 1px solid var(--border); padding-bottom: var(--space-3); }
   .ds-iconography-intro > div { display: grid; gap: var(--space-1); }
-  .ds-iconography-intro strong { color: var(--foreground); font-size: var(--type-heading); font-weight: 680; }
+  .ds-iconography-intro strong { color: var(--foreground); font-size: var(--type-heading); font-weight: var(--weight-section); }
   .ds-iconography-intro span,
   .ds-iconography-intro p,
   .ds-iconography-rule { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--type-caption); line-height: var(--leading-caption); }
@@ -212,7 +212,7 @@
   .ds-iconography-item { display: grid; min-width: 0; grid-template-columns: var(--space-10) minmax(0, 1fr); align-items: center; gap: var(--space-2); min-height: 5rem; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: var(--space-3); }
   .ds-iconography-item > span { display: grid; width: var(--space-10); height: var(--space-10); place-items: center; border-radius: var(--radius-control); background: var(--surface-neutral); color: var(--foreground); }
   .ds-iconography-item > div { display: grid; min-width: 0; gap: 0.1rem; }
-  .ds-iconography-item strong { color: var(--foreground); font-size: var(--type-label); font-weight: 650; }
+  .ds-iconography-item strong { color: var(--foreground); font-size: var(--type-label); font-weight: var(--weight-section); }
   .ds-iconography-item code,
   .ds-iconography-item small { overflow: hidden; color: var(--muted-foreground); font-family: var(--font-mono); font-size: 0.5625rem; line-height: 1.45; text-overflow: ellipsis; white-space: nowrap; }
 
@@ -248,14 +248,6 @@
   .ds-type-scale-row code,
   .ds-type-scale-row small { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--type-caption); line-height: var(--leading-caption); }
   .ds-type-scale-row > p { min-width: 0; overflow: hidden; color: var(--foreground); text-overflow: ellipsis; white-space: nowrap; }
-  .ds-type-scale-row[data-type-role="display"] > p { font-family: var(--font-display); font-size: clamp(1.75rem, 3vw, 2.5rem); font-weight: var(--weight-display); letter-spacing: -0.035em; line-height: var(--leading-display); }
-  .ds-type-scale-row[data-type-role="title"] > p { font-family: var(--font-display); font-size: var(--type-title); font-weight: var(--weight-title); letter-spacing: -0.02em; line-height: var(--leading-title); }
-  .ds-type-scale-row[data-type-role="heading"] > p { font-size: var(--type-heading); font-weight: var(--weight-heading); line-height: var(--leading-heading); }
-  .ds-type-scale-row[data-type-role="body"] > p { font-size: var(--type-body); font-weight: var(--weight-body); line-height: var(--leading-body); }
-  .ds-type-scale-row[data-type-role="ui"] > p { font-size: var(--type-ui); font-weight: var(--weight-ui); line-height: var(--leading-ui); }
-  .ds-type-scale-row[data-type-role="label"] > p { font-size: var(--type-label); font-weight: var(--weight-label); line-height: var(--leading-label); }
-  .ds-type-scale-row[data-type-role="caption"] > p { color: var(--muted-foreground); font-size: var(--type-caption); font-weight: var(--weight-caption); line-height: var(--leading-caption); }
-  .ds-type-scale-row[data-type-role="mono"] > p { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--type-mono); font-weight: var(--weight-mono); line-height: var(--leading-mono); }
 
   .ds-type-control-pairing { display: grid; gap: var(--space-3); }
   .ds-type-control-pairing > article { display: grid; gap: var(--space-4); border: 1px solid var(--border); border-radius: var(--radius-control); background: var(--surface-neutral); padding: var(--space-4); }
@@ -270,7 +262,7 @@
   .ds-foundation-material-preview { display: grid; width: 100%; gap: var(--space-6); }
   .ds-radius-preview, .ds-elevation-preview, .ds-motion-preview { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; }
   .ds-radius-preview span { display: grid; width: 5.5rem; height: 4.5rem; place-content: center; gap: var(--space-1); border: 1px solid var(--border); text-align: center; }
-  .ds-radius-preview strong { color: var(--foreground); font-family: var(--font-mono); font-size: var(--type-ui); font-weight: 650; }
+  .ds-radius-preview strong { color: var(--foreground); font-family: var(--font-mono); font-size: var(--type-ui); font-weight: var(--weight-section); }
   .ds-radius-preview small { color: var(--muted-foreground); font-family: var(--font-mono); font-size: 0.5625rem; }
   .ds-radius-preview [data-radius="compact"] { border-radius: var(--radius-compact); }
   .ds-radius-preview [data-radius="control"] { border-radius: var(--radius-control); }
@@ -320,7 +312,7 @@
   .ds-spatial-section-heading p {
     color: var(--foreground);
     font-size: 0.6875rem;
-    font-weight: 650;
+    font-weight: var(--weight-section);
     text-transform: uppercase;
   }
 
@@ -402,7 +394,7 @@
   .ds-panel-header-specimen-copy strong {
     color: var(--foreground);
     font-size: 0.75rem;
-    font-weight: 650;
+    font-weight: var(--weight-section);
   }
 
   .ds-panel-header-specimen-copy span {
@@ -585,7 +577,7 @@
   .ds-paper-surface-preview .paper-surface { width: 100%; min-height: 18rem; }
   .ds-paper-surface-preview .paper-content-transition > header { display: flex; height: var(--panel-header-height); align-items: center; justify-content: space-between; padding-inline: var(--space-4); color: var(--muted-foreground); font-size: var(--type-caption); }
   .ds-paper-surface-preview article { padding: var(--space-8); }
-  .ds-paper-surface-preview h4 { font-family: var(--font-serif); font-size: var(--type-title); font-weight: 500; }
+  .ds-paper-surface-preview h4 { font-family: var(--font-serif); font-size: var(--type-title); font-weight: var(--weight-title); }
   .ds-paper-surface-preview article p { margin-top: var(--space-4); color: var(--muted-foreground); line-height: 1.7; }
 
   .ds-edge-dock-preview { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: var(--space-4); padding-block: var(--space-8); }
@@ -597,7 +589,7 @@
 
   .ds-archive-cord-preview { position: relative; display: flex; width: 100%; min-height: 13rem; align-items: center; justify-content: space-between; gap: 8rem; padding: var(--space-8); }
   .ds-archive-cord-paper { position: relative; display: grid; width: 12rem; height: 8rem; place-items: center; border: 1px solid var(--paper-edge); border-radius: var(--radius-paper); background: var(--paper-surface); box-shadow: var(--paper-shadow); }
-  .ds-archive-cord-paper strong { font-family: var(--font-serif); font-size: 1.25rem; font-weight: 500; }
+  .ds-archive-cord-paper strong { font-family: var(--font-serif); font-size: 1.25rem; font-weight: var(--weight-title); }
   .ds-archive-cord-target { display: flex; min-width: 11rem; align-items: center; justify-content: space-between; gap: var(--space-4); border-radius: var(--radius-control); background: var(--secondary); padding: var(--space-3); color: var(--foreground); font-size: var(--type-ui); }
 
   .ds-preview-form label {
@@ -630,7 +622,7 @@
   .ds-preview-card p {
     color: inherit;
     font-size: 0.75rem;
-    font-weight: 650;
+    font-weight: var(--weight-section);
   }
 
   .ds-preview-card > span {

@@ -39,7 +39,7 @@ UserButton.tsx: 本地用户身份原子组件，提供可复用 UserAvatar 与�
 UserMenu.tsx: 账户身份与动作菜单，向上浮层共用 PresenceSurface；点击身份/设置前归还 trigger 焦点，再交给同一个 AccountDialog，退出即不再可操作
 index.ts: 基础组件稳定出口，包含 PresenceSurface/MotionSurface、PersistentView、Collapse 与 CardMotion；业务界面组合生产原语，不建立第二套动画
 
-职责: 本地组件目录；首次无旧内容的稳定结构才使用统一 Skeleton，已有内容刷新必须优先保留内容，业务组件不得复制 shimmer；AI 最终正文永远不得拥有卡片表面，用户消息复用 Primary 主题，过程与正文的语义分区由业务层决定，ToolCallBubble 只消费已净化的人话详情；所有组件只消费 app/src/index.css 的静态语义 token 与 design-system/motion.ts 的统一动效与组件层 class，不得在组件中硬编码颜色值或引入第二套 UI 系统。
+职责: 本地组件目录；APP 文字按 app-typography.css 角色消费，Button/action、Input/Select/input、UserButton/navigation、Dialog/section；禁止组件新增局部数字字重，营销继续使用共享样式回退；首次无旧内容的稳定结构才使用统一 Skeleton，已有内容刷新必须优先保留内容，业务组件不得复制 shimmer；AI 最终正文永远不得拥有卡片表面，用户消息复用 Primary 主题，过程与正文的语义分区由业务层决定，ToolCallBubble 只消费已净化的人话详情；所有组件只消费 app/src/index.css 的静态语义 token 与 design-system/motion.ts 的统一动效与组件层 class，不得在组件中硬编码颜色值或引入第二套 UI 系统。
 
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 

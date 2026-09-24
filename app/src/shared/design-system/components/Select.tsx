@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 PresenceSurface 的统一入退场、 React 的受控状态、effect/id/ref 与键盘事件，依赖 共享 Lucide 图标，依赖 index.css 的 ds-select 组件类
+ * [INPUT]: 标签消费 input 字重角色； 依赖 PresenceSurface 的统一入退场、 React 的受控状态、effect/id/ref 与键盘事件，依赖 共享 Lucide 图标，依赖 index.css 的 ds-select 组件类
  * [OUTPUT]: 对外提供具备 combobox/listbox ARIA 契约的 Select 组件及其选项、位置与触发器类型
  * [POS]: app/src/shared/design-system/components 的通用选择器基础件，被 AccountSettingsPanel 与 Design System 预览消费；UserMenu 已使用独立账户菜单语义
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -189,7 +189,7 @@ export function Select({
           type="button"
         >
           <span className="min-w-0 text-left">
-            <span className="block truncate text-sm font-medium">
+            <span className="block truncate text-sm ds-select-label">
               {selectedOption?.label ?? ariaLabel}
             </span>
             {selectedOption?.description ? (
@@ -233,7 +233,7 @@ export function Select({
                   <IconComponent aria-hidden="true" size={16} />
                 ) : null}
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-medium">{option.label}</span>
+                  <span className="block truncate text-sm ds-select-label">{option.label}</span>
                   {option.description ? (
                     <span className="mt-0.5 block truncate text-xs text-muted-foreground">
                       {option.description}

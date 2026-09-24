@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖设计系统的半径/曲线配对规则与 index.css 的统一中性 interactive-hover、纯色 Secondary 材质、32px compact 高度、12px Control 曲率、focus/motion 语义 token 与共享 --press-scale
+ * [INPUT]: 消费 APP app-typography.css 文字角色，变量回退保持非 APP 原排版； 依赖设计系统的半径/曲线配对规则与 index.css 的统一中性 interactive-hover、纯色 Secondary 材质、32px compact 高度、12px Control 曲率、focus/motion 语义 token 与共享 --press-scale
  * [OUTPUT]: 对外提供无实体阴影、hover 固定原位、按下原地收紧的 SidebarButton；选中态只以轻中性底色和墨色表达，utility 当前位置只使用前景色
  * [POS]: app/src/styles 的侧栏导航原子样式，消除 APP 与账户模态框的尺寸/材质分叉并保留安静的未选中层级
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -113,7 +113,7 @@
   .ds-sidebar-button-trailing {
     color: var(--muted-foreground);
     font-size: 0.625rem;
-    font-weight: 560;
+    font-weight: var(--weight-caption, 560);
   }
 
   .ds-sidebar-button[data-size="icon"] .ds-sidebar-button-label {

@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖设计系统的半径/曲线配对规则与 CodeMirror 6 生成的 cm-* DOM 类与 index.css 根级语义 token
+ * [INPUT]: 消费 APP app-typography.css 文字角色，变量回退保持非 APP 原排版； 依赖设计系统的半径/曲线配对规则与 CodeMirror 6 生成的 cm-* DOM 类与 index.css 根级语义 token
  * [OUTPUT]: 对外提供 CodeMirror light/dark 基础适配、写作 Paper 的自然高度/外层滚动、14px source/15px live 正文与完整 Markdown 显示协议
  * [POS]: app/src/styles 的第三方编辑器级联边界；写作态交还纵向滚动给 paper-stage-scroll，其他宿主仍保留默认 100% 编辑器协议
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -69,8 +69,9 @@
   padding: 0;
   color: var(--foreground);
   font-family: var(--font-sans);
-  font-size: var(--type-body);
-  line-height: var(--leading-body);
+  font-size: var(--type-editor, var(--type-body));
+  font-weight: var(--weight-editor, 400);
+  line-height: var(--leading-editor, var(--leading-body));
   white-space: pre-wrap;
 }
 
@@ -97,7 +98,7 @@
   padding-block: 0.22em 0.04em;
   color: var(--foreground);
   font-family: var(--font-serif);
-  font-weight: 500;
+  font-weight: var(--weight-title, 500);
   letter-spacing: -0.02em;
   text-decoration: none !important;
 }
@@ -110,7 +111,7 @@
   color: var(--muted-foreground) !important;
   font-family: var(--font-mono);
   font-size: 0.52em;
-  font-weight: 620 !important;
+  font-weight: var(--weight-marker, 620) !important;
   letter-spacing: 0;
   text-decoration: none !important;
   vertical-align: 0.14em;
@@ -123,7 +124,7 @@
 .folune-md-editor .cm-live-heading-5 { font-size: 0.9375rem; line-height: 1.68; }
 .folune-md-editor .cm-live-heading-6 { font-size: 0.875rem; line-height: 1.7; }
 
-.folune-md-editor .cm-live-strong { font-weight: 720; }
+.folune-md-editor .cm-live-strong { font-weight: var(--weight-emphasis, 720); }
 .folune-md-editor .cm-live-emphasis { font-style: italic; }
 .folune-md-editor .cm-live-strikethrough { text-decoration: line-through; text-decoration-thickness: 1px; }
 .folune-md-editor .cm-live-link { color: var(--primary); text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--primary) 40%, transparent); text-underline-offset: 0.16em; }
@@ -169,7 +170,7 @@
   background: var(--background);
   color: var(--primary-foreground);
   font-size: 0.65rem;
-  font-weight: 800;
+  font-weight: var(--weight-marker, 800);
   line-height: 1;
   vertical-align: -0.08rem;
 }
@@ -233,4 +234,4 @@
 }
 
 .folune-md-editor .cm-live-table-cell + .cm-live-table-cell { border-left: 1px solid var(--border); }
-.folune-md-editor .cm-live-table-header-cell { background: var(--surface-neutral); font-weight: 680; }
+.folune-md-editor .cm-live-table-header-cell { background: var(--surface-neutral); font-weight: var(--weight-table-heading, 680); }

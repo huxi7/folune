@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 Motion presence、Portal、useModalLifecycle 与 React id/ref，依赖 共享 Lucide XIcon，依赖 Button 与 design-system.css 暴露的 ds-dialog-overlay/ds-dialog-panel/ds-dialog-shell 模态材质类
+ * [INPUT]: 标题字重消费 section 文字角色； 依赖 Motion presence、Portal、useModalLifecycle 与 React id/ref，依赖 共享 Lucide XIcon，依赖 Button 与 design-system.css 暴露的 ds-dialog-overlay/ds-dialog-panel/ds-dialog-shell 模态材质类
  * [OUTPUT]: 对外提供密度/宽度/对齐/表面/标题、default|none 入退场模式、标题描述关联、Esc、焦点循环、滚动锁定的 Dialog
  * [POS]: app/src/shared/design-system/components 的唯一模态基础件；motion=none 交出入场编排让遮罩随 root 视图过渡一起换（遮罩绝不自带过渡身份，否则会盖住正在放大的纸），模态行为仍由此统一
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -138,8 +138,8 @@ function DialogFrame({
             <div>
               <h2
                 className={density === "compact"
-                  ? "text-base font-semibold leading-tight text-foreground"
-                  : "text-xl font-semibold leading-tight text-foreground"}
+                  ? "text-base ds-dialog-title-text leading-tight text-foreground"
+                  : "text-xl ds-dialog-title-text leading-tight text-foreground"}
                 id={titleId}
               >
                 {title}

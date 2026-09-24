@@ -1,0 +1,40 @@
+/**
+ * [INPUT]: 读取 APP 排版入口与生产样式，设计规范约束组件只消费文字角色
+ * [OUTPUT]: 阻止局部数字字重回流、主正文/聊天失去角色接线以及营销场景误用 APP 字重
+ * [POS]: styles 的排版消费门禁；不锁像素审美，真实字号/颜色由浏览器验收
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+import { describe, expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
+
+const read = (name: string) => readFileSync(new URL(name, import.meta.url), "utf8");
+const typography = read("app-typography.css");
+const consumers = ["workspace", "button", "sidebar-button", "ai-message", "design-system", "user-menu", "toast", "codemirror", "note-paper", "design-system-workspace", "motion"];
+
+describe("APP 排版角色消费", () => {
+  test("角色只在 APP 根生效并进入生产 CSS", () => {
+    expect(typography).toContain('html:root[data-visual-context="app"]');
+    expect(read("../index.css")).toContain('@import "./styles/app-typography.css";');
+    const declarations = [...typography.matchAll(/--font-weight-\w+:\s*(\d+);/g)].map(match => Number(match[1]));
+    expect(declarations).toEqual([400, 500, 600, 700]);
+    expect(typography).toContain('--weight-conversation: var(--font-weight-medium)');
+    expect(typography).toContain('--weight-editor: var(--weight-body)');
+  });
+
+  test("生产消费层不能绕过角色写数字字重", () => {
+    for (const name of consumers) {
+      expect(read(`${name}.css`)).not.toMatch(/font-weight:\s*\d/);
+    }
+    for (const component of ["Select", "UserButton", "Dialog"]) {
+      expect(read(`../shared/design-system/components/${component}.tsx`)).not.toMatch(/\bfont-(normal|medium|semibold|bold)\b/);
+    }
+  });
+
+  test("消息双方显式消费相同字重与字号，编辑正文独立消费阅读角色", () => {
+    const messages = read("ai-message.css");
+    expect(messages.match(/font-weight: var\(--weight-conversation, 400\)/g)).toHaveLength(2);
+    expect(messages.match(/font-size: var\(--type-conversation, 0.75rem\)/g)).toHaveLength(2);
+    expect(read("codemirror.css")).toContain('font-weight: var(--weight-editor, 400)');
+    expect(read("button.css")).toContain('font-weight: var(--weight-action, 650)');
+  });
+});
