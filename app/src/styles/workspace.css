@@ -168,12 +168,13 @@
 
   .notes-workspace { min-height: 0; background: transparent; }
   .notes-workspace-loading { pointer-events: none; }
-  /* 空/错误占位: height 100% 吃满顶栏下的写作区并居中, 不再漂在上三分之一; min-height 兜底防百分比链断裂 */
-  .notes-workspace-state { display: flex; height: 100%; min-height: 20rem; flex-direction: column; align-items: center; justify-content: center; gap: 1.35rem; padding: 2rem; background: transparent; color: var(--muted-foreground); text-align: center; animation: notes-placeholder-in var(--motion-fast) var(--ease-standard) both; }
-  .notes-empty-figure { display: inline-flex; width: 3.25rem; height: 3.25rem; align-items: center; justify-content: center; border: 1px solid color-mix(in srgb, var(--paper-edge) 78%, transparent); border-radius: var(--radius-panel); corner-shape: var(--corner-shape-smooth); background: color-mix(in srgb, var(--surface-neutral) 55%, var(--paper-surface)); color: color-mix(in srgb, var(--primary) 68%, var(--muted-foreground)); }
-  .notes-workspace-state[data-tone="error"] .notes-empty-figure { color: color-mix(in srgb, var(--destructive) 70%, var(--muted-foreground)); }
+  /* 空/错误兜底占位: height 100% 吃满顶栏下的写作区, 但内容顶在中上部(约 1/3 处),
+     比几何正中更贴合视觉重心, 也让这块保持"临时状态"而非"欢迎页"的分量;
+     min-height 兜底防百分比链断裂, 写作区≈视口高故 24vh 近似成立, 不设 rem 上限以免大屏封顶失效 */
+  .notes-workspace-state { display: flex; height: 100%; min-height: 20rem; flex-direction: column; align-items: center; justify-content: flex-start; padding: max(4rem, 24vh) 2rem 2rem; background: transparent; color: var(--muted-foreground); text-align: center; animation: notes-placeholder-in var(--motion-fast) var(--ease-standard) both; }
   .notes-empty-copy { display: flex; max-width: 24rem; flex-direction: column; align-items: center; gap: 0.5rem; }
   .notes-empty-copy strong { color: var(--foreground); font-family: var(--font-serif); font-size: 1.25rem; font-weight: var(--weight-title, 500); letter-spacing: -0.018em; line-height: 1.3; text-wrap: balance; }
+  .notes-workspace-state[data-tone="error"] .notes-empty-copy strong { color: var(--destructive); }
   .notes-empty-copy span { color: var(--muted-foreground); font-size: 0.8125rem; line-height: 1.72; text-wrap: pretty; }
   @keyframes notes-placeholder-in {
     from { opacity: 0; transform: translateY(4px); }
