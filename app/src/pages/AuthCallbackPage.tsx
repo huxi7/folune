@@ -1,14 +1,14 @@
 /**
  * [INPUT]: 依赖 React effect/ref/state，依赖 react-router-dom 导航，依赖 shared/supabase 的 PKCE code 换取会话能力，依赖本地 design-system
- * [OUTPUT]: 对外提供 /auth/callback OAuth 回调页面，成功后直接进入 /app，失败时返回 /login，并让会话 Spinner 尊重 reduced-motion
- * [POS]: app/src/pages 的 Google OAuth 回调边界，被 app/router 引用
+ * [OUTPUT]: 对外提供 /auth/callback OAuth 回调页面，成功进入 /app、失败返回 /login；状态卡片复用认证页文字/中性表面与共享图标，会话图标在减少动态时静止
+ * [POS]: app/src/pages 的 Google OAuth 回调边界，视觉共用 auth.css 与 APP 控件语义，交换会话仍沿 shared/supabase
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { CircleNotchIcon, WarningCircleIcon } from "../shared/design-system/icons";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { Button, Card } from "../shared/design-system/components";
+import { Button } from "../shared/design-system/components";
 import {
   completeOAuthSignIn,
   getAuthErrorMessage,
@@ -45,21 +45,21 @@ export function AuthCallbackPage() {
   }, [navigate]);
 
   return (
-    <main className="ds-page flex min-h-screen items-center justify-center p-4">
-      <Card className="w-full max-w-md p-5 text-center">
+    <main className="auth-callback-page">
+      <section aria-labelledby="auth-callback-title" className="auth-card auth-callback-card">
         {errorMessage ? (
           <>
             <WarningCircleIcon
               aria-hidden="true"
-              className="mx-auto text-destructive"
+              className="auth-callback-icon"
+              data-tone="error"
               size={24}
             />
-            <h1 className="mt-4 text-xl font-semibold leading-tight text-foreground">
+            <h1 className="auth-verification-title" id="auth-callback-title">
               未能完成 Google 登录
             </h1>
-            <p className="mt-3 text-sm leading-6 text-muted-foreground">{errorMessage}</p>
+            <p className="auth-status-message" role="alert">{errorMessage}</p>
             <Button
-              className="mt-5"
               onClick={() => navigate("/login", { replace: true })}
               variant="primary"
             >
@@ -70,18 +70,19 @@ export function AuthCallbackPage() {
           <>
             <CircleNotchIcon
               aria-hidden="true"
-              className="mx-auto text-primary motion-safe:animate-spin motion-reduce:animate-none"
+              className="auth-callback-icon motion-safe:animate-spin motion-reduce:animate-none"
+              data-tone="pending"
               size={24}
             />
-            <h1 className="mt-4 text-xl font-semibold leading-tight text-foreground">
+            <h1 className="auth-verification-title" id="auth-callback-title">
               正在建立安全会话
             </h1>
-            <p className="mt-3 text-sm leading-6 text-muted-foreground">
+            <p className="auth-status-message" role="status">
               Google 授权已返回，正在进入 Folune。
             </p>
           </>
         )}
-      </Card>
+      </section>
     </main>
   );
 }

@@ -1,10 +1,13 @@
 /**
- * [INPUT]: 依赖 index.css 的字体族/字号基线与 APP 文档根场景，品牌规范定义角色职责
- * [OUTPUT]: APP 的 400/500/600 字重基元、完整文字角色与 data-text-role 消费入口；700 仅用于内容强调
- * [POS]: 设计系统 APP 排版唯一映射；生产组件和 Typography 样板共读，不改变营销文档的默认排版
+ * [INPUT]: 依赖 index.css 的字体族/字号基线、APP 文档根、认证页面与营销 Button/GlowButton 类，品牌规范定义角色职责
+ * [OUTPUT]: APP、认证与营销全部标准按钮共用 400/500/600 字重基元及文字角色；APP 另提供 data-text-role 消费入口，700 仅用于内容强调
+ * [POS]: 设计系统控件排版唯一映射；生产组件和 Typography 样板共读，营销标题及正文保留既有排版
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
-html:root[data-visual-context="app"] {
+html:root[data-visual-context="app"],
+.auth-page,
+.auth-callback-page,
+.landing-blueprint :is(.ds-button, .glow-button) {
   --font-weight-regular: 400;
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
@@ -48,6 +51,8 @@ html:root[data-visual-context="app"] {
 }
 
 @layer components {
+  .landing-blueprint :is(.ds-button, .glow-button) { font-family: var(--font-sans); }
+
   /* ---- 非标准组件可按角色消费整组属性，不用局部 font-weight 或字号工具类拼装 ---- */
   :root[data-visual-context="app"] [data-text-role="editor"] { font-size: var(--type-editor); font-weight: var(--weight-editor); line-height: var(--leading-editor); }
   :root[data-visual-context="app"] [data-text-role="conversation"] { font-size: var(--type-conversation); font-weight: var(--weight-conversation); line-height: var(--leading-assistant-message); }

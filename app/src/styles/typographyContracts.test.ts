@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 读取 APP 排版入口与生产样式，设计规范约束组件只消费文字角色
- * [OUTPUT]: 阻止局部数字字重回流、主正文/聊天失去角色接线以及营销场景误用 APP 字重
+ * [OUTPUT]: 阻止局部数字字重回流、主正文/聊天失去角色接线，并确认认证与营销标准按钮复用 APP 排版而营销正文保持独立
  * [POS]: styles 的排版消费门禁；不锁像素审美，真实字号/颜色由浏览器验收
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -9,11 +9,15 @@ import { readFileSync } from "node:fs";
 
 const read = (name: string) => readFileSync(new URL(name, import.meta.url), "utf8");
 const typography = read("app-typography.css");
-const consumers = ["workspace", "button", "sidebar-button", "ai-message", "design-system", "user-menu", "toast", "codemirror", "note-paper", "design-system-workspace", "motion"];
+const consumers = ["workspace", "button", "sidebar-button", "ai-message", "design-system", "user-menu", "toast", "codemirror", "note-paper", "design-system-workspace", "motion", "auth"];
 
 describe("APP 排版角色消费", () => {
-  test("角色只在 APP 根生效并进入生产 CSS", () => {
+  test("APP、认证和营销标准按钮共读角色，营销正文保持独立", () => {
     expect(typography).toContain('html:root[data-visual-context="app"]');
+    expect(typography).toContain(".auth-page,");
+    expect(typography).toContain(".auth-callback-page,");
+    expect(typography).toContain(".landing-blueprint :is(.ds-button, .glow-button) {");
+    expect(typography).not.toContain(".landing-blueprint {");
     expect(read("../index.css")).toContain('@import "./styles/app-typography.css";');
     const declarations = [...typography.matchAll(/--font-weight-\w+:\s*(\d+);/g)].map(match => Number(match[1]));
     expect(declarations).toEqual([400, 500, 600, 700]);

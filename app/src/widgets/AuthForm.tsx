@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 React 的登录/注册/验证码局部状态与输入框引用、共享 Button/GlowButton/Input/PasswordInput、MarketingLink，以及 shared/supabase 认证服务
- * [OUTPUT]: 对外提供登录、双密码注册、六格邮箱验证码与 Google OAuth 共用的 AuthForm；主提交使用 GlowButton，协议通过 SPA 链接进入公开页面，认证成功只通知页面进入工作区
+ * [OUTPUT]: 对外提供登录、双密码注册、六格验证码与 Google OAuth 共用的 AuthForm；发起动作独占加载反馈，状态提示和验证码通过 auth-* 类消费共享排版，协议用 SPA 链接
  * [POS]: widgets 的唯一认证表单，由 LoginPage 承载；表单负责认证步骤，页面负责布局和导航，不直接持有 Supabase client
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -37,6 +37,7 @@ const OTP_LENGTH = 6;
 
 type AuthStep = "credentials" | "verification";
 type AuthMode = "login" | "register";
+type PendingAuthAction = "credentials" | "google" | "verification" | "resend";
 
 type AuthFormProps = {
   onAuthenticated: () => void;
@@ -55,11 +56,12 @@ export function AuthForm({ onAuthenticated }: AuthFormProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [otp, setOtp] = useState(createEmptyOtp);
-  const [busy, setBusy] = useState(false);
+  const [pendingAction, setPendingAction] = useState<PendingAuthAction | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [noticeMessage, setNoticeMessage] = useState<string | null>(null);
   const otpInputRefs = useRef<Array<HTMLInputElement | null>>([]);
   const verificationInFlightRef = useRef(false);
+  const busy = pendingAction !== null;
 
   useEffect(() => {
     if (step === "verification") {
@@ -75,7 +77,7 @@ export function AuthForm({ onAuthenticated }: AuthFormProps) {
       return;
     }
 
-    setBusy(true);
+    setPendingAction("credentials");
     setErrorMessage(null);
     setNoticeMessage(null);
 
@@ -100,12 +102,12 @@ export function AuthForm({ onAuthenticated }: AuthFormProps) {
     } catch (error) {
       setErrorMessage(getAuthErrorMessage(error));
     } finally {
-      setBusy(false);
+      setPendingAction(null);
     }
   }
 
   async function handleGoogleSignIn() {
-    setBusy(true);
+    setPendingAction("google");
     setErrorMessage(null);
     setNoticeMessage(null);
 
@@ -113,7 +115,7 @@ export function AuthForm({ onAuthenticated }: AuthFormProps) {
       await signInWithGoogle();
     } catch (error) {
       setErrorMessage(getAuthErrorMessage(error));
-      setBusy(false);
+      setPendingAction(null);
     }
   }
 
@@ -123,7 +125,7 @@ export function AuthForm({ onAuthenticated }: AuthFormProps) {
     }
 
     verificationInFlightRef.current = true;
-    setBusy(true);
+    setPendingAction("verification");
     setErrorMessage(null);
     setNoticeMessage("正在验证验证码…");
 
@@ -137,7 +139,7 @@ export function AuthForm({ onAuthenticated }: AuthFormProps) {
       requestAnimationFrame(() => otpInputRefs.current[0]?.focus());
     } finally {
       verificationInFlightRef.current = false;
-      setBusy(false);
+      setPendingAction(null);
     }
   }
 
@@ -192,7 +194,7 @@ export function AuthForm({ onAuthenticated }: AuthFormProps) {
   }
 
   async function handleResendOtp() {
-    setBusy(true);
+    setPendingAction("resend");
     setErrorMessage(null);
     setNoticeMessage(null);
 
@@ -204,7 +206,7 @@ export function AuthForm({ onAuthenticated }: AuthFormProps) {
     } catch (error) {
       setErrorMessage(getAuthErrorMessage(error));
     } finally {
-      setBusy(false);
+      setPendingAction(null);
     }
   }
 
@@ -237,13 +239,13 @@ export function AuthForm({ onAuthenticated }: AuthFormProps) {
         <p className="auth-verification-description">验证码已发送至 {email.trim().toLowerCase()}</p>
       ) : null}
       {isVerificationStep ? (
-        <div className="mt-5 space-y-4">
-          <div className="grid grid-cols-6 gap-2" role="group" aria-label="六位邮箱验证码">
+        <div className="auth-verification-body">
+          <div className="auth-otp-grid" role="group" aria-label="六位邮箱验证码">
             {otp.map((digit, index) => (
               <Input
                 aria-label={`验证码第 ${index + 1} 位`}
                 autoComplete={index === 0 ? "one-time-code" : "off"}
-                className="w-full px-0 text-center font-mono text-lg font-semibold"
+                className="auth-otp-input"
                 disabled={busy}
                 inputMode="numeric"
                 key={index}
@@ -260,17 +262,11 @@ export function AuthForm({ onAuthenticated }: AuthFormProps) {
             ))}
           </div>
 
-          <div aria-live="polite" className="min-h-5 text-sm leading-5">
-            {errorMessage ? (
-              <p className="text-destructive">{errorMessage}</p>
-            ) : noticeMessage ? (
-              <p className="text-muted-foreground">{noticeMessage}</p>
-            ) : (
-              <p className="text-muted-foreground">输满 6 位后将自动验证并进入 Folune。</p>
-            )}
-          </div>
+          <p aria-live="polite" className="auth-status-message" data-tone={errorMessage ? "error" : undefined}>
+            {errorMessage ?? noticeMessage ?? "输满 6 位后将自动验证并进入 Folune。"}
+          </p>
 
-          <div className="flex flex-wrap justify-between gap-2">
+          <div className="auth-verification-actions">
             <Button
               disabled={busy}
               icon={ArrowLeftIcon}
@@ -279,8 +275,8 @@ export function AuthForm({ onAuthenticated }: AuthFormProps) {
             >
               修改邮箱
             </Button>
-            <Button disabled={busy} onClick={handleResendOtp} variant="secondary">
-              {busy ? "处理中…" : "重新发送"}
+            <Button disabled={busy} loading={pendingAction === "resend"} onClick={handleResendOtp} variant="secondary">
+              {pendingAction === "resend" ? "发送中…" : "重新发送"}
             </Button>
           </div>
         </div>
@@ -290,6 +286,7 @@ export function AuthForm({ onAuthenticated }: AuthFormProps) {
             className="auth-provider-button w-full"
             disabled={busy}
             icon={GoogleLogoIcon}
+            loading={pendingAction === "google"}
             onClick={handleGoogleSignIn}
             variant="secondary"
           >
@@ -365,7 +362,7 @@ export function AuthForm({ onAuthenticated }: AuthFormProps) {
           ) : null}
 
           {errorMessage ? (
-            <p aria-live="polite" className="text-sm leading-5 text-destructive">
+            <p aria-live="polite" className="auth-status-message" data-tone="error">
               {errorMessage}
             </p>
           ) : null}
@@ -373,9 +370,10 @@ export function AuthForm({ onAuthenticated }: AuthFormProps) {
           <GlowButton
             className="auth-submit-button w-full"
             disabled={busy}
+            loading={pendingAction === "credentials"}
             type="submit"
           >
-            {busy ? "处理中…" : isRegisterMode ? "注册" : "登录"}
+            {pendingAction === "credentials" ? "处理中…" : isRegisterMode ? "注册" : "登录"}
           </GlowButton>
 
           <p className="auth-mode-switch">

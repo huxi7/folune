@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 Landing 的纸色/字体与 BlueprintFrame 公告骨架、DS token，以及 LoginPage/LoginBackdrop/AuthForm 的 auth-* 结构
- * [OUTPUT]: 对外提供 01A 散墨正文后景、384px 表单、96px 桌面栏距、完整 3:4 背景视频与手机单列表单；协议入口适配公开链接，卡片和输入沿现有认证视觉
- * [POS]: styles 的独立登录页视觉层，由 index.css 统一导入；高度不足时自然滚动，绝不让居中内容钻入 Header 或裁切视频
+ * [INPUT]: 依赖 Landing 的纸色/标题与 BlueprintFrame、DS 尺寸、app-visual/app-typography 的共享控件语义，以及 LoginPage/AuthForm/AuthCallbackPage 的 auth-* 结构
+ * [OUTPUT]: 对外提供认证页面布局、20px 大控件、紧凑验证码与状态提示；表单沿 APP 比例字体、文字角色、中性表面与轻影，交互焦点由共享视觉层统一
+ * [POS]: styles 的认证布局与组件适配层；营销后景/3:4 视频保持独立，登录、注册、验证码与 OAuth 回调共用表单语义，不再复制焦点或加载效果
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 @layer components {
@@ -76,18 +76,17 @@
   }
 
   .auth-card {
-    --auth-input-halo: color-mix(in srgb, var(--primary) 12%, transparent);
-    --auth-input-edge: color-mix(in srgb, var(--primary) 78%, var(--input));
+    --auth-control-radius: var(--radius-dialog);
     padding: 40px 28px 36px;
-    border: 1px solid color-mix(in srgb, var(--landing-border) 50%, transparent);
+    border: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
     border-radius: var(--radius-dialog);
     corner-shape: var(--corner-shape-smooth);
     background: var(--card);
-    box-shadow:
-      inset 0 1px 0 var(--card),
-      0 1px 2px color-mix(in srgb, var(--shadow-color) 7%, transparent),
-      0 0 12px color-mix(in srgb, var(--shadow-color) 4%, transparent),
-      0 12px 28px -8px color-mix(in srgb, var(--shadow-color) 12%, transparent);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    font-size: var(--type-ui);
+    font-weight: var(--weight-body);
+    box-shadow: var(--shadow-sm);
   }
 
   .auth-artwork {
@@ -111,16 +110,60 @@
   }
 
   .auth-card .auth-verification-title {
-    font-size: 24px;
-    line-height: 32px;
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    font-size: var(--type-heading);
+    font-weight: var(--weight-heading);
+    line-height: var(--leading-heading);
   }
 
-  .landing-blueprint .auth-verification-description {
-    margin-top: 12px;
+  .auth-card .auth-verification-description {
+    margin-top: var(--space-3);
     overflow-wrap: anywhere;
     color: var(--muted-foreground);
-    font-size: 14px;
-    line-height: 22px;
+    font-size: var(--type-input);
+    line-height: var(--leading-input);
+  }
+
+  .auth-verification-body {
+    display: grid;
+    gap: var(--space-4);
+    margin-top: var(--space-5);
+  }
+
+  .auth-otp-grid {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: var(--space-2);
+  }
+
+  .auth-otp-input.ds-input {
+    width: 100%;
+    min-width: 0;
+    padding-inline: 0;
+    font-family: var(--font-mono);
+    font-size: var(--type-heading);
+    font-weight: var(--weight-field-value);
+    text-align: center;
+  }
+
+  .auth-verification-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: var(--space-2);
+  }
+
+  .auth-status-message {
+    min-height: var(--leading-input);
+    color: var(--muted-foreground);
+    font-size: var(--type-input);
+    font-weight: var(--weight-support);
+    line-height: var(--leading-input);
+  }
+
+  .auth-status-message[data-tone="error"] {
+    color: var(--destructive);
   }
 
   .auth-credentials-form {
@@ -129,39 +172,29 @@
     gap: 16px;
   }
 
+  /* ---- 大控件提升一档曲率；输入边框与流光裁剪沿同一轮廓 ---- */
   .auth-provider-button.ds-button,
-  .auth-submit-button.ds-button {
+  .auth-submit-button.glow-button,
+  .auth-input.ds-input {
     min-height: 44px;
-    justify-content: center;
+    border-radius: var(--auth-control-radius);
+    corner-shape: var(--corner-shape-smooth);
   }
 
   .auth-divider {
     padding-block: 2px;
     color: var(--muted-foreground);
-    font-size: 0.75rem;
+    font-size: var(--type-label);
+    font-weight: var(--weight-support);
     text-align: center;
   }
 
   .auth-input.ds-input {
-    min-height: 44px;
-    padding-inline: 1rem;
-    font-weight: 400;
+    padding-inline: var(--space-4);
   }
 
   .auth-input.ds-input::placeholder {
     opacity: 1;
-    font-weight: 400;
-  }
-
-  /* ---- 指向即出现一圈细光；同时覆盖营销页的通用外轮廓，避免双圈叠加 ---- */
-  .auth-card .auth-input.ds-input:not(:disabled):is(:hover, :focus-visible),
-  .auth-card .ds-password-input:is(:hover, :focus-within) .auth-input.ds-input:not(:disabled) {
-    border-color: var(--auth-input-edge);
-    outline: none;
-    outline-offset: 0;
-    box-shadow:
-      0 0 0 3px var(--auth-input-halo),
-      0 2px 8px -4px var(--auth-input-halo);
   }
 
   .auth-card .ds-password-toggle {
@@ -172,10 +205,9 @@
     transition: color var(--motion-fast) var(--ease-standard);
   }
 
-  .auth-card .ds-password-toggle:not(:disabled):is(:hover, :focus-visible) {
+  .auth-card .ds-password-toggle:not(:disabled):hover {
     background: transparent;
     color: var(--foreground);
-    outline: none;
   }
 
   .auth-forgot-password {
@@ -185,13 +217,12 @@
     border: 0;
     background: transparent;
     color: var(--muted-foreground);
-    font-size: 12px;
-    line-height: 20px;
+    border-radius: var(--radius-compact);
+    corner-shape: var(--corner-shape-smooth);
+    font-size: var(--type-label);
+    font-weight: var(--weight-support);
+    line-height: var(--leading-input);
     transition: color var(--motion-fast) var(--ease-standard);
-  }
-
-  .auth-forgot-password:not(:disabled):hover {
-    color: var(--foreground);
   }
 
   .auth-input.ds-input:-webkit-autofill,
@@ -211,42 +242,82 @@
   }
 
   .auth-mode-switch {
-    padding-block: 8px;
-    font-size: 12px;
+    padding-block: var(--space-2);
+    font-size: var(--type-label);
+    font-weight: var(--weight-support);
+    line-height: var(--leading-label);
   }
 
   .auth-mode-switch button {
-    margin-left: 0.5rem;
-    color: var(--primary);
-    font-weight: 600;
+    min-height: var(--space-6);
+    margin-left: var(--space-2);
+    border-radius: var(--radius-compact);
+    corner-shape: var(--corner-shape-smooth);
+    color: var(--foreground);
+    font-weight: var(--weight-action);
   }
 
   .auth-terms-copy {
-    padding-top: 8px;
-    font-size: 10px;
-    line-height: 1.7;
+    padding-top: var(--space-2);
+    font-size: var(--type-caption);
+    font-weight: var(--weight-support);
+    line-height: var(--leading-caption);
   }
 
-  .auth-terms-copy a {
-    margin-inline: 0.25rem;
+  .auth-card .auth-terms-copy a {
+    margin-inline: var(--space-1);
     color: var(--foreground);
     text-decoration: underline;
     text-decoration-color: color-mix(in srgb, var(--foreground) 38%, transparent);
     text-underline-offset: 0.18rem;
   }
 
-  .auth-mode-switch button:hover,
-  .auth-terms-copy a:hover {
-    color: var(--primary);
+  .auth-card .auth-mode-switch button:not(:disabled):hover,
+  .auth-card .auth-forgot-password:not(:disabled):hover,
+  .auth-card .auth-terms-copy a:hover {
+    color: var(--foreground);
+    text-decoration: underline;
+    text-decoration-color: currentColor;
+    text-underline-offset: 0.18rem;
   }
 
-  .auth-mode-switch button:focus-visible,
-  .auth-terms-copy a:focus-visible {
-    border-radius: var(--radius-control);
+  .auth-mode-switch button:disabled,
+  .auth-forgot-password:disabled {
+    cursor: not-allowed;
+    opacity: 0.58;
+  }
+
+  .auth-card .auth-mode-switch button:focus-visible,
+  .auth-card .auth-forgot-password:focus-visible,
+  .auth-card .auth-terms-copy a:focus-visible {
+    border-radius: var(--radius-compact);
     corner-shape: var(--corner-shape-smooth);
     outline: 2px solid color-mix(in srgb, var(--ring) 45%, transparent);
     outline-offset: 0.15rem;
   }
+
+  /* ---- OAuth 回调是同一认证流程的状态页，只组合已有控件和语义 ---- */
+  .auth-callback-page {
+    display: grid;
+    min-height: 100svh;
+    place-items: center;
+    padding: var(--space-4);
+    background: var(--landing-paper);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+  }
+
+  .auth-callback-card {
+    width: min(100%, 384px);
+    text-align: center;
+  }
+
+  .auth-callback-icon { margin-inline: auto; }
+  .auth-callback-icon[data-tone="error"] { color: var(--destructive); }
+  .auth-callback-icon[data-tone="pending"] { color: var(--muted-foreground); }
+  .auth-callback-card .auth-verification-title { margin-top: var(--space-4); }
+  .auth-callback-card .auth-status-message { margin-top: var(--space-3); }
+  .auth-callback-card .ds-button { margin-top: var(--space-5); }
 
   @media (max-width: 1199px) {
     .auth-composition { gap: 56px; }
@@ -275,8 +346,8 @@
     .landing-blueprint .auth-intro p { margin-top: 16px; font-size: 13px; }
     .auth-card { padding: 28px 22px 24px; }
     .auth-provider-button.ds-button,
-    .auth-submit-button.ds-button,
-    .auth-input.ds-input { min-height: 48px; }
+    .auth-submit-button.glow-button,
+    .auth-input.ds-input { min-height: var(--control-height-large); }
   }
 
 }

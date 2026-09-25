@@ -21,7 +21,7 @@ Folune is a quiet editorial instrument that lets users write first and allows AI
 
 ## APP 纸白视觉定稿（2026-09-24）
 
-- 场景边界：styles/app-visual.css 仅作用于 html[data-visual-context="app"]，Portal 与 Demo 共同继承；Landing、博客、登录继续沿用默认值。
+- 场景边界：styles/app-visual.css 的完整主题仅作用于 html[data-visual-context="app"]，Portal 与 Demo 共同继承；认证页面及营销标准 Button/GlowButton 共用中性控件边界、悬停表面、阴影与文字角色；Landing、博客正文及品牌后景继续沿用默认值。
 - 浅色定稿：Stage 复用 landing-paper 的微暖纸白 #F4F4F2，正式 APP 工作区不加噪点；纸面/面板为白色，正文 #292B2B、次级字 #707676、边界 #E2E5E5 保持。温度由背景承担，控件保持中性；Landing 与首次加载过渡继续保留既有颗粒，Demo 默认同步无噪点纸白。
 - 排版按下方文字角色统一消费：主正文 15px/400、聊天 12px/500、导航与动作 600；字号与字重必须一起按角色选择，Demo 沿原 rem 比例缩放。
 - 文件树 hover 与 selected/active 共用 #ECEEEE，暗色共用 #2D2D2D；选中后仍持续显示同一背景，经过当前项不加深、不变蓝。普通菜单与列表继续使用中性灰。
@@ -105,6 +105,13 @@ Landing 中文化（2026-09-14）：保留参考布局、暖灰背景、纹理�
 
 - Control is now 16px, with an explicit 12px inner-control radius. This supersedes the earlier 12px/9px decision and applies to the entire control family, including AI message and tool-call bubbles.
 - Keep the shared squircle and 32/36px heights; do not introduce per-button radii or capsule geometry. Paper/Menu, Panel and Dialog retain their separate surface roles.
+
+### 认证控件圆角与边界（2026-09-25）
+
+- 登录/注册的 Google 按钮、主提交按钮和邮箱/密码输入框共用 `auth.css` 的 `--auth-control-radius`，复用现有 20px 档位与全局 squircle；桌面 44px、手机 48px 的大控件以同一轮廓保持比例，流光各层继承宿主裁剪。
+- 此规格仅作用于认证大控件；32/36px 常规命令、顶栏、验证码格与密码显隐按钮继续使用各自的共享控件规格。
+- `app-visual.css` 将 APP、认证页面与营销标准按钮接到同一组中性边界与阴影变量，覆盖 Hero 下载、顶栏、页尾与文章返回；输入默认 #DCDEDE、hover #B9BEBE、focus #666E6E，Secondary 按钮继续通过共享组件从 #E2E5E5 边界派生三态颜色。认证输入和验证码共用 APP 渐进边界与轻影，取消旧外扩光圈；密码容器内焦点与显隐按钮的键盘焦点均保留。
+- 认证文字与营销标准按钮共用 `app-typography.css` 角色及比例字体；只有当前请求动作显示加载，其余动作暂禁，OAuth 回调状态复用同一认证卡片。
 
 ### Curve ownership (2026-09-07)
 

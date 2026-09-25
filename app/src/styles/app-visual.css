@@ -1,31 +1,51 @@
 /**
- * [INPUT]: 依赖 index.css 的 landing-paper 与共享几何/材质/动效，文档根 data-visual-context 与 html.dark，以及生产 Workspace/DS/Canvas 类名
- * [OUTPUT]: APP 与独立 Demo 的无噪点纸白/黑灰语义色、气泡与引用胶囊同源底色/细线、同色选中/悬停与渐进输入焦点；排版由 app-typography.css 统一映射
- * [POS]: APP 视觉唯一场景映射；根级 token 同时覆盖 body Portal，营销文档不命中此作用域，面板曲率在根级映射，纸张与布局继续由原组件拥有
+ * [INPUT]: 依赖 index.css 的 landing-paper 与共享几何/材质/动效、文档根 data-visual-context/html.dark，以及 Workspace/DS/Canvas、认证页面与营销 Button/GlowButton 类
+ * [OUTPUT]: APP 与独立 Demo 的纸白/黑灰语义色；认证与营销全部标准按钮共读中性文字、表面、边界、阴影与错误色，认证全体输入共用 APP 渐进焦点；排版由 app-typography.css 映射
+ * [POS]: APP 完整主题在文档根映射并覆盖 Portal；营销控件按共享组件类接入，覆盖 Hero/顶栏/页尾/文章返回而不依赖容器名单，营销正文、品牌与布局仍由原组件拥有
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
-/* ---- 色彩只在文档根定义；不在面板或 Dialog 内创建第二份主题 ---- */
-html:root[data-visual-context="app"] {
-  --radius-panel: 1.25rem;
-  --background: #ffffff;
+/* ---- 中性控件语义只有一份；页面只决定在哪些区域消费 ---- */
+html:root[data-visual-context="app"],
+.auth-page,
+.auth-callback-page,
+.landing-blueprint :is(.ds-button, .glow-button) {
   --foreground: #292b2b;
-  --workspace-stage: var(--landing-paper);
-  --paper-surface: #ffffff;
-  --paper-foreground: var(--foreground);
-  --paper-edge: #e2e5e5;
   --card: #ffffff;
   --card-foreground: var(--foreground);
-  --popover: #ffffff;
-  --popover-foreground: var(--foreground);
   --secondary: #eceeee;
   --secondary-foreground: var(--foreground);
   --muted: #f6f7f7;
   --muted-foreground: #707676;
   --surface-neutral: #f5f6f6;
-  --surface-accent-subtle: #f7f8f8;
   --interactive-hover: #eceeee;
   --interactive-hover-foreground: var(--foreground);
+  --border: #e2e5e5;
+  --input: #dcdede;
+  --ring: #666e6e;
+  --app-input-hover: #b9bebe;
+  --app-shadow-rgb: 0 0 0;
+  --shadow-color: #292b2b;
+  --button-shadow-neutral-rest: rgb(0 0 0 / 16%);
+  --button-shadow-neutral-hover: rgb(0 0 0 / 21%);
+  --shadow-sm: 0 8px 22px -16px rgb(var(--app-shadow-rgb) / 18%);
+  --shadow-md: 0 18px 38px -24px rgb(var(--app-shadow-rgb) / 24%);
+  --destructive: #b34b56;
+  --destructive-foreground: #ffffff;
+  --destructive-soft: #f9e8ea;
+}
+
+/* ---- APP 完整主题只在文档根定义；不在面板或 Dialog 内创建第二份主题 ---- */
+html:root[data-visual-context="app"] {
+  --radius-panel: 1.25rem;
+  --background: #ffffff;
+  --workspace-stage: var(--landing-paper);
+  --paper-surface: #ffffff;
+  --paper-foreground: var(--foreground);
+  --paper-edge: #e2e5e5;
+  --popover: #ffffff;
+  --popover-foreground: var(--foreground);
+  --surface-accent-subtle: #f7f8f8;
   --accent: var(--interactive-hover);
   --accent-foreground: var(--foreground);
   --primary: #395875;
@@ -34,11 +54,7 @@ html:root[data-visual-context="app"] {
   --primary-active: #284158;
   --primary-soft: var(--accent);
   --primary-soft-foreground: var(--accent-foreground);
-  --border: #e2e5e5;
   --border-strong: #aaafaf;
-  /* 输入边界承担可操作区域辨识，独立于仅供分组的弱分割线。 */
-  --input: #dcdede;
-  --ring: #666e6e;
   --sidebar: var(--card);
   --sidebar-foreground: var(--foreground);
   --sidebar-primary: var(--foreground);
@@ -53,23 +69,15 @@ html:root[data-visual-context="app"] {
   --warning: #8a5b1c;
   --warning-soft: #f7efe2;
   --warning-foreground: var(--warning);
-  --destructive: #b34b56;
-  --destructive-foreground: #ffffff;
-  --destructive-soft: #f9e8ea;
   --archive-cord: #474d55;
   --overlay: rgb(24 24 24 / 38%);
   --app-message-surface: color-mix(in srgb, var(--primary) 6%, white);
   --app-message-border: color-mix(in srgb, var(--primary) 12%, white);
   --app-assistant-foreground: #50585c;
-  --app-input-hover: #b9bebe;
   --canvas-interaction-ink: #686e6e;
   --app-selected-surface: var(--accent);
   --app-selected-foreground: var(--accent-foreground);
   --app-divider: color-mix(in srgb, var(--border) 65%, transparent);
-  --app-shadow-rgb: 0 0 0;
-  --shadow-color: #292b2b;
-  --button-shadow-neutral-rest: rgb(0 0 0 / 16%);
-  --button-shadow-neutral-hover: rgb(0 0 0 / 21%);
   --paper-shadow:
     0 1px 2px rgb(var(--app-shadow-rgb) / 4%),
     -0.15rem 0.35rem 0.7rem -0.45rem rgb(var(--app-shadow-rgb) / 18%),
@@ -86,9 +94,7 @@ html:root[data-visual-context="app"] {
     0 40px 80px -24px rgb(var(--app-shadow-rgb) / 3%);
   --shadow-2xs: 0 1px 2px rgb(var(--app-shadow-rgb) / 3%);
   --shadow-xs: 0 2px 8px -5px rgb(var(--app-shadow-rgb) / 12%);
-  --shadow-sm: 0 8px 22px -16px rgb(var(--app-shadow-rgb) / 18%);
   --shadow: 0 12px 30px -20px rgb(var(--app-shadow-rgb) / 22%);
-  --shadow-md: 0 18px 38px -24px rgb(var(--app-shadow-rgb) / 24%);
   --shadow-lg: 0 24px 54px -30px rgb(var(--app-shadow-rgb) / 28%);
   --shadow-xl: 0 30px 68px -36px rgb(var(--app-shadow-rgb) / 30%);
   --shadow-2xl: 0 38px 82px -40px rgb(var(--app-shadow-rgb) / 34%);
@@ -222,10 +228,13 @@ html:root.dark[data-visual-context="app"] {
   :root[data-visual-context="app"] :is(.agent-panel-header, .account-center-main-header) {
     border-bottom-color: var(--app-divider);
   }
-  :root[data-visual-context="app"] :is(.agent-composer, .ds-input, .ds-select-trigger) {
+  :root[data-visual-context="app"] :is(.agent-composer, .ds-input, .ds-select-trigger),
+  .auth-card .ds-input {
     border-color: var(--input);
   }
-  :root[data-visual-context="app"] :is(.agent-composer, .ds-input, .ds-select-trigger):hover {
+  :root[data-visual-context="app"] :is(.agent-composer, .ds-input, .ds-select-trigger):hover,
+  .auth-card .ds-input:where(:not(:disabled)):hover,
+  .auth-card .ds-password-input:where(:hover) .ds-input:where(:not(:disabled)) {
     border-color: var(--app-input-hover);
   }
   :root[data-visual-context="app"] :is(.ds-user-button:hover, .ds-user-button[data-open="true"]) {
@@ -234,10 +243,24 @@ html:root.dark[data-visual-context="app"] {
   }
   :root[data-visual-context="app"] .agent-composer:focus-within,
   :root[data-visual-context="app"] .ds-input:focus-visible,
-  :root[data-visual-context="app"] .ds-select-trigger:is(:focus-visible, [data-open="true"]) {
+  :root[data-visual-context="app"] .ds-select-trigger:is(:focus-visible, [data-open="true"]),
+  .auth-card .ds-input:where(:not(:disabled)):focus-visible,
+  .auth-card .ds-password-input:where(:focus-within) .ds-input:where(:not(:disabled)) {
     border-color: var(--ring);
     outline: none;
     box-shadow: 0 1px 4px rgb(var(--app-shadow-rgb) / 8%);
   }
-  :root[data-visual-context="app"] .ds-input[aria-invalid="true"] { border-color: var(--destructive); }
+  :root[data-visual-context="app"] .ds-input[aria-invalid="true"],
+  .auth-card .ds-input[aria-invalid="true"] { border-color: var(--destructive); }
+
+  /* ---- 营销通用蓝色焦点不能盖过同源的命令控件焦点 ---- */
+  .auth-card :is(.ds-button, .glow-button, .ds-password-toggle):focus-visible,
+  .landing-blueprint :is(.ds-button, .glow-button):focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--ring) 66%, transparent);
+    outline-offset: 3px;
+  }
+
+  .auth-card .ds-password-toggle:focus-visible {
+    outline-offset: -0.25rem;
+  }
 }
