@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 MarketingLink 的 /login 过渡、BlueprintFrame/Divider 与局部 Footer 样式
- * [OUTPUT]: 对外提供品牌区、长短错落的四组 Folune 导航、上下分置的品牌署名与居中描边字标；待接通入口无跳转行为
- * [POS]: widgets 的营销页收尾；沿用正文导轨与 DS 墨蓝，打开网页版进入统一登录页，其余入口仅预留展示
+ * [INPUT]: 依赖 MarketingLink 的 /login、/terms、/privacy 过渡、BlueprintFrame/Divider 与局部 Footer 样式
+ * [OUTPUT]: 对外提供品牌区、四组 Folune 导航及关于栏的公开法律链接、上下分置的品牌署名与居中描边字标；待接通入口无跳转行为
+ * [POS]: widgets 的营销页收尾；沿用正文导轨与 DS 墨蓝，登录与法律文档使用真实 SPA 导航，其余入口预留展示
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { MarketingLink as Link } from "./LandingMotion/MarketingLink";
@@ -43,6 +43,10 @@ export function LandingFooter() {
                     </span>
                   </li>
                 ))}
+                {name === "关于" ? <>
+                  <li><Link to="/terms" state={{ fromLegalLink: true }}>服务条款</Link></li>
+                  <li><Link to="/privacy" state={{ fromLegalLink: true }}>隐私政策</Link></li>
+                </> : null}
               </ul>
             </nav>
           ))}

@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 landing.css 的共享导轨坐标、分隔线中心与 SVG Pin 遮罩规则
- * [OUTPUT]: 对外提供 14px 双边分隔带、7px 内部分隔带与零高度贴边线；每行横线和节点共享同一定位容器
+ * [OUTPUT]: 对外提供 14px 双边分隔带、7px 内部分隔带与零高度贴边线；showPins 可关闭节点而保留线的位置和宽度
  * [POS]: widgets 的 Landing 横向骨架；导航、公告、正文与页脚复用，同一条边只绘制一次
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -8,6 +8,7 @@ type BlueprintDividerProps = {
   compact?: boolean;
   flush?: boolean;
   fullBleed?: boolean;
+  showPins?: boolean;
 };
 
 function BlueprintPin({
@@ -30,6 +31,7 @@ export function BlueprintDivider({
   compact = false,
   flush = false,
   fullBleed = false,
+  showPins = true,
 }: BlueprintDividerProps) {
   return (
     <div
@@ -42,7 +44,7 @@ export function BlueprintDivider({
       {(flush ? ["start"] : ["start", "end"]).map((side) => (
         <div className="blueprint-divider-rule" data-side={side} key={side}>
           <span className="blueprint-divider-line" />
-          {!compact ? (
+          {!compact && showPins ? (
             <>
               {fullBleed ? (
                 <>

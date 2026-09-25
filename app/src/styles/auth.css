@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Landing 的纸色/字体与 BlueprintFrame 公告骨架、DS token，以及 LoginPage/LoginBackdrop/AuthForm 的 auth-* 结构
- * [OUTPUT]: 对外提供 01A 散墨正文后景、384px 表单、96px 桌面栏距、完整 3:4 背景视频与手机单列表单；卡片有轻层叠阴影，输入框 hover/focus 共用单圈细光
+ * [OUTPUT]: 对外提供 01A 散墨正文后景、384px 表单、96px 桌面栏距、完整 3:4 背景视频与手机单列表单；协议入口适配公开链接，卡片和输入沿现有认证视觉
  * [POS]: styles 的独立登录页视觉层，由 index.css 统一导入；高度不足时自然滚动，绝不让居中内容钻入 Header 或裁切视频
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -227,7 +227,7 @@
     line-height: 1.7;
   }
 
-  .auth-terms-copy button {
+  .auth-terms-copy a {
     margin-inline: 0.25rem;
     color: var(--foreground);
     text-decoration: underline;
@@ -236,12 +236,12 @@
   }
 
   .auth-mode-switch button:hover,
-  .auth-terms-copy button:hover {
+  .auth-terms-copy a:hover {
     color: var(--primary);
   }
 
   .auth-mode-switch button:focus-visible,
-  .auth-terms-copy button:focus-visible {
+  .auth-terms-copy a:focus-visible {
     border-radius: var(--radius-control);
     corner-shape: var(--corner-shape-smooth);
     outline: 2px solid color-mix(in srgb, var(--ring) 45%, transparent);

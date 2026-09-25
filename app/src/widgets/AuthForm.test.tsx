@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 happy-dom、Testing Library、真实 AuthForm 与可替换的认证服务调用
+ * [INPUT]: 依赖 happy-dom、Testing Library、MemoryRouter、真实 AuthForm 与可替换的认证服务调用
  * [OUTPUT]: 验证独立页面中的登录成功/失败、注册密码校验及邮箱验证码步骤，不向真实账号或认证服务器发请求
  * [POS]: widgets 的认证迁移回归门禁；只替换服务边界，真实表单事件与局部状态完整运行
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -18,6 +18,7 @@ Object.assign(globalThis, {
 });
 
 const { cleanup, fireEvent, render, waitFor } = await import("@testing-library/react/pure");
+const { MemoryRouter } = await import("react-router-dom");
 const auth = await import("../shared/supabase/auth");
 const { AuthForm } = await import("./AuthForm");
 
@@ -28,7 +29,7 @@ afterEach(() => {
 
 function renderForm() {
   const onAuthenticated = mock(() => undefined);
-  const view = render(<AuthForm onAuthenticated={onAuthenticated} />);
+  const view = render(<MemoryRouter><AuthForm onAuthenticated={onAuthenticated} /></MemoryRouter>);
   fireEvent.change(view.getByLabelText("电子邮箱", { exact: true }), {
     target: { value: "writer@example.com" },
   });

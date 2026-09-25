@@ -2,8 +2,10 @@
 > L2 | 父级: ../../CLAUDE.md
 
 成员清单
+BlogFrameSection.tsx: 目录/阅读页的外轨分区容器；静态区直接呈现外轨，花纹区独占外侧竖线与两段顶边的淡入，主内容边线仍由 BlueprintFrame 连续绘制
+PublicArticle.tsx: 博客、动态和法律文档共用的阅读模板；Hero 后复用目录同款 48px/28px 空轨，上沿带节点、下沿平直；BlogFrameSection 将静态主轨/中段横线与花纹局部外框拆开，weave 侧纹只覆盖正文及尾部导航，在两侧局部外框之后显现；内部保持导读与窄栏排版；只接收内容与导航插槽，不拥有内容集合或路由
 updatePosts.ts: 独立动态内容源，复用 BlogPost 类型并由 /updates 的共用列表/阅读页消费；初始为空，后续只需填充文章，不混入首页或博客集合
-LandingRailTexture.tsx: 三种侧纹共用一次性 inView 触发和状态机，进入视口 240px 后左右绘制层同步执行 1050ms 原生 mask-position 动画，左侧 animationend 提交共同终态；pending 明确隐藏。模块 Set 在触发时登记，路由往返不重播、刷新重置；DS 减少动态时直接显示，窄屏隐藏不消耗机会，绘制归 landing.css
+LandingRailTexture.tsx: after-frame 模式交给博客 CSS 编排两侧花纹局部外框之后的显现，按路由重新挂载且不读写首页播放缓存；默认三种侧纹共用一次性 inView 触发和状态机，进入视口 240px 后左右绘制层同步执行 1050ms 原生 mask-position 动画，左侧 animationend 提交共同终态；pending 明确隐藏。模块 Set 在触发时登记，路由往返不重播、刷新重置；DS 减少动态时直接显示，窄屏隐藏不消耗机会，绘制归 landing.css
 LandingConnections.tsx: 左侧叙述方法与实践，右侧两张相邻 NotePaper 标出支持关系的原句；短线随纸面布局连接，静态公开材料不装配业务会话
 LandingGuides.tsx: 六篇方法指南的紧凑三列两行目录，共读分类、标题与摘要，序号列于右上；上下空轨和交织侧纹交由 LandingSections 的章节外框装配，guides 为入口，保留 use-cases/extensions 锚点，返回复用博客协议
 guidePosts.ts: 六篇完整记录方法文章，独立于首页三篇精选，以 BlogPost 类型加入同一公开目录
@@ -22,14 +24,14 @@ CLAUDE.md: 记录业务组合组件层职责与文档协议
 MarketingHeader.tsx: 首页/登录/博客/动态共享的 56px 品牌、内容导航和双动作顶栏；下载在左用 Secondary、打开在右用品牌蓝 GlowButton 并导航至 /login，与 Hero 共用次主顺序；末端 CTA 独立为单个箭头开始按钮；下载入口目标待接入，认证状态归页面；手机以第二行横向导航保留全部入口
 MarketingAnnouncement.tsx: 首页与登录页共用的 37px 公告栏，保持既有文案、浅蓝渐变和 BlueprintDivider；链接统一指向首页工作流，可选 ref 只供 Hero 量取高度
 BlueprintFrame.tsx: Landing 纵向导轨容器；导航、1120px 正文与页脚共用主轨/外轨坐标，fullBleed 增加可选外轨，颜色由当前区块局部覆盖
-BlueprintDivider.tsx: Landing 横向导轨；14px 分隔带上下两条边分别共置横线与菱形，flush 提供零高度边界，compact 保留 7px 内部分隔带而不添加参考中没有的节点
-AuthForm.tsx: LoginPage 的唯一认证表单，复用共享 Input/PasswordInput 承载邮箱、双密码与显隐控制；主提交动作(登录/注册)改用墨蓝流光 GlowButton，登录态增加无提交/导航行为的忘记密码占位，保留协议提示、六格 OTP 自动校验与 Google OAuth，认证成功通过回调交还页面导航
+BlueprintDivider.tsx: Landing 横向导轨；showPins=false 关闭节点而保留线宽/位置，用于博客空轨下沿；14px 分隔带上下两条边分别共置横线与菱形，flush 提供零高度边界，compact 保留 7px 内部分隔带而不添加参考中没有的节点
+AuthForm.tsx: LoginPage 的唯一认证表单，复用共享 Input/PasswordInput 承载邮箱、双密码与显隐控制；主提交动作使用 GlowButton，登录态忘记密码仍为占位，协议提示经 MarketingLink 进入公开 /terms 和 /privacy；保留六格 OTP 自动校验与 Google OAuth，认证成功通过回调交还页面导航
 AuthForm.test.tsx: 真实表单事件覆盖登录成功/失败、双密码校验和注册→六格 OTP 粘贴验证；仅替换认证服务，不发送真实认证请求
 LandingHero.tsx: 共享公告、60svh 居中 Hero、三列价值条与真实 UI 互动插槽；主 slogan 无句末标点，装配选定 02A HeroBackdrop，并量取 Header/公告/三栏高度为矮屏保留 64px 产品露出；LandingActions 固定下载在左用 Secondary、打开在右并进入 /login，首屏打开用墨蓝流光 GlowButton；末端 CTA 传 startOnly，只显示 ArrowRightIcon 与开始并进入 /login；桌面版说明按最终上线状态展示，边界复用通栏 BlueprintDivider
 LandingFeatureDetails.tsx: 第 11 区块的四项垂直居中展开说明、对应实景图与底部紧凑四格摘要；标题区和展开正文保留文章入口，底部只含标题和说明；固定展示区内以同源 CSS 时间轴协调行高、标题与正文，正文常驻并在收起时 inert，选中项只保持展开、不显示收起图标，图片不附重复图注；detail query 保留选中项，切换清除已消费的定位锚点，替换历史并保留其他查询/滚动，博客沿 fromBlog 协议返回
 landingDetailData.ts: 归档线、引用选择、同一份原文、Markdown 导出四项细节与完整指南；实景图与文章数据同源，BlogPost 仅类型依赖，不建立运行时反向导入
 LandingSections.tsx: 保留五项真实功能与文章入口、评价和信件；私有 LandingChapter 成对包围评价、产品功能组、指南和精选博客，共八条空轨；其中三种侧纹各在章节外框装配一次，连续贯穿空轨与正文，内侧横线仅画在主轨内；产品功能→关联展示→功能细节维持一章，相邻章节共用斜纹边界，其余区块独立持有展示与交互
-LandingFooter.tsx: 共用 DS 墨蓝的品牌区与产品/资源/关于/连接四组导航；16 项预留入口以 aria-disabled link 语义展示且不跳转，打开网页版进入 /login；品牌与入口置顶、作者与版权置底；保留 Folune 淡描边与细纹层序，BlueprintFrame 延续导轨
+LandingFooter.tsx: 共用 DS 墨蓝的品牌区与产品/资源/关于/连接四组导航；16 项预留入口以 aria-disabled link 语义展示且不跳转，打开网页版进入 /login，关于栏额外公开 /terms 与 /privacy；品牌与入口置顶、作者与版权置底；保留 Folune 淡描边与细纹层序，BlueprintFrame 延续导轨
 LandingMotion/: 营销页克制反馈模块；MarketingLink/useMarketingMotion 统一公开页面/锚点过渡与正文浮现，参数复用 DS；HeroBackdrop/ShowcaseBackdrop/LoginBackdrop 承载各自后景，共用散墨算法供登录与 Lab 消费，CountUp 处理数字变化
 NotebookPreview.tsx: 确定性首屏产品预览，DS 统一缩放淡入与显式卡片 lift 分处不同元素，阴影由 CSS 持有，内部布局不参与独立动画
 AppSidebar.tsx: 右键菜单通过 Portal 锚定视口，避免 Panel transform 改写 fixed 坐标；文件库内容与展开偏好的唯一所有者，负责创建/搜索、树/重命名/拖放意图、底部导航和唯一有效归档代表；重排交给 useTreeReorder，结构键按不可变树引用复用以跳过标题/摘要更新时的整树 FLIP 判据，子级尺寸交给 TreeDisclosure，业务事务仍由 Dashboard 持有

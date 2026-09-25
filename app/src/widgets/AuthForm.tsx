@@ -1,9 +1,10 @@
 /**
- * [INPUT]: 依赖 React 的登录/注册/验证码局部状态与输入框引用、共享 Button/GlowButton/Input/PasswordInput，以及 shared/supabase 认证服务
- * [OUTPUT]: 对外提供登录、双密码注册、六格邮箱验证码与 Google OAuth 共用的 AuthForm；主提交动作用墨蓝流光 GlowButton 承载，忘记密码仅保留无动作按钮，认证成功只通知页面进入工作区
+ * [INPUT]: 依赖 React 的登录/注册/验证码局部状态与输入框引用、共享 Button/GlowButton/Input/PasswordInput、MarketingLink，以及 shared/supabase 认证服务
+ * [OUTPUT]: 对外提供登录、双密码注册、六格邮箱验证码与 Google OAuth 共用的 AuthForm；主提交使用 GlowButton，协议通过 SPA 链接进入公开页面，认证成功只通知页面进入工作区
  * [POS]: widgets 的唯一认证表单，由 LoginPage 承载；表单负责认证步骤，页面负责布局和导航，不直接持有 Supabase client
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
+import { MarketingLink } from "./LandingMotion/MarketingLink";
 import {
   ArrowLeftIcon,
   GoogleLogoIcon,
@@ -386,9 +387,9 @@ export function AuthForm({ onAuthenticated }: AuthFormProps) {
 
           <p className="auth-terms-copy">
             继续即表示您同意 Folune 的
-            <button type="button">服务条款</button>
+            <MarketingLink to="/terms" state={{ fromLegalLink: true }}>服务条款</MarketingLink>
             和
-            <button type="button">隐私政策</button>
+            <MarketingLink to="/privacy" state={{ fromLegalLink: true }}>隐私政策</MarketingLink>
           </p>
         </form>
       )}

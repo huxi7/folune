@@ -2,6 +2,7 @@
 > L2 | 父级: ../CLAUDE.md
 
 成员清单
+chinese-blog-typography.md: 中文博客排版研究、原代码诊断、方案取舍、原生 CSS 兼容边界与实现规格；区分标准、研究证据、设计选择和待用户视觉验收
 landing-refactor/: Figma 基线与最终 Landing 的截图、内容依据、设计取舍和两阶段验收记录
 performance-audit-2026-09-08.md: APP/API 性能链路、优化取舍、隔离测试/合成基线/登录态浏览器证据与未验证上限；不将样本性能当作全站承诺
 chat-performance-audit-2026-09-08.md: Chat 从面板恢复、会话即时切换/逐会话缓存、增量发送、API prepare、Mastra 流式返回到消息持久化的瓶颈、协议级改善、测试证据与外部服务上限；不将 mock 时间冒充端到端延迟
