@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 仅类型依赖 BlogPost 与 GuideCoverKind；以原创材料讲记录方法，不读取账号数据
- * [OUTPUT]: 对外提供固定顺序的六篇 guidePosts，标题摘要正文与首页指南同源
+ * [OUTPUT]: 提供逐篇正文提炼的三个内容标签；对外提供固定顺序的六篇 guidePosts，标题摘要正文与首页指南同源
  * [POS]: 公开文章集合的方法分支；landingBlogData 汇总到目录，首页精选继续独立维护
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -10,7 +10,7 @@ import type { GuideCoverKind } from "./GuideIllustration";
 type GuidePost = BlogPost & { cover: GuideCoverKind };
 export const guidePosts: GuidePost[] = [
   {
-    slug: "when-to-organize-notes", title: "随手记录，何时整理",
+    slug: "when-to-organize-notes", tags: ["随手记录", "笔记拆分", "渐进整理"], title: "随手记录，何时整理",
     description: "把捕捉与整理分开，判断何时拆分、命名和归档，让一条粗略记录变得可用。",
     category: "记录方法", date: "2026-09-20", cover: "guide-capture",
     lead: "记录时最容易丢失的是正在形成的想法。整理时最需要的却是停下来判断。这两件事可以发生在不同的时刻：先留下足够的线索，再决定它该叫什么、放在哪里，以及是否需要拆成几篇。",
@@ -34,7 +34,7 @@ export const guidePosts: GuidePost[] = [
     ],
   },
   {
-    slug: "reading-notes-in-your-own-words", title: "读书笔记：从摘录到理解",
+    slug: "reading-notes-in-your-own-words", tags: ["读书笔记", "自主理解", "反例检验"], title: "读书笔记：从摘录到理解",
     description: "分清原话、解释和追问，用自己的例子检验一句摘录，保留仍未解决的问题。",
     category: "阅读方法", date: "2026-09-20", cover: "guide-reading",
     lead: "摘下一段文字，说明它让你停留过；能解释它适用于什么情境，才开始形成自己的理解。笔记不必把整本书缩写一遍，可以围绕一个触动你的判断，留下来源、自己的解释，以及一个值得继续追问的问题。",
@@ -58,7 +58,7 @@ export const guidePosts: GuidePost[] = [
     ],
   },
   {
-    slug: "name-notes-for-retrieval", title: "给笔记一个找得到的名字",
+    slug: "name-notes-for-retrieval", tags: ["笔记命名", "关键词检索", "目录组织"], title: "给笔记一个找得到的名字",
     description: "让标题说清主题，让正文留下关键词，让目录服务用途，减少日后寻找的猜测。",
     category: "整理方法", date: "2026-09-20", cover: "guide-naming",
     lead: "刚写完的笔记不需要一个完美标题。真正值得命名的时刻，是你准备把它留下来、稍后继续使用时。好标题不必文采出众，它需要让未来的自己认出：这篇谈的是什么，和旁边那篇有什么不同。",
@@ -82,7 +82,7 @@ export const guidePosts: GuidePost[] = [
     ],
   },
   {
-    slug: "judge-connections-between-notes", title: "怎样判断两条笔记真的有关",
+    slug: "judge-connections-between-notes", tags: ["笔记连接", "关系判断", "原文核对"], title: "怎样判断两条笔记真的有关",
     description: "区分相似、互补与反例，写清一条关系成立的依据，避免让连线替代思考。",
     category: "思考方法", date: "2026-09-20", cover: "guide-relations",
     lead: "两篇笔记都提到‘专注’，只能说明它们共享一个词。值得保留的联系还需要回答：把它们放在一起以后，我比单独阅读时多理解了什么？一条能用普通句子解释的关系，往往比一张线很多的图更有用。",
@@ -106,7 +106,7 @@ export const guidePosts: GuidePost[] = [
     ],
   },
   {
-    slug: "turn-notes-into-an-outline", title: "从零散材料组织一篇文章",
+    slug: "turn-notes-into-an-outline", tags: ["素材筛选", "文章提纲", "论点与依据"], title: "从零散材料组织一篇文章",
     description: "先确定一个问题，再筛选材料、安排论点和依据，把笔记组织成可以下笔的提纲。",
     category: "写作方法", date: "2026-09-20", cover: "guide-outline",
     lead: "有很多笔记却写不出文章，未必是材料不够。笔记按照遇到它们的顺序积累，文章却需要按照读者理解问题的顺序展开。开始组织之前，先明确这篇文章准备回答什么，以及哪些内容暂时不回答。",
@@ -130,7 +130,7 @@ export const guidePosts: GuidePost[] = [
     ],
   },
   {
-    slug: "markdown-and-note-portability", title: "Markdown 与笔记的可迁移性",
+    slug: "markdown-and-note-portability", tags: ["Markdown", "内容迁移", "备份检查"], title: "Markdown 与笔记的可迁移性",
     description: "看清正文、附件和应用关系的区别，检查导出的内容，让笔记在换工具后仍然可读。",
     category: "内容管理", date: "2026-09-20", cover: "guide-portability",
     lead: "可迁移不只是有一个导出按钮。更重要的是：导出后还保留哪些内容，用什么软件能读，哪些关系需要另外处理。Markdown 可以让正文保持为容易打开的文本，但它不自动等于一份完整的知识库备份。",

@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依据正式 APP 的归档状态、引用选择、Canvas 原文预览与 Markdown 导出能力，依赖 BlogPost 内容契约
- * [OUTPUT]: 对外提供四项功能细节及一一对应的实景图、稳定文章 slug 和完整中文指南
+ * [OUTPUT]: 提供逐篇正文提炼的三个内容标签；对外提供四项功能细节及一一对应的实景图、稳定文章 slug 和完整中文指南
  * [POS]: widgets 的细节叙事内容源；Landing 展开项、底部分栏与博客共用图片和文章，避免视觉证据与功能承诺分离
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -40,7 +40,7 @@ export const detailStories: DetailStory[] = [
   {
     id: "archive", title: "归档之后，去向清楚", description: "整理不止是换一个标题。纸面上的归档状态与文件树相连，让你看见这篇笔记被收在了哪里。", takeaway: "顺着一条线，找到笔记的新位置。", figure: archiveFigure,
     post: {
-      slug: "follow-the-archive-line", title: "一条归档线，让整理有迹可循", description: "从纸面到文件树，看清 AI 整理的结果，也保留自己安排笔记的余地。", category: "产品细节", date: "2026-09-18", cover: "branches",
+      slug: "follow-the-archive-line", tags: ["归档去向", "文件树", "AI 整理"], title: "一条归档线，让整理有迹可循", description: "从纸面到文件树，看清 AI 整理的结果，也保留自己安排笔记的余地。", category: "产品细节", date: "2026-09-18", cover: "branches",
       lead: "把笔记交给 AI 整理之后，最自然的问题是：它现在在哪里？Folune 用一条连接纸面与目录的线回答这个问题。整理的结果应该出现在你眼前，而不是只剩一句「已完成」。",
       sections: [
         { title: "写完，再决定什么时候整理", paragraphs: [
@@ -65,7 +65,7 @@ export const detailStories: DetailStory[] = [
   {
     id: "references", title: "带哪些笔记，由你选择", description: "当前笔记就在输入区，其他材料用 @ 加进来。发送前看清引用、移除无关内容，让问题有明确的上下文。", takeaway: "先选材料，再问一个具体的问题。", figure: referencesFigure,
     post: {
-      slug: "choose-notes-for-ai", title: "问 AI 之前，先选好这次的材料", description: "用当前笔记和 @ 引用，把一个泛泛的问题变成围绕原文的讨论。", category: "产品细节", date: "2026-09-18", cover: "connections",
+      slug: "choose-notes-for-ai", tags: ["笔记引用", "AI 对话", "提问方法"], title: "问 AI 之前，先选好这次的材料", description: "用当前笔记和 @ 引用，把一个泛泛的问题变成围绕原文的讨论。", category: "产品细节", date: "2026-09-18", cover: "connections",
       lead: "「帮我想几个写作方向」很容易得到泛泛的回答。如果把一篇方法笔记、一段生活观察带进来，问题就有了具体的起点。Folune 让你在发送前看清这次引用了什么。",
       sections: [
         { title: "当前笔记，是对话的起点", paragraphs: [
@@ -90,7 +90,7 @@ export const detailStories: DetailStory[] = [
   {
     id: "original", title: "卡片背后，始终是原文", description: "画布上的卡片引用文件库里的笔记。展开就能读完整上下文，也能回到原文编辑，不必维护两份内容。", takeaway: "在画布上比较，回到纸面上写深。", figure: originalFigure,
     post: {
-      slug: "one-note-across-paper-and-canvas", title: "从卡片到纸面，始终是同一篇笔记", description: "在画布里读完整原文，再回到 Paper 编辑，让两种思考方式接着彼此往下走。", category: "产品细节", date: "2026-09-18", cover: "connections",
+      slug: "one-note-across-paper-and-canvas", tags: ["知识画布", "原文阅读", "原文编辑"], title: "从卡片到纸面，始终是同一篇笔记", description: "在画布里读完整原文，再回到 Paper 编辑，让两种思考方式接着彼此往下走。", category: "产品细节", date: "2026-09-18", cover: "connections",
       lead: "画布适合看关系，纸面适合读细节。如果两边各存一份内容，修改一次就要记得同步两处。Folune 的笔记卡片直接引用文件库里的原文，让你把注意力留给思考。",
       sections: [
         { title: "先用卡片看清这组材料", paragraphs: [
@@ -115,7 +115,7 @@ export const detailStories: DetailStory[] = [
   {
     id: "markdown", title: "写下的内容，随时带走", description: "实时预览、源码与阅读各有用处。需要换个地方继续写时，复制 Markdown 或导出 .md，带走自己的原文。", takeaway: "从纸面的更多菜单，带走 Markdown。", figure: markdownFigure,
     post: {
-      slug: "take-your-notes-with-you", title: "写在 Folune，也能带到别处", description: "从实时预览到 Markdown 导出，让记录保持可读，也保留继续使用的自由。", category: "产品细节", date: "2026-09-18", cover: "paper",
+      slug: "take-your-notes-with-you", tags: ["Markdown", "笔记导出", "内容迁移"], title: "写在 Folune，也能带到别处", description: "从实时预览到 Markdown 导出，让记录保持可读，也保留继续使用的自由。", category: "产品细节", date: "2026-09-18", cover: "paper",
       lead: "写下一段内容之后，它可能还要进入一篇博客、一份文档，或另一款写作工具。Folune 把 Markdown 复制与导出放在纸面的更多菜单里，让一篇笔记能继续走向别处。",
       sections: [
         { title: "先按舒服的方式写", paragraphs: [

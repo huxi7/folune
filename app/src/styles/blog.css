@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 MarketingLayout 的中文语言与过渡状态、DS 字体/颜色/动效 token、共享空轨与 weave 侧纹，以及原生 CJK 间距和断行能力
- * [OUTPUT]: 对外提供无重复阅读按钮的整行目录，以及博客/法律长文的紧凑字号、36 字宽阅读栏、细侧线导读、自然段距及中西文间距增强；仅花纹局部外框淡入后显示纹样
+ * [OUTPUT]: 对外提供紧凑返回按钮、疏朗品牌刊物署名；对外提供目录/文章分类共用的紧凑浅底细边标签材质与主题标签换行；对外提供无重复阅读按钮的整行目录，以及博客/法律长文的紧凑字号、36 字宽阅读栏、细侧线导读、自然段距及中西文间距增强；仅花纹局部外框淡入后显示纹样
  * [POS]: styles 的博客局部表现层；blog-spine 隔离中文阅读规则，正文数据和复制内容不变，首页/APP 不继承；BlogFrameSection 保留既有局部外框入场
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -18,13 +18,38 @@
   .blog-cover-connections { color:#626f83; }
   .blog-card-copy { display:flex; flex:1; flex-direction:column; padding:20px 16px 16px; }
   .blog-eyebrow { color:var(--landing-accent); font:11px/1.6 Landing Mono,var(--font-sans); letter-spacing:.08em; }
-  .landing-blog-grid h3 { margin-top:8px; font:400 19px/1.5 var(--landing-heading); text-wrap:pretty; }
+  .landing-blog-grid h3 { margin-top:0; font:400 19px/1.5 var(--landing-heading); text-wrap:pretty; }
   .landing-blog-grid p { margin-top:10px; color:#656c73; font:13px/1.9 var(--landing-body); text-wrap:pretty; }
   .landing-blog-grid footer { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; padding-top:24px; margin-top:auto; color:#656c73; font:10px/1.5 Landing Mono,var(--font-sans); }
   .blog-author { display:inline-flex; align-items:center; gap:8px; color:var(--landing-ink); }
   .blog-author img { width:28px; height:28px; border-radius:50%; corner-shape:round; object-fit:cover; }
   .blog-card-link:hover h3 { color:var(--landing-accent); }
   .blog-card-link:focus-visible { outline-offset:4px; }
+  /* ---- 纸面标签：墨蓝、灰绿与石板灰沿用现有博客封面，底边保留轻微厚度 ---- */
+  .blog-tag {
+    --blog-tag-ink:var(--landing-accent);
+    display:inline-flex;
+    align-items:center;
+    align-self:flex-start;
+    padding:1px 6px;
+    border:1px solid color-mix(in srgb,var(--blog-tag-ink) 22%,var(--landing-bg));
+    border-bottom-width:2px;
+    border-bottom-color:color-mix(in srgb,var(--blog-tag-ink) 34%,var(--landing-bg));
+    border-radius:3px;
+    corner-shape:round;
+    background:linear-gradient(180deg,
+      color-mix(in srgb,var(--blog-tag-ink) 3%,var(--landing-bg)),
+      color-mix(in srgb,var(--blog-tag-ink) 6%,var(--landing-bg)));
+    box-shadow:inset 0 1px 0 rgb(255 255 255 / 80%);
+    color:var(--blog-tag-ink);
+    font:600 11px/16px var(--font-sans);
+    letter-spacing:normal;
+  }
+  .blog-tag-category { padding-inline:7px; }
+  .blog-tags { display:flex; flex-wrap:wrap; gap:6px; margin:20px 0 0; padding:0; list-style:none; }
+  .blog-tags .blog-tag:nth-child(3n + 2) { --blog-tag-ink:#53756e; }
+  .blog-tags .blog-tag:nth-child(3n) { --blog-tag-ink:#626f83; }
+  .blog-index-copy .blog-tags { margin-top:24px; }
   /* ---- 中文屏幕阅读：保留衬线标题，正文回到比例字体与自然字距 ---- */
   .blog-spine {
     --landing-body:var(--font-sans);
@@ -73,7 +98,11 @@
   }
   .blog-navigation { min-height:64px; padding:16px 32px; display:flex; align-items:center; gap:16px; font:11px/1.6 Landing Mono,var(--font-sans); color:#656c73; }
   .blog-index-heading,.blog-article-heading { position:relative; text-align:center; background-image:radial-gradient(rgb(57 88 117 / 15%) .7px,transparent .7px); background-size:8px 8px; }
+  /* ---- 目录刊头：返回复用标准按钮材质，刊物署名以轻字重与疏朗字距建立层次 ---- */
+  .blog-navigation .blog-home-link { height:28px; min-height:28px; padding-inline:10px; font:500 11px/16px var(--font-sans); }
+  .blog-home-link .ds-button-content { gap:6px; }
   .blog-index-heading { padding:72px 24px 80px; }
+  .blog-index-eyebrow { display:inline-block; font:400 12px/20px var(--font-sans); letter-spacing:.18em; padding-left:.18em; }
   .blog-index-heading h1 { margin-top:16px; color:var(--landing-accent); font-size:48px; line-height:1.3; }
   .blog-index-heading p { margin-top:24px; color:#656c73; font-size:var(--type-body); line-height:1.8; }
   .blog-navigation a:hover { color:var(--landing-accent); }
@@ -96,7 +125,6 @@
   .blog-article-heading h1 { max-width:840px; margin-top:20px; color:var(--landing-accent); font-size:44px; line-height:1.4; text-wrap:balance; }
   .blog-article-heading > p { max-width:36em; margin-top:24px; color:#656c73; font-size:var(--type-body); line-height:1.85; text-wrap:balance; }
   .blog-article-meta { margin-top:28px; display:flex; justify-content:center; flex-wrap:wrap; gap:12px; align-items:center; font:11px/1.6 Landing Mono,var(--font-sans); color:#656c73; }
-  .blog-category { padding:2px 8px; color:var(--landing-accent); border:1px solid color-mix(in srgb,var(--landing-accent) 22%,transparent); background:color-mix(in srgb,var(--landing-accent) 4%,transparent); font:11px/1.6 var(--font-sans); }
   .blog-article-heading .blog-back-button { margin-top:16px; min-height:32px; height:32px; font-size:12px; }
   .blog-reading {
     box-sizing:border-box;

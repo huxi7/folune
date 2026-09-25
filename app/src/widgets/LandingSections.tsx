@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖真实 APP 功能截图、MarketingLink、LandingConnections、LandingGuides、LandingFeatureDetails、LandingBlog、LandingRailTexture、BlueprintDivider、共享 BrandMark 图字组合/独立印章、LandingActions 单个箭头开始 CTA 与 huxi 头像
- * [OUTPUT]: 正文浮现标记交给营销壳，章节/导轨/卡片骨架静止；对外提供五项图文一一对应的 Folune 功能与整理/画布文章入口，以及真实关联展示、独立功能细节、六篇方法指南、评价占位、创作者信件和博客；评价、产品功能组、指南、精选博客各由一对上下空轨包围
- * [POS]: widgets 的营销叙事组合；LandingChapter 成对生成上下空轨，并让评价/指南/博客的一层侧纹贯穿空轨与正文，内侧横线仅落在主轨内，外侧仍共用斜纹边界；产品功能、关联展示与功能细节作为完整章节，内部不插空轨；创作者信件沿用首稿叙事，与 Laper 参考同构：问候与自我介绍各占一行，再以长短有别的段落分承初衷、打磨、AI 分寸与期待，一段只说一件事，由 huxi 个人署名
+ * [OUTPUT]: 正文浮现标记交给营销壳，章节/导轨/卡片骨架静止；对外提供五项图文一一对应的 Folune 功能与整理/画布文章入口，以及真实关联展示、独立功能细节、六篇方法指南、评价占位、创作者信件和博客；评价、产品功能组、指南、精选博客各由一对上下空轨包围，功能网格/关联展示/细节之间另有两条留白分隔框
+ * [POS]: widgets 的营销叙事组合；LandingChapter 成对生成上下空轨，并让评价/指南/博客的一层侧纹贯穿空轨与正文，内侧横线仅落在主轨内，外侧仍共用斜纹边界；产品功能、关联展示与功能细节作为完整章节，五项功能区底部、细节区顶部各补一条留白分隔框，后者位于斜纹带下方；创作者信件沿用首稿叙事，与 Laper 参考同构：问候与自我介绍各占一行，再以长短有别的段落分承初衷、打磨、AI 分寸与期待，一段只说一件事，由 huxi 个人署名
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { LandingConnections } from "./LandingConnections";
@@ -136,9 +136,15 @@ export function LandingSections(){
       ].map(([title, body]) => <article key={title} data-marketing-reveal><h3>{title}</h3><p>{body}</p></article>)}
     </div>
   </section>
+  <div className="landing-chapter-gap" data-edge="start" aria-hidden="true">
+    <BlueprintDivider flush fullBleed />
+  </div>
   <BlueprintDivider fullBleed />
   <LandingConnections />
   <BlueprintDivider fullBleed />
+  <div className="landing-chapter-gap" data-edge="end" aria-hidden="true">
+    <BlueprintDivider flush fullBleed />
+  </div>
   <LandingFeatureDetails />
   </LandingChapter>
   <BlueprintDivider fullBleed />

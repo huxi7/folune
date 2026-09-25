@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 MarketingLink、静态精选博客内容、BlogCover 与作者头像；正文浮现由营销壳统一编排，卡片边框与封面静止
- * [OUTPUT]: 对外提供首页三列博客卡片与通往公开博客目录的入口
+ * [OUTPUT]: 对外提供首页三列精简博客卡片，仅展示封面、标题、摘要、作者与日期与通往公开博客目录的入口
  * [POS]: widgets 的博客预览区；上下空轨与连续格点侧纹由 LandingSections 的章节外框持有；整卡是单一可聚焦链接，内容与阅读页同源，导航状态用于返回原位置
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -19,7 +19,6 @@ export function LandingBlog() {
         <Link className="blog-card-link" to={`/blog/${post.slug}`} state={{ fromBlog: true }} aria-labelledby={`card-${post.slug}`}>
           <div className="blog-card-cover"><BlogCover kind={post.cover} /></div>
           <div className="blog-card-copy" data-marketing-reveal>
-            <span className="blog-eyebrow">{post.category}</span>
             <h3 id={`card-${post.slug}`}>{post.title}</h3>
             <p>{post.description}</p>
             <footer><span className="blog-author"><img src={blogAuthor.avatar} alt="" width="28" height="28" loading="lazy" />{blogAuthor.name}</span><time dateTime={post.date}>{post.date}</time></footer>

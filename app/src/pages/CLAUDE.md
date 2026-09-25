@@ -11,7 +11,7 @@ usePublicPageMetadata.ts: 博客和法律页共用的标题/摘要生命周期�
 useWorkspaceEntryReady.ts: Paper/Canvas 共用的一次性首屏就绪桥梁；等待导航空闲与两帧提交，错误撤销覆盖层，入口编号阻止旧页面推进新加载
 MarketingLayout.tsx: 首页、登录、博客、动态和独立法律页持续挂载的公共壳，持有唯一 MarketingHeader 与 Router ScrollRestoration；登录内容使用弹性单屏布局并省去 Footer，其余页面保留 Footer，路径变化聚焦主标题；useMarketingMotion 在滚动恢复后编排可视正文，路径/锚点原生过渡与一次性滚动浮现共用节奏，query 不重播
 LoginPage.tsx: /login 公开认证页，384px 表单与完整 3:4 插画左右并置，共享首页公告和 Header；公告单独包入 fullBleed BlueprintFrame，使主轨/外轨与顶栏及首页同轴；正文铺设终选 01A 极慢散墨，标题去除行末标点以视觉居中，视频静音自动循环；AuthForm 独占认证步骤，成功仍经 /app Profile 守卫准入
-BlogPage.tsx: /blog 与 /updates 两个分区共用目录和 :slug 阅读页；pathname 作为骨架 key，目录/正文通过 BlogFrameSection 共用两侧花纹局部外框先现/纹样后现，主轨与其他分隔线直接显示，query/锚点不重播，Hero 后空轨上沿有节点、下沿平直；section 选择独立内容集合、标题与目录路径，动态复用点阵标题及无封面整行列表并提供空状态；正文交给 PublicArticle、元信息交给 usePublicPageMetadata；保留来路返回、404 与同分区推荐，目录统一为无封面整行单一链接且不重复显示阅读按钮，Hero 上方空轨承载返回首页，列表由主页同高上下空轨包围，共享波浪侧纹仅覆盖列表高度、不进入空轨，Hero 后空轨下边的中段静态绘制，两侧短横线由花纹外框补齐且无节点；博客保留同组阅读规则；全部文章/目录链接复用 MarketingLink，标题与阅读正文标记交给营销壳浮现，返回继续使用原历史状态
+BlogPage.tsx: 返回首页复用 Secondary Button 材质与标准箭头，博客题眉使用 FOLUNE 杂志品牌刊物署名；目录分类与摘要下主题标签、文章分类复用同一材质； /blog 与 /updates 两个分区共用目录和 :slug 阅读页；pathname 作为骨架 key，目录/正文通过 BlogFrameSection 共用两侧花纹局部外框先现/纹样后现，主轨与其他分隔线直接显示，query/锚点不重播，Hero 后空轨上沿有节点、下沿平直；section 选择独立内容集合、标题与目录路径，动态复用点阵标题及无封面整行列表并提供空状态；正文交给 PublicArticle、元信息交给 usePublicPageMetadata；保留来路返回、404 与同分区推荐，目录统一为无封面整行单一链接且不重复显示阅读按钮，Hero 上方空轨承载返回首页，列表由主页同高上下空轨包围，共享波浪侧纹仅覆盖列表高度、不进入空轨，Hero 后空轨下边的中段静态绘制，两侧短横线由花纹外框补齐且无节点；博客保留同组阅读规则；全部文章/目录链接复用 MarketingLink，标题与阅读正文标记交给营销壳浮现，返回继续使用原历史状态
 workspacePreload.ts: 正文邻居与 Canvas 代码预热共用的在线/前台/省流/慢网判据，只约束非必要预取，不阻止主动打开
 workspacePreload.test.ts: 验证弱网、省流、后台与离线不预取，以及缺失 Network Information 时的兼容行为
 MotionLabPage.tsx: DEV /motion-lab 无鉴权验收入口，复用生产 MotionSpecimen，所有交互只更新本地 fixture 状态，并链接真实 AppSidebar/归档线验收台

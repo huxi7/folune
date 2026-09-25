@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 landingDetailData 四篇细节文章与 guidePosts 六篇指南，依据当前 Paper、已实测的整理/引用/搜索/Canvas 能力与写作研究演示截图，不读取账号数据
- * [OUTPUT]: 对外提供三篇首页精选、四篇功能细节与六篇方法指南及同组阅读推荐、稳定 slug、可选章节实景图、封面主题与统一作者信息；整理与画布指南承接功能区入口
+ * [OUTPUT]: 对外提供三篇首页精选、四篇功能细节与六篇方法指南及同组阅读推荐、稳定 slug、逐篇内容标签、可选章节实景图、封面主题与统一作者信息；整理与画布指南承接功能区入口
  * [POS]: widgets 的公开编辑内容源；首页卡片、博客目录与阅读页共读，避免标题摘要与正文各自维护
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -14,6 +14,7 @@ export type BlogPost = {
   title: string;
   description: string;
   category: string;
+  tags: readonly string[];
   date: string;
   cover: BlogCoverKind;
   lead: string;
@@ -26,7 +27,7 @@ export type BlogPost = {
 export const blogAuthor = { name: "huxi", role: "Folune 创作者", avatar: "/brand/huxi-avatar.jpg" };
 export const featuredBlogPosts: BlogPost[] = [
   {
-    slug: "write-first-organize-later",
+    slug: "write-first-organize-later", tags: ["随手记录", "专注写作", "渐进整理"],
     title: "先记下来，让想法有处可去",
     description: "记录不必从一个完美的目录开始。留下一句话，再慢慢把它写成自己的东西。",
     category: "记录与写作",
@@ -54,7 +55,7 @@ export const featuredBlogPosts: BlogPost[] = [
     ],
   },
   {
-    slug: "a-place-for-every-note",
+    slug: "a-place-for-every-note", tags: ["读书摘记", "AI 整理", "正文搜索"],
     title: "从随手记，到找得到的笔记",
     description: "用一条读书摘记，走一遍 Folune 的记录、AI 整理与正文搜索。",
     category: "使用指南",
@@ -87,7 +88,7 @@ export const featuredBlogPosts: BlogPost[] = [
     ],
   },
   {
-    slug: "think-between-notes",
+    slug: "think-between-notes", tags: ["知识画布", "笔记连接", "写作思路"],
     title: "把三篇笔记，连成一条写作思路",
     description: "从阅读摘记和日常观察出发，在 Folune 画布上摆放、连接，再回到原文。",
     category: "使用指南",
