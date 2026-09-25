@@ -2,6 +2,8 @@
 > L2 | 父级: ../../CLAUDE.md
 
 成员清单
+production-routes.ts: 仅生产注册的路径白名单，阻断 Mastra 默认 Agent/Workflow 等接口绕过 Folune JWT 路由
+production-routes.test.ts: 验证框架路径拒绝与健康/业务/预检路径透传，不调用数据库或模型
 auth.ts: 从 Bearer JWT 经 Supabase /auth/v1/user 建立可信 userId；每次完整读取最多 6 秒，故障禁用连接复用重试一次，401 不重试；成功身份按 SHA-256(token) 缓存 45 秒，失败不缓存
 request-log.ts: 纯格式化安全 HTTP 元数据；开发态输出紧凑彩色 ASCII 卡片与健康摘要，生产态输出单行 JSON
 request-logger.ts: 为响应注入 X-Request-Id 并采集无查询串的请求元数据；跳过 Mastra /__* 热更新噪声，SSE 请求只记录响应握手耗时

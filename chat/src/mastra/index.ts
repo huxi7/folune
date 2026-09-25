@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 memoAgent、独立 approvalAgent、exploreAgent、chat/organize/explore/canvas-expand 路由、请求日志、启动 Banner 与 config/env
+ * [INPUT]: 依赖 memoAgent、独立 approvalAgent、exploreAgent、业务路由、生产路径守卫、请求日志、启动 Banner 与 config/env
  * [OUTPUT]: 对外提供装配 Agents/Workflows、对话/整理/召回/Canvas 增量路由、健康探针与全局日志的 Mastra 服务实例
  * [POS]: chat 服务组合根，只负责注册能力与 HTTP 策略，不承载 Agent、鉴权或路由细节
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -16,6 +16,7 @@ import { organizePlannerAgent } from "@/mastra/agents/organize-planner-agent";
 import { exploreNotesWorkflow } from "@/mastra/workflows/explore-notes";
 import { organizeMemoWorkflow } from "@/mastra/workflows/organize-memo";
 import { requestLogger } from "@/middleware/request-logger";
+import { productionRouteGuard } from "@/middleware/production-routes";
 import { chatRoute } from "@/routes/chat";
 import { canvasExpandRoute } from "@/routes/canvas-expand";
 import { exploreRoute } from "@/routes/explore";
@@ -42,6 +43,9 @@ export const mastra = new Mastra({
       credentials: true,
     },
     middleware: [
+      ...(env.NODE_ENV === "production"
+        ? [{ path: "/*", handler: productionRouteGuard }]
+        : []),
       {
         path: "/*",
         handler: requestLogger,

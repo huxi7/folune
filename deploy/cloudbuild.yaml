@@ -1,0 +1,37 @@
+# [INPUT]: 依赖 production 分支、服务名/模块名/区域/镜像仓库替换参数与对应 Dockerfile
+# [OUTPUT]: 为 API 或 Chat 构建提交号标记的生产镜像，上传 Artifact Registry 并更新 Cloud Run
+# [POS]: 两个 GitHub push 触发器共用的发布流程；保留服务已有环境变量和 Secret Manager 引用，不执行数据库迁移
+# [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+
+steps:
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --platform=linux/amd64
+      - --target=production
+      - -f
+      - deploy/docker/${_MODULE}.Dockerfile
+      - -t
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_SERVICE}:$COMMIT_SHA
+      - .
+  - id: push
+    name: gcr.io/cloud-builders/docker
+    args: [push, '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_SERVICE}:$COMMIT_SHA']
+  - id: deploy
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_SERVICE}
+      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_SERVICE}:$COMMIT_SHA
+      - --region=${_REGION}
+      - --project=$PROJECT_ID
+      - --quiet
+
+images:
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_SERVICE}:$COMMIT_SHA
+options:
+  logging: CLOUD_LOGGING_ONLY
+timeout: 1200s

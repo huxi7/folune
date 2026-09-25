@@ -2,9 +2,9 @@
 > L2 | 父级: ../CLAUDE.md
 
 成员清单
-api.Dockerfile: 基于 oven/bun:1.3.5 冻结安装 api 依赖并暴露 10001，运行时代码由 Compose bind mount 注入
-chat.Dockerfile: 基于 oven/bun:1.3.5 冻结安装 Mastra chat 依赖并暴露 10002，源码和密钥由 Compose 分离注入
+api.Dockerfile: 共用 Bun 1.3.5 基础层；dev 接收 Compose 源码挂载，production 冻结安装运行依赖并复制源码，以非 root 用户执行 start、读取平台 PORT
+chat.Dockerfile: dev 保留 Mastra 热更新；build 在目标 Linux 架构生成产物，production 只携带产物和运行依赖，以非 root Bun 执行 index.mjs，密钥运行时注入
 
-职责: 保存 api/chat 两个独立服务 Dockerfile；镜像只构建稳定依赖层，开发源码、node_modules 与密钥生命周期由 Compose 管理。
+职责: 每个服务只有一份多阶段构建定义；Compose 显式选择 dev，云端选择默认的 production 阶段。构建上下文统一为仓库根，所有真实环境值留在运行平台。
 
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
