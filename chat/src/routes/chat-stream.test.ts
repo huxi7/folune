@@ -137,3 +137,26 @@ test("正文先可见；审批必须先于 finish，落库完成后才关闭流"
   await end;
   expect(closed).toBe(true);
 });
+
+test("98 项审批并发有界，总时长超过单项期限仍能正常完成", async () => {
+  const tools = Array.from({ length: 98 }, (_, index): UIMessageChunk => ({
+    type: "tool-input-available", toolName: "edit_node", toolCallId: `call-${index}`, input: {},
+  }));
+  const f = fixture([{ type: "start-step" }, ...tools, { type: "finish-step" }, { type: "finish", finishReason: "tool-calls" }]);
+  let active = 0;
+  let peak = 0;
+  let completed = 0;
+  f.options.approveTool = async () => {
+    active++;
+    peak = Math.max(peak, active);
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    active--;
+    completed++;
+    return null;
+  };
+  const chunks = await collect(f.options);
+  expect(peak).toBe(4);
+  expect(completed).toBe(98);
+  expect(chunks.at(-1)?.type).toBe("finish");
+  expect(f.saves[0]?.status).toBe("complete");
+});

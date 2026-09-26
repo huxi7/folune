@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 AgentPanel 客户端工具协议、AI SDK 工具状态与 共享 Lucide 极简图标
- * [OUTPUT]: 对外提供基于本轮读取快照与真实 input/output 的人话动作名称、安全轻量详情及未知工具中性回退
+ * [OUTPUT]: 对外提供基于本轮读取快照与真实 input/output 的人话动作名称、安全轻量详情、区分 SDK 回包与业务终态的 getAgentToolState 及未知工具中性回退
  * [POS]: AgentPanel 工具展示适配层，隔离协议载荷与 Message UI，禁止 UUID、正文、Token 和原始 JSON 进入界面
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -85,6 +85,18 @@ function readTitle(value: unknown) {
   return safeText(asRecord(value)?.title, MAX_TITLE_LENGTH);
 }
 
+// SDK output-available 只说明工具有回包；命令终态才决定能否显示成功。
+export function getAgentToolState(part: ToolPartLike): ToolCallState {
+  if (part.state === "approval-responded" && part.approval?.approved === false) return "output-denied";
+  const output = asRecord(part.output);
+  if (part.state !== "output-available" || typeof output?.operation !== "string") return part.state;
+  if (output.status === "failed" || output.status === "stale") return "output-error";
+  if (output.status === "rejected" || output.status === "undone") return "output-denied";
+  if (output.status === "pending_approval") return "approval-requested";
+  if (output.status === "approved" || output.status === "executing") return "input-available";
+  return part.state;
+}
+
 function resultDetails(
   part: ToolPartLike,
   successMessage: string,
@@ -136,6 +148,7 @@ export function getAgentToolPresentation(
   part: ToolPartLike,
   targetTitle?: string,
 ): AgentToolPresentation {
+  if (part.state === "output-available") part = { ...part, state: getAgentToolState(part) };
   toolName = normalizeAgentToolName(toolName);
   if (toolName === "celebration") {
     const reason = readField(part.input, "reason");

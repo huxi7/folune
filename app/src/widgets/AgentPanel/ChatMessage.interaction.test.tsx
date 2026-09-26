@@ -171,7 +171,8 @@ test("历史回复默认折叠，只有思考的中止或失败也会收起且�
     expectExpanded(activeView.container, false);
     fireEvent.click(activeView.getByRole("button", { name: "思考过程" }));
     expectExpanded(activeView.container, true);
-    expect(activeView.container.querySelector(".agent-process-text")?.textContent).toBe(reasoning.text);
+    expect(activeView.container.textContent).not.toContain(reasoning.text);
+    expect(activeView.container.textContent).toContain("分析已结束");
     activeView.unmount();
   }
 });

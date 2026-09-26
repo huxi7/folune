@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 shared/api/client 统一 Bearer 请求、AI SDK UIMessage 与 memo DTO mapper
- * [OUTPUT]: 对外提供 FoluneUIMessage、首开 bootstrap、单会话 content、增量 assistant message PATCH、无归档状态的 AI thread/message/reference/settings/command CRUD、Run apply/reject/undo/get 类型与响应归一化
- * [POS]: app/src/shared/api 的 AI Native V2 HTTP 与消息契约边界；首开和会话切换分别使用聚合读取，真实写入只经 api/chat
+ * [OUTPUT]: 对外提供 AI_TOOL_REQUEST_TIMEOUT_MS、FoluneUIMessage、首开 bootstrap、单会话 content、增量 assistant message PATCH、无归档状态的 AI thread/message/reference/settings/command CRUD、Run apply/reject/undo/get 类型与响应归一化
+ * [POS]: app/src/shared/api 的 AI Native V2 HTTP 与消息契约边界；首开和会话切换分别使用聚合读取，工具权限读取、命令与单条结果落库以 45 秒响应期限退出，写请求不重放；真实写入只经 api/chat
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -323,10 +323,12 @@ export const syncAiMessage = (
   accessToken: string,
   threadId: string,
   message: FoluneUIMessage,
+  signal: AbortSignal = AbortSignal.timeout(AI_TOOL_REQUEST_TIMEOUT_MS),
 ): Promise<Pick<AiMessage, "id" | "updated_at">> =>
   apiRequest<Pick<AiMessage, "id" | "updated_at">>(
     `/ai-threads/${encodeURIComponent(threadId)}/messages/${encodeURIComponent(message.id)}`,
     {
+      signal,
       body: JSON.stringify({
         id: message.id,
         parts: message.parts,
@@ -338,8 +340,11 @@ export const syncAiMessage = (
     accessToken,
   );
 
+// 工具槽不能被失联请求永久占用；写请求超时不自动重放。
+export const AI_TOOL_REQUEST_TIMEOUT_MS = 45_000;
+
 export const getAiSettings = (accessToken: string): Promise<AiUserSettings> =>
-  apiRequest("/ai-settings", {}, accessToken);
+  apiRequest("/ai-settings", { signal: AbortSignal.timeout(AI_TOOL_REQUEST_TIMEOUT_MS) }, accessToken);
 
 export const updateAiSettings = (
   accessToken: string,
@@ -359,8 +364,10 @@ export const getAiCommand = (
 export const createAiCommand = (
   accessToken: string,
   input: CreateAiCommandInput,
+  signal: AbortSignal = AbortSignal.timeout(AI_TOOL_REQUEST_TIMEOUT_MS),
 ): Promise<AiCommand> =>
   apiRequest("/ai-commands", {
+    signal,
     method: "POST",
     body: JSON.stringify(input),
   }, accessToken);

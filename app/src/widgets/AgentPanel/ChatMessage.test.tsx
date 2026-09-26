@@ -196,3 +196,21 @@ describe("ChatMessage", () => {
     expect(successHtml.match(/>撤销</g)).toHaveLength(1);
   });
 });
+
+test("长推理与内部编号不进入 DOM，98 项工具默认只挂载六项", () => {
+  const privateReasoning = "cf8e0ddf-06ad-4e7d-bbcb-3c69241d1519 node_id intent_gate";
+  const parts: FoluneUIMessage["parts"] = [
+    { type: "reasoning", text: privateReasoning.repeat(1000) },
+    ...Array.from({ length: 98 }, (_, index) => ({
+      type: "dynamic-tool" as const, toolName: "edit_node", toolCallId: `bulk-${index}`,
+      state: "output-available" as const, input: { op: "delete", title: `未命名备忘录 ${index}` },
+      output: { operation: "trash_node", status: index === 97 ? "failed" : "succeeded" },
+    })),
+  ];
+  const html = renderToStaticMarkup(<ChatMessage activity="none" message={assistant(parts)} onUndo={async () => undefined} />);
+  expect(html).not.toContain("cf8e0ddf");
+  expect(html).not.toContain("intent_gate");
+  expect((html.match(/class="ds-tool-call-disclosure"/g) ?? []).length).toBe(6);
+  expect(html).toContain('data-result="failure"');
+  expect(html).toContain("查看全部 98 项操作");
+});

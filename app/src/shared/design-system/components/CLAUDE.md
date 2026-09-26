@@ -34,8 +34,8 @@ ThinkingStatusText.tsx: ThinkingIndicator 的低频中性状态文字，以 2800
 ThinkingIndicator.tsx: Animated Formation ThinkingMark 与 ThinkingStatusText 的无卡片行内组合件，等待正文时 active，首 token 后 160ms 淡出，活动工具出现时由调用方立即卸载
 ThinkingMark.tsx: Folune AI 品牌符号，默认使用圆角核心、五条不对称折线连接与五个非等径外围节点表达信息聚合；固定 24×24 viewBox/currentColor/独立 data-part，并以 1840ms 非顺时针错峰 Formation Motion 提供 active 态，同时归档 Radiation/Formation/Fold 三个静态候选
 UserMessageBubble.tsx: 用户消息气泡，直接复用 Primary Button 的主题色、前景色、smooth corner 与均匀环绕柔影
-ToolCallBubble.tsx: 只呈现人话动作与净化详情的工具披露件；活动态复用 Secondary loading，详情用 keepMounted Collapse 连续收放并保留内部状态，无详情时不制造 tab stop
-ToolCallBubble.test.tsx: 工具披露最小 DOM 契约测试，锁定执行态 shimmer、完成态结果槽、可访问详情入口、无 pre/details 调试面板及停止后未完成态静止
+ToolCallBubble.tsx: 工具轻量披露控件，固定状态位依次展示 DS spinner、成功圆勾或中性圆叉，取消和中断不继续转圈；详情点击后才挂载，避免批量任务创建大量隐藏 Motion 子树
+ToolCallBubble.test.tsx: 工具披露最小 DOM 契约测试，锁定执行态转圈、固定结果槽、可访问详情入口、无 pre/details 调试面板及停止后未完成态静止
 accessibilitySemantics.test.tsx: 基础无障碍语义回归测试，锁定 Thinking 单一播报源、隐藏 Skeleton 不宣告忙碌及 Assistant 正文不伪造具名地标
 BrandMark.tsx: 紧边界 PNG 与已选③字标的唯一组合入口；--brand-size 只表示可见图高，共享样式以 5:4 布局比和 7/22 间距比例派生整组，默认 1.375rem 让 Demo 随根字号缩小；iconOnly 保留原独立图的可见体量，整组只播报一次 Folune
 BrandWordmark.tsx: Source Serif 4 Medium 24pt 的固定 Folune 轮廓，资产内纵向光学收至 94% 并保持宽度/居中，只由 BrandMark 消费并继承 currentColor；不加载字体或复用 UI 字体，尺寸统一归 design-system.css，OFL 许可随 public/brand 分发

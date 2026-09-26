@@ -2,8 +2,8 @@
 > L2 | 父级: ../../CLAUDE.md
 
 成员清单
-chat-stream.test.ts: 真实 AI SDK 流门禁，覆盖 finish 无 EOF、流内错误、异常 EOF、空回复、静默期限、主动取消、审批顺序、正文即时显示与落库关流
-chat-stream.ts: 模型流生命周期；30 秒无事件即取消，finish 不再等待 EOF，错误/空回复/异常断流转 error 并保留 parts；审批先于 finish，单条消息落库先于客户端续写，失败不伪装成功；诊断日志只记录阶段/事件数/超时，不含正文或凭据
+chat-stream.test.ts: 98 项审批并发上限与总耗时超过单项期限的回归；真实 AI SDK 流门禁，覆盖 finish 无 EOF、流内错误、异常 EOF、空回复、静默期限、主动取消、审批顺序、正文即时显示与落库关流
+chat-stream.ts: 模型流生命周期；审批最多四项并发，每项取得执行槽后单独限期，大批量总耗时不触发静默超时；30 秒无事件即取消，finish 不再等待 EOF，错误/空回复/异常断流转 error 并保留 parts；审批先于 finish，单条消息落库先于客户端续写，失败不伪装成功；诊断日志只记录阶段/事件数/超时，不含正文或凭据
 chat.ts: POST /v1/chat 冻结上下文并完成 prepare，委托 chat-stream 管理模型/审批/落库；显式透传 reasoning 与正文，沿用同轮 assistant ID、权限审批和客户端工具
 chat-persistence.ts: 提供只含 memo id/title/revision 的用户轮次 context snapshot、同轮 assistant ID/parts 续写、完成/中止/启动失败原位终态和最多一次持久化重试策略
 chat-persistence.test.ts: 锁定 context 正文不进入快照、服务端稳定 ID、续写及启动失败不追加重复 assistant、中止状态和一次安全重试生命周期

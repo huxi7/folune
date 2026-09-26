@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖 Collapse 的保留式高度披露、 React 折叠状态、共享 Lucide 工具图标与自带圆形轮廓的结果图标、人话名称/详情与 AI SDK 调用状态
- * [OUTPUT]: 对外提供不暴露原始载荷、执行中带流光、有详情才可聚焦展开的 ToolCallBubble
+ * [INPUT]: 依赖 Collapse 的按需高度披露、 React 折叠状态、共享 Lucide 工具图标与自带圆形轮廓的结果图标、人话名称/详情与 AI SDK 调用状态
+ * [OUTPUT]: 对外提供不暴露原始载荷、固定状态位展示转圈/成功/失败、有详情才可聚焦展开的 ToolCallBubble
  * [POS]: design-system AI 消息家族的工具披露控件，以 Secondary Button 同源材质承载动作入口，详情保持普通信息排版
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -9,7 +9,7 @@ import { Collapse } from "./Collapse";
 import {
   CheckCircleIcon,
   ToolboxIcon,
-  WarningCircleIcon,
+  CircleNotchIcon,
   XCircleIcon,
   type Icon,
 } from "../icons";
@@ -65,28 +65,20 @@ export function ToolCallBubble({
   const expandable = details.length > 0;
   const ResultIcon = finished
     ? CheckCircleIcon
-    : failed
-      ? WarningCircleIcon
-      : denied || interrupted
-        ? XCircleIcon
-        : null;
+    : failed || denied || interrupted
+      ? XCircleIcon
+      : CircleNotchIcon;
   const status = interrupted ? "未完成" : stateLabel[state];
-  const bubbleClassName = [
-    "ds-button-secondary",
-    "ds-tool-call-bubble",
-    active ? "ds-button-loading" : "",
-  ].join(" ");
+  const bubbleClassName = "ds-button-secondary ds-tool-call-bubble";
   const bubbleContent = (
     <>
       <span className="ds-tool-call-icon">
         <ToolIcon aria-hidden="true" size={14} />
       </span>
       <strong className="ds-tool-call-name">{name}</strong>
-      {ResultIcon ? (
-        <span aria-hidden="true" className="ds-tool-call-result">
-          <ResultIcon size={16} />
-        </span>
-      ) : null}
+      <span aria-hidden="true" className="ds-tool-call-result" data-result={finished ? "success" : active ? "pending" : "failure"}>
+        <ResultIcon className={active ? "ds-button-spinner" : undefined} size={16} />
+      </span>
     </>
   );
 
@@ -120,7 +112,7 @@ export function ToolCallBubble({
         </div>
       )}
       {expandable ? (
-        <Collapse open={expanded} keepMounted>
+        <Collapse open={expanded}>
         <dl
           className="ds-tool-call-details"
           id={detailsId}

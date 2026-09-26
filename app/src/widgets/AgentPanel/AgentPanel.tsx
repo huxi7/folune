@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 useConversationScroll 的挂载定位与退出冻结、 DS 实时动态偏好、 PersistentView 的有方向视图承接、DS Skeleton/输入表面浮现语义、useAiThreads、类型化 useChat/原生审批及既有 Composer/工具执行边界
- * [OUTPUT]: 对外提供 AI Native 右侧工作区；只读工具参数到齐即并发执行，写工具经过流末审批门禁；整轮活动跨客户端工具/审批/续写持续，消息定点同步并以本地快照快速回显
+ * [OUTPUT]: 对外提供 AI Native 右侧工作区；只读工具参数到齐即并发执行，写工具经过流末审批门禁后最多四项并发，停止取消排队、保存本批结果并阻断自动续写；整轮活动跨客户端工具/审批/续写持续，消息定点同步并以本地快照快速回显
  * [POS]: /app 右侧 AI Native V2 组合根；新对话立即进入本地草稿，首发创建期间保持同一 useChat 与消息实例；历史只负责导航，目标会话加载/失败在内容窗承接；api command 是唯一写事实源，Store 只做幂等投影与回滚
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -85,6 +85,7 @@ import {
   normalizeToolInput,
   parseAgentClientToolInput,
 } from "./clientTools";
+import { createClientToolQueue } from "./clientToolQueue";
 import { executeMemoToolPlan } from "./memoToolExecution";
 import { planMemoTool } from "./memoToolPlanner";
 import {
@@ -190,6 +191,9 @@ function AgentConversation({
     if (conversationKey.startsWith("draft")) composerRef.current?.focus({ preventScroll: true });
   }, [conversationKey]);
   const manuallyApprovedToolCalls = useRef(new Set<string>());
+  const toolQueue = useMemo(() => createClientToolQueue(), []);
+  const turnStopped = useRef(false);
+  const toolBatchCount = useRef(0);
   const memoToolExecutions = useRef(new Map<string, Promise<unknown>>());
   const respondingApprovalIds = useRef(new Set<string>());
   const settledApprovalIds = useRef(new Set<string>());
@@ -260,7 +264,7 @@ function AgentConversation({
     messages: initialMessages,
     transport,
     experimental_throttle: 32,
-    sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
+    sendAutomaticallyWhen: (options) => !turnStopped.current && lastAssistantMessageIsCompleteWithToolCalls(options),
     onToolCall: ({ toolCall }) => {
       // 只读 I/O 与剩余模型流、审批和落账重叠；不 await 阻塞 SDK 消费下一个调用。
       // 结果仍由 onFinish 统一发布，停止/失败时不把迟到结果写进下一条消息。
@@ -272,15 +276,18 @@ function AgentConversation({
       }
     },
     onFinish: ({ message, messages: finishedMessages, isAbort, isError }) => {
-      setTurnContinuing(!isAbort && !isError && hasAssistantContinuation(message));
+      if (isAbort || isError) { turnStopped.current = true; toolQueue.cancelPending(); }
+      setTurnContinuing(!turnStopped.current && hasAssistantContinuation(message));
       // 客户端工具执行期间必须计入 busy: 流已结束 (status=ready), 但客户端
       // 规划 + createAiCommand 两次网络往返还在跑。这几百毫秒内切换会话会
       // 卸载 AgentConversation —— command 已落库、树已改变, tool result 永久
       // 丢失, assistant 回复永远停在 input-available (根因 13)。
-      setClientToolsRunning(!isAbort && !isError);
-      void (isAbort || isError ? Promise.resolve() : executePendingClientTools(message))
+      toolBatchCount.current++;
+      setClientToolsRunning(!turnStopped.current);
+      void (turnStopped.current ? Promise.resolve() : executePendingClientTools(message))
         .finally(() => {
-          setClientToolsRunning(false);
+          toolBatchCount.current--;
+          setClientToolsRunning(toolBatchCount.current > 0);
           if (isAbort || isError) {
             void onThreadUpdated();
             return;
@@ -302,7 +309,16 @@ function AgentConversation({
       part.state === "input-available"
       && isAgentClientToolName(clientTools, getToolName(part))
     );
-    await Promise.all(pending.map((part) => executeClientToolPart(part)));
+    const results = await Promise.all(pending.map((part) => executeClientToolPart(part)));
+    if (turnStopped.current) {
+      let settled = [message];
+      pending.forEach((part, index) => {
+        const result = results[index];
+        if (result) settled = applyToolOutput(settled, part.toolCallId, result) ?? settled;
+      });
+      // 停止后没有下一次自动请求替我们落库，必须保存已完成/已取消的真实结果。
+      await syncAiMessage(accessToken, threadIdRef.current!, settled[0]!).catch(() => undefined);
+    }
   }
 
   function getClientToolExecution(part: AgentToolPart): Promise<unknown> {
@@ -310,7 +326,8 @@ function AgentConversation({
     if (existing !== undefined) return existing;
     const toolName = getToolName(part);
     // 同步 schema/Planner 失败也进入已记忆 promise，同一调用只能执行一次。
-    const execution = (async () => {
+    const execution = toolQueue.run(async () => {
+      if (turnStopped.current) throw new Error("操作已停止，尚未执行。");
       if (!isAgentClientToolName(clientTools, toolName)) throw new Error("未知客户端工具。");
       const normalizedInput = normalizeToolInput(part.input);
       return isMemoClientToolName(toolName)
@@ -326,7 +343,7 @@ function AgentConversation({
               toolCallId: part.toolCallId,
             })
           : executeAgentClientTool(clientTools, toolName, normalizedInput);
-    })();
+    });
     memoToolExecutions.current.set(part.toolCallId, execution);
     return execution;
   }
@@ -362,6 +379,7 @@ function AgentConversation({
       if (completedMessages !== undefined) {
         await onThreadUpdated(completedMessages);
       }
+      return { output, state: "output-available" as const };
     } catch (toolError) {
       const errorText = toolError instanceof Error ? toolError.message : "客户端工具执行失败。";
       const completedMessages = durableBaseMessages === undefined
@@ -391,6 +409,7 @@ function AgentConversation({
       if (completedMessages !== undefined) {
         await onThreadUpdated(completedMessages);
       }
+      return { errorText, state: "output-error" as const };
     }
   }
   const streamBusy = status === "submitted" || status === "streaming";
@@ -522,12 +541,19 @@ function AgentConversation({
 
   const { messageListRef, scrollToLatestAuto } = useConversationScroll(messages, status, reduceMotion, present);
 
+  useEffect(() => {
+    turnStopped.current = false;
+    return () => { turnStopped.current = true; toolQueue.cancelPending(); };
+  }, [toolQueue]);
+
   const handleStop = useCallback(() => {
+    turnStopped.current = true;
+    toolQueue.cancelPending();
     setTurnContinuing(false);
     cancelCelebration();
     void stop();
     composerRef.current?.focus({ preventScroll: true });
-  }, [stop]);
+  }, [stop, toolQueue]);
 
   const handleComposerKeyDown = useCallback((event: KeyboardEvent<HTMLDivElement>) => {
     if (mentionOpen && !event.nativeEvent.isComposing) {
@@ -613,6 +639,7 @@ function AgentConversation({
     } catch {
       return;
     }
+    turnStopped.current = false;
     setInputValue("");
     setTurnContinuing(true);
     setMentionOpen(false);
@@ -673,7 +700,7 @@ function AgentConversation({
         <MentionInput aria-label="输入消息" className="agent-chat-input" mentions={inlineMentions} onKeyDown={handleComposerKeyDown} onValueChange={handleInputChange} placeholder="输入消息，@ 引用笔记…" ref={composerRef} value={inputValue} />
         <div className="agent-composer-footer">
           <PermissionModeControl accessToken={accessToken} busy={busy} compact userId={userId} />
-          {streamBusy ? (
+          {streamBusy || clientToolsRunning ? (
             <Button aria-label="停止生成" className="agent-composer-action" icon={StopIcon} onClick={handleStop} size="square" type="button" variant="primary" />
           ) : (
             <Button aria-label="发送消息" className="agent-composer-action" disabled={!canSubmitComposer(inputValue, busy)} icon={ArrowUpIcon} size="square" type="submit" variant="primary" />

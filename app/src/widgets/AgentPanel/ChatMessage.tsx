@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 FoluneUIMessage 的 AI SDK 有序 parts、覆盖工具续写间隙的整轮 activity、本轮读取快照的工具命名、过程分区与 design-system AI 消息组件
- * [OUTPUT]: 对外提供用户/assistant 回复、按真实 activity 退出的空回复占位、隔离披露/撤销状态的过程区及整轮结束后的撤销入口
+ * [OUTPUT]: 对外提供用户/assistant 回复、按真实 activity 退出的空回复占位、不展示原始推理且有界展示工具的过程区及整轮结束后的撤销入口
  * [POS]: AgentPanel 消息语义适配层，只负责对话与过程；人工审批由 AgentConversation 固定在 Composer 上方，冻结上下文不进入对话视觉层
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -17,10 +17,10 @@ import {
   AssistantMessage,
   Button,
   ThinkingIndicator,
-  ToolCallBubble,
   UserMessageBubble,
 } from "../../shared/design-system/components";
 import { MarkdownReadingView } from "../MarkdownReadingView";
+import { AgentToolProgress } from "./AgentToolProgress";
 import { AgentProcessDisclosure } from "./AgentProcessDisclosure";
 import type { AssistantActivity } from "./activityState";
 import { deriveAgentMessagePresentation } from "./messagePresentation";
@@ -86,31 +86,7 @@ function AssistantMessageContent({
           activeLabel={activity === "tool" ? "正在处理" : "正在思考"}
           onProgress={onProgress}
         >
-          {processParts.map((part, index) => {
-            if (part.type === "text" || part.type === "reasoning") {
-              return (
-                <div
-                  className="agent-process-text"
-                  data-kind={part.type}
-                  key={`${part.type}-${index}`}
-                >
-                  <MarkdownReadingView content={part.text} />
-                </div>
-              );
-            }
-
-            if (!isToolUIPart(part)) {
-              return null;
-            }
-
-            const presentation = toolPresentations.get(part.toolCallId)!;
-
-            return (
-              <div className="agent-tool-stack" key={part.toolCallId}>
-                <ToolCallBubble details={presentation.details} icon={presentation.icon} live={responseActive} name={presentation.name} state={part.state} />
-              </div>
-            );
-          })}
+          <AgentToolProgress parts={processParts} presentations={toolPresentations} live={responseActive} />
         </AgentProcessDisclosure>
       ) : undefined}
       renderContent={(content, streamingText) => (

@@ -1,13 +1,14 @@
 /**
  * [INPUT]: 依赖 AI SDK UI stream、可注入模型流/审批/持久化函数与请求取消信号
  * [OUTPUT]: 对外提供 createChatResponseStream；正文即时透传，静默超时/流内错误/无 finish 均进入失败终态
- * [POS]: 聊天流生命周期边界；等待落库保证切换一致性，工具续写只在审批与本轮落库完成后开放
+ * [POS]: 聊天流生命周期边界；等待落库保证切换一致性，审批最多四项并发且逐项计时，工具续写只在审批与本轮落库完成后开放
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
 import { createUIMessageStream, type UIMessage, type UIMessageChunk } from "ai";
 import { persistWithOneRetry, responseStartChunk } from "./chat-persistence";
 
+const APPROVAL_CONCURRENCY = 4;
 const GENERATION_IDLE_MS = 30_000;
 const GENERATION_ERROR = "AI 回复中断，请重新发送消息。";
 const GENERATION_TIMEOUT = "AI 长时间没有响应，请重试。";
@@ -62,6 +63,7 @@ export function createChatResponseStream(options: Options) {
     execute: async ({ writer }) => {
       let reader: ReadableStreamDefaultReader<UIMessageChunk> | undefined;
       const approvals: Promise<void>[] = [];
+      const approvalSlots = Array.from({ length: APPROVAL_CONCURRENCY }, () => Promise.resolve());
       try {
         writer.write(responseStartChunk(options.messageId));
         const upstream = options.createStream(signal);
@@ -96,16 +98,21 @@ export function createChatResponseStream(options: Options) {
           writer.write(chunk);
           if (chunk.type === "tool-input-available" && !seenCalls.has(chunk.toolCallId)) {
             seenCalls.add(chunk.toolCallId);
-            const approval = options.approveTool(chunk).then((result) => {
+            const slot = approvals.length % APPROVAL_CONCURRENCY;
+            const approval = approvalSlots[slot]!.then(async () => {
+              signal.throwIfAborted();
+              const result = await waitForProgress(options.approveTool(chunk));
               if (result && !signal.aborted) writer.write(result);
             });
+            approvalSlots[slot] = approval;
             // 审批与模型并行；立即接管 rejection，结束时统一等待。
             void approval.catch(() => undefined);
             approvals.push(approval);
           }
         }
         phase = "approval";
-        await waitForProgress(Promise.all(approvals));
+        // 每项审批取得执行槽后单独计时；正常推进的大批量不受总计 30 秒误杀。
+        await Promise.all(approvals);
         writer.write(finish);
       } catch (error) {
         if (options.signal.aborted) writer.write({ type: "abort" });

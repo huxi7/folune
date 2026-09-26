@@ -1,12 +1,13 @@
 /**
  * [INPUT]: 依赖 Planner 类型化 plan、单篇 memo/AI Command API、仅合并在途的实时账号权限读取与 tree/document Store 乐观事务
- * [OUTPUT]: 对外提供 executeMemoToolPlan，按 ID 读取单篇全文，或把写计划映射为内部原子命令并完成双 Store 对账
+ * [OUTPUT]: 对外提供 executeMemoToolPlan，按 ID 读取单篇全文，或把写计划映射为有响应期限的内部原子命令并完成双 Store 对账，超时结果明确标为未确认
  * [POS]: AgentPanel 胖工具运行链的主线程协调器；Planner 只计算，本模块不裁决 RLS/revision，最终事实完全服从 api command
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
 import {
   createAiCommand,
+  AI_TOOL_REQUEST_TIMEOUT_MS,
   type AiCommand,
   type AiCommandOperation,
   type AiPermissionMode,
@@ -104,7 +105,7 @@ export async function executeMemoToolPlan(input: {
     return input.plan.output;
   }
   if (input.plan.kind === "read_memo") {
-    const detail = await getMemo(input.accessToken, input.plan.nodeId);
+    const detail = await getMemo(input.accessToken, input.plan.nodeId, AbortSignal.timeout(AI_TOOL_REQUEST_TIMEOUT_MS));
     return {
       content_mdx: detail.memo.content_mdx,
       id: detail.id,
@@ -127,6 +128,7 @@ export async function executeMemoToolPlan(input: {
     draft.operation,
     draft.projectionInput,
   );
+  const commandSignal = AbortSignal.timeout(AI_TOOL_REQUEST_TIMEOUT_MS);
   try {
     const settings = await readFreshAiSettings(input.accessToken);
     const command = await createAiCommand(input.accessToken, {
@@ -138,13 +140,14 @@ export async function executeMemoToolPlan(input: {
       idempotency_key: `${input.threadId}:${input.toolCallId}`,
       input: draft.input,
       ...approvalFields(settings.permission_mode, input.manuallyApproved, draft.operation),
-    });
+    }, commandSignal);
     useMemoTreeStore.getState().reconcileAiCommand(command);
     useMemoDocumentStore.getState().reconcileAiCommand(command);
     return command;
   } catch (error) {
     useMemoTreeStore.getState().rollbackAiToolCall(input.toolCallId);
     useMemoDocumentStore.getState().rollbackAiEdit(input.toolCallId);
+    if (commandSignal.aborted) throw new Error("操作响应超时，结果尚未确认，请核对笔记库后再继续。");
     throw error;
   }
 }

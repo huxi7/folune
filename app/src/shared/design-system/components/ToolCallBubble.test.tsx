@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun 测试运行器、React 静态渲染、共享 Lucide 图标与 ToolCallBubble
- * [OUTPUT]: 验证工具执行态、完成态、可访问折叠详情及中断后停止 shimmer
+ * [OUTPUT]: 验证工具执行态、完成态、可访问折叠详情及中断后停止转圈与详情按需挂载
  * [POS]: design-system AI 工具披露控件的最小 DOM 契约测试，禁止原始 JSON/调试面板进入消息
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -12,7 +12,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { ToolCallBubble } from "./ToolCallBubble";
 
 describe("ToolCallBubble", () => {
-  it("执行中保留轻量 shimmer，并提供人话详情入口", () => {
+  it("执行中保留固定状态位与转圈，并提供人话详情入口", () => {
     const html = renderToStaticMarkup(
       <ToolCallBubble
         details={[{ label: "目标", value: "「产品想法」" }]}
@@ -24,15 +24,16 @@ describe("ToolCallBubble", () => {
 
     expect(html).toContain('aria-busy="true"');
     expect(html).toContain('aria-expanded="false"');
-    expect(html).toContain("ds-button-loading");
+    expect(html).toContain("ds-button-spinner");
+    expect(html).toContain('data-result="pending"');
     expect(html).toContain("更新「产品想法」");
-    expect(html).toContain("目标");
+    expect(html).not.toContain("<dl");
     expect(html).not.toContain("ds-tool-call-caret");
     expect(html).not.toContain("<pre");
     expect(html).not.toContain("<details");
   });
 
-  it("完成后移除 shimmer、展示结果图标并保留轻量详情", () => {
+  it("完成后停止转圈、展示结果图标并保留轻量详情", () => {
     const html = renderToStaticMarkup(
       <ToolCallBubble
         details={[
@@ -47,7 +48,7 @@ describe("ToolCallBubble", () => {
 
     expect(html).not.toContain('aria-busy="true"');
     expect(html).toContain("ds-tool-call-result");
-    expect(html).toContain("正文修改已保存。");
+    expect(html).toContain('data-result="success"');
     expect(html).not.toContain("ds-button-loading");
   });
 

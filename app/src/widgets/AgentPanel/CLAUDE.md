@@ -2,13 +2,16 @@
 > L2 | 父级: ../CLAUDE.md
 
 成员清单
+AgentToolProgress.tsx: 产品过程展示边界，原始 reasoning 不进入 DOM/Markdown；超过六项显示真实成功/失败计数、六项预览和每次二十项的展开记录，拒绝与业务失败不冒充成功
+clientToolQueue.ts: 工具背压边界，最多四项并发；排队时不规划/投影，停止取消排队而保留已提交命令的真实结果
+clientToolQueue.test.ts: 98 项任务并发上限、单项失败释放执行槽、停止取消排队与后续队列复用门禁
 CLAUDE.md: 记录 AgentPanel 子域成员、依赖方向与 GEB 回环协议
 AgentPanelHeader.tsx: 无状态固定顶栏；历史接管标题和左侧返回，新对话为即时本地导航、不承载 loading，执行中保留防中断禁用；生产与演示共用
 useConversationScroll.test.tsx: 验证首次非平滑定位与退出冻结、迟到内容回调不追尾
 useConversationScroll.ts: 消息滚动唯一边界，首次绘制前定位、退出取消平滑滚动并冻结位置，隐藏历史拒绝追尾
 AgentPanel.draft.test.tsx: 子进程隔离、真实组件/Hook/SDK/transport，验证零写草稿、首发创建/引用/持续消息实例、失败重试、删除与迟到请求隔离
-AgentPanel.tsx: 新对话直接进入可输入草稿，首发等候归 SDK 发送状态、落库保持组件身份；AI 组合根，History/Conversation 用撑满高度的 PersistentView 承接；历史从左侧进入，点击会话立即退出列表并由目标标题与 Skeleton 内容壳接管，失败在目标窗重试；流式消息以 32ms UI 节流、末条 assistant 工具对账、assistant 定点同步与本地快照提交降低重算，错误/中止仍后台校准；整轮活动跨 ready、客户端工具和审批续写持续，只读工具参数到齐即启动且不阻塞 SDK 流消费，流末复用同一执行结果；写工具在流末审批门禁后并发启动，停止/失败不发布提前读取结果或启动待执行写工具；菜单与内容 Motion 不接管业务协议
-AgentPanel.streaming.test.tsx: 新增流内错误立即停止思考、不执行未确认写工具/自动续写门禁； 子进程隔离 mock，使用真实 useChat/AgentPanel、可控直通流与延迟工具结果，验证连续两轮工具/自动续写稳定、正文首分块在 text-end/finish-step 前已显示且只折叠一次，独立读写工具并发，以及停止后不再启动待执行工具或自动续写
+AgentPanel.tsx: 新对话直接进入可输入草稿，首发等候归 SDK 发送状态、落库保持组件身份；AI 组合根，History/Conversation 用撑满高度的 PersistentView 承接；历史从左侧进入，点击会话立即退出列表并由目标标题与 Skeleton 内容壳接管，失败在目标窗重试；流式消息以 32ms UI 节流、末条 assistant 工具对账、assistant 定点同步与本地快照提交降低重算，错误/中止仍后台校准；整轮活动跨 ready、客户端工具和审批续写持续，只读工具参数到齐即启动且不阻塞 SDK 流消费，流末复用同一执行结果；写工具在流末审批门禁后由 clientToolQueue 最多四项并发启动，停止同时取消排队并阻止迟到结果自动续写，独立落库本批已完成/已取消结果以便刷新回看；停止入口持续到客户端工具结束，停止/失败不发布提前读取结果或启动待执行写工具；菜单与内容 Motion 不接管业务协议
+AgentPanel.streaming.test.tsx: 新增流内错误立即停止思考、不执行未确认写工具/自动续写门禁； 子进程隔离 mock，使用真实 useChat/AgentPanel、可控直通流与延迟工具结果，验证连续两轮工具/自动续写稳定、正文首分块在 text-end/finish-step 前已显示且只折叠一次，独立读写工具并发、98 项执行与 DOM 有界，以及停止后不再启动待执行工具或自动续写
 AgentPanelNavigation.test.tsx: 会话切换交互回归门禁，以未完成内容请求锁定历史列表立即退出、目标标题与加载壳同步接管
 ApprovalDock.tsx: Composer 上方唯一的紧凑非模态审批视觉原语，统一图标、标题、影响说明、按钮槽位与无蒙层语义；普通工具和 AI 整理审批只能适配它，禁止复制表面
 approvalState.ts: 审批状态机纯领域层，只检查末条 assistant；统一负责 requested 单次响应投影、approved 未完成工具恢复候选与 output 结果投影，避免 UI、持久化和恢复各自解释 AI SDK 状态
@@ -32,8 +35,8 @@ threadSelection.test.ts: 覆盖用户偏好隔离、合法恢复和失效 ID 回
 aiThreadCache.ts: 按用户隔离的 30 秒面板快照允许 selectedThread=null 表达草稿；逐会话内容仅缓存已保存 ID、最多八项，允许陈旧回显且不把草稿混入历史
 aiThreadCache.test.ts: 锁定面板/逐会话快照的用户隔离、TTL、局部更新、目标删除与有界淘汰
 useAiThreads.ts: 会话与本地草稿控制器；新对话、空列表及删完最后一条都不写库，首次发送合并同一创建请求并保存草稿置顶引用，失败可复用已创建 ID；conversationKey 在落库时保持以延续 useChat，bootstrap/内容迟到不覆盖新选择；列表预热、逐会话缓存与流完成本地提交仍收口于此
-AgentProcessDisclosure.tsx: 单条回复只自动收起一次：处理期展开，正文首分块同帧交接，130ms micro Collapse 与正文同时进行；只有跟随流式正文的自动收起才联动滚动，用户手动展开/收起一律留在原地不甩到底部；后续工具不能自动重开，用户回看独立，内部工具详情保持挂载
-ChatMessage.tsx: 空回复占位按 activity 退出，首 token 前失败不再永久显示思考； FoluneUIMessage 适配层；按整轮 thinking/tool 活动驱动过程展开，处理中尾部文字留在过程，正文到达即收起且不延迟流式文本；记录已显示 part 索引防止后续工具把正文撤回，消息 ID 重置披露/正文/撤销状态；冻结上下文不进入对话视觉，单一过程区不承载审批控件，同轮成功命令只在整轮工具/续写/正文结束后提供一个整轮撤销
+AgentProcessDisclosure.tsx: 单条回复只自动收起一次：处理期展开，正文首分块同帧交接，130ms micro Collapse 与正文同时进行；只有跟随流式正文的自动收起才联动滚动，用户手动展开/收起一律留在原地不甩到底部；后续工具不能自动重开，用户回看独立，工具详情按需挂载
+ChatMessage.tsx: 空回复占位按 activity 退出，首 token 前失败不再永久显示思考； FoluneUIMessage 适配层；推理原文仅保留协议，过程由 AgentToolProgress 输出真实数量和有界工具记录；按整轮 thinking/tool 活动驱动过程展开，处理中尾部文字留在过程，正文到达即收起且不延迟流式文本；记录已显示 part 索引防止后续工具把正文撤回，消息 ID 重置披露/正文/撤销状态；冻结上下文不进入对话视觉，单一过程区不承载审批控件，同轮成功命令只在整轮工具/续写/正文结束后提供一个整轮撤销
 ChatMessage.interaction.test.tsx: 锁定整轮结束才显示撤销； 生产消息 DOM 生命周期回归，覆盖工具/审批间隙持续展开、正文即折叠、迟到活动不重开、手动回看、新消息重置及停止/失败
 ChatMessage.test.tsx: 首 token 前失败移除空思考占位；完整回复 DOM 契约测试，锁定单一过程区、审批条非模态且与消息解耦、单一整轮撤销、最终正文边界、冻结来源不污染消息与敏感 ID 屏蔽
 composerBehavior.ts: Composer 的纯交互判定，统一非空闲/空白提交保护，并把普通 Enter 与 Shift/修饰键/IME 组合输入严格分流
@@ -46,10 +49,10 @@ memoToolPlanner.ts: 四个胖工具的纯规划内核，基于轻量 Tree Store 
 memoToolPlanner.test.ts: 覆盖整树/read_memo、create/rename/move/reorder/delete 五种 op、edit_memo、stale 与非法移动
 memoToolPlannerBoundary.test.ts: Planner 纯度静态门禁，以剥离注释的源码证明规划内核不导入 api client 与 Zustand store、不引用 accessToken/document/window/fetch，并且树只能作为只读入参进入；Worker realm 删除后由它把「客户端规划器不是安全边界、也不许自己去取状态」变成 CI 事实而不是评审约定
 memoToolSchemas.ts: 客户端四工具的 zod 契约，与 chat 模型工具保持同构并冻结 expected_revision
-memoToolExecution.ts: 主线程可信协调器，把 Planner plan 映射到现有 ai_commands；read_memo 按可信 nodeId 单篇取正文，写操作合并同凭据在途权限读取，分别协调 Tree/Document Store 的乐观投影、提交、对账与失败回滚
+memoToolExecution.ts: 主线程可信协调器，把 Planner plan 映射到现有 ai_commands；read_memo 按可信 nodeId 单篇取正文，网络响应限期 45 秒且写请求不自动重放，超时明确结果未确认；写操作合并同凭据在途权限读取，分别协调 Tree/Document Store 的乐观投影、提交、对账与失败回滚
 messagePresentation.ts: UIMessage 有序 part 的纯展示分区，兼容归并历史连续 assistant 分片，兼容旧 folune.phase，按工具所在 step、后续 reasoning 和当前处理阶段保留过程，兼容无 step 的旧历史；已显示正文索引保证流式文字只增不回撤；按 toolCallId 去重，并把同轮成功 commands 提取为回复末尾单一入口所需的反向撤销序列
 messagePresentation.test.ts: 回复分区纯函数测试，覆盖历史连续 assistant 归并、step/工具/过渡文字穿插、处理中正文不争抢、重复 toolCall 去重、成功 commands 整轮反向撤销、reasoning 归属和普通回复零过程区
-toolPresentation.ts: 单次扫描本轮读取/命令快照，为执行中与失败动作保留目标名，无额外 API 请求； 工具 Message UI 的唯一展示适配器，先归一化 namespaced 工具名，再基于真实操作、标题和状态生成人话动作及安全详情
+toolPresentation.ts: 单次扫描本轮读取/命令快照，为执行中与失败动作保留目标名，无额外 API 请求； SDK 回包与业务成功分离，failed/stale/rejected/undone 不显示成功勾；工具 Message UI 的唯一展示适配器，先归一化 namespaced 工具名，再基于真实操作、标题和状态生成人话动作及安全详情
 toolPresentation.test.ts: 锁定并发删除执行中/失败/历史回看仍显示笔记名； 工具展示契约测试，锁定具体动作命名、namespaced 归一、安全详情与未知协议名不外露
 activityState.ts: AI Activity 纯判定边界，识别 旧消息 folune.phase 的过程标记，以整轮 continuation 补齐 SDK ready 的客户端工具/审批/自动续写间隙；当前 step 未完成工具优先，空白 text/reasoning 不改变阶段，hasAssistantContinuation 只由末步可续写工具决定
 activityState.test.ts: Activity 状态回归测试，覆盖当前 step、ready 工具间隙、审批/拒绝、空分块、正文开始与终态卸载

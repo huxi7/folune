@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 消费 APP app-typography.css 文字角色，变量回退保持非 APP 原排版； 依赖设计系统的半径/曲线配对规则与 index.css 的 primary/foreground/surface/spacing/button 零偏移环绕阴影与 motion 语义 token
- * [OUTPUT]: 提供用户主色气泡、零卡片最终正文、五词错峰模糊拖尾、可折叠处理过程、Formation ThinkingIndicator 与可展开轻量详情、结果图标不套盒的工具状态样式；长历史使用原生内容可见性优化布局
+ * [OUTPUT]: 提供用户主色气泡、零卡片最终正文、五词错峰模糊拖尾、可折叠处理过程、Formation ThinkingIndicator 与可展开轻量详情、固定状态位转圈/墨绿成功/中性失败的工具状态及有界批量进度样式；长历史使用原生内容可见性优化布局
  * [POS]: app/src/styles 的 AI 消息视觉层，被 AgentPanel 与 DEV Design System 共用；过程和正文只用自然留白过渡，不创建第二套主题或固定分隔线，末条流式消息保持完整测量
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -316,6 +316,34 @@
     color: var(--muted-foreground);
     box-shadow: none;
   }
+
+  .ds-tool-call-result[data-result="success"] {
+    color: var(--blueprint-success);
+  }
+
+  .ds-tool-call-result[data-result="failure"] {
+    color: var(--foreground);
+  }
+
+  .agent-tool-progress {
+    color: var(--muted-foreground);
+    font-size: var(--type-conversation, 0.75rem);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .agent-tool-more {
+    width: fit-content;
+    border: 0;
+    background: transparent;
+    color: var(--muted-foreground);
+    cursor: pointer;
+    font: inherit;
+    font-size: var(--type-conversation, 0.75rem);
+    padding: var(--spacing) 0;
+  }
+
+  .agent-tool-more:hover { color: var(--foreground); }
+  .agent-tool-more:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 
   .ds-tool-call-details {
     display: grid;

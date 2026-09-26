@@ -33,6 +33,9 @@ const thread = {
   id: "stream-test", title: "流式测试", references: [], user_id: "user-test",
   created_at: "2026-09-24T00:00:00Z", updated_at: "2026-09-24T00:00:00Z", last_message_at: null,
 };
+const savedMessages: Array<{ parts: Array<{ state?: string }> }> = [];
+const aiApi = await import("../../shared/api/ai");
+mock.module("../../shared/api/ai", () => ({ ...aiApi, syncAiMessage: async (_token: string, _threadId: string, message: { parts: Array<{ state?: string }> }) => { savedMessages.push(message); } }));
 const streams: ReadableStreamDefaultController<UIMessageChunk>[] = [];
 const toolResults: Array<(result: unknown) => void> = [];
 mock.module("./chatTransport", () => ({
@@ -66,6 +69,7 @@ afterEach(() => {
   cleanup();
   streams.length = 0;
   toolResults.length = 0;
+  savedMessages.length = 0;
 });
 
 async function emit(index: number, chunks: UIMessageChunk[], close = false) {
@@ -249,6 +253,49 @@ test("提前读取完成后若用户停止，不发布结果也不自动续写",
   await emit(0, [], true);
   await waitFor(() => expect(view.queryByRole("button", { name: "停止生成" })).toBeNull());
   expect(streams).toHaveLength(1);
+});
+
+
+test("98 个写工具分批推进且 DOM 有界，只在全部结果到齐后续写", async () => {
+  const view = await startConversation();
+  const chunks: UIMessageChunk[] = [{ type: "start", messageId: "batch-98" }, { type: "start-step" }];
+  for (let index = 0; index < 98; index++) chunks.push({
+    type: "tool-input-available", toolCallId: `bulk-${index}`, toolName: "edit_node",
+    input: { op: "create", node_type: "memo", title: `测试${index}` },
+  });
+  chunks.push({ type: "finish-step" }, { type: "finish", finishReason: "tool-calls" });
+  await emit(0, chunks, true);
+  await waitFor(() => expect(toolResults).toHaveLength(4));
+  expect(view.container.querySelectorAll(".ds-tool-call-bubble").length).toBeLessThanOrEqual(6);
+  let resolved = 0;
+  while (resolved < 98) {
+    const end = Math.min(resolved + 4, 98);
+    await waitFor(() => expect(toolResults).toHaveLength(end));
+    expect(streams).toHaveLength(1);
+    await act(async () => {
+      for (; resolved < end; resolved++) toolResults[resolved]!({});
+    });
+  }
+  await waitFor(() => expect(streams).toHaveLength(2));
+  await emit(1, [{ type: "start", messageId: "batch-98" }, { type: "start-step" }, { type: "text-start", id: "done" }, { type: "text-delta", id: "done", delta: "完成98项。" }, { type: "text-end", id: "done" }, { type: "finish-step" }, { type: "finish", finishReason: "stop" }], true);
+  await waitFor(() => expect(view.queryByRole("button", { name: "停止生成" })).toBeNull());
+});
+
+test("客户端批量执行期间停止，不再启动排队写入或被迟到结果自动续写", async () => {
+  const view = await startConversation();
+  await emit(0, [
+    { type: "start", messageId: "batch-stop" }, { type: "start-step" },
+    ...Array.from({ length: 12 }, (_, index): UIMessageChunk => ({ type: "tool-input-available", toolCallId: `cancel-${index}`, toolName: "edit_node", input: { op: "create", node_type: "memo", title: `停止${index}` } })),
+    { type: "finish-step" }, { type: "finish", finishReason: "tool-calls" },
+  ], true);
+  await waitFor(() => expect(toolResults).toHaveLength(4));
+  fireEvent.click(view.getByRole("button", { name: "停止生成" }));
+  await act(async () => { for (const resolve of toolResults) resolve({}); });
+  await waitFor(() => expect(view.queryByRole("button", { name: "停止生成" })).toBeNull());
+  expect(toolResults).toHaveLength(4);
+  expect(streams).toHaveLength(1);
+  expect(savedMessages.at(-1)?.parts.filter((part) => part.state === "output-available")).toHaveLength(4);
+  expect(savedMessages.at(-1)?.parts.filter((part) => part.state === "output-error")).toHaveLength(8);
 });
 
 }
