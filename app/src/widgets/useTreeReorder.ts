@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 tree 容器、结构身份、共享 FLIP 时间轴和归档运动租约
- * [OUTPUT]: 对外提供 useTreeReorder 与手势前捕获入口；旧行连续让位、新行连同选中反馈淡入，滚动和临时 ID 对账不重播
+ * [OUTPUT]: 对外提供 useTreeReorder 与手势前捕获入口；旧行连续让位、新行独立淡入且连点不重置时钟，布局批量读取后接续位移，滚动和临时 ID 对账不重播
  * [POS]: AppSidebar 的结构动效层；以稳定 DOM 实例和容器内容坐标保存布局，展开高度归 TreeDisclosure，连续结构变更从在途位置接续
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -10,7 +10,7 @@ import { beginArchiveMotion, endArchiveMotion } from "./archiveCordMotion";
 
 type Position = { x: number; y: number };
 type Layout = Map<HTMLElement, Position>;
-type RowMotion = Position & { animation: Animation; opacity: number };
+type RowMotion = Position & { animation: Animation };
 
 // ---- 快照只认内容坐标：滚动与整个 Panel 的位移不是树结构变化 ----
 function readLayout(tree: HTMLDivElement): Layout {
@@ -38,6 +38,7 @@ export function useTreeReorder(treeRef: RefObject<HTMLDivElement | null>, layout
   const capturedLayoutRef = useRef<Layout | null>(null);
   const previousLayoutRef = useRef<Layout | null>(null);
   const motionsRef = useRef(new Map<HTMLElement, RowMotion>());
+  const entriesRef = useRef(new Map<HTMLElement, Animation>());
   const releaseRef = useRef<(() => void) | null>(null);
 
   useLayoutEffect(() => {
@@ -47,7 +48,8 @@ export function useTreeReorder(treeRef: RefObject<HTMLDivElement | null>, layout
     const captured = capturedLayoutRef.current;
     const previous = captured ?? previousLayoutRef.current;
     const snapshot = previous === null ? null : new Map(previous);
-    const opacities = new Map<HTMLElement, number>();
+    // 保留动画时批量读取，再扣除已知位移；避免 cancel 写样式后再强制读布局。
+    const current = readLayout(tree);
     capturedLayoutRef.current = null;
 
     // 先保存正在显示的位置再取消；effect cleanup 提前 cancel 会先跳到终点再倒退。
@@ -60,30 +62,42 @@ export function useTreeReorder(treeRef: RefObject<HTMLDivElement | null>, layout
           y: position.y + motion.y * remaining,
         });
       }
-      opacities.set(row, 1 - (1 - motion.opacity) * remaining);
-      motion.animation.cancel();
+      const target = current.get(row);
+      if (target) current.set(row, { x: target.x - motion.x * remaining, y: target.y - motion.y * remaining });
     });
+    motionsRef.current.forEach(({ animation }) => animation.cancel());
     motionsRef.current.clear();
     releaseRef.current?.();
     releaseRef.current = null;
 
-    // 取消旧 transform 后批量读最终布局，再统一写动画，避免逐行读写交错。
-    const current = readLayout(tree);
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    entriesRef.current.forEach((animation, row) => {
+      if (reduced || !current.has(row)) { animation.cancel(); entriesRef.current.delete(row); }
+    });
     previousLayoutRef.current = current;
-    if (snapshot === null || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (snapshot === null || reduced) return;
 
     current.forEach((position, row) => {
       const origin = snapshot.get(row);
       const x = origin === undefined ? 0 : origin.x - position.x;
       const y = origin === undefined ? 0 : origin.y - position.y;
-      const opacity = origin === undefined ? 0 : opacities.get(row) ?? 1;
-      if (Math.abs(x) < 0.5 && Math.abs(y) < 0.5 && opacity >= 1) return;
+      // 淡入属于行的出生生命周期；后续插入只重定向位置，不延长显现时间。
+      if (origin === undefined && !entriesRef.current.has(row)) {
+        const entry = row.animate([{ opacity: 0 }, { opacity: 1 }], {
+          duration: treeFlipDurationMs, easing: treeFlipEasing,
+        });
+        entriesRef.current.set(row, entry);
+        void entry.finished.catch(() => {}).then(() => {
+          if (entriesRef.current.get(row) === entry) entriesRef.current.delete(row);
+        });
+      }
+      if (Math.abs(x) < 0.5 && Math.abs(y) < 0.5) return;
 
       const animation = row.animate([
-        { transform: `translate(${x}px, ${y}px)`, opacity },
-        { transform: "translate(0, 0)", opacity: 1 },
+        { transform: `translate(${x}px, ${y}px)` },
+        { transform: "translate(0, 0)" },
       ], { duration: treeFlipDurationMs, easing: treeFlipEasing });
-      motionsRef.current.set(row, { animation, x, y, opacity });
+      motionsRef.current.set(row, { animation, x, y });
     });
 
     const batch = [...motionsRef.current.entries()];
@@ -120,6 +134,8 @@ export function useTreeReorder(treeRef: RefObject<HTMLDivElement | null>, layout
   useLayoutEffect(() => () => {
     motionsRef.current.forEach(({ animation }) => animation.cancel());
     motionsRef.current.clear();
+    entriesRef.current.forEach((animation) => animation.cancel());
+    entriesRef.current.clear();
     releaseRef.current?.();
     capturedLayoutRef.current = null;
     previousLayoutRef.current = null;

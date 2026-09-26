@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 MemoTreeBranch/Skeleton、SidebarCreateMenu、memoLibrary 拖拽/祖先计划、memoTitleRules 的重名与可改名判据、持久化展开偏好、archiveCordPolicy 的代表解析、useTreeReorder 的结构重排与通过 Portal 锚定视口的 MotionSurface、Profile 与上层事务命令；结构键按不可变树引用复用
- * [OUTPUT]: 对外提供文件库 Header、搜索入口、原位插入笔记与即时选中、仅目标离屏才平滑定位、可聚焦真实文件树、正文意图预热、树内重排/跨视图笔记拖拽、底部导航、节点回收站命令，以及树内唯一的归档可见代表标记
+ * [OUTPUT]: 对外提供文件库 Header、搜索入口、复用上一布局原位插入笔记与即时选中、仅目标离屏才平滑定位、可聚焦真实文件树、正文意图预热、树内重排/跨视图笔记拖拽、底部导航、节点回收站命令，以及树内唯一的归档可见代表标记
  * [POS]: app/src/widgets 的按需文件库内容层；它是 expandedFolders 的所有者，因此也是「当前谁代表那篇被整理的笔记」唯一有资格回答的一层；结构键只在树形关系变化时递归计算，标题/摘要更新不触发整树 FLIP 判据；事务与路由切换由 Dashboard 编排
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -239,7 +239,6 @@ export function AppSidebar({
   );
   const captureFlipPositions = useTreeReorder(treeRef, layoutKey);
   function handleCreateMemo(parentId: string | null) {
-    captureFlipPositions();
     onCreateMemo(parentId);
   }
   const folderIds = useMemo(() => getFolderIds(memoTree), [memoTree]);

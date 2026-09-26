@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 happy-dom、真实 React Hook、可控 WAAPI 时钟与尺寸回执
- * [OUTPUT]: 验证滚动/Panel 位移不污染树位移、连续插入接续当前帧、选中行保留淡入、ID 对账不重播、减少动态和运动租约回收
+ * [OUTPUT]: 验证滚动/Panel 位移不污染树位移、连续插入接续当前帧、选中行淡入不被连点重启、ID 对账不重播、减少动态和运动租约回收
  * [POS]: 文件树结构动效的行为回归；只核对布局计算与生命周期，不替代用户视觉验收
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -59,7 +59,7 @@ Object.defineProperty(browserWindow.HTMLElement.prototype, "animate", { configur
   const record: AnimationRecord = { row, frames, currentTime: 0, finished, cancel: end,
     finish: () => { record.currentTime = treeFlipDurationMs; end(); } };
   records.push(record);
-  active.set(row, record);
+  if (frames[0]?.transform !== undefined) active.set(row, record);
   return record;
 } });
 
@@ -77,7 +77,7 @@ function Harness({ rows, layoutKey }: { rows: Row[]; layoutKey: string }) {
 }
 const oldRows: Row[] = [{ id: "a", top: 0 }, { id: "b", top: 32 }];
 const inserted: Row[] = [{ id: "new", top: 0 }, { id: "a", top: 32 }, { id: "b", top: 64 }];
-const firstFrame = (id: string) => records.findLast((record) => record.row.dataset["memoTreeRowId"] === id)?.frames[0];
+const firstFrame = (id: string, property = "transform") => records.findLast((record) => record.row.dataset["memoTreeRowId"] === id && record.frames[0]?.[property as keyof Keyframe] !== undefined)?.frames[0];
 beforeEach(() => { reduced = false; treeTop = 80; records = []; active.clear(); });
 afterEach(() => { cleanup(); expect(isArchiveMotionActive()).toBe(false); });
 
@@ -85,7 +85,7 @@ describe("文件树原位插入", () => {
   test("最新行立即拥有选中语义，同时保留完整淡入与旧行让位", () => {
     const view = render(<Harness rows={oldRows} layoutKey="0" />);
     view.rerender(<Harness rows={inserted.map((row) => ({ ...row, selected: row.id === "new" }))} layoutKey="1" />);
-    expect(firstFrame("new")?.opacity).toBe(0);
+    expect(firstFrame("new", "opacity")?.opacity).toBe(0);
     expect(firstFrame("a")?.transform).toBe("translate(0px, -32px)");
     expect(view.getByRole("button", { name: "new" }).getAttribute("aria-current")).toBe("page");
   });
@@ -98,7 +98,7 @@ describe("文件树原位插入", () => {
     view.rerender(<Harness rows={inserted} layoutKey="after" />);
     expect(firstFrame("a")?.transform).toBe("translate(0px, -32px)");
     expect(firstFrame("b")?.transform).toBe("translate(0px, -32px)");
-    expect(firstFrame("new")?.opacity).toBe(0);
+    expect(firstFrame("new", "opacity")?.opacity).toBe(0);
   });
 
   test("快速连续插入从当前帧接续，ResizeObserver 不把中途位置当终态", () => {
@@ -109,7 +109,7 @@ describe("文件树原位插入", () => {
     const remaining = 1 - treeFlipEase(0.5);
     view.rerender(<Harness rows={[{ id: "next", top: 0 }, ...inserted.map((row) => ({ ...row, top: row.top + 32 }))]} layoutKey="2" />);
     expect(firstFrame("a")?.transform).toBe(`translate(0px, ${-32 - 32 * remaining}px)`);
-    expect(firstFrame("new")?.opacity).toBeCloseTo(1 - remaining);
+    expect(records.filter((record) => record.row.dataset["memoTreeRowId"] === "new" && record.frames[0]?.opacity === 0)).toHaveLength(1);
   });
 
   test("显式手势快照只计一次在途 transform", () => {
@@ -122,6 +122,24 @@ describe("文件树原位插入", () => {
     expect(y).toBeCloseTo(-32 - 32 * (1 - treeFlipEase(0.5)));
   });
 
+  test("跨帧连插不会重启已有行的淡入", () => {
+    const view = render(<Harness rows={oldRows} layoutKey="0" />);
+    view.rerender(<Harness rows={inserted} layoutKey="1" />);
+    const entry = records.find((record) => record.row.dataset["memoTreeRowId"] === "new" && record.frames[0]?.opacity === 0)!;
+    const cancel = entry.cancel;
+    let cancelled = false;
+    entry.cancel = () => { cancelled = true; cancel(); };
+    let rows = inserted;
+    for (let index = 2; index < 10; index++) {
+      active.forEach((record) => { record.currentTime = treeFlipDurationMs / 4; });
+      entry.currentTime += treeFlipDurationMs / 4;
+      rows = [{ id: `burst-${index}`, top: 0 }, ...rows.map((row) => ({ ...row, top: row.top + 32 }))];
+      view.rerender(<Harness rows={rows} layoutKey={String(index)} />);
+      expect(cancelled).toBe(false);
+    }
+    expect(records.filter((record) => record.row === entry.row && record.frames[0]?.opacity !== undefined)).toHaveLength(1);
+  });
+
   test("临时 ID 原位对账不重播；下一次插入仍把该行当作旧行", async () => {
     const view = render(<Harness rows={oldRows} layoutKey="0" />);
     view.rerender(<Harness rows={inserted} layoutKey="1" />);
@@ -132,7 +150,7 @@ describe("文件树原位插入", () => {
     view.rerender(<Harness rows={serverRows} layoutKey="1" />);
     expect(records).toHaveLength(count);
     view.rerender(<Harness rows={[{ id: "next", top: 0 }, ...serverRows.map((row) => ({ ...row, top: row.top + 32 }))]} layoutKey="2" />);
-    expect(firstFrame("server")?.opacity).toBe(1);
+    expect(records.filter((record) => record.row.dataset["memoTreeRowId"] === "server" && record.frames[0]?.opacity === 0)).toHaveLength(1);
     expect(firstFrame("server")?.transform).toBe("translate(0px, -32px)");
   });
 
