@@ -31,7 +31,9 @@ AI 是用户的备忘录协作伙伴与智能档案管理员。
 ## 运行形态
 app 跑在本机 Bun/Vite 固定 10000；api 与 chat 由 folune Compose 项目编排为 folune-api-dev(10001)/folune-chat-dev(10002)，各自持有独立健康探针与被 Git 忽略的私有 `.env`。chat 依赖 api 健康后启动，容器内经 `http://api:10001` 访问业务 API；浏览器只接收 `VITE_` 前缀的公开配置。
 
-同一组 Dockerfile 同时提供 dev 与 production 阶段：Compose 显式选择 dev，生产镜像包含运行代码或 Mastra 构建产物、以非 root 用户启动并读取平台 PORT。生产环境值由部署平台注入，镜像不包含本地 `.env`；镜像定义存在不等于云端已发布。
+同一组 Dockerfile 同时提供 dev 与 production 阶段：Compose 显式选择 dev，生产镜像包含运行代码或 Mastra 构建产物、以非 root 用户启动并读取平台 PORT。生产环境值由部署平台注入，镜像不包含本地 `.env`。
+
+线上 app 由 Cloudflare Pages 从 production 分支构建；API/Chat 由同分支的两个 Cloud Build 触发器独立发布到 folune7 项目的 Cloud Run，三者连接同一个 Production Supabase。开发仍使用 main 与 Staging；正式地址、首次建服务要求和发布步骤见 [deploy/README.md](deploy/README.md)，实际发布状态以平台为准。
 
 2026-09-02 app 形制投影：Paper 归档线由 fixed `ArchiveCordOverlay` 承载，不再依赖 react-archer；Canvas 连接临时绳与 Paper 归档 Overlay 都是 UI 层，正式持久化仍只经既有 app WAL/Coordinator/API 边界。
 
