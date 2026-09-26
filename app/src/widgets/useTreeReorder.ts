@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 tree 容器、结构身份、共享 FLIP 时间轴和归档运动租约
- * [OUTPUT]: 对外提供 useTreeReorder 与手势前捕获入口；旧行连续让位、新行淡入，滚动和临时 ID 对账不重播
+ * [OUTPUT]: 对外提供 useTreeReorder 与手势前捕获入口；旧行连续让位、新行淡入，当前选中行立即可见，滚动和临时 ID 对账不重播
  * [POS]: AppSidebar 的结构动效层；以稳定 DOM 实例和容器内容坐标保存布局，展开高度归 TreeDisclosure，连续结构变更从在途位置接续
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -76,7 +76,10 @@ export function useTreeReorder(treeRef: RefObject<HTMLDivElement | null>, layout
       const origin = snapshot.get(row);
       const x = origin === undefined ? 0 : origin.x - position.x;
       const y = origin === undefined ? 0 : origin.y - position.y;
-      const opacity = origin === undefined ? 0 : opacities.get(row) ?? 1;
+      // 选择是即时反馈，不能把最新笔记及其高亮藏在入场淡入里。
+      const opacity = row.getAttribute("aria-current") === "page"
+        ? 1
+        : origin === undefined ? 0 : opacities.get(row) ?? 1;
       if (Math.abs(x) < 0.5 && Math.abs(y) < 0.5 && opacity >= 1) return;
 
       const animation = row.animate([

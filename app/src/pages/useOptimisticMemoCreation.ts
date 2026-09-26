@@ -1,11 +1,11 @@
 /**
  * [INPUT]: 依赖 React Router navigate、用户/access token、memoTreeStore 同步乐观创建、稀疏排序、纸张聚焦回调、删除后目的地与 Toast
- * [OUTPUT]: 对外提供 useOptimisticMemoCreation；一次点击同步进入并聚焦临时纸张，独立跟踪并发提交，成功静默原位换真实路由，失败通知并只回退对应项
+ * [OUTPUT]: 对外提供 useOptimisticMemoCreation；同步选择临时纸张，独立跟踪并发提交，仅已实际选中的创建可替换真实路由或失败回退
  * [POS]: app/src/pages 的创建路由协调器；把临时/真实 ID、last-memo 与乱序响应边界从 AppDashboard 拆出，Store 仍独占树事务
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
-import { useCallback, useRef } from "react";
+import { useCallback, useLayoutEffect, useRef } from "react";
 import type { NavigateFunction } from "react-router-dom";
 
 import type { ToastInput } from "../shared/design-system/components";
@@ -37,7 +37,10 @@ export function useOptimisticMemoCreation({
   toast,
 }: UseOptimisticMemoCreationInput) {
   const currentRouteMemoIdRef = useRef(routeMemoId);
-  currentRouteMemoIdRef.current = routeMemoId;
+  // 只跟踪已提交选择；等待 Canvas 安全保存期间，创建回包不得提前导航离开。
+  useLayoutEffect(() => {
+    currentRouteMemoIdRef.current = routeMemoId;
+  }, [routeMemoId]);
 
   return useCallback((parentId: string | null) => {
     try {
@@ -51,7 +54,6 @@ export function useOptimisticMemoCreation({
       });
       const optimisticId = optimistic.id;
       window.localStorage.setItem(lastMemoStorageKey, optimisticId);
-      currentRouteMemoIdRef.current = optimisticId;
       onSelectMemo(optimisticId);
       onCreatedMemo(optimisticId);
 
@@ -64,6 +66,7 @@ export function useOptimisticMemoCreation({
           if (currentRouteMemoIdRef.current === optimisticId) {
             currentRouteMemoIdRef.current = created.id;
             navigate(`/app/notes/${encodeURIComponent(created.id)}`, {
+              flushSync: true,
               replace: true,
             });
           }
@@ -88,7 +91,7 @@ export function useOptimisticMemoCreation({
               );
             }
 
-            navigate(destination.path, { replace: true });
+            navigate(destination.path, { flushSync: true, replace: true });
           }
 
           toast({

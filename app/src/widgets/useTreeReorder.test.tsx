@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 happy-dom、真实 React Hook、可控 WAAPI 时钟与尺寸回执
- * [OUTPUT]: 验证滚动/Panel 位移不污染树位移、连续插入接续当前帧、ID 对账不重播、减少动态和运动租约回收
+ * [OUTPUT]: 验证滚动/Panel 位移不污染树位移、连续插入接续当前帧、选中行立即可见、ID 对账不重播、减少动态和运动租约回收
  * [POS]: 文件树结构动效的行为回归；只核对布局计算与生命周期，不替代用户视觉验收
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -63,7 +63,7 @@ Object.defineProperty(browserWindow.HTMLElement.prototype, "animate", { configur
   return record;
 } });
 
-type Row = { id: string; key?: string; top: number; hidden?: boolean };
+type Row = { id: string; key?: string; top: number; hidden?: boolean; selected?: boolean };
 let capture: () => void;
 function Harness({ rows, layoutKey }: { rows: Row[]; layoutKey: string }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -71,7 +71,7 @@ function Harness({ rows, layoutKey }: { rows: Row[]; layoutKey: string }) {
   useLayoutEffect(() => { capture = capturePositions; }, [capturePositions]);
   return <div data-tree ref={ref}><div className="memo-tree-level">
     {rows.map((row) => <div key={row.key ?? row.id} inert={row.hidden}>
-      <button data-memo-tree-row-id={row.id} data-top={row.top} type="button">{row.id}</button>
+      <button aria-current={row.selected ? "page" : undefined} data-memo-tree-row-id={row.id} data-top={row.top} type="button">{row.id}</button>
     </div>)}
   </div></div>;
 }
@@ -82,6 +82,14 @@ beforeEach(() => { reduced = false; treeTop = 80; records = []; active.clear(); 
 afterEach(() => { cleanup(); expect(isArchiveMotionActive()).toBe(false); });
 
 describe("文件树原位插入", () => {
+  test("新选中行立即可见，不等待入场透明度；旧行仍连续让位", () => {
+    const view = render(<Harness rows={oldRows} layoutKey="0" />);
+    view.rerender(<Harness rows={inserted.map((row) => ({ ...row, selected: row.id === "new" }))} layoutKey="1" />);
+    expect(firstFrame("new")).toBeUndefined();
+    expect(firstFrame("a")?.transform).toBe("translate(0px, -32px)");
+    expect(view.getByRole("button", { name: "new" }).getAttribute("aria-current")).toBe("page");
+  });
+
   test("滚动并移动 Panel 后新增一行，旧行只让出一行高度", () => {
     const view = render(<Harness rows={oldRows} layoutKey="before" />);
     const tree = view.container.querySelector<HTMLDivElement>("[data-tree]")!;

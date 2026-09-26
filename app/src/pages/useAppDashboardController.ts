@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖首次入口就绪桥梁、React Router Profile/token、Canvas bootstrap、轻量 tree/正文/Workspace Store、删除编排、惰性 AI、持久左右工具宿主、按当前树重算的归档 presentation、useOverlayPanels 响应式判据与 Paper/Canvas Workspace
- * [OUTPUT]: 对外提供 useAppDashboardController 状态与命令投影，支撑互斥 Paper/Canvas 舞台、跨路由不卸载且普通笔记切换不参与整页快照的文件库 React 实例、细粒度正文订阅、当前树节点缓存与正文就绪后的预取、Canvas 离场 flush、网络策略约束的 Canvas 预载、归档 canonical 目标下传与账户/视图编排，改名与文件夹创建成功静默
+ * [OUTPUT]: 对外提供 useAppDashboardController 状态与命令投影；普通笔记选择同步提交路由与树高亮，只有 Canvas 离场等待保存且仅最新选择可继续；另协调持久文件库、正文订阅/预取、账户与归档展示
  * [POS]: app/src/pages 的 /app 状态协调 Hook，由 AppDashboard 单次持有；跨 Paper/Canvas 的数据与视觉交接只在此建立一次，深链刷新先确认节点类型，普通业务状态仍留在各自 Store/Workspace，文件库作为共享 Chrome 留在两种内容壳之外。它是「现在是不是覆盖式布局」的唯一持有者并下传给 Paper 壳与归档 Overlay：同一个断点算两遍就会出现两个都自称正确的布局；归档只交出 canonical memo，屏幕上由谁代表它归 AppSidebar
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -152,6 +152,7 @@ export function useAppDashboardController() {
   >(null);
   const notesWorkspaceRef = useRef<NotesWorkspaceHandle>(null);
   const canvasControlsRef = useRef<CanvasSessionControls | null>(null);
+  const selectionVersionRef = useRef(0);
   const handleCanvasSessionReady = useCallback(
     (controls: CanvasSessionControls | null) => {
       canvasControlsRef.current = controls;
@@ -476,9 +477,15 @@ export function useAppDashboardController() {
   }, [toast]);
 
   function handleSelectMemo(memoId: string) {
-    void (async () => {
-      if (!(await leaveCanvasSafely())) return;
+    const version = ++selectionVersionRef.current;
+    const select = () => {
+      if (version !== selectionVersionRef.current) return;
+      // 等待画布保存时临时笔记可能已经落库，导航前再解析当前真实身份。
+      memoId = resolveMemoId(memoId);
+      const target = findNode(useMemoTreeStore.getState().nodes, memoId);
+      if (target === null) return;
       clearCanvasReturn();
+      setRevealTarget(null);
       setFocusMemoClientKey(null);
       if (activeView !== "note" && routeMemoId === memoId && canvasNodeId === null) {
         transitionContent(() => setActiveView("note"));
@@ -489,7 +496,6 @@ export function useAppDashboardController() {
       rememberRecentNode(memoId);
       // 从文件树切到已有 Canvas 是普通对象切换: 把当前布局作为"保持现状"的依据,
       // 在导航发生的这一刻捕获，而不是等新会话去猜上一个空间留下了什么。
-      const target = findNode(useMemoTreeStore.getState().nodes, resolveMemoId(memoId));
       if (resolveCanvasNodeId(target) !== null) {
         const canvasSession = useCanvasWorkspaceStore.getState();
         const paperChrome = useWorkspaceChromeStore.getState();
@@ -508,13 +514,18 @@ export function useAppDashboardController() {
         });
       }
       // 普通笔记切换只动正文；整页快照会把常驻文件树也交叉淡换。
-      navigate(`/app/notes/${encodeURIComponent(memoId)}`, { viewTransition: canvasNodeId !== null || resolveCanvasNodeId(target) !== null });
-    })();
+      const viewTransition = canvasNodeId !== null || resolveCanvasNodeId(target) !== null;
+      navigate(`/app/notes/${encodeURIComponent(memoId)}`, { viewTransition, flushSync: !viewTransition });
+    };
+    // 普通笔记没有 Canvas 保存边界；无意义的 await 会把插入与选中拆成两帧。
+    if (canvasControlsRef.current === null) select();
+    else void leaveCanvasSafely().then((allowed) => { if (allowed) select(); });
   }
 
   function handleSelectAuxView(view: SidebarView) {
+    const version = ++selectionVersionRef.current;
     void (async () => {
-      if (!(await leaveCanvasSafely())) return;
+      if (!(await leaveCanvasSafely()) || version !== selectionVersionRef.current) return;
       if (canvasNodeId !== null) {
         setActiveView(view);
         navigate("/app", { viewTransition: true });
