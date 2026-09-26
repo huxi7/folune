@@ -1,88 +1,93 @@
 /**
- * [INPUT]: 依赖 tree 容器、结构身份、共享 FLIP 曲线和归档运动租约
- * [OUTPUT]: 对外提供 useTreeReorder 与手势前捕获入口，仅结构变化播放行位移
- * [POS]: AppSidebar 的重排视觉层；展开高度归 TreeDisclosure，ResizeObserver 只更新快照，不触发二次 FLIP
+ * [INPUT]: 依赖 tree 容器、结构身份、共享 FLIP 时间轴和归档运动租约
+ * [OUTPUT]: 对外提供 useTreeReorder 与手势前捕获入口；旧行连续让位、新行淡入，滚动和临时 ID 对账不重播
+ * [POS]: AppSidebar 的结构动效层；以稳定 DOM 实例和容器内容坐标保存布局，展开高度归 TreeDisclosure，连续结构变更从在途位置接续
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { useLayoutEffect, useRef, type RefObject } from "react";
-import { treeFlipDurationMs, treeFlipEasing } from "../pages/workspaceMotion";
+import { treeFlipDurationMs, treeFlipEase, treeFlipEasing } from "../pages/workspaceMotion";
 import { beginArchiveMotion, endArchiveMotion } from "./archiveCordMotion";
+
+type Position = { x: number; y: number };
+type Layout = Map<HTMLElement, Position>;
+type RowMotion = Position & { animation: Animation; opacity: number };
+
+// ---- 快照只认内容坐标：滚动与整个 Panel 的位移不是树结构变化 ----
+function readLayout(tree: HTMLDivElement): Layout {
+  const bounds = tree.getBoundingClientRect();
+  const layout: Layout = new Map();
+  tree.querySelectorAll<HTMLElement>("[data-memo-tree-row-id]").forEach((row) => {
+    if (row.closest('[inert], [aria-hidden="true"]')) return;
+    const rect = row.getBoundingClientRect();
+    layout.set(row, {
+      x: rect.left - bounds.left + tree.scrollLeft,
+      y: rect.top - bounds.top + tree.scrollTop,
+    });
+  });
+  return layout;
+}
+
+function remainingMotion(motion: RowMotion): number {
+  const elapsed = typeof motion.animation.currentTime === "number"
+    ? motion.animation.currentTime
+    : 0;
+  return 1 - treeFlipEase(elapsed / treeFlipDurationMs);
+}
+
 export function useTreeReorder(treeRef: RefObject<HTMLDivElement | null>, layoutKey: string) {
-  const flipSnapshotRef = useRef<Map<string, DOMRect> | null>(null);
-  const previousLayoutRef = useRef<Map<string, DOMRect> | null>(null);
+  const capturedLayoutRef = useRef<Layout | null>(null);
+  const previousLayoutRef = useRef<Layout | null>(null);
+  const motionsRef = useRef(new Map<HTMLElement, RowMotion>());
+  const releaseRef = useRef<(() => void) | null>(null);
+
   useLayoutEffect(() => {
-    if (treeRef.current === null) {
-      return;
-    }
+    const tree = treeRef.current;
+    if (tree === null) return;
 
-    const currentLayout = new Map<string, DOMRect>();
-    const rows = treeRef.current.querySelectorAll<HTMLElement>(
-      "[data-memo-tree-row-id]",
-    );
+    const captured = capturedLayoutRef.current;
+    const previous = captured ?? previousLayoutRef.current;
+    const snapshot = previous === null ? null : new Map(previous);
+    const opacities = new Map<HTMLElement, number>();
+    capturedLayoutRef.current = null;
 
-    rows.forEach((row) => {
-      const nodeId = row.dataset["memoTreeRowId"];
-
-      if (nodeId !== undefined) {
-        currentLayout.set(nodeId, row.getBoundingClientRect());
+    // 先保存正在显示的位置再取消；effect cleanup 提前 cancel 会先跳到终点再倒退。
+    motionsRef.current.forEach((motion, row) => {
+      const remaining = remainingMotion(motion);
+      const position = snapshot?.get(row);
+      if (position && captured === null) {
+        snapshot?.set(row, {
+          x: position.x + motion.x * remaining,
+          y: position.y + motion.y * remaining,
+        });
       }
+      opacities.set(row, 1 - (1 - motion.opacity) * remaining);
+      motion.animation.cancel();
+    });
+    motionsRef.current.clear();
+    releaseRef.current?.();
+    releaseRef.current = null;
+
+    // 取消旧 transform 后批量读最终布局，再统一写动画，避免逐行读写交错。
+    const current = readLayout(tree);
+    previousLayoutRef.current = current;
+    if (snapshot === null || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    current.forEach((position, row) => {
+      const origin = snapshot.get(row);
+      const x = origin === undefined ? 0 : origin.x - position.x;
+      const y = origin === undefined ? 0 : origin.y - position.y;
+      const opacity = origin === undefined ? 0 : opacities.get(row) ?? 1;
+      if (Math.abs(x) < 0.5 && Math.abs(y) < 0.5 && opacity >= 1) return;
+
+      const animation = row.animate([
+        { transform: `translate(${x}px, ${y}px)`, opacity },
+        { transform: "translate(0, 0)", opacity: 1 },
+      ], { duration: treeFlipDurationMs, easing: treeFlipEasing });
+      motionsRef.current.set(row, { animation, x, y, opacity });
     });
 
-    const snapshot = flipSnapshotRef.current ?? previousLayoutRef.current;
-    flipSnapshotRef.current = null;
-    previousLayoutRef.current = currentLayout;
-
-    if (
-      snapshot === null ||
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    ) {
-      return;
-    }
-
-    const animations: Animation[] = [];
-
-    rows.forEach((row) => {
-      const nodeId = row.dataset["memoTreeRowId"];
-      const previous = nodeId === undefined ? undefined : snapshot.get(nodeId);
-
-      if (previous === undefined) {
-        return;
-      }
-
-      const current = nodeId === undefined ? undefined : currentLayout.get(nodeId);
-
-      if (current === undefined) {
-        return;
-      }
-
-      const deltaX = previous.left - current.left;
-      const deltaY = previous.top - current.top;
-
-      if (Math.abs(deltaX) < 0.5 && Math.abs(deltaY) < 0.5) {
-        return;
-      }
-
-      animations.push(row.animate(
-        [
-          { transform: `translate(${deltaX}px, ${deltaY}px)` },
-          { transform: "translate(0, 0)" },
-        ],
-        {
-          duration: treeFlipDurationMs,
-          easing: treeFlipEasing,
-        },
-      ));
-    });
-
-    if (animations.length === 0) {
-      return;
-    }
-
-    /*
-     * FLIP 是 transform 动画: ResizeObserver 看不见它, 也没有 transitionend。
-     * 归档线要在这段时间里逐帧读到行的真实 transform 后 rect, 只能由发起动画的这一方
-     * 明确交出一段租约, 并在真的结束时归还 —— 猜结尾等于让线晚一帧到位。
-     */
+    const batch = [...motionsRef.current.entries()];
+    if (batch.length === 0) return;
     beginArchiveMotion("tree-flip");
     let released = false;
     const release = () => {
@@ -90,43 +95,37 @@ export function useTreeReorder(treeRef: RefObject<HTMLDivElement | null>, layout
       released = true;
       endArchiveMotion("tree-flip");
     };
-    void Promise.allSettled(animations.map((animation) => animation.finished))
-      .then(release);
-
-    return () => { animations.forEach((animation) => animation.cancel()); release(); };
+    releaseRef.current = release;
+    void Promise.allSettled(batch.map(([, { animation }]) => animation.finished)).then(() => {
+      // 新的一次插入可能已接管同一行，旧 Promise 不得清掉新动画。
+      batch.forEach(([row, { animation }]) => {
+        if (motionsRef.current.get(row)?.animation === animation) motionsRef.current.delete(row);
+      });
+      release();
+    });
   }, [layoutKey, treeRef]);
+
   useLayoutEffect(() => {
     const tree = treeRef.current;
     const content = tree?.querySelector(".memo-tree-level");
     if (!tree || !content || typeof ResizeObserver === "undefined") return;
     const observer = new ResizeObserver(() => {
-      const layout = new Map<string, DOMRect>();
-      tree.querySelectorAll<HTMLElement>("[data-memo-tree-row-id]").forEach((row) => {
-        const id = row.dataset["memoTreeRowId"];
-        if (id && !row.closest("[inert]")) layout.set(id, row.getBoundingClientRect());
-      });
-      previousLayoutRef.current = layout;
+      // FLIP 期间的 rect 含 transform，不能把中途位置覆盖为下一次的终态基线。
+      if (motionsRef.current.size === 0) previousLayoutRef.current = readLayout(tree);
     });
     observer.observe(content);
     return () => observer.disconnect();
   }, [layoutKey, treeRef]);
-  function captureFlipPositions() {
-    if (treeRef.current === null) {
-      return;
-    }
 
-    const snapshot = new Map<string, DOMRect>();
-    treeRef.current
-      .querySelectorAll<HTMLElement>("[data-memo-tree-row-id]")
-      .forEach((row) => {
-        const nodeId = row.dataset["memoTreeRowId"];
+  useLayoutEffect(() => () => {
+    motionsRef.current.forEach(({ animation }) => animation.cancel());
+    motionsRef.current.clear();
+    releaseRef.current?.();
+    capturedLayoutRef.current = null;
+    previousLayoutRef.current = null;
+  }, []);
 
-        if (nodeId !== undefined) {
-          snapshot.set(nodeId, row.getBoundingClientRect());
-        }
-      });
-    flipSnapshotRef.current = snapshot;
-  }
-
-  return captureFlipPositions;
+  return function captureFlipPositions() {
+    if (treeRef.current !== null) capturedLayoutRef.current = readLayout(treeRef.current);
+  };
 }
