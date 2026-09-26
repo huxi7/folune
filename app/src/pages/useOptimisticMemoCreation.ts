@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖即时选择/身份对账回调、用户/access token、memoTreeStore 同步乐观创建、稀疏排序、纸张聚焦回调、删除后目的地与 Toast
+ * [INPUT]: 依赖即时选择/身份对账回调、用户/access token、memoTreeStore 同步乐观创建、稀疏排序、纸张聚焦回调、按原槽位就近回退的删除落点与 Toast
  * [OUTPUT]: 对外提供 useOptimisticMemoCreation；同步创建并选择临时笔记，独立跟踪并发提交；选中意图边界负责身份对账和失败回退，不强制执行正文导航
  * [POS]: app/src/pages 的创建路由协调器；把临时/真实 ID、last-memo 与乱序响应边界从 AppDashboard 拆出，Store 仍独占树事务
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -62,7 +62,11 @@ export function useOptimisticMemoCreation({
             window.localStorage.removeItem(lastMemoStorageKey);
           }
 
-          const destination = getPostDeletionDestination(useMemoTreeStore.getState().nodes);
+          // 临时笔记插在同级最前，撤回后就近落到它原来那一格的邻居，而不是树顶
+          const destination = getPostDeletionDestination(
+            useMemoTreeStore.getState().nodes,
+            { index: 0, parentId },
+          );
           if (onReconcileSelection(optimisticId, destination.memoId)) {
             onTitleDraftReset();
             if (destination.memoId !== null) window.localStorage.setItem(lastMemoStorageKey, destination.memoId);

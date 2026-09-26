@@ -26,10 +26,10 @@ AppDashboard.tsx: 文件树消费即时选择，正文消费已提交路由；�
 CanvasRouteCoordinator.tsx: `/app/notes/:id` 的 Canvas 路由协调器；把入口 Canvas bootstrap 冻结为本次挂载的不可变快照，避免缓存消费后在浏览器拍新帧前撤掉目标纸面身份，也避免下一轮离场 bootstrap 反向注入仍在场的旧 Canvas 并制造重复 transition name；另统一 Canvas→原文→Canvas 返回描述、画布重命名与会话 flush 暴露，不持有图数据、保存队列或跨路由文件库。画布→写作区那一跳由它的 navigate 带 viewTransition 起——路由状态落地是异步的，谁持有 navigate 谁才能在正确的那一刻开始过渡
 DashboardDialogs.tsx: 账户与新建文件夹的纯受控组合，外层 presence 等待 Dialog 自身退出，文件夹落点与重名裁决不变
 appDashboardTypes.ts: Dashboard 私有状态类型边界，集中定义含首屏 tree bootstrap 与入口编号的 loader、账户/文件夹弹窗、标题草稿与树加载状态，不承载运行时逻辑
-memoDeletion.ts: 删除导航纯算法，区分“当前路由被影响需要导航离开”与“当前路由是 memo 需要等 autosave flush”两件事（画布没有编辑会话可等），并从剩余 active tree 选择下一路由
-memoDeletion.test.ts: 覆盖删除当前 Memo/祖先影响判定、删除正在打开的 Canvas 只导航不 flush，及有/无下一 Memo 的路由选择
-useMemoNodeDeletion.ts: 软删编排 Hook；沿用调用方共享的 mutating 门禁，删除前对 memo 会话做 required flush；乐观移除与导航落在同一 React 批次、网络确认置于其后，删当前笔记时路由从被删项直接跳到落点、不经过 memo===null 的空态闪帧，成功确认后才清正文缓存与 last-memo；失败随 store 回滚原路退回并恢复编辑会话
-useOptimisticMemoCreation.ts: 人工创建事务编排；每次点击立即插入临时笔记与完整标题，独立跟踪网络请求；成功/失败交给选择意图边界对账或回退，不直接导航或强制同步渲染
+memoDeletion.ts: 删除导航纯算法，区分“当前路由被影响需要导航离开”与“当前路由是 memo 需要等 autosave flush”两件事（画布没有编辑会话可等）；落点按移除前取下的同级槽位就近选择：同级后一篇 → 前一篇 → 沿祖先链上一层，整条链都没有才钻进旁边文件夹（钻进去会撑开它），画布不作落点——取整树第一篇会把选中、展开与滚动一起拽回树顶，删除与新建失败回退共用这一条
+memoDeletion.test.ts: 覆盖删除当前 Memo/祖先影响判定、删除正在打开的 Canvas 只导航不 flush、就近落点的五种位置关系（同级后/前、上一层、删文件夹、祖先链无笔记才钻旁边文件夹）与画布不作落点，及无剩余 Memo 空态
+useMemoNodeDeletion.ts: 软删编排 Hook；沿用调用方共享的 mutating 门禁，删除前对 memo 会话做 required flush，摘除前先取同级槽位供就近落点；乐观移除与导航落在同一 React 批次、网络确认置于其后，删当前笔记时路由从被删项直接跳到落点、不经过 memo===null 的空态闪帧，成功确认后才清正文缓存与 last-memo；失败随 store 回滚原路退回并恢复编辑会话
+useOptimisticMemoCreation.ts: 人工创建事务编排；每次点击立即插入临时笔记与完整标题，独立跟踪网络请求；成功/失败交给选择意图边界对账或回退（失败按临时笔记所在的同级首位就近落点），不直接导航或强制同步渲染
 useMemoSelection.ts: 文件树即时选择与正文路由之间的意图边界；同帧只导航到最新目标，路由保持可中断，临时 ID 落库前后保留 push/replace 语义；旧回包与旧过渡不能抢回高亮，历史返回/辅助视图/卸载取消待执行导航
 memoCreation.integration.test.tsx: 真实 Router/Dashboard/Store/侧栏时序回归；连续 32 次点击即时插入与选中且仅最终正文挂载、不使用 flushSync；正文 Suspense 期间继续新建，乱序回包、失败回退、Canvas 保存、首帧前确认与历史返回均保持最新选择；可见目标不滚动，离屏保留平滑定位
 useMemoDocumentLoad.ts: 当前笔记正文请求生命周期边界；目录 ready 后只为未缓存的选中 ID 发起单篇读取，并可复用已在途的意图预取，失败统一送入 Toast

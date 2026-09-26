@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 memoDeletion 的影响面/落点纯策略、memoTreeStore 软删命令、memoDocumentStore 正文清理、NotesWorkspace 的 required flush handle、调用方共享的 mutating 门禁、last-memo 存储键、Router 导航与全局 Toast
+ * [INPUT]: 依赖 memoDeletion 的影响面/移除前槽位/就近落点纯策略、memoTreeStore 软删命令、memoDocumentStore 正文清理、NotesWorkspace 的 required flush handle、调用方共享的 mutating 门禁、last-memo 存储键、Router 导航与全局 Toast
  * [OUTPUT]: 对外提供软删命令 deleteNode，成功时返回 true
- * [POS]: AppDashboard 的删除编排 Hook；删除前可证明当前编辑会话已落库；乐观移除与导航落在同一批次、网络确认放到其后，使删除当前笔记时路由从被删项直接跳到落点、不经过空态那一帧；失败则随回滚原路退回并恢复编辑会话
+ * [POS]: AppDashboard 的删除编排 Hook；删除前可证明当前编辑会话已落库；乐观移除与导航落在同一批次、网络确认放到其后，使删除当前笔记时路由从被删项直接跳到同一位置的相邻笔记、不经过空态那一帧也不被甩回树顶；失败则随回滚原路退回并恢复编辑会话
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -14,6 +14,7 @@ import { useMemoTreeStore } from "../shared/store/memoTreeStore";
 import type { NotesWorkspaceHandle } from "../widgets/NotesWorkspace";
 import {
   getMemoDeletionImpact,
+  getMemoTreeSlot,
   getPostDeletionDestination,
 } from "./memoDeletion";
 
@@ -92,7 +93,10 @@ export function useMemoNodeDeletion({
        * 停在 memo===null 的空态上——这正是「每删一篇都闪一下」的根因。所以不
        * await 它：让同步的乐观移除与 navigate 落在同一个 React 批次里，路由从
        * 被删笔记直接跳到落点，中间不经过空态。网络确认放到最后，只用于回滚。
+       *
+       * 槽位必须在摘除之前取：摘掉之后树里只剩空位，落点才能就近而不是回到树顶。
        */
+      const slot = getMemoTreeSlot(useMemoTreeStore.getState().nodes, nodeId);
       const deletion = softDeleteNode(accessToken, nodeId);
 
       const storedMemoId = window.localStorage.getItem(lastMemoStorageKey);
@@ -104,6 +108,7 @@ export function useMemoNodeDeletion({
       if (impact.affectsCurrentRoute) {
         const destination = getPostDeletionDestination(
           useMemoTreeStore.getState().nodes,
+          slot,
         );
 
         onLeaveRoute();

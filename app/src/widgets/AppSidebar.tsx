@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 MemoTreeBranch/Skeleton、SidebarCreateMenu、memoLibrary 拖拽/祖先计划、memoTitleRules 的重名与可改名判据、持久化展开偏好、archiveCordPolicy 的代表解析、useTreeReorder 的结构重排与通过 Portal 锚定视口的 MotionSurface、Profile 与上层事务命令；结构键按不可变树引用复用
- * [OUTPUT]: 对外提供文件库 Header、搜索入口、复用上一布局原位插入笔记与即时选中、仅目标离屏才平滑定位、可聚焦真实文件树、正文意图预热、树内重排/跨视图笔记拖拽、底部导航、节点回收站命令，以及树内唯一的归档可见代表标记
+ * [OUTPUT]: 对外提供文件库 Header、搜索入口、复用上一布局原位插入笔记与即时选中、仅在定位目标本身变化（换目标/被搬走/树就绪）且离屏时才平滑定位、可聚焦真实文件树、正文意图预热、树内重排/跨视图笔记拖拽、底部导航、节点回收站命令，以及树内唯一的归档可见代表标记
  * [POS]: app/src/widgets 的按需文件库内容层；它是 expandedFolders 的所有者，因此也是「当前谁代表那篇被整理的笔记」唯一有资格回答的一层；结构键只在树形关系变化时递归计算，标题/摘要更新不触发整树 FLIP 判据；事务与路由切换由 Dashboard 编排
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -272,34 +272,37 @@ export function AppSidebar({
   const createParentId = selectedNode?.node_type === "folder"
     ? selectedNode.id
     : selectedNode?.parent_id ?? null;
-  const focusKey = reveal === null
-    ? (freshArchiveMemoId === null ? layoutKey : archiveTarget?.runId ?? layoutKey)
-    : `reveal:${reveal.seq}`;
   // 定位 effect 的触发身份也走 client key：optimistic→real 只是同一篇笔记换了 id，
   // 不该被当成"选中移到了新目标"而把展开/滚动重放一次。effect 内部仍按当前真实
   // id 查行（data-memo-tree-row-id 是真实 id），这里只让"要不要重跑"变稳。
   const focusClientKey = focusNodeId === null ? null : resolveClientKey(focusNodeId);
+  const focusSource = reveal !== null
+    ? `reveal:${reveal.seq}`
+    : freshArchiveMemoId !== null ? `run:${archiveTarget?.runId}` : "selection";
+  const focusAncestorIds = useMemo(
+    () => focusNodeId === null ? [] : getAncestorFolderIds(memoTree, focusNodeId),
+    [focusNodeId, memoTree],
+  );
+  const focusPlacementKey = focusAncestorIds.map(resolveClientKey).join("/");
+  const treeReady = treeStatus === "ready";
 
   /*
-   * focusKey/focusClientKey/layoutKey 是定位与树结构的语义触发器；标题等 memoTree 身份变化不应反复抢占
-   * 展开状态。展开的只有目标 memo 的祖先 —— canonical 目标是 memo, 没有第二个「目标目录」
-   * 需要额外撑开。用户随后手动收起时 focusKey 不变, 因此这个 effect 不会把它再撑回来。
-   * 三个键都按 client key 折叠, 所以乐观新建落库那一帧的 id 替换不会让"选中刚移过去"重放一次。
+   * 定位只回答「目标变了没有」：换了目标（选中/reveal/新一次整理）、目标被搬进
+   * 别的文件夹、或树首次就绪。别处的增删改只是树变了、目标没变——此前触发键混入
+   * 整树 layoutKey，于是在文件夹里删一篇别的笔记也会把用户手动收起的目录撑回来、
+   * 把滚动拽回树顶那篇选中笔记。三个键都按 client key 折叠，乐观新建落库那一帧的
+   * id 替换不会让"选中刚移过去"重放一次。展开的只有目标 memo 的祖先。
    */
-  // oxlint-disable react-hooks/exhaustive-deps -- 触发身份走 focusClientKey/layoutKey（已折叠 client key），effect 内按当前真实 focusNodeId 查行，setter/archiveTarget 已折叠进键
+  // oxlint-disable react-hooks/exhaustive-deps -- 触发身份只认 focusSource/focusClientKey/focusPlacementKey/treeReady（已折叠 client key），effect 内按当前真实 focusNodeId 查行
   useEffect(() => {
-    if (focusNodeId === null) {
+    if (focusNodeId === null || focusAncestorIds.length === 0) {
       return;
     }
 
-    const ancestorIds = getAncestorFolderIds(memoTree, focusNodeId);
-
-    if (ancestorIds.length > 0) {
-      setExpandedFolders((currentFolders) => ancestorIds.every((id) => currentFolders.has(id))
-        ? currentFolders
-        : new Set([...currentFolders, ...ancestorIds]));
-    }
-  }, [focusKey, focusClientKey, layoutKey]);
+    setExpandedFolders((currentFolders) => focusAncestorIds.every((id) => currentFolders.has(id))
+      ? currentFolders
+      : new Set([...currentFolders, ...focusAncestorIds]));
+  }, [focusSource, focusClientKey, focusPlacementKey, treeReady]);
 
   useEffect(() => {
     if (focusNodeId === null || treeRef.current === null) {
@@ -322,10 +325,8 @@ export function AppSidebar({
     });
 
     return () => window.cancelAnimationFrame(frame);
-  }, [focusKey, focusClientKey, layoutKey]);
+  }, [focusSource, focusClientKey, focusPlacementKey, treeReady]);
   // oxlint-enable react-hooks/exhaustive-deps
-
-
 
   useEffect(() => {
     if (contextMenu === null) {
