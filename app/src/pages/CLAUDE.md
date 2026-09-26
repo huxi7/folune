@@ -15,22 +15,23 @@ BlogPage.tsx: 返回首页复用 Secondary Button 材质与标准箭头，博客
 workspacePreload.ts: 正文邻居与 Canvas 代码预热共用的在线/前台/省流/慢网判据，只约束非必要预取，不阻止主动打开
 workspacePreload.test.ts: 验证弱网、省流、后台与离线不预取，以及缺失 Network Information 时的兼容行为
 MotionLabPage.tsx: DEV /motion-lab 无鉴权验收入口，复用生产 MotionSpecimen，所有交互只更新本地 fixture 状态，并链接真实 AppSidebar/归档线验收台
-useAppDashboardController.ts: 首次准入等待入口解析与正文就绪后报告完成，新账号初始化失败释放加载层；普通笔记选择直接同步提交路由与树高亮，不等待画布检查或低优先级过渡；仅 Canvas 离场等待保存且最后一次选择生效，新选择清理旧定位； Dashboard 单次持有的状态/命令协调 Hook，保持 Profile/正文订阅、乐观事务、flush/导航、工具预载、唯一响应式判据与归档 canonical 目标；普通本地辅助视图走 transitionContent，跨路由快照交给 Router 当前节点查询按 tree/路由 ID 缓存，相邻正文预取等当前正文就绪；文件夹创建和改名成功静默，失败保持原有 Toast。
+useAppDashboardController.ts: 首次准入等待入口解析与正文就绪后报告完成，新账号初始化失败释放加载层；普通笔记选择交给 useMemoSelection，树高亮即时响应、正文导航按帧合并且保持可中断，不强制同步挂载编辑器；仅 Canvas 离场等待保存且最后一次选择生效，新选择清理旧定位； Dashboard 单次持有的状态/命令协调 Hook，保持 Profile/正文订阅、乐观事务、flush/导航、工具预载、唯一响应式判据与归档 canonical 目标；普通本地辅助视图走 transitionContent，跨路由快照交给 Router 当前节点查询按 tree/路由 ID 缓存，相邻正文预取等当前正文就绪；文件夹创建和改名成功静默，失败保持原有 Toast。
 .gitkeep: 保留页面层空目录
 CLAUDE.md: 记录页面层职责与文档协议
 LandingPage.tsx: MarketingLayout 内的公开首页正文，以 1120px 主轨和流式分区组合居中 Hero、大幅编辑器、图文叙事；顶栏与全宽 Footer 由父布局持有；声明中文语言，复用 DS 字体回退、圆角按钮和品牌墨蓝，保留参考布局与背景
 ArchiveCordLabPage.tsx: resizeHandle 复用宿主独立边界插槽； 仅 DEV `/archive-cord-lab` 归档线验收 fixture；复用生产 PaperSurface/ArchiveStatus/AppSidebar/WorkspacePanelLayer/PanelResizeHandle/ArchiveCordOverlay 与真实 organizePresentation 构造器，以三层嵌套 + 上下填充的确定性假树覆盖 fresh/restore/清除、逐层折叠展开、tree 滚动贴边、文件库开关、Panel resize 与 Light/Dark。纸必须由 PaperSurface 包出来——`.app-main-panel` 是单 grid area，7:9 比例基线与 `.paper-content-transition` 叠在同一格里，少了那层顶栏会被放到基线下面那一行、source 直接掉出视口。进入时清掉 fixture 专属的展开偏好键使结论可重跑；假 ID、假内容，不读写 API、数据库、真实用户正文或真实 AI run
 ColorLabPage.tsx: 仅 DEV `/color-lab` 色彩决策实验页，以同一静态 Paper First/Library/AI DOM、共享生产组件与候选选择、Light/Dark 控制公平比较现有蓝、02 灰蓝、04 标准墨蓝与 05 柔和墨蓝 scoped token，不读取鉴权、业务数据或主题持久化
 AuthCallbackPage.tsx: /auth/callback 路由页面，交换 Google OAuth PKCE code，成功进入 /app，失败提供返回登录入口；状态卡片复用 auth.css 的中性表面、文字角色与状态提示，会话 Spinner 在 reduced-motion 下静止
-AppDashboard.tsx: 两侧 resizeHandle 装配于宿主独立插槽，脱离内容裁切； /app 视觉组合根，消费 useAppDashboardController 的状态/命令；装配互斥 Paper/Canvas、跨空间常驻文件库与 AI 面板、归档线与 Dialog，不让动画重建整体业务会话
+AppDashboard.tsx: 文件树消费即时选择，正文消费已提交路由；两侧 resizeHandle 装配于宿主独立插槽，脱离内容裁切； /app 视觉组合根，消费 useAppDashboardController 的状态/命令；装配互斥 Paper/Canvas、跨空间常驻文件库与 AI 面板、归档线与 Dialog，不让动画重建整体业务会话
 CanvasRouteCoordinator.tsx: `/app/notes/:id` 的 Canvas 路由协调器；把入口 Canvas bootstrap 冻结为本次挂载的不可变快照，避免缓存消费后在浏览器拍新帧前撤掉目标纸面身份，也避免下一轮离场 bootstrap 反向注入仍在场的旧 Canvas 并制造重复 transition name；另统一 Canvas→原文→Canvas 返回描述、画布重命名与会话 flush 暴露，不持有图数据、保存队列或跨路由文件库。画布→写作区那一跳由它的 navigate 带 viewTransition 起——路由状态落地是异步的，谁持有 navigate 谁才能在正确的那一刻开始过渡
 DashboardDialogs.tsx: 账户与新建文件夹的纯受控组合，外层 presence 等待 Dialog 自身退出，文件夹落点与重名裁决不变
 appDashboardTypes.ts: Dashboard 私有状态类型边界，集中定义含首屏 tree bootstrap 与入口编号的 loader、账户/文件夹弹窗、标题草稿与树加载状态，不承载运行时逻辑
 memoDeletion.ts: 删除导航纯算法，区分“当前路由被影响需要导航离开”与“当前路由是 memo 需要等 autosave flush”两件事（画布没有编辑会话可等），并从剩余 active tree 选择下一路由
 memoDeletion.test.ts: 覆盖删除当前 Memo/祖先影响判定、删除正在打开的 Canvas 只导航不 flush，及有/无下一 Memo 的路由选择
 useMemoNodeDeletion.ts: 软删编排 Hook；沿用调用方共享的 mutating 门禁，删除前对 memo 会话做 required flush；乐观移除与导航落在同一 React 批次、网络确认置于其后，删当前笔记时路由从被删项直接跳到落点、不经过 memo===null 的空态闪帧，成功确认后才清正文缓存与 last-memo；失败随 store 回滚原路退回并恢复编辑会话
-useOptimisticMemoCreation.ts: 人工新建路由协调器；同步进入临时备忘录并独立跟踪每个并发提交，当前选择只跟踪已提交路由，普通树重渲染不改写；成功仅为已实际选中的创建同步原位替换真实 ID，失败只撤销对应节点并在仍处当前页时同步回退，等待 Canvas 保存期间的回包不得抢先导航
-memoCreation.integration.test.tsx: 真实 Router/Dashboard/Store/侧栏时序回归；每次连续点击结束即选中最新行，乱序回包与旧画布保存不抢回选择，失败按当前创建回退，新选择清除旧定位且不积累平滑滚动
+useOptimisticMemoCreation.ts: 人工创建事务编排；每次点击立即插入临时笔记与完整标题，独立跟踪网络请求；成功/失败交给选择意图边界对账或回退，不直接导航或强制同步渲染
+useMemoSelection.ts: 文件树即时选择与正文路由之间的意图边界；同帧只导航到最新目标，路由保持可中断，临时 ID 落库前后保留 push/replace 语义；旧回包与旧过渡不能抢回高亮，历史返回/辅助视图/卸载取消待执行导航
+memoCreation.integration.test.tsx: 真实 Router/Dashboard/Store/侧栏时序回归；连续 32 次点击即时插入与选中且仅最终正文挂载、不使用 flushSync；正文 Suspense 期间继续新建，乱序回包、失败回退、Canvas 保存、首帧前确认与历史返回均保持最新选择；可见目标不滚动，离屏保留平滑定位
 useMemoDocumentLoad.ts: 当前笔记正文请求生命周期边界；目录 ready 后只为未缓存的选中 ID 发起单篇读取，并可复用已在途的意图预取，失败统一送入 Toast
 useMemoDocumentPreload.ts: 正文按需架构的空闲预热 Hook；只预取当前笔记阅读顺序相邻的前后两篇，点击/键盘意图预热仍由文件树触发，不扩大目录载荷 执行时跳过后台页、离线、省流和 2G/3G 网络，优先把带宽留给正在打开的正文。
 useAccountProfileRefresh.ts: 账户资料生命周期协调器；每次打开只后台刷新一次并保留现有资料，栏目切换不重复请求

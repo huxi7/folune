@@ -18,8 +18,8 @@ LandingBlog.tsx: 首页固定三篇精选博客卡片，仅展示封面、标题
 LandingEditor.tsx: 保留原导轨和 738px 展示框，平滑圆角外壳统一裁剪受限 demo.html iframe；ShowcaseBackdrop 独立置于后景，不传递真实账号状态
 LandingDemo/: 无业务会话的内存产品演示，复用 Paper/Toolbar/树/生产工具芯片/Canvas 视图；AI 面板按脚本逐步揭示真实工具调用，唯一的写操作与工具条共用同一归档入口并可真撤销；无底部额外工具栏
 landingReferenceData.ts: Figma 素材路径、英文代码分段与中文扩展卡片说明，不读取远程数据
-useTreeReorder.ts: AppSidebar 结构重排 FLIP Hook，以稳定 DOM 实例和容器内容坐标消除滚动/ID 对账造成的整树跳动；手势前捕获当前帧、连续插入接续在途位置与透明度，新行短淡入但当前选中行立即可见、旧行让位，完成/取消归还租约；ResizeObserver 只在无 FLIP 时刷新终态快照，子级开合仍归 TreeDisclosure
-useTreeReorder.test.tsx: 可控几何与 WAAPI 时钟回归，覆盖滚动/Panel 位移隔离、连续插入与显式快照接续、ResizeObserver 不污染终态、选中行不延迟淡入、ID 对账、折叠排除、减少动态与租约释放
+useTreeReorder.ts: AppSidebar 结构重排 FLIP Hook，以稳定 DOM 实例和容器内容坐标消除滚动/ID 对账造成的整树跳动；手势前捕获当前帧、连续插入接续在途位置与透明度，新行连同选中反馈保留短淡入、旧行让位，完成/取消归还租约；ResizeObserver 只在无 FLIP 时刷新终态快照，子级开合仍归 TreeDisclosure
+useTreeReorder.test.tsx: 可控几何与 WAAPI 时钟回归，覆盖滚动/Panel 位移隔离、连续插入与显式快照接续、ResizeObserver 不污染终态、选中行保留淡入、ID 对账、折叠排除、减少动态与租约释放
 TreeDisclosure.tsx: 文件树与 DS Collapse 的薄适配，声明可打断、成对释放的归档运动租约，让 Overlay 跟随真实高度几何；不读取业务数据
 .gitkeep: 保留业务组合组件层空目录
 CLAUDE.md: 记录业务组合组件层职责与文档协议
@@ -36,7 +36,7 @@ LandingSections.tsx: 保留五项真实功能与文章入口、评价和信件�
 LandingFooter.tsx: 共用 DS 墨蓝的品牌区与产品/资源/关于/连接四组导航；16 项预留入口以 aria-disabled link 语义展示且不跳转，打开网页版进入 /login，关于栏额外公开 /terms 与 /privacy；品牌与入口置顶、作者与版权置底；保留 Folune 淡描边与细纹层序，BlueprintFrame 延续导轨
 LandingMotion/: 营销页克制反馈模块；MarketingLink/useMarketingMotion 统一公开页面/锚点过渡与正文浮现，参数复用 DS；HeroBackdrop/ShowcaseBackdrop/LoginBackdrop 承载各自后景，共用散墨算法供登录与 Lab 消费，CountUp 处理数字变化
 NotebookPreview.tsx: 确定性首屏产品预览，DS 统一缩放淡入与显式卡片 lift 分处不同元素，阴影由 CSS 持有，内部布局不参与独立动画
-AppSidebar.tsx: 右键菜单通过 Portal 锚定视口，避免 Panel transform 改写 fixed 坐标；文件库内容与展开偏好的唯一所有者，负责创建/搜索、树/重命名/拖放意图、底部导航和唯一有效归档代表；主按钮与右键新建均先捕获当前布局再发出创建命令，最新选择只做即时最近定位、不积累平滑滚动，重排交给 useTreeReorder，结构键按不可变树引用复用以跳过标题/摘要更新时的整树 FLIP 判据，子级尺寸交给 TreeDisclosure，业务事务仍由 Dashboard 持有
+AppSidebar.tsx: 右键菜单通过 Portal 锚定视口，避免 Panel transform 改写 fixed 坐标；文件库内容与展开偏好的唯一所有者，负责创建/搜索、树/重命名/拖放意图、底部导航和唯一有效归档代表；主按钮与右键新建均先捕获当前布局再发出创建命令，最新选择已可见时不滚动，离屏才沿原平滑定位，祖先已展开不重复写状态，重排交给 useTreeReorder，结构键按不可变树引用复用以跳过标题/摘要更新时的整树 FLIP 判据，子级尺寸交给 TreeDisclosure，业务事务仍由 Dashboard 持有
 AppSidebar.creation.test.tsx: 真实侧栏 DOM 回归，覆盖主按钮/右键连续新建、乱序 ID 确认与失败撤回；已有行和目录实例、展开/折叠偏好与选中身份保持稳定
 WorkspacePanelLayer.tsx: 跨 Paper/Canvas 常驻左右工具宿主，resizeHandle 插槽与裁切内容同级，外壳允许热区跨边框、内容仍保留圆角裁切；8px/220ms 入、8px/170ms 出，不缩放内容或改变 Stage；关闭即 inert，开合运动租约成对归还，保留文件树/AI 会话实例与滚动位置
 SidebarCreateMenu.tsx: 48/32 split 创建入口，保持双区几何与两项命令；PresenceSurface 统一入退场，关闭即 inert，键盘循环、Escape 与触发器焦点归还保留

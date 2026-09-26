@@ -1,19 +1,19 @@
 /**
  * [INPUT]: 依赖真实 Data Router、Dashboard controller、Memo Store、AppSidebar 与可延迟/乱序完成的创建 API
- * [OUTPUT]: 验证快速新建时每次点击结束即选中最新行，服务端回包和旧画布保存不抢回选择，失败仅回退当前创建
+ * [OUTPUT]: 验证快速新建时每次点击即插入并选中，但同帧仅挂载最终正文；动画保留，乱序回包、历史导航和失败不抢回新意图
  * [POS]: 页面到文件树的时序回归；仅替换网络与无关后台预取，保留真实路由调度以捕获乐观树/选中不同步
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { afterEach, beforeEach, expect, mock, test } from "bun:test";
 import { Window } from "happy-dom";
-import { useLayoutEffect } from "react";
+import { Suspense, useLayoutEffect } from "react";
 import type { MemoDetailNode } from "../shared/api/memo";
 
 const browserWindow = new Window({ url: "http://localhost:10000/app/notes/existing" });
 Object.assign(globalThis, {
   window: browserWindow, document: browserWindow.document,
   HTMLElement: browserWindow.HTMLElement, Element: browserWindow.Element, Node: browserWindow.Node,
-  CSS: browserWindow.CSS,
+  CSS: browserWindow.CSS, DOMRect: browserWindow.DOMRect,
 });
 window.requestIdleCallback = () => 1;
 window.cancelIdleCallback = () => undefined;
@@ -57,18 +57,25 @@ const { useMemoTreeStore } = await import("../shared/store/memoTreeStore");
 const { AppSidebar } = await import("../widgets/AppSidebar");
 const { ToastProvider } = await import("../shared/design-system/components/Toast");
 let controller: ReturnType<typeof useAppDashboardController>;
+const mountedDocuments: string[] = [];
+let blockedDocument: ReturnType<typeof deferred<void>> | null = null;
+function DocumentMountProbe({ id }: { id: string }) {
+  useLayoutEffect(() => { mountedDocuments.push(id); }, [id]);
+  if (id.startsWith("optimistic-") && blockedDocument !== null) throw blockedDocument.promise;
+  return null;
+}
 const noop = () => undefined;
 function Harness() {
   const current = useAppDashboardController();
   useLayoutEffect(() => { controller = current; });
-  return <AppSidebar activeView={current.activeView} archiveTarget={null} memoTree={current.memoTree}
+  return <><DocumentMountProbe key={current.routeMemoId} id={current.routeMemoId ?? "empty"} /><AppSidebar activeView={current.activeView} archiveTarget={null} memoTree={current.memoTree}
     mutating={false} onCreateMemo={current.handleCreateMemo} onCreateCanvas={noop} onClose={noop}
     onMoveNode={async () => true} onPrefetchMemo={noop} onOpenDesignSystem={noop} onOpenProfile={noop}
     onOpenSettings={noop} onOpenSearch={noop} onOpenSubscription={noop} onRenameNode={async () => undefined}
     onSoftDeleteNode={async () => undefined} onRequestCreateFolder={noop} onSelectMemo={current.handleSelectMemo}
     onSelectView={current.handleSelectAuxView} onSignOut={async () => undefined} profile={current.profile}
-    reveal={current.revealTarget} revealContent={false} selectedMemoId={current.routeMemoId === null ? null : current.resolveMemoId(current.routeMemoId)}
-    skeletonVisible={false} treeStatus={current.renderedTreeStatus} />;
+    reveal={current.revealTarget} revealContent={false} selectedMemoId={current.sidebarSelectedMemoId}
+    skeletonVisible={false} treeStatus={current.renderedTreeStatus} /></>;
 }
 let router: ReturnType<typeof createMemoryRouter>;
 async function setup() {
@@ -77,38 +84,59 @@ async function setup() {
     memoTree: [detail("existing"), detail("another")],
   }), shouldRevalidate: () => false, hydrateFallbackElement: <span>加载中</span>, element: <ToastProvider><Harness /></ToastProvider>,
   children: [{ path: "notes/:noteId", element: null }, { index: true, element: null }] }], { initialEntries: ["/app/notes/existing"] });
-  const view = render(<RouterProvider router={router} />);
+  const view = render(<Suspense fallback={<span>正文准备中</span>}><RouterProvider router={router} /></Suspense>);
   await waitFor(() => expect(view.getByRole("button", { name: "新建备忘录" }).hasAttribute("disabled")).toBe(false));
   return view;
 }
+const nextFrame = async () => {
+  await act(async () => {
+    const pending = [...frames.values()];
+    frames.clear();
+    pending.forEach((callback) => callback(0));
+  });
+};
 const activeId = (container: HTMLElement) => container.querySelector('[aria-current="page"][data-memo-tree-row-id]')?.getAttribute("data-memo-tree-row-id");
 const settle = async (index: number, id: string) => {
   const optimistic = useMemoTreeStore.getState().nodes.find((node) => node.id === id)!;
   await act(async () => requests[index]!.resolve({ ...detail(`server-${index}`), sort_order: optimistic.sort_order, title: optimistic.title }));
 };
-beforeEach(() => { requests.length = 0; frames.clear(); scrolls.length = 0; window.localStorage.clear(); });
+beforeEach(() => { blockedDocument = null; requests.length = 0; mountedDocuments.length = 0; frames.clear(); scrolls.length = 0; window.localStorage.clear(); });
 afterEach(() => { cleanup(); router?.dispose(); useMemoTreeStore.getState().reset(); });
 
-test("连续八次点击不等待网络或下一轮任务，路由与高亮每次立即落到最新笔记", async () => {
+test("连续 32 次点击立即插入并选中，只为最后一篇挂载正文且不强制同步渲染", async () => {
   const view = await setup();
   const ids: string[] = [];
-  for (let i = 0; i < 8; i++) {
-    fireEvent.click(view.getByRole("button", { name: "新建备忘录" }));
+  const navigations: { path: string; flushSync: boolean }[] = [];
+  const unsubscribe = router.subscribe((state, options) => {
+    if (state.navigation.state === "idle") navigations.push({ path: state.location.pathname, flushSync: options.flushSync });
+  });
+  for (let i = 0; i < 32; i++) {
+    const create = view.getByRole("button", { name: "新建备忘录" });
+    expect(create.hasAttribute("disabled")).toBe(false);
+    fireEvent.click(create);
     const id = useMemoTreeStore.getState().nodes[0]!.id;
     ids.push(id);
     expect(activeId(view.container)).toBe(id);
-    expect(router.state.location.pathname).toBe(`/app/notes/${id}`);
-    expect(controller.focusMemoClientKey).toBe(id);
+    expect(router.state.location.pathname).toBe("/app/notes/existing");
   }
-  // 只执行最新仍有效的定位回调，不允许旧目标留下平滑滚动。
-  act(() => { const pending = [...frames.values()]; frames.clear(); pending.forEach((callback) => callback(0)); });
-  expect(scrolls).toEqual([{ id: ids[7], behavior: "instant" }]);
-  await settle(7, ids[7]!);
-  for (let i = 6; i >= 0; i--) {
+  expect(requests).toHaveLength(32);
+  expect(useMemoTreeStore.getState().nodes).toHaveLength(34);
+  expect(mountedDocuments).toEqual(["existing"]);
+  expect(navigations).toHaveLength(0);
+  await nextFrame();
+  expect(navigations).toEqual([{ path: `/app/notes/${ids[31]}`, flushSync: false }]);
+  expect(mountedDocuments).toEqual(["existing", ids[31]!]);
+  // 可见新行不滚动树，保留行自身的入场；服务器回包也不逐篇挂载正文。
+  expect(scrolls).toHaveLength(0);
+  await settle(31, ids[31]!);
+  for (let i = 30; i >= 0; i--) {
     await settle(i, ids[i]!);
-    expect(activeId(view.container)).toBe("server-7");
-    expect(router.state.location.pathname).toBe("/app/notes/server-7");
+    expect(activeId(view.container)).toBe("server-31");
   }
+  await nextFrame();
+  expect(router.state.location.pathname).toBe("/app/notes/server-31");
+  expect(navigations.every((item) => !item.flushSync)).toBe(true);
+  unsubscribe();
 });
 
 test("新建后主动选择旧笔记，迟到的创建回包不能抢回高亮", async () => {
@@ -155,7 +183,8 @@ test("旧的显式定位目标不能盖过新建笔记的定位", async () => {
   const latest = useMemoTreeStore.getState().nodes[0]!.id;
   expect(controller.revealTarget).toBeNull();
   act(() => { const pending = [...frames.values()]; frames.clear(); pending.forEach((callback) => callback(0)); });
-  expect(scrolls).toEqual([{ id: latest, behavior: "instant" }]);
+  expect(activeId(view.container)).toBe(latest);
+  expect(scrolls).toHaveLength(0);
 });
 
 test("新建已落库但画布尚未保存，创建回包不能提前导航", async () => {
@@ -182,4 +211,66 @@ test("画布等待期间新建失败，保存完成后也不能导航到已撤�
   await act(async () => requests[0]!.reject(new Error("failed")));
   await act(async () => saving.resolve({ persisted: true, synced: true }));
   expect(activeId(view.container)).toBe("existing");
+});
+
+test("正文尚未准备好时仍可连续创建，树的选中不随旧路由退回", async () => {
+  const view = await setup();
+  blockedDocument = deferred<void>();
+  fireEvent.click(view.getByRole("button", { name: "新建备忘录" }));
+  await nextFrame();
+  let latest = "";
+  for (let index = 0; index < 4; index++) {
+    fireEvent.click(view.getByRole("button", { name: "新建备忘录" }));
+    latest = useMemoTreeStore.getState().nodes[0]!.id;
+    expect(activeId(view.container)).toBe(latest);
+    await nextFrame();
+    expect(activeId(view.container)).toBe(latest);
+  }
+  expect(requests).toHaveLength(5);
+  const blocked = blockedDocument;
+  blockedDocument = null;
+  await act(async () => blocked.resolve());
+  expect(activeId(view.container)).toBe(latest);
+  await nextFrame();
+  expect(controller.routeMemoId).toBe(latest);
+});
+
+test("首帧前服务器已回包，直接打开真实 ID 且只新增一次历史", async () => {
+  const view = await setup();
+  fireEvent.click(view.getByRole("button", { name: "新建备忘录" }));
+  const id = useMemoTreeStore.getState().nodes[0]!.id;
+  await settle(0, id);
+  expect(activeId(view.container)).toBe("server-0");
+  expect(controller.routeMemoId).toBe("existing");
+  await nextFrame();
+  expect(controller.routeMemoId).toBe("server-0");
+  await act(async () => { await router.navigate(-1); });
+  expect(activeId(view.container)).toBe("existing");
+});
+
+test("历史返回取消尚未派发的创建导航，回包不再抢回页面", async () => {
+  const view = await setup();
+  fireEvent.click(view.getByRole("button", { name: "another" }));
+  await nextFrame();
+  fireEvent.click(view.getByRole("button", { name: "新建备忘录" }));
+  const id = useMemoTreeStore.getState().nodes[0]!.id;
+  await act(async () => { await router.navigate(-1); });
+  await settle(0, id);
+  await nextFrame();
+  expect(controller.routeMemoId).toBe("existing");
+  expect(activeId(view.container)).toBe("existing");
+});
+
+test("目标离屏才平滑定位，快速选择只定位最终目标", async () => {
+  const view = await setup();
+  const tree = view.getByRole("tree");
+  tree.getBoundingClientRect = () => new DOMRect(0, 0, 200, 200);
+  const another = view.getByRole("button", { name: "another" });
+  const existing = view.getByRole("button", { name: "existing" });
+  another.getBoundingClientRect = () => new DOMRect(0, 240, 200, 32);
+  existing.getBoundingClientRect = () => new DOMRect(0, 300, 200, 32);
+  fireEvent.click(another);
+  fireEvent.click(existing);
+  await nextFrame();
+  expect(scrolls).toEqual([{ id: "existing", behavior: "smooth" }]);
 });

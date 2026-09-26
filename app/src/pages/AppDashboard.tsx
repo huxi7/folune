@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 useAppDashboardController 的状态/命令投影、Paper/Canvas 内容壳、持久文件库与统一 Dialog
- * [OUTPUT]: 对外提供 /app 的稳定空间装配，左右工具跨路由保留实例，拖拽边界独立于内容裁切插槽，Paper 与 Canvas 各自拥有内容生命周期
+ * [OUTPUT]: 对外提供 /app 的稳定空间装配，文件树消费即时选择、正文消费已提交路由，左右工具跨路由保留实例，拖拽边界独立于内容裁切插槽，Paper 与 Canvas 各自拥有内容生命周期
  * [POS]: pages 的 Workspace 视觉组合根；业务/路由/flush 编排归 controller，动画不能通过重挂载这个根来驱动
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -38,6 +38,7 @@ const AgentPanel = lazy(() => loadAgentPanel().then((module) => ({
 export function AppDashboard() {
   const {
     activeView,
+    sidebarSelectedMemoId,
     memoTree,
     treeMutating,
     canvasCreation,
@@ -149,9 +150,7 @@ export function AppDashboard() {
         profile={profile}
         reveal={revealTarget}
         revealContent={revealInitialTreeContent}
-        selectedMemoId={routeMemoId === null
-          ? null
-          : resolveMemoId(routeMemoId)}
+        selectedMemoId={sidebarSelectedMemoId}
         skeletonVisible={treeSkeletonVisible}
         treeStatus={renderedTreeStatus}
       />

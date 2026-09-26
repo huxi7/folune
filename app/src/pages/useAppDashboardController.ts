@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖首次入口就绪桥梁、React Router Profile/token、Canvas bootstrap、轻量 tree/正文/Workspace Store、删除编排、惰性 AI、持久左右工具宿主、按当前树重算的归档 presentation、useOverlayPanels 响应式判据与 Paper/Canvas Workspace
- * [OUTPUT]: 对外提供 useAppDashboardController 状态与命令投影；普通笔记选择同步提交路由与树高亮，只有 Canvas 离场等待保存且仅最新选择可继续；另协调持久文件库、正文订阅/预取、账户与归档展示
+ * [OUTPUT]: 对外提供 useAppDashboardController 状态与命令投影；普通笔记树高亮即时响应，正文导航按帧合并且保持可中断，只有 Canvas 离场等待保存且仅最新选择可继续；另协调持久文件库、正文订阅/预取、账户与归档展示
  * [POS]: app/src/pages 的 /app 状态协调 Hook，由 AppDashboard 单次持有；跨 Paper/Canvas 的数据与视觉交接只在此建立一次，深链刷新先确认节点类型，普通业务状态仍留在各自 Store/Workspace，文件库作为共享 Chrome 留在两种内容壳之外。它是「现在是不是覆盖式布局」的唯一持有者并下传给 Paper 壳与归档 Overlay：同一个断点算两遍就会出现两个都自称正确的布局；归档只交出 canonical memo，屏幕上由谁代表它归 AppSidebar
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -54,6 +54,7 @@ import { useMemoDocumentPreload } from "./useMemoDocumentPreload";
 import { canPreloadWorkspace } from "./workspacePreload";
 import { useMemoNodeDeletion } from "./useMemoNodeDeletion";
 import { useMemoOrganize } from "./useMemoOrganize";
+import { useMemoSelection } from "./useMemoSelection";
 import { useOptimisticMemoCreation } from "./useOptimisticMemoCreation";
 import { useStandaloneCanvasCreation } from "./useStandaloneCanvasCreation";
 import {
@@ -95,6 +96,7 @@ export function useAppDashboardController() {
   const navigate = useNavigate();
   const noteMatch = useMatch("/app/notes/:noteId");
   const routeMemoId = noteMatch?.params.noteId ?? null;
+  const memoSelection = useMemoSelection(routeMemoId, navigate);
   const { toast } = useToast();
   const assistantOpen = useWorkspaceChromeStore((state) => state.assistantOpen);
   const libraryOpen = useWorkspaceChromeStore((state) => state.libraryOpen);
@@ -255,6 +257,7 @@ export function useAppDashboardController() {
     navigate,
     onDeleted: () => setTrashRevision((revision) => revision + 1),
     onLeaveRoute: () => {
+      memoSelection.cancelSelection();
       setViewTitleDraft(null);
       setActiveView("note");
     },
@@ -515,7 +518,7 @@ export function useAppDashboardController() {
       }
       // 普通笔记切换只动正文；整页快照会把常驻文件树也交叉淡换。
       const viewTransition = canvasNodeId !== null || resolveCanvasNodeId(target) !== null;
-      navigate(`/app/notes/${encodeURIComponent(memoId)}`, { viewTransition, flushSync: !viewTransition });
+      memoSelection.selectMemo(memoId, { viewTransition });
     };
     // 普通笔记没有 Canvas 保存边界；无意义的 await 会把插入与选中拆成两帧。
     if (canvasControlsRef.current === null) select();
@@ -524,6 +527,7 @@ export function useAppDashboardController() {
 
   function handleSelectAuxView(view: SidebarView) {
     const version = ++selectionVersionRef.current;
+    memoSelection.cancelSelection();
     void (async () => {
       if (!(await leaveCanvasSafely()) || version !== selectionVersionRef.current) return;
       if (canvasNodeId !== null) {
@@ -538,6 +542,7 @@ export function useAppDashboardController() {
     setAccountDialog(section);
   }
   async function handleSignOut() {
+    memoSelection.cancelSelection();
     resetMemoTree();
     await signOutAuthenticatedUser();
     navigate("/", { replace: true, viewTransition: true });
@@ -546,11 +551,10 @@ export function useAppDashboardController() {
   const handleCreateMemo = useOptimisticMemoCreation({
     accessToken,
     lastMemoStorageKey: lastMemoStorageKey(profile.id),
-    navigate,
+    onReconcileSelection: memoSelection.reconcileSelection,
     onCreatedMemo: setFocusMemoClientKey,
     onSelectMemo: handleSelectMemo,
     onTitleDraftReset: () => setViewTitleDraft(null),
-    routeMemoId,
     toast,
   });
 
@@ -691,6 +695,7 @@ export function useAppDashboardController() {
   const paperViewport = useOverlayPanels(assistantOpen, libraryOpen);
   return {
     activeView,
+    sidebarSelectedMemoId: memoSelection.selectedMemoId === null ? null : resolveMemoId(memoSelection.selectedMemoId),
     memoTree,
     treeMutating,
     canvasCreation,

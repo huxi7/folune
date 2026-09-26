@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 happy-dom、真实 React Hook、可控 WAAPI 时钟与尺寸回执
- * [OUTPUT]: 验证滚动/Panel 位移不污染树位移、连续插入接续当前帧、选中行立即可见、ID 对账不重播、减少动态和运动租约回收
+ * [OUTPUT]: 验证滚动/Panel 位移不污染树位移、连续插入接续当前帧、选中行保留淡入、ID 对账不重播、减少动态和运动租约回收
  * [POS]: 文件树结构动效的行为回归；只核对布局计算与生命周期，不替代用户视觉验收
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -82,10 +82,10 @@ beforeEach(() => { reduced = false; treeTop = 80; records = []; active.clear(); 
 afterEach(() => { cleanup(); expect(isArchiveMotionActive()).toBe(false); });
 
 describe("文件树原位插入", () => {
-  test("新选中行立即可见，不等待入场透明度；旧行仍连续让位", () => {
+  test("最新行立即拥有选中语义，同时保留完整淡入与旧行让位", () => {
     const view = render(<Harness rows={oldRows} layoutKey="0" />);
     view.rerender(<Harness rows={inserted.map((row) => ({ ...row, selected: row.id === "new" }))} layoutKey="1" />);
-    expect(firstFrame("new")).toBeUndefined();
+    expect(firstFrame("new")?.opacity).toBe(0);
     expect(firstFrame("a")?.transform).toBe("translate(0px, -32px)");
     expect(view.getByRole("button", { name: "new" }).getAttribute("aria-current")).toBe("page");
   });
