@@ -49,7 +49,10 @@ mock.module("./useAiThreads", () => ({
     const [selectedLoading, setSelectedLoading] = useState(true);
     return {
       commitLocalMessages: async () => undefined,
-      createThread: async () => undefined,
+      startDraft: () => undefined,
+      conversationKey: selectedThread.id,
+      ensureThread: async () => selectedThread.id,
+      pinnedMemoIds: [],
       loading: false,
       messages: [],
       mutating: false,

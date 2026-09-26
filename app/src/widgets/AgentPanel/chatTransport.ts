@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 AI SDK DefaultChatTransport、FoluneUIMessage、shared/supabase/auth token 与 chatFetch
  * [OUTPUT]: 对外提供 createMemoChatTransport，以及 organize/canvas-expand 的统一鉴权 URL/Fetch 边界；普通发送只传增量消息
- * [POS]: AgentPanel 的 AI SDK 会话传输工厂；稳定绑定一个 thread，当前页面 memo 不再作为动态请求状态进入工具续写
+ * [POS]: AgentPanel 的 AI SDK 会话传输工厂；在 SDK submitted 阶段解析首发草稿的真实 thread ID，后续复用同一会话，当前页面 memo 不再作为动态请求状态进入工具续写
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -104,11 +104,13 @@ export const prepareMemoChatRequest = ({
 };
 
 export const createMemoChatTransport = (
-  threadId: string,
+  threadId: string | (() => Promise<string>),
 ) => new DefaultChatTransport<FoluneUIMessage>({
   api: chatApiUrl("/v1/chat"),
   fetch: authenticatedChatFetch,
-  prepareSendMessagesRequest: (input) => prepareMemoChatRequest({ ...input, threadId }),
+  prepareSendMessagesRequest: async (input) => prepareMemoChatRequest({
+    ...input, threadId: typeof threadId === "string" ? threadId : await threadId(),
+  }),
 });
 
 export const getOrganizeApiUrl = (): string => chatApiUrl("/v1/organize");

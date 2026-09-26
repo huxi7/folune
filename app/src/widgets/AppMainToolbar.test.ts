@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 读取 AppMainToolbar、workspace.css 与 brand-spec 的 Toolbar 命令层级契约
- * [OUTPUT]: 锁定 Toolbar 不再接收拼接路径；整理是排在首位的 Quiet Accent 核心动作（有图标与文字、不是 Filled Primary、静止无容器身体），进入 Canvas 收成无标签 32px 图标，三枚图标组成 4px 紧凑簇，整理与簇以 8px 分开，弹层型「更多」排在簇尾，归档状态是左侧身份段的独立元素，命令不带选中指示，顶栏 control 的 32px 高度只声明一次且中性 hover/press 只有一个答案，sticky 钉在 Panel 内缩线，顶栏与 Paper 同表面同颜色且永远不画底边线，凝结只有一个被动画的进度且下缘软边的高度/模糊/遮罩都乘它
+ * [OUTPUT]: 锁定 Toolbar 不再接收拼接路径；整理是排在首位的 中性核心动作（有图标与文字、不是 Filled Primary、静止无容器身体），进入 Canvas 收成无标签 32px 图标，三枚图标组成 4px 紧凑簇，整理与簇也以 4px 相隔，弹层型「更多」排在簇尾，归档状态是左侧身份段的独立元素，命令不带选中指示，顶栏 control 的 32px 高度只声明一次且中性 hover/press 只有一个答案，sticky 钉在 Panel 内缩线，顶栏与 Paper 同表面同颜色且永远不画底边线，凝结只有一个被动画的进度且下缘软边的高度/模糊/遮罩都乘它
  * [POS]: Paper Toolbar 结构/样式静态回归门禁；不发起导航、整理请求或文件树事务
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -49,19 +49,18 @@ describe("AppMainToolbar", () => {
     expect(trailing.indexOf("note-organize-button")).toBeLessThan(trailing.indexOf("note-explore-button"));
   });
 
-  test("Quiet Accent: 静止无背景/边框/外影, hover 只浮出现有 primary-soft, 不写 raw color", () => {
+  test("整理继承 ghost 中性前景，不再覆写品牌色", () => {
     const organize = /\.note-organize-button\.ds-button \{[\s\S]*?\n  \}/.exec(workspaceCss)?.[0] ?? "";
     expect(organize).not.toBe("");
     // 静止那三项来自 ghost 基类的透明底座, 因此这里一条都不许自己写出来
     expect(organize).not.toMatch(/^\s*background:/m);
     expect(organize).not.toMatch(/^\s*border:/m);
     expect(organize).not.toMatch(/box-shadow/);
-    expect(organize).toContain("--button-foreground-rest: var(--primary)");
-    expect(organize).toContain("--button-face-top-hover: var(--primary-soft)");
-    expect(organize).toContain("--button-face-bottom-hover: var(--primary-soft)");
+    expect(organize).not.toContain("primary");
+    expect(organize).not.toContain("--button-foreground-rest");
     // 颜色只能来自既有 token: 没有 #hex, 也没有第二套品牌色
     expect(organize).not.toMatch(/#[0-9a-fA-F]{3,8}/);
-    expect(workspaceCss).toContain(".note-organize-button.ds-button:not(:disabled):hover { color: var(--primary-hover); }");
+    expect(workspaceCss).not.toContain(".note-organize-button.ds-button:not(:disabled):hover");
   });
 
   test("进入 Canvas 是无标签 32px 图标, 与整理不再同尺寸同变体同形状", () => {
@@ -87,8 +86,8 @@ describe("AppMainToolbar", () => {
     expect(/\.note-more-menu \{[^}]*right: 0/.test(workspaceCss)).toBe(true);
   });
 
-  test("整理与图标簇用 8px, 簇内用 4px, 顶栏静止时不多出一条竖线", () => {
-    expect(workspaceCss).toContain(".note-view-actions { display: flex; flex-shrink: 0; align-items: center; gap: var(--space-2); }");
+  test("整理与图标簇统一用 4px, 顶栏静止时不多出一条竖线", () => {
+    expect(workspaceCss).toContain(".note-view-actions { display: flex; flex-shrink: 0; align-items: center; gap: var(--space-1); }");
     expect(workspaceCss).toContain(".note-view-cluster { display: flex; flex-shrink: 0; align-items: center; gap: var(--space-1); }");
     expect(workspaceCss).toContain(".markdown-view-menu { display: flex; flex-shrink: 0; align-items: center; gap: var(--space-1); }");
     // 分组只由两层 flex gap 表达, 不再让额外 margin 产生第二个答案
@@ -119,8 +118,8 @@ describe("AppMainToolbar", () => {
     expect(workspaceCss.match(/\.note-view-icon-button\.ds-button\.ds-button-size-square/g)).toHaveLength(1);
   });
 
-  test("中性命令的 hover/press 反馈也只有一个答案, 整理仍是唯一的品牌色例外", () => {
-    const neutral = /\.toolbar-return-canvas\.ds-button,\n  \.note-explore-button\.ds-button,\n  \.note-view-icon-button\.ds-button \{[^}]*\}/
+  test("整理与其他命令共用中性 hover/press 反馈", () => {
+    const neutral = /\.note-organize-button\.ds-button,\n  \.toolbar-return-canvas\.ds-button,\n  \.note-explore-button\.ds-button,\n  \.note-view-icon-button\.ds-button \{[^}]*\}/
       .exec(workspaceCss)?.[0] ?? "";
     expect(neutral).not.toBe("");
     // ghost 基类给的是 --muted, 归档落点给的是 --interactive-hover, 而它们就挨在一起
@@ -130,7 +129,7 @@ describe("AppMainToolbar", () => {
       "--button-face-bottom-hover: var(--interactive-hover)",
       "--button-surface-active: var(--border)",
     ]) expect(neutral).toContain(token);
-    // 品牌软色只属于整理: 中性命令一个 primary 都不许沾
+    // 整理也属于中性命令，共享规则不引用 primary
     expect(neutral).not.toContain("primary");
     // 归档落点是按钮, 按下就必须给同一份"原地收紧" —— 时长与比例都不新写数值
     const press = /\.archive-status:active \{[^}]*\}/.exec(workspaceCss)?.[0] ?? "";

@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 memo 标题/view 状态、可选文件操作能力、持久 Canvas 入口、整理 presentation、文件库定位回调、显式 AI 整理命令与浏览器 scroll timeline 能力
- * [OUTPUT]: 对外提供 sticky Paper Toolbar：左侧 Canvas 返回/归档落点/标题三段身份，右侧按扫描顺序排 Quiet Accent「整理」（独立文字槽做光学对齐）→ 32px 图标控制簇（Canvas、阅读切换、更多）
+ * [OUTPUT]: 对外提供 sticky Paper Toolbar：左侧 Canvas 返回/归档落点/标题三段身份，右侧按扫描顺序排 中性「整理」（独立文字槽做光学对齐）→ 32px 图标控制簇（Canvas、阅读切换、更多）
  * [POS]: app/src/widgets 的纸张内命令条纯视图；左身份右能力各占稳定槽位，核心动作排首、「更多」只能排在簇尾，归档状态兼作归档线起点故必须留在纸的左上角，全局文件库/AI 开关归工作区控制层。凝结与下缘软边是同一个 CSS 滚动进度的两个读数，首选交给滚动本身，只有不支持 scroll timeline 的浏览器才挂一个哨兵做一次软切；本组件因此不含阈值、不读 scrollTop，也不知道软边有多高
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -109,12 +109,10 @@ export function AppMainToolbar(props: AppMainToolbarProps) {
       {/*
         * 顺序不是审美, 是扫描顺序: 整理排在最左, 于是核心动作是这一簇里第一个被扫到的东西;
         * 换空间的 Canvas 紧随其后但不占最右; 「更多」永远在最右 —— 它的菜单右对齐垂下,
-        * 放在别处只会悬在同侧控件头上。整理与图标簇用 8px 留白, 簇内用 4px 留白, 顶栏不画装饰性竖线。
+        * 放在别处只会悬在同侧控件头上。整理与图标簇及簇内都用 4px 留白, 顶栏不画装饰性竖线。
         *
         * Canvas 是导航(名词), 无标签 32px 图标足够, 与阅读切换同一重量; 整理是命令(动词),
-        * 32px + 文字 + Soft Ink 色调。两者共用同一个无填色底座只是实现复用: 整理的层级由
-        * 尺寸、文字与色调表达, 不由填色表达 —— 一张安静白纸上的永久色块反而在跟文件库的
-        * 「新建」抢主角, 那颗才是 Filled Primary 该待的地方。
+        * 32px + 文字。两者共用中性 ghost 底座，整理的层级只由文字标签表达。
         */}
       <div className="note-view-actions">
         {props.currentMemo !== null ? <>

@@ -213,15 +213,6 @@ html:root.dark[data-visual-context="app"] {
   :root[data-visual-context="app"] .note-more-menu-item[aria-checked="true"] > svg {
     color: var(--foreground);
   }
-  :root[data-visual-context="app"] .note-organize-button.ds-button {
-    --button-surface-hover: var(--interactive-hover);
-    --button-face-top-hover: var(--interactive-hover);
-    --button-face-bottom-hover: var(--interactive-hover);
-    --button-surface-active: var(--accent);
-    --button-face-top-active: var(--accent);
-    --button-face-bottom-active: var(--accent);
-  }
-  :root[data-visual-context="app"] .note-organize-button.ds-button:not(:disabled):hover { color: var(--foreground); }
   :root[data-visual-context="app"] .agent-approval-dock { border-color: var(--border); }
 
   /* ---- 输入保持同一条边界，从默认到悬停到聚焦连续加深，不叠加选中外框 ---- */

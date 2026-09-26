@@ -88,13 +88,13 @@ Stage 背景        ← 最底层，一张桌面
 - 顶栏**不常驻文件夹路径**。产品卖的就是「用户不用管文件树」，常驻路径每次打开笔记都在把他拉回那件事。落点信息由第 5 节的归档状态承担：它有因果、有时机、有交互，常驻路径三样都没有。同一句话不说两遍，删掉没有语气的那遍。
 - 正文标题滚出视口后，笔记标题淡入顶栏左侧。那一刻它是唯一的身份锚，这是它出现的理由；在标题仍看得见时就出现，只是重复。
 - 命令**靠右，不上中轴**。中轴属于作用于正文每一行的工具（格式、类型切换）；纸上的命令没有一个是这种性质，它们全都是「关于这张纸的」，不是「纸里面的」。左侧是身份（你在哪），两侧是能力（你能做什么）。
-- **命令区内部的顺序由语义决定，不由审美决定。** 核心动作排在命令区最左，是第一个被扫到的内容动作；换空间的入口紧随其后，但不占最右端；弹层型的「更多」永远在最右——它的菜单从右边缘向纸内展开，放在别处只会悬在同侧控件头上。整理与图标簇之间使用 8px 留白，Canvas/阅读编辑/更多簇内使用 4px 留白，视觉区分交给文字/图标 geometry、当前态与菜单行为，不画分隔线。`[决策: 所有者 · 2026-09-22，收紧原 12px 分组]`
+- **命令区内部的顺序由语义决定，不由审美决定。** 核心动作排在命令区最左，是第一个被扫到的内容动作；换空间的入口紧随其后，但不占最右端；弹层型的「更多」永远在最右——它的菜单从右边缘向纸内展开，放在别处只会悬在同侧控件头上。整理与图标簇及 Canvas/阅读编辑/更多簇内统一使用 4px 留白，视觉区分交给文字/图标 geometry、当前态与菜单行为，不画分隔线。`[决策: 所有者 · 2026-09-26，统一命令间距]`
 - 「返回〈Canvas〉」是真来路而非装饰性面包屑，因此可以留在左侧。
 - 状态指示（阅读／编辑等当前态）与命令**不共用视觉语言**：当前态可以用柔光下划线，命令永远不用。选中指示只给状态。
 
-### 4.1 Toolbar spacing refinement (updated 2026-09-22)
+### 4.1 Toolbar spacing refinement (updated 2026-09-26)
 
-The accepted Paper toolbar geometry keeps the semantic split visible without a divider: organize is separated from the Canvas/reading/More icon cluster by 8px, while adjacent controls inside that cluster use 4px. Every toolbar control — organize, the three icon commands and the archive-status element — shares one 32px height, and that height belongs to the toolbar rather than to any individual control: a control added later is aligned by construction, not by someone remembering to align it. The organize label and Quiet Accent color remain unchanged.
+The accepted Paper toolbar geometry keeps the semantic split visible without a divider: organize and the Canvas/reading/More controls all use 4px gaps. Every toolbar control — organize, the three icon commands and the archive-status element — shares one 32px height, and that height belongs to the toolbar rather than to any individual control: a control added later is aligned by construction, not by someone remembering to align it. The organize label alone expresses hierarchy; foreground, hover and press share the neutral icon-control material.
 
 ### 4.2 顶栏没有底边线，纸在顶部连续（2026-09-04）
 
@@ -137,11 +137,11 @@ sticky 停在 Panel 内缩线上而不是 `y=0`（§4），于是顶栏上方永
 ## 5. 整理：唯一的核心动作，状态与动作分离
 
 - **`primary action` 是任务语义，`Primary` 是填色按钮的材质，两者不是同一件事。** 把「唯一的核心动作」直接翻译成「必须填色」，是让一条产品判断去指定一种材质：一张安静白纸上的永久色块，反而在和文件库的「新建」争夺视觉主角。`[决策: 所有者 · 2026-09-02]`
-- **整理是 Paper 上唯一的核心 AI 动作，并且带文字标签。** 它不是「一个功能」，它是产品存在的理由；把它压成一个无标签图标、与视图开关并排，是把核心承诺降到开关的层级。层级由**尺寸、文字与色调**表达，不由填色表达。
-- **它的材质是 Quiet Accent，不是 Filled Primary。** 静止时没有背景、没有边框、没有外影，安静到看不出纸上有这个容器；但文字、图标、点击区与快捷键一个都不少——所谓「隐藏」只指隐藏容器的身体，绝不隐藏它是什么。指向它时浮出一层极淡的品牌软色，按下时原地收紧。
+- **整理是 Paper 上唯一的核心 AI 动作，并且带文字标签。** 它不是「一个功能」，它是产品存在的理由；把它压成一个无标签图标、与视图开关并排，是把核心承诺降到开关的层级。层级只由**文字标签**表达；高度、前景色、间距与 hover/press 和旁边的图标命令统一。`[决策: 所有者 · 2026-09-26]`
+- **它使用共享中性 Ghost 材质。** 静止时没有背景、没有边框、没有外影，安静到看不出纸上有这个容器；但文字、图标、点击区与快捷键一个都不少——所谓「隐藏」只指隐藏容器的身体，绝不隐藏它是什么。指向它时浮出共享中性 interactive-hover 表面，按下时原地收紧。
 - **只有任务真的在跑时，它才允许凝结成一个实体。** 那一刻实体表达的是状态，不是层级；任务结束必须回到安静，结果交给归档状态、归档线或 Toast——按钮不是结果的显示器。
 - 文件库的「新建」继续保留 Filled Primary。它是另一个上下文（一个独立 Panel）的创建锚点，与纸上的整理不争同一个视觉主角；「每屏只许一个 Primary」从来不是「每个应用只许一个」。
-- 「进入 Canvas」是导航（名词），整理是命令（动词）。两者不得做成同尺寸、同标签、同色调并排的双胞胎——那正是 Canvas 宪法 3.2「名词与动词分离」在视觉层的反面。Canvas 是无标签的中性图标，与视图开关同一重量；整理更高、带文字、带品牌色调。两者可以共用同一个无填色的按钮底座，那只是实现上的复用，不构成同一个材质层级。
+- 「进入 Canvas」是导航（名词），整理是命令（动词）。两者不得做成同尺寸、同标签、同色调并排的双胞胎——那正是 Canvas 宪法 3.2「名词与动词分离」在视觉层的反面。Canvas 是无标签的中性图标，与视图开关同一重量；整理与它等高、同色，只增加文字标签。两者共用同一个无填色的按钮底座和中性反馈。
 - **「进入 Canvas」永远只是进入 Canvas**，不顺带运行任何 AI。AI 拓展只存在于 Canvas 内选中卡片的语境。
 - **状态与动作是两个元素，不是一颗会变形的按钮。**
   - 动作按钮的位置永不移动。位置稳定是可预测性的全部来源；让同一个控件在「执行整理」和「显示落点」之间来回换语义，用户会不敢点它。

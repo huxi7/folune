@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 useConversationScroll 的挂载定位与退出冻结、 DS 实时动态偏好、 PersistentView 的有方向视图承接、DS Skeleton/输入表面浮现语义、useAiThreads、类型化 useChat/原生审批及既有 Composer/工具执行边界
  * [OUTPUT]: 对外提供 AI Native 右侧工作区；只读工具参数到齐即并发执行，写工具经过流末审批门禁；整轮活动跨客户端工具/审批/续写持续，消息定点同步并以本地快照快速回显
- * [POS]: /app 右侧 AI Native V2 组合根；历史只负责导航，目标会话加载/失败在内容窗承接；api command 是唯一写事实源，Store 只做幂等投影与回滚
+ * [POS]: /app 右侧 AI Native V2 组合根；新对话立即进入本地草稿，首发创建期间保持同一 useChat 与消息实例；历史只负责导航，目标会话加载/失败在内容窗承接；api command 是唯一写事实源，Store 只做幂等投影与回滚
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -130,7 +130,10 @@ type ConversationProps = {
   onThreadUpdated: (messages?: readonly FoluneUIMessage[]) => Promise<void>;
   organizeReviewBusy: boolean;
   organizeRun: AiRun | null;
-  thread: AiThreadDetail;
+  thread: AiThreadDetail | null;
+  conversationKey: string;
+  pinnedIds: readonly string[];
+  onEnsureThread: () => Promise<string>;
   userId: string;
 };
 
@@ -152,7 +155,10 @@ function getErrorCopy(error: Error | undefined) {
 function AgentConversation({
   accessToken,
   currentMemo,
+  conversationKey,
   initialMessages,
+  onEnsureThread,
+  pinnedIds,
   memoTree,
   onApplyOrganize,
   onBusyChange,
@@ -180,6 +186,9 @@ function AgentConversation({
   const [clientToolsRunning, setClientToolsRunning] = useState(false);
   const [turnContinuing, setTurnContinuing] = useState(false);
   const composerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (conversationKey.startsWith("draft")) composerRef.current?.focus({ preventScroll: true });
+  }, [conversationKey]);
   const manuallyApprovedToolCalls = useRef(new Set<string>());
   const memoToolExecutions = useRef(new Map<string, Promise<unknown>>());
   const respondingApprovalIds = useRef(new Set<string>());
@@ -189,17 +198,16 @@ function AgentConversation({
   const initialReconciliationDone = useRef(false);
   const previousMessageCount = useRef(0);
   const messagesRef = useRef<FoluneUIMessage[]>(initialMessages);
-  const transport = useMemo(
-    () => createMemoChatTransport(thread.id),
-    [thread.id],
-  );
+  const threadIdRef = useRef(thread?.id ?? null);
+  if (thread !== null) threadIdRef.current = thread.id;
+  const transport = useMemo(() => createMemoChatTransport(async () => {
+    const id = await onEnsureThread();
+    threadIdRef.current = id;
+    return id;
+  }), [onEnsureThread]);
   const clientTools = useMemo(() => createAgentClientTools(), []);
   const reconcileAiCommand = useMemoTreeStore((state) => state.reconcileAiCommand);
   const rollbackAiToolCall = useMemoTreeStore((state) => state.rollbackAiToolCall);
-  const pinnedIds = useMemo(
-    () => thread.references.map((reference) => reference.memo_id),
-    [thread.references],
-  );
   const currentMemoSourceId = currentMemo?.node_type === "memo"
     ? currentMemo.id
     : null;
@@ -248,7 +256,7 @@ function AgentConversation({
     status,
     stop,
   } = useChat<FoluneUIMessage>({
-    id: thread.id,
+    id: conversationKey,
     messages: initialMessages,
     transport,
     experimental_throttle: 32,
@@ -314,7 +322,7 @@ function AgentConversation({
                 parseAgentClientToolInput(clientTools, toolName, normalizedInput),
                 useMemoTreeStore.getState().nodes,
               ),
-              threadId: thread.id,
+              threadId: threadIdRef.current!,
               toolCallId: part.toolCallId,
             })
           : executeAgentClientTool(clientTools, toolName, normalizedInput);
@@ -343,7 +351,7 @@ function AgentConversation({
             (candidate) => candidate.role === "assistant",
           );
           if (assistantMessage !== undefined) {
-            await syncAiMessage(accessToken, thread.id, assistantMessage);
+            await syncAiMessage(accessToken, threadIdRef.current!, assistantMessage);
           }
         } catch {
           // addToolResult 随后的续写会由服务端按 thread 重建历史；若网络持续失败，
@@ -368,7 +376,7 @@ function AgentConversation({
             (candidate) => candidate.role === "assistant",
           );
           if (assistantMessage !== undefined) {
-            await syncAiMessage(accessToken, thread.id, assistantMessage);
+            await syncAiMessage(accessToken, threadIdRef.current!, assistantMessage);
           }
         } catch {
           // 交由后续 chat 请求或刷新恢复重试，不能因审计同步失败再次执行非幂等 UI 更新。
@@ -462,7 +470,7 @@ function AgentConversation({
         (candidate) => candidate.role === "assistant",
       );
       if (respondedAssistant !== undefined) {
-        await syncAiMessage(accessToken, thread.id, respondedAssistant);
+        await syncAiMessage(accessToken, threadIdRef.current!, respondedAssistant);
       }
       settledApprovalIds.current.add(id);
 
@@ -678,7 +686,6 @@ function AgentConversation({
 
 export function AgentPanel(props: AgentPanelProps) {
   const [historyOpen, setHistoryOpen] = useState(false);
-  const [creatingThread, setCreatingThread] = useState(false);
   const { toast } = useToast();
   const [chatBusy, setChatBusy] = useState(false);
   const threads = useAiThreads({ accessToken: props.accessToken, userId: props.userId });
@@ -704,18 +711,10 @@ export function AgentPanel(props: AgentPanelProps) {
     });
   };
 
-  const createConversation = async () => {
-    if (creatingThread || actionBusy || threads.loading) return;
-    setCreatingThread(true);
-    try {
-      // 数据就绪前保留当前视图与草稿；成功后从历史页回到新会话。
-      await threads.createThread();
-      setHistoryOpen(false);
-    } catch (error) {
-      toast({ title: "新建会话失败", description: error instanceof Error ? error.message : "请稍后重试。", variant: "error" });
-    } finally {
-      setCreatingThread(false);
-    }
+  const createConversation = () => {
+    if (actionBusy) return;
+    threads.startDraft();
+    setHistoryOpen(false);
   };
 
   return (
@@ -723,11 +722,10 @@ export function AgentPanel(props: AgentPanelProps) {
       <AgentPanelHeader
         historyOpen={historyOpen}
         title={thread?.title ?? "新对话"}
-        historyDisabled={chatBusy || creatingThread}
-        createDisabled={actionBusy || threads.loading}
-        creating={creatingThread}
+        historyDisabled={chatBusy}
+        createDisabled={actionBusy}
         onToggleHistory={() => setHistoryOpen((open) => !open)}
-        onCreate={() => void createConversation()}
+        onCreate={createConversation}
         onClose={props.onClose}
       />
       <div className="agent-panel-view-stack">
@@ -735,10 +733,10 @@ export function AgentPanel(props: AgentPanelProps) {
         <ThreadHistory busy={actionBusy} onDelete={threads.removeThread} onPrefetch={threads.preloadThread} onRename={(id, title) => threads.patchThread(id, { title })} onSelect={selectConversation} selectedId={thread?.id ?? null} threads={threads.threads} />
       </PersistentView>
       <PersistentView active={!historyOpen} fill className="agent-panel-view-switch">
-      {thread === null ? (
-        <div className="agent-panel-loading">{threads.loading ? "正在恢复会话…" : "会话加载失败，请重新打开面板。"}</div>
+      {threads.loading && thread === null ? (
+        <div className="agent-panel-loading">正在恢复会话…</div>
       ) : threads.selectedLoading ? (
-        <SkeletonGroup className="agent-conversation-loading" label={`正在载入会话 ${thread.title}`}>
+        <SkeletonGroup className="agent-conversation-loading" label={`正在载入会话 ${thread?.title ?? "新对话"}`}>
           <div className="agent-conversation-loading-list">
             <Skeleton className="agent-conversation-loading-user" />
             <div className="agent-conversation-loading-answer">
@@ -752,10 +750,10 @@ export function AgentPanel(props: AgentPanelProps) {
       ) : threads.selectedLoadError !== null ? (
         <div className="agent-panel-loading" role="alert">
           <span>这个会话暂时没有加载出来。</span>
-          <Button onClick={() => void selectConversation(thread.id)} variant="ghost">重试</Button>
+          <Button onClick={() => { if (thread) void selectConversation(thread.id); }} variant="ghost">重试</Button>
         </div>
       ) : (
-        <AgentConversation accessToken={props.accessToken} currentMemo={props.currentMemo} initialMessages={threads.messages} key={thread.id} memoTree={props.memoTree} onApplyOrganize={props.onApplyOrganize} onBusyChange={setChatBusy} onPrepareMutation={props.onPrepareMutation} onReferencesChange={threads.replaceReferences} onRejectOrganize={props.onRejectOrganize} onThreadUpdated={(localMessages) => localMessages === undefined ? threads.refreshSelected() : threads.commitLocalMessages(localMessages)} organizeReviewBusy={actionBusy} organizeRun={visibleOrganizeRun} thread={thread} userId={props.userId} />
+        <AgentConversation accessToken={props.accessToken} currentMemo={props.currentMemo} initialMessages={threads.messages} key={threads.conversationKey} conversationKey={threads.conversationKey} onEnsureThread={threads.ensureThread} pinnedIds={threads.pinnedMemoIds} memoTree={props.memoTree} onApplyOrganize={props.onApplyOrganize} onBusyChange={setChatBusy} onPrepareMutation={props.onPrepareMutation} onReferencesChange={threads.replaceReferences} onRejectOrganize={props.onRejectOrganize} onThreadUpdated={(localMessages) => localMessages === undefined ? threads.refreshSelected() : threads.commitLocalMessages(localMessages)} organizeReviewBusy={actionBusy} organizeRun={visibleOrganizeRun} thread={thread} userId={props.userId} />
       )}
       </PersistentView>
       </div>

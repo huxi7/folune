@@ -1,11 +1,11 @@
 /**
  * [INPUT]: 依赖 React、shared/api/ai 聚合读取、按用户与会话隔离的短时快照缓存、访问令牌与 threadSelection 偏好策略
- * [OUTPUT]: 对外提供可只读预热、点击即切换目标壳、逐会话预取/回显、消息本地提交与后台校准的会话列表/detail/messages 与 CRUD/reference 命令
- * [POS]: AgentPanel 会话控制器；列表选择不等待网络，内容缺失时显式加载、命中缓存时立即恢复，并合并同一会话的并发读取；服务端仍是真相源
+ * [OUTPUT]: 对外提供本地草稿、首发幂等创建与本地置顶引用、可只读预热、点击即切换目标壳、逐会话预取/回显、消息本地提交与后台校准的会话列表/detail/messages 与 CRUD/reference 命令
+ * [POS]: AgentPanel 会话控制器；新对话/空列表不写库，草稿落库保持同一渲染身份；列表选择不等待网络，内容缺失时显式加载、命中缓存时立即恢复，并合并同一会话的并发读取；服务端仍是真相源
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   createAiThread,
@@ -21,7 +21,7 @@ import {
   type AiThreadDetail,
   type FoluneUIMessage,
 } from "../../shared/api/ai";
-import { selectedThreadStorageKey } from "./threadSelection";
+import { DRAFT_THREAD_SELECTION, selectedThreadStorageKey } from "./threadSelection";
 import {
   patchAiThreadSnapshot,
   readAiThreadContent,
@@ -37,7 +37,6 @@ type UseAiThreadsInput = {
   userId: string;
 };
 
-const pendingInitialThreads = new Map<string, Promise<AiThread>>();
 const pendingHydrations = new Map<string, Promise<AiThreadSnapshot | null>>();
 const pendingThreadContents = new Map<string, Promise<AiThreadContent>>();
 
@@ -77,58 +76,21 @@ const localTitleFromMessages = (
   return text.length === 0 ? null : Array.from(text).slice(0, 30).join("");
 };
 
-const ensureInitialThread = (
-  accessToken: string,
-  userId: string,
-  threads: readonly AiThread[],
-): Promise<AiThread> => {
-  if (threads[0] !== undefined) return Promise.resolve(threads[0]);
-  const existing = pendingInitialThreads.get(userId);
-  if (existing !== undefined) return existing;
-  const creation = createAiThread(accessToken).finally(() => {
-    pendingInitialThreads.delete(userId);
-  });
-  pendingInitialThreads.set(userId, creation);
-  return creation;
-};
-
 const hydrateAiThreads = (
   accessToken: string,
   userId: string,
-  createIfEmpty: boolean,
 ): Promise<AiThreadSnapshot | null> => {
   const existing = pendingHydrations.get(userId);
   if (existing !== undefined) return existing;
   const hydration = (async () => {
-    const preferredThreadId = window.localStorage.getItem(
-      selectedThreadStorageKey(userId),
-    );
-    const bootstrap = await getAiThreadBootstrap(accessToken, preferredThreadId);
-    let threads = bootstrap.threads;
-    let threadId = bootstrap.selectedThread?.id ?? null;
-    if (threadId === null) {
-      if (!createIfEmpty) return null;
-      const created = await ensureInitialThread(accessToken, userId, threads);
-      threads = [created];
-      threadId = created.id;
-      // 新建会话按定义没有引用和消息；不再为重建这个空状态连续读两次。
-      return {
-        messages: [],
-        selectedThread: { ...created, references: [] },
-        storedAt: Date.now(),
-        threads,
-      };
-    }
-    if (bootstrap.selectedThread !== null && bootstrap.selectedThread.id === threadId) {
-      return {
-        messages: bootstrap.messages,
-        selectedThread: bootstrap.selectedThread,
-        storedAt: Date.now(),
-        threads,
-      };
-    }
-    const content = await requestThreadContent(accessToken, userId, threadId);
-    return { ...content, storedAt: Date.now(), threads };
+    const preferredThreadId = window.localStorage.getItem(selectedThreadStorageKey(userId));
+    const draftSelected = preferredThreadId === DRAFT_THREAD_SELECTION;
+    const bootstrap = await getAiThreadBootstrap(accessToken, draftSelected ? null : preferredThreadId);
+    return {
+      ...bootstrap,
+      ...(draftSelected ? { selectedThread: null, messages: [] } : {}),
+      storedAt: Date.now(),
+    };
   })().finally(() => pendingHydrations.delete(userId));
   pendingHydrations.set(userId, hydration);
   return hydration;
@@ -142,9 +104,12 @@ export const preloadAiThreads = async ({
   if (cached?.fresh) return cached.snapshot;
 
   // Workspace 空闲预热必须是纯读取，不能因为用户只是写笔记就替他创建 AI 会话。
-  const snapshot = await hydrateAiThreads(accessToken, userId, false);
+  const snapshot = await hydrateAiThreads(accessToken, userId);
   if (snapshot === null) return null;
-  writeAiThreadSnapshot(userId, snapshot);
+  // 预热发出后用户可能已切到草稿或其他会话；旧结果不能覆盖新的选择。
+  if (readAiThreadSnapshot(userId)?.snapshot === cached?.snapshot) {
+    writeAiThreadSnapshot(userId, snapshot);
+  }
   return snapshot;
 };
 
@@ -157,17 +122,27 @@ export function useAiThreads({ accessToken, userId }: UseAiThreadsInput) {
   const [mutating, setMutating] = useState(false);
   const [selectedLoading, setSelectedLoading] = useState(false);
   const [selectedLoadError, setSelectedLoadError] = useState<string | null>(null);
-  const selectedIdRef = useRef<string | null>(null);
+  const selectedIdRef = useRef<string | null>(initialSnapshot.current?.snapshot.selectedThread?.id ?? null);
+  const selectionVersion = useRef(0);
+  const [conversationKey, setConversationKey] = useState(() => selectedIdRef.current ?? DRAFT_THREAD_SELECTION);
+  const [draftReferenceIds, setDraftReferenceIds] = useState<readonly string[]>([]);
+  const draftReferencesRef = useRef<readonly string[]>([]);
+  const pendingCreation = useRef<Promise<string> | null>(null);
+  const createdDraft = useRef<AiThreadDetail | null>(null);
+  const threadsRef = useRef(threads);
+  threadsRef.current = threads;
 
-  const persistSelection = useCallback((threadId: string) => {
+  const persistSelection = useCallback((threadId: string | null) => {
     selectedIdRef.current = threadId;
-    window.localStorage.setItem(selectedThreadStorageKey(userId), threadId);
+    window.localStorage.setItem(selectedThreadStorageKey(userId), threadId ?? DRAFT_THREAD_SELECTION);
   }, [userId]);
 
   const loadSelected = useCallback(async (
     threadId: string,
     knownThreads?: AiThread[],
   ) => {
+    selectionVersion.current++;
+    setConversationKey(threadId);
     persistSelection(threadId);
     setSelectedLoadError(null);
     const cachedThreads = knownThreads
@@ -227,6 +202,7 @@ export function useAiThreads({ accessToken, userId }: UseAiThreadsInput) {
 
   const refreshLists = useCallback(async () => {
     const refreshedThreads = await listAiThreads(accessToken);
+    threadsRef.current = refreshedThreads;
     setThreads(refreshedThreads);
     patchAiThreadSnapshot(userId, { threads: refreshedThreads });
     return refreshedThreads;
@@ -234,38 +210,32 @@ export function useAiThreads({ accessToken, userId }: UseAiThreadsInput) {
 
   useEffect(() => {
     let cancelled = false;
+    const version = selectionVersion.current;
     const cached = readAiThreadSnapshot(userId);
-    selectedIdRef.current = cached?.snapshot.selectedThread.id ?? null;
     if (cached !== null) {
-      persistSelection(cached.snapshot.selectedThread.id);
+      persistSelection(cached.snapshot.selectedThread?.id ?? null);
       setLoading(false);
       if (cached.fresh) return;
-    } else {
-      setLoading(true);
     }
-
-    const initialize = async () => {
-      const preloaded = await preloadAiThreads({ accessToken, userId });
-      const snapshot = preloaded
-        ?? await hydrateAiThreads(accessToken, userId, true);
-      if (snapshot === null) return;
+    void hydrateAiThreads(accessToken, userId).then((snapshot) => {
+      if (snapshot === null || cancelled) return;
+      if (version !== selectionVersion.current) {
+        if (selectedIdRef.current === null && createdDraft.current === null) {
+          setThreads(snapshot.threads);
+          patchAiThreadSnapshot(userId, { threads: snapshot.threads });
+        }
+        return;
+      }
       writeAiThreadSnapshot(userId, snapshot);
-      if (cancelled) return;
-      persistSelection(snapshot.selectedThread.id);
+      persistSelection(snapshot.selectedThread?.id ?? null);
+      setConversationKey(snapshot.selectedThread?.id ?? DRAFT_THREAD_SELECTION);
       setThreads(snapshot.threads);
       setSelectedThread(snapshot.selectedThread);
       setMessages(snapshot.messages);
-    };
-
-    void initialize()
-      .catch(() => undefined)
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
+    }).catch(() => undefined).finally(() => {
+      if (!cancelled) setLoading(false);
+    });
+    return () => { cancelled = true; };
   }, [accessToken, persistSelection, userId]);
 
   const runMutation = useCallback(async <T,>(operation: () => Promise<T>) => {
@@ -277,18 +247,49 @@ export function useAiThreads({ accessToken, userId }: UseAiThreadsInput) {
     }
   }, []);
 
-  const createThread = useCallback(() => runMutation(async () => {
-    const created = await createAiThread(accessToken);
-    const nextThreads = [created, ...threads];
-    const detail = { ...created, references: [] };
-    setThreads(nextThreads);
-    persistSelection(created.id);
-    setSelectedThread(detail);
+  const startDraft = useCallback(() => {
+    selectionVersion.current++;
+    persistSelection(null);
+    setConversationKey(`draft-${selectionVersion.current}`);
+    setSelectedThread(null);
     setMessages([]);
+    setLoading(false);
     setSelectedLoading(false);
     setSelectedLoadError(null);
-    writeAiThreadSnapshot(userId, { messages: [], selectedThread: detail, threads: nextThreads });
-  }), [accessToken, persistSelection, runMutation, threads, userId]);
+    draftReferencesRef.current = [];
+    setDraftReferenceIds([]);
+    createdDraft.current = null;
+    pendingCreation.current = null;
+    writeAiThreadSnapshot(userId, { messages: [], selectedThread: null, threads: threadsRef.current });
+  }, [persistSelection, userId]);
+
+  const ensureThread = useCallback((): Promise<string> => {
+    if (selectedIdRef.current !== null) return Promise.resolve(selectedIdRef.current);
+    if (pendingCreation.current !== null) return pendingCreation.current;
+    const version = ++selectionVersion.current;
+    const request = (async () => {
+      const created = createdDraft.current ?? { ...await createAiThread(accessToken), references: [] };
+      if (version !== selectionVersion.current) throw new Error("已切换会话，请重新发送。");
+      // 引用保存失败时保留已创建 ID；重试发送不再新建另一个空会话。
+      createdDraft.current = created;
+      const references = draftReferencesRef.current.length === 0 ? []
+        : await replaceAiThreadReferences(accessToken, created.id, draftReferencesRef.current);
+      if (version !== selectionVersion.current) throw new Error("已切换会话，请重新发送。");
+      const detail = { ...created, references };
+      const nextThreads = [created, ...threadsRef.current.filter((thread) => thread.id !== created.id)];
+      threadsRef.current = nextThreads;
+      setThreads(nextThreads);
+      persistSelection(created.id);
+      setSelectedThread(detail);
+      // conversationKey 不变：草稿落库不能重建正在发送首条消息的 useChat。
+      writeAiThreadSnapshot(userId, { messages: [], selectedThread: detail, threads: nextThreads });
+      return created.id;
+    })().finally(() => {
+      if (pendingCreation.current === request) pendingCreation.current = null;
+    });
+    pendingCreation.current = request;
+    return request;
+  }, [accessToken, persistSelection, userId]);
 
   const selectThread = useCallback(
     (threadId: string) => loadSelected(threadId),
@@ -394,7 +395,7 @@ export function useAiThreads({ accessToken, userId }: UseAiThreadsInput) {
     if (selectedIdRef.current === threadId) {
       setSelectedThread((detail) => detail === null ? null : { ...detail, ...updated });
       const cached = readAiThreadSnapshot(userId)?.snapshot;
-      if (cached?.selectedThread.id === threadId) {
+      if (cached?.selectedThread?.id === threadId) {
         patchAiThreadSnapshot(userId, {
           selectedThread: { ...cached.selectedThread, ...updated },
         });
@@ -406,45 +407,41 @@ export function useAiThreads({ accessToken, userId }: UseAiThreadsInput) {
   const replaceReferences = useCallback((memoIds: readonly string[]) =>
     runMutation(async () => {
       const current = selectedThread;
-      if (current === null) return;
+      if (current === null) {
+        draftReferencesRef.current = [...memoIds];
+        setDraftReferenceIds([...memoIds]);
+        return;
+      }
       const references = await replaceAiThreadReferences(
         accessToken,
         current.id,
         memoIds,
       );
+      if (selectedIdRef.current !== current.id) return;
       setSelectedThread((detail) => detail === null ? null : { ...detail, references });
       patchAiThreadSnapshot(userId, {
         selectedThread: { ...current, references },
       });
     }), [accessToken, runMutation, selectedThread, userId]);
 
-  const chooseNextOrCreate = useCallback(async (excludedId: string) => {
-    const next = threads.find((thread) => thread.id !== excludedId);
-    if (next !== undefined) {
-      await loadSelected(next.id);
-      return;
-    }
-    const created = await createAiThread(accessToken);
-    const detail = { ...created, references: [] };
-    persistSelection(created.id);
-    setThreads([created]);
-    setSelectedThread(detail);
-    setMessages([]);
-    setSelectedLoading(false);
-    setSelectedLoadError(null);
-    writeAiThreadSnapshot(userId, { messages: [], selectedThread: detail, threads: [created] });
-  }, [accessToken, loadSelected, persistSelection, threads, userId]);
-
   const removeThread = useCallback((threadId: string) => runMutation(async () => {
     await deleteAiThread(accessToken, threadId);
     removeAiThreadContent(userId, threadId);
-    const wasSelected = selectedThread?.id === threadId;
-    await refreshLists();
-    if (wasSelected) await chooseNextOrCreate(threadId);
-  }), [accessToken, chooseNextOrCreate, refreshLists, runMutation, selectedThread?.id, userId]);
+    const refreshed = await refreshLists();
+    if (selectedIdRef.current !== threadId) return;
+    const next = refreshed[0];
+    if (next !== undefined) await loadSelected(next.id, refreshed);
+    else startDraft();
+  }), [accessToken, loadSelected, refreshLists, runMutation, startDraft, userId]);
+
+  const pinnedMemoIds = useMemo(() => selectedThread?.references.map((reference) => reference.memo_id)
+    ?? draftReferenceIds, [draftReferenceIds, selectedThread?.references]);
 
   return {
-    createThread,
+    conversationKey,
+    ensureThread,
+    startDraft,
+    pinnedMemoIds,
     loading,
     messages,
     mutating,

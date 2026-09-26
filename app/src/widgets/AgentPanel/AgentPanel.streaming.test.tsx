@@ -48,6 +48,7 @@ mock.module("./memoToolExecution", () => ({
 }));
 mock.module("./useAiThreads", () => ({
   useAiThreads: () => ({
+    conversationKey: thread.id, pinnedMemoIds: [], ensureThread: async () => thread.id,
     selectedThread: thread, messages: [], threads: [thread], selectedLoading: false,
     selectedLoadError: null, loading: false, mutating: false,
     commitLocalMessages: async () => undefined, refreshSelected: async () => undefined,

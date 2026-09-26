@@ -36,7 +36,7 @@ describe("aiThreadCache", () => {
     patchAiThreadSnapshot("user-a", { messages: [{ id: "message-a" } as never] }, 200);
     const cached = readAiThreadSnapshot("user-a", 200)?.snapshot;
     expect(cached?.messages).toHaveLength(1);
-    expect(cached?.selectedThread.id).toBe("thread-a");
+    expect(cached?.selectedThread?.id).toBe("thread-a");
   });
 
   test("逐会话内容可独立命中，主快照写入也会同步记住当前会话", () => {

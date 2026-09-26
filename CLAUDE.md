@@ -54,7 +54,7 @@ Canvas V2 是一级持久知识 Workspace：memo 默认 Canvas 与 standalone Ca
 | --- | --- |
 | CANVAS_CONSTITUTION.md | Canvas 产品宪法与常驻门禁，回答「为什么不能」而不是「现在是什么」；冻结一级持久 Workspace、同构画布、显式 AI、增量图、添加/连接/自由文字、自动保存与产品边界，并以第 14 节十一条验收问题约束后续任何改动。它与 CLAUDE.md 职责相反：CLAUDE.md 必须跟随代码，本文件绝不跟随代码，因此只有它能指出实现走偏了。不含进度、不含实施计划 |
 | CANVAS_V2_PHASE2_BACKLOG.md | 历史阶段清单，仅用于追溯当时取舍；已完成项与主动放弃项都不得被后续 Agent 自动还原成需求 |
-| PAPER_CONSTITUTION.md | Paper 产品宪法与常驻门禁，与 CANVAS_CONSTITUTION.md 并列且同样绝不跟随代码。冻结 Stage/Paper/Panel 的三层关系（Panel 压在 Paper 上，因此 Paper 不参照 Panel 的顶部边界）、写作纸的开本比例与「短内容与 Panel 同构、长文只向下生长」、与纸同表面且不画底边线的 sticky 顶栏、整理作为唯一核心 AI 动作但使用 Quiet Accent、状态与动作分离，以及归档线「真实 memo → 结构可见代表 → viewport 边缘投影」的生命周期与渲染边界，并以第 8 节验收问题约束后续改动。视觉数值归 app/brand-spec.md，产品定律归本文件 |
+| PAPER_CONSTITUTION.md | Paper 产品宪法与常驻门禁，与 CANVAS_CONSTITUTION.md 并列且同样绝不跟随代码。冻结 Stage/Paper/Panel 的三层关系（Panel 压在 Paper 上，因此 Paper 不参照 Panel 的顶部边界）、写作纸的开本比例与「短内容与 Panel 同构、长文只向下生长」、与纸同表面且不画底边线的 sticky 顶栏、整理作为唯一核心 AI 动作、只用文字标签表达层级并共享中性 Ghost 反馈、状态与动作分离，以及归档线「真实 memo → 结构可见代表 → viewport 边缘投影」的生命周期与渲染边界，并以第 8 节验收问题约束后续改动。视觉数值归 app/brand-spec.md，产品定律归本文件 |
 | .dockerignore | 收窄后端镜像的仓库根构建上下文，允许生产源码，排除缓存、密钥与无关模块 |
 | .env.example | app/api/chat 无密钥变量总览与根 Compose 可选覆盖模板；服务默认使用各自本地环境文件 |
 | .gitignore | 根级本地环境、构建缓存、系统文件与未接入路由的图标研究页忽略规则 |

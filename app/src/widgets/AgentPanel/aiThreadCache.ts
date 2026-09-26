@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 AI thread/detail/message DTO 与浏览器进程内时间
- * [OUTPUT]: 对外提供按用户隔离的面板快照与逐会话内容缓存，二者均可短时判鲜并陈旧回显
+ * [OUTPUT]: 对外提供按用户隔离的含空草稿选择的面板快照与已保存会话内容缓存，二者均可短时判鲜并陈旧回显
  * [POS]: AgentPanel 的 stale-while-revalidate 内存边界；列表快照恢复面板，逐会话缓存让返回已读会话无需等待网络，不替代服务端真相
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -12,15 +12,15 @@ const MAX_CACHED_THREAD_CONTENTS_PER_USER = 8;
 
 export type AiThreadSnapshot = {
   messages: AiMessage[];
-  selectedThread: AiThreadDetail;
+  selectedThread: AiThreadDetail | null;
   storedAt: number;
   threads: AiThread[];
 };
 
 export type AiThreadContentSnapshot = Pick<
   AiThreadSnapshot,
-  "messages" | "selectedThread" | "storedAt"
->;
+  "messages" | "storedAt"
+> & { selectedThread: AiThreadDetail };
 
 const snapshots = new Map<string, AiThreadSnapshot>();
 const threadContents = new Map<string, Map<string, AiThreadContentSnapshot>>();
@@ -60,7 +60,9 @@ export const writeAiThreadSnapshot = (
 ) => {
   const stored = { ...snapshot, storedAt: now };
   snapshots.set(userId, stored);
-  rememberThreadContent(userId, stored);
+  if (stored.selectedThread !== null) {
+    rememberThreadContent(userId, { ...stored, selectedThread: stored.selectedThread });
+  }
 };
 
 export const patchAiThreadSnapshot = (
@@ -72,8 +74,8 @@ export const patchAiThreadSnapshot = (
   if (current === undefined) return;
   const stored = { ...current, ...patch, storedAt: now };
   snapshots.set(userId, stored);
-  if (patch.messages !== undefined || patch.selectedThread !== undefined) {
-    rememberThreadContent(userId, stored);
+  if (stored.selectedThread !== null && (patch.messages !== undefined || patch.selectedThread !== undefined)) {
+    rememberThreadContent(userId, { ...stored, selectedThread: stored.selectedThread });
   }
 };
 
