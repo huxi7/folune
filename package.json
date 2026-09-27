@@ -1,0 +1,10 @@
+{
+  "name": "folune-workspace",
+  "private": true,
+  "scripts": {
+    "electron:install": "npm --prefix desktop ci",
+    "electron:dev": "npm --prefix desktop run dev",
+    "electron:make": "npm --prefix desktop run make",
+    "electron:test": "npm --prefix desktop test"
+  }
+}

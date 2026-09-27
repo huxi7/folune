@@ -22,7 +22,7 @@ AI 是用户的备忘录协作伙伴与智能档案管理员。
 普通问答、写作、改写、规划与整理应按用户指令直接完成；用户要求原样收纳时保持内容保真，要求创作或编辑时允许生成新内容。需要保存备忘录时，AI 判断内容主题并分配到相关文件夹；当现有文件夹不合适时，AI 有权根据主题创建新文件夹，使文件 tree 随内容自然生长。
 
 ## 技术栈
-全栈 TypeScript，顶层由三个业务模块组成。
+全栈 TypeScript，三个云端/Web 业务模块与独立 Electron 桌面宿主组成。
 
 - app: 用户端，Bun + Vite 8 + React 19 + React Router 7 + Zustand 5 + Motion for React 12 + @xyflow/react 12 + CodeMirror 6/Lezer Markdown + react-markdown/remark/rehype-sanitize + Vercel AI SDK 6 (`@ai-sdk/react`) + `@mastra/client-js` + zod 4 + canvas-confetti + Kumo UI 2 + Tailwind CSS v4 + 本地 design system（含同源 Motion token 与完整入退场原语）+ Lucide React + Supabase Auth SDK
 - chat: AI 能力服务，Bun + Mastra 1.57 + `@mastra/ai-sdk` + Vercel AI SDK 6 + zod 4；模型白名单只含 DeepSeek V4 Flash 且拒绝任何切换；对话/审批/整理三个 Agent 分离，模型只见 read_tree/read_memo/edit_memo/edit_node 四个原子笔记工具、明确清单的 edit_nodes 批量工具与 celebration
@@ -43,6 +43,8 @@ Canvas V2 是一级持久知识 Workspace：memo 默认 Canvas 与 standalone Ca
 ## 模块地图
 | 模块 | 职责 | 文档 |
 | --- | --- | --- |
+| desktop | Electron + Forge 桌面宿主，复用 app；macOS arm64 DMG 与 Windows x64 Squirrel，私有源码构建、公开二进制发布 | [desktop/CLAUDE.md](desktop/CLAUDE.md) |
+| .github | 桌面 Tag 构建与跨仓库 Release 发布，Web/后端仍沿原 production 分支发布 | [.github/CLAUDE.md](.github/CLAUDE.md) |
 | app | 用户端，以 Paper First 舞台承载写作与共享左右工具；Canvas 路由切换到始终挂载同一 React Flow 实例的独立 Workspace，支持 memo Picker、预览/返回、自由文字、连接/删除/框选/整组移动/缩放、显式 AI 增量拓展与可靠自动保存；服务端文档、交互会话、WAL/传输状态分别收口，选择只有 React Flow 一个所有者，正文只按 memo ID 读取 | [app/CLAUDE.md](app/CLAUDE.md) |
 | chat | AI 能力服务，冻结消息上下文；聊天流原样透传推理，APP 直接以纯文本将原始推理与真实工具进度交错展示，不添加摘要模型调用，明确批量请求由共享八并发队列执行且可停止，转圈与实际运行同构，完成记录一次展开，正文首分块触发前端一次性收起过程，不等待步骤结束；对话、审批、整理与逐篇关联判断职责分离；Canvas expansion 只从 api 重取可信 context/正文/语料版本，复用 Explore 判断和逐字引文复核后返回候选，最终写入仍由浏览器经 api 统一 mutation 提交 | [chat/CLAUDE.md](chat/CLAUDE.md) |
 | api | 业务接口服务，承载 profile、memo、回收站、AI 状态机与 Canvas V2 默认/空白入口、无正文图读取、expansion context、人工/AI 共用 mutation；owner-only RLS、行锁、version、稳定 intent digest、receipt、原子 checkpoint 与同父同类型标题唯一索引共同构成唯一持久化边界，重名由数据库裁决；两种 Canvas 共用一条命名规则，标题不跟随任何东西 | [api/CLAUDE.md](api/CLAUDE.md) |
@@ -55,6 +57,7 @@ Canvas V2 是一级持久知识 Workspace：memo 默认 Canvas 与 standalone Ca
 | CANVAS_CONSTITUTION.md | Canvas 产品宪法与常驻门禁，回答「为什么不能」而不是「现在是什么」；冻结一级持久 Workspace、同构画布、显式 AI、增量图、添加/连接/自由文字、自动保存与产品边界，并以第 14 节十一条验收问题约束后续任何改动。它与 CLAUDE.md 职责相反：CLAUDE.md 必须跟随代码，本文件绝不跟随代码，因此只有它能指出实现走偏了。不含进度、不含实施计划 |
 | CANVAS_V2_PHASE2_BACKLOG.md | 历史阶段清单，仅用于追溯当时取舍；已完成项与主动放弃项都不得被后续 Agent 自动还原成需求 |
 | PAPER_CONSTITUTION.md | Paper 产品宪法与常驻门禁，与 CANVAS_CONSTITUTION.md 并列且同样绝不跟随代码。冻结 Stage/Paper/Panel 的三层关系（Panel 压在 Paper 上，因此 Paper 不参照 Panel 的顶部边界）、写作纸的开本比例与「短内容与 Panel 同构、长文只向下生长」、与纸同表面且不画底边线的 sticky 顶栏、整理作为唯一核心 AI 动作、只用文字标签表达层级并共享中性 Ghost 反馈、状态与动作分离，以及归档线「真实 memo → 结构可见代表 → viewport 边缘投影」的生命周期与渲染边界，并以第 8 节验收问题约束后续改动。视觉数值归 app/brand-spec.md，产品定律归本文件 |
+| package.json | 桌面依赖安装、开发、打包与测试的根命令入口 |
 | .dockerignore | 收窄后端镜像的仓库根构建上下文，允许生产源码，排除缓存、密钥与无关模块 |
 | .env.example | app/api/chat 无密钥变量总览与根 Compose 可选覆盖模板；服务默认使用各自本地环境文件 |
 | .gitignore | 根级本地环境、构建缓存、系统文件与未接入路由的图标研究页忽略规则 |

@@ -17,3 +17,12 @@
 
 # 仅供本机比较图标方案，不参与正式路由或构建
 /app/icon-lab.html
+
+# 桌面构建与仅本机公开运行配置；依赖由各自 lock 文件管理
+/desktop/out/
+/desktop/web/
+/desktop/release/
+/desktop/runtime.json
+/desktop/assets/icon.png
+/desktop/assets/icon.ico
+/desktop/assets/icon.icns

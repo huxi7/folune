@@ -40,8 +40,8 @@ Cloud Build 使用 deploy/cloudbuild.yaml。两个 GitHub push 触发器都只�
 
 | 位置 | 生产配置 |
 | --- | --- |
-| API Cloud Run | NODE_ENV=production、SUPABASE_URL、SUPABASE_PUBLISHABLE_KEY、CORS_ORIGINS=正式网站 origin |
-| Chat Cloud Run | NODE_ENV=production、SUPABASE_URL、SUPABASE_PUBLISHABLE_KEY、ALLOWED_ORIGINS=正式网站 origin、BUSINESS_API_BASE_URL=正式 API HTTPS 地址 |
+| API Cloud Run | NODE_ENV=production、SUPABASE_URL、SUPABASE_PUBLISHABLE_KEY、CORS_ORIGINS=正式网站 origin 与 folune-app://app |
+| Chat Cloud Run | NODE_ENV=production、SUPABASE_URL、SUPABASE_PUBLISHABLE_KEY、ALLOWED_ORIGINS=正式网站 origin 与 folune-app://app、BUSINESS_API_BASE_URL=正式 API HTTPS 地址 |
 | Secret Manager | DEEPSEEK_API_KEY，仅授权 Chat 运行身份读取，在容器启动时注入 |
 | Cloudflare Pages Production | VITE_SUPABASE_URL、VITE_SUPABASE_PUBLISHABLE_KEY、VITE_API_BASE_URL、VITE_CHAT_BASE_URL，修改后重新构建 |
 
