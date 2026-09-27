@@ -3,7 +3,7 @@
 
 成员清单
 index.ts: prompts 子域稳定出口，只转出 memoAgentPrompt，不承载提示词正文
-memo-agent.ts: 备忘录助手的协作优先系统提示词，以 XML 分层规定即时协作/显式操作/隐含收纳分流、原文与生成双模式、最小确认和可见执行；独立工具每轮最多十二项并自动继续后续批次，不删一篇等一篇；禁止抄写标识清单/复述审批规则/按编号区间猜总数，只有同节点或同排序区间等真实依赖才顺序调用，全部完成再连续输出正文，省去工具前过渡句；字段约束全部留给工具 schema
+memo-agent.ts: 备忘录助手行为边界；同任务同操作多篇 memo 优先 edit_nodes 一次提交，其他独立调用每轮最多十二项；真实依赖顺序执行，原始推理不抄标识清单
 memo-agent.test.ts: 提示词结构回归测试，锁定协作优先双模式、直接执行与依赖调度原则、多篇删除同轮批发不退化为逐条串行、旧过度限制不得回归及禁止出现 schema/SQL 实现细节
 memo-context.ts: 把 Business API 返回的 primary/references 正文序列化到不可信用户数据区，明确 primary 优先级、截断语义与 prompt injection 隔离
 approval-agent.ts: 实验性独立审批规则，限定 approve/manual/deny 与风险理由，强制综合用户原话、实际目标、参数和影响范围，禁止只按 op 判断

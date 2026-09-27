@@ -4,7 +4,7 @@
  * [POS]: AgentConversation 的背压边界，规划和乐观投影都在取得执行槽后发生
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
-export const CLIENT_TOOL_CONCURRENCY = 4;
+export const CLIENT_TOOL_CONCURRENCY = 8;
 
 type Job = { start: () => Promise<void>; cancel: () => void };
 

@@ -462,7 +462,7 @@ function ToolCallBubblePreview() {
       <ToolCallBubble
         icon={TreeStructureIcon}
         name="编辑文件树"
-        state="input-available"
+        state="running"
       />
       <ToolCallBubble
         icon={NotePencilIcon}

@@ -7,7 +7,7 @@
 import { expect, test } from "bun:test";
 import { createClientToolQueue, CLIENT_TOOL_CONCURRENCY } from "./clientToolQueue";
 
-test("98 项任务始终最多四项在途，每项只执行一次且失败不阻塞后续", async () => {
+test("98 项任务始终最多八项在途，每项只执行一次且失败不阻塞后续", async () => {
   const queue = createClientToolQueue();
   let active = 0;
   let peak = 0;

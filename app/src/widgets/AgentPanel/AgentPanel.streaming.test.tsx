@@ -259,7 +259,7 @@ test("提前读取完成后若用户停止，不发布结果也不自动续写",
 });
 
 
-test("98 个写工具分批推进且 DOM 有界，只在全部结果到齐后续写", async () => {
+test("98 个独立写工具保留顺序，只有八项转圈且结果到齐后续写", async () => {
   const view = await startConversation();
   const chunks: UIMessageChunk[] = [{ type: "start", messageId: "batch-98" }, { type: "start-step" }];
   for (let index = 0; index < 98; index++) chunks.push({
@@ -268,11 +268,12 @@ test("98 个写工具分批推进且 DOM 有界，只在全部结果到齐后续
   });
   chunks.push({ type: "finish-step" }, { type: "finish", finishReason: "tool-calls" });
   await emit(0, chunks, true);
-  await waitFor(() => expect(toolResults).toHaveLength(4));
-  expect(view.container.querySelectorAll(".ds-tool-call-bubble").length).toBeLessThanOrEqual(6);
+  await waitFor(() => expect(toolResults).toHaveLength(8));
+  expect(view.container.querySelectorAll(".ds-tool-call-bubble")).toHaveLength(98);
+  expect(view.container.querySelectorAll(".ds-tool-spinner")).toHaveLength(8);
   let resolved = 0;
   while (resolved < 98) {
-    const end = Math.min(resolved + 4, 98);
+    const end = Math.min(resolved + 8, 98);
     await waitFor(() => expect(toolResults).toHaveLength(end));
     expect(streams).toHaveLength(1);
     await act(async () => {
@@ -291,14 +292,67 @@ test("客户端批量执行期间停止，不再启动排队写入或被迟到�
     ...Array.from({ length: 12 }, (_, index): UIMessageChunk => ({ type: "tool-input-available", toolCallId: `cancel-${index}`, toolName: "edit_node", input: { op: "create", node_type: "memo", title: `停止${index}` } })),
     { type: "finish-step" }, { type: "finish", finishReason: "tool-calls" },
   ], true);
-  await waitFor(() => expect(toolResults).toHaveLength(4));
+  await waitFor(() => expect(toolResults).toHaveLength(8));
   fireEvent.click(view.getByRole("button", { name: "停止生成" }));
   await act(async () => { for (const resolve of toolResults) resolve({}); });
   await waitFor(() => expect(view.queryByRole("button", { name: "停止生成" })).toBeNull());
-  expect(toolResults).toHaveLength(4);
+  expect(toolResults).toHaveLength(8);
   expect(streams).toHaveLength(1);
-  expect(savedMessages.at(-1)?.parts.filter((part) => part.state === "output-available")).toHaveLength(4);
-  expect(savedMessages.at(-1)?.parts.filter((part) => part.state === "output-error")).toHaveLength(8);
+  expect(savedMessages.at(-1)?.parts.filter((part) => part.state === "output-available")).toHaveLength(8);
+  expect(savedMessages.at(-1)?.parts.filter((part) => part.state === "output-error")).toHaveLength(4);
+});
+
+
+test("明确批量100项同一工具持续推进，真实八项转圈且一次展开已完成记录", async () => {
+  const { useMemoTreeStore } = await import("../../shared/store/memoTreeStore");
+  const nodes = Array.from({ length: 100 }, (_, i) => ({
+    id: `00000000-0000-4000-8000-${String(i).padStart(12, "0")}`, title: `未命名备忘录 ${i}`,
+    node_type: "memo", revision: 1, parent_id: null, children: [],
+  }));
+  useMemoTreeStore.setState({ nodes: nodes as never });
+  const view = await startConversation();
+  await emit(0, [
+    { type: "start", messageId: "explicit-batch" }, { type: "start-step" },
+    { type: "tool-input-available", toolName: "edit_nodes", toolCallId: "batch-one", input: { op: "delete", targets: nodes.map((node) => ({ node_id: node.id, expected_revision: 1 })) } },
+    { type: "finish-step" }, { type: "finish", finishReason: "tool-calls" },
+  ], true);
+  await waitFor(() => expect(toolResults).toHaveLength(8));
+  expect(view.container.querySelectorAll(".ds-tool-spinner")).toHaveLength(8);
+  expect(view.getByText("还有 92 篇等待处理")).toBeTruthy();
+  await act(async () => { toolResults[2]!({ id: "command-2", operation: "trash_node", status: "succeeded" }); });
+  await waitFor(() => expect(toolResults).toHaveLength(9));
+  expect(view.container.querySelectorAll(".ds-tool-spinner")).toHaveLength(8);
+  fireEvent.click(view.getByRole("button", { name: "查看全部 1 条记录" }));
+  expect(view.getByRole("region", { name: "全部操作记录" })).toBeTruthy();
+  for (let i = 0; i < 100; i++) {
+    if (i === 2) continue;
+    await waitFor(() => expect(toolResults.length).toBeGreaterThan(i));
+    await act(async () => { toolResults[i]!({ id: `command-${i}`, operation: "trash_node", status: "succeeded" }); });
+  }
+  await waitFor(() => expect(streams).toHaveLength(2));
+  expect(view.container.querySelectorAll(".ds-tool-spinner")).toHaveLength(0);
+  expect(view.getByRole("button", { name: "收起操作记录" })).toBeTruthy();
+  expect(view.queryByText("显示更多操作")).toBeNull();
+  expect(view.container.querySelectorAll(".agent-batch-record").length).toBeLessThanOrEqual(16);
+  const last = savedMessages.at(-1)!;
+  expect(last.parts.some((part) => "type" in part && part.type === "data-tool-batch")).toBeTrue();
+  await emit(1, [{ type: "start", messageId: "explicit-batch" }, { type: "start-step" }, { type: "text-start", id: "done" }, { type: "text-delta", id: "done", delta: "删除完成。" }, { type: "text-end", id: "done" }, { type: "finish-step" }, { type: "finish", finishReason: "stop" }], true);
+  await waitFor(() => expect(view.queryByRole("button", { name: "停止生成" })).toBeNull());
+});
+
+
+test("余额不足显示明确错误，退出思考且不执行工具或自动重发", async () => {
+  const view = await startConversation();
+  await emit(0, [
+    { type: "start", messageId: "balance-error" }, { type: "start-step" },
+    { type: "error", errorText: "DeepSeek API 账户余额不足，充值后才能继续使用。" },
+  ], true);
+  await waitFor(() => expect(view.getByText("AI 服务余额不足")).toBeTruthy());
+  expect(view.getByText("DeepSeek API 账户余额不足，充值后才能继续使用。")).toBeTruthy();
+  expect(view.queryByRole("button", { name: "停止生成" })).toBeNull();
+  expect(view.container.querySelectorAll(".ds-tool-spinner")).toHaveLength(0);
+  expect(toolResults).toHaveLength(0);
+  expect(streams).toHaveLength(1);
 });
 
 }

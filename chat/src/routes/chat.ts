@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 authMiddleware、Business API、冻结 memo context、独立审批协调器、客户端工具、Mastra 流桥与 chat-stream 的终态/静默超时协调
- * [OUTPUT]: 对外提供消息级上下文冻结、一次性 turn prepare、三档写审批、同轮 assistant 续写、胖工具流转与增量 parts 持久化的 POST /v1/chat
+ * [OUTPUT]: 对外提供消息级上下文冻结、一次性 turn prepare、三档写审批、同轮 assistant 续写、胖工具流转、明确的模型余额错误与增量 parts 持久化的 POST /v1/chat
  * [POS]: routes 层 AI Native V2 HTTP 协调边界；审批/工具续跑复用同一回复 ID，先完成审批再让浏览器 Worker 规划，最终安全仍由 api command 决定
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -16,6 +16,8 @@ import {
 } from "ai";
 import { z } from "zod";
 
+import { batchModelMessages } from "./batch-model-messages";
+import { modelErrorMessage } from "@/lib/model-error";
 import { env } from "@/config/env";
 import {
   evaluateWriteApproval,
@@ -46,6 +48,16 @@ const describeApprovalTarget = (
   const flat = roots.flatMap(function flatten(node): typeof roots[number][] {
     return [node, ...node.children.flatMap(flatten)];
   });
+  if (Array.isArray(args.targets)) {
+    const ids = new Set(args.targets.flatMap((target) => target && typeof target === "object" && "node_id" in target ? [target.node_id] : []));
+    const targets = flat.filter((node) => ids.has(node.id));
+    return {
+      target_title: targets.map((node) => node.title).join("、"),
+      target_type: targets.every((node) => node.node_type === "memo") ? "memo" : null,
+      parent_title: typeof args.parent_id === "string" ? flat.find((node) => node.id === args.parent_id)?.title ?? null : "根目录",
+      affected_node_count: targets.length,
+    };
+  }
   const targetId = typeof args.node_id === "string" ? args.node_id : null;
   const parentId = typeof args.parent_id === "string" ? args.parent_id : null;
   const target = flat.find((node) => node.id === targetId) ?? null;
@@ -211,7 +223,7 @@ export const chatRoute = registerApiRoute("/v1/chat", {
     }
 
     const params = {
-      messages: inputMessages,
+      messages: batchModelMessages(inputMessages),
       trigger: parsed.data.trigger,
       resumeData: parsed.data.resumeData,
     } as unknown as ChatParams;
@@ -229,7 +241,7 @@ export const chatRoute = registerApiRoute("/v1/chat", {
     };
     let approvalTreePromise: ReturnType<typeof businessApi.getMemoTree> | null = null;
     const requireWriteApproval = async (
-      writeToolName: "edit_node" | "edit_memo",
+      writeToolName: "edit_node" | "edit_memo" | "edit_nodes",
       args: Readonly<Record<string, unknown>>,
     ): Promise<boolean> => {
       if (permissionMode === "ask") return true;
@@ -267,7 +279,7 @@ export const chatRoute = registerApiRoute("/v1/chat", {
         version: "v6",
         sendStart: false,
         sendReasoning: true,
-        onError: () => "AI 回复中断，请重新发送消息。",
+        onError: modelErrorMessage,
         params: {
           ...params,
           clientTools,
@@ -285,7 +297,7 @@ export const chatRoute = registerApiRoute("/v1/chat", {
         const input = chunk.input !== null && typeof chunk.input === "object" && !Array.isArray(chunk.input)
           ? chunk.input as Record<string, unknown>
           : {};
-        return await requireWriteApproval(toolName as "edit_node" | "edit_memo", input)
+        return await requireWriteApproval(toolName as "edit_node" | "edit_memo" | "edit_nodes", input)
           ? { type: "tool-approval-request", approvalId: `folune::${chunk.toolCallId}`, toolCallId: chunk.toolCallId }
           : null;
       },

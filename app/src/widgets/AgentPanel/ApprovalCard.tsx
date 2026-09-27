@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 AI SDK approval-requested tool part、共享 ApprovalDock、Design System Button 与批准/拒绝回调
- * [OUTPUT]: 对外提供普通工具单次操作的 ApprovalDock 内容适配
+ * [OUTPUT]: 对外提供原子或明确批量操作的 ApprovalDock 内容适配
  * [POS]: AgentConversation 的工具审批语义层；与 AI 整理审批共享同一视觉原语，消息正文不承载审批控件
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -24,7 +24,7 @@ const record = (value: unknown): Record<string, unknown> | null =>
 const approvalCopy = (part: ToolPart) => {
   const input = record(part.input);
   const operation = normalizeAgentToolName(getToolName(part));
-  const editOperation = operation === "edit_node" && typeof input?.op === "string"
+  const editOperation = (operation === "edit_node" || operation === "edit_nodes") && typeof input?.op === "string"
     ? input.op
     : operation;
   const presentation = getAgentToolPresentation(operation, part);

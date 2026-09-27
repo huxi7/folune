@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Mastra createTool、zod 与胖工具的 revision/操作约束
- * [OUTPUT]: 对外提供仅供模型选择的 read_tree/read_memo/edit_memo/edit_node 客户端工具工厂、写工具识别与稳定审批 key
+ * [OUTPUT]: 对外提供仅供模型选择的 read_tree/read_memo/edit_memo/edit_node/edit_nodes 客户端工具工厂、写工具识别与稳定审批 key
  * [POS]: tools 子域的模型协议源；写审批由 chat 路由按请求裁决，细分 command 不暴露给模型，浏览器 Worker 规划后仍由 api 原子命令执行
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -48,6 +48,31 @@ const editNodeInputSchema = z.object({
   }
 });
 
+export const editNodesInputSchema = z.object({
+  op: z.enum(["delete", "move", "rename"]),
+  parent_id: z.uuid().nullable().optional(),
+  targets: z.array(z.object({
+    node_id: z.uuid(),
+    expected_revision: z.number().int().positive(),
+    title: z.string().trim().min(1).max(500).optional(),
+  }).strict()).min(1).max(500),
+}).strict().superRefine((input, context) => {
+  if (new Set(input.targets.map((target) => target.node_id)).size !== input.targets.length) {
+    context.addIssue({ code: "custom", message: "批量目标不能重复", path: ["targets"] });
+  }
+  if (input.op === "move" && input.parent_id === undefined) {
+    context.addIssue({ code: "custom", message: "移动必须提供目标目录", path: ["parent_id"] });
+  }
+  if (input.op !== "move" && input.parent_id !== undefined) {
+    context.addIssue({ code: "custom", message: "只有移动可以提供目标目录", path: ["parent_id"] });
+  }
+  input.targets.forEach((target, index) => {
+    if ((input.op === "rename") !== (target.title !== undefined)) {
+      context.addIssue({ code: "custom", message: "只有重命名必须提供每项目标标题", path: ["targets", index, "title"] });
+    }
+  });
+});
+
 export const createMemoClientTools = () => {
   const readTree = createTool({
     id: "read_tree",
@@ -74,7 +99,13 @@ export const createMemoClientTools = () => {
     inputSchema: editNodeInputSchema,
   });
 
+  const editNodes = createTool({
+    id: "edit_nodes",
+    description: "一次批量移动、重命名或软删除明确清单中的备忘录（仅 memo，不含文件夹）。同一批只能有一种操作，targets 必须来自已读取结构且携带最新 revision。相互独立的目标一次提交（最多500篇），不拆成多轮单项调用；执行器控制并发并返回每项结果。失败会停止本批尚未开始的操作。",
+    inputSchema: editNodesInputSchema,
+  });
   return {
+    edit_nodes: editNodes,
     read_tree: readTree,
     read_memo: readMemo,
     edit_memo: editMemo,
@@ -101,7 +132,7 @@ export const approvalDecisionKey = (
   args: Readonly<Record<string, unknown>>,
 ): string => JSON.stringify([toolName, stableValue(args)]);
 
-export const WRITE_MEMO_TOOL_NAMES = new Set(["edit_node", "edit_memo"]);
+export const WRITE_MEMO_TOOL_NAMES = new Set(["edit_node", "edit_memo", "edit_nodes"]);
 
 export const resolveMemoWriteToolName = (toolName: string): string | null => {
   for (const candidate of WRITE_MEMO_TOOL_NAMES) {

@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 FoluneUIMessage 的 AI SDK 有序 parts、覆盖工具续写间隙的整轮 activity、本轮读取快照的工具命名、过程分区与 design-system AI 消息组件
- * [OUTPUT]: 对外提供用户/assistant 回复、按真实 activity 退出的空回复占位、不展示原始推理且有界展示工具的过程区及整轮结束后的撤销入口
+ * [OUTPUT]: 对外提供用户/assistant 回复、按真实 activity 退出的空回复占位、原始推理与有界工具交错展示的过程区及整轮结束后的撤销入口
  * [POS]: AgentPanel 消息语义适配层，只负责对话与过程；人工审批由 AgentConversation 固定在 Composer 上方，冻结上下文不进入对话视觉层
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */

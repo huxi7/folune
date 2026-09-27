@@ -197,7 +197,7 @@ describe("ChatMessage", () => {
   });
 });
 
-test("长推理与内部编号不进入 DOM，98 项工具默认只挂载六项", () => {
+test("原始推理完整显示，独立工具不因数量而折叠", () => {
   const privateReasoning = "cf8e0ddf-06ad-4e7d-bbcb-3c69241d1519 node_id intent_gate";
   const parts: FoluneUIMessage["parts"] = [
     { type: "reasoning", text: privateReasoning.repeat(1000) },
@@ -208,9 +208,24 @@ test("长推理与内部编号不进入 DOM，98 项工具默认只挂载六项"
     })),
   ];
   const html = renderToStaticMarkup(<ChatMessage activity="none" message={assistant(parts)} onUndo={async () => undefined} />);
-  expect(html).not.toContain("cf8e0ddf");
-  expect(html).not.toContain("intent_gate");
-  expect((html.match(/class="ds-tool-call-disclosure"/g) ?? []).length).toBe(6);
+  expect(html).toContain("cf8e0ddf");
+  expect(html).toContain("intent_gate");
+  expect((html.match(/class="ds-tool-call-disclosure"/g) ?? []).length).toBe(98);
   expect(html).toContain('data-result="failure"');
-  expect(html).toContain("查看全部 98 项操作");
+  expect(html).not.toContain("agent-tool-more");
+});
+
+test("原始思考与工具交错，批量保留前后思路并忽略旧摘要", () => {
+  const parts: FoluneUIMessage["parts"] = [
+    { type: "data-thinking-summary", id: "summary-1", data: { text: "旧摘要不应覆盖原始推理。" } },
+    { type: "reasoning", text: "先核对默认标题，保留已命名的备忘录。", state: "done" },
+    ...Array.from({ length: 8 }, (_, index) => ({ type: "dynamic-tool" as const, toolName: "edit_node", toolCallId: `interleave-${index}`, state: "output-available" as const, input: { op: "delete", title: `未命名备忘录 ${index}` }, output: {} })),
+    { type: "reasoning", text: "接下来核对是否还有遗漏的内容。", state: "streaming" },
+  ];
+  const html = renderToStaticMarkup(<ChatMessage activity="thinking" message={assistant(parts)} onUndo={async () => undefined} />);
+  expect(html.indexOf("先核对默认标题")).toBeLessThan(html.indexOf("ds-tool-call-bubble"));
+  expect(html.indexOf("接下来核对是否还有遗漏")).toBeGreaterThan(html.lastIndexOf("ds-tool-call-bubble"));
+  expect(html).not.toContain("cf8e0ddf");
+  expect(html).not.toContain("旧摘要不应覆盖原始推理。");
+  expect((html.match(/data-kind="reasoning"/g) ?? [])).toHaveLength(2);
 });

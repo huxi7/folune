@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun test、独立审批协调纯函数与 memo 胖工具公共契约
- * [OUTPUT]: 验证模型只看到四个工具、稳定审批缓存键及三档权限的 fail-closed 人工确认规则
+ * [OUTPUT]: 验证模型只看到四个原子工具与一个批量工具、稳定审批缓存键及三档权限的 fail-closed 人工确认规则
  * [POS]: tools 子域执行面守门测试，防止内部细分 command 再次泄漏给模型或非法审批绕过人工门禁
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -20,14 +20,15 @@ import {
 } from "./memo";
 
 describe("memo server tool contracts", () => {
-  test("exposes only four memo tools and one fat node writer", () => {
+  test("exposes atomic tools and an explicit batch writer", () => {
     expect(Object.keys(memoClientTools).sort()).toEqual([
       "edit_memo",
       "edit_node",
+      "edit_nodes",
       "read_memo",
       "read_tree",
     ]);
-    expect([...WRITE_MEMO_TOOL_NAMES].sort()).toEqual(["edit_memo", "edit_node"]);
+    expect([...WRITE_MEMO_TOOL_NAMES].sort()).toEqual(["edit_memo", "edit_node", "edit_nodes"]);
   });
 
   test("leaves per-request approval to the chat coordinator", () => {

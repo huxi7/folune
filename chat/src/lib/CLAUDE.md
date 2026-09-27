@@ -2,6 +2,8 @@
 > L2 | 父级: ../../CLAUDE.md
 
 成员清单
+model-error.ts: 模型错误安全映射，HTTP 402 明确为 DeepSeek 余额不足，识别 cause/重试包装且不转发原始载荷
+model-error.test.ts: 余额不足跨包装保留、循环 cause 有界及未知异常净化验证
 upstream-http.test.ts: 用停滞响应体验证期限真实生效、重试新连接、写请求不重放与主动取消
 upstream-http.ts: Auth/Business API 共享完整 HTTP 读取期限、取消与显式只读重试策略；不接管模型 SSE，也不解析业务身份
 banner.ts: 启动时输出一次定宽 ASCII Banner，只呈现服务名、运行时、端口、Agent、模型 ID 与路由等非敏感摘要

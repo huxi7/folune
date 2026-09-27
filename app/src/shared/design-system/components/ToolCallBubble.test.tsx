@@ -12,19 +12,28 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { ToolCallBubble } from "./ToolCallBubble";
 
 describe("ToolCallBubble", () => {
+  it("参数生成、排队和审批等待都不能冒充执行中", () => {
+    for (const state of ["queued", "input-streaming", "input-available", "approval-requested", "approval-responded"] as const) {
+      const html = renderToStaticMarkup(<ToolCallBubble name="等待操作" state={state} />);
+      expect(html).not.toContain("ds-tool-spinner");
+      expect(html).not.toContain('aria-busy="true"');
+    }
+  });
   it("执行中保留固定状态位与转圈，并提供人话详情入口", () => {
     const html = renderToStaticMarkup(
       <ToolCallBubble
         details={[{ label: "目标", value: "「产品想法」" }]}
         icon={TreeStructureIcon}
         name="更新「产品想法」"
-        state="input-available"
+        state="running"
       />,
     );
 
     expect(html).toContain('aria-busy="true"');
     expect(html).toContain('aria-expanded="false"');
-    expect(html).toContain("ds-button-spinner");
+    expect(html).toContain("ds-tool-spinner");
+    expect(html).not.toContain("ds-button-spinner");
+    expect(html).toContain('pathLength="100"');
     expect(html).toContain('data-result="pending"');
     expect(html).toContain("更新「产品想法」");
     expect(html).not.toContain("<dl");

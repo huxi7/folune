@@ -7,6 +7,7 @@
 
 import { isToolUIPart, type UIMessage } from "ai";
 
+import { readToolCommands } from "./toolExecutionState";
 import type { AiCommand } from "../../shared/api/ai";
 
 export type AgentMessagePresentation = {
@@ -37,16 +38,6 @@ export function coalesceAssistantMessages<T extends UIMessage>(
   }
   return result;
 }
-
-const readCommand = (part: UIMessage["parts"][number]): AiCommand | null => {
-  if (!isToolUIPart(part) || part.state !== "output-available") return null;
-  const output = part.output;
-  if (output === null || typeof output !== "object" || Array.isArray(output)) return null;
-  const command = output as Partial<AiCommand>;
-  return typeof command.id === "string" && command.status === "succeeded"
-    ? command as AiCommand
-    : null;
-};
 
 function hasVisibleText(part: UIMessage["parts"][number]) {
   return (part.type === "text" || part.type === "reasoning")
@@ -79,8 +70,9 @@ export function deriveAgentMessagePresentation(
 
   message.parts.forEach((part, index) => {
     if (isToolUIPart(part)) {
-      const command = readCommand(part);
-      if (command !== null) undoCommands.set(command.id, command);
+      if (part.state === "output-available") for (const command of readToolCommands(part.output)) {
+        if (command.status === "succeeded") undoCommands.set(command.id, command);
+      }
       if (!visibleToolCalls.has(part.toolCallId)) {
         visibleToolCalls.add(part.toolCallId);
         processParts.push(part);
@@ -88,6 +80,13 @@ export function deriveAgentMessagePresentation(
       return;
     }
 
+    if (part.type === "data-tool-batch") {
+      const hasFinalOutput = message.parts.some((tool) => isToolUIPart(tool) && tool.toolCallId === part.id && tool.state.startsWith("output-"));
+      if (!hasFinalOutput && "data" in part) for (const command of readToolCommands(part.data)) {
+        if (command.status === "succeeded" && !undoCommands.has(command.id)) undoCommands.set(command.id, command);
+      }
+      processParts.push(part); return;
+    }
     if (part.type === "reasoning") {
       if (hasVisibleText(part)) {
         processParts.push(part);

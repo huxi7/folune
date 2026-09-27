@@ -1,16 +1,17 @@
 /**
  * [INPUT]: 依赖 AI SDK UI stream、可注入模型流/审批/持久化函数与请求取消信号
- * [OUTPUT]: 对外提供 createChatResponseStream；正文即时透传，静默超时/流内错误/无 finish 均进入失败终态
+ * [OUTPUT]: 对外提供 createChatResponseStream；正文即时透传，余额不足文案跨包装保留，静默超时/流内错误/无 finish 均进入失败终态
  * [POS]: 聊天流生命周期边界；等待落库保证切换一致性，审批最多四项并发且逐项计时，工具续写只在审批与本轮落库完成后开放
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
 import { createUIMessageStream, type UIMessage, type UIMessageChunk } from "ai";
+import { modelErrorMessage, MODEL_ERROR_MESSAGE } from "../lib/model-error";
 import { persistWithOneRetry, responseStartChunk } from "./chat-persistence";
 
 const APPROVAL_CONCURRENCY = 4;
 const GENERATION_IDLE_MS = 30_000;
-const GENERATION_ERROR = "AI 回复中断，请重新发送消息。";
+const GENERATION_ERROR = MODEL_ERROR_MESSAGE;
 const GENERATION_TIMEOUT = "AI 长时间没有响应，请重试。";
 
 type Options = {
@@ -32,7 +33,8 @@ export function createChatResponseStream(options: Options) {
   let timeout = false;
   let phase = "startup";
   let chunks = 0;
-  const errorText = () => timeout ? GENERATION_TIMEOUT : GENERATION_ERROR;
+  let failureMessage = GENERATION_ERROR;
+  const errorText = () => timeout ? GENERATION_TIMEOUT : failureMessage;
 
   // 等待的是有效模型事件，而非总生成时长；持续输出的长回复不会被截断。
   const waitForProgress = async <T>(work: Promise<T>): Promise<T> => {
@@ -80,7 +82,11 @@ export function createChatResponseStream(options: Options) {
           const { value: chunk, done } = await waitForProgress(reader.read());
           if (done) throw new Error(GENERATION_ERROR);
           chunks++;
-          if (chunk.type === "error" || (chunk.type === "finish" && chunk.finishReason === "error")) {
+          if (chunk.type === "error") {
+            failureMessage = modelErrorMessage(chunk.errorText);
+            throw new Error(failureMessage);
+          }
+          if (chunk.type === "finish" && chunk.finishReason === "error") {
             throw new Error(GENERATION_ERROR);
           }
           if (chunk.type === "abort") {
@@ -118,6 +124,7 @@ export function createChatResponseStream(options: Options) {
         if (options.signal.aborted) writer.write({ type: "abort" });
         else {
           failed = true;
+          failureMessage = modelErrorMessage(error);
           options.onGenerationError?.({ phase, chunks, timedOut: timeout });
           writer.write({ type: "error", errorText: errorText() });
         }

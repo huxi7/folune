@@ -171,8 +171,7 @@ test("历史回复默认折叠，只有思考的中止或失败也会收起且�
     expectExpanded(activeView.container, false);
     fireEvent.click(activeView.getByRole("button", { name: "思考过程" }));
     expectExpanded(activeView.container, true);
-    expect(activeView.container.textContent).not.toContain(reasoning.text);
-    expect(activeView.container.textContent).toContain("分析已结束");
+    expect(activeView.container.textContent).toContain(reasoning.text);
     activeView.unmount();
   }
 });
@@ -186,4 +185,43 @@ test("成功工具的整轮撤销只在续写与正文全部结束后出现", ()
   expect(view.queryByRole("button", { name: "撤销" })).toBeNull();
   view.rerender(turn([finishedReasoning, success, { type: "step-start" }, { ...answer, state: "done" }], "ready"));
   expect(view.getByRole("button", { name: "撤销" })).toBeTruthy();
+});
+
+
+test("少量明确批次不折叠；大量完成记录一次展开并保持，滚动可到最后一项", async () => {
+  const { BatchToolProgress } = await import("./BatchToolProgress");
+  const batch = (count: number) => ({ kind: "memo-batch" as const, items: Array.from({ length: count }, (_, i) => ({
+    id: String(i), title: `备忘录 ${i + 1}`, state: "succeeded" as const,
+    plan: { kind: "delete_node" as const, op: "delete" as const, nodeId: String(i), expectedRevision: 1 },
+  })) });
+  const view = render(<BatchToolProgress batch={batch(5)} live={false} />);
+  expect(view.container.querySelectorAll(".ds-tool-call-bubble")).toHaveLength(5);
+  expect(view.queryByText(/查看全部/)).toBeNull();
+  view.rerender(<BatchToolProgress batch={batch(100)} live />);
+  fireEvent.click(view.getByRole("button", { name: "查看全部 100 条记录" }));
+  view.rerender(<BatchToolProgress batch={batch(101)} live />);
+  expect(view.getByRole("button", { name: "收起操作记录" })).toBeTruthy();
+  const region = view.getByRole("region", { name: "全部操作记录" });
+  fireEvent.scroll(region, { target: { scrollTop: 3640 } });
+  expect(view.getByText("备忘录 101")).toBeTruthy();
+  expect(view.container.querySelectorAll(".agent-batch-record").length).toBeLessThanOrEqual(16);
+  expect(view.queryByText("显示更多操作")).toBeNull();
+});
+
+
+test("批量补位不等待勾选反馈，切换失败记录时从顶部显示", async () => {
+  const { BatchToolProgress } = await import("./BatchToolProgress");
+  const batch = { kind: "memo-batch" as const, items: Array.from({ length: 100 }, (_, i) => ({
+    id: String(i), title: `备忘录 ${i + 1}`, state: i < 90 ? "succeeded" as const : i < 98 ? "running" as const : "queued" as const,
+    plan: { kind: "delete_node" as const, op: "delete" as const, nodeId: String(i), expectedRevision: 1 },
+  })) };
+  const view = render(<BatchToolProgress batch={batch} live />);
+  fireEvent.click(view.getByRole("button", { name: "查看全部 90 条记录" }));
+  fireEvent.scroll(view.getByRole("region", { name: "全部操作记录" }), { target: { scrollTop: 3200 } });
+  const next = { ...batch, items: batch.items.map((item, i) => i === 90 ? { ...item, state: "failed" as const } : i === 98 ? { ...item, state: "running" as const } : item) };
+  view.rerender(<BatchToolProgress batch={next} live />);
+  expect(view.container.querySelectorAll(".ds-tool-spinner")).toHaveLength(8);
+  expect(view.getByLabelText("刚刚完成的操作")).toBeTruthy();
+  fireEvent.click(view.getByRole("button", { name: "查看未完成项" }));
+  expect(view.getByRole("region", { name: "全部操作记录" }).textContent).toContain("备忘录 91");
 });

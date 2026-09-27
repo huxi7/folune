@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Motion 的 Transition/Variants 类型与 CSS 自定义属性协议
- * [OUTPUT]: 对外提供语义时长、曲线、有限 spring、surface 变体与含错峰步长/上限的同源 CSS token 声明
+ * [OUTPUT]: 对外提供语义时长、曲线、有限 spring、surface 变体与含错峰步长/上限及工具单弧双时钟的同源 CSS token 声明
  * [POS]: Design System 的唯一通用动效语言；组件不复制数字，纸面/绳线的领域几何仍归 pages/widgets
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -20,6 +20,8 @@ export const motionDuration = {
   spatial: 0.36,
   reveal: 0.42,
   quiet: 0.6,
+  progressRotate: 1.8,
+  progressArc: 1.4,
 } as const;
 export const motionEase = {
   enter: [0.22, 1, 0.36, 1],

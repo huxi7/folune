@@ -201,6 +201,13 @@ export function getAgentToolPresentation(
     };
   }
 
+  if (toolName === "edit_nodes") {
+    const input = asRecord(part.input);
+    const count = Array.isArray(input?.targets) ? input.targets.length : 0;
+    if (!count) return { icon: TreeStructureIcon, name: "准备批量操作", details: [] };
+    const action = input?.op === "delete" ? "移入回收站" : input?.op === "move" ? "移动" : "重命名";
+    return { icon: TreeStructureIcon, name: `${action} ${count} 篇备忘录`, details: [{ label: "范围", value: `本次明确选定的 ${count} 篇备忘录` }, ...resultDetails(part, "批量处理已结束，请查看各项结果。")] };
+  }
   if (toolName === "edit_node") {
     const input = asRecord(part.input);
     const output = asRecord(part.output);

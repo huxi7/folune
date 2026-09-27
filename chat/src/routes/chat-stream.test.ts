@@ -160,3 +160,21 @@ test("98 项审批并发有界，总时长超过单项期限仍能正常完成",
   expect(chunks.at(-1)?.type).toBe("finish");
   expect(f.saves[0]?.status).toBe("complete");
 });
+
+test("余额不足在 Mastra error chunk 与外层 SSE 间保留，不执行写工具且落库失败状态", async () => {
+  const { MODEL_BALANCE_MESSAGE, modelErrorMessage } = await import("../lib/model-error");
+  const f = fixture([{ type: "start-step" }, { type: "error", errorText: modelErrorMessage({ statusCode: 402 }) }]);
+  let approvals = 0;
+  f.options.approveTool = async () => { approvals++; return null; };
+  expect((await collect(f.options)).at(-1)).toEqual({ type: "error", errorText: MODEL_BALANCE_MESSAGE });
+  expect(approvals).toBe(0);
+  expect(f.saves[0]?.status).toBe("error");
+});
+
+test("模型创建流直接抛出402时仍显示余额不足", async () => {
+  const { MODEL_BALANCE_MESSAGE } = await import("../lib/model-error");
+  const f = fixture([]);
+  f.options.createStream = async () => { throw Object.assign(new Error("private upstream error"), { statusCode: 402 }); };
+  expect((await collect(f.options)).at(-1)).toEqual({ type: "error", errorText: MODEL_BALANCE_MESSAGE });
+  expect(f.saves[0]?.status).toBe("error");
+});

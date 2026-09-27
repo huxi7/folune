@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖账号权限确认状态控制发送、useConversationScroll、DS 动态/视图/输入原语、useAiThreads、类型化 useChat/原生审批及既有工具执行边界
- * [OUTPUT]: 对外提供 AI Native 右侧工作区；只读工具参数到齐即并发执行，写工具经过流末审批门禁后最多四项并发，停止取消排队、保存本批结果并阻断自动续写；整轮活动跨客户端工具/审批/续写持续，消息定点同步并以本地快照快速回显
+ * [OUTPUT]: 对外提供 AI Native 右侧工作区；只读工具参数到齐即并发执行，写工具经过流末审批门禁后最多八项并发，停止取消排队、保存本批结果并阻断自动续写；整轮活动跨客户端工具/审批/续写持续，消息定点同步并以本地快照快速回显
  * [POS]: /app 右侧 AI Native V2 组合根；新对话立即进入本地草稿，首发创建期间保持同一 useChat 与消息实例；历史只负责导航，目标会话加载/失败在内容窗承接；api command 是唯一写事实源，Store 只做幂等投影与回滚
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -56,14 +56,13 @@ import { deriveAssistantActivity, hasAssistantContinuation } from "./activitySta
 import {
   applyApprovalResponse,
   applyToolOutput,
-  findApprovedPendingTools,
   findPendingApproval,
   type AgentToolPart,
 } from "./approvalState";
 import { ApprovalCard } from "./ApprovalCard";
 import { cancelCelebration } from "./celebration";
 import { ChatMessage, LiveAssistantTurn } from "./ChatMessage";
-import { getChatErrorCode } from "./chatFetch";
+import { getErrorCopy } from "./chatErrorCopy";
 import { createMemoChatTransport } from "./chatTransport";
 import {
   canSubmitComposer,
@@ -86,6 +85,10 @@ import {
   normalizeToolInput,
   parseAgentClientToolInput,
 } from "./clientTools";
+import { findRecoverableTools } from "./batchRecovery";
+import { createBatchCheckpointer } from "./batchCheckpoint";
+import { executeBatch, prepareBatch } from "./batchToolExecution";
+import { ToolExecutionContext, createToolExecutionStore, readBatchSnapshot, readToolCommands } from "./toolExecutionState";
 import { createClientToolQueue } from "./clientToolQueue";
 import { executeMemoToolPlan } from "./memoToolExecution";
 import { planMemoTool } from "./memoToolPlanner";
@@ -139,21 +142,6 @@ type ConversationProps = {
   userId: string;
 };
 
-const readCommandOutput = (value: unknown): AiCommand | null => {
-  if (value === null || typeof value !== "object" || Array.isArray(value)) return null;
-  const command = value as Partial<AiCommand>;
-  return typeof command.id === "string" && typeof command.operation === "string"
-    && typeof command.status === "string" ? command as AiCommand : null;
-};
-
-function getErrorCopy(error: Error | undefined) {
-  const code = getChatErrorCode(error);
-  if (code === "UNAUTHORIZED") return { title: "需要重新登录", description: "登录状态已失效，请重新登录后再发送消息。" };
-  if (code === "AUTH_UPSTREAM_UNAVAILABLE" || code === "AUTH_UPSTREAM_ERROR") return { title: "暂时无法验证登录状态", description: "身份服务暂时不可用，请稍后再试。" };
-  if (code === "INVALID_CHAT_REQUEST") return { title: "消息格式无效", description: "当前消息格式无法发送，请刷新页面后再试。" };
-  return { title: "消息发送失败", description: error?.message || "请检查网络与 chat 服务状态，然后重试。" };
-}
-
 function AgentConversation({
   accessToken,
   currentMemo,
@@ -192,6 +180,7 @@ function AgentConversation({
     if (conversationKey.startsWith("draft")) composerRef.current?.focus({ preventScroll: true });
   }, [conversationKey]);
   const manuallyApprovedToolCalls = useRef(new Set<string>());
+  const executionStore = useMemo(() => createToolExecutionStore(), []);
   const toolQueue = useMemo(() => createClientToolQueue(), []);
   const turnStopped = useRef(false);
   const toolBatchCount = useRef(0);
@@ -304,7 +293,11 @@ function AgentConversation({
     },
   });
   messagesRef.current = messages;
-
+  const checkpointBatch = useMemo(() => createBatchCheckpointer({
+    read: () => messagesRef.current,
+    write: (next) => { messagesRef.current = next; setMessages(next); },
+    persist: (message) => syncAiMessage(accessToken, threadIdRef.current!, message),
+  }), [accessToken, setMessages]);
   async function executePendingClientTools(message: FoluneUIMessage) {
     const pending = message.parts.filter(isToolUIPart).filter((part) =>
       part.state === "input-available"
@@ -312,7 +305,7 @@ function AgentConversation({
     );
     const results = await Promise.all(pending.map((part) => executeClientToolPart(part)));
     if (turnStopped.current) {
-      let settled = [message];
+      let settled = [messagesRef.current.find((candidate) => candidate.id === message.id) ?? message];
       pending.forEach((part, index) => {
         const result = results[index];
         if (result) settled = applyToolOutput(settled, part.toolCallId, result) ?? settled;
@@ -321,34 +314,47 @@ function AgentConversation({
       await syncAiMessage(accessToken, threadIdRef.current!, settled[0]!).catch(() => undefined);
     }
   }
-
   function getClientToolExecution(part: AgentToolPart): Promise<unknown> {
     const existing = memoToolExecutions.current.get(part.toolCallId);
     if (existing !== undefined) return existing;
     const toolName = getToolName(part);
-    // 同步 schema/Planner 失败也进入已记忆 promise，同一调用只能执行一次。
-    const execution = toolQueue.run(async () => {
-      if (turnStopped.current) throw new Error("操作已停止，尚未执行。");
-      if (!isAgentClientToolName(clientTools, toolName)) throw new Error("未知客户端工具。");
-      const normalizedInput = normalizeToolInput(part.input);
-      return isMemoClientToolName(toolName)
-          ? executeMemoToolPlan({
-              accessToken,
-              manuallyApproved: manuallyApprovedToolCalls.current.has(part.toolCallId),
-              plan: planMemoTool(
-                toolName,
-                parseAgentClientToolInput(clientTools, toolName, normalizedInput),
-                useMemoTreeStore.getState().nodes,
-              ),
-              threadId: threadIdRef.current!,
-              toolCallId: part.toolCallId,
-            })
+    executionStore.set(part.toolCallId, { state: "queued" });
+    const execution = (async () => {
+      if (toolName === "edit_nodes") {
+        const saved = messagesRef.current.flatMap((message) => message.parts).find((candidate) => candidate.type === "data-tool-batch" && candidate.id === part.toolCallId);
+        const snapshot = readBatchSnapshot(saved && "data" in saved ? saved.data : undefined)
+          ?? await prepareBatch(part.input, part.toolCallId, useMemoTreeStore.getState().nodes);
+        return executeBatch({
+          snapshot, queue: toolQueue, stopped: () => turnStopped.current,
+          execute: (plan, id) => executeMemoToolPlan({ accessToken, plan, toolCallId: id, threadId: threadIdRef.current!, manuallyApproved: manuallyApprovedToolCalls.current.has(part.toolCallId) }) as Promise<AiCommand>,
+          publish: (batch) => executionStore.set(part.toolCallId, { state: "running", batch }),
+          checkpoint: (batch) => checkpointBatch(part.toolCallId, batch),
+        });
+      }
+      return toolQueue.run(async () => {
+        if (turnStopped.current) throw new Error("操作已停止，尚未执行。");
+        executionStore.set(part.toolCallId, { state: "running" });
+        if (!isAgentClientToolName(clientTools, toolName)) throw new Error("未知客户端工具。");
+        const normalizedInput = normalizeToolInput(part.input);
+        return isMemoClientToolName(toolName)
+          ? executeMemoToolPlan({ accessToken, manuallyApproved: manuallyApprovedToolCalls.current.has(part.toolCallId),
+              plan: planMemoTool(toolName, parseAgentClientToolInput(clientTools, toolName, normalizedInput), useMemoTreeStore.getState().nodes),
+              threadId: threadIdRef.current!, toolCallId: part.toolCallId })
           : executeAgentClientTool(clientTools, toolName, normalizedInput);
+      });
+    })().then((output) => {
+      const batch = readBatchSnapshot(output);
+      const failed = batch ? batch.items.some((item) => item.state !== "succeeded") : readToolCommands(output).some((command) => command.status !== "succeeded");
+      executionStore.set(part.toolCallId, { state: failed ? "failed" : "succeeded", batch });
+      return output;
+    }, (error) => {
+      const previous = executionStore.get(part.toolCallId);
+      executionStore.set(part.toolCallId, { state: turnStopped.current ? "cancelled" : "failed", batch: previous?.batch && { ...previous.batch, items: previous.batch.items.map((item) => item.state === "queued" ? { ...item, state: "cancelled" } : item) } });
+      throw error;
     });
     memoToolExecutions.current.set(part.toolCallId, execution);
     return execution;
   }
-
   async function executeClientToolPart(
     part: AgentToolPart,
     durableBaseMessages?: readonly FoluneUIMessage[],
@@ -359,7 +365,7 @@ function AgentConversation({
       const output = await getClientToolExecution(part);
       const completedMessages = durableBaseMessages === undefined
         ? undefined
-        : applyToolOutput(durableBaseMessages, part.toolCallId, {
+        : applyToolOutput(messagesRef.current, part.toolCallId, {
             output,
             state: "output-available",
           });
@@ -385,7 +391,7 @@ function AgentConversation({
       const errorText = toolError instanceof Error ? toolError.message : "客户端工具执行失败。";
       const completedMessages = durableBaseMessages === undefined
         ? undefined
-        : applyToolOutput(durableBaseMessages, part.toolCallId, {
+        : applyToolOutput(messagesRef.current, part.toolCallId, {
             errorText,
             state: "output-error",
           });
@@ -457,8 +463,7 @@ function AgentConversation({
         const toolName = normalizeAgentToolName(getToolName(part));
         const isWrite = toolName === "edit_node" || toolName === "edit_memo";
         if (part.state === "output-available") {
-          const command = readCommandOutput(part.output);
-          if (command !== null) reconcileAiCommand(command);
+          for (const command of readToolCommands(part.output)) reconcileAiCommand(command);
         }
         if (!isWrite) continue;
         if ((part.state === "approval-responded" && !part.approval.approved)
@@ -503,7 +508,7 @@ function AgentConversation({
         manuallyApprovedToolCalls.current.delete(approvalPart.toolCallId);
         rollbackAiToolCall(approvalPart.toolCallId);
       }
-      await onThreadUpdated(respondedMessages);
+      await onThreadUpdated(messagesRef.current);
     })().catch(() => {
       setTurnContinuing(false);
       if (!settledApprovalIds.current.has(id)) {
@@ -519,16 +524,19 @@ function AgentConversation({
   // 恢复扫描只由持久消息与稳定工具表驱动；执行函数使用当轮闭包，放入依赖会让每次 render 重扫。
   // oxlint-disable react-hooks/exhaustive-deps -- recoveredToolCalls 已按 toolCallId 保证幂等
   useEffect(() => {
-    const recoverable = findApprovedPendingTools(messages);
+    if (turnStopped.current) return;
+    const recoverable = findRecoverableTools(messages);
     for (const part of recoverable) {
       if (!isAgentClientToolName(clientTools, getToolName(part))
-        || recoveredToolCalls.current.has(part.toolCallId)
-        || respondingApprovalIds.current.has(part.approval.id)) continue;
+        || memoToolExecutions.current.has(part.toolCallId) || recoveredToolCalls.current.has(part.toolCallId)
+        || (part.approval && respondingApprovalIds.current.has(part.approval.id))) continue;
 
       recoveredToolCalls.current.add(part.toolCallId);
       setTurnContinuing(true);
-      manuallyApprovedToolCalls.current.add(part.toolCallId);
-      void executeClientToolPart(part, messages);
+      if (part.approval?.approved) manuallyApprovedToolCalls.current.add(part.toolCallId);
+      toolBatchCount.current++;
+      setClientToolsRunning(true);
+      void executeClientToolPart(part, messages).finally(() => { toolBatchCount.current--; setClientToolsRunning(toolBatchCount.current > 0); });
     }
   }, [clientTools, messages]);
   // oxlint-enable react-hooks/exhaustive-deps
@@ -666,6 +674,7 @@ function AgentConversation({
   }
   return (
     <div className="agent-panel-body">
+      <ToolExecutionContext.Provider value={executionStore}>
       <div aria-busy={busy} aria-live="polite" className="agent-message-list" ref={messageListRef} role="log">
         {displayMessages.map((message, index) => index === displayLiveAssistantIndex ? null : (
           <ChatMessage activity="none" key={message.id} message={message} onProgress={scrollToLatestAuto} onUndo={undoAssistantTurn} />
@@ -674,6 +683,7 @@ function AgentConversation({
           <LiveAssistantTurn activity={activity} key="live-assistant" message={displayLiveAssistantIndex >= 0 ? displayMessages[displayLiveAssistantIndex] : undefined} onProgress={scrollToLatestAuto} onUndo={undoAssistantTurn} />
         ) : null}
       </div>
+      </ToolExecutionContext.Provider>
       {error ? (
         <div className="agent-error-state" role="alert"><WarningCircleIcon aria-hidden="true" size={16} /><div><strong>{errorCopy.title}</strong><p>{errorCopy.description}</p></div></div>
       ) : null}

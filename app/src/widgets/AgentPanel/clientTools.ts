@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 @mastra/client-js createTool、zod 与浏览器庆祝执行器
- * [OUTPUT]: 对外提供 celebration 与四个 memo 胖工具的客户端注册表、字符串入参归一化、schema 校验与庆祝执行入口
+ * [OUTPUT]: 对外提供 celebration、四个原子 memo 工具与 edit_nodes 批量工具的客户端注册表、字符串入参归一化、schema 校验与庆祝执行入口
  * [POS]: AgentPanel 客户端工具边界；memo 工具由纯 Planner 规划并交 api command，庆祝仍由浏览器视觉执行器直接完成
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -12,6 +12,7 @@ import { playCelebration } from "./celebration";
 import {
   editMemoInputSchema,
   editNodeInputSchema,
+  editNodesInputSchema,
   readMemoInputSchema,
   readTreeInputSchema,
 } from "./memoToolSchemas";
@@ -56,7 +57,13 @@ export function createAgentClientTools() {
     inputSchema: editMemoInputSchema,
   });
 
-  return { celebration, edit_memo, edit_node, read_memo, read_tree };
+  const edit_nodes = createTool({
+    id: "edit_nodes",
+    description: "对明确目标清单批量移动、重命名或软删除备忘录；每项独立执行并保留结果。",
+    inputSchema: editNodesInputSchema,
+  });
+
+  return { edit_nodes, celebration, edit_memo, edit_node, read_memo, read_tree };
 }
 
 export type AgentClientTools = ReturnType<typeof createAgentClientTools>;

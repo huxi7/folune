@@ -25,7 +25,7 @@ AI 是用户的备忘录协作伙伴与智能档案管理员。
 全栈 TypeScript，顶层由三个业务模块组成。
 
 - app: 用户端，Bun + Vite 8 + React 19 + React Router 7 + Zustand 5 + Motion for React 12 + @xyflow/react 12 + CodeMirror 6/Lezer Markdown + react-markdown/remark/rehype-sanitize + Vercel AI SDK 6 (`@ai-sdk/react`) + `@mastra/client-js` + zod 4 + canvas-confetti + Kumo UI 2 + Tailwind CSS v4 + 本地 design system（含同源 Motion token 与完整入退场原语）+ Lucide React + Supabase Auth SDK
-- chat: AI 能力服务，Bun + Mastra 1.57 + `@mastra/ai-sdk` + Vercel AI SDK 6 + zod 4；模型白名单只含 DeepSeek V4 Flash 且拒绝任何切换；对话/审批/整理三个 Agent 分离，模型只见 read_tree/read_memo/edit_memo/edit_node 四个胖笔记工具与 celebration
+- chat: AI 能力服务，Bun + Mastra 1.57 + `@mastra/ai-sdk` + Vercel AI SDK 6 + zod 4；模型白名单只含 DeepSeek V4 Flash 且拒绝任何切换；对话/审批/整理三个 Agent 分离，模型只见 read_tree/read_memo/edit_memo/edit_node 四个原子笔记工具、明确清单的 edit_nodes 批量工具与 celebration
 - api: 业务接口服务，Bun + Hono 4 + zod 4 + Supabase REST/PostgREST/Storage HTTP API；只以用户 JWT 访问数据，禁止 service role、连接串与 ORM
 
 ## 运行形态
@@ -44,7 +44,7 @@ Canvas V2 是一级持久知识 Workspace：memo 默认 Canvas 与 standalone Ca
 | 模块 | 职责 | 文档 |
 | --- | --- | --- |
 | app | 用户端，以 Paper First 舞台承载写作与共享左右工具；Canvas 路由切换到始终挂载同一 React Flow 实例的独立 Workspace，支持 memo Picker、预览/返回、自由文字、连接/删除/框选/整组移动/缩放、显式 AI 增量拓展与可靠自动保存；服务端文档、交互会话、WAL/传输状态分别收口，选择只有 React Flow 一个所有者，正文只按 memo ID 读取 | [app/CLAUDE.md](app/CLAUDE.md) |
-| chat | AI 能力服务，冻结消息上下文；聊天流保留推理协议但 APP 只展示阶段与真实工具进度，批量调用有界执行且可停止，正文首分块触发前端一次性收起过程，不等待步骤结束；对话、审批、整理与逐篇关联判断职责分离；Canvas expansion 只从 api 重取可信 context/正文/语料版本，复用 Explore 判断和逐字引文复核后返回候选，最终写入仍由浏览器经 api 统一 mutation 提交 | [chat/CLAUDE.md](chat/CLAUDE.md) |
+| chat | AI 能力服务，冻结消息上下文；聊天流原样透传推理，APP 直接以纯文本将原始推理与真实工具进度交错展示，不添加摘要模型调用，明确批量请求由共享八并发队列执行且可停止，转圈与实际运行同构，完成记录一次展开，正文首分块触发前端一次性收起过程，不等待步骤结束；对话、审批、整理与逐篇关联判断职责分离；Canvas expansion 只从 api 重取可信 context/正文/语料版本，复用 Explore 判断和逐字引文复核后返回候选，最终写入仍由浏览器经 api 统一 mutation 提交 | [chat/CLAUDE.md](chat/CLAUDE.md) |
 | api | 业务接口服务，承载 profile、memo、回收站、AI 状态机与 Canvas V2 默认/空白入口、无正文图读取、expansion context、人工/AI 共用 mutation；owner-only RLS、行锁、version、稳定 intent digest、receipt、原子 checkpoint 与同父同类型标题唯一索引共同构成唯一持久化边界，重名由数据库裁决；两种 Canvas 共用一条命名规则，标题不跟随任何东西 | [api/CLAUDE.md](api/CLAUDE.md) |
 | deploy | 后端构建基础设施，提供 API/Chat 共用的开发与生产多阶段镜像及运行时配置隔离契约 | [deploy/CLAUDE.md](deploy/CLAUDE.md) |
 | scripts | 本地开发运维入口，统一启动、停止与查看 folune-api-dev/folune-chat-dev 双服务 Docker 日志 | [scripts/CLAUDE.md](scripts/CLAUDE.md) |

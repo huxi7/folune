@@ -3,7 +3,7 @@
 
 成员清单
 useMotionPreference.ts: 用 useSyncExternalStore 订阅系统减少动态效果，Panel 与输入区无需刷新即可取消位移
-motion.ts: 增加目录视图的左侧 24px/280ms 进入及新上下文输入表面的 12px/280ms 浮现；Design System 唯一通用动效源，按操作/浮层/模态/面板/层级输出时长、曲线、有限 spring 和同源 CSS 声明，32ms 错峰步长与 128ms 上限同步导出给营销 CSS；领域纸面/绳线几何不进入通用层
+motion.ts: 统一工具进度单弧的 1800ms 旋转/1400ms 伸缩时钟； 增加目录视图的左侧 24px/280ms 进入及新上下文输入表面的 12px/280ms 浮现；Design System 唯一通用动效源，按操作/浮层/模态/面板/层级输出时长、曲线、有限 spring 和同源 CSS 声明，32ms 错峰步长与 128ms 上限同步导出给营销 CSS；领域纸面/绳线几何不进入通用层
 useModalLifecycle.ts: Dialog 行为边界，统一嵌套模态栈、焦点循环/归还与计数滚动锁；Escape 在 capture 层先让内菜单处理，关闭后立即退出交互，最后一个视觉层卸载才解锁
 .gitkeep: 保留 design system 层空目录
 CLAUDE.md: 记录 design system 职责与文档协议

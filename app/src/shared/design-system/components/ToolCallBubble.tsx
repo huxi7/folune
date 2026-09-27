@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖 Collapse 的按需高度披露、 React 折叠状态、共享 Lucide 工具图标与自带圆形轮廓的结果图标、人话名称/详情与 AI SDK 调用状态
- * [OUTPUT]: 对外提供不暴露原始载荷、固定状态位展示转圈/成功/失败、有详情才可聚焦展开的 ToolCallBubble
+ * [INPUT]: 依赖 Collapse 的按需高度披露、 React 折叠状态、共享 Lucide 工具图标与自带圆形轮廓的结果图标、人话名称/详情、AI SDK 状态与执行器 running/queued 状态
+ * [OUTPUT]: 对外提供不暴露原始载荷、固定状态位仅 running 展示单弧旋转，等待静止，完成展示成功/失败、有详情才可聚焦展开的 ToolCallBubble
  * [POS]: design-system AI 消息家族的工具披露控件，以 Secondary Button 同源材质承载动作入口，详情保持普通信息排版
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -9,13 +9,14 @@ import { Collapse } from "./Collapse";
 import {
   CheckCircleIcon,
   ToolboxIcon,
-  CircleNotchIcon,
   XCircleIcon,
   type Icon,
 } from "../icons";
 import { useId, useState } from "react";
 
 export type ToolCallState =
+  | "queued"
+  | "running"
   | "input-streaming"
   | "input-available"
   | "approval-requested"
@@ -38,10 +39,12 @@ type ToolCallBubbleProps = {
 };
 
 const stateLabel: Record<ToolCallState, string> = {
+  queued: "等待执行",
+  running: "正在执行",
   "input-streaming": "正在准备",
-  "input-available": "正在调用",
+  "input-available": "等待执行",
   "approval-requested": "等待确认",
-  "approval-responded": "正在调用",
+  "approval-responded": "等待执行",
   "output-available": "调用完成",
   "output-error": "调用失败",
   "output-denied": "已取消",
@@ -61,13 +64,13 @@ export function ToolCallBubble({
   const denied = state === "output-denied";
   const pending = !finished && !failed && !denied;
   const interrupted = pending && !live;
-  const active = pending && live;
+  const active = state === "running" && live;
   const expandable = details.length > 0;
   const ResultIcon = finished
     ? CheckCircleIcon
     : failed || denied || interrupted
       ? XCircleIcon
-      : CircleNotchIcon;
+      : null;
   const status = interrupted ? "未完成" : stateLabel[state];
   const bubbleClassName = "ds-button-secondary ds-tool-call-bubble";
   const bubbleContent = (
@@ -76,8 +79,12 @@ export function ToolCallBubble({
         <ToolIcon aria-hidden="true" size={14} />
       </span>
       <strong className="ds-tool-call-name">{name}</strong>
-      <span aria-hidden="true" className="ds-tool-call-result" data-result={finished ? "success" : active ? "pending" : "failure"}>
-        <ResultIcon className={active ? "ds-button-spinner" : undefined} size={16} />
+      <span aria-hidden="true" className="ds-tool-call-result" data-result={finished ? "success" : active ? "pending" : pending && live ? "waiting" : "failure"}>
+        {ResultIcon ? <ResultIcon size={16} /> : active ? (
+          <svg className="ds-tool-spinner" viewBox="0 0 24 24" width="16" height="16" fill="none" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" pathLength="100" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+        ) : <span className="ds-tool-waiting" />}
       </span>
     </>
   );

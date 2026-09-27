@@ -1,11 +1,36 @@
 /**
  * [INPUT]: 依赖 zod 的对象 schema、字段描述与条件校验能力
- * [OUTPUT]: 对外提供 read_tree/edit_node/read_memo/edit_memo 客户端工具 schema、输入类型与 Planner 输出类型
+ * [OUTPUT]: 对外提供 read_tree/edit_node/read_memo/edit_memo/edit_nodes 客户端工具 schema、输入类型与 Planner 输出类型
  * [POS]: AgentPanel 胖工具协议源；与 chat 端模型工具保持同构，并把 revision 门禁带入纯 Planner plan
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
 import { z } from "zod";
+
+export const editNodesInputSchema = z.object({
+  op: z.enum(["delete", "move", "rename"]),
+  parent_id: z.uuid().nullable().optional(),
+  targets: z.array(z.object({
+    node_id: z.uuid(),
+    expected_revision: z.number().int().positive(),
+    title: z.string().trim().min(1).max(500).optional(),
+  }).strict()).min(1).max(500),
+}).strict().superRefine((input, context) => {
+  if (new Set(input.targets.map((target) => target.node_id)).size !== input.targets.length) {
+    context.addIssue({ code: "custom", message: "批量目标不能重复", path: ["targets"] });
+  }
+  if (input.op === "move" && input.parent_id === undefined) {
+    context.addIssue({ code: "custom", message: "移动必须提供目标目录", path: ["parent_id"] });
+  }
+  if (input.op !== "move" && input.parent_id !== undefined) {
+    context.addIssue({ code: "custom", message: "只有移动可以提供目标目录", path: ["parent_id"] });
+  }
+  input.targets.forEach((target, index) => {
+    if ((input.op === "rename") !== (target.title !== undefined)) {
+      context.addIssue({ code: "custom", message: "只有重命名必须提供每项目标标题", path: ["targets", index, "title"] });
+    }
+  });
+});
 
 export const editNodeOperationSchema = z
   .enum(["create", "rename", "move", "reorder", "delete"])
