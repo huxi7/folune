@@ -13,7 +13,8 @@ module.exports = {
     protocols: [{ name: 'Folune OAuth', schemes: ['folune'] }],
     ignore: (file) => Boolean(file && !/^\/(src|web|assets|node_modules)(\/|$)/.test(file)
       && !['/package.json', '/runtime.json'].includes(file)) || /\.test\.cjs$|CLAUDE\.md$/.test(file),
-    ...(process.env.APPLE_SIGN_IDENTITY ? { osxSign: { identity: process.env.APPLE_SIGN_IDENTITY } } : {}),
+    // ---- 无真实证书时用 ad-hoc 空签名(identity '-'),让 arm64 应用被 Gatekeeper「仍要打开」放行,而不是报「已损坏」 ----
+    osxSign: { identity: process.env.APPLE_SIGN_IDENTITY || '-' },
     ...(process.env.APPLE_ID && process.env.APPLE_APP_PASSWORD && process.env.APPLE_TEAM_ID ? {
       osxNotarize: { appleId: process.env.APPLE_ID, appleIdPassword: process.env.APPLE_APP_PASSWORD, teamId: process.env.APPLE_TEAM_ID },
     } : {}),
