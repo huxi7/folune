@@ -7,18 +7,20 @@
 import sharp from 'sharp';
 import pngToIco from 'png-to-ico';
 import { mkdir, writeFile } from 'node:fs/promises';
-const input = new URL('../../app/public/brand/folune.png', import.meta.url);
+import { fileURLToPath } from 'node:url';
+// ---- sharp 只认真实文件系统路径; URL.pathname 在 Windows 上是 /D:/... 打不开, 必须转 OS 路径 ----
+const input = fileURLToPath(new URL('../../app/public/brand/folune.png', import.meta.url));
 const assets = new URL('../assets/', import.meta.url);
 await mkdir(assets, { recursive: true });
-const png = await sharp(input.pathname).resize(1024, 1024).png().toBuffer();
+const png = await sharp(input).resize(1024, 1024).png().toBuffer();
 await writeFile(new URL('icon.png', assets), png);
 const chunks = [];
 for (const [type, size] of [['icp4',16], ['icp5',32], ['icp6',64], ['ic07',128], ['ic08',256], ['ic09',512], ['ic10',1024]]) {
-  const data = await sharp(input.pathname).resize(size, size).png().toBuffer();
+  const data = await sharp(input).resize(size, size).png().toBuffer();
   const header = Buffer.alloc(8); header.write(type); header.writeUInt32BE(data.length + 8, 4);
   chunks.push(header, data);
 }
 const header = Buffer.alloc(8); header.write('icns'); header.writeUInt32BE(8 + chunks.reduce((sum, chunk) => sum + chunk.length, 0), 4);
 await writeFile(new URL('icon.icns', assets), Buffer.concat([header, ...chunks]));
-const windows = await Promise.all([16,32,48,64,128,256].map(size => sharp(input.pathname).resize(size,size).png().toBuffer()));
+const windows = await Promise.all([16,32,48,64,128,256].map(size => sharp(input).resize(size,size).png().toBuffer()));
 await writeFile(new URL('icon.ico', assets), await pngToIco(windows));
