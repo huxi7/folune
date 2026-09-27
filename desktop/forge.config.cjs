@@ -19,9 +19,10 @@ module.exports = {
     } : {}),
   },
   makers: [
-    { name: '@electron-forge/maker-dmg', platforms: ['darwin'], config: { name: 'folune-macos-arm64', format: 'ULFO' } },
+    { name: '@electron-forge/maker-dmg', platforms: ['darwin'], config: { name: 'folune-macos-arm64', format: 'ULFO', icon: path.join(__dirname, 'assets/icon.icns') } },
     { name: '@electron-forge/maker-squirrel', platforms: ['win32'], config: {
       name: 'Folune', setupExe: 'folune-windows-x64.exe', setupIcon: path.join(__dirname, 'assets/icon.ico'),
+      iconUrl: 'https://raw.githubusercontent.com/solink7/folune-releases/main/icon.ico',
       ...(process.env.WINDOWS_CERTIFICATE_FILE ? { certificateFile: process.env.WINDOWS_CERTIFICATE_FILE, certificatePassword: process.env.WINDOWS_CERTIFICATE_PASSWORD } : {}),
     } },
   ],
