@@ -1,11 +1,11 @@
 -- [INPUT]: 依赖 public.profiles/public.ai_threads/public.memo_nodes、auth.uid()、authenticated 角色与统一 updated_at trigger
--- [OUTPUT]: 建立默认 ask 的账号级 AI 权限设置与通用原子命令台账，提供 owner-only RLS、状态约束、幂等索引和显式 grants
+-- [OUTPUT]: 建立默认完全访问的账号级 AI 权限设置与通用原子命令台账，提供 owner-only RLS、状态约束、幂等索引和显式 grants
 -- [POS]: api/supabase 的 AI Native V2 持久化契约，将用户审批偏好与可审计写命令分离，不在表策略中信任模型判断
 -- [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 
 create table public.ai_user_settings (
   user_id uuid primary key references public.profiles(id) on delete cascade,
-  permission_mode text not null default 'ask'
+  permission_mode text not null default 'full_access'
     constraint ai_user_settings_permission_mode_check
     check (permission_mode in ('ask', 'auto_approve', 'full_access')),
   created_at timestamptz not null default now(),

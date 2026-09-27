@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 PresenceSurface 的统一入退场、 shared/api/ai settings GET/PATCH、AgentPanel 权限设置缓存、后端确认状态、全局 Toast、当前用户/access token 与 busy 状态
- * [OUTPUT]: 对外提供账号全局“每次询问/智能审批实验/完全访问”切换、勾选标记与统一中性菜单表面；成功以模式更新反馈，加载/保存失败通过 Toast 明示且模式不漂移
- * [POS]: AgentPanel Composer 的 AI 权限偏好控制器；界面只展示 API 已确认模式，不用乐观假象代替持久化事实
+ * [OUTPUT]: 对外提供账号全局三档权限切换；首屏默认完全访问，加载/保存期间不可切换，失败保留显示并允许重试
+ * [POS]: AgentPanel Composer 的权限视图；只接收当前账号当前请求，保存交由共享协调器跨卸载与凭据刷新完成
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -10,13 +10,10 @@ import { CaretDownIcon, CheckIcon, ShieldCheckIcon } from "../../shared/design-s
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useDismissable } from "../../shared/design-system/useDismissable";
 
-import {
-  updateAiSettings,
-  type AiPermissionMode,
-} from "../../shared/api/ai";
+import type { AiPermissionMode } from "../../shared/api/ai";
 import { Button, useToast } from "../../shared/design-system/components";
 import { useAgentPanelStore } from "../../shared/store/agentPanelStore";
-import { readAiSettings, writeAiSettings } from "./aiSettingsCache";
+import { readAiSettings, saveAiSettings } from "./aiSettingsCache";
 
 const labels: Record<AiPermissionMode, string> = {
   ask: "每次询问",
@@ -41,8 +38,8 @@ export function PermissionModeControl({
   const shellRef = useRef<HTMLDivElement>(null);
   const requestSequence = useRef(0);
   const { toast } = useToast();
-  const mode = useAgentPanelStore((state) => state.permissionMode);
-  const permissionStatus = useAgentPanelStore((state) => state.permissionStatus);
+  const mode = useAgentPanelStore((state) => state.permissionUserId === userId ? state.permissionMode : "full_access");
+  const permissionStatus = useAgentPanelStore((state) => state.permissionUserId === userId ? state.permissionStatus : "idle");
   const beginLoad = useAgentPanelStore((state) => state.beginPermissionLoad);
   const beginSave = useAgentPanelStore((state) => state.beginPermissionSave);
   const failPermission = useAgentPanelStore((state) => state.failPermission);
@@ -51,7 +48,7 @@ export function PermissionModeControl({
 
   useEffect(() => {
     const sequence = ++requestSequence.current;
-    beginLoad();
+    beginLoad(userId);
     void readAiSettings(accessToken, userId)
       .then((settings) => {
         if (sequence === requestSequence.current) {
@@ -63,7 +60,7 @@ export function PermissionModeControl({
         const message = error instanceof Error ? error.message : "无法读取审批设置。";
         failPermission(message);
         toast({
-          description: `${message} 当前继续使用“每次询问”。`,
+          description: `${message} 请重新选择审批模式，确认后再发送。`,
           title: "审批设置加载失败",
           variant: "error",
         });
@@ -78,7 +75,9 @@ export function PermissionModeControl({
   useDismissable({ onDismiss: closeMenu, open, shellRef });
 
   const changeMode = async (nextMode: AiPermissionMode) => {
-    if (saving || nextMode === mode) {
+    const current = useAgentPanelStore.getState();
+    if (busy || current.permissionUserId !== userId || !["ready", "error"].includes(current.permissionStatus)) return;
+    if (current.permissionStatus === "ready" && nextMode === mode) {
       setOpen(false);
       return;
     }
@@ -86,16 +85,15 @@ export function PermissionModeControl({
     setOpen(false);
     beginSave();
     try {
-      const settings = await updateAiSettings(accessToken, nextMode);
+      const settings = await saveAiSettings(accessToken, userId, nextMode);
       if (sequence !== requestSequence.current) return;
-      writeAiSettings(userId, settings);
       resolvePermission(settings.permission_mode);
     } catch (error) {
       if (sequence !== requestSequence.current) return;
       const message = error instanceof Error ? error.message : "无法保存审批设置。";
       failPermission(message);
       toast({
-        description: `${message} 仍使用“${labels[mode]}”。`,
+        description: `${message} 尚未确认切换，请重新选择后再发送。`,
         title: "审批模式切换失败",
         variant: "error",
       });
@@ -119,7 +117,7 @@ export function PermissionModeControl({
       >
         {!compact ? <><span>{labels[mode]}</span><CaretDownIcon size={14} /></> : null}
       </Button>
-      <PresenceSurface open={open} placement={compact ? "top" : "bottom"} className="agent-permission-menu" data-placement={compact ? "top" : "bottom"} role="menu">
+      <PresenceSurface open={open && !busy} placement={compact ? "top" : "bottom"} className="agent-permission-menu" data-placement={compact ? "top" : "bottom"} role="menu">
           {(Object.keys(labels) as AiPermissionMode[]).map((value) => (
             <button
               aria-checked={mode === value}

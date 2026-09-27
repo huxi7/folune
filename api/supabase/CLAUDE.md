@@ -21,7 +21,8 @@ ai.sql: 建立不含归档状态的会话、原始 UIMessage parts、会话级 m
 remove-ai-thread-archive.sql: 一次性删除 public.ai_threads.status 与旧归档索引；保留历史会话并创建按活动时间排序的新索引
 ai-organize.sql: 提供 Run 创建/规划/失败/拒绝状态机和 SECURITY INVOKER 的 apply/undo 原子执行器；固定锁顺序、revision 门禁、真实目录复核、动作倒序恢复与幂等结果共同保护 AI 写操作
 ai-organize-grants.sql: 收口 AI 整理六个 SECURITY INVOKER 函数的显式权限；撤销 public/anon/service_role 默认执行权，只向 authenticated 开放 Run 状态机入口
-ai-v2.sql: 已部署的默认 ask 账号级 ai_user_settings 与通用 ai_commands 台账契约，以 owner-only RLS、幂等键、状态/操作/revision 约束及显式 grants 分离审批偏好和写审计事实
+ai-v2.sql: 新环境默认完全访问的账号级 ai_user_settings 与通用 ai_commands 台账契约，以 owner-only RLS、幂等键、状态/操作/revision 约束及显式 grants 分离审批偏好和写审计事实
+ai-settings-full-access.sql: 现有环境升级为默认完全访问；迁移 created_at=updated_at 的旧 ask 默认，保留明确选择，仅替换命令缺失设置时的默认片段以保留环境 GUC；2026-09-27 已应用并复核 Folune-staging，生产未应用
 ai-command.sql: 已部署的 SECURITY INVOKER Command 创建/批准/拒绝/apply/undo 状态机；按账号权限校验审批来源，删除/恢复先按 ID 锁整树再锁目标，避免并发删除交叉等待；保留 expected_revision/owner/撤销门禁，失败保留目标快照并区分死锁/序列化/锁超时
 
 ai-command-lock-order.sql: 已部署函数的增量升级补丁，只替换删除/恢复锁顺序和错误分类，保留远端 mutation GUC 与 RLS 契约；20260924040636 已应用到 Folune-staging

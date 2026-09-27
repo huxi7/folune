@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖真实 AgentPanel/useAiThreads/useChat/transport、happy-dom 与可控 API/SSE 边界
- * [OUTPUT]: 验证草稿零写入、首发单次创建/引用冻结/消息不重挂、失败重试和异步选择隔离
+ * [OUTPUT]: 验证草稿零写入、首发单次创建/引用冻结/消息不重挂、失败重试、异步选择隔离与权限未确认不得发送
  * [POS]: 草稿到持久会话的集成门禁；隔离子进程防止 module mock 污染其余用例
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -52,9 +52,11 @@ mock.module("../../shared/api/ai", () => ({
 const auth = await import("../../shared/supabase/auth");
 mock.module("../../shared/supabase/auth", () => ({ ...auth, getAuthenticatedAccessToken: async () => "test" }));
 const settings = await import("./aiSettingsCache");
+let readPermission = async () => ({ permission_mode: "ask" });
+let savePermission = async () => ({ permission_mode: "full_access" });
 mock.module("./aiSettingsCache", () => ({
   ...settings,
-  readAiSettings: async () => ({ permission_mode: "ask" }), writeAiSettings: () => undefined,
+  readAiSettings: () => readPermission(), saveAiSettings: () => savePermission(), writeAiSettings: () => undefined,
 }));
 const originalFetch = globalThis.fetch;
 globalThis.fetch = Object.assign(async (_input: unknown, init?: RequestInit) => {
@@ -81,6 +83,8 @@ afterEach(() => {
   creates = 0; referenceWrites.length = 0; chatBodies.length = 0; failReferences = false;
   bootstrap = async () => empty; create = async () => thread;
   content = async () => ({ selectedThread: thread, messages: [] });
+  readPermission = async () => ({ permission_mode: "ask" });
+  savePermission = async () => ({ permission_mode: "full_access" });
 });
 async function panel(currentMemo: MemoTreeNode | null = null) {
   const view = render(<ToastProvider><AgentPanel {...input} currentMemo={currentMemo} memoTree={currentMemo ? [currentMemo] : []}
@@ -101,6 +105,33 @@ function deferred<T>() {
   const promise = new Promise<T>((r) => { resolve = r; });
   return { promise, resolve };
 }
+
+test("首开权限未确认和切换保存期间，点击发送、Enter 与直接提交都不能走旧模式", async () => {
+  const loading = deferred<{ permission_mode: string }>();
+  readPermission = () => loading.promise;
+  const view = await panel();
+  const textbox = view.getByRole("textbox", { name: "输入消息" });
+  textbox.textContent = "创建笔记"; fireEvent.input(textbox);
+  const button = view.getByRole("button", { name: "发送消息" }) as HTMLButtonElement;
+  expect(button.disabled).toBe(true);
+  fireEvent.keyDown(textbox, { key: "Enter" });
+  fireEvent.submit(textbox.closest("form")!);
+  expect(chatBodies).toHaveLength(0); expect(creates).toBe(0);
+  await act(async () => loading.resolve({ permission_mode: "ask" }));
+  await waitFor(() => expect(button.disabled).toBe(false));
+  const saving = deferred<{ permission_mode: string }>(); savePermission = () => saving.promise;
+  fireEvent.click(view.getByRole("button", { name: "审批模式：每次询问" }));
+  fireEvent.click(view.getByRole("menuitemradio", { name: /完全访问/ }));
+  expect(button.disabled).toBe(true);
+  fireEvent.click(button); fireEvent.keyDown(textbox, { key: "Enter" });
+  fireEvent.submit(textbox.closest("form")!);
+  expect(chatBodies).toHaveLength(0); expect(creates).toBe(0);
+  await act(async () => saving.resolve({ permission_mode: "full_access" }));
+  await waitFor(() => expect(button.disabled).toBe(false));
+  fireEvent.click(button);
+  await waitFor(() => expect(chatBodies).toHaveLength(1));
+  expect(creates).toBe(1);
+});
 
 test("首次打开、反复新建与从历史返回均不写空会话", async () => {
   const view = await panel();

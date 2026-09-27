@@ -1,5 +1,5 @@
 -- [INPUT]: 依赖 public.ai_commands/public.memo_nodes/public.memos、auth.uid()、memo 软删除/恢复 RPC 与 revision triggers
--- [OUTPUT]: 提供默认 ask 的命令创建、批准、拒绝、执行和撤销 RPC，以统一树锁顺序、owner、幂等与 expected_revision 保护全部 AI 写操作
+-- [OUTPUT]: 提供默认完全访问的命令创建、批准、拒绝、执行和撤销 RPC，以统一树锁顺序、owner、幂等与 expected_revision 保护全部 AI 写操作
 -- [POS]: api/supabase 的 AI Native V2 可信执行核心；模型只提交意图，数据库在原子事务内决定能否改变真实备忘录状态
 -- [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 
@@ -434,7 +434,7 @@ begin
   from public.ai_user_settings settings
   where settings.user_id = p_user_id;
 
-  permission_mode := coalesce(permission_mode, 'ask');
+  permission_mode := coalesce(permission_mode, 'full_access');
   effective_approval_source := case
     when permission_mode = 'ask' and p_approval_source = 'manual' then 'manual'
     when permission_mode = 'auto_approve'

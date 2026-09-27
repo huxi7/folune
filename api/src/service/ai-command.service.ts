@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖可信 AuthUser、请求期 JWT、AI settings/command DTO、HttpError 与 aiRepository
- * [OUTPUT]: 对外提供账号级权限读写及命令查询、创建、人工批准、拒绝和冲突安全撤销服务
+ * [OUTPUT]: 对外提供默认完全访问、并发初始化不覆盖选择的账号权限读写，以及命令查询、创建、人工批准、拒绝和冲突安全撤销
  * [POS]: service 层 AI Native V2 可信执行入口，将 Postgres 状态机结果映射成稳定 HTTP 领域错误，不执行模型审批
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -49,11 +49,9 @@ export const aiSettingsService = {
     const existing = await aiRepository.findSettings(authUser.id, accessToken);
     if (existing !== null) return existing;
 
-    const created = await aiRepository.upsertSettings(
-      authUser.id,
-      "ask",
-      accessToken,
-    );
+    // 读取时只补缺失行；并发 PATCH 或另一条初始化已建档时，重读胜出的值。
+    const created = await aiRepository.createSettingsIfMissing(authUser.id, accessToken)
+      ?? await aiRepository.findSettings(authUser.id, accessToken);
     if (created === null) {
       throw new HttpError(502, "AI_SETTINGS_WRITE_FAILED", "AI settings could not be created");
     }

@@ -9,8 +9,8 @@ CLAUDE.md: 记录 AgentPanel 子域成员、依赖方向与 GEB 回环协议
 AgentPanelHeader.tsx: 无状态固定顶栏；历史接管标题和左侧返回，新对话为即时本地导航、不承载 loading，执行中保留防中断禁用；生产与演示共用
 useConversationScroll.test.tsx: 验证首次非平滑定位与退出冻结、迟到内容回调不追尾
 useConversationScroll.ts: 消息滚动唯一边界，首次绘制前定位、退出取消平滑滚动并冻结位置，隐藏历史拒绝追尾
-AgentPanel.draft.test.tsx: 子进程隔离、真实组件/Hook/SDK/transport，验证零写草稿、首发创建/引用/持续消息实例、失败重试、删除与迟到请求隔离
-AgentPanel.tsx: 新对话直接进入可输入草稿，首发等候归 SDK 发送状态、落库保持组件身份；AI 组合根，History/Conversation 用撑满高度的 PersistentView 承接；历史从左侧进入，点击会话立即退出列表并由目标标题与 Skeleton 内容壳接管，失败在目标窗重试；流式消息以 32ms UI 节流、末条 assistant 工具对账、assistant 定点同步与本地快照提交降低重算，错误/中止仍后台校准；整轮活动跨 ready、客户端工具和审批续写持续，只读工具参数到齐即启动且不阻塞 SDK 流消费，流末复用同一执行结果；写工具在流末审批门禁后由 clientToolQueue 最多四项并发启动，停止同时取消排队并阻止迟到结果自动续写，独立落库本批已完成/已取消结果以便刷新回看；停止入口持续到客户端工具结束，停止/失败不发布提前读取结果或启动待执行写工具；菜单与内容 Motion 不接管业务协议
+AgentPanel.draft.test.tsx: 覆盖首开权限与保存期间按钮/Enter/直接提交不发送；子进程隔离、真实组件/Hook/SDK/transport，验证零写草稿、首发创建/引用/持续消息实例、失败重试、删除与迟到请求隔离
+AgentPanel.tsx: 发送须等当前账号权限确认，加载/保存期间按钮、Enter 与提交均不放行；新对话直接进入可输入草稿，首发等候归 SDK 发送状态、落库保持组件身份；AI 组合根，History/Conversation 用撑满高度的 PersistentView 承接；历史从左侧进入，点击会话立即退出列表并由目标标题与 Skeleton 内容壳接管，失败在目标窗重试；流式消息以 32ms UI 节流、末条 assistant 工具对账、assistant 定点同步与本地快照提交降低重算，错误/中止仍后台校准；整轮活动跨 ready、客户端工具和审批续写持续，只读工具参数到齐即启动且不阻塞 SDK 流消费，流末复用同一执行结果；写工具在流末审批门禁后由 clientToolQueue 最多四项并发启动，停止同时取消排队并阻止迟到结果自动续写，独立落库本批已完成/已取消结果以便刷新回看；停止入口持续到客户端工具结束，停止/失败不发布提前读取结果或启动待执行写工具；菜单与内容 Motion 不接管业务协议
 AgentPanel.streaming.test.tsx: 新增流内错误立即停止思考、不执行未确认写工具/自动续写门禁； 子进程隔离 mock，使用真实 useChat/AgentPanel、可控直通流与延迟工具结果，验证连续两轮工具/自动续写稳定、正文首分块在 text-end/finish-step 前已显示且只折叠一次，独立读写工具并发、98 项执行与 DOM 有界，以及停止后不再启动待执行工具或自动续写
 AgentPanelNavigation.test.tsx: 会话切换交互回归门禁，以未完成内容请求锁定历史列表立即退出、目标标题与加载壳同步接管
 ApprovalDock.tsx: Composer 上方唯一的紧凑非模态审批视觉原语，统一图标、标题、影响说明、按钮槽位与无蒙层语义；普通工具和 AI 整理审批只能适配它，禁止复制表面
@@ -20,9 +20,10 @@ composerSources.ts: Prompt Bar 唯一上下文领域层；当前 memo 与置顶�
 composerSources.test.ts: 覆盖当前 memo 默认来源、删除抑制、切换更新、手动/置顶去重、内联 mention 删除同步、发送冻结及发送后草稿来源收束
 MentionMenu.tsx: Prompt Bar 与 Canvas Picker 共用的 memo 搜索纯函数及无状态 @列表；列表向上用 PresenceSurface 开合，查询、IME、选择生命周期由 Composer 持有
 MentionMenu.test.ts: 覆盖空 @候选、搜索排除、revision、Canvas 节点隔离及轻量渲染结构
-PermissionModeControl.tsx: 账号权限偏好控制器，继续只显示 API 确认结果并维持加载/失败门禁；向上/向下菜单统一消费 PresenceSurface，不改变权限或业务调用
-aiSettingsCache.ts: 按用户短时缓存已确认审批设置并合并在途读取；侧栏重复挂载直接复用新鲜值，改设置成功后同步写回，写命令仅按凭据合并在途读取且完成后不缓存，不替代服务端权限事实
-aiSettingsCache.test.ts: 锁定审批设置缓存的用户隔离、新鲜命中、过期重读、并发合并与成功写回语义，以及写命令实时读取的凭据隔离、完成后重读和失败重试
+PermissionModeControl.tsx: 当前账号三档权限视图，默认完全访问；API 确认后更新勾选，失败不冒充询问模式且同值可重试；保存独立于卸载/凭据刷新，菜单复用 PresenceSurface
+PermissionModeControl.test.tsx: 真实控件生命周期门禁，覆盖默认显示、刷新保留选择、保存中凭据刷新/重挂、旧账号结果隔离与同值重试
+aiSettingsCache.ts: 用户级确认快照与 GET/PATCH 协调；读取优先等待在途保存、迟到 GET 不能覆盖 PATCH，保存跨控件卸载写回；命令仍仅合并同凭据在途读取，不借用 UI 快照
+aiSettingsCache.test.ts: 锁定 TTL、用户隔离、在途合并、迟到 GET 保护、保存中重挂/凭据刷新读取等待与失败重试；命令权限完成后重读
 ApprovalCard.tsx: 每次询问与智能审批回退的工具审批语义适配；把人话动作、最小影响说明和危险操作按钮映射到共享 ApprovalDock
 OrganizeReviewCard.tsx: AI 整理审批语义适配；只把当前 memo 的 awaiting_confirmation 标题/位置影响与确认/取消映射到共享 ApprovalDock，其他 Run 状态不在 AgentPanel 或 Paper 下方重复展示
 OrganizeReviewCard.test.tsx: AI 整理审批 DOM 同构测试，锁定 awaiting_confirmation 复用 agent-approval-dock 且 succeeded 输出为空

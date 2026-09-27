@@ -457,7 +457,7 @@ describe("AI API authentication", () => {
 describe("AI settings and commands", () => {
   test("creates default account settings and updates all three modes", async () => {
     const initial = await data<AiUserSettings>(await request("/ai-settings"));
-    expect(initial.permission_mode).toBe("ask");
+    expect(initial.permission_mode).toBe("full_access");
     for (const permission_mode of ["ask", "auto_approve", "full_access"] as const) {
       const updated = await data<AiUserSettings>(
         await request("/ai-settings", "PATCH", { permission_mode }),

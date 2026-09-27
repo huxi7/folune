@@ -1,6 +1,6 @@
 """
 [INPUT]: 依赖 Docker PostgreSQL 17、仓库 memos/ai-v2/ai-command SQL 与 Python 标准库
-[OUTPUT]: 在隔离数据库验证八条并发删除、撤销、幂等和 revision/owner 门禁；可传旧 SQL 重现死锁
+[OUTPUT]: 在隔离数据库验证八条并发删除、撤销、幂等、revision/owner 和权限默认迁移；可传旧 SQL 重现死锁
 [POS]: API 真实数据库并发门禁，补足内存 RPC mock 无法验证事务锁的边界，不连接远端或读取真实数据
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -112,5 +112,32 @@ try:
     assert owned(deletion(ids[0], 'stale-version')) == 'stale'
     assert owned(deletion(ids[1], 'wrong-owner'), OTHER) == 'not_found'
     print('idempotency, revision and owner guards: passed')
+
+    # 用旧默认及明确选择验证增量迁移，不接触真实账号。
+    explicit_ask = '00000000-0000-4000-8000-000000000003'
+    explicit_auto = '00000000-0000-4000-8000-000000000004'
+    sql(f"""
+      alter table public.ai_user_settings alter column permission_mode set default 'ask';
+      insert into public.profiles values ('{explicit_ask}'), ('{explicit_auto}');
+      insert into public.ai_user_settings(user_id) values ('{OTHER}');
+      insert into public.ai_user_settings(user_id,permission_mode,created_at,updated_at) values
+        ('{explicit_ask}','ask','2026-01-01','2026-01-02'),
+        ('{explicit_auto}','auto_approve','2026-01-01','2026-01-02');
+    """)
+    original_command = sql("select pg_get_functiondef('public.create_ai_command(uuid,uuid,text,text,uuid,bigint,text,jsonb,text,text,text)'::regprocedure);")
+    sql(original_command.replace("coalesce(permission_mode, 'full_access')", "coalesce(permission_mode, 'ask')"))
+    permission_patch = (ROOT / 'supabase/ai-settings-full-access.sql').read_text()
+    sql(permission_patch)
+    sql(permission_patch)
+    assert sql(f"select permission_mode from public.ai_user_settings where user_id='{OTHER}';") == 'full_access'
+    assert sql(f"select permission_mode from public.ai_user_settings where user_id='{explicit_ask}';") == 'ask'
+    assert sql(f"select permission_mode from public.ai_user_settings where user_id='{explicit_auto}';") == 'auto_approve'
+    assert sql("select pg_get_functiondef('public.create_ai_command(uuid,uuid,text,text,uuid,bigint,text,jsonb,text,text,text)'::regprocedure);") == original_command
+    sql(f"delete from public.ai_user_settings where user_id='{OWNER}';")
+    assert owned(deletion(ids[0], 'default-access', revision=3)) == 'succeeded'
+    assert sql(f"insert into public.ai_user_settings(user_id) values ('{OWNER}') returning permission_mode;") == 'full_access'
+    sql(f"update public.ai_user_settings set permission_mode='ask' where user_id='{OWNER}';")
+    assert owned(deletion(ids[1], 'explicit-ask', revision=3)) == 'pending_approval'
+    print('full access defaults, explicit choices, incremental migration and repeatability: passed')
 finally:
     subprocess.run(["docker", "rm", "-f", CONTAINER], capture_output=True)

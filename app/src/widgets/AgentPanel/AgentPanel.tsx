@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 useConversationScroll 的挂载定位与退出冻结、 DS 实时动态偏好、 PersistentView 的有方向视图承接、DS Skeleton/输入表面浮现语义、useAiThreads、类型化 useChat/原生审批及既有 Composer/工具执行边界
+ * [INPUT]: 依赖账号权限确认状态控制发送、useConversationScroll、DS 动态/视图/输入原语、useAiThreads、类型化 useChat/原生审批及既有工具执行边界
  * [OUTPUT]: 对外提供 AI Native 右侧工作区；只读工具参数到齐即并发执行，写工具经过流末审批门禁后最多四项并发，停止取消排队、保存本批结果并阻断自动续写；整轮活动跨客户端工具/审批/续写持续，消息定点同步并以本地快照快速回显
  * [POS]: /app 右侧 AI Native V2 组合根；新对话立即进入本地草稿，首发创建期间保持同一 useChat 与消息实例；历史只负责导航，目标会话加载/失败在内容窗承接；api command 是唯一写事实源，Store 只做幂等投影与回滚
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -51,6 +51,7 @@ import {
 import type { MemoTreeNode } from "../../shared/api/memo";
 import { Button, MentionInput } from "../../shared/design-system/components";
 import { useMemoTreeStore } from "../../shared/store/memoTreeStore";
+import { useAgentPanelStore, isPermissionReady } from "../../shared/store/agentPanelStore";
 import { deriveAssistantActivity, hasAssistantContinuation } from "./activityState";
 import {
   applyApprovalResponse,
@@ -414,6 +415,7 @@ function AgentConversation({
   }
   const streamBusy = status === "submitted" || status === "streaming";
   const busy = streamBusy || respondingApprovalId !== null || clientToolsRunning;
+  const composerBusy = useAgentPanelStore((state) => !isPermissionReady(state, userId)) || busy;
   const lastMessage = messages.at(-1);
   const activity = deriveAssistantActivity(
     status,
@@ -595,8 +597,8 @@ function AgentConversation({
       shiftKey: event.shiftKey,
     })) return;
     event.preventDefault();
-    if (canSubmitComposer(inputValue, busy)) event.currentTarget.closest("form")?.requestSubmit();
-  }, [busy, inputValue, mentionIndex, mentionOpen, mentionResults, mentionStart]);
+    if (canSubmitComposer(inputValue, composerBusy)) event.currentTarget.closest("form")?.requestSubmit();
+  }, [composerBusy, inputValue, mentionIndex, mentionOpen, mentionResults, mentionStart]);
 
   const handleInputChange = useCallback((value: string) => {
     setInputValue(value);
@@ -628,14 +630,14 @@ function AgentConversation({
     setMentionQuery("");
     composerRef.current?.focus();
   }, [mentionQuery.length, mentionStart]);
-
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const text = inputValue.trim();
-    if (!canSubmitComposer(inputValue, busy)) return;
+    if (!canSubmitComposer(inputValue, busy) || !isPermissionReady(useAgentPanelStore.getState(), userId)) return;
     clearError();
     try {
       await onPrepareMutation();
+      if (!isPermissionReady(useAgentPanelStore.getState(), userId)) return;
     } catch {
       return;
     }
@@ -662,7 +664,6 @@ function AgentConversation({
       // useChat 维护 error；下一次请求或后台校准会把服务端状态重新对齐。
     }
   }
-
   return (
     <div className="agent-panel-body">
       <div aria-busy={busy} aria-live="polite" className="agent-message-list" ref={messageListRef} role="log">
@@ -703,7 +704,7 @@ function AgentConversation({
           {streamBusy || clientToolsRunning ? (
             <Button aria-label="停止生成" className="agent-composer-action" icon={StopIcon} onClick={handleStop} size="square" type="button" variant="primary" />
           ) : (
-            <Button aria-label="发送消息" className="agent-composer-action" disabled={!canSubmitComposer(inputValue, busy)} icon={ArrowUpIcon} size="square" type="submit" variant="primary" />
+            <Button aria-label="发送消息" className="agent-composer-action" disabled={!canSubmitComposer(inputValue, composerBusy)} icon={ArrowUpIcon} size="square" type="submit" variant="primary" />
           )}
         </div>
       </motion.form>

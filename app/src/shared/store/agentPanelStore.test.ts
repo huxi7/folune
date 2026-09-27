@@ -7,9 +7,33 @@
 
 import { describe, expect, test } from "bun:test";
 
-import { useAgentPanelStore } from "./agentPanelStore";
+import { isPermissionReady, useAgentPanelStore } from "./agentPanelStore";
 
 describe("AgentPanel permission preference", () => {
+  test("首次展示默认完全访问，但确认前和保存期间都不能发送", () => {
+    expect(useAgentPanelStore.getInitialState().permissionMode).toBe("full_access");
+    const store = useAgentPanelStore.getState();
+    store.beginPermissionLoad("user-a");
+    expect(isPermissionReady(useAgentPanelStore.getState(), "user-a")).toBe(false);
+    store.resolvePermission("full_access");
+    expect(isPermissionReady(useAgentPanelStore.getState(), "user-a")).toBe(true);
+    store.beginPermissionSave();
+    expect(isPermissionReady(useAgentPanelStore.getState(), "user-a")).toBe(false);
+  });
+
+  test("同账号重读保留确认值，切账号不借用上一账号权限", () => {
+    const store = useAgentPanelStore.getState();
+    store.beginPermissionLoad("user-a");
+    store.resolvePermission("ask");
+    store.beginPermissionLoad("user-a");
+    expect(useAgentPanelStore.getState().permissionMode).toBe("ask");
+    store.resolvePermission("ask");
+    expect(isPermissionReady(useAgentPanelStore.getState(), "user-b")).toBe(false);
+    store.beginPermissionLoad("user-b");
+    expect(useAgentPanelStore.getState().permissionMode).toBe("full_access");
+    expect(isPermissionReady(useAgentPanelStore.getState(), "user-b")).toBe(false);
+  });
+
   test("审批模式只在后端确认后改变，保存失败保留原值", () => {
     useAgentPanelStore.setState({
       permissionError: null,

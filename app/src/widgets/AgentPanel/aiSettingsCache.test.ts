@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 aiSettingsCache 的用户缓存/在途合并接口与测试替身 API
- * [OUTPUT]: 覆盖审批设置读取的并发合并、用户隔离、TTL 命中、写入更新与写命令实时权限合并
+ * [OUTPUT]: 覆盖并发读取、用户隔离、TTL、迟到读取不覆盖保存、保存期间读取等待，以及写命令实时权限合并
  * [POS]: AgentPanel 权限设置缓存的纯行为回归；不触达真实网络或 UI
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -10,9 +10,11 @@ import { afterEach, describe, expect, mock, test } from "bun:test";
 import type { AiUserSettings } from "../../shared/api/ai";
 
 let getAiSettingsHandler: (accessToken: string) => Promise<AiUserSettings>;
+let updateAiSettingsHandler: () => Promise<AiUserSettings>;
 
 mock.module("../../shared/api/ai", () => ({
   getAiSettings: (accessToken: string) => getAiSettingsHandler(accessToken),
+  updateAiSettings: () => updateAiSettingsHandler(),
 }));
 
 const {
@@ -20,6 +22,7 @@ const {
   readAiSettings,
   readFreshAiSettings,
   resetAiSettingsCacheForTests,
+  saveAiSettings,
   writeAiSettings,
 } = await import("./aiSettingsCache");
 
@@ -85,6 +88,40 @@ describe("aiSettingsCache", () => {
     writeAiSettings("user-a", settings("auto_approve"), 2_000);
 
     expect(await readAiSettings("token", "user-a", 2_000)).toEqual(settings("auto_approve"));
+  });
+
+  test("迟到 GET 不能覆盖已确认 PATCH，也不能把旧值返回给挂载中的控件", async () => {
+    let release!: (value: AiUserSettings) => void;
+    getAiSettingsHandler = () => new Promise(resolve => { release = resolve; });
+    const oldRead = readAiSettings("token", "user-a");
+    updateAiSettingsHandler = async () => settings("full_access");
+    await saveAiSettings("token", "user-a", "full_access");
+    release(settings("ask"));
+    expect((await oldRead).permission_mode).toBe("full_access");
+    expect((await readAiSettings("token", "user-a")).permission_mode).toBe("full_access");
+  });
+
+  test("凭据刷新或重挂载的读取等同账号保存完成，其他账号不受阻", async () => {
+    let release!: (value: AiUserSettings) => void;
+    writeAiSettings("user-a", settings("ask"));
+    updateAiSettingsHandler = () => new Promise(resolve => { release = resolve; });
+    const saving = saveAiSettings("old-token", "user-a", "full_access");
+    const remounted = readAiSettings("new-token", "user-a");
+    expect(remounted).toBe(saving);
+    getAiSettingsHandler = async () => settings("ask", "user-b");
+    expect((await readAiSettings("other-token", "user-b")).permission_mode).toBe("ask");
+    release(settings("full_access"));
+    expect((await remounted).permission_mode).toBe("full_access");
+  });
+
+  test("保存失败清除旧快照，后续读取重新确认服务端，原模式可重试保存", async () => {
+    writeAiSettings("user-a", settings("ask"));
+    updateAiSettingsHandler = async () => { throw new Error("offline"); };
+    await expect(saveAiSettings("token", "user-a", "full_access")).rejects.toThrow("offline");
+    getAiSettingsHandler = async () => settings("full_access");
+    expect((await readAiSettings("token", "user-a")).permission_mode).toBe("full_access");
+    updateAiSettingsHandler = async () => settings("ask");
+    expect((await saveAiSettings("token", "user-a", "ask")).permission_mode).toBe("ask");
   });
   test("写命令只合并同凭据在途请求，完成后重读且不借用侧栏缓存", async () => {
     const resolvers: Array<(value: AiUserSettings) => void> = [];

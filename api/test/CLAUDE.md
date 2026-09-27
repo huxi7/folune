@@ -13,7 +13,8 @@ canvas-v2.test.ts: Canvas V2 HTTP 纵向契约测试；锁定 memo 默认/空白
 request-log.test.ts: 验证开发请求卡片、健康探针摘要、生产 JSON 日志，以及控制字符净化与敏感请求信息不落日志
 supabase-rest.test.ts: 验证断连含响应体故障、GET 重试真正禁用连接复用、写请求只尝试一次、503 网络错误与主动取消透传
 
-ai-command-concurrency.py: 显式 Docker PostgreSQL 17 八连接门禁，重现旧版 1 成功/7 死锁，验证修复后删除/撤销、增量补丁幂等及 revision/owner；运行 python3 api/test/ai-command-concurrency.py [旧版SQL路径]，自动删除测试容器，不访问远端
+ai-command-concurrency.py: Docker PostgreSQL 17 八连接门禁，验证删除/撤销、revision/owner；另验证默认完全访问迁移只更新旧默认、保留明确选择及重复补丁等价；可传旧 SQL 重现死锁，自动删除测试容器，不访问远端
+ai-settings.test.ts: 真实 service/repository 与延迟 PostgREST 替身，验证默认完全访问、显式模式持久化、并发首次读取与迟到初始化不覆盖 PATCH
 
 职责: API 的无远端依赖 HTTP 回归层；通过真实 router/service/repository 调用链验证鉴权、业务不变量和 Supabase REST 请求契约，禁止保存或输出真实凭据。
 

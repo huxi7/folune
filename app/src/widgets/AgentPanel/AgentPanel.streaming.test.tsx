@@ -58,7 +58,9 @@ mock.module("./useAiThreads", () => ({
     replaceReferences: async () => undefined,
   }),
 }));
+const aiSettingsModule = await import("./aiSettingsCache");
 mock.module("./aiSettingsCache", () => ({
+  ...aiSettingsModule,
   readAiSettings: async () => ({ permission_mode: "ask" }),
   writeAiSettings: () => undefined,
 }));
@@ -89,6 +91,7 @@ async function startConversation() {
   const input = view.getByRole("textbox", { name: "输入消息" });
   input.textContent = "读取两次结构再回答";
   fireEvent.input(input);
+  await waitFor(() => expect(view.getByRole("button", { name: "发送消息" }).hasAttribute("disabled")).toBeFalse());
   fireEvent.click(view.getByRole("button", { name: "发送消息" }));
   await waitFor(() => expect(streams).toHaveLength(1));
   return view;

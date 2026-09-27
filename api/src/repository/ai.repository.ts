@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖唯一 supabase-rest 适配器、AI DTO 行/RPC 校验、请求期用户 JWT 与领域输入
- * [OUTPUT]: 对外提供 owner-scoped 统一 threads 列表/bootstrap、messages/refs/settings/commands CRUD、context 数据读取及受控 Run/Command 状态机 RPC；消息支持全量与定点写入
+ * [OUTPUT]: 对外提供 owner-scoped threads/messages/refs/settings/commands 与状态机 RPC；设置初始化只插入缺失行，显式修改才覆盖，消息支持全量与定点写入
  * [POS]: repository 层 AI Native V2 PostgREST 访问器，只表达持久化操作与返回校验，不判断会话标题、上下文优先级或模型审批风险
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -158,6 +158,21 @@ export const aiRepository = {
     return parseSettings(
       await supabaseRest<unknown>(`ai_user_settings${query}`, { accessToken }),
     )[0] ?? null;
+  },
+
+  async createSettingsIfMissing(
+    userId: string,
+    accessToken: string,
+  ): Promise<AiUserSettings | null> {
+    const query = createPostgrestQuery({ onConflict: ["user_id"] });
+    const payload = await supabaseRest<unknown>(`ai_user_settings${query}`, {
+      accessToken,
+      method: "POST",
+      headers: { Prefer: "resolution=ignore-duplicates" },
+      body: JSON.stringify({ user_id: userId, permission_mode: "full_access" }),
+      returnRepresentation: true,
+    });
+    return parseSettings(payload)[0] ?? null;
   },
 
   async upsertSettings(

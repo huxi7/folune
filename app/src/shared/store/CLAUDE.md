@@ -5,8 +5,8 @@
 workspaceEntryStore.ts: 首次准入的短期 UI 状态；会话/账户/目录/代码/首屏按真实完成累加，编号隔离旧请求，失败/取消与揭幕后释放
 workspaceEntryStore.test.ts: 真实节点乱序、首屏 100% 门禁、重复通知与取消/旧入口隔离回归
 CLAUDE.md: 记录客户端状态层的职责边界、成员地图与 GEB 回环协议
-agentPanelStore.ts: AgentPanel 权限薄状态，只缓存后端已确认审批模式及 loading/saving/error；可见性统一归 WorkspaceChromeState，禁止复制 AI SDK 消息或文件树
-agentPanelStore.test.ts: 锁定审批保存失败保留原值、成功后才更新模式
+agentPanelStore.ts: 当前账号的权限薄状态，首屏默认完全访问；同账号重读保留显示、切账号隔离，isPermissionReady 只在当前账号 API 确认后允许发送；可见性归 WorkspaceChromeState
+agentPanelStore.test.ts: 锁定默认完全访问、加载/保存门禁、账号隔离、保存失败保留显示与成功确认
 workspaceChromeStore.ts: Paper First 外壳唯一 UI 状态，按用户持久化 libraryOpen/assistantOpen，新用户双关闭，兼容旧 Agent 开关迁移，并在覆盖式视口保证左右工具互斥
 workspaceChromeStore.test.ts: 覆盖按用户 key、首次双关闭、版本化恢复、损坏容错与旧 AI 偏好迁移
 canvasChromePolicy.ts: Canvas 侧栏进入策略纯函数，把 memo_default/standalone/tree/direct 四种进入语境与 1200/1400 两个断点翻译成左右两个独立布尔值；新建独立画布双收起，从笔记进入继承当前工具状态（命名由画布标题原地完成），文件树切换也继承现状、直接链接恢复快照，进入之后一律以用户操作为准

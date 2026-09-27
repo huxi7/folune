@@ -10,7 +10,7 @@ memo.service.ts: 是 nextSortOrder 与 memoContentData 两条派生规则的所�
 memo-trash.service.ts: 回收站业务规则层，筛选已删除祖先下不可见的删除根、生成原路径/摘要，并把软删、恢复、永久删除、清空 RPC 状态映射为稳定 404/409
 ai-thread.service.ts: prepare 的历史读取与 thread/settings/context 同一 Promise.all 接管失败，避免历史先拒绝导致 unhandled rejection；编排无归档分支的会话 CRUD、首开 bootstrap、切换 content 的 thread/ref/messages 并发读取、一次性 Chat turn prepare、增量消息/assistant 定点同步、旧 context snapshot 保留与最多五篇去重引用；非关键 thread 活跃时间后台更新
 ai-context.service.ts: 无引用普通聊天不读取文件树/正文/会话引用，显式冻结引用不再重读会话引用；从服务端 memo tree/正文解析本轮冻结 primary/显式/置顶引用，先以 expected revision 拒绝审批续写期间的漂移，再生成可信路径并分配 60k 字符预算；prepare-chat 可与 thread/settings 校验并行启动
-ai-command.service.ts: 编排默认“每次询问”的账号权限 GET/PATCH 确认式更新，以及通用命令查询、创建、人工批准/拒绝与冲突安全撤销；Postgres 状态统一映射 404/409
+ai-command.service.ts: 编排默认完全访问的账号权限 GET/PATCH；首次读取只补缺失行、冲突重读胜出选择，不能覆盖并发 PATCH；另负责命令创建/查询/批准/拒绝/撤销及 Postgres 404/409 映射
 ai-run.service.ts: 将 Run 创建/读取/记录方案/应用/拒绝/失败/撤销命令映射到数据库状态机，apply/undo 只接收 runId 并输出稳定 404/409
 canvas.service.ts: 将 Canvas V2 默认/standalone 入口、读取、人工 mutation、AI expansion commit/context 编排为稳定 HTTP 契约；新建 standalone 的系统默认名撞名时与新建备忘录同规则顺位让开，409 回传当前 version/mutation_id 供 WAL rebase，运行期只有这一套写路径
 profile.service.ts: 以 Web Crypto 生成单一默认 username 与头像 UUID 路径，执行幂等建档、owner 校验、5MB/JPEG-PNG-WebP 签名验证、avatar_url CAS、失败补偿与旧 Storage 对象清理

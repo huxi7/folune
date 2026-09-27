@@ -1,12 +1,14 @@
 /**
- * [INPUT]: 依赖 AI 权限设置 DTO 与共享 API 的读取函数
- * [OUTPUT]: 对外提供按用户隔离、短时新鲜且可合并在途请求的审批设置读取/写入缓存
- * [POS]: AgentPanel 权限设置的数据边界；侧栏使用短时快照，写命令仅合并在途请求，不替代服务端确认事实
+ * [INPUT]: 依赖 AI 权限 DTO 与共享 API 的 GET/PATCH
+ * [OUTPUT]: 对外提供用户隔离的确认值缓存与保存协调；读取等待在途保存，迟到 GET 不覆盖 PATCH
+ * [POS]: AgentPanel 权限数据边界；保存独立于组件生命周期，写命令仍只合并在途读取，不复用 UI 快照
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
 import {
   getAiSettings,
+  updateAiSettings,
+  type AiPermissionMode,
   type AiUserSettings,
 } from "../../shared/api/ai";
 
@@ -19,6 +21,7 @@ type AiSettingsSnapshot = {
 
 const snapshots = new Map<string, AiSettingsSnapshot>();
 const pendingReads = new Map<string, Promise<AiUserSettings>>();
+const pendingWrites = new Map<string, Promise<AiUserSettings>>();
 const pendingFreshReads = new Map<string, Promise<AiUserSettings>>();
 
 // 写命令只合并同一凭据的在途读取，不复用已完成快照；后续操作仍检查最新权限。
@@ -37,6 +40,8 @@ export const readAiSettings = (
   userId: string,
   now = Date.now(),
 ): Promise<AiUserSettings> => {
+  const saving = pendingWrites.get(userId);
+  if (saving !== undefined) return saving;
   const cached = snapshots.get(userId);
   if (cached !== undefined && now - cached.storedAt < AI_SETTINGS_CACHE_FRESH_MS) {
     return Promise.resolve(cached.settings);
@@ -47,11 +52,17 @@ export const readAiSettings = (
 
   const request = getAiSettings(accessToken)
     .then((settings) => {
+      const saving = pendingWrites.get(userId);
+      if (saving !== undefined) return saving;
+      if (pendingReads.get(userId) !== request) return readAiSettings(accessToken, userId);
       snapshots.set(userId, { settings, storedAt: Date.now() });
       return settings;
+    }, (error: unknown) => {
+      if (pendingReads.get(userId) !== request) return readAiSettings(accessToken, userId);
+      throw error;
     })
     .finally(() => {
-      pendingReads.delete(userId);
+      if (pendingReads.get(userId) === request) pendingReads.delete(userId);
     });
   pendingReads.set(userId, request);
   return request;
@@ -62,11 +73,34 @@ export const writeAiSettings = (
   settings: AiUserSettings,
   now = Date.now(),
 ) => {
+  pendingReads.delete(userId);
   snapshots.set(userId, { settings, storedAt: now });
+};
+
+export const saveAiSettings = (
+  accessToken: string,
+  userId: string,
+  mode: AiPermissionMode,
+): Promise<AiUserSettings> => {
+  const pending = pendingWrites.get(userId);
+  if (pending !== undefined) return pending;
+  pendingReads.delete(userId);
+  snapshots.delete(userId);
+  const request = updateAiSettings(accessToken, mode)
+    .then((settings) => {
+      writeAiSettings(userId, settings);
+      return settings;
+    })
+    .finally(() => {
+      if (pendingWrites.get(userId) === request) pendingWrites.delete(userId);
+    });
+  pendingWrites.set(userId, request);
+  return request;
 };
 
 export const resetAiSettingsCacheForTests = () => {
   snapshots.clear();
   pendingReads.clear();
   pendingFreshReads.clear();
+  pendingWrites.clear();
 };
