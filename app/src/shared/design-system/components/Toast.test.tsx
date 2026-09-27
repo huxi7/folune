@@ -123,3 +123,25 @@ test("剩余细线与到期共用时间，反复暂停和隐藏后不重置、�
     focusSpy.mockRestore(); cancelSpy.mockRestore(); rafSpy.mockRestore(); nowSpy.mockRestore();
   }
 });
+
+function UpdateTrigger({ onInstall }: { onInstall: () => void }) {
+  const { toast, dismissToast } = useToast();
+  return <button onClick={() => {
+    const id = toast({ title: "新版本已经准备好", duration: 0,
+      action: { label: "重启更新", onClick: onInstall },
+      secondaryAction: { label: "稍后", onClick: () => dismissToast(id) },
+    });
+  }}>显示更新</button>;
+}
+
+test("更新 Toast 常驻且稍后不会执行安装", () => {
+  let installs = 0;
+  const view = render(<ToastProvider><UpdateTrigger onInstall={() => { installs++; }} /></ToastProvider>);
+  fireEvent.click(view.getByText("显示更新"));
+  expect(document.querySelector("[role=dialog]")).toBeNull();
+  expect(document.querySelector(".ds-toast-countdown")).toBeNull();
+  expect(view.getByText("重启更新")).toBeDefined();
+  fireEvent.click(view.getByText("稍后"));
+  expect(installs).toBe(0);
+  expect(document.querySelectorAll(".ds-toast:not([data-ending-style])")).toHaveLength(0);
+});

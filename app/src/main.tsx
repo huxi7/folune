@@ -1,10 +1,11 @@
 /**
- * [INPUT]: 优先加载 index.css 建立全局 CSS 层序，再依赖设计系统 motionTokenStyles、React、app/router、ThemeProvider、ToastProvider 与跨路由 WorkspaceEntryTransition
+ * [INPUT]: 优先加载 index.css 建立全局 CSS 层序，再依赖设计系统 motionTokenStyles、React、app/router、ThemeProvider、ToastProvider、DesktopLifecycle 与跨路由 WorkspaceEntryTransition
  * [OUTPUT]: 对外提供本地存储品牌命名空间迁移与尊重系统 reduced-motion 的浏览器端 React 挂载入口
  * [POS]: app/src 的运行时入口，先把旧 SuperNote 偏好迁移到 Folune，再挂载全局 Motion/主题/Toast 上下文和 React Router
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import "./index.css";
+import { DesktopLifecycle } from "./app/DesktopLifecycle";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { MotionConfig } from "motion/react";
@@ -56,6 +57,7 @@ createRoot(rootElement).render(
       <style>{motionTokenStyles}</style>
       <ThemeProvider>
         <ToastProvider>
+          <DesktopLifecycle />
           <WorkspaceEntryTransition>
             <RouterProvider router={router} />
           </WorkspaceEntryTransition>

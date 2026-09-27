@@ -1,10 +1,11 @@
 /**
- * [INPUT]: 依赖本目录 supabase client 的 Auth API，依赖浏览器 origin 生成 OAuth 回调地址
+ * [INPUT]: 依赖本目录 supabase client 的 Auth API，依赖浏览器 origin 或可选桌面 bridge 生成 OAuth 回调，桌面授权在系统浏览器打开
  * [OUTPUT]: 对外提供邮箱密码登录/注册、邮箱验证码、OAuth、当前 access token 读取、退出登录与错误文案
  * [POS]: app/src/shared/supabase 的纯认证服务层，隔离 SDK/会话细节并向统一 API 中枢提供请求期 token，不承载业务资料读写
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { supabase } from "./client";
+import type {} from "../desktop/bridge";
 
 export type PasswordAuthOutcome = "authenticated" | "verification-required";
 
@@ -123,17 +124,21 @@ export async function resendSignupOtp(email: string) {
 }
 
 export async function signInWithGoogle() {
-  const redirectTo = new URL("/auth/callback", window.location.origin).toString();
-  const { error } = await supabase.auth.signInWithOAuth({
+  const desktop = window.foluneDesktop;
+  const redirectTo = desktop ? await desktop.prepareOAuth()
+    : new URL("/auth/callback", window.location.origin).toString();
+  const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
       redirectTo,
+      skipBrowserRedirect: Boolean(desktop),
     },
   });
 
   if (error) {
     throw error;
   }
+  if (desktop && data.url) await desktop.openOAuth(data.url);
 }
 
 export async function completeOAuthSignIn(code: string) {

@@ -83,3 +83,7 @@ Google 核查的是披露与实际行为的一致性，不以字数判断政策�
 - 当前只保留「忘记密码？」的无动作按钮，未渲染模拟验证框，未启用 Turnstile 或修改线上认证配置。
 
 配置依据：[Supabase CAPTCHA 文档](https://supabase.com/docs/guides/auth/auth-captcha)与[Cloudflare Turnstile](https://developers.cloudflare.com/turnstile/)。
+
+## Electron 回调（待配置）
+
+桌面复用 PKCE。Staging 需增加 `http://127.0.0.1:10003/auth/callback**`；Staging/Production 均需增加 `folune://auth/callback**`。保留既有 Web 回调。实际新增尚待 Management API 配置权限；不能仅凭代码认定已可登录。

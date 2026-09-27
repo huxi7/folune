@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 React lazy/Suspense、react-router-dom loader/redirect、theme/visualContext 场景同步、真实入口进度 Store、Supabase Auth token 读取与后端 Profile API
- * [OUTPUT]: 对外提供共享营销壳的首页、独立 /login、/terms、/privacy、/blog 与 /updates 目录和各自 :slug 阅读页、旧 auth query 重定向、OAuth 回调、受保护工作区与仅开发态实验页；已提交路由同步根级视觉作用域
+ * [OUTPUT]: 桌面仅保留登录/OAuth/工作区路由， 对外提供共享营销壳的首页、独立 /login、/terms、/privacy、/blog 与 /updates 目录和各自 :slug 阅读页、旧 auth query 重定向、OAuth 回调、受保护工作区与仅开发态实验页；已提交路由同步根级视觉作用域
  * [POS]: app/src/app/router 的路由装配文件；静态身份、Profile 与轻量 tree loader 并行装配，Dashboard 直接消费 bootstrap；/app 首次进入统一由根级品牌过渡覆盖，内容就绪才揭幕；左右工具偏好在 Dashboard 获得用户后恢复
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -11,9 +11,6 @@ import {
   type LoaderFunctionArgs,
 } from "react-router-dom";
 
-import { MarketingLayout } from "../../pages/MarketingLayout";
-import { BlogPage } from "../../pages/BlogPage";
-import { LandingPage } from "../../pages/LandingPage";
 import { useWorkspaceEntryStore } from "../../shared/store/workspaceEntryStore";
 import { applyVisualContext } from "../../shared/theme/visualContext";
 
@@ -23,7 +20,9 @@ const AuthCallbackPage = lazy(() =>
   })),
 );
 
-const ColorLabPage = import.meta.env.DEV
+const desktop = import.meta.env.VITE_DESKTOP === "true" || Boolean(window.foluneDesktop);
+
+const ColorLabPage = import.meta.env.DEV && !desktop
   ? lazy(() =>
     import("../../pages/ColorLabPage").then((module) => ({
       default: module.ColorLabPage,
@@ -35,7 +34,7 @@ const ColorLabPage = import.meta.env.DEV
  * 归档线的验收台。它必须能被真实浏览器打开并真的用鼠标操作，否则「端点跟手」
  * 就只剩静态字符串测试在替它作证；同时它只带假数据, 因此不进生产包、不需要鉴权。
  */
-const ArchiveCordLabPage = import.meta.env.DEV
+const ArchiveCordLabPage = import.meta.env.DEV && !desktop
   ? lazy(() =>
     import("../../pages/ArchiveCordLabPage").then((module) => ({
       default: module.ArchiveCordLabPage,
@@ -43,7 +42,7 @@ const ArchiveCordLabPage = import.meta.env.DEV
   )
   : null;
 
-const MotionLabPage = import.meta.env.DEV
+const MotionLabPage = import.meta.env.DEV && !desktop
   ? lazy(() => import("../../pages/MotionLabPage").then((module) => ({ default: module.MotionLabPage })))
   : null;
 
@@ -120,16 +119,20 @@ async function requireWorkspace({ request }: LoaderFunctionArgs) {
 }
 
 export const router = createBrowserRouter([
-  {
+  ...(desktop ? [
+    { path: "/", loader: () => redirect("/app") },
+    { path: "/login", lazy: async () => ({ Component: (await import("../../pages/LoginPage")).LoginPage }) },
+    { path: "*", loader: () => redirect("/app") },
+  ] : [{
     path: "/",
-    element: <MarketingLayout />,
+    lazy: async () => ({ Component: (await import("../../pages/MarketingLayout")).MarketingLayout }),
     hydrateFallbackElement: <RouteFallback />,
     // ---- 已分享的旧认证地址仍进入同一登录页，不再挂载弹窗 ----
-    loader: ({ request }) => new URL(request.url).searchParams.get("auth") === "login"
+    loader: ({ request }: LoaderFunctionArgs) => new URL(request.url).searchParams.get("auth") === "login"
       ? redirect("/login")
       : null,
     children: [
-      { index: true, element: <LandingPage /> },
+      { index: true, lazy: async () => ({ Component: (await import("../../pages/LandingPage")).LandingPage }) },
       { path: "login", lazy: async () => ({ Component: (await import("../../pages/LoginPage")).LoginPage }) },
       { path: "terms", lazy: async () => {
         const { LegalPage } = await import("../../pages/LegalPage");
@@ -139,12 +142,12 @@ export const router = createBrowserRouter([
         const { LegalPage } = await import("../../pages/LegalPage");
         return { element: <LegalPage document="privacy" /> };
       } },
-      { path: "blog", element: <BlogPage /> },
-      { path: "blog/:slug", element: <BlogPage /> },
-      { path: "updates", element: <BlogPage section="updates" /> },
-      { path: "updates/:slug", element: <BlogPage section="updates" /> },
+      { path: "blog", lazy: async () => ({ Component: (await import("../../pages/BlogPage")).BlogPage }) },
+      { path: "blog/:slug", lazy: async () => ({ Component: (await import("../../pages/BlogPage")).BlogPage }) },
+      { path: "updates", lazy: async () => { const { BlogPage } = await import("../../pages/BlogPage"); return { element: <BlogPage section="updates" /> }; } },
+      { path: "updates/:slug", lazy: async () => { const { BlogPage } = await import("../../pages/BlogPage"); return { element: <BlogPage section="updates" /> }; } },
     ],
-  },
+  }]),
   {
     path: "/auth/callback",
     element: (

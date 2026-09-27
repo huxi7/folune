@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Kumo Toast 可访问队列/焦点/滑动、本地 Button、useToastCountdown 动作时钟与 toast.css 的中性反馈材质
- * [OUTPUT]: 对外提供 ToastProvider/useToast/ToastVariant/ToastInput；贴近视口顶部居中并从上沿滑入、三条内容自适应等宽堆叠，倒计时动作回执只保留业务按钮与整条底边进度，到期自动消失
+ * [OUTPUT]: 对外提供 ToastProvider/useToast/ToastVariant/ToastInput（支持次级动作）；贴近视口顶部居中并从上沿滑入、三条内容自适应等宽堆叠，倒计时动作回执只保留业务按钮与整条底边进度，到期自动消失
  * [POS]: app/src/shared/design-system/components 的全局瞬时反馈边界；Kumo 只拥有队列与交互机制，业务动作仍由 Folune 本地 Button 渲染，隔离业务和第三方表现实现
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -30,6 +30,10 @@ import { useToastCountdown } from "./useToastCountdown";
 export type ToastVariant = "info" | "success" | "warning" | "error";
 
 export type ToastInput = {
+  secondaryAction?: {
+    label: string;
+    onClick: () => void;
+  };
   action?: {
     label: string;
     onClick: () => void;
@@ -111,11 +115,11 @@ function ToastItem({ toast, frontmost }: { toast: KumoManagedToast; frontmost: b
           ) : null}
         </div>
         <div className="ds-toast-controls">
-          {action ? (
-            <Button className="ds-toast-action" onClick={action.onClick} variant="secondary">
-              {action.children}
+          {toast.actions?.map((item, index) => (
+            <Button key={index} className="ds-toast-action" onClick={item.onClick} variant="secondary">
+              {item.children}
             </Button>
-          ) : null}
+          ))}
           {duration <= 0 ? (
             <KumoToast.Close aria-label="关闭提示" className="ds-toast-dismiss">
               <XIcon aria-hidden="true" size={14} />
@@ -152,10 +156,10 @@ function ToastRuntime({ children }: { children: ReactNode }) {
         : variant === "error" ? 6500 : variant === "warning" ? 5000 : DEFAULT_TOAST_DURATION);
 
       toastManagerRef.current.add({
-        actions: input.action === undefined ? undefined : [{
-          children: input.action.label,
-          onClick: input.action.onClick,
-        }],
+        actions: [input.secondaryAction, input.action].filter((action) => action !== undefined).map(action => ({
+          children: action.label,
+          onClick: action.onClick,
+        })),
         description: input.description,
         data: { actionDuration: input.action ? duration : 0 },
         id: getToastId(id),

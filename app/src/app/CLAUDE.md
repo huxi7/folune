@@ -4,6 +4,7 @@
 成员清单
 .gitkeep: 保留应用装配层空目录
 CLAUDE.md: 记录应用装配层职责与文档协议
+DesktopLifecycle.tsx: 桌面更新 Toast 与保存退出应答；普通 Web 不绑定原生能力
 router/: React Router 路由装配目录，暴露用户端路由表与 /app 首次准入的 Folune 品牌进度/完成揭幕层
 
 职责: 应用装配层，承载用户端路由壳、后端身份准入与 `/app/notes/:noteId` 详情地址装配边界；文件树加载归 Dashboard Zustand Store。

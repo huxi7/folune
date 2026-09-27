@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Router 导航、AuthForm、MarketingAnnouncement、BlueprintFrame、LoginBackdrop 与 public/auth 的本地视频和首帧
- * [OUTPUT]: 对外提供 /login 的 01A 极慢散墨背景、左表单右插画布局；视频作为无控件的 3:4 静音循环背景
+ * [OUTPUT]: 桌面不挂营销导航/公告，仅复用认证表单与背景； 对外提供 /login 的 01A 极慢散墨背景、左表单右插画布局；视频作为无控件的 3:4 静音循环背景
  * [POS]: pages 的公开认证入口，公告单独复用首页轨道骨架，正文后景独立于认证步骤；成功后仍由 /app 的 Profile loader 判定准入
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -12,13 +12,14 @@ import { LoginBackdrop } from "../widgets/LandingMotion/LoginBackdrop";
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const desktop = import.meta.env.VITE_DESKTOP === "true" || Boolean(window.foluneDesktop);
 
-  return (
+  const content = (
     <>
-      <BlueprintFrame className="auth-announcement-frame" fullBleed>
+      {!desktop && <BlueprintFrame className="auth-announcement-frame" fullBleed>
         <MarketingAnnouncement />
-      </BlueprintFrame>
-      <main className="auth-page" id="main-content">
+      </BlueprintFrame>}
+      <main className="auth-page" id="main-content" style={desktop ? { minHeight: "100svh" } : undefined}>
         <LoginBackdrop />
         <div className="auth-composition">
           <div className="auth-panel">
@@ -46,4 +47,7 @@ export function LoginPage() {
       </main>
     </>
   );
+  return desktop
+    ? <div className="ds-page landing-blueprint landing-reference marketing-auth-layout" lang="zh-CN">{content}</div>
+    : content;
 }

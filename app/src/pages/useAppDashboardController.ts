@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖首次入口就绪桥梁、React Router Profile/token、Canvas bootstrap、轻量 tree/正文/Workspace Store、删除编排、惰性 AI、持久左右工具宿主、按当前树重算的归档 presentation、useOverlayPanels 响应式判据与 Paper/Canvas Workspace
+ * [INPUT]: 依赖桌面可选退出保存注册表， 依赖首次入口就绪桥梁、React Router Profile/token、Canvas bootstrap、轻量 tree/正文/Workspace Store、删除编排、惰性 AI、持久左右工具宿主、按当前树重算的归档 presentation、useOverlayPanels 响应式判据与 Paper/Canvas Workspace
  * [OUTPUT]: 对外提供 useAppDashboardController 状态与命令投影；普通笔记树高亮即时响应，正文导航按帧合并且保持可中断，只有 Canvas 离场等待保存且仅最新选择可继续；另协调持久文件库、正文订阅/预取、账户与归档展示
  * [POS]: app/src/pages 的 /app 状态协调 Hook，由 AppDashboard 单次持有；跨 Paper/Canvas 的数据与视觉交接只在此建立一次，深链刷新先确认节点类型，普通业务状态仍留在各自 Store/Workspace，文件库作为共享 Chrome 留在两种内容壳之外。它是「现在是不是覆盖式布局」的唯一持有者并下传给 Paper 壳与归档 Overlay：同一个断点算两遍就会出现两个都自称正确的布局；归档只交出 canonical memo，屏幕上由谁代表它归 AppSidebar
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -70,6 +70,8 @@ import {
   usePersistedPanelWidth,
   type WorkspaceStyle,
 } from "./workspaceLayout";
+
+import { registerDesktopSaveGuard } from "../shared/desktop/bridge";
 
 const LAST_MEMO_KEY_PREFIX = "folune:last-memo:";
 const DEFAULT_MEMO_TITLE = "未命名备忘录";
@@ -478,6 +480,14 @@ export function useAppDashboardController() {
     }
     return true;
   }, [toast]);
+
+  useEffect(() => {
+    if (!window.foluneDesktop) return;
+    return registerDesktopSaveGuard(async () => {
+      await notesWorkspaceRef.current?.flushCurrentDraft();
+      if (!await leaveCanvasSafely()) throw new Error("画布保存尚未完成");
+    });
+  }, [leaveCanvasSafely]);
 
   function handleSelectMemo(memoId: string) {
     const version = ++selectionVersionRef.current;

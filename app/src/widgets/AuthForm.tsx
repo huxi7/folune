@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 React 的登录/注册/验证码局部状态与输入框引用、共享 Button/GlowButton/Input/PasswordInput、MarketingLink，以及 shared/supabase 认证服务
- * [OUTPUT]: 对外提供登录、双密码注册、六格验证码与 Google OAuth 共用的 AuthForm；发起动作独占加载反馈，状态提示和验证码通过 auth-* 类消费共享排版，协议用 SPA 链接
+ * [OUTPUT]: 桌面协议链接外开； 对外提供登录、双密码注册、六格验证码与 Google OAuth 共用的 AuthForm；发起动作独占加载反馈，状态提示和验证码通过 auth-* 类消费共享排版，协议用 SPA 链接
  * [POS]: widgets 的唯一认证表单，由 LoginPage 承载；表单负责认证步骤，页面负责布局和导航，不直接持有 Supabase client
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -385,9 +385,13 @@ export function AuthForm({ onAuthenticated }: AuthFormProps) {
 
           <p className="auth-terms-copy">
             继续即表示您同意 Folune 的
-            <MarketingLink to="/terms" state={{ fromLegalLink: true }}>服务条款</MarketingLink>
+            {window.foluneDesktop || import.meta.env.VITE_DESKTOP === "true"
+              ? <a href="https://folune.huxi7.com/terms" target="_blank" rel="noreferrer">服务条款</a>
+              : <MarketingLink to="/terms" state={{ fromLegalLink: true }}>服务条款</MarketingLink>}
             和
-            <MarketingLink to="/privacy" state={{ fromLegalLink: true }}>隐私政策</MarketingLink>
+            {window.foluneDesktop || import.meta.env.VITE_DESKTOP === "true"
+              ? <a href="https://folune.huxi7.com/privacy" target="_blank" rel="noreferrer">隐私政策</a>
+              : <MarketingLink to="/privacy" state={{ fromLegalLink: true }}>隐私政策</MarketingLink>}
           </p>
         </form>
       )}

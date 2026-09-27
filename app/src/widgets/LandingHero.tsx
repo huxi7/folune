@@ -1,10 +1,11 @@
 /**
- * [INPUT]: 依赖共享 Button/GlowButton、ArrowRightIcon、MarketingAnnouncement、BlueprintDivider、HeroBackdrop 与 LandingEditor；/login 走原生过渡，正文标记交给 MarketingLayout 编排浮现
+ * [INPUT]: 依赖共享 DesktopDownloadButton/GlowButton、ArrowRightIcon、MarketingAnnouncement、BlueprintDivider、HeroBackdrop 与 LandingEditor；/login 走原生过渡，正文标记交给 MarketingLayout 编排浮现
  * [OUTPUT]: 对外提供渐变公告、60svh 居中 Hero、定稿三列价值条与真实 UI 展示；量取顶栏/公告/三栏为矮屏保留产品露出空间
  * [POS]: widgets 的中文首页首屏；02A 背景独立加载，LandingActions 统一下载在左、打开在右，打开引导进入 /login，首屏打开用墨蓝流光；末端 CTA 用 startOnly 模式只显示箭头与开始
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
-import { Button, GlowButton } from "../shared/design-system/components";
+import { GlowButton } from "../shared/design-system/components";
+import { DesktopDownloadButton } from "./DesktopDownloadButton";
 import { ArrowRightIcon } from "../shared/design-system/icons";
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
@@ -18,7 +19,7 @@ export function LandingActions({ startOnly = false }: { startOnly?: boolean } = 
   const navigate = useNavigate();
   const openApp = () => navigate("/login", { viewTransition: supportsMarketingTransition() });
   return <div className="landing-actions">
-    {!startOnly && <Button variant="secondary">下载</Button>}
+    {!startOnly && <DesktopDownloadButton />}
     <GlowButton icon={startOnly ? ArrowRightIcon : undefined} onClick={openApp}>
       {startOnly ? "开始" : "打开"}
     </GlowButton>
