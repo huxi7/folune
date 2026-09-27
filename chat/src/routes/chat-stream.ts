@@ -23,7 +23,15 @@ type Options = {
   persist: (message: UIMessage, status: "complete" | "error" | "aborted") => Promise<unknown>;
   onPersistenceError: () => void;
   onGenerationError?: (detail: { phase: string; chunks: number; timedOut: boolean }) => void;
+  onUsage?: (totalTokens: number) => void;
   idleMs?: number;
+};
+
+// finish 时经 messageMetadata 注入的本轮真实 token（输入+输出总和）；缺失或非正数视为 0。
+const readUsageTokens = (message: UIMessage): number => {
+  const meta = message.metadata as { folune_total_tokens?: unknown } | undefined;
+  const value = meta?.folune_total_tokens;
+  return typeof value === "number" && Number.isFinite(value) && value > 0 ? value : 0;
 };
 
 export function createChatResponseStream(options: Options) {
@@ -135,6 +143,8 @@ export function createChatResponseStream(options: Options) {
       }
     },
     onFinish: async ({ responseMessage, isAborted }) => {
+      const usageTokens = readUsageTokens(responseMessage);
+      if (usageTokens > 0) options.onUsage?.(usageTokens);
       const saved = await persistWithOneRetry(() => options.persist(
         responseMessage,
         isAborted || options.signal.aborted ? "aborted" : failed ? "error" : "complete",

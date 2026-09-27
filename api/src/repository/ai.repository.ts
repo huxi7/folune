@@ -14,7 +14,9 @@ import {
   aiRunRpcResultSchema,
   aiThreadReferenceRowsSchema,
   aiThreadRowsSchema,
+  aiUsageDailyRowsSchema,
   aiUserSettingsRowsSchema,
+  incrementAiUsageResultSchema,
   replaceAiThreadReferencesRpcSchema,
   type AiCommandRpcResult,
   type AiPermissionMode,
@@ -33,6 +35,7 @@ import type {
   AiRun,
   AiThread,
   AiThreadReference,
+  AiUsageDaily,
   AiUserSettings,
 } from "../model/ai.model.ts";
 
@@ -84,6 +87,12 @@ const parseRuns = (payload: unknown): AiRun[] => {
 const parseSettings = (payload: unknown): AiUserSettings[] => {
   const parsed = aiUserSettingsRowsSchema.safeParse(payload ?? []);
   if (!parsed.success) throw invalidStoragePayload("AI settings");
+  return parsed.data;
+};
+
+const parseUsage = (payload: unknown): AiUsageDaily[] => {
+  const parsed = aiUsageDailyRowsSchema.safeParse(payload ?? []);
+  if (!parsed.success) throw invalidStoragePayload("AI usage");
   return parsed.data;
 };
 
@@ -192,6 +201,38 @@ export const aiRepository = {
       returnRepresentation: true,
     });
     return parseSettings(payload)[0] ?? null;
+  },
+
+  async findTodayUsage(
+    userId: string,
+    usageDate: string,
+    accessToken: string,
+  ): Promise<AiUsageDaily | null> {
+    const query = createPostgrestQuery({
+      select: "*",
+      eq: { user_id: userId, usage_date: usageDate },
+      limit: 1,
+    });
+    return parseUsage(
+      await supabaseRest<unknown>(`ai_usage_daily${query}`, { accessToken }),
+    )[0] ?? null;
+  },
+
+  // 只增不减的当日累加；RPC 内部开 GUC 写窗口，返回累加后的当日总量。
+  async incrementUsage(
+    userId: string,
+    tokens: number,
+    accessToken: string,
+  ): Promise<number> {
+    const parsed = incrementAiUsageResultSchema.safeParse(
+      await supabaseRest<unknown>("rpc/increment_ai_usage_daily", {
+        accessToken,
+        method: "POST",
+        body: JSON.stringify({ p_user_id: userId, p_tokens: tokens }),
+      }),
+    );
+    if (!parsed.success) throw invalidStoragePayload("AI usage RPC");
+    return parsed.data;
   },
 
   async createThread(

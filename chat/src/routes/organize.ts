@@ -11,6 +11,7 @@ import { z } from "zod";
 import { env } from "@/config/env";
 import { businessApi, BusinessApiError, type AiRun } from "@/lib/business-api";
 import { projectOrganizeInput } from "@/lib/organize-contracts";
+import { estimateTokens } from "@/lib/token-estimate";
 import { authMiddleware } from "@/middleware/auth";
 
 const organizeRequestSchema = z.object({
@@ -76,6 +77,13 @@ export const organizeRoute = registerApiRoute("/v1/organize", {
 
     let run: AiRun | null = null;
     try {
+      const usage = await businessApi.getUsageStatus(accessToken);
+      if (usage.exceeded) {
+        return context.json(
+          { error: { code: "AI_DAILY_LIMIT_EXCEEDED", message: "今日 AI 使用额度已用完，明天再来。" } },
+          429,
+        );
+      }
       run = await businessApi.createRun(
         {
           memo_id: parsed.data.memo_id,
@@ -121,6 +129,12 @@ export const organizeRoute = registerApiRoute("/v1/organize", {
       if (workflowResult.status !== "success") {
         throw new Error(`Organize workflow ended with ${workflowResult.status}`);
       }
+
+      // 精确 usage 封装在 workflow 内取不到，按输入正文保守估算记账，使整理也计入额度。
+      void businessApi.recordUsage(
+        estimateTokens(plannerInput.memo.content_mdx),
+        accessToken,
+      ).catch(() => null);
 
       run = await businessApi.recordRunPlan(
         run.id,

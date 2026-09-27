@@ -13,6 +13,7 @@ import {
   aiRunRouter,
   aiSettingsRouter,
   aiThreadRouter,
+  aiUsageRouter,
 } from "./ai.router.ts";
 
 import { canvasRouter, memoCanvasRouter } from "./canvas.router.ts";
@@ -43,4 +44,5 @@ router.route("/ai-context", aiContextRouter);
 router.route("/ai-runs", aiRunRouter);
 router.route("/ai-settings", aiSettingsRouter);
 router.route("/ai-commands", aiCommandRouter);
+router.route("/ai-usage", aiUsageRouter);
 router.route("/canvases", canvasRouter);

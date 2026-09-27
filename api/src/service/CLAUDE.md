@@ -12,6 +12,7 @@ ai-thread.service.ts: prepare 的历史读取与 thread/settings/context 同一 
 ai-context.service.ts: 无引用普通聊天不读取文件树/正文/会话引用，显式冻结引用不再重读会话引用；从服务端 memo tree/正文解析本轮冻结 primary/显式/置顶引用，先以 expected revision 拒绝审批续写期间的漂移，再生成可信路径并分配 60k 字符预算；prepare-chat 可与 thread/settings 校验并行启动
 ai-command.service.ts: 编排默认完全访问的账号权限 GET/PATCH；首次读取只补缺失行、冲突重读胜出选择，不能覆盖并发 PATCH；另负责命令创建/查询/批准/拒绝/撤销及 Postgres 404/409 映射
 ai-run.service.ts: 将 Run 创建/读取/记录方案/应用/拒绝/失败/撤销命令映射到数据库状态机，apply/undo 只接收 runId 并输出稳定 404/409
+ai-usage.service.ts: 按 UTC 日 token 额度编排 getDailyStatus 门禁判定与 recordUsage 记账；每日上限取自配置，判定与累加都以验签用户身份经 owner-only RLS/受控 RPC 落地，绝不信任入参身份，使用户无法伪造或清零用量绕过限流
 canvas.service.ts: 将 Canvas V2 默认/standalone 入口、读取、人工 mutation、AI expansion commit/context 编排为稳定 HTTP 契约；新建 standalone 的系统默认名撞名时与新建备忘录同规则顺位让开，409 回传当前 version/mutation_id 供 WAL rebase，运行期只有这一套写路径
 profile.service.ts: 以 Web Crypto 生成单一默认 username 与头像 UUID 路径，执行幂等建档、owner 校验、5MB/JPEG-PNG-WebP 签名验证、avatar_url CAS、失败补偿与旧 Storage 对象清理
 

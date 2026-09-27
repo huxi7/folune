@@ -55,6 +55,14 @@ const aiSettingsSchema = z.object({
   updated_at: z.string(),
 });
 
+export const usageStatusSchema = z.object({
+  usage_date: z.string(),
+  total_tokens: z.number().int().nonnegative(),
+  daily_limit: z.number().int().nonnegative(),
+  remaining: z.number().int().nonnegative(),
+  exceeded: z.boolean(),
+});
+
 const preparedChatMessageSchema = z
   .object({
     id: z.string().min(1),
@@ -373,6 +381,19 @@ export const businessApi = {
 
   getSettings(accessToken: string) {
     return request("/ai-settings", accessToken, aiSettingsSchema);
+  },
+
+  // 今日额度门禁：exceeded 为真则各 AI 入口拒绝进入模型调用。
+  getUsageStatus(accessToken: string) {
+    return request("/ai-usage", accessToken, usageStatusSchema);
+  },
+
+  // 记账：模型调用结束后上报本轮真实 token（输入+输出总和）。
+  recordUsage(totalTokens: number, accessToken: string) {
+    return request("/ai-usage/record", accessToken, usageStatusSchema, {
+      method: "POST",
+      body: JSON.stringify({ total_tokens: totalTokens }),
+    });
   },
 
   getMemoTree(accessToken: string) {

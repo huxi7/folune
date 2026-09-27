@@ -46,6 +46,13 @@ export const canvasExpandRoute = registerApiRoute("/v1/canvas-expand", {
     }
 
     try {
+      const usage = await businessApi.getUsageStatus(accessToken);
+      if (usage.exceeded) {
+        return context.json(
+          { error: { code: "AI_DAILY_LIMIT_EXCEEDED", message: "今日 AI 使用额度已用完，明天再来。" } },
+          429,
+        );
+      }
       const result = await runCanvasExpansion({
         getContext: async (canvasId, sourceNodeId) =>
           await businessApi.getCanvasExpansionContext(
@@ -70,6 +77,11 @@ export const canvasExpandRoute = registerApiRoute("/v1/canvas-expand", {
         search: async (input) =>
           await businessApi.searchRelatedMemos(input, accessToken),
       }, parsed.data);
+      // 精确 usage 在 expansion service 内取不到，按判断的邻居篇数（源+limit 篇）保守估算记账。
+      void businessApi.recordUsage(
+        (parsed.data.limit + 1) * 3000,
+        accessToken,
+      ).catch(() => null);
       return context.json(result);
     } catch (error) {
       const status = error instanceof BusinessApiError

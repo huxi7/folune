@@ -38,7 +38,7 @@ const envSchema = z.object({
     .literal("deepseek/deepseek-v4-flash")
     .default("deepseek/deepseek-v4-flash"),
   MAX_STEPS: z.coerce.number().int().min(1).default(50),
-  MAX_OUTPUT_TOKENS: z.coerce.number().int().min(1).default(393_216),
+  MAX_OUTPUT_TOKENS: z.coerce.number().int().min(1).default(32_768),
   ORGANIZE_AUTO_APPLY_CONFIDENCE: z.coerce.number().min(0).max(1).default(0.85),
 });
 

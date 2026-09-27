@@ -183,6 +183,25 @@ export const chatRoute = registerApiRoute("/v1/chat", {
     }
 
     const { thread_id: threadId } = parsed.data;
+
+    // 每日额度门禁：超限直接 429，不进入模型调用（避免烧钱）。
+    try {
+      const usage = await businessApi.getUsageStatus(accessToken);
+      if (usage.exceeded) {
+        return context.json(
+          {
+            error: {
+              code: "AI_DAILY_LIMIT_EXCEEDED",
+              message: "今日 AI 使用额度已用完，明天再来。",
+            },
+          },
+          429,
+        );
+      }
+    } catch (error) {
+      const failure = businessApiFailure(error);
+      return context.json(failure.body, failure.status);
+    }
     const requestMessages = parsed.data.messages ?? [parsed.data.message!];
     const assistantContinuation = parsed.data.trigger !== "regenerate-message"
       && isAssistantContinuation(requestMessages);
@@ -280,6 +299,11 @@ export const chatRoute = registerApiRoute("/v1/chat", {
         sendStart: false,
         sendReasoning: true,
         onError: modelErrorMessage,
+        messageMetadata: ({ part }) => {
+          if (part.type !== "finish") return undefined;
+          const usage = (part as { totalUsage?: { totalTokens?: number } }).totalUsage;
+          return { folune_total_tokens: usage?.totalTokens ?? 0 };
+        },
         params: {
           ...params,
           clientTools,
@@ -302,6 +326,11 @@ export const chatRoute = registerApiRoute("/v1/chat", {
           : null;
       },
       persist: (message, status) => businessApi.syncMessage(threadId, message, status, accessToken),
+      onUsage: (totalTokens) => {
+        void businessApi.recordUsage(totalTokens, accessToken).catch(() =>
+          context.get("mastra").getLogger().warn("Usage record failed", { threadId }),
+        );
+      },
       onPersistenceError: () => context.get("mastra").getLogger().error(
         "Chat response persistence failed", { threadId, assistantMessageId },
       ),

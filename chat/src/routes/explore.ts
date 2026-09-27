@@ -10,6 +10,7 @@ import { z } from "zod";
 
 import { businessApi, BusinessApiError } from "@/lib/business-api";
 import { projectExploreInput } from "@/lib/explore-contracts";
+import { estimateTokens } from "@/lib/token-estimate";
 import { authMiddleware } from "@/middleware/auth";
 
 /**
@@ -79,6 +80,13 @@ export const exploreRoute = registerApiRoute("/v1/explore", {
     }
 
     try {
+      const usage = await businessApi.getUsageStatus(accessToken);
+      if (usage.exceeded) {
+        return context.json(
+          { error: { code: "AI_DAILY_LIMIT_EXCEEDED", message: "今日 AI 使用额度已用完，明天再来。" } },
+          429,
+        );
+      }
       const source = await businessApi.getMemo(parsed.data.memo_id, accessToken);
       // 未选中文字时以整篇为查询，这是同一接口的默认取值
       const queryText = (parsed.data.selection ?? source.memo.content_mdx).trim();
@@ -148,6 +156,12 @@ export const exploreRoute = registerApiRoute("/v1/explore", {
       if (workflowResult.status !== "success") {
         throw new Error(`Explore workflow ended with ${workflowResult.status}`);
       }
+
+      // 精确 usage 封装在 workflow 内取不到，按查询+召回正文保守估算记账，使探索也计入额度。
+      void businessApi.recordUsage(
+        estimateTokens(queryText, ...[...bodies.values()].map((body) => body.content_mdx)),
+        accessToken,
+      ).catch(() => null);
 
       return context.json(workflowResult.result);
     } catch (error) {

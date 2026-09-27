@@ -21,6 +21,7 @@ import {
   patchAiUserSettingsSchema,
   patchAiThreadSchema,
   recordAiRunPlanSchema,
+  recordAiUsageSchema,
   replaceAiThreadReferencesSchema,
   prepareAiChatSchema,
   resolveAiContextSchema,
@@ -30,6 +31,7 @@ import {
 import { aiCommandService, aiSettingsService } from "../service/ai-command.service.ts";
 import { aiContextService } from "../service/ai-context.service.ts";
 import { aiRunService } from "../service/ai-run.service.ts";
+import { aiUsageService } from "../service/ai-usage.service.ts";
 import { aiThreadService } from "../service/ai-thread.service.ts";
 import { authService } from "../service/auth.service.ts";
 import {
@@ -249,4 +251,19 @@ aiRunRouter.post("/:runId/fail", async (c) => {
   const { runId } = parseRouteParams(aiRunIdParamSchema, c.req.param());
   const { error_code } = await parseJsonBody(c, failAiRunSchema, "Invalid AI run failure");
   return ok(c, await aiRunService.fail(authUser, accessToken, runId, error_code));
+});
+
+export const aiUsageRouter = new Hono();
+
+// 今日额度状态：前端展示剩余、chat 各入口据 exceeded 决定放行。
+aiUsageRouter.get("/", async (c) => {
+  const { accessToken, authUser } = await authenticate(c);
+  return ok(c, await aiUsageService.getDailyStatus(authUser, accessToken));
+});
+
+// 记账：chat 在每次模型调用结束后上报本轮真实 token（输入+输出总和）。
+aiUsageRouter.post("/record", async (c) => {
+  const { accessToken, authUser } = await authenticate(c);
+  const { total_tokens } = await parseJsonBody(c, recordAiUsageSchema, "Invalid AI usage");
+  return ok(c, await aiUsageService.recordUsage(authUser, accessToken, total_tokens));
 });

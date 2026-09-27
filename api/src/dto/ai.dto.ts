@@ -161,6 +161,23 @@ export const aiUserSettingsRowSchema = z.object({
 
 export const aiUserSettingsRowsSchema = z.array(aiUserSettingsRowSchema);
 
+export const aiUsageDailyRowSchema = z.object({
+  user_id: z.uuid(),
+  usage_date: z.string(),
+  total_tokens: z.coerce.number().int().nonnegative(),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
+export const aiUsageDailyRowsSchema = z.array(aiUsageDailyRowSchema);
+
+// increment_ai_usage_daily 返回该用户当日累计值；PostgREST 对 bigint 可能回字符串，故 coerce。
+export const incrementAiUsageResultSchema = z.coerce.number().int().nonnegative();
+
+export const recordAiUsageSchema = z
+  .object({ total_tokens: z.number().int().nonnegative().max(100_000_000) })
+  .strict();
+
 export const patchAiUserSettingsSchema = z
   .object({ permission_mode: aiPermissionModeSchema })
   .strict();

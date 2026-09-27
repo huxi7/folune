@@ -33,6 +33,8 @@ const envSchema = z.object({
     .string()
     .trim()
     .startsWith("sb_publishable_"),
+  // 免费账号每 UTC 日 token 额度（输入+输出总和）；接入订阅后可按档位覆盖此默认。
+  AI_DAILY_TOKEN_LIMIT: z.coerce.number().int().min(1).default(1_000_000),
 });
 
 const result = envSchema.safeParse({
@@ -42,6 +44,7 @@ const result = envSchema.safeParse({
   CORS_ORIGINS: Bun.env["CORS_ORIGINS"],
   SUPABASE_URL: Bun.env["SUPABASE_URL"],
   SUPABASE_PUBLISHABLE_KEY: Bun.env["SUPABASE_PUBLISHABLE_KEY"],
+  AI_DAILY_TOKEN_LIMIT: Bun.env["AI_DAILY_TOKEN_LIMIT"],
 });
 
 if (!result.success) {

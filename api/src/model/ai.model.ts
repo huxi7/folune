@@ -63,6 +63,24 @@ export interface AiUserSettings {
   updated_at: string;
 }
 
+export interface AiUsageDaily {
+  user_id: string;
+  usage_date: string;
+  total_tokens: number;
+  created_at: string;
+  updated_at: string;
+}
+
+// 服务端按 UTC 日的 token 额度门禁判定；daily_limit 由 api 配置注入，
+// remaining/exceeded 供 chat 决定放行或拦截、供前端展示剩余额度。
+export interface AiDailyUsageStatus {
+  usage_date: string;
+  total_tokens: number;
+  daily_limit: number;
+  remaining: number;
+  exceeded: boolean;
+}
+
 export type AiCommandOperation =
   | "create_node"
   | "rename_node"
