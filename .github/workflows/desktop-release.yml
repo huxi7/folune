@@ -1,0 +1,96 @@
+# [INPUT]: 私有源码、Git Tag、Production VITE 公开变量与跨仓库 Release Token
+# [OUTPUT]: macOS arm64 DMG、Windows x64 EXE/RELEASES/nupkg
+# [POS]: 桌面双平台构建与公开二进制发布；普通 push 不发布，手动触发只构建
+# [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+name: Desktop release
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+  pull_request:
+    paths: ['desktop/**', 'app/**', '.github/workflows/desktop-release.yml', 'package.json']
+permissions:
+  contents: read
+concurrency:
+  group: desktop-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15
+            target: macos-arm64
+          - os: windows-latest
+            target: windows-x64
+    runs-on: ${{ matrix.os }}
+    env:
+      VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+      VITE_CHAT_BASE_URL: ${{ vars.VITE_CHAT_BASE_URL }}
+      VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.3.14'
+      - name: Install frontend
+        working-directory: app
+        run: bun install --frozen-lockfile
+      - name: Install desktop
+        working-directory: desktop
+        run: npm ci
+      - name: Set tag version
+        if: startsWith(github.ref, 'refs/tags/')
+        working-directory: desktop
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          node -e 'const s=require("semver");const t=process.env.RELEASE_TAG;if(!/^v\d+\.\d+\.\d+$/.test(t)||!s.valid(t))throw new Error("Only stable vX.Y.Z tags are supported")'
+          npm version "${RELEASE_TAG#v}" --no-git-tag-version --allow-same-version
+      - name: Verify
+        run: npm run electron:test
+      - name: Build installers
+        run: npm run electron:make
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-${{ matrix.target }}
+          path: desktop/release/*
+          if-no-files-found: error
+  publish:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.FOLUNE_RELEASE_TOKEN }}
+      GH_REPO: solink7/folune-releases
+      RELEASE_TAG: ${{ github.ref_name }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: desktop-*
+          merge-multiple: true
+          path: release
+      - name: Publish complete release
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$GH_TOKEN"
+          test -f release/folune-macos-arm64.dmg
+          test -f release/folune-windows-x64.exe
+          test -f release/RELEASES
+          test -n "$(find release -name '*-full.nupkg' -print -quit)"
+          if gh release view "$RELEASE_TAG" --json isDraft > existing.json 2>/dev/null; then
+            test "$(jq -r .isDraft existing.json)" = true
+          else
+            gh release create "$RELEASE_TAG" --draft --title "Folune $RELEASE_TAG" --notes 'Folune desktop for Apple Silicon Mac and Windows x64.'
+          fi
+          gh release upload "$RELEASE_TAG" release/* --clobber
+          gh release edit "$RELEASE_TAG" --draft=false --latest
