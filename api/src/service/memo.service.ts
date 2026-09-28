@@ -406,28 +406,46 @@ const updateMemo = async (
   input: PatchMemoInput,
 ): Promise<MemoDetailNode> => {
   // 完整替换正文时不需要旧正文；节点仍先经 owner/type 校验，写入继续走用户 JWT/RLS。
-  const current = input.content_mdx === undefined
-    ? await findOwnedMemo(authUser, accessToken, nodeId)
-    : { node: await findOwnedNode(authUser, accessToken, nodeId), content: null };
-  if (current.node.node_type !== "memo") {
+  // 正文写只用 nodeId、与 owner/type 校验读没有数据依赖，故内容分支(即 autosave 形态)用单个
+  // Promise.all 并发发起"校验读 + 正文写"，把两次串行跨区往返压成一次(findOwnedMemo 已是同一
+  // 范式)。对 folder/canvas 节点的正文写是确定性 no-op(memos 只存 memo 行，由 FK 与
+  // validate_memo_content_node 触发器兜底)，投机安全；单个 Promise.all 同时给两个 promise 挂
+  // 处理器，任一先 reject 也不产生 unhandled rejection。
+  let node: MemoNode;
+  let content: MemoContent | null = null;
+  let updatedContent: MemoContent | null = null;
+
+  if (input.content_mdx === undefined) {
+    const current = await findOwnedMemo(authUser, accessToken, nodeId);
+    node = current.node;
+    content = current.content;
+  } else {
+    const [ownedNode, writtenContent] = await Promise.all([
+      findOwnedNode(authUser, accessToken, nodeId),
+      memoRepository.updateContent(
+        authUser.id,
+        nodeId,
+        memoContentData(input.content_mdx),
+        accessToken,
+      ),
+    ]);
+    node = ownedNode;
+    updatedContent = writtenContent;
+  }
+
+  // owner/type 关口对两个分支都必须先于 409 生效：否则 folder/canvas 的 nodeId 会因 memos
+  // 无对应行、updatedContent===null 被误报成 409，而不是正确的 404。
+  if (node.node_type !== "memo") {
     throw new HttpError(404, "MEMO_NOT_FOUND", "Memo was not found");
   }
-  let content = current.content;
 
   /*
-   * ---- 顺序是正文先、标题后 ----
-   * 标题会撞上同父同类型唯一约束，正文不会。先写正文，标题冲突就只挂起标题
-   * 这一件事：用户在冲突状态下写的正文已经落库，不会被一次注定失败的改名
-   * 连坐带走，也不再需要"标题已改、正文未改"的半写回滚补偿。
+   * ---- 顺序仍是正文先、标题后 ----
+   * 标题会撞上同父同类型唯一约束，正文不会。正文已在上面的 Promise.all 里落库，标题冲突就
+   * 只挂起标题这一件事：用户在冲突状态下写的正文不会被一次注定失败的改名连坐带走，也不再
+   * 需要"标题已改、正文未改"的半写回滚补偿。
    */
   if (input.content_mdx !== undefined) {
-    const updatedContent = await memoRepository.updateContent(
-      authUser.id,
-      current.node.id,
-      memoContentData(input.content_mdx),
-      accessToken,
-    );
-
     if (updatedContent === null) {
       throw new HttpError(
         409,
@@ -439,13 +457,11 @@ const updateMemo = async (
     content = assertOwnedContent(authUser, updatedContent);
   }
 
-  let node = current.node;
-
   if (input.title !== undefined) {
     const updatedNode = await withTitleConflictTranslation(() =>
       memoRepository.updateNode(
         authUser.id,
-        current.node.id,
+        node.id,
         { title: input.title as string },
         accessToken,
       ));

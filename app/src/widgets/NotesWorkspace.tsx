@@ -13,6 +13,7 @@ import {
   useEffect,
   useImperativeHandle,
   useLayoutEffect,
+  useMemo,
   useRef,
   type FormEvent,
   type KeyboardEvent,
@@ -251,6 +252,22 @@ export const NotesWorkspace = forwardRef<
     onTitleChangeRef.current(title);
   }, [memo, title, titleConflict]);
 
+  // 编辑与阅读同处一个 PersistentView 栈：编辑期阅读面板只是 hidden、并未卸载。若把每键都在
+  // 变的 content 直接喂给它，react-markdown 会在用户看不见时全文重解析。这里只在阅读态把最新
+  // 正文 latch 进快照，编辑期沿用上一次快照——隐藏期间 readingContent 恒定、解析被彻底跳过；
+  // 切回阅读态是同步写入，不出现一帧陈旧内容。
+  const readingSnapshotRef = useRef(content);
+  if (documentView === "reading") {
+    readingSnapshotRef.current = content;
+  }
+  const readingContent = readingSnapshotRef.current;
+  // MarkdownReadingView 未 memo 化，父组件每键重渲染仍会带着它一起重跑；冻结元素身份，让
+  // readingContent 不变时 React 直接跳过整棵 Markdown 解析子树。
+  const readingView = useMemo(
+    () => <MarkdownReadingView content={readingContent} preserveSoftBreaks />,
+    [readingContent],
+  );
+
   function handleKeyboardSave(event: KeyboardEvent<HTMLElement>) {
     if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "s") {
       event.preventDefault();
@@ -364,7 +381,7 @@ export const NotesWorkspace = forwardRef<
           />
         </PersistentView>
         <PersistentView active={documentView === "reading"} className="note-reading-surface">
-            <MarkdownReadingView content={content} preserveSoftBreaks />
+            {readingView}
         </PersistentView>
         </div>
       </article>

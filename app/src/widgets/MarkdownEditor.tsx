@@ -12,6 +12,7 @@ import { GFM } from "@lezer/markdown";
 import CodeMirror, { type ReactCodeMirrorRef } from "@uiw/react-codemirror";
 import {
   forwardRef,
+  useCallback,
   useEffect,
   useImperativeHandle,
   useRef,
@@ -116,6 +117,18 @@ export const MarkdownEditor = forwardRef<
     inflateMarkdownBlankLines(value));
   const editorValueRef = useRef(editorValue);
 
+  // onChange 是每次渲染换新身份的 prop；@uiw/react-codemirror 把它放进 reconfigure 副作用
+  // 的依赖数组，若直接内联下传，每敲一键都会 dispatch 一次全套扩展 reconfigure。用 latest-ref
+  // 读最新 onChange，把交给 CodeMirror 的处理器身份钉成常量，只有 theme 真变才再 reconfigure。
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+
+  const handleEditorChange = useCallback((nextEditorValue: string) => {
+    editorValueRef.current = nextEditorValue;
+    setEditorValue(nextEditorValue);
+    onChangeRef.current(deflateEditorBlankLineMarkers(nextEditorValue));
+  }, []);
+
   useImperativeHandle(forwardedRef, () => ({
     focus() {
       codeMirrorRef.current?.view?.focus();
@@ -169,11 +182,7 @@ export const MarkdownEditor = forwardRef<
       className="folune-md-editor"
       extensions={editorExtensions}
       onBlur={onBlur}
-      onChange={(nextEditorValue) => {
-        editorValueRef.current = nextEditorValue;
-        setEditorValue(nextEditorValue);
-        onChange(deflateEditorBlankLineMarkers(nextEditorValue));
-      }}
+      onChange={handleEditorChange}
       placeholder={placeholder}
       ref={codeMirrorRef}
       theme={theme}
