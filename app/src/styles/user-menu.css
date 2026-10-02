@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 消费共享 Popover 淡灰边框/短柔影、APP文字角色与中性hover；子菜单1px间距/36px行来自实测，国旗为同源SVG
- * [OUTPUT]: 提供 256px/12px 外壳、34px/8px 行、40px 圆头像与 28px 独立流光 CTA、头部整体 hover，右侧子菜单和24px 外/12px 内两层账户底卡；积分摘要与身份卡间距8px
+ * [OUTPUT]: 提供固定256px主菜单（仅窄视口缩宽）/12px曲率外壳、34px/8px 行、40px 圆头像与 28px 独立流光 CTA、头部整体 hover，右侧子菜单和24px 外/12px 内两层账户底卡；积分摘要与身份卡间距8px
  * [POS]: 账户区唯一视觉层；Portal 定位/避让归 UserMenu，所有图案和色彩由现有 DS token 派生，不改变全局控件圆角
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */

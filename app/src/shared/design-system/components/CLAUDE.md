@@ -45,8 +45,8 @@ useToastCountdown.ts: 动作回执唯一计时，Toast 整条底边的剩余长�
 Toast.test.tsx: 验证更新双动作/常驻无倒计时/稍后不触发安装，区分底层非模态 dialog 与真正模态弹窗； 真实 Provider 的重复入栈/三条上限/悬停展开收回/独立撤销与可控帧时钟门禁，验证暂停续走、隐藏保留与到期关闭
 Select.tsx: combobox/listbox 选择器，键盘焦点保留在 trigger、option 不增加 Tab 停靠点；上/下浮层共用 PresenceSurface 的锚点入退场，选择与关闭语义仍在本组件
 UserButton.tsx: 身份原子组件；UserAvatar 显示真实照片或前两个字符，UserButton 用姓名/方案名/单向展开箭头表达账户入口，排版由 user-menu.css 统一，不读持久化状态或发起业务请求
-UserMenu.tsx: 底卡只呈现积分/订阅与账户身份两层；身份头整体hover，订阅复用28px流光；256px主菜单与1px贴边/36px行子菜单，子菜单末行中心对齐触发行中心，其余项向上排列、由邻近下角向上展开并避让视口；语言配国旗，当前项随props显示浅灰；Portal命中边界、悬停缓冲、键盘/触屏与刷新命令维持同源
-UserMenu.test.tsx: 真实ThemeProvider验证三种主题当前项随点击更新、两种语言国旗、两种高度的1px子菜单避让、末行与触发行对齐及向上排列；保留刷新/悬停/键盘/触屏/外点/焦点回归，主题存储在测试后恢复
+UserMenu.tsx: 底卡只呈现积分/订阅与账户身份两层；身份头整体hover，订阅复用28px流光；主菜单以身份按钮为锚点左移8px、间隔8px向上展开，固定256px且允许越过侧栏，仅窄视口缩宽；ResizeObserver跟随按钮和内容尺寸；1px贴边/36px行子菜单，子菜单末行中心对齐触发行中心，其余项向上排列、由邻近下角向上展开并避让视口；语言配国旗，当前项随props显示浅灰；Portal命中边界、悬停缓冲、键盘/触屏与刷新命令维持同源
+UserMenu.test.tsx: 验证主菜单身份按钮锚点/左移8px/8px间距、侧栏缩放时固定256px/观察释放与窄屏避让；真实ThemeProvider验证三种主题当前项随点击更新、两种语言国旗、两种高度的1px子菜单避让、末行与触发行对齐及向上排列；保留刷新/悬停/键盘/触屏/外点/焦点回归，主题存储在测试后恢复
 index.ts: 基础组件稳定出口，包含 WarmTooltip/KeyboardShortcut、PresenceSurface/MotionSurface、PersistentView、Collapse 与 CardMotion；业务界面组合生产原语，不建立第二套动画
 
 职责: 本地组件目录；APP 文字按 app-typography.css 角色消费，Button/action、Input/Select/input、UserButton/navigation、Dialog/section；禁止组件新增局部数字字重，营销继续使用共享样式回退；首次无旧内容的稳定结构才使用统一 Skeleton，已有内容刷新必须优先保留内容，业务组件不得复制 shimmer；AI 最终正文永远不得拥有卡片表面，用户消息复用 Primary 主题，过程与正文的语义分区由业务层决定，ToolCallBubble 只消费已净化的人话详情；所有组件只消费 app/src/index.css 的静态语义 token 与 design-system/motion.ts 的统一动效与组件层 class，不得在组件中硬编码颜色值或引入第二套 UI 系统。ShaderGlow 是本层唯一获准持有 WebGL/GPU 表面的组件，其光色仍在运行期从 index.css 的 --primary token 解析派生而非硬编码，深浅主题随之重建纹理，故不构成第二套视觉系统；GlowButton 是唯一消费它的强调 CTA，材质与标准 Button 平级隔离。

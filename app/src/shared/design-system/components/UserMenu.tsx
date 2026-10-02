@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖 AccountSubscribeButton 独立流光按钮、PresenceSurface/useDismissable 的浮层生命周期、UserButton 与上层受控的语言/主题、真实积分和账户命令
- * [OUTPUT]: 提供两层账户底卡、256px主菜单及1px贴边子菜单；子菜单末行与触发行对齐、其余行向上排列，国旗/主题状态及悬停/键盘/触屏交互同源
+ * [INPUT]: 依赖 AccountSubscribeButton 独立流光按钮、PresenceSurface/useDismissable 的浮层生命周期、UserButton 的视口几何/ResizeObserver 与上层受控的语言/主题、真实积分和账户命令
+ * [OUTPUT]: 提供两层账户底卡、以身份按钮为锚点左移8px并间隔8px向上展开的256px主菜单（仅窄视口缩宽）及1px贴边子菜单；子菜单末行与触发行对齐、其余行向上排列，国旗/主题状态及悬停/键盘/触屏交互同源
  * [POS]: 账户菜单纯展示边界；Portal 避开侧栏裁剪，统一内容边界负责外点关闭，价格/语言持久化/业务跳转均交给上层
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -49,10 +49,12 @@ const languages = [
 const MENU_WIDTH = 256;
 const SUBMENU_WIDTH = 160;
 const VIEWPORT_GAP = 8;
+const MENU_GAP = 8;
+const MENU_START_OFFSET = -8;
 const SUBMENU_GAP = 1;
 const HOVER_CLOSE_DELAY = 180;
 const menuItemSelector = '[role="menuitem"], [role="menuitemradio"]';
-type Position = { left: number; top: number; maxHeight: number; side?: "left" | "right" };
+type Position = { left: number; top: number; width: number; maxHeight: number; side?: "left" | "right" };
 
 export function UserMenu({
   avatarUrl, email, name, locale = "zh-CN", onLocaleChange, onOpen, onThemeChange,
@@ -95,21 +97,26 @@ export function UserMenu({
   useLayoutEffect(() => {
     if (!open) return;
     const positionMenu = () => {
+      // 浮层跟随实际触发按钮；固定开本允许越过侧栏，只在视口边缘让位。
       const anchor = triggerRef.current?.getBoundingClientRect();
       if (!anchor) return;
       const height = menuRef.current?.offsetHeight ?? 0;
       const width = Math.min(MENU_WIDTH, window.innerWidth - VIEWPORT_GAP * 2);
-      const spaceAbove = anchor.top - VIEWPORT_GAP * 2;
-      const spaceBelow = window.innerHeight - anchor.bottom - VIEWPORT_GAP * 2;
+      const spaceAbove = anchor.top - VIEWPORT_GAP - MENU_GAP;
+      const spaceBelow = window.innerHeight - anchor.bottom - VIEWPORT_GAP - MENU_GAP;
       const placeAbove = spaceAbove >= height || spaceAbove >= spaceBelow;
       const maxHeight = Math.max(48, placeAbove ? spaceAbove : spaceBelow);
-      const top = placeAbove ? Math.max(VIEWPORT_GAP, anchor.top - Math.min(height, maxHeight) - VIEWPORT_GAP) : anchor.bottom + VIEWPORT_GAP;
-      setMenuPosition({ left: Math.max(VIEWPORT_GAP, Math.min(anchor.left, window.innerWidth - width - VIEWPORT_GAP)), top, maxHeight });
+      const top = placeAbove ? Math.max(VIEWPORT_GAP, anchor.top - Math.min(height, maxHeight) - MENU_GAP) : anchor.bottom + MENU_GAP;
+      setMenuPosition({ left: Math.max(VIEWPORT_GAP, Math.min(anchor.left + MENU_START_OFFSET, window.innerWidth - width - VIEWPORT_GAP)), top, width, maxHeight });
     };
     positionMenu();
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(positionMenu);
+    if (triggerRef.current) observer?.observe(triggerRef.current);
+    if (menuRef.current) observer?.observe(menuRef.current);
     window.addEventListener("resize", positionMenu);
     window.addEventListener("scroll", positionMenu, true);
     return () => {
+      observer?.disconnect();
       window.removeEventListener("resize", positionMenu);
       window.removeEventListener("scroll", positionMenu, true);
     };
@@ -136,7 +143,7 @@ export function UserMenu({
       setSubmenuPosition({
         left: Math.max(VIEWPORT_GAP, Math.min(left, window.innerWidth - width - VIEWPORT_GAP)),
         top: Math.max(VIEWPORT_GAP, bottom - height),
-        maxHeight: window.innerHeight - VIEWPORT_GAP * 2, side,
+        width, maxHeight: window.innerHeight - VIEWPORT_GAP * 2, side,
       });
     };
     positionSubmenu();
@@ -261,7 +268,7 @@ export function UserMenu({
         aria-label={submenu === "language" ? t("界面语言", "Language") : t("界面主题", "Appearance")}
         className="ds-user-menu-popover ds-user-menu-submenu" data-side={submenuPosition?.side} id={submenuId}
         onPointerEnter={cancelSubmenuClose} onPointerLeave={scheduleSubmenuClose} open={open && submenu !== null}
-        placement="top" ref={submenuRef} role="menu" style={{ left: submenuPosition?.left, top: submenuPosition?.top, maxHeight: submenuPosition?.maxHeight, transformOrigin: submenuPosition?.side === "left" ? "bottom right" : "bottom left", visibility: submenuPosition ? "visible" : "hidden" }}
+        placement="top" ref={submenuRef} role="menu" style={{ left: submenuPosition?.left, top: submenuPosition?.top, width: submenuPosition?.width, maxHeight: submenuPosition?.maxHeight, transformOrigin: submenuPosition?.side === "left" ? "bottom right" : "bottom left", visibility: submenuPosition ? "visible" : "hidden" }}
       >
         {submenu === "theme" ? themes.map(({ icon: IconComponent, label, english, value }) => <button
           aria-checked={theme === value} className="ds-user-menu-item ds-user-menu-submenu-option" key={value} role="menuitemradio" type="button"

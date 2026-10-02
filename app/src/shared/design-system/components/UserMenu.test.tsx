@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖真实 UserMenu/Toast/ThemeProvider、happy-dom 与语言/主题/刷新回调
- * [OUTPUT]: 验证真实主题偏好切换后的当前项、中美国旗、1px子菜单避让与悬停/键盘/触屏/焦点生命周期
+ * [OUTPUT]: 验证主菜单身份按钮锚点/左移8px/8px间距/侧栏缩放时固定256px与窄屏避让、真实主题偏好切换后的当前项、中美国旗、1px子菜单避让与悬停/键盘/触屏/焦点生命周期
  * [POS]: 账户菜单交互门禁；数据获取仍属上层，本测试只确认组件事件与真实 DOM 生命周期
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -62,6 +62,77 @@ function setup(onOpen: () => void = noop, onOpenSettings: () => void = noop, ove
     onOpenProfile={noop} onOpenSubscription={noop} onOpenUsage={noop} onOpenBilling={noop}
     onSignOut={async () => {}} theme="system" onThemeChange={noop} locale="zh-CN" onLocaleChange={noop} {...overrides} /></ToastProvider>);
 }
+
+const rect = (left: number, top: number, width: number, height: number): DOMRect => ({
+  x: left, y: top, left, top, width, height, right: left + width, bottom: top + height, toJSON: () => ({}),
+});
+
+test("主菜单在身份按钮左侧和上方各留8px，侧栏缩放时保持256px并跟随按钮，关闭时释放观察", () => {
+  const previousObserver = globalThis.ResizeObserver;
+  const callbacks: (() => void)[] = [];
+  const observed: Element[] = [];
+  let disconnected = false;
+  class GeometryObserver {
+    constructor(callback: ResizeObserverCallback) { callbacks.push(() => callback([], this as unknown as ResizeObserver)); }
+    observe(target: Element) { observed.push(target); }
+    disconnect() { disconnected = true; }
+  }
+  Object.defineProperty(globalThis, "ResizeObserver", { value: GeometryObserver, configurable: true, writable: true });
+  try {
+    const view = setup();
+    const trigger = view.getByRole("button", { name: "打开用户菜单" });
+    const card = trigger.closest<HTMLDivElement>(".ds-user-menu-shell")!;
+    card.getBoundingClientRect = () => rect(28, 500, 232, 100);
+    // 外卡与实际触发按钮的坐标故意不同，防止定位重新依赖装饰容器。
+    trigger.getBoundingClientRect = () => rect(41, 536, 206, 56);
+    fireEvent.click(trigger);
+    const menu = view.getByRole("menu", { name: "用户菜单" });
+    Object.defineProperty(menu, "offsetHeight", { value: 350, configurable: true });
+    act(() => callbacks[0]!());
+    expect(menu.style.left).toBe("33px");
+    expect(menu.style.width).toBe("256px");
+    expect(Number.parseFloat(menu.style.top) + menu.offsetHeight).toBe(528);
+    expect(observed).toContain(trigger);
+    expect(observed).toContain(menu);
+
+    card.getBoundingClientRect = () => rect(28, 480, 280, 120);
+    trigger.getBoundingClientRect = () => rect(45, 532, 246, 56);
+    act(() => callbacks[0]!());
+    expect(menu.style.left).toBe("37px");
+    expect(menu.style.width).toBe("256px");
+    expect(Number.parseFloat(menu.style.top) + menu.offsetHeight).toBe(524);
+    fireEvent.click(trigger);
+    expect(disconnected).toBe(true);
+  } finally {
+    cleanup();
+    Object.defineProperty(globalThis, "ResizeObserver", { value: previousObserver, configurable: true, writable: true });
+  }
+});
+
+test.each([
+  { viewportWidth: 320, triggerLeft: 120, width: "256px", left: "56px" },
+  { viewportWidth: 200, triggerLeft: 12, width: "184px", left: "8px" },
+])("$viewportWidth px视口保留菜单可读宽度并避让两侧和顶部", ({ viewportWidth, triggerLeft, width, left }) => {
+  const previousWidth = window.innerWidth;
+  const previousHeight = window.innerHeight;
+  Object.defineProperties(window, { innerWidth: { value: viewportWidth, configurable: true }, innerHeight: { value: 500, configurable: true } });
+  try {
+    const view = setup();
+    const trigger = view.getByRole("button", { name: "打开用户菜单" });
+    trigger.getBoundingClientRect = () => rect(triggerLeft, 370, 180, 118);
+    fireEvent.click(trigger);
+    const menu = view.getByRole("menu", { name: "用户菜单" });
+    Object.defineProperty(menu, "offsetHeight", { value: 450, configurable: true });
+    fireEvent.resize(window);
+    expect(menu.style.left).toBe(left);
+    expect(menu.style.width).toBe(width);
+    expect(menu.style.top).toBe("8px");
+    expect(menu.style.maxHeight).toBe("354px");
+  } finally {
+    cleanup();
+    Object.defineProperties(window, { innerWidth: { value: previousWidth, configurable: true }, innerHeight: { value: previousHeight, configurable: true } });
+  }
+});
 
 test("鼠标与键盘每次打开只刷新一次，主题展开不重复刷新", async () => {
   let refreshes = 0;
@@ -190,9 +261,9 @@ test.each([
     fireEvent.click(trigger);
     const menu = view.getByRole("menu", { name: "用户菜单" });
     Object.defineProperty(menu, "offsetHeight", { value: 350, configurable: true });
-    menu.getBoundingClientRect = () => ({ x: 456, y: 72, top: 72, left: 456, right: 712, bottom: 422, width: 256, height: 350, toJSON: () => ({}) });
+    menu.getBoundingClientRect = () => rect(456, 72, 256, 350);
     const submenuTrigger = view.getByRole("menuitem", { name: triggerName });
-    submenuTrigger.getBoundingClientRect = () => ({ x: 463, y: 340, top: 340, left: 463, right: 705, bottom: 374, width: 242, height: 34, toJSON: () => ({}) });
+    submenuTrigger.getBoundingClientRect = () => rect(463, 340, 242, 34);
     fireEvent.resize(window);
     expect(menu.style.left).toBe("456px");
     expect(menu.style.top).toBe("72px");
