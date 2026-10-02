@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 Zustand、Canvas V2 API 文档/回执与 canvasDocument 的纯投影
+ * [INPUT]: 依赖 Zustand、Canvas V2 API 文档/回执与 canvasDocument 的纯投影；助手外壳不进入画布会话
  * [OUTPUT]: 对外提供单一 canvasWorkspaceStore，逻辑分为服务端文档、交互会话与持久化状态三组字段和命令
  * [POS]: shared/store 的 Canvas Workspace 唯一客户端状态源；不复制 memo 正文、不持有计时器或网络重试，后两者只属于 CanvasSaveCoordinator
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -41,7 +41,6 @@ type CanvasInteractionSlice = {
   aiSourceNodeId: string | null;
   aiLoading: boolean;
   libraryOpen: boolean;
-  assistantOpen: boolean;
 };
 
 type CanvasPersistenceSlice = {
@@ -57,7 +56,6 @@ type CanvasWorkspaceActions = {
     detail: CanvasDetail;
     focusNodeId?: string | null;
     libraryOpen: boolean;
-    assistantOpen: boolean;
   }): void;
   applyLocal(intent: CanvasIntent): void;
   replaceServer(detail: CanvasDetail, pending: readonly CanvasIntent[]): void;
@@ -76,7 +74,7 @@ type CanvasWorkspaceActions = {
   editText(nodeId: string | null): void;
   startConnection(nodeId: string | null): void;
   setAiLoading(loading: boolean, sourceNodeId?: string | null): void;
-  setCanvasChrome(input: { libraryOpen?: boolean; assistantOpen?: boolean }): void;
+  setCanvasChrome(input: { libraryOpen?: boolean }): void;
   reset(): void;
 };
 
@@ -89,7 +87,6 @@ export type CanvasWorkspaceState =
 const initialState: CanvasDocumentSlice & CanvasInteractionSlice & CanvasPersistenceSlice = {
   aiLoading: false,
   aiSourceNodeId: null,
-  assistantOpen: false,
   canvasId: null,
   connectionSourceId: null,
   document: null,
@@ -119,7 +116,6 @@ export const useCanvasWorkspaceStore = create<CanvasWorkspaceState>()((set, get)
   beginSession(input) {
     set({
       ...initialState,
-      assistantOpen: input.assistantOpen,
       canvasId: input.canvasId,
       document: input.detail,
       libraryOpen: input.libraryOpen,
@@ -211,7 +207,6 @@ export const useCanvasWorkspaceStore = create<CanvasWorkspaceState>()((set, get)
 
   setCanvasChrome(input) {
     set((state) => ({
-      assistantOpen: input.assistantOpen ?? state.assistantOpen,
       libraryOpen: input.libraryOpen ?? state.libraryOpen,
     }));
   },

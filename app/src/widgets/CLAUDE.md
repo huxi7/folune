@@ -2,6 +2,13 @@
 > L2 | 父级: ../../CLAUDE.md
 
 成员清单
+WorkspaceAssistantLayer.test.tsx: 演示87.5%尺寸投影与无中间帧硬切回归，往返保持同一输入实例与草稿
+AssistantWindowResize.tsx: 助手专属四边四角命中区；对边固定、拖拽不更新业务状态、松手一次提交；取消/Escape/捕获丢失清理与键盘尺寸调整
+AssistantWindowResize.test.tsx: 八方向入口、边角同时改变宽高、只松手提交、取消恢复、第二指针隔离与全局光标清理门禁
+WorkspaceAssistantLayer.tsx: 常驻三态与自由尺寸助手外壳；局部MotionValue驱动拖拽，四边四角调整、恢复自定义窗口，Demo按根字号缩放并硬切、可禁用调整；默认右下锚点、自定义保留调整位置，仅外壳尺寸/裁切变化、正文不缩放，关闭inert与焦点归还；复用品牌流光并显示真实工作/审批/完成/异常状态
+assistantGeometry.test.ts: 锁定同宽同底边、Panel顶部对齐、短窗2/3限制与手机键盘/低矮视口可用边界
+assistantGeometry.ts: 助手尺寸/八方向调整纯策略；自定义窗口完整钳制在可视区域，最小264×280，默认130×44胶囊，短窗最高520且不超过可用高度2/3，全高对齐Panel；共用窗口宽度，键盘/窄屏限制在可视区域
+MenuComparison/: 独立本地菜单对照入口与1c1fe55历史快照；复用生产菜单/侧栏表面、保持数据一致并默认展开，只为对比尺寸和定位，不装配业务状态
 CreditsPurchaseDialog.tsx: 用户选定的同源蓝色生成图横幅、实测超椭圆曲率与六档积分选购的受控展示层，640px/24px圆角弹窗内呈现服务端报价、原生单选、当前积分余额、支付状态/升级入口与规则；复用 Dialog 模态和 locale，网络与生命周期交给 CreditsPage
 DesktopDownloadButton.tsx: Header/Hero 共用原生下载，可靠识别时直接下载，未知架构时明确选择 Mac arm64/Windows x64
 BlogTags.tsx: 独立博客目录的静态主题标签列表；接收文章同源标签，不创建筛选状态或嵌套链接
@@ -38,10 +45,10 @@ LandingSections.tsx: 保留五项真实功能与文章入口、评价和信件�
 LandingFooter.tsx: 共用 DS 墨蓝的品牌区与产品/资源/关于/连接四组导航；16 项预留入口以 aria-disabled link 语义展示且不跳转，打开网页版进入 /login，关于栏额外公开 /terms 与 /privacy；品牌与入口置顶、作者与版权置底；保留 Folune 淡描边与细纹层序，BlueprintFrame 延续导轨
 LandingMotion/: 营销页克制反馈模块；MarketingLink/useMarketingMotion 统一公开页面/锚点过渡与正文浮现，参数复用 DS；HeroBackdrop/ShowcaseBackdrop/LoginBackdrop 承载各自后景，共用散墨算法供登录与 Lab 消费，CountUp 处理数字变化
 NotebookPreview.tsx: 确定性首屏产品预览，DS 统一缩放淡入与显式卡片 lift 分处不同元素，阴影由 CSS 持有，内部布局不参与独立动画
-AppSidebar.tsx: 从 ThemeProvider/LocaleProvider 读取偏好并透传 Dashboard 的方案名、剩余额度、菜单打开刷新与资料/用量/账单/订阅/购买积分命令给纯展示 UserMenu，不在树内请求计费；右键菜单通过 Portal 锚定视口，避免 Panel transform 改写 fixed 坐标；文件库内容与展开偏好的唯一所有者，负责创建/搜索、树/重命名/拖放意图、底部导航和唯一有效归档代表；新建复用上一终态布局与在途位移，不额外扫描整树；拖放保留手势前快照，定位只由目标本身变化触发（换目标/reveal/新一次整理、目标被搬进别的文件夹、树首次就绪），别处增删改不重放展开与滚动；最新选择已可见时不滚动，离屏才沿原平滑定位，祖先已展开不重复写状态，重排交给 useTreeReorder，结构键按不可变树引用复用以跳过标题/摘要更新时的整树 FLIP 判据，子级尺寸交给 TreeDisclosure，业务事务仍由 Dashboard 持有
+AppSidebar.tsx: 搜索与新建共用工具栏的 WarmTooltipGroup 连续提示，搜索显示真实 mod+K 平台键帽；从 ThemeProvider/LocaleProvider 读取偏好并透传 Dashboard 的方案名、剩余额度、菜单打开刷新与资料/用量/账单/订阅/购买积分命令给纯展示 UserMenu，不在树内请求计费；右键菜单通过 Portal 锚定视口，避免 Panel transform 改写 fixed 坐标；文件库内容与展开偏好的唯一所有者，负责创建/搜索、树/重命名/拖放意图、底部导航和唯一有效归档代表；新建复用上一终态布局与在途位移，不额外扫描整树；拖放保留手势前快照，定位只由目标本身变化触发（换目标/reveal/新一次整理、目标被搬进别的文件夹、树首次就绪），别处增删改不重放展开与滚动；最新选择已可见时不滚动，离屏才沿原平滑定位，祖先已展开不重复写状态，重排交给 useTreeReorder，结构键按不可变树引用复用以跳过标题/摘要更新时的整树 FLIP 判据，子级尺寸交给 TreeDisclosure，业务事务仍由 Dashboard 持有
 AppSidebar.creation.test.tsx: 真实 ThemeProvider/侧栏 DOM 回归，覆盖主按钮/右键连续新建、乱序 ID 确认与失败撤回；已有行和目录实例、展开/折叠偏好与选中身份保持稳定；删除别处节点不撑回用户收起的目录，目标被搬进收起目录才跟随展开
-WorkspacePanelLayer.tsx: 跨Paper/Canvas常驻左右侧栏宿主，DS样板直接使用同一组件；原220/170ms、左-8px/右+8px平移加透明度，全程不缩放、不改变Stage或子内容高度；resizeHandle在裁切内容之外，关闭即inert，归档运动租约成对归还，保留文件树/AI实例与滚动位置
-SidebarCreateMenu.tsx: 48/32 split 创建入口，保持双区几何与两项命令；PresenceSurface紧凑菜单120/100ms入退场，关闭即 inert，键盘循环、Escape 与触发器焦点归还保留
+WorkspacePanelLayer.tsx: 常驻文件库与设计系统侧栏样板宿主；保留DS Tween与归档租约，resizeHandle独立于裁切内容，不参与生产助手的尺寸形变
+SidebarCreateMenu.tsx: 48/32 split 创建入口，两半复用 WarmTooltip 下方提示，菜单展开或禁用时收起；locale 同步新建/New 短标签、提示与两项菜单，保持双区几何；PresenceSurface紧凑菜单120/100ms入退场，关闭即 inert，键盘循环、Escape 与触发器焦点归还保留
 SidebarCreateMenu.test.tsx: 侧栏创建入口 DOM/键盘回归测试，锁定文字主动作、菜单恰好两项、方向键循环、Home/End 与 Escape 焦点合同
 AppMainToolbar.tsx: 与CanvasControls共用WarmTooltipGroup连续提示，整理显示mod+Enter、进入Canvas显示mod+E平台键帽，提示置于顶栏下方且不使用原生title；locale中英文案；Paper 内 sticky 48px 文档命令条；左侧是身份三段——真实 Canvas 返回、归档落点、滚动后淡入的 memo 标题（落点排在标题之前，标题静止时透明但仍占位，因此落点的横坐标恒定），右侧命令区按扫描顺序排 中性「整理」（文字独立向下光学校正 0.0625rem）→ 无标签 32px Ghost「进入 Canvas」→ 阅读切换 → 弹层型「更多」，四个命令统一 4px 间距，静止顶栏不画竖线。顺序不是审美：核心动作必须是这一簇第一个被扫到的东西，而「更多」的菜单右对齐垂下，簇尾是它唯一不会把菜单悬在同侧控件头上的位置。整理的层级只由文字标签表达，不由填色表达——顶栏里一个 Filled Primary 都没有，那颗留给文件库的「新建」；Canvas 是导航（名词）故一个无标签图标说得完，与阅读切换同一重量。两者共用中性 Ghost 前景与 hover/press 反馈。顶栏 sticky 在 `--workspace-panel-inset` 上而不是 y=0；顶栏属于纸而不是浮在纸上的一层，全程与 Paper 共用同一表面同一颜色，**不画底边线**——那条线会把「窗口上边 → 线」整段圈成一个随滚动变宽的物体，而宽窄是物体才有的属性；凝结与下缘 Soft Edge 是同一个 CSS 进度的两个读数，首选交给滚动本身，只有不支持 scroll timeline 的浏览器才挂一个哨兵做一次软切，本组件因此不含任何滚动监听、阈值数字，也不知道软边有多高。顶栏 control 的 32px 高度与中性 hover/press 反馈同样只在 workspace.css 声明一次，不由这里逐个控件申报——整理仍显式用 `size="default"` 加文字，它与图标簇的区别是文字标签。归档状态住左侧不只是语义（它回答"你在哪"而不是"你能做什么"），更因为它是归档线的起点：放在纸的右上角那条线必须横穿整张纸才够得到左边的文件树。进入默认 Canvas 前由页面层完成 required flush，Toolbar 不直接发业务请求
 ArchiveStatus.tsx: locale 中英归档标签包围原样路径；整理成功/撤销后的安静落点元素；可见文案是「归档于〈末级目录〉」，完整路径只进 accessible name/title，稳定 data-archive-source 供归档线取 source 锚点，点击只委托文件库定位。它是 contextual text button 而不是 Badge：静止无填充/描边/外影，也不带状态圆点——给一条线找出发点而在纸边摆一颗常驻圆珠，等于给一个不存在的对象造了个身体
@@ -58,7 +65,7 @@ useMemoTreeExpansion.test.ts: 覆盖展开快照缺失与明确全折叠的区�
 useMemoSearch.ts: Command Palette 与 @菜单共用的正文关键词命中 hook，180ms 防抖、切换中止旧请求，只把仍存在于 active tree 的命中 ID 与 idle/loading/ready/error 状态交给调用方；网络 effect 只依赖查询/身份，tree 变化仅通过一次 ID 索引过滤既有命中，不因保存或改名重新搜索。
 escapeLayering.test.ts: Escape 层级仲裁静态门禁；冒泡链只有 document 恒先于 window 两档可用，因此锁定内层弹层挂 document + preventDefault、两个壳层守卫留在 window 并让行，画布内容层同样留在 window 以免与 Dialog 抢同一档
 PanelResizeHandle.test.tsx: 双侧方向/宽度边界、主指针隔离、捕获丢失/取消/卸载清理与键盘/复位回归
-PanelResizeHandle.tsx: 左右浮动 Panel 共用跨边框 8px 透明热区与 280px 局部渐隐细线（中心 56px），由宿主独立插槽承载，指针坐标直接写 CSS、不触发悬停重渲染，键盘焦点居中；仅主指针左键开始拖动，捕获丢失/取消/卸载均清理全局状态；支持 Pointer 拖拽、方向键调整、双击复位与 separator ARIA；拖拽期间声明全局 resizing 状态，禁止布局/面板动画干扰 1:1 跟手；文件库手柄随持久宿主保留
+PanelResizeHandle.tsx: 文件库及设计系统样板使用跨边框 8px 透明热区与 280px 局部渐隐细线（中心 56px），由宿主独立插槽承载，指针坐标直接写 CSS、不触发悬停重渲染，键盘焦点居中；仅主指针左键开始拖动，捕获丢失/取消/卸载均清理全局状态；支持 Pointer 拖拽、方向键调整、双击复位与 separator ARIA；拖拽期间声明全局 resizing 状态，禁止布局/面板动画干扰 1:1 跟手；文件库手柄随持久宿主保留
 ArchiveCord.tsx: 归档线稳定导出边界；只导出 fixed Overlay。目标标记已回归真实 tree row 的 data-archive-representative，这里不再制造零尺寸中转对象——一个不存在的组件不该继续冒充对象
 ArchiveCordOverlay.tsx: 唯一归档几何调度器，消费树上唯一非 inert 代表；滚动/树高度/FLIP/Panel 期间按租约读真实矩形，保持代表迁移时间轴与 settled/fresh 语义，不把几何写进 React state
 ArchiveCordOverlay.test.tsx: Overlay 结构与视觉语法回归测试，锁定 fixed 全屏、三条 path、无中心圆点/方向箭头、首帧一律 settled、关闭与窄屏只隐藏渲染（opacity 而非 display）、旧 marker/organize 连线层/目录高亮死样式确已删除，以及 Reduced Motion 不自绘不流光
@@ -75,7 +82,7 @@ EdgeDock.tsx: 文件库/AI 共用的 Stage 关闭态 Ghost 图标入口，桌面
 PaperSurface.tsx: 正文身份变化只重播局部动效，不卸载内容子树； Paper First 签名表面，纸壳/正文各自命名而不拉伸字；内层容器不再按辅助视图重挂载，NotesWorkspace 自己用 memoClientKey 隔离编辑会话，7:9 几何和归档 source 边界不变
 CanvasStageLoading.tsx: useLocale 只切换界面/无障碍文案，不改变画布名称或会话；统一 Canvas 首屏加载覆盖层；延迟状态由调用方提供，只保留干净 Stage 与可访问 busy 状态，不渲染虚构笔记卡片
 CanvasStageLoading.test.tsx: 锁定隐藏时卸载、显示时保留加载语义且没有纸面 Skeleton
-CanvasWorkspace.tsx: useLocale 只切换界面/无障碍文案，不改变画布名称或会话；Canvas 空间壳、标题/边缘工具和窄屏互斥 Panel，左右 Panel 均由 Dashboard 常驻宿主持有；Canvas 会话和节点几何不受面板开合影响
+CanvasWorkspace.tsx: Canvas 内容壳、文件库进入/记忆、窄屏与Escape；助手可见性读取跨空间唯一Store，右下三态外壳由Dashboard持有，面板不改变React Flow几何
 CanvasWorkspace.test.tsx: Canvas 会话壳回归测试，锁定中央 Canvas、共享 Panel、Paper 互斥关系，以及伪返回按钮/Canvas 文字标识/厚重标题卡片确已消失
 KnowledgeCanvas/: Canvas V2 交互内容根，以受控 React Flow 承载持久视口、memo/native 节点、右下抓手的拖/点等效连接与纯 UI 临时编织绳、带撤销回执/来源确认的移除、拖拽/缩放、Picker、Preview、显式 AI expansion、WAL 恢复与保存状态
 DesignSystemWorkspace/: 开发态 Quiet Editorial Design System 工作区，按 Foundations/Primitives/Navigation & Overlays/Editorial/AI & Organize 五层直接陈列生产 Token、Lucide 精选图标示例、Markdown/Reading/Quote/Code 与四种 Signature Components；组件状态由真实预览交互表达，不再铺设重复状态轨；通过 lazy import 只在 import.meta.env.DEV 下暴露
@@ -89,7 +96,7 @@ MarkdownReadingView.test.tsx: 阅读换行、安全、常数尾部动画节点�
 MarkdownViewMenu.tsx: 阅读/编辑与更多入口消费同组WarmTooltip，更多展开时禁用提示，保留焦点和文件操作；locale中英菜单/回执与空标题导出名；可选关闭文件操作能力，供嵌入展示保留按钮形制； 编辑/阅读与 Markdown 文件操作入口；More菜单共用PresenceSurface紧凑菜单120/100ms配方，保留原文复制/导出和键盘行为，不修改保存协议
 markdownViewTypes.ts: DocumentView editing/reading 与 EditingMode live/source 的共享状态协议，阅读状态不占用编辑模式槽位
 NotesWorkspace.tsx: 单篇笔记编辑会话边界，保持 memoClientKey 与原 autosave 协议；编辑/阅读共享定位框并用 PersistentView 淡换，CodeMirror 不重挂载，旧视图不再撑高或接收焦点
-PaperWorkspaceShell.tsx: Paper 空间壳与边缘工具/窄屏遮罩，左右 Panel 由外层持久宿主负责，开合不改变纸面几何
+PaperWorkspaceShell.tsx: Paper内容壳、文件库入口与窄屏遮罩/Escape；生产与Landing Demo助手入口/尺寸均由外层独立宿主承载
 useMemoAutosave.ts: 单 memo 本地草稿状态机；递归 required flush 使用具名 callback，session 只以 memoId 建立/销毁，逐键输入不写全局 Store，晚到初值由独立门禁接纳
 useMemoAutosave.test.ts: 覆盖迟到服务端正文接纳门禁、插入/删除/等长替换字符计数、三次有界指数退避，以及驱动真实 Hook 证明标题冲突只挂起 title 而正文照常落库
 WorkspaceAuxViews.tsx: 纸内辅助视图挂载点，仅装配回收站与 DEV Design System；订阅由独立 SubscriptionPage 持有，Canvas 继续由 CanvasWorkspace 承载，均不进入 Paper 分支
@@ -119,4 +126,4 @@ AgentPanel/: Paper 与 Canvas 共用的右侧思考空间；界面/权限/审批
 
 2026-09-04 顶栏底边线删除：`::before` 去掉 `border-bottom`，凝结铺开的只是同一个 `--paper-surface`。Paper 与 Panel 是三层而不是并列（Stage → Paper → 压在 Paper 上的 Panel），所以 Paper 不参照 Panel 的顶部边界；纸在滚动中继续往窗口上方延伸，顶栏上方本来就是纸，而那条线一存在，眼睛就把「窗口上边 → 线」读成一个 64px 的物体，顶栏于是随滚动"变宽变笨"。边界交给下缘软边独自表达，软边参数（16px / 6px）与单一进度一个字不动。
 
-本次侧栏生命周期约束：Paper/Canvas 只承载中央内容与工具开关，左右工具由 Dashboard 的 WorkspacePanelLayer 持续挂载；从笔记进入默认画布继承当前工具开关，动画不得重建 AgentPanel。
+助手生命周期：Dashboard常驻同一AgentPanel，WorkspaceAssistantLayer只改变右下外壳；笔记恢复用户短/全高选择，普通进入画布用短窗，明确原文返回可恢复当次全高；胶囊可见性跨空间共享。文件库继续使用原WorkspacePanelLayer。

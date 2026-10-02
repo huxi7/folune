@@ -20,7 +20,7 @@ describe("CanvasWorkspace", () => {
       onRename: async () => undefined,
       // 返回描述是唯一不依赖视口断点的进入语境, 因此结构测试用它打开两侧 Panel
       restore: {
-        assistantOpen: true,
+        assistantSize: "expanded",
         canvasId: "canvas-1",
         libraryOpen: true,
         selectedNodeId: null,

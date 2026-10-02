@@ -1,16 +1,25 @@
 /**
  * [INPUT]: 依赖 Zustand 与浏览器 localStorage，兼容旧 AgentPanel 单开关偏好
- * [OUTPUT]: 对外提供按用户 hydrate 的 WorkspaceChromeState，以及文件库/AI 独立 open/close/toggle 命令
- * [POS]: shared/store 的工作台外壳唯一 UI 状态源；只保存左右工具可见性，不复制树、编辑器或会话数据
+ * [OUTPUT]: 对外提供按用户 hydrate 的文件库偏好与跨空间助手可见性、笔记尺寸/自定义浮窗偏好和当前场景尺寸命令
+ * [POS]: shared/store 的工作台外壳 UI 状态源；助手跨空间连续，画布全高只在当次场景或明确原文返回时恢复；不复制树、编辑器或会话数据
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
 import { create } from "zustand";
 
+export type AssistantSize = "compact" | "expanded";
+/** 宽度由工作台原有共享偏好持有；此处只保存自由浮窗的高度与边缘位置。 */
+export type AssistantFrame = { height: number; right: number; bottom: number };
+
 export type WorkspaceChromeState = {
   libraryOpen: boolean;
   assistantOpen: boolean;
   hydratedUserId: string | null;
+  assistantSize: AssistantSize;
+  paperAssistantSize: AssistantSize;
+  assistantCanvasId: string | null;
+  assistantFrame: AssistantFrame | null;
+  paperAssistantFrame: AssistantFrame | null;
 };
 
 type WorkspaceChromeStore = WorkspaceChromeState & {
@@ -21,6 +30,9 @@ type WorkspaceChromeStore = WorkspaceChromeState & {
   openLibrary(): void;
   toggleAssistant(): void;
   toggleLibrary(): void;
+  enterAssistantScene(canvasId: string | null, restoredSize?: AssistantSize, restoredFrame?: AssistantFrame | null): void;
+  setAssistantSize(size: AssistantSize): void;
+  setAssistantFrame(frame: AssistantFrame): void;
 };
 
 type StoredWorkspaceChrome = Pick<
@@ -28,6 +40,8 @@ type StoredWorkspaceChrome = Pick<
   "assistantOpen" | "libraryOpen"
 > & {
   version: 1;
+  paperAssistantSize?: AssistantSize;
+  paperAssistantFrame?: AssistantFrame | null;
 };
 
 const WORKSPACE_CHROME_KEY_PREFIX = "folune:workspace-chrome:v1:";
@@ -35,6 +49,14 @@ const LEGACY_AGENT_PANEL_KEY_PREFIX = "folune:agent-panel-open:";
 
 export const workspaceChromeStorageKey = (userId: string): string =>
   `${WORKSPACE_CHROME_KEY_PREFIX}${userId}`;
+
+const parseAssistantFrame = (value: unknown): AssistantFrame | null => {
+  if (value === null || typeof value !== "object") return null;
+  const frame = value as Partial<AssistantFrame>;
+  return [frame.height, frame.right, frame.bottom].every((n) => typeof n === "number" && Number.isFinite(n) && n >= 0)
+    && Number(frame.height) > 0
+    ? { height: frame.height!, right: frame.right!, bottom: frame.bottom! } : null;
+};
 
 export function parseWorkspaceChrome(
   stored: string | null,
@@ -88,6 +110,8 @@ const persist = (state: WorkspaceChromeState): void => {
     assistantOpen: state.assistantOpen,
     libraryOpen: state.libraryOpen,
     version: 1,
+    paperAssistantSize: state.paperAssistantSize,
+    paperAssistantFrame: state.paperAssistantFrame,
   };
 
   try {
@@ -129,11 +153,17 @@ export const useWorkspaceChromeStore = create<WorkspaceChromeStore>((set) => ({
   assistantOpen: false,
   hydratedUserId: null,
   libraryOpen: false,
+  assistantSize: "expanded",
+  paperAssistantSize: "expanded",
+  assistantCanvasId: null,
+  assistantFrame: null,
+  paperAssistantFrame: null,
   closeAssistant: () => updateVisibility(set, () => ({ assistantOpen: false })),
   closeLibrary: () => updateVisibility(set, () => ({ libraryOpen: false })),
   hydrate: (userId) => {
+    const storedPreference = readStoredValue(workspaceChromeStorageKey(userId));
     const preference = migrateWorkspaceChrome(
-      readStoredValue(workspaceChromeStorageKey(userId)),
+      storedPreference,
       readStoredValue(`${LEGACY_AGENT_PANEL_KEY_PREFIX}${userId}`),
     );
     // 恢复快照同样受窄屏互斥约束: <1400px 时两个 Panel 不得同开,
@@ -141,13 +171,21 @@ export const useWorkspaceChromeStore = create<WorkspaceChromeStore>((set) => ({
     const resolved = preference.assistantOpen && preference.libraryOpen && isOverlayViewport()
       ? { assistantOpen: preference.assistantOpen, libraryOpen: false }
       : preference;
-    const nextState = { ...resolved, hydratedUserId: userId };
+    let paperAssistantSize: AssistantSize = "expanded";
+    let paperAssistantFrame: AssistantFrame | null = null;
+    try {
+      const stored = JSON.parse(storedPreference ?? "null");
+      if (stored?.version === 1 && stored.paperAssistantSize === "compact") paperAssistantSize = "compact";
+      if (stored?.version === 1) paperAssistantFrame = parseAssistantFrame(stored.paperAssistantFrame);
+    } catch { /* 损坏偏好沿用笔记全高。 */ }
+    const nextState = { ...resolved, hydratedUserId: userId, paperAssistantSize, assistantSize: paperAssistantSize, assistantCanvasId: null, paperAssistantFrame, assistantFrame: paperAssistantFrame };
 
     set(() => nextState);
     persist(nextState);
   },
-  openAssistant: () => updateVisibility(set, () => ({
+  openAssistant: () => updateVisibility(set, (state) => ({
     assistantOpen: true,
+    assistantSize: state.assistantCanvasId === null ? state.paperAssistantSize : "compact",
     ...(isOverlayViewport() ? { libraryOpen: false } : {}),
   })),
   openLibrary: () => updateVisibility(set, () => ({
@@ -156,10 +194,26 @@ export const useWorkspaceChromeStore = create<WorkspaceChromeStore>((set) => ({
   })),
   toggleAssistant: () => updateVisibility(set, (state) => ({
     assistantOpen: !state.assistantOpen,
+    assistantSize: state.assistantCanvasId === null ? state.paperAssistantSize : "compact",
     ...(!state.assistantOpen && isOverlayViewport() ? { libraryOpen: false } : {}),
   })),
   toggleLibrary: () => updateVisibility(set, (state) => ({
     ...(!state.libraryOpen && isOverlayViewport() ? { assistantOpen: false } : {}),
     libraryOpen: !state.libraryOpen,
+  })),
+  enterAssistantScene: (canvasId, restoredSize, restoredFrame) => set((state) =>
+    state.assistantCanvasId === canvasId ? state : {
+      assistantCanvasId: canvasId,
+      assistantSize: canvasId === null ? state.paperAssistantSize : restoredSize ?? "compact",
+      assistantFrame: canvasId === null ? state.paperAssistantFrame : restoredFrame ?? null,
+    }),
+  setAssistantSize: (size) => updateVisibility(set, (state) => ({
+    assistantSize: size,
+    ...(state.assistantCanvasId === null ? { paperAssistantSize: size } : {}),
+  })),
+  setAssistantFrame: (frame) => updateVisibility(set, (state) => ({
+    assistantSize: "compact",
+    assistantFrame: frame,
+    ...(state.assistantCanvasId === null ? { paperAssistantSize: "compact", paperAssistantFrame: frame } : {}),
   })),
 }));

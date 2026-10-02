@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 motion/react、EdgeDock/PaperSurface、稳定 paperIdentity/纸面过渡身份；左右工具与 fixed 归档 Overlay 由外部持久宿主承载
+ * [INPUT]: 依赖 motion/react、仅文件库 EdgeDock/PaperSurface、稳定 paperIdentity/纸面过渡身份；左右工具与 fixed 归档 Overlay 由外部持久宿主承载
  * [OUTPUT]: 对外提供 Paper First 共享 Workspace Chrome、遮罩布局的消费与 Escape 收束，并只保留文件库的开关语义
  * [POS]: widgets 的写作工作台空间壳；Canvas 已成为独立持久 Workspace，旧临时探索舞台不再进入生产壳。响应式判据不在此处再算一遍——它由 Dashboard 的 useOverlayPanels 持有并下传，壳只消费；同一个断点算两遍就会出现两个都自称正确的布局
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -19,7 +19,6 @@ import {
 } from "react";
 
 import {
-  AssistantPanelOpenIcon,
   SidebarSimpleIcon,
 } from "../shared/design-system/icons";
 import {
@@ -37,7 +36,6 @@ type PaperWorkspaceShellProps = {
   libraryOpen: boolean;
   onCloseAssistant: () => void;
   onCloseLibrary: () => void;
-  onToggleAssistant: () => void;
   onToggleLibrary: () => void;
   organizing: boolean;
   /** 覆盖式布局（compact，或双开且宽度不足）。同样只由 Dashboard 计算 */
@@ -54,7 +52,6 @@ export function PaperWorkspaceShell({
   libraryOpen,
   onCloseAssistant,
   onCloseLibrary,
-  onToggleAssistant,
   onToggleLibrary,
   organizing,
   overlayPanels,
@@ -120,7 +117,7 @@ export function PaperWorkspaceShell({
     ].join(",")) !== null) {
       return;
     }
-    closeOverlay();
+    if (libraryOpen) onCloseLibrary();
   };
 
   return (
@@ -152,25 +149,6 @@ export function PaperWorkspaceShell({
           ) : null}
         </AnimatePresence>
 
-        <AnimatePresence initial={false}>
-          {!assistantOpen ? (
-            <motion.div
-              animate={{ opacity: 1 }}
-              className="workspace-stage-control workspace-assistant-control"
-              exit={{ opacity: 0 }}
-              initial={{ opacity: 0 }}
-              transition={reduceMotion ? reducedFadeTransition : fadeTransition}
-            >
-              <EdgeDock
-                icon={<AssistantPanelOpenIcon size={16} />}
-                label="AI"
-                onClick={onToggleAssistant}
-                side="right"
-              />
-            </motion.div>
-          ) : null}
-        </AnimatePresence>
-
         <div className="paper-stage-scroll" ref={paperScrollRef}>
           <motion.div
             className="paper-stage-layout"
@@ -190,7 +168,7 @@ export function PaperWorkspaceShell({
 
 
         <AnimatePresence initial={false}>
-          {overlayPanels && anyPanelOpen ? (
+          {overlayPanels && libraryOpen ? (
             <motion.button
               animate={{ opacity: 1 }}
               aria-label="关闭浮动工具"

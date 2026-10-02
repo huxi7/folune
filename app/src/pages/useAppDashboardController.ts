@@ -1,11 +1,11 @@
 /**
- * [INPUT]: 依赖桌面可选退出保存注册表， 依赖首次入口就绪桥梁、React Router Profile/token、Canvas bootstrap、轻量 tree/正文/Workspace Store、删除编排、惰性 AI、持久左右工具宿主、按当前树重算的归档 presentation、useOverlayPanels 响应式判据与 Paper/Canvas Workspace
+ * [INPUT]: 依赖桌面可选退出保存注册表， 依赖跨空间助手尺寸/可见性、首次入口就绪桥梁、React Router Profile/token、Canvas bootstrap、轻量 tree/正文/Workspace Store、删除编排、惰性 AI、持久左右工具宿主、按当前树重算的归档 presentation、useOverlayPanels 响应式判据与 Paper/Canvas Workspace
  * [OUTPUT]: 对外提供 useAppDashboardController 状态与命令投影；订阅通过受限来路保留原笔记身份，深链不触发恢复/创建笔记；普通笔记树高亮即时响应，正文导航按帧合并且可中断，Canvas 离场等待保存且仅最新选择继续，另协调文件库、正文预取、账户与归档
  * [POS]: app/src/pages 的 /app 状态协调 Hook，由 AppDashboard 单次持有；跨 Paper/Canvas 的数据与视觉交接只在此建立一次，深链刷新先确认节点类型，普通业务状态仍留在各自 Store/Workspace，文件库作为共享 Chrome 留在两种内容壳之外。它是「现在是不是覆盖式布局」的唯一持有者并下传给 Paper 壳与归档 Overlay：同一个断点算两遍就会出现两个都自称正确的布局；归档只交出 canonical memo，屏幕上由谁代表它归 AppSidebar
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   useLoaderData,
   useLocation,
@@ -60,7 +60,6 @@ import { useMemoSelection } from "./useMemoSelection";
 import { useOptimisticMemoCreation } from "./useOptimisticMemoCreation";
 import { useStandaloneCanvasCreation } from "./useStandaloneCanvasCreation";
 import {
-  AGENT_MAX_WIDTH,
   AGENT_MIN_WIDTH,
   AGENT_WIDTH_KEY,
   DEFAULT_AGENT_WIDTH,
@@ -116,7 +115,13 @@ export function useAppDashboardController() {
   const rememberRecentNode = useRecentNodesStore((state) => state.remember);
   const openCommandPalette = useCommandPaletteStore((state) => state.openPalette);
   const rememberCanvasEntry = useCanvasChromeStore((state) => state.rememberEntry);
-  const toggleAssistant = useWorkspaceChromeStore((state) => state.toggleAssistant);
+  const openAssistant = useWorkspaceChromeStore((state) => state.openAssistant);
+  const assistantScene = useWorkspaceChromeStore((state) => state.assistantCanvasId);
+  const sceneSize = useWorkspaceChromeStore((state) => state.assistantSize);
+  const paperAssistantSize = useWorkspaceChromeStore((state) => state.paperAssistantSize);
+  const setAssistantSize = useWorkspaceChromeStore((state) => state.setAssistantSize);
+  const assistantFrame = useWorkspaceChromeStore((state) => state.assistantFrame);
+  const setAssistantFrame = useWorkspaceChromeStore((state) => state.setAssistantFrame);
   const toggleLibrary = useWorkspaceChromeStore((state) => state.toggleLibrary);
   const memoTree = useMemoTreeStore((state) => state.nodes);
   const hydrateTree = useMemoTreeStore((state) => state.hydrateTree);
@@ -129,7 +134,6 @@ export function useAppDashboardController() {
     (state) => state.getMemoClientKey,
   );
   const canvasSessionCanvasId = useCanvasWorkspaceStore((state) => state.canvasId);
-  const canvasSessionAssistantOpen = useCanvasWorkspaceStore((state) => state.assistantOpen);
   const canvasSessionLibraryOpen = useCanvasWorkspaceStore((state) => state.libraryOpen);
   const resolveMemoId = useMemoTreeStore((state) => state.resolveMemoId);
   const updateMemoTitleLocal = useMemoTreeStore(
@@ -182,7 +186,7 @@ export function useAppDashboardController() {
     AGENT_WIDTH_KEY,
     DEFAULT_AGENT_WIDTH,
     AGENT_MIN_WIDTH,
-    AGENT_MAX_WIDTH,
+    Number.POSITIVE_INFINITY,
   );
   const resolvedRouteMemoId = routeMemoId === null ? null : resolveMemoId(routeMemoId);
   const selectedMemo = useMemo(() => resolvedRouteMemoId === null
@@ -234,16 +238,13 @@ export function useAppDashboardController() {
           canvasNodeId,
           typeof window === "undefined" ? 0 : window.innerWidth,
         ).libraryOpen;
-  const activeAssistantOpen = canvasNodeId === null
-    ? assistantOpen
-    : canvasSessionCanvasId === canvasNodeId
-      ? canvasSessionAssistantOpen
-      : canvasReturn?.canvasId === canvasNodeId
-        ? canvasReturn.assistantOpen
-        : peekCanvasEntryChrome(
-          canvasNodeId,
-          typeof window === "undefined" ? 0 : window.innerWidth,
-        ).assistantOpen;
+  const activeAssistantOpen = assistantOpen;
+  const restoredAssistantSize = canvasReturn?.canvasId === canvasNodeId ? canvasReturn.assistantSize : undefined;
+  const assistantSize = assistantScene === canvasNodeId ? sceneSize
+    : canvasNodeId === null ? paperAssistantSize : restoredAssistantSize ?? "compact";
+  useLayoutEffect(() => {
+    useWorkspaceChromeStore.getState().enterAssistantScene(canvasNodeId, restoredAssistantSize, canvasReturn?.canvasId === canvasNodeId ? canvasReturn.assistantFrame : null);
+  }, [assistantScene, canvasNodeId, restoredAssistantSize, canvasReturn]);
   const memoCanvasEntry = useMemoCanvasEntry({
     accessToken,
     mergeServerNode,
@@ -524,9 +525,6 @@ export function useAppDashboardController() {
         rememberCanvasEntry({
           canvasId: memoId,
           inherited: {
-            assistantOpen: onCanvas
-              ? canvasSession.assistantOpen
-              : paperChrome.assistantOpen,
             libraryOpen: onCanvas
               ? canvasSession.libraryOpen
               : paperChrome.libraryOpen,
@@ -691,7 +689,7 @@ export function useAppDashboardController() {
     ? openPaperLibrary
     : () => useCanvasWorkspaceStore.getState()
       .setCanvasChrome(clampCanvasChrome(
-        { assistantOpen: false, libraryOpen: true },
+        { libraryOpen: true },
         window.innerWidth,
       ));
   /*
@@ -706,10 +704,11 @@ export function useAppDashboardController() {
       seq: (current?.seq ?? 0) + 1,
     }));
   };
-  const closeActiveAssistant = canvasNodeId === null
-    ? closeAssistant
-    : () => useCanvasWorkspaceStore.getState()
-      .setCanvasChrome({ assistantOpen: false });
+  const closeActiveAssistant = closeAssistant;
+  const openActiveAssistant = () => {
+    if (window.innerWidth < 1400) closeActiveLibrary();
+    openAssistant();
+  };
   const paperViewport = useOverlayPanels(assistantOpen, libraryOpen);
   return {
     activeView,
@@ -774,7 +773,11 @@ export function useAppDashboardController() {
     libraryOpen,
     closeAssistant,
     closeLibrary,
-    toggleAssistant,
+    openActiveAssistant,
+    assistantSize,
+    setAssistantSize,
+    assistantFrame,
+    setAssistantFrame,
     toggleLibrary,
     workspaceStyle,
     handleCanvasSessionReady,

@@ -1,0 +1,23 @@
+<!doctype html>
+<!--
+ [INPUT]: 依赖生产index.css和MenuComparison独立脚本入口，hash选择历史或当前版本
+ [OUTPUT]: 以1:1像素显示真实菜单和生产侧栏表面，默认展开；账户数据仅为内存示例
+ [POS]: menu-compare.html的隔离iframe场景，不进入生产构建
+ [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+-->
+<html lang="zh-CN" data-visual-context="app">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><meta name="robots" content="noindex" />
+  <meta http-equiv="Content-Security-Policy" content="connect-src 'none'; img-src 'self' data:; media-src 'none'; object-src 'none'; frame-src 'none'; form-action 'none'; base-uri 'none'" />
+  <title>Folune · 菜单场景</title><link rel="stylesheet" href="/src/index.css" />
+  <style>
+    body { margin: 0; overflow: hidden; }
+    .menu-demo-brand { display:flex; align-items:center; height:var(--panel-header-height); }
+    .menu-demo-tree { flex:1; min-height:0; padding-top:12px; }
+    .menu-demo-paper { position:absolute; inset:16px 16px 16px 302px; border-radius:var(--radius-paper); background:var(--paper-surface); padding:32px; color:var(--foreground); }
+    .menu-demo-paper h1 { white-space:nowrap; font-size:20px; }
+    .menu-demo-paper p { margin-top:16px; font-size:13px; line-height:1.8; color:var(--muted-foreground); }
+  </style>
+</head>
+<body><div id="root"></div><script type="module" src="/src/widgets/MenuComparison/main.tsx"></script></body>
+</html>

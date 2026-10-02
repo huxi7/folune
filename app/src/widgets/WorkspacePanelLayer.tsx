@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖DS唯一surfaceVariants侧栏配方（原220/170ms、外侧8px平移、无缩放）、Dashboard左右工具内容、共享尺寸与归档线运动租约
- * [OUTPUT]: 对外提供跨 Paper/Canvas 路由持续挂载的左右工具浮层宿主与裁切内容之外的 resizeHandle 插槽；关闭时只隐藏并冻结交互，不卸载 AppSidebar/AgentPanel，并在 Tween 期间交出一段归档几何租约
+ * [INPUT]: 依赖DS唯一surfaceVariants侧栏配方（原220/170ms、外侧8px平移、无缩放）、Dashboard文件库内容与设计系统侧栏样板、共享尺寸与归档线运动租约
+ * [OUTPUT]: 对外提供跨 Paper/Canvas 路由持续挂载的文件库宿主及设计系统通用侧栏样板与裁切内容之外的 resizeHandle 插槽；关闭时只隐藏并冻结交互，不卸载内部内容；生产AgentPanel由独立助手宿主持有，并在 Tween 期间交出一段归档几何租约
  * [POS]: widgets 的跨空间 Workspace Chrome 边界；把文件树与 AI 实例从互斥的 Paper/Canvas 内容壳中提出，消除路由切换时的重挂载闪烁。它是唯一知道这段 Tween 何时结束的人，因此必须由它显式通知归档线，而不是让归档线去猜 transform 动画的结尾
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */

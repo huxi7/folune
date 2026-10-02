@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖生产 Workspace/Paper/Canvas/Agent 与 DS 样式
- * [OUTPUT]: Demo 文档的字号档位、三栏之间的空隙、Paper/Canvas 互斥显示与窄屏适配
+ * [OUTPUT]: Demo 文档的字号档位、三栏之间的空隙、Paper/Canvas 互斥显示、静态助手宽度测量与窄屏适配
  * [POS]: 仅适配嵌入尺寸，不新增演示工具条或组件皮肤
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -28,6 +28,7 @@ html, body, #root { height:100%; overflow:hidden; }
 html[data-demo-variant="pinned"] { --spacing:4px; }
 html[data-demo-variant="original"] { font-size:100%; }
 html[data-demo-variant="original"] .demo-root { --demo-column-gap:32px; }
+.demo-agent-track { position:absolute; width:var(--workspace-agent-track); visibility:hidden; pointer-events:none; }
 .demo-workspace-frame { position:relative; height:100%; overflow:hidden; }
 .demo-workspace-frame .app-workspace { height:100%; }
 .demo-workspace-frame .canvas-workspace { position:absolute; inset:0; }

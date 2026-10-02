@@ -2,6 +2,7 @@
 > L2 | 父级: ../CLAUDE.md
 
 成员清单
+AgentConversation.tsx: 单会话Composer/流/审批/八并发工具执行与恢复边界；权限确认后发送，草稿首发保持实例，停止取消排队，后台同步真实消息/命令；完成提示仅来自本次实际处理结束
 chatErrorCopy.test.ts: SSE 余额错误显示专门标题，登录和通用错误分类保持
 batchCheckpoint.test.ts: 并行批次检查点串行合并不丢记录、末轮恢复与终态不重跑门禁
 batchRecovery.ts: 末条 assistant 的审批/检查点恢复候选纯判定，终态和旧轮次不重跑
@@ -15,11 +16,11 @@ AgentToolProgress.tsx: 工具读屏状态按locale投影，推理/正文不翻�
 clientToolQueue.ts: 共享工具队列最多八项并发，完成一项立即补位；停止取消排队而保留已提交结果
 clientToolQueue.test.ts: 98 项任务并发上限、单项失败释放执行槽、停止取消排队与后续队列复用门禁
 CLAUDE.md: 记录 AgentPanel 子域成员、依赖方向与 GEB 回环协议
-AgentPanelHeader.tsx: locale控制历史/返回/新建文案，真实会话标题保留；无状态固定顶栏；历史接管标题和左侧返回，新对话为即时本地导航、不承载 loading，执行中保留防中断禁用；生产与演示共用
+AgentPanelHeader.tsx: 无状态同源Header；历史/返回、即时新对话、可选短窗/全高切换与向下收起，复用DS Ghost Button，尺寸模式归外壳
 useConversationScroll.test.tsx: 验证首次非平滑定位与退出冻结、迟到内容回调不追尾
 useConversationScroll.ts: 消息滚动唯一边界，首次绘制前定位、退出取消平滑滚动并冻结位置，隐藏历史拒绝追尾
 AgentPanel.draft.test.tsx: 覆盖首开权限与保存期间按钮/Enter/直接提交不发送；子进程隔离、真实组件/Hook/SDK/transport，验证零写草稿、首发创建/引用/持续消息实例、失败重试、删除与迟到请求隔离
-AgentPanel.tsx: Composer、加载与错误使用locale，用户/AI内容不被翻译；发送须等当前账号权限确认，加载/保存期间按钮、Enter 与提交均不放行；新对话直接进入可输入草稿，首发等候归 SDK 发送状态、落库保持组件身份；AI 组合根，History/Conversation 用撑满高度的 PersistentView 承接；历史从左侧进入，点击会话立即退出列表并由目标标题与 Skeleton 内容壳接管，失败在目标窗重试；流式消息以 32ms UI 节流、末条 assistant 工具对账、assistant 定点同步与本地快照提交降低重算，错误/中止仍后台校准；整轮活动跨 ready、客户端工具和审批续写持续，只读工具参数到齐即启动且不阻塞 SDK 流消费，流末复用同一执行结果；写工具在流末审批门禁后由 clientToolQueue 最多八项并发启动，停止同时取消排队并阻止迟到结果自动续写，独立落库本批已完成/已取消结果以便刷新回看；停止入口持续到客户端工具结束，停止/失败不发布提前读取结果或启动待执行写工具；菜单与内容 Motion 不接管业务协议
+AgentPanel.tsx: 历史/新对话导航与单会话装配；接收外壳尺寸/放大收起动作，将聊天与整理的真实状态上报胶囊；AgentConversation身份不因场景/尺寸变化而重建
 AgentPanel.streaming.test.tsx: 余额不足退出思考、明确提示且不自动重发； 新增流内错误立即停止思考、不执行未确认写工具/自动续写门禁； 子进程隔离 mock，使用真实 useChat/AgentPanel、可控直通流与延迟工具结果，验证连续两轮工具/自动续写稳定、正文首分块在 text-end/finish-step 前已显示且只折叠一次，独立读写工具并发、98 项独立工具顺序展示、100项明确批量八并发与完成列表 DOM 有界，以及停止后不再启动待执行工具或自动续写
 AgentPanelNavigation.test.tsx: 会话切换交互回归门禁，以未完成内容请求锁定历史列表立即退出、目标标题与加载壳同步接管
 ApprovalDock.tsx: Composer 上方唯一的紧凑非模态审批视觉原语，统一图标、标题、影响说明、按钮槽位与无蒙层语义；普通工具和 AI 整理审批只能适配它，禁止复制表面
@@ -64,7 +65,7 @@ messagePresentation.ts: 有序消息分区与单调正文发布；按调用去�
 messagePresentation.test.ts: 回复分区纯函数测试，覆盖历史连续 assistant 归并、step/工具/过渡文字穿插、处理中正文不争抢、重复 toolCall 去重、成功 commands 整轮反向撤销、reasoning 归属和普通回复零过程区
 toolPresentation.ts: locale参数统一工具名称、状态与安全详情，原目标标题保持；单次扫描本轮读取/命令快照，为执行中与失败动作保留目标名，无额外 API 请求； SDK 回包与业务成功分离，failed/stale/rejected/undone 不显示成功勾；工具 Message UI 的唯一展示适配器，先归一化 namespaced 工具名，再基于真实操作、标题和状态生成人话动作及安全详情
 toolPresentation.test.ts: 锁定并发删除执行中/失败/历史回看仍显示笔记名； 工具展示契约测试，锁定具体动作命名、namespaced 归一、安全详情与未知协议名不外露
-activityState.ts: AI Activity 纯判定边界，识别 旧消息 folune.phase 的过程标记，以整轮 continuation 补齐 SDK ready 的客户端工具/审批/自动续写间隙；当前 step 未完成工具优先，空白 text/reasoning 不改变阶段，hasAssistantContinuation 只由末步可续写工具决定
+activityState.ts: AI Activity与胶囊AgentPresence类型边界；以整轮continuation补齐SDK ready期间的工具/审批/续写间隙，当前step未完成工具优先
 activityState.test.ts: Activity 状态回归测试，覆盖当前 step、ready 工具间隙、审批/拒绝、空分块、正文开始与终态卸载
 chatFetch.ts: 可独立测试的 HTTP 策略层，每次调用 token provider 后注入 Bearer，并把非 2xx 扁平/嵌套信封归一为带 code 的 ChatRequestError
 chatTransport.ts: DefaultChatTransport 在 SDK submitted 阶段异步解析草稿的真实 thread ID，后续发送/工具续写复用同一 ID；增量消息、冻结 metadata、稳定 assistant ID 与统一鉴权端点保持

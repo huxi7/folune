@@ -90,3 +90,5 @@ $$;
 
 revoke all on function public.increment_ai_usage_daily(uuid, bigint) from anon, public;
 grant execute on function public.increment_ai_usage_daily(uuid, bigint) to authenticated;
+
+-- 2026-10-03（Asia/Shanghai）：Folune-production 已应用 migration 20261002173654 / ai_usage_daily_quota，RLS 与角色/列级权限已复核。

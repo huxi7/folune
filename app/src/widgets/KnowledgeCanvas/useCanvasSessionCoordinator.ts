@@ -1,10 +1,11 @@
 /**
- * [INPUT]: 依赖 Canvas V2 API、可选一次性 CanvasEntryBootstrap、CanvasSaveCoordinator/IndexedDB WAL、canvasWorkspaceStore、进入侧栏状态与当前 React Flow 视口
+ * [INPUT]: 依赖 Canvas V2 API、跨空间助手尺寸快照、可选一次性 CanvasEntryBootstrap、CanvasSaveCoordinator/IndexedDB WAL、canvasWorkspaceStore、进入侧栏状态与当前 React Flow 视口
  * [OUTPUT]: 首次进入时报告 Canvas 内容就绪/失败给入口过渡； 对外提供 useCanvasSessionCoordinator，优先消费对应 bootstrap detail，并完成 Store 建会话、WAL 恢复、pagehide 与会话控制注册
  * [POS]: KnowledgeCanvas 的会话基础设施 Hook；一次会话的身份只有 (登录用户, 这张画布)，进入语境与回调走渲染期 latest ref，因此记录返回描述、面板开合或上层重渲染都不会 reset Store、掐断在飞的保存或让预览在过渡取景前消失；初始 detail 只取一次，后续冲突重取仍归 Coordinator
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
+import { useWorkspaceChromeStore } from "../../shared/store/workspaceChromeStore";
 import { useWorkspaceEntryReady } from "../../pages/useWorkspaceEntryReady";
 import { useWorkspaceEntryStore } from "../../shared/store/workspaceEntryStore";
 import {
@@ -114,7 +115,6 @@ export function useCanvasSessionCoordinator({
         }
         const { entryChrome: chrome, restore: entry } = entryRef.current;
         beginSession({
-          assistantOpen: chrome.assistantOpen,
           canvasId,
           detail,
           focusNodeId: entry?.canvasId === canvasId
@@ -190,7 +190,8 @@ export function useCanvasSessionCoordinator({
           getReturnDescriptor(title) {
             const state = useCanvasWorkspaceStore.getState();
             return {
-              assistantOpen: state.assistantOpen,
+              assistantSize: useWorkspaceChromeStore.getState().assistantSize,
+              assistantFrame: useWorkspaceChromeStore.getState().assistantFrame,
               canvasId,
               libraryOpen: state.libraryOpen,
               selectedNodeId: state.selectedNodeIds.length === 1

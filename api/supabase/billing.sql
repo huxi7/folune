@@ -38,3 +38,5 @@ grant select (
   user_id, plan_id, status, billing_interval,
   current_period_start, current_period_end, cancel_at_period_end
 ) on public.billing_subscriptions to authenticated;
+
+-- 2026-10-03（Asia/Shanghai）：Folune-production 已应用 migration 20261002173658 / billing_readonly_subscriptions，RLS 与角色/列级权限已复核。

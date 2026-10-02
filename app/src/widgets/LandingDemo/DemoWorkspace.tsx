@@ -1,13 +1,14 @@
 /**
- * [INPUT]: 依赖生产 PaperWorkspaceShell/Toolbar/Markdown/Panel/归档线与确定性 Demo 数据
+ * [INPUT]: 依赖生产 PaperWorkspaceShell/Toolbar/Markdown/文件库Panel/三态助手外壳/归档线与确定性 Demo 数据
  * [OUTPUT]: 对外提供笔记/画布直接切换、工具条进入与返回的纸面过渡、内存编辑、整理和本页会话
- * [POS]: Demo 唯一状态所有者；文件树导航清除笔记来路，工具条入口才记录返回对象，左右 Panel 持续挂载
+ * [POS]: Demo 唯一状态所有者；文件树导航清除笔记来路，工具条入口才记录返回对象，文件库与助手持续挂载；助手按演示根字号同比缩小；笔记固定全高、画布固定胶囊，先硬切助手再启动纸面过渡，避免根截图把助手一起带走
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { flushSync } from "react-dom";
 import { PaperWorkspaceShell } from "../PaperWorkspaceShell";
 import { AppMainToolbar } from "../AppMainToolbar";
+import { WorkspaceAssistantLayer } from "../WorkspaceAssistantLayer";
 import { WorkspacePanelLayer } from "../WorkspacePanelLayer";
 import { MarkdownEditor } from "../MarkdownEditor";
 import { MarkdownReadingView } from "../MarkdownReadingView";
@@ -40,6 +41,7 @@ const TRACKS = {
 } as const;
 export type DemoVariant = keyof typeof TRACKS;
 
+const readUiScale = () => (parseFloat(window.getComputedStyle(document.documentElement).fontSize) || 16) / 16;
 const folders = () => new Set(["demo-life", "demo-observation", "demo-reading", "demo-projects", "demo-newsletter"]);
 export function DemoWorkspace({ variant = "uniform" }: { variant?: DemoVariant }) {
   const tracks = TRACKS[variant];
@@ -52,7 +54,10 @@ export function DemoWorkspace({ variant = "uniform" }: { variant?: DemoVariant }
   const [canvas, setCanvas] = useState(false);
   const [canvasOrigin, setCanvasOrigin] = useState<string | null>(null);
   const [libraryOpen, setLibrary] = useState(() => window.innerWidth >= 760);
-  const [assistantOpen, setAssistant] = useState(() => window.innerWidth >= 1024);
+  const [assistantOpen, setAssistantOpen] = useState(true);
+  const agentTrack = useRef<HTMLSpanElement>(null);
+  const [assistantWidth, setAssistantWidth] = useState(288);
+  const [uiScale, setUiScale] = useState(readUiScale);
   const [width, setWidth] = useState(window.innerWidth);
   const [expanded, setExpanded] = useState(folders);
   const [view, setView] = useState<DocumentView>("editing");
@@ -68,20 +73,26 @@ export function DemoWorkspace({ variant = "uniform" }: { variant?: DemoVariant }
   const presentation = presentations[selected] ?? null;
   const filedAt = note.parent_id ? ARCHIVE_LABEL[note.parent_id] ?? null : null;
   const closeLibrary = useCallback(() => setLibrary(false), []);
-  const closeAssistant = useCallback(() => setAssistant(false), []);
-  const openLibrary = useCallback(() => { setLibrary(true); if (window.innerWidth < 1024) setAssistant(false); }, []);
-  const openAssistant = useCallback(() => { setAssistant(true); if (window.innerWidth < 1024) setLibrary(false); }, []);
+  const closeAssistant = useCallback(() => {}, []);
+  const openLibrary = useCallback(() => { setLibrary(true); }, []);
   const hint = useCallback(() => {}, []);
   useEffect(() => {
-    const resize = () => { setWidth(window.innerWidth); if (window.innerWidth < 1024) setAssistant(false); if (window.innerWidth < 760) setLibrary(false); };
+    const resize = () => { setWidth(window.innerWidth); if (window.innerWidth < 760) setLibrary(false); };
     window.addEventListener("resize", resize);
     return () => { window.removeEventListener("resize", resize); if (timer.current) clearTimeout(timer.current); };
   }, []);
+  useLayoutEffect(() => {
+    if (agentTrack.current) setAssistantWidth(agentTrack.current.getBoundingClientRect().width);
+    setUiScale(readUiScale());
+  }, [width, variant]);
   const changeSpace = useCallback((update: () => void, kind: "to-canvas" | "to-editor") => {
+    // ---- 助手先硬切，旧/新世界截图里保持同一形态；纸面仍走原过渡 ----
+    flushSync(() => setAssistantOpen(kind === "to-editor"));
     if (!runViewTransition(() => flushSync(update), kind)) update();
   }, []);
   const select = useCallback((id: string) => {
     setCanvasOrigin(null);
+    setAssistantOpen(id !== "demo-canvas");
     if (id === "demo-canvas") { setCanvas(true); return; }
     setSelected(id); setCanvas(false);
     if (window.innerWidth < 760) setLibrary(false);
@@ -100,7 +111,6 @@ export function DemoWorkspace({ variant = "uniform" }: { variant?: DemoVariant }
       if (commandId) undoLog.current.set(commandId, { memoId, parentId: from });
       setPresentations(old => ({ ...old, [memoId]: { memoId, origin: "fresh", path: ARCHIVE_LABEL[from ?? UNFILED_TARGET]!, runId: `demo-organize-${memoId}`, status: "succeeded" } }));
       setExpanded(folders()); setLibrary(true);
-      if (window.innerWidth < 1024) setAssistant(false);
       setOrganizing(false); lock.current = false;
       resolve();
     }, 850);
@@ -126,13 +136,14 @@ export function DemoWorkspace({ variant = "uniform" }: { variant?: DemoVariant }
   const compact = width < 760;
   return <div className="demo-root" style={style} data-canvas={canvas}>
     <div className="demo-workspace-frame">
+      <span ref={agentTrack} className="demo-agent-track" aria-hidden="true" />
       <div className="demo-canvas-layer" hidden={!canvas} inert={!canvas} aria-hidden={!canvas}>
         <DemoCanvas notes={notes} active={canvas} origin={canvasOrigin} onEdit={openMemo} onHint={hint}
-          libraryOpen={libraryOpen} assistantOpen={assistantOpen} onLibrary={openLibrary} onAssistant={openAssistant} />
+          libraryOpen={libraryOpen} onLibrary={openLibrary} />
       </div>
-      {!canvas && <PaperWorkspaceShell style={style} assistantOpen={assistantOpen} libraryOpen={libraryOpen}
+      {!canvas && <PaperWorkspaceShell style={style} assistantOpen libraryOpen={libraryOpen}
         compactViewport={compact} overlayPanels={compact} organizing={organizing}
-        onCloseAssistant={closeAssistant} onCloseLibrary={closeLibrary} onToggleAssistant={openAssistant} onToggleLibrary={openLibrary}
+        onCloseAssistant={closeAssistant} onCloseLibrary={closeLibrary} onToggleLibrary={openLibrary}
         paperIdentity={selected} paperTransitionIdentity={selected} paper={<>
           <AppMainToolbar fileActionsEnabled={false} currentMemo={note} currentMemoTitle={note.title} documentView={view} editingMode={mode}
             enteringCanvas={false} onDocumentViewChange={setView} onEditingModeChange={setMode}
@@ -149,7 +160,7 @@ export function DemoWorkspace({ variant = "uniform" }: { variant?: DemoVariant }
         </>} />}
       <WorkspacePanelLayer side="library" open={libraryOpen} style={style}><DemoSidebar tree={tree} selected={canvas ? "demo-canvas" : selected}
         expanded={expanded} onExpanded={setExpanded} onSelect={select} onClose={closeLibrary} onHint={hint} presentation={presentation} /></WorkspacePanelLayer>
-      <WorkspacePanelLayer side="assistant" open={assistantOpen} style={style}><DemoAssistant memoId={selected} title={note.title} filedAt={filedAt} onClose={closeAssistant} onHint={hint} onOrganize={organize} onUndo={undo} /></WorkspacePanelLayer>
+      <WorkspaceAssistantLayer open={assistantOpen} size="expanded" panelWidth={assistantWidth} onOpen={hint} resizable={false} uiScale={uiScale} animateGeometry={false}><DemoAssistant memoId={selected} title={note.title} filedAt={filedAt} onClose={closeAssistant} onHint={hint} onOrganize={organize} onUndo={undo} /></WorkspaceAssistantLayer>
       {!canvas && <ArchiveCordOverlay libraryOpen={libraryOpen} overlayPanels={compact} presentation={presentation} onLocate={locate} />}
     </div>
   </div>;

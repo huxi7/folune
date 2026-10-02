@@ -10,6 +10,8 @@ Canvas 已落地为一级持久 Workspace。memo 默认 Canvas 与 standalone Ca
 成员清单
 public/: 账户蓝色生成图横幅/中美国旗、登录页 3:4 书房花园本地循环视频/首帧、统一品牌母图、PNG Favicon、参考 Frame 素材/字体与 landing-features/landing-details/landing-connections 真实 APP 截图；功能网格、可展开细节与配套博客共用产品截图
 MOTION_SYSTEM.md: A/B 全量源码取舍、统一 Motion Design 规范与实际验收记录
+menu-compare.html: 仅本地账户菜单前后对照页，旧版/当前版按1:1像素并排或单版全宽查看，共同调整侧栏宽度并回显真实菜单宽高与比例；不进入生产构建
+menu-demo-frame.html: 菜单对照的浅色隔离iframe文档，预载生产样式并由hash选择历史或当前真实菜单；不挂载认证/路由或持久化偏好
 demo.html: 文档根独立启用 APP 新视觉，保持浅色与嵌入缩放；Landing 独立 UI 演示入口，CSP 禁止连接与表单提交；不装配 Auth/Router/持久化主题，和 index.html 一同构建
 demo-compare.html: 本地三档视觉对比入口：原版/此前灰白/纸白定稿，默认纸白；同一 demo.html iframe 保留笔记、对话与视图，灰白参照仅局部覆盖 workspace-stage 为 #F1F2F2，纸白沿正式 APP 默认值；不进入生产构建或 Landing
 demo-noise.html: 本地 1:1 字号/默认面板宽度的噪点对照；单一 Demo iframe 固定纸白底，切换无噪点/1.5%/3% 静态颗粒，只覆盖工作区空白背景，保留内容与视图；不进入生产构建或改变正式背景
@@ -47,7 +49,7 @@ APP 当前视觉（2026-09-24）：styles/app-visual.css 在 data-visual-context
 
 图标系统约束: 通用图标统一从 `src/shared/design-system/icons.tsx` 取稳定语义别名，业务文件禁止直接引入第三方图标包。底层采用 Lucide React 的 24×24 网格、2px 描边、圆形端点与圆角连接，产品尺寸限制为 14/16/20/24px；Primary、选中态与状态反馈只改变 `currentColor` 或所在表面，不通过另一套 fill/duotone 图形制造视觉分裂。BrandMark、ThinkingMark、Archive Cord 与 Google 品牌标记属于明确的 Signature/品牌例外。DEV Design System 必须展示全部生产语义图标、导出名、真实用途和尺寸阶梯。
 
-空间与尺寸约束: APP 以 4px 为唯一空间基线，并在 `src/index.css` 集中维护 32/36/48px 尺寸阶梯。三处 Panel Header 统一为 48px 高、12px 水平内边距；Header 图标命令、Sidebar 新建、纸上 Canvas/阅读/更多与助手开关及关闭入口统一为 32px 容器和 16px 图标，因此上下自然各保留 8px 呼吸区，相邻命令间距统一为 4px。AI Header 只保留历史菜单、单行会话名、独立于 NotePencil 的 MessageCirclePlus 新对话和 PanelRightClose 尾端收起；关闭态 Stage 使用匹配的 PanelRightOpen，不展示品牌标记、副标题或权限胶囊。标准 Button、Input 与 Select 使用 36px 外部高度；Button 采用 14px/18px UI 字体、14px 水平留白与 6px 图文间距，表单采用 14px/20px。SidebarButton 与递归文件树行使用 32px compact 外部高度和 16px 图标，文件树和底部辅助导航均使用 12px/16px。认证表单可独立使用 48px 大点击规格。Agent Composer 使用 16px Panel 曲率和内层同心曲率，底栏只保留左侧权限与右侧发送/停止两个 32/16 Button；发送与停止共享 32px 几何圆形 Primary 轮廓，并以 `corner-shape: round` 显式覆盖通用 Button squircle，状态切换不得改变几何。原生 MentionInput 最多增长到 6 行后内部滚动，@候选是可滚动菜单内按内容宽度收束的 28px 文件图标+文件名单行，不得拉伸成整行 Button。首屏 Skeleton 必须使用相同尺寸 token，禁止加载跳变；DEV Design System 必须直接呈现这套空间标尺与 Header/Composer 样板，且不得复制另一套展示专用值。
+空间与尺寸约束: APP 以 4px 为唯一空间基线，并在 `src/index.css` 集中维护 32/36/48px 尺寸阶梯。三处 Panel Header 统一为 48px 高、12px 水平内边距；Header 图标命令、Sidebar 新建、纸上 Canvas/阅读/更多与助手开关及关闭入口统一为 32px 容器和 16px 图标，因此上下自然各保留 8px 呼吸区，相邻命令间距统一为 4px。AI Header 只保留历史菜单、单行会话名、独立新对话、短窗/全高切换和向下收起；生产关闭态由右下Folune AI胶囊承载，不再提供Stage右上开关。标准 Button、Input 与 Select 使用 36px 外部高度；Button 采用 14px/18px UI 字体、14px 水平留白与 6px 图文间距，表单采用 14px/20px。SidebarButton 与递归文件树行使用 32px compact 外部高度和 16px 图标，文件树和底部辅助导航均使用 12px/16px。认证表单可独立使用 48px 大点击规格。Agent Composer 使用 16px Panel 曲率和内层同心曲率，底栏只保留左侧权限与右侧发送/停止两个 32/16 Button；发送与停止共享 32px 几何圆形 Primary 轮廓，并以 `corner-shape: round` 显式覆盖通用 Button squircle，状态切换不得改变几何。原生 MentionInput 最多增长到 6 行后内部滚动，@候选是可滚动菜单内按内容宽度收束的 28px 文件图标+文件名单行，不得拉伸成整行 Button。首屏 Skeleton 必须使用相同尺寸 token，禁止加载跳变；DEV Design System 必须直接呈现这套空间标尺与 Header/Composer 样板，且不得复制另一套展示专用值。
 
 备忘录状态约束: `src/shared/store/memoTreeStore.ts` 只保存 active 文件夹/笔记结构与摘要，`memoDocumentStore.ts` 是按 ID 正文与草稿的唯一客户端状态源；目录响应禁止携带 `content_mdx`，用户打开笔记后才读取该 ID 的完整正文并缓存，切换/登出必须中止或门禁旧响应。当前关键词搜索可由 `/memo-search` 在服务端匹配正文，但只回传命中 ID/摘要；未来向量/混合检索不得把正文重新塞回整树。GET 整树只允许在进入 Dashboard、登录用户变化或显式刷新时发生；人工创建必须同步插入临时 Memo、立即进入编辑器且不锁定后续创建，多个提交独立并发，临时/真实 ID 替换不得重挂载编辑器或覆盖等待期间的标题/正文，失败只精确撤销对应节点。重命名、移动、软删除与恢复同样必须乐观更新或合并局部响应，严禁写成功后刷新整棵树。Trash 只保存回收站列表视图状态，不得复制 active tree。删除当前 Memo 或其祖先前必须等待 `useMemoAutosave` required flush，失败保留路由、编辑会话和 subtree；删除成功后暂停旧会话、清理受影响 last-memo/正文缓存并导航到下一 Memo 或 `/app`。“需要 flush”与“需要导航离开”是两件事：画布没有编辑会话，删除正在打开的画布只导航不 flush，不得因为拿不到编辑器而静默失败。中央连续画布、Markdown、reading/live/source、安全渲染与空白保真继续遵循既有单一存储协议；自动保存仍使用既有调度/重试参数且所有保存携带显式 memoId。
 
@@ -59,7 +61,7 @@ APP 当前视觉（2026-09-24）：styles/app-visual.css 在 data-visual-context
 
 知识画布视觉补充: memo_ref 关系必须持续读取两张卡片的真实绝对矩形，以中心连线与各自边界的交点作为可见端点，目标跨象限拖动时端点随之换边，禁止依赖固定左右 Handle 坐标。这里的边界是卡片可见的圆角轮廓而不是尖角矩形——尖角落在圆角削掉的空处，端点会在对角方向露出悬空的一截；端点宁可略微进到卡片底下（边层在卡片之下，看不见），也不许露在外面。任何“把端点夹在边中段”的做法都被禁止：它会先把端点钉住再在越过角时跳掉几十像素，正是这条曲线要消灭的东西。弯度是弦法向上的反对称偏移 bow·sin(2θ)（等价于 2·dx·dy/L²）：水平或垂直对齐时归零成直线，四条对角线最弯且必须是两个弯的 S，其余角度连续过渡——禁止用 Position 枚举、象限判断或任何分段切换实现弯度，因为那会让一张卡片绕另一张转动时每 90° 跳一次。曲线中点常驻低对比查看入口，人工与 AI 来源分别标注；理由的指向面是整条关系线本身，中点标记只是它常驻可见的把手，完整理由必须可由整线 hover、中点 hover、选中、点击保持和键盘聚焦到达，且指针在线与标记之间交接时不得闪断。thumbnail 正文只允许在最后约两行以连续透明度衰减和完全无填色的渐进失焦收尾，禁止不透明覆盖层形成横向色带或提前吞掉仍可展示的摘录。文件库 96px 新建 split 必须与全局控件共享 smooth squircle 形状。
 
-工作台外壳约束: WorkspaceChromeState 按用户保存 Paper 的 libraryOpen/assistantOpen，新用户首次双关闭，旧 Agent 偏好只迁移助手；新建和切换 memo 不改变开关。Canvas 的侧栏状态是独立所有权：canvasChromeStore 按用户持久化每张画布的最近布局，Canvas 的开合永不写入 Paper 偏好，Paper 的偏好也不作为 Canvas 的进入值。进入状态只在挂载那一刻解释一次，优先级是返回描述 > 进入意图 > 该画布快照 > 双收起：从笔记进入默认 Canvas 与新建独立 Canvas 都双收起（新对象的命名由画布标题原地完成，不再需要为此展开文件库），从文件树切换已有 Canvas 保持导航那一刻的现状，直接链接/刷新恢复该画布最近状态；<1200px 打开任一 Panel 时使用遮罩抽屉，1200–1399px 双开时只保留文件库。此后每一次开关都以用户操作为准，系统不再替他决定，左右两个面板必须是两个独立布尔值；每画布快照只记录用户亲手的开关，进入策略自己的输出不得被写成假偏好。文件库内容由 Dashboard 级持久宿主跨 Paper/Canvas 共同挂载，路由壳只消费开关语义，关闭只隐藏并禁止交互，不得因空间切换重挂载树或重播子项入场动画。左右工具在所有视口都是全屏 Stage 上两个彼此独立的浮层，只在各自边框范围内遮盖 Paper/Canvas，开合不得创建侧边网格轨道、移动背景、压缩 Paper 或改变 React Flow 几何；桌面浮层保留视口间距且无整屏遮罩，<1400px 两侧互斥，<1200px 与移动端使用 Escape/遮罩关闭。整理 succeeded/undone 只打开文件库并定位/高亮真实目标，不得在 Paper 下方追加结果或撤销回执；awaiting_confirmation 只打开 AI，stale/failed 不强迫打开任何工具。Stage 的 Library/AI 入口固定为无文字、无静止背景/描边/阴影的 Ghost 图标，hover/focus 才显示中性表面；Panel 关闭入口位于对应 Header 尾端，严禁用共享 layoutId 跨位置飞行、宽度增长或任何scale缩放内容。Motion 只解释 Panel 自身与状态转换，Panel采用DS原有x/opacity Tween，全程scale固定为1，统一从 motion/react 引入，reduced-motion 取消位移与路径绘制。
+工作台外壳约束: Dashboard持续挂载文件库和同一个AgentPanel。WorkspaceChromeState按账号保存Paper文件库、跨Paper/Canvas共享的助手可见性与笔记短窗/全高偏好；新用户胶囊起步，旧AI开关兼容恢复。笔记点击胶囊恢复用户尺寸（初始全高）；普通进入画布时已展开助手收为短窗，已关闭保持胶囊；画布全高只保持当次主动选择，明确Canvas→原文→Canvas返回才恢复离开尺寸。画布收起助手后回笔记仍为胶囊，对话/输入/执行实例不断。Canvas文件库保持原进入意图和每画布快照，快照不再裁决助手；左侧与助手互不联动，窄屏仍按原互斥约束让出空间。助手由WorkspaceAssistantLayer固定右下，短/全高同宽，最高520px且不超过可用高度2/3，低矮视口自动使用可用高度；全高顶部与其他Panel对齐，尺寸/圆角变化只由Motion持有，文字与输入不scale。胶囊130×44、32px平滑曲率、墨蓝底色/模糊流光/高光柔影；短窗24px、全高20px，普通控件保持现有DS。展开窗口四边四角都可调整；拖拽只更新局部MotionValue，松手提交共享宽度及当前场景自定义高度/位置，允许超出默认短窗尺寸但限制在可视区域且保留输入区。笔记自定义尺寸按账号恢复，画布仍以当次选择或明确返回快照为准。文件库保留细蓝线，助手使用独立透明手柄和原生方向光标。文件库继续使用WorkspacePanelLayer与归档租约；任何工具开合不挤压Paper或React Flow几何，关闭内容即inert。审批只唤醒助手；成功/撤销只定位文件库真实目标，不重复结果卡。
 
 全局命令约束: 全局搜索只有一个状态所有者（commandPaletteStore），Sidebar 按钮、Paper ⌘K 与 Canvas ⌘K 打开的必须是同一个 Command Palette；禁止第二套相似 Dialog、第二个搜索开关或第二处排序。面板宽 680px、最大 100vw-32px，位于视口上方 18%，无可见标题/说明/关闭按钮，56px 无边框搜索区只在结果区前留一条 hairline，48px 结果行的选中态只用中性表面。⌘K 双向开合，Esc/遮罩/成功打开即关闭，查询变化后首项自动选中，方向键移动、Enter 打开这一行本来的样子、Tab 打开这一行笔记的画布（Shift+Tab 留给焦点逃生，IME 合成期两个键都不接管）；active 身份必须是结果 id 而不是数组下标，正文命中在防抖后补入不得让选中项跳走；IME 合成期的 Enter 不触发跳转，无结果时 Enter 无副作用，hover 更新 active 但输入框不得失焦。Canvas 语境由会话登记「加入当前画布」适配器：Enter 仍只打开对象，⌘/Ctrl+Enter 或显式加号才加入，加入后面板保持打开、清空查询并就地给回执以支持连续加入，且只有笔记可加入——画布与文件夹没有加入入口。排序固定为标题完全匹配 → 标题前缀 → 最近打开 → 标题包含 → 正文命中 → 路径命中。两种画布都是独立结果行——搜不到的东西等于不存在；默认 Canvas 与来源笔记同名时两行都在，同档同名按「本体先于派生物」让笔记恒排在它的画布之前，辨识交给图标与「由《X》展开」血缘副标题，禁止靠把画布藏起来换取列表短一行。笔记行同时保留「以画布打开」次级动作（Tab 或行尾常显徽标），它服务的是另一个意图：用户在找这篇笔记，顺便发现它有图。行尾动作是一个靠右收口的整体而不是逐个占据网格轨道——空轨道宽度为 0 但 gap 仍占位，会让有徽标与没徽标的行的加号错开几像素，整列看着是歪的。loading/empty/error/recent/results 五态必须分辨，正文搜索失败只报告状态、不关闭面板也不清空标题与路径结果。底部提示条按两级解释「此刻真能按的键」：语境决定条目在不在（不在画布里就没有「加入当前画布」这回事），当前行决定条目灰不灰；位置因此恒定，上下换行不产生左右抖动，而灰掉的条目仍让用户知道这个键存在。禁止提示一个当前按不动的键，也禁止用隐藏条目的方式表达不可用。
 
@@ -95,11 +97,11 @@ Paper First V1.1 / Quiet Editorial 覆盖约束: 本节覆盖上文遗留的 V1 
 
 2026-09-07 视觉收口：Control 全族统一 16px / inner 12px；Skeleton 改为纯中性灰阶，覆盖上文旧的灰蓝加载约束。设置暗色局部使用统一黑灰表面，Canvas 加载只保留干净 Stage。
 
-2026-09-07 曲线规范：所有非圆形 APP 表面在半径声明处同时消费平滑曲线；菜单 hover 行使用 Compact 8px，菜单外壳 Menu 12px，普通按钮 Control 16px。禁止私有半径或胶囊命令，几何头像/状态点/发送停止保留 round。
+2026-09-07 曲线规范：所有非圆形 APP 表面在半径声明处同时消费平滑曲线；菜单 hover 行使用 Compact 8px，菜单外壳 Menu 12px，普通按钮 Control 16px。通用命令禁止私有半径或胶囊轮廓，几何头像/状态点/发送停止保留 round；生产助手的胶囊/短窗/全高是独立语义表面，允许32/24/20px平滑曲率。
 
 2026-09-07 Scrollbar refinement: 文件树与 AI 消息滚动区须到达 Panel 边缘，正文留白位于滚动区内部；原生细滚动条共用淡中性色与透明轨道，不能遮盖正文或再造装饰轨道。
 
-本次侧栏生命周期约束：Paper/Canvas 只承载中央内容与工具开关，左右工具由 Dashboard 的 WorkspacePanelLayer 持续挂载；从笔记进入默认画布继承当前工具开关，动画不得重建 AgentPanel。
+助手与文件库生命周期：Paper/Canvas只切中央内容，文件库由WorkspacePanelLayer、助手由WorkspaceAssistantLayer持续挂载；场景变化只裁决外壳尺寸，不重建AgentPanel。
 
 2026-09-16 APP 展示区：LandingEditor 在原 738px 框内加载独立 demo.html。复用生产 Paper、Toolbar、MemoTreeBranch、消息渲染、CanvasCardView 与纸面 Transition；仅本实例内存管理笔记和模拟回复，禁止业务 API/Auth/持久化依赖。按用户反馈移除底部引导/重置栏、搜索/新建/历史管理/画布编辑工具；三栏上下同线。Paper 与 Canvas 互斥可见，左右 Panel 不随切换重挂载。
 
@@ -126,3 +128,5 @@ Paper First V1.1 / Quiet Editorial 覆盖约束: 本节覆盖上文遗留的 V1 
 2026-09-25 营销边界：首页、登录与公开内容页从首绘到路由切换都固定浅色；ThemeProvider 保留用户偏好，返回 APP 恢复其已解析主题。页面噪点只在隔离背景层，顶栏与 Hero 主按钮复用 GlowButton，底部 CTA 只保留箭头开始。
 
 Landing 演示样式入口：demo.html 在组件脚本前依次预载 index.css、React Flow 和 landing-demo.css，避免生产组件依赖图决定基础 CSS 层序；三栏布局、缩放档位和内容保持原样。
+
+Landing APP 展示助手：胶囊轮廓/文字/图标/间距/柔影按演示根字号同比缩小（默认87.5%，113.75×38.5），位置跟随Demo内缩；助手在纸面过渡截图前同步硬切目标形态，禁止几何/透明度/阴影过渡，中央纸面保留原过渡。笔记场景固定全高，尺寸/收起按钮保持静态；画布场景固定右下胶囊，点击不展开且不装配调整手柄。卡片坐标与间距沿原示例，右侧不再保留整栏安全区。

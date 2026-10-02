@@ -1,0 +1,61 @@
+<!doctype html>
+<!--
+ [INPUT]: 依赖同源menu-demo-frame.html的历史/当前菜单真实组件和尺寸回报
+ [OUTPUT]: 旧版/当前版并排或单版全宽对比；同步调整侧栏208–360px、回显实际菜单宽高与比例
+ [POS]: 仅本地菜单定位验收页，不进入生产构建或修改正式菜单偏好
+ [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+-->
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><meta name="robots" content="noindex" />
+  <title>Folune · 菜单前后对照</title>
+  <style>
+    * { box-sizing:border-box; }
+    body { margin:0; background:#f4f4f2; color:#292b2b; font:13px/1.5 -apple-system,'PingFang SC',sans-serif; }
+    header { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; padding:16px 24px; border-bottom:1px solid #e4e6e8; }
+    h1 { margin:0; font-size:16px; font-weight:600; } header p { margin:4px 0 0; color:#71777c; }
+    .controls { display:flex; align-items:center; flex-wrap:wrap; gap:12px; }
+    button { border:1px solid #e4e6e8; border-radius:8px; background:#fff; color:inherit; padding:7px 12px; font:inherit; cursor:pointer; }
+    button[aria-pressed=true] { background:#e9ecef; } button:focus-visible { outline:2px solid #395875; outline-offset:2px; }
+    label { display:flex; align-items:center; gap:8px; } input { width:120px; accent-color:#395875; }
+    main { display:grid; grid-template-columns:1fr 1fr; gap:1px; background:#e4e6e8; }
+    section { min-width:0; background:#f4f4f2; } .caption { padding:12px 24px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+    .caption strong { font-weight:600; } .caption span { color:#71777c; } iframe { display:block; width:100%; height:calc(100dvh - 148px); min-height:650px; border:0; }
+    body[data-mode=previous] main, body[data-mode=current] main { grid-template-columns:1fr; }
+    body[data-mode=previous] section[data-version=current], body[data-mode=current] section[data-version=previous] { display:none; }
+    @media(max-width:760px) { main { grid-template-columns:1fr; } header { padding:12px; } .caption { padding:12px; } }
+  </style>
+</head>
+<body data-mode="both">
+  <header><div><h1>账户菜单 · 前后对照</h1><p>相同内容、相同侧栏，按实际像素显示。可切换单版全宽查看。</p></div>
+    <div class="controls"><div role="group" aria-label="对比方式"><button data-mode="both" aria-pressed="true">并排</button> <button data-mode="previous" aria-pressed="false">之前</button> <button data-mode="current" aria-pressed="false">现在</button></div>
+      <label>侧栏宽度 <input id="width" type="range" min="208" max="360" value="264" /><output id="width-value">264px</output></label><button id="open">重新展开菜单</button>
+    </div>
+  </header>
+  <main>
+    <section data-version="previous"><div class="caption"><div><strong>之前</strong><br /><span>固定256px · 对齐内部身份按钮</span></div><span id="previous-size" aria-live="polite"></span></div><iframe src="/menu-demo-frame.html#previous" title="之前的账户菜单" sandbox="allow-scripts allow-same-origin"></iframe></section>
+    <section data-version="current"><div class="caption"><div><strong>现在</strong><br /><span>随外卡宽度 · 外卡上方8px</span></div><span id="current-size" aria-live="polite"></span></div><iframe src="/menu-demo-frame.html#current" title="现在的账户菜单" sandbox="allow-scripts allow-same-origin"></iframe></section>
+  </main>
+  <script>
+    const frames = [...document.querySelectorAll('iframe')];
+    const width = document.getElementById('width');
+    const send = data => frames.forEach(frame => frame.contentWindow?.postMessage(data, location.origin));
+    width.addEventListener('input', () => { document.getElementById('width-value').textContent = `${width.value}px`; send({ type:'menu-demo-width', width:Number(width.value) }); });
+    document.getElementById('open').addEventListener('click', () => send({ type:'menu-demo-open' }));
+    document.querySelectorAll('button[data-mode]').forEach(button => button.addEventListener('click', () => {
+      document.body.dataset.mode = button.dataset.mode;
+      document.querySelectorAll('button[data-mode]').forEach(item => item.setAttribute('aria-pressed', String(item === button)));
+      requestAnimationFrame(() => send({ type:'menu-demo-open' }));
+    }));
+    frames.forEach(frame => frame.addEventListener('load', () => frame.contentWindow?.postMessage({ type:'menu-demo-width', width:Number(width.value) }, location.origin)));
+    window.addEventListener('message', event => {
+      const index = frames.findIndex(frame => frame.contentWindow === event.source);
+      if (event.origin !== location.origin || index < 0 || event.data?.type !== 'menu-demo-measure') return;
+      const version = index === 0 ? 'previous' : 'current';
+      const { width:w, height:h } = event.data;
+      if (!(Number.isFinite(w) && Number.isFinite(h) && h > 0)) return;
+      document.getElementById(`${version}-size`).textContent = `${w} × ${h}px · 宽高 ${(w / h).toFixed(2)}:1`;
+    });
+  </script>
+</body>
+</html>

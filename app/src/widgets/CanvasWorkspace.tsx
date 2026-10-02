@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 useLocale 的画布壳文案；依赖 motion/react、可选 CanvasEntryBootstrap、共享 EdgeDock、ArchiveCord 空闲上下文、canvasChromeStore/canvasWorkspaceStore、KnowledgeCanvas 会话控制与 Quiet Editorial token；左右工具由 Dashboard 持久宿主承载
+ * [INPUT]: 依赖 useLocale 的画布壳文案；依赖跨空间助手可见性、motion/react、可选 CanvasEntryBootstrap、共享 EdgeDock、ArchiveCord 空闲上下文、canvasChromeStore/canvasWorkspaceStore、KnowledgeCanvas 会话控制与 Quiet Editorial token；文件库与助手三态外壳由 Dashboard 持久宿主承载
  * [OUTPUT]: 对外提供可预载、可消费一次性 detail、可向路由暴露 flush 且中央始终保持同一 React Flow 实例的全视口 CanvasWorkspace
- * [POS]: widgets 的 Canvas V2 会话壳；负责返回 flush、Panel 会话状态、每画布布局记忆与空间布局，数据/交互/恢复归 KnowledgeCanvas；文件库宿主在路由壳外持久挂载，Canvas 只提供其开关语义，左右面板各自独立
+ * [POS]: widgets 的 Canvas V2 会话壳；负责返回 flush、Panel 会话状态、每画布布局记忆与空间布局，数据/交互/恢复归 KnowledgeCanvas；文件库宿主在路由壳外持久挂载，Canvas 只持有文件库开关，助手可见性由跨空间 Store 裁决
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -22,9 +22,9 @@ import {
 } from "react";
 
 import {
-  AssistantPanelOpenIcon,
   SidebarSimpleIcon,
 } from "../shared/design-system/icons";
+import { useWorkspaceChromeStore } from "../shared/store/workspaceChromeStore";
 import { useCanvasChromeStore } from "../shared/store/canvasChromeStore";
 import {
   CANVAS_DUAL_PANEL_BREAKPOINT,
@@ -83,7 +83,8 @@ export function CanvasWorkspace({
   const { t } = useLocale();
   const reduceMotion = useReducedMotion();
   const sessionCanvasId = useCanvasWorkspaceStore((state) => state.canvasId);
-  const sessionAssistantOpen = useCanvasWorkspaceStore((state) => state.assistantOpen);
+  const assistantOpen = useWorkspaceChromeStore((state) => state.assistantOpen);
+  const closeAssistant = useWorkspaceChromeStore((state) => state.closeAssistant);
   const sessionLibraryOpen = useCanvasWorkspaceStore((state) => state.libraryOpen);
   const setCanvasChrome = useCanvasWorkspaceStore((state) => state.setCanvasChrome);
   const rememberChrome = useCanvasChromeStore((state) => state.remember);
@@ -96,20 +97,16 @@ export function CanvasWorkspace({
   const [entryChrome] = useState<CanvasChromeState>(() => {
     if (restore?.canvasId === canvasId) {
       return {
-        assistantOpen: restore.assistantOpen,
         libraryOpen: restore.libraryOpen,
       };
     }
-    // 没有视口就没有断点可言(服务端渲染与结构测试), 一律按双关闭起步
+    // 没有视口就没有断点可言(服务端渲染与结构测试), 一律按文件库关闭起步
     if (typeof window === "undefined") {
-      return { assistantOpen: false, libraryOpen: false };
+      return { libraryOpen: false };
     }
     return useCanvasChromeStore.getState()
       .entryChrome(canvasId, window.innerWidth);
   });
-  const assistantOpen = sessionCanvasId === canvasId
-    ? sessionAssistantOpen
-    : entryChrome.assistantOpen;
   const libraryOpen = sessionCanvasId === canvasId
     ? sessionLibraryOpen
     : entryChrome.libraryOpen;
@@ -123,31 +120,14 @@ export function CanvasWorkspace({
     onSessionReady?.(controls);
   }, [onSessionReady]);
 
-  const closeAssistant = useCallback(() => {
-    setCanvasChrome({ assistantOpen: false });
-  }, [setCanvasChrome]);
-
   const closeLibrary = useCallback(() => {
     setCanvasChrome({ libraryOpen: false });
   }, [setCanvasChrome]);
 
-  const openAssistant = useCallback(() => {
-    setCanvasChrome({
-      assistantOpen: true,
-      ...(window.innerWidth < CANVAS_DUAL_PANEL_BREAKPOINT
-        ? { libraryOpen: false }
-        : {}),
-    });
-  }, [setCanvasChrome]);
-
   const openLibrary = useCallback(() => {
-    setCanvasChrome({
-      ...(window.innerWidth < CANVAS_DUAL_PANEL_BREAKPOINT
-        ? { assistantOpen: false }
-        : {}),
-      libraryOpen: true,
-    });
-  }, [setCanvasChrome]);
+    if (window.innerWidth < CANVAS_DUAL_PANEL_BREAKPOINT) closeAssistant();
+    setCanvasChrome({ libraryOpen: true });
+  }, [closeAssistant, setCanvasChrome]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -181,8 +161,8 @@ export function CanvasWorkspace({
       entryPersistedRef.current = true;
       return;
     }
-    rememberChrome(canvasId, { assistantOpen, libraryOpen });
-  }, [assistantOpen, canvasId, libraryOpen, rememberChrome]);
+    rememberChrome(canvasId, { libraryOpen });
+  }, [canvasId, libraryOpen, rememberChrome]);
 
   useEffect(() => {
     if (!anyPanelOpen) return;
@@ -216,7 +196,7 @@ export function CanvasWorkspace({
       >
       <section className="canvas-stage">
         {/*
-          顶层分区只有四块: 左上开关+标题、右上 AI 开关、底部中央命令、右下保存
+          顶层分区只有四块: 左上开关+标题、底部中央命令和右下保存
           状态。全部锚在 canvas-stage 上并共用同一组 --canvas-chrome-* 变量，
           因此侧栏预留安全区时它们跟着让位，不靠零散的 top/left 互相躲避。
           开关槽位常驻: Panel 打开后按钮进入 Panel 自己的 Header，槽位留空以
@@ -245,28 +225,6 @@ export function CanvasWorkspace({
           <CanvasTitle onRename={onRename} title={title} />
         </div>
 
-        <div className="canvas-chrome canvas-chrome-end">
-          <span className="canvas-chrome-slot">
-            <AnimatePresence initial={false}>
-              {!assistantOpen ? (
-                <motion.span
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  initial={{ opacity: 0 }}
-                  transition={reduceMotion ? reducedFadeTransition : fadeTransition}
-                >
-                  <EdgeDock
-                    icon={<AssistantPanelOpenIcon size={16} />}
-                    label="AI"
-                    onClick={openAssistant}
-                    side="right"
-                  />
-                </motion.span>
-              ) : null}
-            </AnimatePresence>
-          </span>
-        </div>
-
         <Suspense
           fallback={<CanvasStageLoading visible />}
         >
@@ -292,7 +250,7 @@ export function CanvasWorkspace({
 
 
       <AnimatePresence initial={false}>
-        {overlayPanels && anyPanelOpen ? (
+        {overlayPanels && libraryOpen ? (
           <motion.button
             animate={{ opacity: 1 }}
             aria-label={t("关闭浮动工具", "Close floating tools")}

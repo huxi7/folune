@@ -7,12 +7,12 @@ workspaceEntryStore.test.ts: 真实节点乱序、首屏 100% 门禁、重复通
 CLAUDE.md: 记录客户端状态层的职责边界、成员地图与 GEB 回环协议
 agentPanelStore.ts: 当前账号的权限薄状态，首屏默认完全访问；同账号重读保留显示、切账号隔离，isPermissionReady 只在当前账号 API 确认后允许发送；可见性归 WorkspaceChromeState
 agentPanelStore.test.ts: 锁定默认完全访问、加载/保存门禁、账号隔离、保存失败保留显示与成功确认
-workspaceChromeStore.ts: Paper First 外壳唯一 UI 状态，按用户持久化 libraryOpen/assistantOpen，新用户双关闭，兼容旧 Agent 开关迁移，并在覆盖式视口保证左右工具互斥
-workspaceChromeStore.test.ts: 覆盖按用户 key、首次双关闭、版本化恢复、损坏容错与旧 AI 偏好迁移
-canvasChromePolicy.ts: Canvas 侧栏进入策略纯函数，把 memo_default/standalone/tree/direct 四种进入语境与 1200/1400 两个断点翻译成左右两个独立布尔值；新建独立画布双收起，从笔记进入继承当前工具状态（命名由画布标题原地完成），文件树切换也继承现状、直接链接恢复快照，进入之后一律以用户操作为准
-canvasChromePolicy.test.ts: 逐行锁定状态矩阵与两条断点钳制，并证明左右面板不会被绑成同一个值
-canvasChromeStore.ts: Canvas 侧栏状态唯一所有者；登记一次性进入意图、提供不消费意图的只读预览、幂等解析进入状态（StrictMode 双渲染同答案）并按用户持久化每画布最近布局，只记录用户亲手的开关而不把进入策略的输出写成假偏好，与 Paper 的用户级偏好完全隔离
-canvasChromeStore.test.ts: 覆盖意图只生效一次、只读预览不消费意图、解析幂等、切换画布重新解析、每画布快照持久化/按用户隔离与损坏容错
+workspaceChromeStore.ts: 按账号持久化笔记自定义浮窗高度/位置（宽度沿工作台共享偏好）、Paper文件库、跨空间助手可见性与笔记尺寸；普通画布进入短窗，全高只保持当次主动选择或明确返回快照，关闭后跨场景保持胶囊
+workspaceChromeStore.test.ts: 自定义窗口收起/全高还原/刷新与画布隔离； 账号/旧偏好恢复及助手跨场景短窗、全高、主动关闭、明确返回与持久化隔离门禁
+canvasChromePolicy.ts: Canvas文件库四种进入意图与窄屏钳制纯策略；助手可见性/尺寸由workspaceChromeStore裁决，画布快照不覆盖它
+canvasChromePolicy.test.ts: 文件库继承、新建关闭、直达恢复与窄屏钳制；不再制造画布助手的第二真相
+canvasChromeStore.ts: Canvas文件库一次性进入意图、只读预览与幂等解析，按账号保存每画布最近文件库开关；读取旧快照时丢弃助手字段，避免全高被恢复成画布常态
+canvasChromeStore.test.ts: 旧快照助手字段丢弃与文件库恢复门禁；覆盖意图只生效一次、只读预览不消费意图、解析幂等、切换画布重新解析、每画布快照持久化/按用户隔离与损坏容错
 aiRunTree.ts: AI 整理结果的无副作用局部树归并器，移动/改名目标 memo、插入工作流新目录，并在 undo 时恢复原位和删除可安全移除的空目录
 aiRunTree.test.ts: 覆盖 apply/undo 局部归并、摘要与 children 保真和工作流创建目录回收
 aiCommandTree.ts: 通用 AI Command 无副作用对账器，把 succeeded/undone 的 server node/正文摘要/软删除事实局部归并 active tree，stale/failed 不改变真相

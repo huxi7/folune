@@ -58,7 +58,7 @@ Folune 的对话、写作、整理和探索使用同一种积分，不再叠加�
 
 ## 数据库与发布
 
-2026-09-29，`billing.sql` 已以 migration `20260929113054 / billing_readonly_subscriptions` 仅应用到 **Folune-staging**（`buauzrzxifgdacntisfq`）。生产尚未应用。发布 API 前必须先在目标环境应用 `ai-usage.sql`（若尚未存在）与 `billing.sql`；缺少订阅表会报错，服务不会把数据库错误伪装为免费或零消耗。
+2026-09-29，`billing.sql` 已以 migration `20260929113054 / billing_readonly_subscriptions` 应用到 **Folune-staging**（`buauzrzxifgdacntisfq`）。2026-10-03 发布前，已在 **Folune-production**（`ialqliixbdwwmxackjpr`）依次应用 `20261002173654 / ai_usage_daily_quota` 与 `20261002173658 / billing_readonly_subscriptions`，复核两表 RLS、owner-only 策略、订阅公开列可读/私有列不可读及 INSERT/UPDATE/DELETE 被拒绝、用量 RPC 仅 authenticated 可执行。未来目标环境发布 API 前仍须先确认这两项契约存在；服务不会把数据库错误伪装为免费或零消耗。
 
 `test/billing-rls.sql` 在 staging 的真实 PostgreSQL 中验证本人可读、跨用户隔离、支付私有列不可读、用户 INSERT/UPDATE/DELETE 及匿名读取被拒绝，测试事务最后完整回滚。HTTP 测试覆盖认证、白名单、付款未接入状态、有效期和共享额度。支付接入验收尚未发生。
 

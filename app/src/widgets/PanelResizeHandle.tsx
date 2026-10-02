@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 React pointer/keyboard/effect 与父层提供的面板尺寸边界
  * [OUTPUT]: 对外提供局部渐隐焦点跟随指针、支持拖拽/方向键/双击复位的 PanelResizeHandle；捕获丢失时清理全局 resize 状态
- * [POS]: app/src/widgets 的工作台分隔栏，被 AppDashboard 用于 Sidebar 与 AgentPanel 宽度调整
+ * [POS]: widgets 的文件库分隔栏与旧样板宽度调整；生产助手改用独立四边四角窗口调整器
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { useEffect, useRef, type KeyboardEvent, type PointerEvent } from "react";

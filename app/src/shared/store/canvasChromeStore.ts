@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 Zustand、canvasChromePolicy 的纯策略与浏览器 localStorage
  * [OUTPUT]: 对外提供按用户持久化的每画布侧栏快照、一次性进入意图登记、只读 peekEntryChrome 预览与幂等的 entryChrome 解析
- * [POS]: shared/store 的 Canvas 侧栏状态唯一所有者；与 workspaceChromeStore（Paper 的用户级偏好）完全隔离，Canvas 进入策略不得读写 Paper 偏好，Paper 也不因画布开关而改变
+ * [POS]: shared/store 的 Canvas 文件库偏好所有者；只持久化每画布文件库开关，助手可见性与尺寸统一交给 workspaceChromeStore，旧快照的助手字段读取时丢弃
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -76,7 +76,6 @@ const resolveEntryChrome = (
 const isChromeState = (value: unknown): value is CanvasChromeState =>
   value !== null
   && typeof value === "object"
-  && typeof (value as CanvasChromeState).assistantOpen === "boolean"
   && typeof (value as CanvasChromeState).libraryOpen === "boolean";
 
 export function parseCanvasChrome(
@@ -90,7 +89,7 @@ export function parseCanvasChrome(
     }
     const snapshots: Record<string, CanvasChromeState> = {};
     for (const [canvasId, chrome] of Object.entries(snapshot.snapshots ?? {})) {
-      if (isChromeState(chrome)) snapshots[canvasId] = chrome;
+      if (isChromeState(chrome)) snapshots[canvasId] = { libraryOpen: chrome.libraryOpen };
     }
     const order = Array.isArray(snapshot.order)
       ? snapshot.order.filter((id): id is string =>
@@ -168,7 +167,6 @@ export const useCanvasChromeStore = create<CanvasChromeStore>((set, get) => ({
     const state = get();
     const current = state.snapshots[canvasId];
     const unchanged = current !== undefined
-      && current.assistantOpen === chrome.assistantOpen
       && current.libraryOpen === chrome.libraryOpen
       && state.order.at(-1) === canvasId;
     if (unchanged) return;

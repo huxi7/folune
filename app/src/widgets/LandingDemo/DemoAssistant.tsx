@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖生产 ChatMessage/Header/MentionInput、活动判定、输入判据、滚动 Hook 与 Demo 对话脚本
- * [OUTPUT]: 对外提供点击/回车共用发送、可取消、按工具脚本逐步揭示并真实归档的 Demo AI Panel
+ * [OUTPUT]: 对外提供固定展开的Demo AI窗口；尺寸/收起命令静态，点击/回车仍共用模拟发送与可取消的真实内存归档
  * [POS]: 只模拟消息传输；引用保留生产 @ 图标与标题，图标按根字号同比缩放；发送不依赖 iframe 禁止的原生表单提交
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -86,7 +86,7 @@ export function DemoAssistant({ memoId, title, filedAt, onClose, onHint, onOrgan
     timer.current = setTimeout(() => runStep(0), THINK_MS);
   };
   return <aside aria-label="备忘录助手" className="agent-panel">
-    <AgentPanelHeader title="让零散想法连起来" historyOpen={false} historyDisabled createDisabled onToggleHistory={onHint} onCreate={onHint} onClose={onClose} />
+    <AgentPanelHeader title="让零散想法连起来" historyOpen={false} historyDisabled createDisabled onToggleHistory={onHint} onCreate={onHint} onClose={onClose} assistantSize="expanded" onToggleSize={onHint} />
     <div className="agent-panel-body">
       <div aria-label="AI 对话" className="agent-message-list" ref={messageListRef} role="log" aria-live="polite">
         {messages.map(m => <ChatMessage key={m.id} activity="none" message={m} onUndo={onUndo} />)}

@@ -40,14 +40,14 @@ describe("canvasChromeStore", () => {
     state().hydrate("user-1");
     state().rememberEntry({
       canvasId: "canvas-1",
-      inherited: { assistantOpen: false, libraryOpen: true },
+      inherited: { libraryOpen: true },
       intent: "tree",
     });
 
     const first = state().entryChrome("canvas-1", 1440);
     const second = state().entryChrome("canvas-1", 1440);
 
-    expect(first).toEqual({ assistantOpen: false, libraryOpen: true });
+    expect(first).toEqual({ libraryOpen: true });
     // StrictMode 会把初始化跑两遍：第二次不得退化成 direct
     expect(second).toEqual(first);
     expect(state().pendingEntry).toBeNull();
@@ -58,12 +58,12 @@ describe("canvasChromeStore", () => {
     state().hydrate("user-1");
     state().rememberEntry({
       canvasId: "canvas-1",
-      inherited: { assistantOpen: false, libraryOpen: true },
+      inherited: { libraryOpen: true },
       intent: "tree",
     });
 
     expect(state().peekEntryChrome("canvas-1", 1440)).toEqual({
-      assistantOpen: false,
+
       libraryOpen: true,
     });
     expect(state().pendingEntry).not.toBeNull();
@@ -75,13 +75,13 @@ describe("canvasChromeStore", () => {
     state().hydrate("user-1");
     state().rememberEntry({
       canvasId: "canvas-1",
-      inherited: { assistantOpen: false, libraryOpen: true },
+      inherited: { libraryOpen: true },
       intent: "tree",
     });
     expect(state().entryChrome("canvas-1", 1440).libraryOpen).toBe(true);
 
     expect(state().entryChrome("canvas-2", 1440)).toEqual({
-      assistantOpen: false,
+
       libraryOpen: false,
     });
   });
@@ -89,12 +89,12 @@ describe("canvasChromeStore", () => {
   test("每画布最近状态持久化，刷新后 direct 进入恢复它", () => {
     const state = () => useCanvasChromeStore.getState();
     state().hydrate("user-1");
-    state().remember("canvas-1", { assistantOpen: true, libraryOpen: false });
-    state().remember("canvas-2", { assistantOpen: false, libraryOpen: true });
+    state().remember("canvas-1", { libraryOpen: false });
+    state().remember("canvas-2", { libraryOpen: true });
 
     const persisted = store.get(canvasChromeStorageKey("user-1")) ?? null;
     expect(parseCanvasChrome(persisted)?.snapshots["canvas-1"]).toEqual({
-      assistantOpen: true,
+
       libraryOpen: false,
     });
 
@@ -102,13 +102,13 @@ describe("canvasChromeStore", () => {
     useCanvasChromeStore.getState().reset();
     state().hydrate("user-1");
     expect(state().entryChrome("canvas-1", 1440)).toEqual({
-      assistantOpen: true,
+
       libraryOpen: false,
     });
     useCanvasChromeStore.getState().reset();
     state().hydrate("user-1");
     expect(state().entryChrome("canvas-2", 1440)).toEqual({
-      assistantOpen: false,
+
       libraryOpen: true,
     });
   });
@@ -116,12 +116,12 @@ describe("canvasChromeStore", () => {
   test("另一个用户读不到上一个用户的快照", () => {
     const state = () => useCanvasChromeStore.getState();
     state().hydrate("user-1");
-    state().remember("canvas-1", { assistantOpen: true, libraryOpen: true });
+    state().remember("canvas-1", { libraryOpen: true });
     state().hydrate("user-2");
 
     expect(state().snapshots).toEqual({});
     expect(state().entryChrome("canvas-1", 1440)).toEqual({
-      assistantOpen: false,
+
       libraryOpen: false,
     });
   });
@@ -137,7 +137,7 @@ describe("canvasChromeStore", () => {
       version: 1,
     }))).toEqual({
       order: ["canvas-1"],
-      snapshots: { "canvas-1": { assistantOpen: true, libraryOpen: false } },
+      snapshots: { "canvas-1": { libraryOpen: false } },
     });
   });
 });

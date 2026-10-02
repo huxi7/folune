@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 AI SDK ChatStatus/UIMessage part、Chat folune.phase 标记与调用方整轮续写状态
- * [OUTPUT]: 对外提供互斥 AssistantActivity、deriveAssistantActivity 与 hasAssistantContinuation 续写判定
+ * [OUTPUT]: 对外提供互斥 AssistantActivity、胶囊 AgentPresence 状态、deriveAssistantActivity 与 hasAssistantContinuation 续写判定
  * [POS]: AgentPanel 的活动语义边界；网络 ready 不等于整轮完成，当前 step 工具优先于过渡文字
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -8,6 +8,7 @@
 import { isToolUIPart, type ChatStatus, type UIMessage } from "ai";
 
 export type AssistantActivity = "none" | "thinking" | "streaming" | "tool";
+export type AgentPresence = "idle" | "working" | "approval" | "complete" | "error";
 
 export function hasAssistantContinuation(message: UIMessage): boolean {
   const lastStep = message.parts.findLastIndex((part) => part.type === "step-start");

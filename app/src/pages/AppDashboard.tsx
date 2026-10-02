@@ -1,11 +1,11 @@
 /**
- * [INPUT]: 依赖双语 locale、useAppDashboardController、Paper/Canvas 内容壳、持久文件库与统一 Dialog、独立 SubscriptionPage，积分购买弹窗，以及菜单打开时刷新的用户级 BillingProvider 快照
+ * [INPUT]: 依赖双语 locale、useAppDashboardController、Paper/Canvas 内容壳、三态助手宿主、持久文件库与统一 Dialog、独立 SubscriptionPage，积分购买弹窗，以及菜单打开时刷新的用户级 BillingProvider 快照
  * [OUTPUT]: 对外提供 /app 的稳定空间装配与 /app/subscription 独立页，文件树消费即时选择、正文消费已提交路由；订阅打开时隐藏并保留工作区/左右工具实例，积分弹窗按来路保留工作区或订阅背景，键盘边界阻止常驻工作区快捷键
  * [POS]: pages 的 Workspace 视觉组合根；按 profile.id 持有唯一计费快照，菜单/设置/订阅同源，路由返回由受限来路解析；业务/flush 归 controller，动画不重挂载根
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { useLocale } from "../shared/locale";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useState } from "react";
 import { useLoaderData, useLocation, useNavigate } from "react-router-dom";
 import { BillingProvider, useBilling } from "../shared/api/useBilling";
 import type { WorkspaceLoaderData } from "./appDashboardTypes";
@@ -25,15 +25,14 @@ import { PanelResizeHandle } from "../widgets/PanelResizeHandle";
 import { PaperWorkspaceShell } from "../widgets/PaperWorkspaceShell";
 import { WorkspaceAuxViews } from "../widgets/WorkspaceAuxViews";
 import { WorkspaceCommandPalette } from "../widgets/WorkspaceCommandPalette";
+import { WorkspaceAssistantLayer } from "../widgets/WorkspaceAssistantLayer";
+import type { AgentPresence } from "../widgets/AgentPanel/activityState";
 import { WorkspacePanelLayer } from "../widgets/WorkspacePanelLayer";
 import { peekCanvasEntryBootstrap } from "./canvasEntryBootstrap";
 import { CanvasRouteCoordinator } from "./CanvasRouteCoordinator";
 import { DashboardDialogs } from "./DashboardDialogs";
 import { isMemo, loadAgentPanel, useAppDashboardController } from "./useAppDashboardController";
 import {
-  AGENT_MAX_WIDTH,
-  AGENT_MIN_WIDTH,
-  DEFAULT_AGENT_WIDTH,
   DEFAULT_SIDEBAR_WIDTH,
   SIDEBAR_MAX_WIDTH,
   SIDEBAR_MIN_WIDTH
@@ -124,7 +123,11 @@ function DashboardContent() {
     libraryOpen,
     closeAssistant,
     closeLibrary,
-    toggleAssistant,
+    openActiveAssistant,
+    assistantSize,
+    setAssistantSize,
+    assistantFrame,
+    setAssistantFrame,
     toggleLibrary,
     workspaceStyle,
     handleCanvasSessionReady,
@@ -141,6 +144,7 @@ function DashboardContent() {
     openActiveLibrary,
     setRevealTarget,
   } = useAppDashboardController();
+  const [assistantPresence, setAssistantPresence] = useState<AgentPresence>("idle");
   const library = (
     <>
       <AppSidebar
@@ -269,6 +273,9 @@ function DashboardContent() {
           memoTree={memoTree}
           onApplyOrganize={memoOrganize.apply}
           onClose={closeActiveAssistant}
+          assistantSize={assistantSize}
+          onToggleSize={() => setAssistantSize(assistantSize === "compact" ? "expanded" : "compact")}
+          onPresenceChange={setAssistantPresence}
           onPrepareMutation={async () => {
             await notesWorkspaceRef.current?.flushCurrentDraft();
           }}
@@ -300,7 +307,6 @@ function DashboardContent() {
           libraryOpen={libraryOpen}
           onCloseAssistant={closeAssistant}
           onCloseLibrary={closeLibrary}
-          onToggleAssistant={toggleAssistant}
           onToggleLibrary={toggleLibrary}
           organizing={memoOrganize.organizing}
           overlayPanels={paperViewport.overlayPanels}
@@ -343,25 +349,23 @@ function DashboardContent() {
       >
         {library}
       </WorkspacePanelLayer>
-      <WorkspacePanelLayer
+      <WorkspaceAssistantLayer
         open={activeAssistantOpen}
-        side="assistant"
-        style={workspaceStyle}
-        resizeHandle={
-          <PanelResizeHandle
-            ariaLabel={t("调整聊天区域宽度", "Resize chat panel")}
-            direction={-1}
-            max={AGENT_MAX_WIDTH}
-            min={AGENT_MIN_WIDTH}
-            onReset={() => setAgentWidth(DEFAULT_AGENT_WIDTH)}
-            onResize={setAgentWidth}
-            side="left"
-            size={agentWidth}
-          />
-        }
+        size={assistantSize}
+        panelWidth={agentWidth}
+        presence={assistantPresence}
+        onOpen={() => {
+          if (assistantPresence === "complete") setAssistantPresence("idle");
+          openActiveAssistant();
+        }}
+        frame={assistantFrame}
+        onResize={(rect) => {
+          setAgentWidth(rect.width);
+          setAssistantFrame({ height: rect.height, right: window.innerWidth - rect.left - rect.width, bottom: window.innerHeight - rect.top - rect.height });
+        }}
       >
         {assistant}
-      </WorkspacePanelLayer>
+      </WorkspaceAssistantLayer>
       <ArchiveCordOverlay
         libraryOpen={canvasNodeId === null && libraryOpen}
         onLocate={locateArchive}

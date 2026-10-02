@@ -5,6 +5,7 @@
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
+import { useWorkspaceChromeStore } from "../../shared/store/workspaceChromeStore";
 import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
 import { Window } from "happy-dom";
 import type {
@@ -185,7 +186,7 @@ const { CanvasEdgeReasonInspector } = await import("./CanvasCordEdge");
 beforeEach(() => {
   mutationRequests.length = 0;
   useCanvasWorkspaceStore.getState().beginSession({
-    assistantOpen: false,
+
     canvasId: "test-canvas",
     detail: emptyCanvas(),
     libraryOpen: false,
@@ -255,7 +256,7 @@ const renderCanvas = () => render(
     <KnowledgeCanvas
       accessToken="test-token"
       canvasId="test-canvas"
-      entryChrome={{ assistantOpen: false, libraryOpen: false }}
+      entryChrome={{ libraryOpen: false }}
       onEditMemo={() => undefined}
       onSelectMemo={() => undefined}
       userId="test-user"
@@ -559,7 +560,7 @@ describe("KnowledgeCanvas 自由文字纵向交互", () => {
    */
   test("带聚焦节点进入画布，聚焦卡片选中且镜像静止在同一个答案", async () => {
     useCanvasWorkspaceStore.getState().beginSession({
-      assistantOpen: false,
+
       canvasId: "test-canvas",
       detail: relationCanvas(),
       focusNodeId: "memo-card-a",
@@ -794,10 +795,11 @@ describe("KnowledgeCanvas 自由文字纵向交互", () => {
  */
 describe("KnowledgeCanvas 与左右 Panel 的边界", () => {
   const panelToggles = [
-    { assistantOpen: true },
-    { libraryOpen: true },
-    { assistantOpen: false },
-    { libraryOpen: false },
+    () => useWorkspaceChromeStore.getState().openAssistant(),
+    () => useCanvasWorkspaceStore.getState().setCanvasChrome({ libraryOpen: true }),
+    () => useWorkspaceChromeStore.getState().setAssistantSize("compact"),
+    () => useWorkspaceChromeStore.getState().closeAssistant(),
+    () => useCanvasWorkspaceStore.getState().setCanvasChrome({ libraryOpen: false }),
   ];
 
   test("多选后反复开合 Panel，选择、坐标与外接框都不动，也不入队", async () => {
@@ -829,7 +831,7 @@ describe("KnowledgeCanvas 与左右 Panel 的边界", () => {
     });
 
     for (const toggle of panelToggles) {
-      useCanvasWorkspaceStore.getState().setCanvasChrome(toggle);
+      toggle();
       await waitFor(() => expect(readGeometry()).toEqual(before));
     }
 
@@ -844,7 +846,7 @@ describe("KnowledgeCanvas 与左右 Panel 的边界", () => {
     fireEvent.change(editor, { target: { value: "手势进行中不该被面板打断" } });
 
     for (const toggle of panelToggles) {
-      useCanvasWorkspaceStore.getState().setCanvasChrome(toggle);
+      toggle();
     }
 
     const live = await waitFor(() => {

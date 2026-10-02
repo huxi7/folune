@@ -1,0 +1,63 @@
+/**
+ * [INPUT]: 消费展示投影比例、品牌Primary、card/border、平滑曲率、GlowButton 的三层材质与 WorkspaceAssistantLayer 形态/活动属性
+ * [OUTPUT]: 对外提供助手右下三态表面、胶囊高光/柔影、常驻正文裁切与八方向调整命中区/光标；几何动画与手势由MotionValue唯一持有
+ * [POS]: styles 的助手专属视觉边界；短窗 24px、全高 20px、胶囊 32px 曲率不扩散到其他 Panel 或控件
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+@layer components {
+  .workspace-assistant-layer {
+    --assistant-ui-scale: 1;
+    --glow-sheen-top: rgba(255, 255, 255, 0.18);
+    --glow-sheen-hairline: rgba(255, 255, 255, 0.34);
+    position: fixed;
+    z-index: 86;
+    isolation: isolate;
+    corner-shape: var(--corner-shape-smooth);
+    background: var(--card);
+    box-shadow: 0 calc(4px * var(--assistant-ui-scale)) calc(20px * var(--assistant-ui-scale)) color-mix(in srgb, var(--primary) 32%, transparent);
+    transition: box-shadow var(--motion-fast) var(--ease-standard);
+  }
+  .workspace-assistant-layer:not([data-assistant-mode="capsule"]) { box-shadow: var(--shadow-2xs), 0 8px 32px rgb(0 0 0 / 0.06); }
+  .workspace-assistant-layer[data-animated="false"] { transition: none; }
+  .workspace-assistant-clip { position: relative; width: 100%; height: 100%; overflow: hidden; border-radius: inherit; corner-shape: inherit; }
+  .workspace-assistant-clip::after { position: absolute; z-index: 4; inset: 0; border: 1px solid var(--border); border-radius: inherit; corner-shape: inherit; pointer-events: none; content: ""; }
+  .workspace-assistant-layer[data-assistant-mode="capsule"] .workspace-assistant-clip::after { border-color: rgb(255 255 255 / 0.1); box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.2); }
+  .workspace-assistant-material { position: absolute; inset: 0; border-radius: inherit; corner-shape: inherit; pointer-events: none; }
+  .workspace-assistant-material .glow-button-base { background: linear-gradient(135deg, var(--primary) 0%, color-mix(in srgb, var(--primary) 68%, black) 50%, color-mix(in srgb, var(--primary) 78%, white) 100%); }
+  .workspace-assistant-body { position: absolute; right: 0; bottom: 0; min-height: 0; overflow: hidden; }
+  .workspace-assistant-launcher { position: absolute; z-index: 3; right: 0; bottom: 0; display: inline-flex; width: calc(130px * var(--assistant-ui-scale)); height: calc(44px * var(--assistant-ui-scale)); align-items: center; justify-content: center; gap: calc(8px * var(--assistant-ui-scale)); padding: 0; border: 0; border-radius: inherit; corner-shape: inherit; background: transparent; color: white; font-size: calc(12px * var(--assistant-ui-scale)); font-weight: 650; line-height: calc(16px * var(--assistant-ui-scale)); white-space: nowrap; cursor: pointer; }
+  .workspace-assistant-launcher:hover { background: rgb(255 255 255 / 0.06); }
+  .workspace-assistant-launcher:active { background: rgb(0 0 0 / 0.07); }
+  .workspace-assistant-launcher:focus-visible { outline: 2px solid rgb(255 255 255 / 0.8); outline-offset: -4px; }
+  .workspace-assistant-launcher > svg { width: calc(16px * var(--assistant-ui-scale)); height: calc(16px * var(--assistant-ui-scale)); }
+  .workspace-assistant-material .glow-button-canvas { filter: blur(calc(6px * var(--assistant-ui-scale))); }
+  .workspace-assistant-arrow { rotate: -45deg; }
+  .workspace-assistant-layer[data-assistant-mode="capsule"][data-presence="working"] .workspace-assistant-material::after { position: absolute; inset: 0; background: linear-gradient(110deg, transparent 25%, rgb(255 255 255 / 0.14) 50%, transparent 75%); animation: assistant-working-sheen 2.4s ease-in-out infinite; content: ""; }
+  /* 胶囊保留 Agent 身份材质；内容区继续由现有 Header/Composer 控件决定密度。 */
+  .workspace-assistant-body .agent-panel { background: transparent; }
+  /* 八个透明命中区只改变系统光标；边角优先命中，不借用文件库的蓝线。 */
+  .assistant-window-resize { position: absolute; z-index: 5; margin: 0; padding: 0; border: 0; background: transparent; touch-action: none; }
+  .assistant-window-resize:is([data-edge="n"], [data-edge="s"]) { left: 12px; right: 12px; height: 10px; cursor: ns-resize; }
+  .assistant-window-resize[data-edge="n"] { top: -5px; }
+  .assistant-window-resize[data-edge="s"] { bottom: -5px; }
+  .assistant-window-resize:is([data-edge="e"], [data-edge="w"]) { top: 12px; bottom: 12px; width: 10px; cursor: ew-resize; }
+  .assistant-window-resize[data-edge="e"] { right: -5px; }
+  .assistant-window-resize[data-edge="w"] { left: -5px; }
+  .assistant-window-resize:is([data-edge="nw"], [data-edge="ne"], [data-edge="sw"], [data-edge="se"]) { width: 18px; height: 18px; }
+  .assistant-window-resize[data-edge="nw"] { top: -5px; left: -5px; cursor: nwse-resize; }
+  .assistant-window-resize[data-edge="ne"] { top: -5px; right: -5px; cursor: nesw-resize; }
+  .assistant-window-resize[data-edge="sw"] { bottom: -5px; left: -5px; cursor: nesw-resize; }
+  .assistant-window-resize[data-edge="se"] { bottom: -5px; right: -5px; cursor: nwse-resize; }
+  .assistant-window-resize:focus-visible { outline: 1px solid var(--muted-foreground); outline-offset: -4px; border-radius: var(--radius-compact); corner-shape: var(--corner-shape-smooth); }
+}
+
+html[data-assistant-resizing="n"], html[data-assistant-resizing="s"] { --assistant-resize-cursor: ns-resize; }
+html[data-assistant-resizing="w"], html[data-assistant-resizing="e"] { --assistant-resize-cursor: ew-resize; }
+html[data-assistant-resizing="nw"], html[data-assistant-resizing="se"] { --assistant-resize-cursor: nwse-resize; }
+html[data-assistant-resizing="ne"], html[data-assistant-resizing="sw"] { --assistant-resize-cursor: nesw-resize; }
+html[data-assistant-resizing], html[data-assistant-resizing] * { cursor: var(--assistant-resize-cursor) !important; user-select: none !important; }
+
+@keyframes assistant-working-sheen { from { translate: -100% 0; } to { translate: 100% 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .workspace-assistant-layer[data-presence="working"] .workspace-assistant-material::after { animation: none !important; }
+}
