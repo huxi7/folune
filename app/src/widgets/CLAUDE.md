@@ -40,8 +40,8 @@ LandingMotion/: 营销页克制反馈模块；MarketingLink/useMarketingMotion �
 NotebookPreview.tsx: 确定性首屏产品预览，DS 统一缩放淡入与显式卡片 lift 分处不同元素，阴影由 CSS 持有，内部布局不参与独立动画
 AppSidebar.tsx: 从 ThemeProvider/LocaleProvider 读取偏好并透传 Dashboard 的方案名、剩余额度、菜单打开刷新与资料/用量/账单/订阅/购买积分命令给纯展示 UserMenu，不在树内请求计费；右键菜单通过 Portal 锚定视口，避免 Panel transform 改写 fixed 坐标；文件库内容与展开偏好的唯一所有者，负责创建/搜索、树/重命名/拖放意图、底部导航和唯一有效归档代表；新建复用上一终态布局与在途位移，不额外扫描整树；拖放保留手势前快照，定位只由目标本身变化触发（换目标/reveal/新一次整理、目标被搬进别的文件夹、树首次就绪），别处增删改不重放展开与滚动；最新选择已可见时不滚动，离屏才沿原平滑定位，祖先已展开不重复写状态，重排交给 useTreeReorder，结构键按不可变树引用复用以跳过标题/摘要更新时的整树 FLIP 判据，子级尺寸交给 TreeDisclosure，业务事务仍由 Dashboard 持有
 AppSidebar.creation.test.tsx: 真实 ThemeProvider/侧栏 DOM 回归，覆盖主按钮/右键连续新建、乱序 ID 确认与失败撤回；已有行和目录实例、展开/折叠偏好与选中身份保持稳定；删除别处节点不撑回用户收起的目录，目标被搬进收起目录才跟随展开
-WorkspacePanelLayer.tsx: 跨 Paper/Canvas 常驻左右工具宿主，resizeHandle 插槽与裁切内容同级，外壳允许热区跨边框、内容仍保留圆角裁切；8px/220ms 入、8px/170ms 出，不缩放内容或改变 Stage；关闭即 inert，开合运动租约成对归还，保留文件树/AI 会话实例与滚动位置
-SidebarCreateMenu.tsx: 48/32 split 创建入口，保持双区几何与两项命令；PresenceSurface 统一入退场，关闭即 inert，键盘循环、Escape 与触发器焦点归还保留
+WorkspacePanelLayer.tsx: 跨Paper/Canvas常驻左右侧栏宿主，DS样板直接使用同一组件；原220/170ms、左-8px/右+8px平移加透明度，全程不缩放、不改变Stage或子内容高度；resizeHandle在裁切内容之外，关闭即inert，归档运动租约成对归还，保留文件树/AI实例与滚动位置
+SidebarCreateMenu.tsx: 48/32 split 创建入口，保持双区几何与两项命令；PresenceSurface紧凑菜单120/100ms入退场，关闭即 inert，键盘循环、Escape 与触发器焦点归还保留
 SidebarCreateMenu.test.tsx: 侧栏创建入口 DOM/键盘回归测试，锁定文字主动作、菜单恰好两项、方向键循环、Home/End 与 Escape 焦点合同
 AppMainToolbar.tsx: 与CanvasControls共用WarmTooltipGroup连续提示，整理显示mod+Enter、进入Canvas显示mod+E平台键帽，提示置于顶栏下方且不使用原生title；locale中英文案；Paper 内 sticky 48px 文档命令条；左侧是身份三段——真实 Canvas 返回、归档落点、滚动后淡入的 memo 标题（落点排在标题之前，标题静止时透明但仍占位，因此落点的横坐标恒定），右侧命令区按扫描顺序排 中性「整理」（文字独立向下光学校正 0.0625rem）→ 无标签 32px Ghost「进入 Canvas」→ 阅读切换 → 弹层型「更多」，四个命令统一 4px 间距，静止顶栏不画竖线。顺序不是审美：核心动作必须是这一簇第一个被扫到的东西，而「更多」的菜单右对齐垂下，簇尾是它唯一不会把菜单悬在同侧控件头上的位置。整理的层级只由文字标签表达，不由填色表达——顶栏里一个 Filled Primary 都没有，那颗留给文件库的「新建」；Canvas 是导航（名词）故一个无标签图标说得完，与阅读切换同一重量。两者共用中性 Ghost 前景与 hover/press 反馈。顶栏 sticky 在 `--workspace-panel-inset` 上而不是 y=0；顶栏属于纸而不是浮在纸上的一层，全程与 Paper 共用同一表面同一颜色，**不画底边线**——那条线会把「窗口上边 → 线」整段圈成一个随滚动变宽的物体，而宽窄是物体才有的属性；凝结与下缘 Soft Edge 是同一个 CSS 进度的两个读数，首选交给滚动本身，只有不支持 scroll timeline 的浏览器才挂一个哨兵做一次软切，本组件因此不含任何滚动监听、阈值数字，也不知道软边有多高。顶栏 control 的 32px 高度与中性 hover/press 反馈同样只在 workspace.css 声明一次，不由这里逐个控件申报——整理仍显式用 `size="default"` 加文字，它与图标簇的区别是文字标签。归档状态住左侧不只是语义（它回答"你在哪"而不是"你能做什么"），更因为它是归档线的起点：放在纸的右上角那条线必须横穿整张纸才够得到左边的文件树。进入默认 Canvas 前由页面层完成 required flush，Toolbar 不直接发业务请求
 ArchiveStatus.tsx: locale 中英归档标签包围原样路径；整理成功/撤销后的安静落点元素；可见文案是「归档于〈末级目录〉」，完整路径只进 accessible name/title，稳定 data-archive-source 供归档线取 source 锚点，点击只委托文件库定位。它是 contextual text button 而不是 Badge：静止无填充/描边/外影，也不带状态圆点——给一条线找出发点而在纸边摆一颗常驻圆珠，等于给一个不存在的对象造了个身体
@@ -86,7 +86,7 @@ MarkdownEditor.test.ts: 以 content_mdx 恒等 round-trip 验证普通文本、2
 MarkdownLivePreview.ts: CodeMirror 6 原生 Live Preview 引擎，以 syntaxTree/visibleRanges 只扫描可见 block；活动标题保留弱化且无下划线的源码标记，非活动标题隐藏标记和分隔空白，活动/多选区与不安全语法回退完整源码，隐藏范围同步提供 atomicRanges，IME 合成期只映射旧装饰并在结束后刷新
 MarkdownReadingView.tsx: react-markdown + remark-gfm + 可选 remark-breaks + rehype-sanitize 的共享只读正文边界；备忘录阅读态保留单换行，AI 消息维持标准 CommonMark，并以模块级稳定渲染器 + Context 只装饰最后可见块；历史块和最后块的稳定前缀保留原生文本节点，末尾最多五个动画 span，固定 skipHtml 并禁止原始 HTML、JSX/JavaScript 执行
 MarkdownReadingView.test.tsx: 阅读换行、安全、常数尾部动画节点与文件边界测试；正则按真实 HTML 属性匹配，不保留无意义的 quote 转义
-MarkdownViewMenu.tsx: 阅读/编辑与更多入口消费同组WarmTooltip，更多展开时禁用提示，保留焦点和文件操作；locale中英菜单/回执与空标题导出名；可选关闭文件操作能力，供嵌入展示保留按钮形制； 编辑/阅读与 Markdown 文件操作入口；More 菜单共用 PresenceSurface，保留原文复制/导出和键盘行为，不修改保存协议
+MarkdownViewMenu.tsx: 阅读/编辑与更多入口消费同组WarmTooltip，更多展开时禁用提示，保留焦点和文件操作；locale中英菜单/回执与空标题导出名；可选关闭文件操作能力，供嵌入展示保留按钮形制； 编辑/阅读与 Markdown 文件操作入口；More菜单共用PresenceSurface紧凑菜单120/100ms配方，保留原文复制/导出和键盘行为，不修改保存协议
 markdownViewTypes.ts: DocumentView editing/reading 与 EditingMode live/source 的共享状态协议，阅读状态不占用编辑模式槽位
 NotesWorkspace.tsx: 单篇笔记编辑会话边界，保持 memoClientKey 与原 autosave 协议；编辑/阅读共享定位框并用 PersistentView 淡换，CodeMirror 不重挂载，旧视图不再撑高或接收焦点
 PaperWorkspaceShell.tsx: Paper 空间壳与边缘工具/窄屏遮罩，左右 Panel 由外层持久宿主负责，开合不改变纸面几何

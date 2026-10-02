@@ -279,7 +279,8 @@ test.each([
     expect(submenu.style.top).toBe(top);
     // 末行中心距浮层底边25px，两列的行中心应同为357px。
     expect(Number.parseFloat(submenu.style.top) + submenu.offsetHeight - 25).toBe(357);
-    expect(submenu.style.transformOrigin).toBe("bottom right");
+    expect(submenu.style.transformOrigin).toBe("50% 50%");
+    expect(submenu.getAttribute("data-motion-surface")).toBe("submenu");
   } finally {
     Object.defineProperties(window, { innerWidth: { value: previousWidth, configurable: true }, innerHeight: { value: previousHeight, configurable: true } });
   }

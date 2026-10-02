@@ -1,11 +1,11 @@
 /**
- * [INPUT]: 依赖 motion/react 的面板 Tween、Dashboard 传入的左右工具内容、共享工作区尺寸变量、归档线运动租约
+ * [INPUT]: 依赖DS唯一surfaceVariants侧栏配方（原220/170ms、外侧8px平移、无缩放）、Dashboard左右工具内容、共享尺寸与归档线运动租约
  * [OUTPUT]: 对外提供跨 Paper/Canvas 路由持续挂载的左右工具浮层宿主与裁切内容之外的 resizeHandle 插槽；关闭时只隐藏并冻结交互，不卸载 AppSidebar/AgentPanel，并在 Tween 期间交出一段归档几何租约
  * [POS]: widgets 的跨空间 Workspace Chrome 边界；把文件树与 AI 实例从互斥的 Paper/Canvas 内容壳中提出，消除路由切换时的重挂载闪烁。它是唯一知道这段 Tween 何时结束的人，因此必须由它显式通知归档线，而不是让归档线去猜 transform 动画的结尾
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
-import { motion, useReducedMotion } from "motion/react";
+import { motion, useReducedMotion, type TargetAndTransition } from "motion/react";
 import {
   useEffect,
   useRef,
@@ -13,12 +13,7 @@ import {
   type ReactNode,
 } from "react";
 
-import {
-  panelEnterTransition,
-  panelExitTransition,
-  reducedFadeTransition,
-} from "../pages/workspaceMotion";
-import { motionDistance } from "../shared/design-system/motion";
+import { surfaceVariants, surfaceTransformOrigin } from "../shared/design-system/motion";
 import {
   beginArchiveMotion,
   endArchiveMotion,
@@ -42,6 +37,7 @@ export function WorkspacePanelLayer({
   style,
 }: WorkspacePanelLayerProps) {
   const reduceMotion = useReducedMotion();
+  const variants = surfaceVariants(side === "library" ? "panel-left" : "panel-right", Boolean(reduceMotion));
   const panelRef = useRef<HTMLDivElement>(null);
   const wasOpenRef = useRef(open);
   /*
@@ -71,10 +67,9 @@ export function WorkspacePanelLayer({
 
   return (
     <motion.div
-      animate={{
-        opacity: open ? 1 : 0,
-        x: open || reduceMotion ? 0 : (side === "library" ? -1 : 1) * motionDistance.panel,
-      }}
+      // 常驻面板只执行配方目标，不向内部详情广播exit标签，避免子内容随壳退出再次动画。
+      animate={variants[open ? "visible" : "exit"] as TargetAndTransition}
+      data-motion-surface={side === "library" ? "panel-left" : "panel-right"}
       aria-hidden={!open}
       className={`app-${side === "library" ? "sidebar" : "agent"}-shell workspace-floating-panel workspace-persistent-panel`}
       data-open={open}
@@ -89,13 +84,9 @@ export function WorkspacePanelLayer({
       ref={panelRef}
       style={{
         ...style,
+        transformOrigin: surfaceTransformOrigin,
         pointerEvents: open ? "auto" : "none",
       }}
-      transition={reduceMotion
-        ? reducedFadeTransition
-        : open
-          ? panelEnterTransition
-          : panelExitTransition}
     >
       <div className={`workspace-panel-content workspace-panel-content-${side}`}>
         {children}

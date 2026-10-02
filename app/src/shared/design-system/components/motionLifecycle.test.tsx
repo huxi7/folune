@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 happy-dom、Testing Library 与真实 Dialog/Select/PersistentView/PresenceSurface/Collapse
- * [OUTPUT]: 验证退出即隔离交互、快速反向开关、分层 Escape、表单实例保留与父退出隔离
+ * [OUTPUT]: 验证退出即隔离交互、快速反向开关、分层 Escape、表单实例保留、父退出隔离与模态父子同拍透明度
  * [POS]: Design System 动效行为门禁；不以测试环境的动画时钟冒充浏览器逐帧验收
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -79,6 +79,16 @@ describe("Motion 的行为边界", () => {
     fireEvent.keyDown(select, { key: "Escape" });
     expect(view.queryByRole("dialog")).toBeNull();
     expect(document.activeElement === trigger).toBe(true);
+  });
+  test("模态按Laper父层与本体同拍渐入，保持独立遮罩", () => {
+    const view = render(<Dialog open onOpenChange={() => {}} title="独立淡入"><p>可读正文</p></Dialog>);
+    const overlay = view.getByRole("dialog");
+    const backdrop = overlay.querySelector(".ds-dialog-backdrop");
+    const panel = overlay.querySelector(".ds-dialog-panel");
+    expect(backdrop?.parentElement).toBe(overlay);
+    expect(panel?.parentElement).toBe(overlay);
+    expect(overlay.style.opacity).toBe("0");
+    expect(panel?.getAttribute("style")).toContain("opacity: 0");
   });
   test("嵌套 Dialog 一次只关闭一层，父层存在时滚动仍锁定", async () => {
     const view = render(<DialogHarness />);

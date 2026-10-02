@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 PresenceSurface 的统一入退场、设计系统图标、文件库当前目录语境与上层 memo/canvas/folder 创建意图
+ * [INPUT]: 依赖 PresenceSurface紧凑菜单120/100ms配方、设计系统图标、文件库当前目录语境与上层 memo/canvas/folder 创建意图
  * [OUTPUT]: 对外提供约 80px split 新建控件及只含 Canvas/文件夹的可聚焦菜单，支持方向键/Home/End/Escape、外部关闭与焦点归还
  * [POS]: AppSidebar 的创建入口；只管理菜单焦点和选择，不持有树事务或路由状态
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -82,7 +82,7 @@ export function SidebarCreateMenu({
       >
         <CaretDownIcon aria-hidden size={14} />
       </button>
-      <PresenceSurface open={open}
+      <PresenceSurface open={open} kind="compact-menu"
           className="sidebar-create-menu"
           onKeyDown={(event) => {
             const items = [...(menuRef.current?.querySelectorAll<HTMLButtonElement>(

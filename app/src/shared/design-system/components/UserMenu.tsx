@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 AccountSubscribeButton 独立流光按钮、PresenceSurface/useDismissable 的浮层生命周期、UserButton 的视口几何/ResizeObserver 与上层受控的语言/主题、真实积分和账户命令
+ * [INPUT]: 依赖 AccountSubscribeButton 独立流光按钮、PresenceSurface菜单/子菜单配方与useDismissable 的浮层生命周期、UserButton 的视口几何/ResizeObserver 与上层受控的语言/主题、真实积分和账户命令
  * [OUTPUT]: 提供两层账户底卡、以身份按钮为锚点左移8px并间隔8px向上展开的256px主菜单（仅窄视口缩宽）及1px贴边子菜单；子菜单末行与触发行对齐、其余行向上排列，国旗/主题状态及悬停/键盘/触屏交互同源
  * [POS]: 账户菜单纯展示边界；Portal 避开侧栏裁剪，统一内容边界负责外点关闭，价格/语言持久化/业务跳转均交给上层
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -266,9 +266,9 @@ export function UserMenu({
       </PresenceSurface>
       <PresenceSurface
         aria-label={submenu === "language" ? t("界面语言", "Language") : t("界面主题", "Appearance")}
-        className="ds-user-menu-popover ds-user-menu-submenu" data-side={submenuPosition?.side} id={submenuId}
+        className="ds-user-menu-popover ds-user-menu-submenu" data-side={submenuPosition?.side} id={submenuId} kind="submenu"
         onPointerEnter={cancelSubmenuClose} onPointerLeave={scheduleSubmenuClose} open={open && submenu !== null}
-        placement="top" ref={submenuRef} role="menu" style={{ left: submenuPosition?.left, top: submenuPosition?.top, width: submenuPosition?.width, maxHeight: submenuPosition?.maxHeight, transformOrigin: submenuPosition?.side === "left" ? "bottom right" : "bottom left", visibility: submenuPosition ? "visible" : "hidden" }}
+        placement="top" ref={submenuRef} role="menu" style={{ left: submenuPosition?.left, top: submenuPosition?.top, width: submenuPosition?.width, maxHeight: submenuPosition?.maxHeight, visibility: submenuPosition ? "visible" : "hidden" }}
       >
         {submenu === "theme" ? themes.map(({ icon: IconComponent, label, english, value }) => <button
           aria-checked={theme === value} className="ds-user-menu-item ds-user-menu-submenu-option" key={value} role="menuitemradio" type="button"

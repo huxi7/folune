@@ -1,15 +1,16 @@
 /**
  * [INPUT]: 依赖生产 Button/Select/UserMenu/Dialog/Collapse/PersistentView/PresenceSurface 与 motion token
- * [OUTPUT]: 对外提供可反复交互的完整 Motion 样板；所有动作只改 fixture 本地状态
+ * [OUTPUT]: 对外提供可反复交互的完整 Motion 样板与生产配方目录，左右面板直接挂载WorkspacePanelLayer；所有动作只改 fixture 本地状态
  * [POS]: Design System 的动效验收入口，亦被 DEV MotionLabPage 消费，不读取账户或业务数据
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { useState } from "react";
 import { AnimatePresence, MotionConfig, useReducedMotion } from "motion/react";
-import { Button, Card, Collapse, Dialog, Input, PersistentView, PresenceSurface, SegmentedControl, Select, UserMenu, useToast } from "../../shared/design-system/components";
-import { motionDuration } from "../../shared/design-system/motion";
+import { Button, Card, Collapse, Dialog, Input, PersistentView, SegmentedControl, Select, UserMenu, useToast } from "../../shared/design-system/components";
+import { motionDuration, surfaceMotionCatalog } from "../../shared/design-system/motion";
 import { PanelMotionSpecimen } from "./PanelMotionSpecimen";
 import { SidebarCreateMenu } from "../SidebarCreateMenu";
+import { WorkspacePanelLayer } from "../WorkspacePanelLayer";
 
 export function MotionSpecimen() {
   const [dialog, setDialog] = useState(false);
@@ -17,6 +18,7 @@ export function MotionSpecimen() {
   const [tree, setTree] = useState(false);
   const [child, setChild] = useState(false);
   const [panel, setPanel] = useState(false);
+  const [theme, setTheme] = useState<"system" | "light" | "dark">("system");
   const [view, setView] = useState("write");
   const [draft, setDraft] = useState("同一份草稿，在阅读与编辑间连续切换。");
   const reduced = useReducedMotion();
@@ -26,8 +28,24 @@ export function MotionSpecimen() {
     <div className="motion-specimen">
       <p className="motion-specimen-note">{reduced ? "减少动态效果 · 90ms 淡换" : "标准动效 · 原位反馈、短距离进退"}</p>
       <div className="motion-specimen-tokens" aria-label="生产动效时长">
-        {([['Press', 'press'], ['Menu', 'microEnter'], ['Tree', 'tree'], ['Panel', 'panelEnter'], ['Modal', 'modalEnter']] as const).map(([label, token]) => <span key={token}>{label} <strong>{(reduced ? token === "tree" ? 0 : motionDuration.press : motionDuration[token]) * 1000}ms</strong></span>)}
+        {([['Press', 'press'], ['Compact menu', 'compactMenuEnter'], ['Menu', 'menuEnter'], ['Tree', 'tree'], ['Panel', 'panelEnter'], ['Modal', 'modalEnter']] as const).map(([label, token]) => <span key={token}>{label} <strong>{(reduced ? token === "tree" ? 0 : motionDuration.press : motionDuration[token]) * 1000}ms</strong></span>)}
       </div>
+      <section className="motion-specimen-section" aria-label="生产动效配方">
+        <h3>生产动效配方 · Laper 基础与紧凑菜单</h3>
+        <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", textAlign: "left", fontSize: 12, borderSpacing: "0 8px" }}>
+            <thead><tr><th scope="col">组件</th><th scope="col">进入 / 退出</th><th scope="col">曲线</th><th scope="col">缩放 / 位移</th><th scope="col">实际用途</th></tr></thead>
+            <tbody>{surfaceMotionCatalog.map((recipe) => <tr key={recipe.kind} data-motion-recipe={recipe.kind}>
+              <th scope="row" title={recipe.source}>{recipe.label}</th>
+              <td>{(reduced ? 0.09 : recipe.enter) * 1000} / {(reduced ? 0.09 : recipe.exit) * 1000}ms</td>
+              <td>({recipe.ease.join(", ")}){"exitEase" in recipe ? <> / ({recipe.exitEase.join(", ")})</> : null}</td>
+              <td>{reduced ? "100% / 0px" : `${recipe.scale * 100}% / ${recipe.offset}`}</td>
+              <td>{recipe.use}</td>
+            </tr>)}</tbody>
+          </table>
+        </div>
+        <p className="motion-specimen-note">紧凑菜单120/100ms，沿用普通菜单的几何与曲线。工作区左右侧栏保持原220/170ms、外侧8px平移与淡入淡出，全程不缩放。表格读取生产常量，示例使用真实组件；品牌入口与纸面保持既定动画。</p>
+      </section>
       <section className="motion-specimen-section">
         <h3>操作与浮层</h3>
         <div className="motion-specimen-actions">
@@ -40,7 +58,7 @@ export function MotionSpecimen() {
         <div className="motion-specimen-controls">
           <Select ariaLabel="向下选择" options={[{ label: "默认视图", value: "default" }, { label: "紧凑视图", value: "compact" }]} />
           <Select ariaLabel="向上选择" placement="top" options={[{ label: "向上展开", value: "up" }, { label: "另一项", value: "other" }]} />
-          <UserMenu email="motion@example.test" name="Motion 示例" onOpenProfile={() => setDialog(true)} onOpenSettings={() => setDialog(true)} onOpenSubscription={receipt} onSignOut={async () => { receipt(); }} />
+          <UserMenu email="motion@example.test" name="Motion 示例" theme={theme} onThemeChange={setTheme} onOpenProfile={() => setDialog(true)} onOpenSettings={() => setDialog(true)} onOpenSubscription={receipt} onSignOut={async () => { receipt(); }} />
         </div>
       </section>
       <section className="motion-specimen-section">
@@ -58,10 +76,10 @@ export function MotionSpecimen() {
             </Collapse>
             <p>固定同级落点</p>
           </div>
-          <PresenceSurface className="motion-specimen-panel" kind="panel-right" open={panel}>
-            <strong>辅助面板</strong><p>文字保持原尺寸，面板向右侧边缘回收。</p>
+          <WorkspacePanelLayer side="assistant" open={panel} style={{ position: "absolute", inset: "12px 12px 12px auto", width: "48%", padding: 12 }}>
+            <strong>辅助面板</strong><p>与实际助手和文件库共用同一组件与配方。</p>
             <Input aria-label="面板内的输入" placeholder="关闭后退出键盘顺序" />
-          </PresenceSurface>
+          </WorkspacePanelLayer>
         </div>
       </section>
       <section className="motion-specimen-section">

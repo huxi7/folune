@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 Motion height/opacity 与 Design System 的层级时间轴
  * [OUTPUT]: 对外提供 Collapse，tree/micro 两档同源高度切换与即时退出交互
- * [POS]: Tree/披露控件的尺寸生命周期原语；独立 presence 边界隔离父面板退出，只在自身 open 改变时收放高度
+ * [POS]: Tree/披露控件的尺寸生命周期原语；独立 presence 隔离父面板退出，高度与透明度同步使用进/退场节奏，避免高度已收完仍等待淡出
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { AnimatePresence, motion, useIsPresent, useReducedMotion } from "motion/react";
@@ -33,7 +33,7 @@ function CollapseBody({ children, className, onMotionStart, onMotionEnd, onMotio
     initial={keptOpen !== undefined || reduced ? false : { height: 0, opacity: 0 }}
     animate={present ? { height: "auto", opacity: 1 } : { height: 0, opacity: 0 }}
     exit={{ height: 0, opacity: 0 }}
-    transition={reduced ? { height: { duration: 0 }, opacity: reducedFadeTransition } : { height: heightTransition, opacity: fadeTransition }}
+    transition={reduced ? { height: { duration: 0 }, opacity: reducedFadeTransition } : { height: heightTransition, opacity: present ? fadeTransition : microExitTransition }}
     onAnimationStart={onMotionStart}
     onAnimationComplete={onMotionEnd}
     onUpdate={onMotionProgress}

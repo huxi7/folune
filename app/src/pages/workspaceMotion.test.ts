@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun test、workspaceMotion 语义 token、Canvas/Workspace/Dialog/Cord reduced-motion CSS 与 Paper/Canvas 路由协调器源码
- * [OUTPUT]: 锁定标准时长/spring/stagger、纸面零过冲、纸壳等比取景与正文永不缩放、交接严格互补、四方向世界先落定、当前曲线不变、两条跨路由纸面通道不丢失、入口 bootstrap 在单次 Canvas 挂载内不漂移、只有纸与纸内正文拥有过渡身份、85%无模糊遮罩随root同步、画布会话只认登录用户与画布，并证明 Reduced Motion 取消空间位移与路径绘制
+ * [OUTPUT]: 锁定分场景节奏、模态缓起步且无弹簧长尾、纸面原300/240ms零过冲、正文不缩放、交接互补及路由/会话身份；Reduced Motion取消空间位移与路径绘制
  * [POS]: pages 的统一 Motion Language 回归门禁；防止组件重新发明时长、给遮罩单独命名而盖住正在放大的纸、把正文当图片拉伸，或以缩短原空间 keyframe 冒充 reduced-motion
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -16,6 +16,7 @@ import {
   staggerMaxMs,
   staggerStepMs,
 } from "./workspaceMotion";
+import { contentEntranceVariants, surfaceVariants, motionEase, motionScale, surfaceMotionCatalog, panelEnterTransition } from "../shared/design-system/motion";
 
 const stylesDir = join(import.meta.dir, "../styles");
 const canvasCss = readFileSync(join(stylesDir, "knowledge-canvas.css"), "utf8");
@@ -48,6 +49,8 @@ describe("Workspace Motion Language", () => {
     expect(motionDuration).toMatchObject({
       microEnter: 0.16,
       microExit: 0.13,
+      menuEnter: 0.15,
+      menuExit: 0.15,
       panelEnter: 0.22,
       panelExit: 0.17,
       press: 0.09,
@@ -60,6 +63,35 @@ describe("Workspace Motion Language", () => {
     expect(reducedFadeTransition.duration).toBe(0.09);
     expect(staggerStepMs).toBe(32);
     expect(staggerMaxMs).toBe(128);
+  });
+  test("交互表面按确定时长完成，输入表面不等错峰", () => {
+    const modal = surfaceVariants("modal", false);
+    expect(modal.visible).toMatchObject({ transition: { type: "tween", duration: motionDuration.modalEnter } });
+    expect(modal.exit).toMatchObject({ transition: { type: "tween", duration: motionDuration.modalExit } });
+    expect(JSON.stringify(modal)).not.toContain("spring");
+    expect(modal.hidden).toMatchObject({ opacity: 0, scale: 0.9, y: 0 });
+    expect(modal.visible).toMatchObject({ transition: { duration: 0.15, ease: [0.4, 0, 0.2, 1] } });
+    expect(surfaceVariants("popover", false, "top").hidden).toEqual(surfaceVariants("popover", false, "bottom").hidden);
+    expect(surfaceVariants("popover", false).hidden).toMatchObject({ opacity: 0, scale: 0.95, y: 8 });
+    expect(surfaceVariants("submenu", false).hidden).toEqual({ opacity: 0, x: -10 });
+    expect(panelEnterTransition).toMatchObject({ duration: 0.22, ease: motionEase.enter });
+    expect(surfaceMotionCatalog.find((entry) => entry.kind === "modal")).toMatchObject({ enter: motionDuration.modalEnter, scale: motionScale.modal });
+    expect(JSON.stringify(contentEntranceVariants(false))).not.toContain("delay");
+    for (const kind of ["modal", "popover", "panel-left", "panel-right"] as const) {
+      const reduced = surfaceVariants(kind, true);
+      expect(reduced.hidden).toEqual({ opacity: 0 });
+      expect(reduced.visible).toMatchObject({ opacity: 1, transition: { duration: 0.09 } });
+    }
+  });
+  test("左右侧栏只从各自外侧淡入，全程固定尺寸且不借用菜单缩放", () => {
+    for (const [kind, x] of [["panel-left", -8], ["panel-right", 8]] as const) {
+      const panel = surfaceVariants(kind, false);
+      expect(panel.hidden).toEqual({ opacity: 0, scale: 1, x });
+      expect(panel.visible).toMatchObject({ opacity: 1, scale: 1, x: 0, transition: { duration: 0.22, ease: motionEase.enter } });
+      expect(panel.exit).toMatchObject({ opacity: 0, scale: 1, x, transition: { duration: 0.17, ease: motionEase.exit } });
+      expect(surfaceVariants(kind, true).hidden).toEqual({ opacity: 0 });
+    }
+    expect(surfaceMotionCatalog.find((entry) => entry.kind === "panel-right")).toMatchObject({ scale: 1, enter: 0.22, exit: 0.17 });
   });
   /*
    * 卡片 ↔ 预览、预览 ↔ 写作区、写作区 ↔ 画布全部交给浏览器的视图过渡: 截图、变形与
@@ -152,11 +184,12 @@ describe("Workspace Motion Language", () => {
       .toBeLessThanOrEqual(72);
     expect(vtCss).toContain("--paper-world-old: canvas-world-old-immediate;");
   });
-  test("保留当前纸面曲线, 两条跨路由纸面通道都由路由自己接管", () => {
-    // 这是用户已经确认过的当前效果: 本次只恢复路径, 不把曲线换回上一版。
+  test("纸面恢复原时长与完整曲线，两条跨路由通道仍由路由接管", () => {
+    // 纸面独立于菜单/模态调速，保留原来的加减速与正文取景关系。
     expect(vtCss).toContain(
       "--paper-morph-ease: cubic-bezier(0.4, 0, 0.2, 1);",
     );
+    expect(vtCss).toContain('html {\n  --paper-morph: 300ms;');
     expect(vtCss).toContain('html[data-paper-transition="collapse"] {\n    --paper-morph: 240ms;');
 
     // 预览 → 编辑区: navigate 自己创建跨路由 View Transition。

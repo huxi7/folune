@@ -3,7 +3,7 @@
 
 成员清单
 PanelMotionSpecimen.tsx: 复用生产单一顶栏、左侧目录承接与输入浮现规则的无网络示例；可重复切换历史、创建新上下文并验证草稿保留
-MotionSpecimen.tsx: 可重复交互的生产 Motion 样板，涵盖命令/Select/账户菜单/嵌套 Dialog/Tree/Panel/视图保留与 Card；仅用 fixture 本地状态，复用到 /motion-lab
+MotionSpecimen.tsx: 从surfaceMotionCatalog生成紧凑菜单/菜单/子菜单/工作区侧栏/模态的时长、曲线、幅度与用途表，侧栏明确展示进/退两条原曲线、scale1和外侧方向；所有交互使用真实生产组件，左右面板直接复用WorkspacePanelLayer；仅fixture本地状态，不复制展示专用参数；同时用于/motion-lab和DS Motion区
 .gitkeep: 保留 Design System 工作区目录
 CLAUDE.md: 记录开发态 Design System 工作区职责与文档协议
 index.tsx: DesignSystemWorkspace 入口，以真实 ThemeProvider/SegmentedControl 切换 system/light/dark，再按五层信息架构陈列生产 Foundations、组件和 Signature Patterns；并独占导入 styles/design-system-workspace.css，使陈列样式随本入口一起 DEV 懒加载而不进生产 CSS

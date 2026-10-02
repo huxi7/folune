@@ -1,14 +1,14 @@
 /**
  * [INPUT]: 标题字重消费 section 文字角色； 依赖 Motion presence、Portal、useModalLifecycle 与 React id/ref，依赖 共享 Lucide XIcon，依赖 Button 与 design-system.css 暴露的 ds-dialog-overlay/ds-dialog-panel/ds-dialog-shell 模态材质类
  * [OUTPUT]: 对外提供密度/宽度/对齐/表面/标题/可本地化关闭标签、default|none 入退场模式、标题描述关联、Esc、焦点循环、滚动锁定的 Dialog
- * [POS]: app/src/shared/design-system/components 的唯一模态基础件；motion=none 交出入场编排让遮罩随 root 视图过渡一起换（遮罩绝不自带过渡身份，否则会盖住正在放大的纸），模态行为仍由此统一
+ * [POS]: 唯一模态基础件；按Laper设置弹窗复现父层/遮罩/本体150ms同拍渐入，内部150ms退场；motion=none把纸面交给root，焦点/滚动锁沿用同一生命周期
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { XIcon } from "../icons";
 import { useId, useRef, useSyncExternalStore, type ReactNode } from "react";
 import { AnimatePresence, motion as m, useIsPresent, useReducedMotion } from "motion/react";
 import { createPortal } from "react-dom";
-import { surfaceVariants } from "../motion";
+import { modalBackdropVariants, surfaceVariants } from "../motion";
 import { useModalLifecycle } from "../useModalLifecycle";
 
 import { Button } from "./Button";
@@ -85,14 +85,17 @@ function DialogFrame({
       data-motion={motion}
       data-surface={surface}
       role={present ? "dialog" : undefined}
-      initial={motion === "none" ? false : "hidden"}
+      initial={motion === "none" || reduced ? false : "hidden"}
       animate="visible"
-      exit={motion === "none" ? undefined : "exit"}
-      variants={motion === "none" ? undefined : surfaceVariants("fade", reduced)}
+      variants={motion === "none" || reduced ? undefined : modalBackdropVariants(false)}
     >
-      <button
+      <m.button
         aria-hidden="true"
-        className="absolute inset-0 cursor-default"
+        className="ds-dialog-backdrop absolute inset-0 cursor-default"
+        initial={motion === "none" ? false : "hidden"}
+        animate="visible"
+        exit={motion === "none" ? undefined : "exit"}
+        variants={motion === "none" ? undefined : modalBackdropVariants(reduced)}
         onClick={() => onOpenChange(false)}
         tabIndex={-1}
         type="button"

@@ -4,8 +4,8 @@
 成员清单
 AccountSubscribeButton.tsx: 账户专用28px流光CTA，组合既有GlowButton/ShaderGlow，12px文案、24px曲率及独立白亮边缘参数归user-menu.css；不影响普通按钮或其他CTA
 motionLifecycle.test.tsx: 验证父面板退出不连带折叠常驻详情； 真实 DOM 行为门禁，覆盖菜单快速反向开关、退出交互隔离、input 实例/光标保留、菜单/模态分层 Escape 与嵌套滚动锁；动画完成时间另由浏览器测量
-Collapse.tsx: 常驻详情同样使用独立且不传播父退出的 presence 边界，防止 Panel 退出使内部高度归零； Tree/披露控件的高度生命周期原语，默认 210ms tree 或 160/130ms micro 同源曲线、逐帧回调支持滚动对齐、可打断、退出立即 inert；keepMounted 保留工具详情状态，减少动态效果即时改变高度
-PresenceSurface.tsx: Menu/Popover/Panel 共用的无额外定位包装入退场基础件；关闭即 inert、完成后卸载，MotionSurface 支持外层 presence，定位和焦点策略留给语义组件
+Collapse.tsx: 常驻详情同样使用独立且不传播父退出的 presence 边界，防止 Panel 退出使内部高度归零； Tree/披露控件的高度生命周期原语，默认 210ms tree 或 160/130ms micro 同源曲线，透明度与高度使用相同进退方向、逐帧回调支持滚动对齐、可打断、退出立即 inert；keepMounted 保留工具详情状态，减少动态效果即时改变高度
+PresenceSurface.tsx: 支持compact-menu仅调时长档；菜单固定向下8px/中心缩放、submenu固定横移-10px；侧栏使用原220/170ms外侧平移且不缩放；Menu/Popover/Panel共用无额外定位包装的生命周期基础件；关闭即 inert、完成后卸载，MotionSurface 支持外层 presence，定位和焦点策略留给语义组件
 PersistentView.tsx: 保留实例的视图基础件；motion=from-left 选择从左侧进入的 24px 承接，fill 以四边定位维持 Panel 退出高度，默认仍为轻淡换；旧视图立即脱离布局并 inert、淡出完成 hidden，切回复用原实例和草稿，父容器提供相对定位
 .gitkeep: 保留本地组件目录
 CLAUDE.md: 记录本地组件目录职责与文档协议
@@ -26,7 +26,7 @@ WarmTooltip.css: 提示定位层/表面分层与主题 token 接线，Portal 低
 WarmTooltip.LICENSE.md: React Bits WarmTooltip 的原始版权与 MIT + Commons Clause 许可
 KeyboardShortcut.tsx: 共享快捷键表现层，把组合键拆成真实键帽；Mac 使用 Command/Delete 符号，其他平台使用 Ctrl/Backspace，只呈现不绑定行为
 KeyboardShortcut.css: 22px 紧凑键帽、浅边框与底部细阴影，提示和帮助面板共用浅暗色语义
-Dialog.tsx: panel/bare共享85%页面底色的无模糊遮罩，几何与交互不因材质变化而分支； 全站唯一模态基础件，closeLabel 由消费方传入本地化文案而不依赖语言Provider；Portal 脱离祖先 transform、--layer-dialog 置于归档线/侧栏之上，独立 AnimatePresence 负责完整入退场；空嵌套 Dialog 不注册父退出以免悬挂，语义/焦点/滚动锁归 useModalLifecycle。默认 10px/0.985 浮现，motion=none 将纸面与遮罩完全交给原生 View Transition，遮罩永不命名
+Dialog.tsx: panel/bare共享85%页面底色的无模糊遮罩，几何与交互不因材质变化而分支； 全站唯一模态基础件，closeLabel 由消费方传入本地化文案而不依赖语言Provider；Portal 脱离祖先 transform、--layer-dialog 置于归档线/侧栏之上，独立 AnimatePresence 负责完整入退场；空嵌套 Dialog 不注册父退出以免悬挂，语义/焦点/滚动锁归 useModalLifecycle。默认150/150ms standard Tween、.9中心缩放，父层/遮罩/面板同拍进入，内部两层退出；复现Laper设置模态的透明度叠加，motion=none 将纸面与遮罩完全交给原生 View Transition，遮罩永不命名
 AssistantMessage.tsx: AI 消息正文根，不绘制“助手”等可见身份标题，以零卡片表面依次组合可选过程槽、独立 StreamingText 最终正文与兼容 children 工具区；向纯文本/Markdown 渲染器透传统一词级动效状态，不拥有过程分区或折叠状态
 StreamingText.tsx: 首个真实 text part 后把 SSE 目标文本在同次上游更新中完整直出，不设置逐词显示队列、全文时间轴、冗余 performance 时钟或 useLayoutEffect 状态；历史正文保持原生文本，只有尾部最多 5 个词使用常数动画节点
 streamingTextSegments.ts: 语言无关的流式分词纯函数，以 Intl.Segmenter 同时支持英文单词和中文语义词组，并把标点、空白及 Markdown 标记完整归入相邻显示单元
@@ -45,7 +45,7 @@ useToastCountdown.ts: 动作回执唯一计时，Toast 整条底边的剩余长�
 Toast.test.tsx: 验证更新双动作/常驻无倒计时/稍后不触发安装，区分底层非模态 dialog 与真正模态弹窗； 真实 Provider 的重复入栈/三条上限/悬停展开收回/独立撤销与可控帧时钟门禁，验证暂停续走、隐藏保留与到期关闭
 Select.tsx: combobox/listbox 选择器，键盘焦点保留在 trigger、option 不增加 Tab 停靠点；上/下浮层共用 PresenceSurface 的锚点入退场，选择与关闭语义仍在本组件
 UserButton.tsx: 身份原子组件；UserAvatar 显示真实照片或前两个字符，UserButton 用姓名/方案名/单向展开箭头表达账户入口，排版由 user-menu.css 统一，不读持久化状态或发起业务请求
-UserMenu.tsx: 底卡只呈现积分/订阅与账户身份两层；身份头整体hover，订阅复用28px流光；主菜单以身份按钮为锚点左移8px、间隔8px向上展开，固定256px且允许越过侧栏，仅窄视口缩宽；ResizeObserver跟随按钮和内容尺寸；1px贴边/36px行子菜单，子菜单末行中心对齐触发行中心，其余项向上排列、由邻近下角向上展开并避让视口；语言配国旗，当前项随props显示浅灰；Portal命中边界、悬停缓冲、键盘/触屏与刷新命令维持同源
+UserMenu.tsx: 底卡只呈现积分/订阅与账户身份两层；身份头整体hover，订阅复用28px流光；主菜单以身份按钮为锚点左移8px、间隔8px向上展开，固定256px且允许越过侧栏，仅窄视口缩宽；ResizeObserver跟随按钮和内容尺寸；1px贴边/36px行子菜单，子菜单末行中心对齐触发行中心，其余项向上排列、固定横移-10px且不缩放，定位避让视口；语言配国旗，当前项随props显示浅灰；Portal命中边界、悬停缓冲、键盘/触屏与刷新命令维持同源
 UserMenu.test.tsx: 验证主菜单身份按钮锚点/左移8px/8px间距、侧栏缩放时固定256px/观察释放与窄屏避让；真实ThemeProvider验证三种主题当前项随点击更新、两种语言国旗、两种高度的1px子菜单避让、末行与触发行对齐及向上排列；保留刷新/悬停/键盘/触屏/外点/焦点回归，主题存储在测试后恢复
 index.ts: 基础组件稳定出口，包含 WarmTooltip/KeyboardShortcut、PresenceSurface/MotionSurface、PersistentView、Collapse 与 CardMotion；业务界面组合生产原语，不建立第二套动画
 

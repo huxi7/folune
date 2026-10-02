@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖PresenceSurface、WarmTooltip、React弹层/焦点状态、locale双语文案、共享图标/Button/Toast与Markdown视图/文件协议
+ * [INPUT]: 依赖PresenceSurface紧凑菜单120/100ms配方、WarmTooltip、React弹层/焦点状态、locale双语文案、共享图标/Button/Toast与Markdown视图/文件协议
  * [OUTPUT]: 编辑/阅读与更多入口共享Canvas同款提示；更多展开时提示退场，保留菜单焦点语义、原文复制及.md下载
  * [POS]: app/src/widgets 的编辑视图命令边界；只操作本地显示状态和原始正文副本，不拼接 title、不触发保存或改造业务数据流
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -188,7 +188,7 @@ export function MarkdownViewMenu({
         />
         </WarmTooltip>
 
-      <PresenceSurface open={open}
+      <PresenceSurface open={open} kind="compact-menu"
             aria-label={t("Markdown 视图与文件操作", "Markdown view and file actions")}
             className="note-more-menu"
             id={menuId}
