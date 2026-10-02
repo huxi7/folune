@@ -1,0 +1,134 @@
+/**
+ * [INPUT]: 使用已提取的 Laper 订阅 DOM/CSS 几何与叠层，消费 Folune 语义颜色/曲率/动效和 Button/GlowButton
+ * [OUTPUT]: 三张 300px 付费卡、玻璃铭牌、普通/流光按钮、年付开关、暖琥珀折扣标记、账户积分条与结算样式
+ * [POS]: styles 的订阅专属层；原四栏收为 932px 三栏，颜色归 Folune，字体/间距/阴影按浏览器代码还原
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+@layer components {
+  .folune-subscription {
+    --subscription-width: 58.25rem;
+    --subscription-typewriter: 'Courier New', Courier, 'Songti SC', 'STSong', 'Noto Serif SC', SimSun, serif;
+    position: fixed; z-index: 95; inset: 0; isolation: isolate; overflow-y: auto; overflow-x: hidden;
+    background: var(--background); color: var(--foreground); scrollbar-width: none;
+  }
+  .folune-subscription::-webkit-scrollbar { display: none; }
+  .folune-subscription-ambient {
+    position: fixed; z-index: -1; inset: 0; pointer-events: none;
+    background: radial-gradient(ellipse at 14% 45%, color-mix(in srgb, var(--primary) 8%, transparent) 0% 12%, transparent 30%), radial-gradient(ellipse at 46% 18%, color-mix(in srgb, var(--primary) 7%, transparent) 0% 14%, transparent 33%), radial-gradient(ellipse at 78% 40%, color-mix(in srgb, var(--primary) 7%, transparent) 0% 14%, transparent 32%);
+  }
+  .folune-subscription-ambient::before { position: absolute; inset: 0; opacity: 0.55; background-image: radial-gradient(color-mix(in srgb, var(--muted-foreground) 20%, transparent) 1px, transparent 1px); background-size: 7px 7px; content: ''; }
+  .folune-subscription-ambient::after { position: absolute; inset: 0; background: linear-gradient(90deg, var(--background) 0%, transparent 20%, transparent 80%, var(--background) 100%); content: ''; }
+  .folune-subscription .folune-subscription-close { position: fixed; z-index: 20; top: 24px; right: 24px; width: 40px; height: 40px; min-width: 40px; padding: 0; border: 1px solid var(--border); border-radius: var(--radius-pill); corner-shape: round; background: color-mix(in srgb, var(--background) 80%, transparent); box-shadow: none; }
+  .folune-subscription-close svg { width: 16px; height: 16px; }
+  .folune-subscription .folune-subscription-close:hover { background: var(--surface-neutral); }
+  .folune-subscription-inner { display: flex; min-height: 100%; flex-direction: column; align-items: center; justify-content: center; gap: 24px; padding: 48px 24px; }
+  .folune-subscription-heading { max-width: 100%; text-align: center; }
+  .folune-subscription-heading h1 { margin: 0 0 6px; font-family: var(--subscription-typewriter); font-size: 28px; font-weight: 300; letter-spacing: -0.025em; line-height: 1.333333; text-wrap: balance; }
+  .folune-subscription-heading h1:focus { outline: none; }
+  .folune-subscription-description { margin: 0; color: var(--muted-foreground); font-family: var(--subscription-typewriter); font-size: 12px; font-weight: 300; letter-spacing: -0.025em; line-height: 1.428571; }
+  .folune-subscription-cycle { display: inline-flex; align-items: center; gap: 10px; color: var(--muted-foreground); font-size: 12px; line-height: 18px; }
+  .folune-subscription-cycle label { cursor: pointer; }
+  .folune-subscription-switch { position: relative; display: inline-flex; width: 36px; height: 18px; flex-shrink: 0; align-items: center; padding: 0; border: 0; border-radius: var(--radius-compact); corner-shape: var(--corner-shape-smooth); background: var(--border); cursor: pointer; transition: background var(--motion-fast) var(--ease-standard); }
+  .folune-subscription-switch > span { position: absolute; inset: 0 auto 0 0; width: 18px; border-radius: inherit; corner-shape: inherit; background: var(--card); box-shadow: 0 0 1px 0.5px color-mix(in srgb, var(--shadow-color) 12%, transparent), 0 1px 2px color-mix(in srgb, var(--shadow-color) 8%, transparent); transition: transform var(--motion-fast) var(--ease-standard); }
+  .folune-subscription-switch[aria-checked='true'] { background: var(--primary); }
+  .folune-subscription-switch[aria-checked='true'] > span { transform: translateX(18px); }
+  .folune-subscription-switch:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
+  .folune-subscription-switch:disabled { cursor: not-allowed; opacity: 0.5; }
+  .folune-subscription-grid { display: grid; width: 100%; max-width: var(--subscription-width); grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: stretch; gap: 16px; margin: 8px auto 0; }
+  .folune-subscription-plan { position: relative; display: flex; min-width: 0; min-height: 540px; flex-direction: column; overflow: hidden; padding: 24px 16px 16px; border: 1px solid color-mix(in srgb, var(--border) 60%, transparent); border-radius: 32px; corner-shape: var(--corner-shape-smooth); backdrop-filter: blur(24px); background: linear-gradient(180deg, color-mix(in srgb, var(--foreground) 4%, transparent) 0%, transparent 30%), var(--card); box-shadow: 0 2px 4px color-mix(in srgb, var(--shadow-color) 5%, transparent), 0 4px 6px -1px color-mix(in srgb, var(--shadow-color) 5%, transparent), inset 0 1px 0 rgb(255 255 255 / 8%), inset 0 -1px 0 rgb(0 0 0 / 4%); }
+  .folune-subscription-plan[data-recommended='true'] { border-color: color-mix(in srgb, var(--primary) 25%, transparent); background: linear-gradient(180deg, color-mix(in srgb, var(--primary) 8%, transparent), transparent 35%), radial-gradient(140% 90% at 100% 0%, color-mix(in srgb, var(--primary) 18%, transparent), color-mix(in srgb, var(--primary) 5%, transparent) 45%, var(--card)); box-shadow: 0 2px 4px color-mix(in srgb, var(--shadow-color) 5%, transparent), 0 4px 6px -1px color-mix(in srgb, var(--shadow-color) 5%, transparent), inset 0 1px 0 color-mix(in srgb, var(--primary) 28%, transparent), inset 0 -1px 0 rgb(0 0 0 / 4%); }
+  .folune-subscription-plan-content { position: relative; z-index: 1; display: flex; flex: 1; flex-direction: column; }
+  .folune-subscription-plan-topline { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+  .folune-subscription-plan-badge { flex-shrink: 0; border: 1px solid color-mix(in srgb, var(--border) 45%, transparent); border-radius: var(--radius-pill); corner-shape: round; background: var(--card); padding: 4px 7px; color: var(--foreground); font-size: 10px; line-height: 14px; box-shadow: var(--shadow-xs); }
+  /* ---- 原 DOM 的底片 / 清晰文字 / 模糊文字；两张互补遮罩保留真实玻璃铭牌 ---- */
+  .folune-subscription-tier { min-width: 0; flex: 1; margin: 0; color: var(--foreground); font-family: var(--subscription-typewriter); line-height: 1; }
+  .folune-subscription-tier-brand { display: block; font-size: 20px; font-weight: 500; letter-spacing: -0.025em; }
+  .folune-subscription-tier-word { position: relative; display: inline-block; margin-top: 8px; transform: rotate(-0.75deg); font-size: 28px; font-weight: 600; letter-spacing: -0.04em; white-space: nowrap; }
+  .folune-subscription-tier-chip { position: absolute; z-index: 0; inset: -4.8px -8.8px; border: 1px solid color-mix(in srgb, var(--shadow-color) 6%, transparent); border-top-color: color-mix(in srgb, var(--card) 72%, transparent); border-radius: var(--radius-control); corner-shape: var(--corner-shape-smooth); background: linear-gradient(color-mix(in srgb, var(--card) 38%, transparent), color-mix(in srgb, var(--card) 10%, transparent) 58%, color-mix(in srgb, var(--card) 20%, transparent)); box-shadow: inset 0 1px color-mix(in srgb, var(--card) 50%, transparent), inset 0 -1px 1px color-mix(in srgb, var(--shadow-color) 5%, transparent), 0 3px 10px color-mix(in srgb, var(--shadow-color) 7%, transparent); }
+  .folune-subscription-tier-sharp, .folune-subscription-tier-blurred { position: relative; z-index: 1; }
+  .folune-subscription-tier-sharp { display: inline-block; mask-image: linear-gradient(black 0%, black 42%, transparent 100%); }
+  .folune-subscription-tier-blurred { position: absolute; inset: 0; filter: blur(2px); mask-image: linear-gradient(transparent 0%, black 58%, black 100%); }
+  .folune-subscription-plan-description { margin: 0 0 16px; color: color-mix(in srgb, var(--muted-foreground) 84%, transparent); font-size: 12px; line-height: 1.625; }
+  .folune-subscription-price-block { margin-bottom: 16px; }
+  .folune-subscription-price { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 4px; margin: 0; }
+  .folune-subscription-price > strong { color: var(--foreground); font-family: var(--subscription-typewriter); font-size: 30px; font-weight: 700; letter-spacing: -0.025em; line-height: 1; font-variant-numeric: tabular-nums; }
+  .folune-subscription-price > span { padding-bottom: 2px; color: var(--muted-foreground); font-size: 12px; font-weight: 500; line-height: 1.428571; }
+  .folune-subscription-price-note { height: 16px; margin: 6px 0 0; color: var(--muted-foreground); font-size: 11px; line-height: 16px; font-variant-numeric: tabular-nums; }
+  /* ---- 折扣使用 DS 暖琥珀色，独立不透明底色避免融入 Pro 的墨蓝卡片 ---- */
+  .folune-subscription-price .folune-subscription-saving { margin-bottom: 2px; padding: 2px 6px; border: 1px solid color-mix(in srgb, var(--warning) 20%, var(--border)); border-bottom: 2px solid color-mix(in srgb, var(--warning) 34%, var(--border)); border-radius: var(--radius-compact); corner-shape: var(--corner-shape-smooth); background: linear-gradient(180deg, color-mix(in srgb, var(--warning-soft) 65%, var(--card)), var(--warning-soft)); color: var(--warning-foreground); font-size: 9px; font-weight: 600; line-height: 12px; }
+  .folune-subscription-features { display: flex; flex: 1; flex-direction: column; gap: 10px; margin: 0; padding: 0; list-style: none; }
+  .folune-subscription-features li { display: flex; align-items: flex-start; gap: 8px; color: color-mix(in srgb, var(--muted-foreground) 84%, transparent); font-size: 13px; line-height: 1.625; }
+  .folune-subscription-features li svg { flex-shrink: 0; margin-top: 3px; color: var(--foreground); }
+  .folune-subscription-features strong { font-weight: 600; }
+  .folune-subscription-plan-action { margin-top: 20px; }
+  .folune-subscription .folune-subscription-plan-button { --glow-button-height: 32px; --button-font-size: 13px; width: 100%; height: 32px; min-height: 32px; padding: 0 16px; border-radius: var(--radius-panel); corner-shape: var(--corner-shape-smooth); font-size: 13px; font-weight: 500; line-height: 19.5px; }
+  /* ---- Starter 按下保留正常外影，取消凹陷内影；缩放与其余按钮共用 DS ---- */
+  .folune-subscription-plan[data-plan-id='starter'] .folune-subscription-plan-button { --button-state-shadow-pressed: var(--button-state-shadow); }
+  .folune-subscription-account-scroll { width: 100%; max-width: var(--subscription-width); overflow-x: auto; scrollbar-width: none; }
+  .folune-subscription-account { display: flex; width: max-content; min-height: 28px; align-items: center; justify-content: center; gap: 12px; margin-inline: auto; padding: 0 4px; color: var(--muted-foreground); font-size: 11px; line-height: 16px; white-space: nowrap; }
+  .folune-subscription-account strong { color: var(--foreground); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .folune-subscription-account .folune-subscription-account-name { font-weight: 500; }
+  .folune-subscription-account-divider { width: 1px; height: 12px; flex-shrink: 0; background: var(--border); }
+  .folune-subscription-balance { display: flex; align-items: center; gap: 6px; }
+  .folune-subscription-balance > svg { color: var(--primary); filter: drop-shadow(0 2px 4px color-mix(in srgb, var(--primary) 25%, transparent)); }
+  .folune-subscription-balance > strong { font-size: 12px; }
+  .folune-subscription .folune-subscription-buy-credits { height: 28px; min-height: 28px; padding: 0 8px; border: 0; background: transparent; box-shadow: none; font-size: 11px; font-weight: 500; }
+  .folune-subscription-buy-credits svg { width: 13px; height: 13px; }
+  .folune-subscription-help { display: flex; align-items: baseline; justify-content: center; flex-wrap: wrap; gap: 12px; margin-top: 8px; color: var(--muted-foreground); font-size: 12px; line-height: 1.428571; }
+  .folune-subscription-help p { margin: 0; }
+  .folune-subscription-help a { color: inherit; text-underline-offset: 4px; }
+  .folune-subscription-credit-rules { max-width: 36rem; }
+  .folune-subscription-credit-rules summary { cursor: pointer; list-style: none; text-align: center; text-decoration: underline; text-underline-offset: 4px; }
+  .folune-subscription-credit-rules summary::-webkit-details-marker { display: none; }
+  .folune-subscription-credit-rules[open] { flex-basis: 100%; }
+  .folune-subscription-credit-rules-content { display: grid; gap: 8px; margin-top: 16px; padding: 16px; border: 1px solid var(--border); border-radius: var(--radius-panel); corner-shape: var(--corner-shape-smooth); background: var(--card); line-height: 1.7; }
+  .folune-subscription-legal { display: grid; width: 100%; max-width: 48rem; gap: 8px; margin-top: 24px; padding-top: 24px; border-top: 1px solid color-mix(in srgb, var(--border) 40%, transparent); color: color-mix(in srgb, var(--muted-foreground) 55%, transparent); font-size: 11px; line-height: 1.625; }
+  .folune-subscription-legal > div { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 12px; }
+  .folune-subscription-legal a { color: inherit; text-decoration: none; text-underline-offset: 2px; }
+  .folune-subscription-legal a:hover { color: var(--foreground); text-decoration: underline; }
+  .folune-subscription-error { display: flex; width: 100%; max-width: var(--subscription-width); align-items: center; gap: 12px; padding: 12px 16px; border: 1px solid var(--border); border-radius: var(--radius-control); corner-shape: var(--corner-shape-smooth); background: var(--card); color: var(--muted-foreground); font-size: 12px; }
+  .folune-subscription-error > span { flex: 1; }
+  .folune-subscription-error > svg { flex-shrink: 0; }
+  .folune-subscription-empty { padding: 64px 16px; text-align: center; }
+  .folune-subscription-plan-loading .ds-skeleton { display: block; }
+  .folune-subscription-skeleton-brand { width: 4rem; height: 20px; }
+  .folune-subscription-skeleton-name { width: 7rem; height: 28px; margin-top: 8px; }
+  .folune-subscription-skeleton-description { width: 80%; height: 16px; margin-top: 16px; }
+  .folune-subscription-skeleton-price { width: 6rem; height: 30px; margin-top: 16px; }
+  .folune-subscription-plan-loading .folune-subscription-features { margin-top: 24px; }
+  .folune-subscription-plan-loading .folune-subscription-features > .ds-skeleton { width: 84%; height: 16px; }
+  .folune-subscription-skeleton-button { width: 100%; height: 32px; margin-top: 20px; }
+  /* ---- 结算摘要与真正执行支付的动作分开，状态由 API 决定 ---- */
+  .folune-subscription-checkout { display: flex; flex-direction: column; gap: var(--space-5); margin-top: var(--space-5); }
+  .folune-subscription-checkout-summary { overflow: hidden; border: 1px solid var(--border); border-radius: var(--radius-panel); corner-shape: var(--corner-shape-smooth); background: var(--surface-neutral); }
+  .folune-subscription-checkout-plan { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); padding: var(--space-5); }
+  .folune-subscription-checkout-plan h3 { font-family: var(--font-serif); font-size: var(--type-heading); font-weight: var(--weight-heading); }
+  .folune-subscription-checkout-plan p { margin-top: var(--space-1); color: var(--muted-foreground); font-size: var(--type-label); }
+  .folune-subscription-checkout-plan svg { color: var(--muted-foreground); }
+  .folune-subscription-checkout-total { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); border-top: 1px solid var(--border); background: var(--card); padding: var(--space-4) var(--space-5); font-size: var(--type-label); }
+  .folune-subscription-checkout-total strong { font-size: 1.5rem; font-weight: var(--weight-emphasis, 700); font-variant-numeric: tabular-nums; }
+  .folune-subscription-checkout-status { display: flex; align-items: flex-start; gap: var(--space-3); border-radius: var(--radius-control); corner-shape: var(--corner-shape-smooth); background: var(--surface-neutral); padding: var(--space-4); }
+  .folune-subscription-checkout-status > svg { flex-shrink: 0; margin-top: var(--space-1); color: var(--muted-foreground); }
+  .folune-subscription-checkout-status strong { display: block; font-size: var(--type-ui); font-weight: var(--weight-label); line-height: var(--leading-input); }
+  .folune-subscription-checkout-status p { margin-top: var(--space-1); color: var(--muted-foreground); font-size: var(--type-label); line-height: var(--leading-input); }
+  .folune-subscription-checkout-disclaimer { color: var(--muted-foreground); font-size: var(--type-label); line-height: var(--leading-input); }
+  .folune-subscription-checkout-actions { display: flex; justify-content: flex-end; gap: var(--space-2); }
+  .folune-subscription-checkout-actions .glow-button { --glow-button-height: var(--control-height-default); }
+
+  @media (max-width: 767px) {
+    .folune-subscription-inner { padding: 72px 20px 40px; }
+    .folune-subscription-heading h1 { font-size: 24px; }
+    .folune-subscription-grid { max-width: 24rem; grid-template-columns: 1fr; }
+    .folune-subscription-plan { min-height: 540px; }
+    .folune-subscription .folune-subscription-close { top: 16px; right: 16px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .folune-subscription-switch, .folune-subscription-switch > span { transition: none; }
+  }
+  @media (forced-colors: active) {
+    .folune-subscription-ambient, .folune-subscription-tier-chip, .folune-subscription-tier-blurred { display: none; }
+    .folune-subscription-tier-sharp { mask-image: none; }
+    .folune-subscription-plan { border-color: CanvasText; }
+    .folune-subscription-plan[data-recommended='true'] { border: 2px solid Highlight; }
+  }
+}

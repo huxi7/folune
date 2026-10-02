@@ -1,10 +1,11 @@
 /**
- * [INPUT]: 依赖 @xyflow/react v12、同步首帧 Canvas bootstrap、纸面视图过渡、Canvas Chat/Coordinator/Store、瞬时 motion receipt、空间文字、增量布局与拖拽载荷；撤销回执时长由共享 Toast 默认策略拥有
+ * [INPUT]: 依赖 useLocale 的界面文案，用户笔记/关系文本与命令协议不翻译；依赖 @xyflow/react v12、同步首帧 Canvas bootstrap、纸面视图过渡、Canvas Chat/Coordinator/Store、瞬时 motion receipt、空间文字、增量布局与拖拽载荷；撤销回执时长由共享 Toast 默认策略拥有
  * [OUTPUT]: 对外提供始终挂载真实 React Flow 的 Canvas（删除只由产品确认流拥有、浮层键盘不穿透）：首帧过渡落点、稳定受控图、尺寸变化时不随节点拖动重建 observer 的响应式视口校准、拖/点等效直接连接、单一 Stage loading、Preview 纸面形变、删除退场与可靠保存
  * [POS]: KnowledgeCanvas 的会话内容根；图投影只随文档变化并由首帧/更新共用，避免拖拽和选择重算全图；连接手势只经 useCanvasConnectionSession 写意图，几何/选择/WAL 仍由原系统负责，hydration/rebase/save/rerender 不得重播 UI receipt
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
+import { useLocale } from "../../shared/locale";
 import {
   Background,
   BackgroundVariant,
@@ -122,9 +123,10 @@ const withPaperTransitionIdentity = (
 });
 
 function CanvasAiState() {
+  const { t } = useLocale();
   const aiLoading = useCanvasWorkspaceStore((state) => state.aiLoading);
   return aiLoading
-    ? <div className="canvas-ai-state">正在拓展这条知识分支…</div>
+    ? <div className="canvas-ai-state">{t("正在拓展这条知识分支…", "Exploring this branch…")}</div>
     : null;
 }
 
@@ -362,6 +364,7 @@ export function KnowledgeCanvas({
   restore = null,
   userId,
 }: KnowledgeCanvasProps) {
+  const { t } = useLocale();
   const { dismissToast, toast } = useToast();
   const sessionCanvasId = useCanvasWorkspaceStore((state) => state.canvasId);
   const document = useCanvasWorkspaceStore((state) => state.document);
@@ -630,12 +633,12 @@ export function KnowledgeCanvas({
     } catch (error) {
       toast({
         description: error instanceof Error ? error.message : undefined,
-        title: "本机恢复不可用",
+        title: t("本机恢复不可用", "Local recovery unavailable"),
         variant: "error",
       });
       throw error;
     }
-  }, [coordinatorRef, toast]);
+  }, [coordinatorRef, t, toast]);
 
   const enqueue = useCallback(
     async (intent: CanvasIntent) => { await enqueueMany([intent]); },
@@ -681,7 +684,7 @@ export function KnowledgeCanvas({
     let toastId = 0;
     toastId = toast({
       action: {
-        label: originRemoved ? "撤销普通节点" : "撤销",
+        label: originRemoved ? t("撤销普通节点", "Undo other items") : t("撤销", "Undo"),
         onClick: () => {
           if (undoing) return;
           undoing = true;
@@ -694,16 +697,16 @@ export function KnowledgeCanvas({
         },
       },
       description: originRemoved
-        ? "撤销只恢复普通节点及仍可恢复的关联；来源卡片与画布来源关系无法恢复。"
+        ? t("撤销只恢复普通节点及仍可恢复的关联；来源卡片与画布来源关系无法恢复。", "Undo restores other items and available connections. The source card and its canvas link cannot be restored.")
         : snapshot.edges.length === 0
           ? undefined
-          : `同时移除了 ${snapshot.edges.length} 条关联。`,
+          : t(`同时移除了 ${snapshot.edges.length} 条关联。`, `${snapshot.edges.length} connections were also removed.`),
       title: snapshot.nodes.length === 1
-        ? "已从 Canvas 移除"
-        : `已从 Canvas 移除 ${snapshot.nodes.length} 个节点`,
+        ? t("已从 Canvas 移除", "Removed from canvas")
+        : t(`已从 Canvas 移除 ${snapshot.nodes.length} 个节点`, `Removed ${snapshot.nodes.length} items from canvas`),
       variant: "info",
     });
-  }, [dismissToast, enqueueMany, toast]);
+  }, [dismissToast, enqueueMany, t, toast]);
 
   const commitNodeRemoval = useCallback(async (
     snapshot: CanvasRemovalSnapshot,
@@ -724,8 +727,8 @@ export function KnowledgeCanvas({
 
     if (snapshot.includesOrigin) {
       toast({
-        description: "原笔记完全不受影响；画布来源关系已永久解除。",
-        title: `「${snapshot.canvasTitle}」已转为独立画布`,
+        description: t("原笔记完全不受影响；画布来源关系已永久解除。", "Your original note is unchanged. Its link to this canvas was permanently removed."),
+        title: t(`「${snapshot.canvasTitle}」已转为独立画布`, `“${snapshot.canvasTitle}” is now a standalone canvas`),
         variant: "warning",
       });
       const ordinarySnapshot = restorableOrdinaryRemoval(snapshot);
@@ -736,16 +739,16 @@ export function KnowledgeCanvas({
     }
     if (snapshot.includesTombstone) {
       toast({
-        description: "原笔记已永久删除，这次清理无法撤销。",
+        description: t("原笔记已永久删除，这次清理无法撤销。", "The original note was permanently deleted. This cleanup cannot be undone."),
         title: snapshot.nodes.length === 1
-          ? "已清理失效卡片"
-          : `已移除 ${snapshot.nodes.length} 个节点`,
+          ? t("已清理失效卡片", "Unavailable card removed")
+          : t(`已移除 ${snapshot.nodes.length} 个节点`, `${snapshot.nodes.length} items removed`),
         variant: "info",
       });
       return;
     }
     showUndoReceipt(snapshot);
-  }, [enqueueMany, reduceMotion, selectOnly, showUndoReceipt, toast]);
+  }, [enqueueMany, reduceMotion, selectOnly, showUndoReceipt, t, toast]);
 
   const requestNodeRemoval = useCallback(async (nodeIds: readonly string[]) => {
     const current = latestDocumentRef.current;
@@ -781,7 +784,7 @@ export function KnowledgeCanvas({
     let toastId = 0;
     toastId = toast({
       action: {
-        label: "撤销",
+        label: t("撤销", "Undo"),
         onClick: () => {
           if (undoing) return;
           undoing = true;
@@ -801,10 +804,10 @@ export function KnowledgeCanvas({
             });
         },
       },
-      title: "已移除关系",
+      title: t("已移除关系", "Connection removed"),
       variant: "info",
     });
-  }, [dismissToast, enqueue, toast]);
+  }, [dismissToast, enqueue, t, toast]);
 
   const persistViewport = useCallback(() => {
     const viewport = instanceRef.current?.getViewport();
@@ -901,12 +904,12 @@ export function KnowledgeCanvas({
     const result = await coordinator.flush();
     if (!result.synced && result.persisted) {
       toast({
-        title: "尚未同步，将在重开后继续",
+        title: t("尚未同步，将在重开后继续", "Not synced yet. Sync will resume when reopened."),
         variant: "info",
       });
     }
     return result.persisted;
-  }, [coordinatorRef, toast]);
+  }, [coordinatorRef, t, toast]);
 
   /*
    * 离开画布进写作区也是同一张纸换了个位置: 写作区那张纸与卡片/预览共用同一个纸面名字。
@@ -1054,7 +1057,7 @@ export function KnowledgeCanvas({
     if (coordinator === null || useCanvasWorkspaceStore.getState().aiLoading) return;
     const flushed = await coordinator.flush();
     if (!flushed.synced) {
-      toast({ title: "请先恢复网络并保存当前修改", variant: "error" });
+      toast({ title: t("请先恢复网络并保存当前修改", "Reconnect and save your changes first"), variant: "error" });
       return;
     }
 
@@ -1066,7 +1069,7 @@ export function KnowledgeCanvas({
         sourceCanvasNodeId: sourceNodeId,
       });
       if (result.status === "up_to_date") {
-        toast({ title: "已是最新", variant: "info" });
+        toast({ title: t("已是最新", "Already up to date"), variant: "info" });
         return;
       }
 
@@ -1155,12 +1158,12 @@ export function KnowledgeCanvas({
       });
       ensureNodesInSafeViewport([sourceNodeId, ...receiptNodeIds]);
       if (result.candidates.length === 0) {
-        toast({ title: "没有发现新的直接关联", variant: "info" });
+        toast({ title: t("没有发现新的直接关联", "No new direct connections found"), variant: "info" });
       }
     } catch (error) {
       toast({
         description: error instanceof Error ? error.message : undefined,
-        title: "AI 拓展失败",
+        title: t("AI 拓展失败", "AI exploration failed"),
         variant: "error",
       });
     } finally {
@@ -1172,6 +1175,7 @@ export function KnowledgeCanvas({
     ensureNodesInSafeViewport,
     issueMotionReceipt,
     setAiLoading,
+    t,
     toast,
   ]);
 
@@ -1308,7 +1312,7 @@ export function KnowledgeCanvas({
           )
           : undefined;
         if (node === undefined || !canExpandFromNode(node)) {
-          toast({ title: "先选择一篇笔记", variant: "info" });
+          toast({ title: t("先选择一篇笔记", "Select a note first"), variant: "info" });
           return;
         }
         void expandFromNode(node.id).catch(() => undefined);
@@ -1362,6 +1366,7 @@ export function KnowledgeCanvas({
     selectOnly,
     selectedNodeIds,
     startConnection,
+    t,
     toast,
   ]);
 
@@ -1381,7 +1386,7 @@ export function KnowledgeCanvas({
   const previewMemoId = previewNode?.target_node_id ?? null;
   const previewTitle = previewNode?.target?.title
     ?? previewNode?.snapshot_title
-    ?? "笔记预览";
+    ?? t("笔记预览", "Note preview");
   /*
    * 卡片上那段摘录就是这篇笔记的开头, 所以正文在路上时先把它放进纸里, 而不是三条灰条:
    * 放大的是同一段字, 从卡片长成一页纸, 中途没有一次内容被抽走再换上。
@@ -1495,25 +1500,25 @@ export function KnowledgeCanvas({
         <CanvasStageLoading visible={canvasSkeletonVisible} />
         {loadStatus === "error" ? (
           <div className="canvas-state">
-            <strong>Canvas 打不开</strong>
-            <span>它可能已被删除，或当前登录已失效。</span>
+            <strong>{t("Canvas 打不开", "Could not open this canvas")}</strong>
+            <span>{t("它可能已被删除，或当前登录已失效。", "It may have been deleted, or your session may have expired.")}</span>
           </div>
         ) : null}
         {loadStatus === "ready" && renderDocument?.nodes.length === 0 ? (
           <div className="canvas-empty-hint">
-            双击空白写一段自由文字，或使用下方「加入笔记」搜索并加入已有笔记
+            {t("双击空白写一段自由文字，或使用下方「加入笔记」搜索并加入已有笔记", "Double-click empty space to write, or use Add note below to find an existing note.")}
           </div>
         ) : null}
 
         {connectionSourceId !== null && !connectionDragging ? (
           <div className="canvas-mode-notice">
-            选择另一张笔记卡片建立关系
-            <button onClick={() => startConnection(null)} type="button">取消</button>
+            {t("选择另一张笔记卡片建立关系", "Choose another note card to connect")}
+            <button onClick={() => startConnection(null)} type="button">{t("取消", "Cancel")}</button>
           </div>
         ) : null}
 
         {memoDropActive ? (
-          <div className="canvas-drop-hint">松开以在这里加入笔记</div>
+          <div className="canvas-drop-hint">{t("松开以在这里加入笔记", "Drop to add this note here")}</div>
         ) : null}
 
         <CanvasPersistenceStatus coordinatorRef={coordinatorRef} />
@@ -1537,13 +1542,13 @@ export function KnowledgeCanvas({
       <Dialog
         description={pendingOriginRemoval !== null
           && pendingOriginRemoval.nodes.length > 1
-          ? `所选 ${pendingOriginRemoval.nodes.length} 个节点中包含源笔记卡片。原笔记完全不受影响；继续会移除所选节点，并让「${pendingOriginRemoval.canvasTitle}」永久转为独立画布。以后再从那篇笔记选择「进入画布」，会创建一张新的画布。`
-          : `原笔记完全不受影响。移除这张源笔记卡片后，「${pendingOriginRemoval?.canvasTitle ?? "这张画布"}」将永久转为独立画布；以后再从那篇笔记选择「进入画布」，会创建一张新的画布。`}
+          ? t(`所选 ${pendingOriginRemoval.nodes.length} 个节点中包含源笔记卡片。原笔记完全不受影响；继续会移除所选节点，并让「${pendingOriginRemoval.canvasTitle}」永久转为独立画布。以后再从那篇笔记选择「进入画布」，会创建一张新的画布。`, `The ${pendingOriginRemoval.nodes.length} selected items include the source note card. Your original note is unchanged. Continuing removes the selected items and permanently makes “${pendingOriginRemoval.canvasTitle}” a standalone canvas. Opening a canvas from that note again will create a new one.`)
+          : t(`原笔记完全不受影响。移除这张源笔记卡片后，「${pendingOriginRemoval?.canvasTitle ?? "这张画布"}」将永久转为独立画布；以后再从那篇笔记选择「进入画布」，会创建一张新的画布。`, `Your original note is unchanged. Removing its source card permanently makes “${pendingOriginRemoval?.canvasTitle ?? "this canvas"}” a standalone canvas. Opening a canvas from that note again will create a new one.`)}
         onOpenChange={(open) => {
           if (!open && !originRemovalBusy) setPendingOriginRemoval(null);
         }}
         open={pendingOriginRemoval !== null}
-        title="移除源笔记卡片？"
+        title={t("移除源笔记卡片？", "Remove the source note card?")}
       >
         <div className="mt-5 flex justify-end gap-2">
           <Button
@@ -1551,7 +1556,7 @@ export function KnowledgeCanvas({
             onClick={() => setPendingOriginRemoval(null)}
             variant="ghost"
           >
-            取消
+            {t("取消", "Cancel")}
           </Button>
           <Button
             data-dialog-autofocus
@@ -1559,7 +1564,7 @@ export function KnowledgeCanvas({
             onClick={() => void confirmOriginRemoval()}
             variant="danger"
           >
-            解除并移除
+            {t("解除并移除", "Unlink and remove")}
           </Button>
         </div>
       </Dialog>

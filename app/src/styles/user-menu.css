@@ -1,111 +1,90 @@
 /**
- * [INPUT]: 消费 APP app-typography.css 文字角色，变量回退保持非 APP 原排版； 菜单外壳材质由 design-system.css 统一提供； 依赖设计系统的半径/曲线配对规则与 index.css 的账户、popover、统一中性 interactive-hover、smooth-corner 按钮、边框、阴影与动效 token，复用 design-system.css 的 UserAvatar 表面
- * [OUTPUT]: 对外提供身份卡片式 UserMenu 弹层、与文件树同源的中性分组动作 hover、无红色填充的危险动作与键盘焦点视觉
- * [POS]: app/src/styles 的账户菜单专用视觉层，与通用 Select 分离并被 UserMenu 独占
+ * [INPUT]: 消费共享 Popover 淡灰边框/短柔影、APP文字角色与中性hover；子菜单1px间距/36px行来自实测，国旗为同源SVG
+ * [OUTPUT]: 提供 256px/12px 外壳、34px/8px 行、40px 圆头像与 28px 独立流光 CTA、头部整体 hover，右侧子菜单和24px 外/12px 内两层账户底卡；积分摘要与身份卡间距8px
+ * [POS]: 账户区唯一视觉层；Portal 定位/避让归 UserMenu，所有图案和色彩由现有 DS token 派生，不改变全局控件圆角
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 @layer components {
-  .ds-user-menu-shell {
-    position: relative;
-    min-width: 0;
-  }
-
+  .ds-user-menu-shell { position: relative; min-width: 0; }
+  .ds-user-menu-portals { position: relative; z-index: 90; }
   .ds-user-menu-popover {
-    position: absolute;
-    bottom: calc(100% + 0.5rem);
-    left: 0;
-    z-index: 40;
-    width: min(19rem, calc(100vw - 1rem));
-    overflow: hidden;
-    transform-origin: center bottom;
-    /* 入退场归 PresenceSurface。 */
-  }
-
-  .ds-user-menu-identity {
-    display: grid;
-    width: 100%;
-    min-height: 4.4rem;
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    align-items: center;
-    gap: 0.7rem;
-    border-radius: var(--button-radius);
+    position: fixed;
+    z-index: 90;
+    width: min(16rem, calc(100vw - 1rem));
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border-radius: var(--radius-menu);
     corner-shape: var(--corner-shape-smooth);
-    padding: 0.65rem;
-    color: var(--foreground);
-    text-align: left;
-    transition: background var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard);
+    padding: 0.375rem;
+    font-family: var(--font-sans);
   }
-
-  .ds-user-menu-identity:hover,
-  .ds-user-menu-identity:focus-visible,
+  .ds-user-menu-header { border-radius: 8px; corner-shape: superellipse(2); transition: background var(--motion-fast) var(--ease-standard); display: flex; min-height: 3.5rem; align-items: center; gap: var(--space-2); padding: var(--space-2); }
+  .ds-user-menu-identity { display: flex; min-width: 0; flex: 1; align-items: center; gap: var(--space-2); border-radius: var(--radius-compact); corner-shape: var(--corner-shape-smooth); color: var(--foreground); text-align: left; transition: background var(--motion-fast) var(--ease-standard); }
+  .ds-user-menu-header:hover,
+  .ds-user-menu-header:focus-within,
   .ds-user-menu-item:hover,
-  .ds-user-menu-item:focus-visible {
-    outline: none;
-    background: var(--interactive-hover);
-    color: var(--interactive-hover-foreground);
-  }
+  .ds-user-menu-item:focus-visible,
+  .ds-user-menu-item[aria-expanded="true"] { outline: none; background: var(--interactive-hover); color: var(--interactive-hover-foreground); }
+  .ds-user-menu-popover .ds-user-menu-identity-avatar { width: 2.5rem; height: 2.5rem; border-radius: var(--radius-pill); corner-shape: round; font-size: 1rem; }
+  .ds-user-menu-identity-copy { display: flex; min-width: 0; flex-direction: column; align-items: flex-start; gap: 0.125rem; }
+  .ds-user-menu-identity-copy strong { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: inherit; font-size: 0.75rem; font-weight: var(--weight-section, 600); line-height: 1.5; }
+  .ds-user-menu-plan { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 0.1875rem; corner-shape: round; padding: 0.0625rem 0.375rem; background: linear-gradient(var(--card), var(--surface-neutral)); color: var(--muted-foreground); font-size: 0.625rem; font-weight: var(--weight-control-label, 600); line-height: 1.25; }
 
-  .ds-user-menu-identity-avatar {
-    width: 2.65rem;
-    height: 2.65rem;
-    border-radius: var(--radius-pill);
-    corner-shape: round;
-    font-size: 0.8125rem;
-  }
+  .ds-user-menu-divider { height: 1px; margin-block: var(--space-1); background: var(--border); }
+  .ds-user-menu-item { display: flex; width: 100%; min-height: 2.125rem; align-items: center; justify-content: space-between; gap: var(--space-2); border-radius: var(--radius-compact); corner-shape: var(--corner-shape-smooth); padding: 0.5rem; color: var(--foreground); font-size: 0.75rem; font-weight: var(--weight-body, 400); line-height: 1.125rem; text-align: left; transition: background var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard); }
+  .ds-user-menu-item > svg { flex-shrink: 0; }
+  .ds-user-menu-credits strong { font-size: 0.75rem; font-weight: var(--weight-section, 600); font-variant-numeric: tabular-nums; letter-spacing: 0.04em; }
+  .ds-user-menu-item.ds-user-menu-add-credits { color: var(--primary); font-weight: var(--weight-section, 600); }
+  .ds-user-menu-submenu { z-index: 91; width: min(10rem, calc(100vw - 1rem)); overflow: visible; }
+  /* 两层之间透明延伸命中区，配合 180ms 消散缓冲，斜向移动也不会丢失子菜单。 */
+  .ds-user-menu-submenu::before { content: ""; position: absolute; inset-block: 0; width: 0.5rem; }
+  .ds-user-menu-submenu[data-side="right"]::before { right: 100%; }
+  .ds-user-menu-submenu[data-side="left"]::before { left: 100%; }
+  .ds-user-menu-submenu-option { min-height: 36px; justify-content: flex-start; gap: 8px; padding: 8px; }
+  .ds-user-menu-submenu-option[aria-checked="true"] { color: color-mix(in srgb, var(--foreground) 46%, var(--popover)); font-weight: var(--weight-section, 600); }
+  .ds-user-menu-language-flag { display: block; width: 20px; height: 20px; flex: 0 0 auto; object-fit: contain; }
+  .ds-user-account-card { position: relative; isolation: isolate; display: grid; gap: var(--space-2); border: 1px solid var(--border); border-radius: 24px; corner-shape: superellipse(2); padding: 12px 12px 8px; background: linear-gradient(140deg, color-mix(in srgb, var(--primary) 16%, var(--sidebar)), color-mix(in srgb, var(--primary) 6%, var(--card)) 60%, color-mix(in srgb, var(--primary) 19%, var(--sidebar))); }
+  .ds-user-account-card::before { content: ""; position: absolute; z-index: -1; inset: 0; border-radius: inherit; corner-shape: inherit; background-image: radial-gradient(color-mix(in srgb, var(--primary) 18%, transparent) 0.65px, transparent 0.75px); background-size: 0.3125rem 0.3125rem; mask-image: linear-gradient(115deg, black, transparent 74%); pointer-events: none; }
+  .ds-user-account-summary { display: flex; min-width: 0; align-items: center; justify-content: space-between; gap: var(--space-2); padding-inline: var(--space-1); }
+  .ds-user-account-credits { display: inline-flex; min-width: 0; align-items: baseline; gap: var(--space-1); border-radius: var(--radius-compact); corner-shape: var(--corner-shape-smooth); color: var(--foreground); font-size: 0.6875rem; line-height: 1.125rem; }
+  .ds-user-account-credits strong { font-size: 0.75rem; font-weight: var(--weight-section, 600); font-variant-numeric: tabular-nums; }
+  .ds-user-account-upgrade { min-height: 1.5rem; flex: 0 0 auto; border: 1px solid color-mix(in srgb, var(--card) 72%, var(--border)); border-radius: var(--radius-pill); corner-shape: round; background: color-mix(in srgb, var(--card) 58%, transparent); padding: 0.125rem 0.5rem; color: var(--foreground); font-size: 0.625rem; font-weight: var(--weight-body, 400); line-height: 1rem; }
+  .ds-user-account-upgrade:hover,
+  .ds-user-account-upgrade:focus-visible,
+  .ds-user-account-credits:hover,
+  .ds-user-account-credits:focus-visible { outline: none; background: var(--interactive-hover); }
+  .ds-user-menu-shell .ds-user-account-card .ds-user-button { min-height: 3.5rem; gap: var(--space-2); border: 1px solid color-mix(in srgb, var(--border) 65%, var(--card)); border-radius: 12px; corner-shape: superellipse(2); padding: 8px; background: color-mix(in srgb, var(--card) 94%, transparent); box-shadow: var(--shadow-xs); }
+  .ds-user-menu-shell .ds-user-account-card .ds-user-button:hover,
+  .ds-user-menu-shell .ds-user-account-card .ds-user-button[data-open="true"] { border-color: var(--border); background: var(--card); box-shadow: var(--shadow-xs); transform: none; }
+  .ds-user-button-copy { flex: 1; min-width: 0; text-align: left; }
+  .ds-user-button-name { display: block; overflow: hidden; color: var(--foreground); font-size: 0.75rem; line-height: 1.125rem; text-overflow: ellipsis; white-space: nowrap; }
+  .ds-user-button-detail { display: block; overflow: hidden; color: var(--muted-foreground); font-size: 0.6875rem; line-height: 1rem; text-overflow: ellipsis; white-space: nowrap; }
+  .ds-user-button-caret { flex-shrink: 0; color: var(--muted-foreground); transition: rotate var(--motion-fast) var(--ease-standard); }
+  .ds-user-button[data-open="true"] .ds-user-button-caret { rotate: 180deg; }
+  .ds-user-account-card .ds-user-avatar { width: 2.5rem; height: 2.5rem; border-radius: var(--radius-pill); corner-shape: round; border: 0; font-size: 0.875rem; }
+  .ds-user-account-card span.ds-user-avatar,
+  .ds-user-menu-popover span.ds-user-avatar { background: radial-gradient(at 72% 22%, color-mix(in srgb, var(--primary) 44%, var(--card)), transparent 60%), radial-gradient(at 25% 90%, color-mix(in srgb, var(--primary) 60%, var(--foreground)), transparent 70%), var(--primary); }
 
-  .ds-user-menu-identity-copy {
-    min-width: 0;
+  /* ---- 账户专用流光：与普通按钮和大尺寸 CTA 独立，沿用唯一 ShaderGlow ---- */
+  .account-subscribe-button.glow-button {
+    --glow-button-height: 28px;
+    --glow-button-padding-inline: 12px;
+    --glow-sheen-top: rgb(255 255 255 / 18%);
+    --glow-sheen-hairline: rgb(255 255 255 / 34%);
+    --button-content-gap: 6px;
+    border-radius: 24px; corner-shape: superellipse(2);
+    font-family: var(--font-account); font-size: 12px; font-weight: var(--font-weight-medium, 500); line-height: 17.1429px; letter-spacing: normal;
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--shadow-color) 15%, transparent), 0 2px 4px color-mix(in srgb, var(--shadow-color) 3%, transparent);
   }
-
-  .ds-user-menu-identity-copy strong,
-  .ds-user-menu-identity-copy small {
-    display: block;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+  .account-subscribe-button .glow-button-sheen {
+    background: linear-gradient(180deg, var(--glow-sheen-top), transparent);
+    box-shadow: inset 0 1px var(--glow-sheen-hairline), inset 1px 0 rgb(255 255 255 / 16%), inset -1px 0 rgb(255 255 255 / 12%);
+    transition: background 150ms var(--ease-standard), box-shadow 150ms var(--ease-standard);
   }
-
-  .ds-user-menu-identity-copy strong {
-    color: inherit;
-    font-size: 0.8125rem;
-    font-weight: var(--weight-section, 680);
+  .account-subscribe-button.glow-button:not(:disabled):hover {
+    --glow-sheen-top: rgb(255 255 255 / 34%);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--shadow-color) 15%, transparent), 0 2px 4px color-mix(in srgb, var(--shadow-color) 5%, transparent);
   }
-
-  .ds-user-menu-identity-copy small {
-    margin-top: 0.25rem;
-    color: var(--muted-foreground);
-    font-size: 0.6875rem;
-  }
-
-  .ds-user-menu-divider {
-    height: 1px;
-    margin: 0.35rem 0.25rem;
-    background: var(--border);
-  }
-
-  .ds-user-menu-item {
-    display: flex;
-    width: 100%;
-    min-height: 2.5rem;
-    align-items: center;
-    gap: 0.65rem;
-    border-radius: var(--radius-compact);
-    corner-shape: var(--corner-shape-smooth);
-    padding: 0.55rem 0.65rem;
-    color: var(--foreground);
-    font-size: 0.75rem;
-    font-weight: var(--weight-navigation, 560);
-    text-align: left;
-    transition: background var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard);
-  }
-
-  .ds-user-menu-item[data-tone="danger"] {
-    color: var(--destructive);
-  }
-
-  .ds-user-menu-item[data-tone="danger"]:hover,
-  .ds-user-menu-item[data-tone="danger"]:focus-visible {
-    background: var(--interactive-hover);
-    color: var(--destructive);
-  }
+  .ds-user-menu-identity:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 }

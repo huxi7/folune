@@ -1,0 +1,93 @@
+/**
+ * [INPUT]: 消费 Folune 品牌蓝/灰框线、共享 Button/Dialog/Skeleton、用户选定的蓝色生成图与实测640px/4:1/24px超椭圆曲率及12px间距
+ * [OUTPUT]: 直接呈现蓝色横幅/原有彩色柔光、品牌蓝选中边框/外圈、积分图标近边阴影及六档卡片/余额/操作区，覆盖窄屏与浅暗主题
+ * [POS]: styles 的积分弹窗视觉边界；共享 Dialog 拥有模态行为，本层定义内容比例，外壳复用设置的近边柔影
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+@layer components {
+  .folune-credits-purchase {
+    --credits-shell-radius: 24px;
+    --credits-card-radius: 24px;
+    position: relative;
+    isolation: isolate;
+    width: min(640px, calc(100vw - 32px));
+    max-height: calc(100dvh - 32px);
+    overflow: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--credits-shell-radius);
+    corner-shape: superellipse(2);
+    background: var(--card);
+    color: var(--foreground);
+    box-shadow: var(--shadow-xs);
+  }
+  .folune-credits-banner {
+    position: relative;
+    aspect-ratio: 4 / 1;
+    overflow: hidden;
+    background: var(--surface-neutral);
+  }
+  .folune-credits-banner img { display: block; width: 100%; height: 100%; position: absolute; inset: 0; object-fit: cover; }
+  .folune-credits-purchase .folune-credits-close {
+    position: absolute;
+    z-index: 1;
+    top: 16px;
+    right: 16px;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    corner-shape: round;
+    background: var(--card);
+    box-shadow: none;
+  }
+  .folune-credits-body { padding: 24px; }
+  .folune-credits-heading { display: flex; align-items: stretch; justify-content: space-between; gap: 16px; }
+  .folune-credits-heading > div:first-child { min-width: 0; }
+  .folune-credits-heading h2 { margin: 0; font-size: 20px; font-weight: 400; line-height: 26.7px; }
+  .folune-credits-heading p { margin-top: 8px; color: var(--muted-foreground); font-size: 12px; line-height: 17.14px; }
+  .folune-credits-balance { flex-shrink: 0; min-width: 110px; min-height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 24px; border: 1px dashed color-mix(in srgb, var(--muted-foreground) 30%, transparent); border-radius: 12px; corner-shape: superellipse(2); text-align: center; }
+  .folune-credits-balance > span { display: block; color: var(--muted-foreground); font-size: 10px; line-height: 14px; }
+  .folune-credits-balance strong { display: flex; align-items: center; justify-content: center; gap: 7px; margin-top: 6px; font-family: "Courier New", Courier, var(--font-serif); font-size: 27.2px; font-weight: var(--weight-emphasis, 700); letter-spacing: normal; line-height: 27.2px; font-variant-numeric: tabular-nums; }
+  .folune-credits-balance svg { color: var(--primary); }
+  .folune-credits-packs { position: relative; isolation: isolate; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; min-width: 0; margin: 32px 0 0; padding: 0; border: 0; }
+  .folune-credits-packs::before { position: absolute; z-index: -1; inset: 8px; content: ""; pointer-events: none; background: conic-gradient(from 140deg, rgb(255 107 107 / 60%), rgb(255 179 71 / 50%), rgb(253 253 150 / 40%), rgb(119 221 119 / 40%), rgb(59 130 246 / 50%), rgb(139 92 246 / 60%), rgb(255 107 107 / 60%)); filter: blur(20px); opacity: 0.4; }
+  .folune-credit-pack { position: relative; min-width: 0; cursor: pointer; }
+  .folune-credit-pack input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: inherit; }
+  .folune-credit-pack-surface { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; aspect-ratio: 2 / 1; min-height: 94px; border: 1px solid var(--border); border-radius: var(--credits-card-radius); corner-shape: superellipse(2); background: var(--card); transition: border-color var(--motion-micro-enter) var(--ease-standard), box-shadow var(--motion-micro-enter) var(--ease-standard); }
+  .folune-credit-pack input:checked + .folune-credit-pack-surface { border-color: color-mix(in srgb, var(--primary) 70%, var(--card)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 22%, transparent), 0 0 14px color-mix(in srgb, var(--primary) 18%, transparent); }
+  .folune-credit-pack input:focus-visible + .folune-credit-pack-surface { outline: 2px solid var(--primary); outline-offset: 5px; }
+  .folune-credit-pack-icons { display: flex; justify-content: center; gap: 3px; color: var(--primary); }
+  .folune-credits-balance svg,
+  .folune-credit-pack-icons svg { filter: drop-shadow(0 1px 1px rgb(var(--app-shadow-rgb, 0 0 0) / 16%)) drop-shadow(0 2px 4px color-mix(in srgb, var(--primary) 35%, transparent)); }
+  .folune-credit-pack-surface > strong { margin-top: 0; font-family: "Courier New", Courier, var(--font-serif); font-size: 27.2px; font-weight: var(--weight-emphasis, 700); letter-spacing: normal; line-height: 27.2px; font-variant-numeric: tabular-nums; }
+  .folune-credit-pack-price { color: var(--muted-foreground); font-size: 13px; font-weight: var(--weight-section, 600); line-height: 13px; }
+  .folune-credit-pack-skeleton { min-height: 94px; border-radius: var(--credits-card-radius); corner-shape: superellipse(2); }
+  .folune-credits-actions { display: flex; flex-direction: column; gap: 12px; margin-top: 32px; }
+  .folune-credits-actions .ds-button { width: 100%; min-height: 40px; height: auto; padding: 10px 12px; border-radius: var(--radius-pill); corner-shape: superellipse(2); font-size: 13px; line-height: 20px; --button-state-shadow-pressed: var(--button-state-shadow); }
+  .folune-credits-actions .ds-button-content { white-space: normal; text-align: center; }
+  .folune-credits-status { display: flex; align-items: flex-start; gap: 8px; margin-top: 14px; padding: 10px 12px; border-radius: 12px; corner-shape: superellipse(2); background: var(--surface-neutral); font-size: 12px; line-height: 18px; color: var(--muted-foreground); }
+  .folune-credits-status svg { flex-shrink: 0; margin-top: 1px; }
+  .folune-credits-footer { margin-top: 16px; color: var(--muted-foreground); text-align: center; font-size: 10px; line-height: 14px; }
+  .folune-credits-rules-toggle { border: 0; background: none; padding: 0; color: inherit; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+  .folune-credits-rules-toggle:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
+  .folune-credits-rules { display: grid; gap: 8px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); color: var(--muted-foreground); font-size: 12px; line-height: 20px; }
+  .folune-credits-error { display: flex; flex-direction: column; align-items: center; gap: 12px; min-height: 200px; justify-content: center; color: var(--muted-foreground); font-size: 13px; }
+  @media (max-width: 520px) {
+    .folune-credits-body { padding: 20px; }
+    .folune-credits-heading { gap: 12px; }
+    .folune-credits-heading p { line-height: 18px; }
+    .folune-credits-balance { min-width: 96px; padding-inline: 8px; }
+    .folune-credits-balance strong { font-size: 21px; }
+    .folune-credit-pack-surface > strong { font-size: 25px; }
+    .folune-credits-packs { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 24px; }
+    .folune-credits-actions { margin-top: 24px; }
+  }
+  @media (prefers-reduced-motion: reduce) { .folune-credit-pack-surface { transition: none; } }
+  @media (forced-colors: active) {
+    .folune-credits-banner, .folune-credits-packs::before { display: none; }
+    .folune-credits-body { padding-top: 64px; }
+    .folune-credit-pack input:checked + .folune-credit-pack-surface { outline: 2px solid Highlight; outline-offset: 2px; }
+  }
+}

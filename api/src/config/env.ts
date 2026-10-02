@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 zod 的 schema 校验能力与 Bun.env 进程环境变量
- * [OUTPUT]: 对外提供经过校验、转换且不含默认真实凭据的 env 配置
- * [POS]: config 层唯一环境变量入口，集中约束端口、运行环境、系统名、CORS 与 Supabase Publishable key
+ * [OUTPUT]: 对外提供经过校验、转换且不含默认真实凭据的 env 配置和 Free/Starter/Pro/Studio 四档日 token 上限（10/200/1000/5000 万）
+ * [POS]: config 层唯一环境变量入口，集中约束端口、运行环境、系统名、CORS、Supabase Publishable key 与免费/订阅额度
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -33,8 +33,11 @@ const envSchema = z.object({
     .string()
     .trim()
     .startsWith("sb_publishable_"),
-  // 免费账号每 UTC 日 token 额度（输入+输出总和）；接入订阅后可按档位覆盖此默认。
-  AI_DAILY_TOKEN_LIMIT: z.coerce.number().int().min(1).default(1_000_000),
+  // 每 UTC 日 token 额度（输入+输出总和）；只有已验证、有效的付费订阅能取得对应上限。
+  AI_DAILY_TOKEN_LIMIT: z.coerce.number().int().min(1).default(100_000),
+  AI_STARTER_DAILY_TOKEN_LIMIT: z.coerce.number().int().min(1).default(2_000_000),
+  AI_PRO_DAILY_TOKEN_LIMIT: z.coerce.number().int().min(1).default(10_000_000),
+  AI_STUDIO_DAILY_TOKEN_LIMIT: z.coerce.number().int().min(1).default(50_000_000),
 });
 
 const result = envSchema.safeParse({
@@ -45,6 +48,9 @@ const result = envSchema.safeParse({
   SUPABASE_URL: Bun.env["SUPABASE_URL"],
   SUPABASE_PUBLISHABLE_KEY: Bun.env["SUPABASE_PUBLISHABLE_KEY"],
   AI_DAILY_TOKEN_LIMIT: Bun.env["AI_DAILY_TOKEN_LIMIT"],
+  AI_STARTER_DAILY_TOKEN_LIMIT: Bun.env["AI_STARTER_DAILY_TOKEN_LIMIT"],
+  AI_PRO_DAILY_TOKEN_LIMIT: Bun.env["AI_PRO_DAILY_TOKEN_LIMIT"],
+  AI_STUDIO_DAILY_TOKEN_LIMIT: Bun.env["AI_STUDIO_DAILY_TOKEN_LIMIT"],
 });
 
 if (!result.success) {

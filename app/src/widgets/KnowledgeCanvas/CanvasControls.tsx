@@ -1,10 +1,11 @@
 /**
- * [INPUT]: 依赖 React Flow Panel、共享 WarmTooltip/KeyboardShortcut/useDismissable、CanvasHelpPopover 与上层加入/视口命令
+ * [INPUT]: 依赖 useLocale 的界面文案（用户内容保留原文）；依赖 React Flow Panel、共享 WarmTooltip/KeyboardShortcut/useDismissable、CanvasHelpPopover 与上层加入/视口命令
  * [OUTPUT]: 提供两个中性动作面、同组连续悬浮提示与工具栏上方的轻量操作说明，快捷键只呈现真实绑定
  * [POS]: KnowledgeCanvas 的空间命令条；仅拥有帮助开合，沿用既有命令入口，不读写图数据或另设快捷键
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
+import { useLocale } from "../../shared/locale";
 import { Panel } from "@xyflow/react";
 import { useCallback, useId, useRef, useState } from "react";
 
@@ -32,6 +33,7 @@ export function CanvasControls({
   onZoomIn,
   onZoomOut,
 }: CanvasControlsProps) {
+  const { t } = useLocale();
   const [helpOpen, setHelpOpen] = useState(false);
   const helpId = useId();
   const shellRef = useRef<HTMLDivElement>(null);
@@ -44,30 +46,30 @@ export function CanvasControls({
     <Panel className="canvas-controls" position="bottom-center" ref={shellRef}>
       <WarmTooltipGroup>
         <div className="canvas-control-group" data-surface="content">
-          <WarmTooltip content="加入笔记" disabled={helpOpen} shortcut={<KeyboardShortcut keys={["mod", "K"]} />}>
-            <button aria-label="加入笔记" aria-keyshortcuts="Meta+K Control+K" className="canvas-control canvas-control-add" onClick={onAdd} type="button">
+          <WarmTooltip content={t("加入笔记", "Add note")} disabled={helpOpen} shortcut={<KeyboardShortcut keys={["mod", "K"]} />}>
+            <button aria-label={t("加入笔记", "Add note")} aria-keyshortcuts="Meta+K Control+K" className="canvas-control canvas-control-add" onClick={onAdd} type="button">
               <AddNoteIcon aria-hidden size={16} />
             </button>
           </WarmTooltip>
         </div>
         <div className="canvas-control-group canvas-control-group-viewport" data-surface="viewport">
-          <WarmTooltip content="适配视图" disabled={helpOpen}>
-            <button aria-label="适配视图" className="canvas-control" onClick={onFit} type="button">
+          <WarmTooltip content={t("适配视图", "Fit view")} disabled={helpOpen}>
+            <button aria-label={t("适配视图", "Fit view")} className="canvas-control" onClick={onFit} type="button">
               <FitViewIcon aria-hidden size={16} />
             </button>
           </WarmTooltip>
-          <WarmTooltip content="缩小" disabled={helpOpen}>
-            <button aria-label="缩小" className="canvas-control" onClick={onZoomOut} type="button">
+          <WarmTooltip content={t("缩小", "Zoom out")} disabled={helpOpen}>
+            <button aria-label={t("缩小", "Zoom out")} className="canvas-control" onClick={onZoomOut} type="button">
               <ZoomOutIcon aria-hidden size={16} />
             </button>
           </WarmTooltip>
-          <WarmTooltip content="放大" disabled={helpOpen}>
-            <button aria-label="放大" className="canvas-control" onClick={onZoomIn} type="button">
+          <WarmTooltip content={t("放大", "Zoom in")} disabled={helpOpen}>
+            <button aria-label={t("放大", "Zoom in")} className="canvas-control" onClick={onZoomIn} type="button">
               <ZoomInIcon aria-hidden size={16} />
             </button>
           </WarmTooltip>
-          <WarmTooltip content="操作说明" disabled={helpOpen}>
-            <button aria-controls={helpOpen ? helpId : undefined} aria-expanded={helpOpen} aria-haspopup="dialog" aria-label="操作说明" className="canvas-control" onClick={() => setHelpOpen((open) => !open)} ref={helpButtonRef} type="button">
+          <WarmTooltip content={t("操作说明", "Canvas guide")} disabled={helpOpen}>
+            <button aria-controls={helpOpen ? helpId : undefined} aria-expanded={helpOpen} aria-haspopup="dialog" aria-label={t("操作说明", "Canvas guide")} className="canvas-control" onClick={() => setHelpOpen((open) => !open)} ref={helpButtonRef} type="button">
               <InfoIcon aria-hidden size={16} />
             </button>
           </WarmTooltip>

@@ -28,6 +28,7 @@ ai-command.sql: 已部署的 SECURITY INVOKER Command 创建/批准/拒绝/apply
 ai-command-lock-order.sql: 已部署函数的增量升级补丁，只替换删除/恢复锁顺序和错误分类，保留远端 mutation GUC 与 RLS 契约；20260924040636 已应用到 Folune-staging
 
 ai-usage.sql: 建立每用户每日 token 计数表 ai_usage_daily（user_id+usage_date 复合主键、total_tokens 只增）；写口经 folune.ai_usage_mutation 会话 GUC 收口加 owner-only RLS，唯一落账路径是 increment_ai_usage_daily 这一 SECURITY INVOKER 原子累加 RPC（日期服务端派生、只增不减），使用户无法经直接 PostgREST 写清零用量绕过限流，SELECT 仅供服务端与前端读今日额度；migration 20260927092934 已应用到 Folune-staging，生产（Folune-production）未应用
+billing.sql: 最小 billing_subscriptions 付款事实契约；用户仅获本人公开列 SELECT，平台标识不可读且运行时角色无订阅写权限，没有付款验证时保持空表；migration 20260929113054 已于 2026-09-29 应用并实测 Folune-staging，生产未应用，网关验签/幂等落账待支付接入
 
 职责: 保存可审阅、可顺序部署的 Database/Storage SQL 契约；画布沿用备忘录树而不新建第二套结构；重名的最终裁决在唯一索引而非应用层预检查；业务表以 owner-only RLS 与显式 grants 隔离租户，AI 方案只经受控状态机和单事务执行器落地，远端是否已部署必须单独验证，禁止把仓库文件存在误报为线上已应用。
 

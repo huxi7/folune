@@ -4,6 +4,7 @@
 成员清单
 supabase-http.ts: Auth/PostgREST 共享的完整 HTTP 响应生命周期；GET/HEAD 每次 6 秒且最多两次，写请求 12 秒且不重放；重试使用新连接，读取 body 后才结束期限，定时器随完成释放
 CLAUDE.md: 记录基础库适配层职责与文档协议
+payment-provider.ts: 订阅与积分尚未连接支付网关的唯一适配器，两类选购均返回 unavailable/null URL，不创建订单或写权益；未来由真实会话/验签落账替换，用户 JWT 不进入网关
 banner.ts: 输出纯 ASCII logo、非敏感运行信息与 ready 路由摘要
 supabase-auth.ts: 使用用户 JWT/Publishable key 调用 /auth/v1/user；复用 supabase-http 的完整响应期限和只读重试后返回可信 AuthUser
 supabase-rest.ts: authenticated RLS 的唯一 PostgREST 边界；组装 Prefer/query/RPC 并保留 SQLSTATE，完整响应交给 supabase-http，网络故障映射 503，主动取消透传

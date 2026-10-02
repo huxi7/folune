@@ -1,12 +1,11 @@
 /**
- * [INPUT]: 依赖可后台刷新的后端 Profile、shared/api/profile 的 username/bio PATCH 与 5MB 头像上传、React 受控草稿/800ms 防抖副作用/原生文件 input、本地 UI 与 共享 Lucide 图标
- * [OUTPUT]: 对外提供 AccountDialog 内的账户资料面板、仅按 bio/username 合并后台 Profile 与本地草稿、静默自动保存、头像即时上传，成功仅本地可访问反馈、异常进入全局 Toast
+ * [INPUT]: 依赖可后台刷新的后端 Profile、shared/api/profile 的 username/bio PATCH 与 5MB 头像上传、React 受控草稿/800ms 防抖副作用/原生文件 input、locale 双语文案与本地 UI/共享 Lucide 图标
+ * [OUTPUT]: 对外提供 AccountDialog 内分组嵌套卡片式个人资料面板、仅按 bio/username 合并后台 Profile 与本地草稿、静默自动保存、无图标紧凑头像上传入口，成功仅本地可访问反馈、异常进入全局 Toast
  * [POS]: app/src/widgets 的账户资料栏，以 stale-while-revalidate 字段级冲突保护和串行防抖保存消除整页 Loading 与显式提交区
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import {
   ImageSquareIcon,
-  UploadSimpleIcon,
 } from "../shared/design-system/icons";
 import {
   useCallback,
@@ -27,6 +26,7 @@ import {
   uploadProfileAvatar,
   type Profile,
 } from "../shared/api/profile";
+import { useLocale } from "../shared/locale";
 
 type AccountProfilePanelProps = {
   onProfileChange: (profile: Profile) => void;
@@ -57,6 +57,7 @@ export function AccountProfilePanel({
   onProfileChange,
   profile,
 }: AccountProfilePanelProps) {
+  const { t, formatNumber } = useLocale();
   const { toast } = useToast();
   const [draft, setDraft] = useState(() => createProfileDraft(profile));
   const [autosaveMessage, setAutosaveMessage] = useState("");
@@ -90,7 +91,7 @@ export function AccountProfilePanel({
 
   const saveProfileDraft = useCallback(async (nextDraft: ProfileDraft) => {
     setSavingProfile(true);
-    setAutosaveMessage("正在自动保存个人资料");
+    setAutosaveMessage(t("正在自动保存个人资料", "Saving your profile"));
 
     try {
       const updatedProfile = await updateProfile({
@@ -107,22 +108,22 @@ export function AccountProfilePanel({
           ? createProfileDraft(updatedProfile)
           : currentDraft,
       );
-      setAutosaveMessage("个人资料已自动保存");
+      setAutosaveMessage(t("个人资料已自动保存", "Your profile has been saved"));
     } catch (error) {
       const description = error instanceof Error
-        ? error.message
-        : "自动保存失败，请稍后重试。";
+        ? t(error.message, "We couldn't save your changes. Please try again.")
+        : t("自动保存失败，请稍后重试。", "We couldn't save your changes. Please try again.");
       failedDraft.current = nextDraft;
       setAutosaveMessage(description);
       toast({
         description,
-        title: "个人资料自动保存失败",
+        title: t("个人资料自动保存失败", "Couldn't save your profile"),
         variant: "error",
       });
     } finally {
       setSavingProfile(false);
     }
-  }, [onProfileChange, toast]);
+  }, [onProfileChange, t, toast]);
 
   useEffect(() => {
     if (savingProfile || uploadingAvatar) {
@@ -141,12 +142,12 @@ export function AccountProfilePanel({
 
     const timerId = window.setTimeout(() => {
       if (!nextDraft.username) {
-        const description = "用户名不能为空。";
+        const description = t("用户名不能为空。", "Please enter a display name.");
         failedDraft.current = nextDraft;
         setAutosaveMessage(description);
         toast({
           description,
-          title: "无法自动保存",
+          title: t("无法自动保存", "Couldn't save your changes"),
           variant: "warning",
         });
         return;
@@ -156,7 +157,7 @@ export function AccountProfilePanel({
     }, AUTOSAVE_DELAY_MS);
 
     return () => window.clearTimeout(timerId);
-  }, [draft, saveProfileDraft, savingProfile, toast, uploadingAvatar]);
+  }, [draft, saveProfileDraft, savingProfile, t, toast, uploadingAvatar]);
 
   function updateField<Key extends keyof ProfileDraft>(
     key: Key,
@@ -179,35 +180,35 @@ export function AccountProfilePanel({
     }
 
     if (file.size > AVATAR_MAX_FILE_BYTES) {
-      const description = "头像文件不能超过 5MB。";
+      const description = t("头像文件不能超过 5MB。", "Your photo must be 5MB or smaller.");
       setAutosaveMessage(description);
-      toast({ description, title: "无法上传头像", variant: "warning" });
+      toast({ description, title: t("无法上传头像", "Couldn't upload your photo"), variant: "warning" });
       return;
     }
 
     if (!AVATAR_ACCEPTED_TYPES.includes(
       file.type as (typeof AVATAR_ACCEPTED_TYPES)[number],
     )) {
-      const description = "头像仅支持 JPEG、PNG 或 WebP 格式。";
+      const description = t("头像仅支持 JPEG、PNG 或 WebP 格式。", "Please choose a JPEG, PNG or WebP image.");
       setAutosaveMessage(description);
-      toast({ description, title: "无法上传头像", variant: "warning" });
+      toast({ description, title: t("无法上传头像", "Couldn't upload your photo"), variant: "warning" });
       return;
     }
 
     setUploadingAvatar(true);
-    setAutosaveMessage("正在上传头像");
+    setAutosaveMessage(t("正在上传头像", "Uploading your photo"));
 
     try {
       const updatedProfile = await uploadProfileAvatar(file);
       onProfileChange(updatedProfile);
       lastSavedDraft.current = normalizeProfileDraft(createProfileDraft(updatedProfile));
-      setAutosaveMessage("头像已更新");
+      setAutosaveMessage(t("头像已更新", "Your photo has been updated"));
     } catch (error) {
       const description = error instanceof Error
-        ? error.message
-        : "头像上传失败，请重试。";
+        ? t(error.message, "Your photo couldn't be uploaded. Please try again.")
+        : t("头像上传失败，请重试。", "Your photo couldn't be uploaded. Please try again.");
       setAutosaveMessage(description);
-      toast({ description, title: "头像上传失败", variant: "error" });
+      toast({ description, title: t("头像上传失败", "Couldn't upload your photo"), variant: "error" });
     } finally {
       setUploadingAvatar(false);
     }
@@ -221,16 +222,16 @@ export function AccountProfilePanel({
       <div className="account-dialog-scroll">
         <section className="account-dialog-section">
           <header className="account-dialog-section-header">
-            <h4 className="account-dialog-section-title">基本信息</h4>
+            <h4 className="account-dialog-section-title">{t("基本信息", "Basic information")}</h4>
             <p className="account-dialog-section-description">
-              用于账户入口与个人身份展示。
+              {t("与个人资料相关的常规设置。", "The details that make this profile yours.")}
             </p>
           </header>
 
           <div className="account-dialog-rows">
             <div className="account-dialog-row">
               <label className="account-dialog-label" htmlFor="account-profile-username">
-                用户名
+                {t("昵称", "Display name")}
               </label>
               <div className="account-dialog-control">
                 <Input
@@ -239,7 +240,7 @@ export function AccountProfilePanel({
                   id="account-profile-username"
                   maxLength={100}
                   onChange={(event) => updateField("username", event.target.value)}
-                  placeholder="设置用户名"
+                  placeholder={t("设置昵称", "Your display name")}
                   spellCheck={false}
                   value={draft.username}
                 />
@@ -248,25 +249,25 @@ export function AccountProfilePanel({
 
             <div className="account-dialog-row">
               <label className="account-dialog-label" htmlFor="account-profile-email">
-                邮箱
+                {t("邮箱", "Email")}
               </label>
               <div className="account-dialog-control">
                 <Input
                   className="account-dialog-readonly-input"
                   id="account-profile-email"
                   readOnly
-                  value={profile.email ?? "未绑定邮箱"}
+                  value={profile.email ?? t("未绑定邮箱", "No email connected")}
                 />
               </div>
             </div>
 
             <div className="account-dialog-row account-dialog-avatar-row">
-              <p className="account-dialog-label">头像</p>
+              <p className="account-dialog-label">{t("头像照片", "Profile photo")}</p>
               <div className="account-dialog-avatar-control">
                 <div className="account-dialog-avatar-preview">
                   {profile.avatarUrl ? (
                     <img
-                      alt={profile.username + " 的头像"}
+                      alt={t(`${profile.username} 的头像`, `${profile.username}'s profile photo`)}
                       className="account-dialog-avatar-image"
                       src={profile.avatarUrl}
                     />
@@ -281,18 +282,18 @@ export function AccountProfilePanel({
                   >
                     <input
                       accept={AVATAR_ACCEPTED_TYPES.join(",")}
-                      aria-label="选择头像图片"
+                      aria-label={t("选择头像图片", "Choose a profile photo")}
                       className="account-dialog-avatar-input"
+                      title={t("JPEG、PNG 或 WebP，最大 5MB。", "JPEG, PNG or WebP, up to 5MB.")}
                       disabled={uploadingAvatar || savingProfile}
                       onChange={(event) => void handleAvatarChange(event)}
                       type="file"
                     />
                     <span className="ds-button-content">
-                      <UploadSimpleIcon aria-hidden="true" size={16} />
-                      {uploadingAvatar ? "上传中…" : "选择图片"}
+                      {uploadingAvatar ? t("上传中…", "Uploading…") : t("上传文件", "Upload file")}
                     </span>
                   </label>
-                  <span>JPEG、PNG 或 WebP，最大 5MB。</span>
+
                 </div>
               </div>
             </div>
@@ -301,24 +302,23 @@ export function AccountProfilePanel({
 
         <section className="account-dialog-section">
           <header className="account-dialog-section-header">
-            <h4 className="account-dialog-section-title">个人简介</h4>
-            <p className="account-dialog-section-description">简单介绍一下您自己。</p>
+            <h4 className="account-dialog-section-title">{t("个人简介", "About you")}</h4>
+            <p className="account-dialog-section-description">{t("简单介绍一下您自己。", "Share a little about yourself.")}</p>
           </header>
           <div className="account-dialog-bio">
             <label className="sr-only" htmlFor="account-profile-bio">
-              个人简介
+              {t("个人简介", "About you")}
             </label>
             <textarea
               className="ds-input account-dialog-textarea"
               id="account-profile-bio"
               maxLength={240}
               onChange={(event) => updateField("bio", event.target.value)}
-              placeholder="写下您的个人介绍"
+              placeholder={t("写下您的个人介绍", "A few words about you")}
               value={draft.bio}
             />
             <div className="account-dialog-meta">
-              <span>展示在个人资料中。</span>
-              <span>{draft.bio.length} / 240</span>
+              <span>{formatNumber(draft.bio.length)} / {formatNumber(240)}</span>
             </div>
           </div>
         </section>

@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖账号权限确认状态控制发送、useConversationScroll、DS 动态/视图/输入原语、useAiThreads、类型化 useChat/原生审批及既有工具执行边界
+ * [INPUT]: 依赖 locale 界面文案、账号权限确认、useConversationScroll、DS 原语、useAiThreads、useChat/审批及既有工具执行边界
  * [OUTPUT]: 对外提供 AI Native 右侧工作区；只读工具参数到齐即并发执行，写工具经过流末审批门禁后最多八项并发，停止取消排队、保存本批结果并阻断自动续写；整轮活动跨客户端工具/审批/续写持续，消息定点同步并以本地快照快速回显
  * [POS]: /app 右侧 AI Native V2 组合根；新对话立即进入本地草稿，首发创建期间保持同一 useChat 与消息实例；历史只负责导航，目标会话加载/失败在内容窗承接；api command 是唯一写事实源，Store 只做幂等投影与回滚
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -107,7 +107,7 @@ import { ThreadHistory } from "./ThreadHistory";
 import { normalizeAgentToolName } from "./toolPresentation";
 import { useAiThreads } from "./useAiThreads";
 import { useMemoSearch } from "../useMemoSearch";
-
+import { useLocale } from "../../shared/locale";
 type AgentPanelProps = {
   accessToken: string;
   currentMemo: MemoTreeNode | null;
@@ -121,7 +121,6 @@ type AgentPanelProps = {
   organizeRun: AiRun | null;
   userId: string;
 };
-
 type ConversationProps = {
   accessToken: string;
   currentMemo: MemoTreeNode | null;
@@ -141,7 +140,6 @@ type ConversationProps = {
   onEnsureThread: () => Promise<string>;
   userId: string;
 };
-
 function AgentConversation({
   accessToken,
   currentMemo,
@@ -161,6 +159,7 @@ function AgentConversation({
   thread,
   userId,
 }: ConversationProps) {
+  const { t, locale } = useLocale();
   const [inputValue, setInputValue] = useState("");
   const reduceMotion = Boolean(useMotionPreference());
   const present = useIsPresent();
@@ -439,7 +438,7 @@ function AgentConversation({
   const displayLiveAssistantIndex = displayLastMessage?.role === "assistant"
     ? displayMessages.length - 1
     : -1;
-  const errorCopy = getErrorCopy(error);
+  const errorCopy = getErrorCopy(error, locale);
 
   useEffect(() => {
     // 首次挂载必须扫完整历史以恢复已落账命令；流式阶段只有末条 assistant
@@ -688,7 +687,7 @@ function AgentConversation({
         <div className="agent-error-state" role="alert"><WarningCircleIcon aria-hidden="true" size={16} /><div><strong>{errorCopy.title}</strong><p>{errorCopy.description}</p></div></div>
       ) : null}
       {approvalError ? (
-        <div className="agent-error-state" role="alert"><WarningCircleIcon aria-hidden="true" size={16} /><div><strong>确认失败</strong><p>{approvalError}</p></div></div>
+        <div className="agent-error-state" role="alert"><WarningCircleIcon aria-hidden="true" size={16} /><div><strong>{t("确认失败", "Confirmation failed")}</strong><p>{t(approvalError, "Unable to save the confirmation. Check your connection and try again.")}</p></div></div>
       ) : null}
       {pendingApproval !== undefined ? (
         pendingApproval.approval.id !== respondingApprovalId
@@ -706,15 +705,15 @@ function AgentConversation({
       >
         <MentionMenu open={mentionOpen} activeIndex={mentionIndex} onSelect={selectMention} results={mentionResults} />
         {visibleContextSources.length > 0 ? <div className="agent-composer-sources">{visibleContextSources.map((source) => {
-          return <span key={source.id}><AtIcon size={14} /><strong>{source.title}</strong><button aria-label={`${source.pinned ? "取消置顶" : "置顶引用"} ${source.title}`} onClick={() => void onReferencesChange(source.pinned ? pinnedIds.filter((id) => id !== source.id) : [...pinnedIds, source.id])} type="button"><PushPinIcon fill={source.pinned ? "currentColor" : "none"} size={14} /></button><button aria-label={`移除引用 ${source.title}`} onClick={() => void (async () => { if (source.pinned) await onReferencesChange(pinnedIds.filter((id) => id !== source.id)); if (source.current) setSuppressedCurrentMemoId(source.id); setSources((current) => current.filter((item) => item.id !== source.id)); })()} type="button"><XIcon size={14} /></button></span>;
+          return <span key={source.id}><AtIcon size={14} /><strong>{source.title}</strong><button aria-label={`${source.pinned ? t("取消置顶", "Unpin reference") : t("置顶引用", "Pin reference")} ${source.title}`} onClick={() => void onReferencesChange(source.pinned ? pinnedIds.filter((id) => id !== source.id) : [...pinnedIds, source.id])} type="button"><PushPinIcon fill={source.pinned ? "currentColor" : "none"} size={14} /></button><button aria-label={`${t("移除引用", "Remove reference")} ${source.title}`} onClick={() => void (async () => { if (source.pinned) await onReferencesChange(pinnedIds.filter((id) => id !== source.id)); if (source.current) setSuppressedCurrentMemoId(source.id); setSources((current) => current.filter((item) => item.id !== source.id)); })()} type="button"><XIcon size={14} /></button></span>;
         })}</div> : null}
-        <MentionInput aria-label="输入消息" className="agent-chat-input" mentions={inlineMentions} onKeyDown={handleComposerKeyDown} onValueChange={handleInputChange} placeholder="输入消息，@ 引用笔记…" ref={composerRef} value={inputValue} />
+        <MentionInput aria-label={t("输入消息", "Message")} className="agent-chat-input" mentions={inlineMentions} onKeyDown={handleComposerKeyDown} onValueChange={handleInputChange} placeholder={t("输入消息，@ 引用笔记…", "Write a message, @ to reference notes…")} ref={composerRef} value={inputValue} />
         <div className="agent-composer-footer">
           <PermissionModeControl accessToken={accessToken} busy={busy} compact userId={userId} />
           {streamBusy || clientToolsRunning ? (
-            <Button aria-label="停止生成" className="agent-composer-action" icon={StopIcon} onClick={handleStop} size="square" type="button" variant="primary" />
+            <Button aria-label={t("停止生成", "Stop generating")} className="agent-composer-action" icon={StopIcon} onClick={handleStop} size="square" type="button" variant="primary" />
           ) : (
-            <Button aria-label="发送消息" className="agent-composer-action" disabled={!canSubmitComposer(inputValue, composerBusy)} icon={ArrowUpIcon} size="square" type="submit" variant="primary" />
+            <Button aria-label={t("发送消息", "Send message")} className="agent-composer-action" disabled={!canSubmitComposer(inputValue, composerBusy)} icon={ArrowUpIcon} size="square" type="submit" variant="primary" />
           )}
         </div>
       </motion.form>
@@ -723,6 +722,7 @@ function AgentConversation({
 }
 
 export function AgentPanel(props: AgentPanelProps) {
+  const { t } = useLocale();
   const [historyOpen, setHistoryOpen] = useState(false);
   const { toast } = useToast();
   const [chatBusy, setChatBusy] = useState(false);
@@ -745,7 +745,7 @@ export function AgentPanel(props: AgentPanelProps) {
   const selectConversation = (threadId: string) => {
     setHistoryOpen(false);
     return threads.selectThread(threadId).catch((error) => {
-      toast({ title: "会话加载失败", description: error instanceof Error ? error.message : "请稍后重试。", variant: "error" });
+      toast({ title: t("会话加载失败", "Unable to load this conversation"), description: t(error instanceof Error ? error.message : "请稍后重试。", "Please try again shortly."), variant: "error" });
     });
   };
 
@@ -756,10 +756,10 @@ export function AgentPanel(props: AgentPanelProps) {
   };
 
   return (
-    <aside aria-label="备忘录助手" className="agent-panel">
+    <aside aria-label={t("备忘录助手", "Note assistant")} className="agent-panel">
       <AgentPanelHeader
         historyOpen={historyOpen}
-        title={thread?.title ?? "新对话"}
+        title={thread?.title ?? t("新对话", "New chat")}
         historyDisabled={chatBusy}
         createDisabled={actionBusy}
         onToggleHistory={() => setHistoryOpen((open) => !open)}
@@ -772,9 +772,9 @@ export function AgentPanel(props: AgentPanelProps) {
       </PersistentView>
       <PersistentView active={!historyOpen} fill className="agent-panel-view-switch">
       {threads.loading && thread === null ? (
-        <div className="agent-panel-loading">正在恢复会话…</div>
+        <div className="agent-panel-loading">{t("正在恢复会话…", "Restoring your conversations…")}</div>
       ) : threads.selectedLoading ? (
-        <SkeletonGroup className="agent-conversation-loading" label={`正在载入会话 ${thread?.title ?? "新对话"}`}>
+        <SkeletonGroup className="agent-conversation-loading" label={`${t("正在载入会话", "Loading conversation")} ${thread?.title ?? t("新对话", "New chat")}`}>
           <div className="agent-conversation-loading-list">
             <Skeleton className="agent-conversation-loading-user" />
             <div className="agent-conversation-loading-answer">
@@ -787,8 +787,8 @@ export function AgentPanel(props: AgentPanelProps) {
         </SkeletonGroup>
       ) : threads.selectedLoadError !== null ? (
         <div className="agent-panel-loading" role="alert">
-          <span>这个会话暂时没有加载出来。</span>
-          <Button onClick={() => { if (thread) void selectConversation(thread.id); }} variant="ghost">重试</Button>
+          <span>{t("这个会话暂时没有加载出来。", "This conversation could not be loaded.")}</span>
+          <Button onClick={() => { if (thread) void selectConversation(thread.id); }} variant="ghost">{t("重试", "Try again")}</Button>
         </div>
       ) : (
         <AgentConversation accessToken={props.accessToken} currentMemo={props.currentMemo} initialMessages={threads.messages} key={threads.conversationKey} conversationKey={threads.conversationKey} onEnsureThread={threads.ensureThread} pinnedIds={threads.pinnedMemoIds} memoTree={props.memoTree} onApplyOrganize={props.onApplyOrganize} onBusyChange={setChatBusy} onPrepareMutation={props.onPrepareMutation} onReferencesChange={threads.replaceReferences} onRejectOrganize={props.onRejectOrganize} onThreadUpdated={(localMessages) => localMessages === undefined ? threads.refreshSelected() : threads.commitLocalMessages(localMessages)} organizeReviewBusy={actionBusy} organizeRun={visibleOrganizeRun} thread={thread} userId={props.userId} />

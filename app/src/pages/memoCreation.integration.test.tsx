@@ -1,10 +1,10 @@
 /**
- * [INPUT]: 依赖真实 Data Router、Dashboard controller、Memo Store、AppSidebar 与可延迟/乱序完成的创建 API
+ * [INPUT]: 依赖真实 Data Router、Dashboard controller、Memo Store、ThemeProvider/AppSidebar 与可延迟/乱序完成的创建 API
  * [OUTPUT]: 验证快速新建时每次点击即插入并选中，但同帧仅挂载最终正文；动画保留，乱序回包、历史导航和失败不抢回新意图
- * [POS]: 页面到文件树的时序回归；仅替换网络与无关后台预取，保留真实路由调度以捕获乐观树/选中不同步
+ * [POS]: 页面到文件树的时序回归；仅替换网络与后台预取，Canvas 预载替身逐测恢复并保留组件导出，避免污染壳测试
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
-import { afterEach, beforeEach, expect, mock, test } from "bun:test";
+import { afterEach, beforeEach, expect, mock, spyOn, test } from "bun:test";
 import { Window } from "happy-dom";
 import { Suspense, useLayoutEffect } from "react";
 import type { MemoDetailNode } from "../shared/api/memo";
@@ -51,11 +51,13 @@ mock.module("../shared/api/memo", () => ({ ...memoApi,
 }));
 mock.module("./useMemoOrganize", () => ({ useMemoOrganize: () => ({ presentationRun: null, organizing: false }) }));
 mock.module("./useMemoDocumentPreload", () => ({ useMemoDocumentPreload() {} }));
-mock.module("../widgets/CanvasWorkspace", () => ({ preloadKnowledgeCanvas() {} }));
+const canvasWorkspace = await import("../widgets/CanvasWorkspace");
+let preloadSpy: ReturnType<typeof spyOn<typeof canvasWorkspace, "preloadKnowledgeCanvas">>;
 const { useAppDashboardController } = await import("./useAppDashboardController");
 const { useMemoTreeStore } = await import("../shared/store/memoTreeStore");
 const { AppSidebar } = await import("../widgets/AppSidebar");
 const { ToastProvider } = await import("../shared/design-system/components/Toast");
+const { ThemeProvider } = await import("../shared/theme/ThemeProvider");
 let controller: ReturnType<typeof useAppDashboardController>;
 const mountedDocuments: string[] = [];
 let blockedDocument: ReturnType<typeof deferred<void>> | null = null;
@@ -82,7 +84,7 @@ async function setup() {
   router = createMemoryRouter([{ path: "/app", loader: () => ({ accessToken: "test", entryId: null,
     profile: { id: "test-user", username: "Test", email: null, bio: null, avatarUrl: null },
     memoTree: [detail("existing"), detail("another")],
-  }), shouldRevalidate: () => false, hydrateFallbackElement: <span>加载中</span>, element: <ToastProvider><Harness /></ToastProvider>,
+  }), shouldRevalidate: () => false, hydrateFallbackElement: <span>加载中</span>, element: <ThemeProvider><ToastProvider><Harness /></ToastProvider></ThemeProvider>,
   children: [{ path: "notes/:noteId", element: null }, { index: true, element: null }] }], { initialEntries: ["/app/notes/existing"] });
   const view = render(<Suspense fallback={<span>正文准备中</span>}><RouterProvider router={router} /></Suspense>);
   await waitFor(() => expect(view.getByRole("button", { name: "新建备忘录" }).hasAttribute("disabled")).toBe(false));
@@ -100,8 +102,11 @@ const settle = async (index: number, id: string) => {
   const optimistic = useMemoTreeStore.getState().nodes.find((node) => node.id === id)!;
   await act(async () => requests[index]!.resolve({ ...detail(`server-${index}`), sort_order: optimistic.sort_order, title: optimistic.title }));
 };
-beforeEach(() => { blockedDocument = null; requests.length = 0; mountedDocuments.length = 0; frames.clear(); scrolls.length = 0; window.localStorage.clear(); });
-afterEach(() => { cleanup(); router?.dispose(); useMemoTreeStore.getState().reset(); });
+beforeEach(() => {
+  preloadSpy = spyOn(canvasWorkspace, "preloadKnowledgeCanvas").mockImplementation(() => {});
+  blockedDocument = null; requests.length = 0; mountedDocuments.length = 0; frames.clear(); scrolls.length = 0; window.localStorage.clear();
+});
+afterEach(() => { cleanup(); router?.dispose(); useMemoTreeStore.getState().reset(); preloadSpy.mockRestore(); });
 
 test("连续 32 次点击立即插入并选中，只为最后一篇挂载正文且不强制同步渲染", async () => {
   const view = await setup();

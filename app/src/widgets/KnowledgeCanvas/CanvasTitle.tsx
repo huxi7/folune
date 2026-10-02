@@ -1,10 +1,11 @@
 /**
- * [INPUT]: 依赖 React 本地编辑状态与上层的重命名命令；不再读取 canvas_kind/origin_node_id
+ * [INPUT]: 依赖 useLocale 的界面文案（用户内容保留原文）；依赖 React 本地编辑状态与上层的重命名命令；不再读取 canvas_kind/origin_node_id
  * [OUTPUT]: 对外提供 Canvas 顶层安静标题：任何画布都能就地重命名，且仅在进入编辑态时聚焦并全选
  * [POS]: KnowledgeCanvas 的画布身份表现层；不绘制卡片表面、不持有树事务，重命名交回上层，长标题截断并以 tooltip 给出全名。回到来源笔记不在这里——它是画布上那张 memo_ref 卡片的职责
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
+import { useLocale } from "../../shared/locale";
 import { useEffect, useRef, useState } from "react";
 
 type CanvasTitleProps = {
@@ -19,6 +20,7 @@ type CanvasTitleProps = {
  * 自动转为 standalone），标题这块地因此只做一件事: 改名。
  */
 export function CanvasTitle({ onRename, title }: CanvasTitleProps) {
+  const { t } = useLocale();
   const [draft, setDraft] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const committingRef = useRef(false);
@@ -47,7 +49,7 @@ export function CanvasTitle({ onRename, title }: CanvasTitleProps) {
   if (draft !== null) {
     return (
       <input
-        aria-label="画布名称"
+        aria-label={t("画布名称", "Canvas name")}
         className="canvas-title-input nodrag"
         maxLength={500}
         onBlur={commit}
@@ -73,7 +75,7 @@ export function CanvasTitle({ onRename, title }: CanvasTitleProps) {
       className="canvas-title"
       data-role="rename"
       onClick={() => setDraft(title)}
-      title={`${title} · 点击重命名`}
+      title={`${title} · ${t("点击重命名", "Click to rename")}`}
       type="button"
     >
       {title}

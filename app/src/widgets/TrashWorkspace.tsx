@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 shared/api/memo 的真实回收站 API、上层 Store restore 命令、根级 Toast 与纯 TrashWorkspaceView
+ * [INPUT]: 依赖 shared/api/memo 的真实回收站 API、上层 Store restore 命令、locale 双语反馈、根级 Toast 与 TrashWorkspaceView
  * [OUTPUT]: 对外提供 TrashWorkspace，编排加载/重试/恢复/永久删除/当前用户清空，列表呈现成功结果、Toast 仅报告失败
  * [POS]: app/src/widgets 的回收站控制器；只保存 Trash 列表视图状态，不复制 active tree，恢复结果必须交回唯一 Store
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -14,6 +14,7 @@ import {
   type MemoTrashItem,
 } from "../shared/api/memo";
 import { useToast } from "../shared/design-system/components";
+import { useLocale } from "../shared/locale";
 import {
   type TrashBusyAction,
   type TrashConfirmation,
@@ -32,6 +33,7 @@ export function TrashWorkspace({
   onRestore,
   refreshKey,
 }: TrashWorkspaceProps) {
+  const { t } = useLocale();
   const { toast } = useToast();
   const [items, setItems] = useState<MemoTrashItem[]>([]);
   const [status, setStatus] = useState<TrashStatus>("loading");
@@ -79,8 +81,8 @@ export function TrashWorkspace({
       removeItem(item.id);
     } catch (error) {
       toast({
-        description: error instanceof Error ? error.message : undefined,
-        title: "恢复失败",
+        description: error instanceof Error ? t(error.message, "Please try again shortly.") : undefined,
+        title: t("恢复失败", "Couldn't restore this item"),
         variant: "error",
       });
     } finally {
@@ -101,8 +103,8 @@ export function TrashWorkspace({
       setConfirmation(null);
     } catch (error) {
       toast({
-        description: error instanceof Error ? error.message : undefined,
-        title: "永久删除失败",
+        description: error instanceof Error ? t(error.message, "Please try again shortly.") : undefined,
+        title: t("永久删除失败", "Couldn't permanently delete this item"),
         variant: "error",
       });
     } finally {
@@ -124,8 +126,8 @@ export function TrashWorkspace({
       setConfirmation(null);
     } catch (error) {
       toast({
-        description: error instanceof Error ? error.message : undefined,
-        title: "清空回收站失败",
+        description: error instanceof Error ? t(error.message, "Please try again shortly.") : undefined,
+        title: t("清空回收站失败", "Couldn't empty Trash"),
         variant: "error",
       });
     } finally {

@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 shared/api/client 统一 Bearer 请求、AI SDK UIMessage 与 memo DTO mapper
- * [OUTPUT]: 对外提供 AI_TOOL_REQUEST_TIMEOUT_MS、FoluneUIMessage、首开 bootstrap、单会话 content、增量 assistant message PATCH、无归档状态的 AI thread/message/reference/settings/command CRUD、Run apply/reject/undo/get 类型与响应归一化
+ * [OUTPUT]: 对外提供 AI_TOOL_REQUEST_TIMEOUT_MS、FoluneUIMessage、首开 bootstrap、单会话 content、增量 assistant message PATCH、无归档状态的 AI thread/message/reference/settings/command CRUD、Run apply/reject/undo/get 类型与响应归一化、今日额度 getAiDailyUsage/AiDailyUsage
  * [POS]: app/src/shared/api 的 AI Native V2 HTTP 与消息契约边界；首开和会话切换分别使用聚合读取，工具权限读取、命令与单条结果落库以 45 秒响应期限退出，写请求不重放；真实写入只经 api/chat
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -354,6 +354,20 @@ export const updateAiSettings = (
     method: "PATCH",
     body: JSON.stringify({ permission_mode: permissionMode }),
   }, accessToken);
+
+// 今日额度状态（按 UTC 日）：total_tokens/daily_limit/remaining 为底层 token 口径，
+// 面板层再折算成对用户展示的「额度」；exceeded 是后端裁定的门禁真值，前端不可用折算后
+// 的额度自行判定。accessToken 省略时由请求期读当前会话。
+export type AiDailyUsage = {
+  usage_date: string;
+  total_tokens: number;
+  daily_limit: number;
+  remaining: number;
+  exceeded: boolean;
+};
+
+export const getAiDailyUsage = (accessToken?: string): Promise<AiDailyUsage> =>
+  apiRequest("/ai-usage", {}, accessToken);
 
 export const getAiCommand = (
   accessToken: string,

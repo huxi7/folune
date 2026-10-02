@@ -3,6 +3,8 @@
 
 成员清单
 CLAUDE.md: 记录 API 内存集成测试职责与文档协议
+billing.test.ts: 验证套餐/六档积分预览报价、JWT、两类 strict checkout 反注入、未付款不升级或造钱包、过期/欠费降级与 billing/Chat 同源真实日额度，存储失败不能伪装零消耗
+billing-rls.sql: staging PostgreSQL 事务验证订阅 owner 隔离、私有列不可读、用户三种 DML 与匿名读取被拒绝；测试记录全部回滚，不保留伪造付款事实
 support/: 测试替身模块，提供 memo 域两组契约测试共用的内存 Supabase Auth/PostgREST/RPC mock，并忠实复刻 memo_nodes 的两条标题 partial 唯一索引与默认画布标题同步触发器
 memo.test.ts: 以 Hono app 和共享 mock 验证 active memo 整树、canvas 节点的画布身份与无 canvas 时不多发请求、创建补偿、JWT owner 隔离、标题/正文更新、空白保真、移动防环及回收站端点认证 另验证正文替换不读取旧正文、CORS 预检复用/来源隔离与 gzip 解压逐字一致。
 memo-naming.test.ts: 覆盖现存最大编号加一、35 篇后只插入一次与客户端撞号兜底； 命名边界契约；锁定新建默认名撞名顺位让开、用户输入撞名只回 MEMO_TITLE_CONFLICT、不同类型同名合法、标题撞名回 409 但正文已落库、根节点作用域、soft-delete 后名称可复用、来源笔记改名时默认画布留着自己的名字、默认画布自己改名不回落，以及并发提交只成功一个

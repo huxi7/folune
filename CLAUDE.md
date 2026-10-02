@@ -16,6 +16,10 @@ Folune 的本质不是普通文本收纳，而是把“随手写”转化为“�
 - 20 美金: 进阶订阅
 - 100 美金: 高阶订阅
 
+积分统一为1积分=10,000 Token，日额度为Free 10、Starter 200、Pro 1,000、Studio 5,000积分；订阅按月/年收费、权益每日刷新，不另计对话次数或虚构月到账额度。菜单/设置/订阅共用服务端积分事实，余额最多显示一位小数且不足0.1保留阈值提示。
+
+独立订阅地址为 `/app/subscription`，账户菜单、设置与订阅页共享按用户隔离的订阅/用量快照；价格、有效订阅和 AI 日额度由 API 唯一裁决。当前升级页只展示三档付费套餐，提供年付 20% 折扣、账户每日/月赠积分及余额、六档积分预览弹窗与结账准备，支付网关尚未连接，选择方案不产生订单或权益变更。付款事实只读表已在 Staging 验证，生产迁移与真实支付接入分别按 [api/BILLING.md](api/BILLING.md) 执行。
+
 ## AI 角色
 AI 是用户的备忘录协作伙伴与智能档案管理员。
 
@@ -45,9 +49,9 @@ Canvas V2 是一级持久知识 Workspace：memo 默认 Canvas 与 standalone Ca
 | --- | --- | --- |
 | desktop | Electron + Forge 桌面宿主，复用 app；macOS arm64 DMG 与 Windows x64 Squirrel，私有源码构建、公开二进制发布 | [desktop/CLAUDE.md](desktop/CLAUDE.md) |
 | .github | 桌面 Tag 构建与跨仓库 Release 发布，Web/后端仍沿原 production 分支发布 | [.github/CLAUDE.md](.github/CLAUDE.md) |
-| app | 用户端，以 Paper First 舞台承载写作与共享左右工具；Canvas 路由切换到始终挂载同一 React Flow 实例的独立 Workspace，支持 memo Picker、预览/返回、自由文字、连接/删除/框选/整组移动/缩放、显式 AI 增量拓展与可靠自动保存；服务端文档、交互会话、WAL/传输状态分别收口，选择只有 React Flow 一个所有者，正文只按 memo ID 读取 | [app/CLAUDE.md](app/CLAUDE.md) |
+| app | 用户端，五栏设置与独立订阅页共用用户级计费快照；以 Paper First 舞台承载写作与共享左右工具；Canvas 路由切换到始终挂载同一 React Flow 实例的独立 Workspace，支持 memo Picker、预览/返回、自由文字、连接/删除/框选/整组移动/缩放、显式 AI 增量拓展与可靠自动保存；服务端文档、交互会话、WAL/传输状态分别收口，选择只有 React Flow 一个所有者，正文只按 memo ID 读取 | [app/CLAUDE.md](app/CLAUDE.md) |
 | chat | AI 能力服务，冻结消息上下文；聊天流原样透传推理，APP 直接以纯文本将原始推理与真实工具进度交错展示，不添加摘要模型调用，明确批量请求由共享八并发队列执行且可停止，转圈与实际运行同构，完成记录一次展开，正文首分块触发前端一次性收起过程，不等待步骤结束；对话、审批、整理与逐篇关联判断职责分离；Canvas expansion 只从 api 重取可信 context/正文/语料版本，复用 Explore 判断和逐字引文复核后返回候选，最终写入仍由浏览器经 api 统一 mutation 提交 | [chat/CLAUDE.md](chat/CLAUDE.md) |
-| api | 业务接口服务，承载 profile、memo、回收站、AI 状态机与 Canvas V2 默认/空白入口、无正文图读取、expansion context、人工/AI 共用 mutation；owner-only RLS、行锁、version、稳定 intent digest、receipt、原子 checkpoint 与同父同类型标题唯一索引共同构成唯一持久化边界，重名由数据库裁决；两种 Canvas 共用一条命名规则，标题不跟随任何东西 | [api/CLAUDE.md](api/CLAUDE.md) |
+| api | 业务接口服务，承载 profile、服务端套餐目录/只读付款事实/有效订阅与共享 AI 日额度、明确未接入的结账边界、memo、回收站、AI 状态机与 Canvas V2 默认/空白入口、无正文图读取、expansion context、人工/AI 共用 mutation；owner-only RLS、行锁、version、稳定 intent digest、receipt、原子 checkpoint 与同父同类型标题唯一索引共同构成唯一持久化边界，重名由数据库裁决；两种 Canvas 共用一条命名规则，标题不跟随任何东西 | [api/CLAUDE.md](api/CLAUDE.md) |
 | deploy | 后端构建基础设施，提供 API/Chat 共用的开发与生产多阶段镜像及运行时配置隔离契约 | [deploy/CLAUDE.md](deploy/CLAUDE.md) |
 | scripts | 本地开发运维入口，统一启动、停止与查看 folune-api-dev/folune-chat-dev 双服务 Docker 日志 | [scripts/CLAUDE.md](scripts/CLAUDE.md) |
 

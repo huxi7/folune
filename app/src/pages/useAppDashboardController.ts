@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖桌面可选退出保存注册表， 依赖首次入口就绪桥梁、React Router Profile/token、Canvas bootstrap、轻量 tree/正文/Workspace Store、删除编排、惰性 AI、持久左右工具宿主、按当前树重算的归档 presentation、useOverlayPanels 响应式判据与 Paper/Canvas Workspace
- * [OUTPUT]: 对外提供 useAppDashboardController 状态与命令投影；普通笔记树高亮即时响应，正文导航按帧合并且保持可中断，只有 Canvas 离场等待保存且仅最新选择可继续；另协调持久文件库、正文订阅/预取、账户与归档展示
+ * [OUTPUT]: 对外提供 useAppDashboardController 状态与命令投影；订阅通过受限来路保留原笔记身份，深链不触发恢复/创建笔记；普通笔记树高亮即时响应，正文导航按帧合并且可中断，Canvas 离场等待保存且仅最新选择继续，另协调文件库、正文预取、账户与归档
  * [POS]: app/src/pages 的 /app 状态协调 Hook，由 AppDashboard 单次持有；跨 Paper/Canvas 的数据与视觉交接只在此建立一次，深链刷新先确认节点类型，普通业务状态仍留在各自 Store/Workspace，文件库作为共享 Chrome 留在两种内容壳之外。它是「现在是不是覆盖式布局」的唯一持有者并下传给 Paper 壳与归档 Overlay：同一个断点算两遍就会出现两个都自称正确的布局；归档只交出 canonical memo，屏幕上由谁代表它归 AppSidebar
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -8,10 +8,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   useLoaderData,
-  useMatch,
+  useLocation,
+  matchPath,
   useNavigate,
 } from "react-router-dom";
 import { useWorkspaceEntryReady } from "./useWorkspaceEntryReady";
+import { isSubscriptionPath, workspacePathForLocation } from "./subscriptionNavigation";
 import { transitionContent } from "./viewTransition";
 
 import type { MemoTreeNode } from "../shared/api/memo";
@@ -96,7 +98,9 @@ export function useAppDashboardController() {
   const { accessToken, entryId, memoTree: initialMemoTree, profile: initialProfile } =
     useLoaderData() as WorkspaceLoaderData;
   const navigate = useNavigate();
-  const noteMatch = useMatch("/app/notes/:noteId");
+  const location = useLocation();
+  const subscriptionOpen = isSubscriptionPath(location.pathname);
+  const noteMatch = matchPath("/app/notes/:noteId", workspacePathForLocation(location));
   const routeMemoId = noteMatch?.params.noteId ?? null;
   const memoSelection = useMemoSelection(routeMemoId, navigate);
   const { toast } = useToast();
@@ -339,6 +343,9 @@ export function useAppDashboardController() {
       return;
     }
 
+    // 独立订阅深链不恢复或创建笔记；返回工作区后仍由原初始化流程接手。
+    if (subscriptionOpen) { setEntryStatus("ready"); return; }
+
     const handlingKey = `${profile.id}:${routeMemoId ?? "index"}`;
 
     if (initialTreeHandledRef.current !== null) {
@@ -417,6 +424,7 @@ export function useAppDashboardController() {
     resolveMemoId,
     toast,
     treeStatus,
+    subscriptionOpen,
   ]);
 
   useEffect(() => {
@@ -433,11 +441,11 @@ export function useAppDashboardController() {
   /*
    * ⌘E 在两个 Workspace 里表达同一件事——往前推进一步: Paper 里进入这篇笔记的
    * 画布, Canvas 里从选中节点继续 AI 拓展（见 KnowledgeCanvas 的 handleKeyDown）。
-   * 两个空间互斥, 所以同一个键位不会打架。AppMainToolbar 的画布按钮一直在 title
-   * 与 aria-keyshortcuts 里宣传这个快捷键, 这里才是真正兑现它的地方。
+   * 两个空间互斥, 所以同一个键位不会打架。AppMainToolbar 的画布按钮通过共享悬浮提示
+   * 与 aria-keyshortcuts 展示这个快捷键, 这里才是真正兑现它的地方。
    */
   useEffect(() => {
-    if (canvasNodeId !== null || activeView !== "note" || selectedMemoId === null) {
+    if (subscriptionOpen || canvasNodeId !== null || activeView !== "note" || selectedMemoId === null) {
       return;
     }
 
@@ -449,7 +457,7 @@ export function useAppDashboardController() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [activeView, canvasNodeId, memoCanvasEntry, selectedMemoId]);
+  }, [activeView, canvasNodeId, memoCanvasEntry, selectedMemoId, subscriptionOpen]);
 
   const accountDialogOpen = accountDialog !== null;
   useAccountProfileRefresh({

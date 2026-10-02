@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 优先加载 index.css 建立全局 CSS 层序，再依赖设计系统 motionTokenStyles、React、app/router、ThemeProvider、ToastProvider、DesktopLifecycle 与跨路由 WorkspaceEntryTransition
+ * [INPUT]: 优先加载 index.css 建立全局 CSS 层序，再依赖设计系统 motionTokenStyles、React、app/router、ThemeProvider 与独立 locale/LocaleProvider、ToastProvider、DesktopLifecycle 与跨路由 WorkspaceEntryTransition
  * [OUTPUT]: 对外提供本地存储品牌命名空间迁移与尊重系统 reduced-motion 的浏览器端 React 挂载入口
- * [POS]: app/src 的运行时入口，先把旧 SuperNote 偏好迁移到 Folune，再挂载全局 Motion/主题/Toast 上下文和 React Router
+ * [POS]: app/src 的运行时入口，先把旧 SuperNote 偏好迁移到 Folune，再挂载全局 Motion/主题/语言/Toast 上下文和 React Router；独立 Demo 不走本入口
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import "./index.css";
@@ -15,6 +15,7 @@ import { WorkspaceEntryTransition } from "./app/router/WorkspaceEntryTransition"
 import { router } from "./app/router";
 import { ToastProvider } from "./shared/design-system/components";
 import { ThemeProvider } from "./shared/theme/ThemeProvider";
+import { LocaleProvider } from "./shared/locale/LocaleProvider";
 import { motionTokenStyles } from "./shared/design-system/motion";
 
 const rootElement = document.getElementById("root");
@@ -56,12 +57,14 @@ createRoot(rootElement).render(
     <MotionConfig reducedMotion="user">
       <style>{motionTokenStyles}</style>
       <ThemeProvider>
-        <ToastProvider>
-          <DesktopLifecycle />
-          <WorkspaceEntryTransition>
-            <RouterProvider router={router} />
-          </WorkspaceEntryTransition>
-        </ToastProvider>
+        <LocaleProvider>
+          <ToastProvider>
+            <DesktopLifecycle />
+            <WorkspaceEntryTransition>
+              <RouterProvider router={router} />
+            </WorkspaceEntryTransition>
+          </ToastProvider>
+        </LocaleProvider>
       </ThemeProvider>
     </MotionConfig>
   </StrictMode>,

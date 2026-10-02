@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun test、轻量 MemoTreeNode fixtures 与 commandResults 排序纯函数
- * [OUTPUT]: 锁定六档固定排序、两种画布都独立成行、同名时笔记恒先于它的画布、画布行携带血缘、文件夹可导航，以及最近打开整档提前与稳定 tie-break
+ * [OUTPUT]: 锁定根路径本地化不改写用户路径、六档固定排序、两种画布都独立成行、同名时笔记恒先于它的画布、画布行携带血缘、文件夹可导航，以及最近打开整档提前与稳定 tie-break
  * [POS]: app/src/widgets 的全局搜索排序门禁；排序只有这一处实现，任何组件都不得再排一遍，因此这里是唯一需要维护的排序契约
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -76,6 +76,19 @@ const ids = (query: string, extra: Parameters<typeof buildCommandResults>[0] ext
   buildCommandResults({ query, tree, ...extra }).map((result) => result.id);
 
 describe("Command Palette 排序", () => {
+  test("本地化根目录标签不改写用户命名的同名文件夹", () => {
+    const ownFolder = node("own-folder", "根目录", "folder", {
+      children: [node("nested", "中文笔记", "memo")],
+    });
+    const translated = recentCommandResults({
+      recentIds: ["root-note", "nested"],
+      rootPathLabel: "Library",
+      tree: [node("root-note", "原始内容", "memo"), ownFolder],
+    });
+    expect(translated.map((result) => result.path)).toEqual(["Library", "根目录"]);
+    expect(translated.map((result) => result.title)).toEqual(["原始内容", "中文笔记"]);
+  });
+
   test("六档顺序固定：完全匹配 → 前缀 → 最近打开 → 包含 → 正文 → 路径", () => {
     const results = buildCommandResults({
       bodyHitIds: ["memo-body"],

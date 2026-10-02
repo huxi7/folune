@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 读取 APP 排版入口与生产样式，设计规范约束组件只消费文字角色
  * [OUTPUT]: 阻止局部数字字重回流、主正文/聊天失去角色接线，并确认认证与营销标准按钮复用 APP 排版而营销正文保持独立
- * [POS]: styles 的排版消费门禁；不锁像素审美，真实字号/颜色由浏览器验收
+ * [POS]: styles 的排版消费门禁；按用户/助手正文选择器验证角色，不把其他组件复用同一角色算作违规
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { describe, expect, test } from "bun:test";
@@ -36,8 +36,12 @@ describe("APP 排版角色消费", () => {
 
   test("消息双方显式消费相同字重与字号，编辑正文独立消费阅读角色", () => {
     const messages = read("ai-message.css");
-    expect(messages.match(/font-weight: var\(--weight-conversation, 400\)/g)).toHaveLength(2);
-    expect(messages.match(/font-size: var\(--type-conversation, 0.75rem\)/g)).toHaveLength(2);
+    for (const selector of [".ds-user-message-bubble", ".ds-streaming-text"]) {
+      const declarations = [...messages.matchAll(/([^{}]+)\{([^{}]*)\}/g)]
+        .find(match => match[1]?.trim() === selector)?.[2] ?? "";
+      expect(declarations, selector).toContain("font-weight: var(--weight-conversation, 400)");
+      expect(declarations, selector).toContain("font-size: var(--type-conversation, 0.75rem)");
+    }
     expect(read("codemirror.css")).toContain('font-weight: var(--weight-editor, 400)');
     expect(read("button.css")).toContain('font-weight: var(--weight-action, 650)');
   });

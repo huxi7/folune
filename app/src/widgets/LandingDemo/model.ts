@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 仅依赖 memo/AI 的类型契约
- * [OUTPUT]: 对外提供确定性笔记、文件树、归档落点标签、带真实工具调用的对话脚本与模拟回复step 列表
+ * [OUTPUT]: 对外提供确定性笔记/文件树、归档落点标签与对话脚本；模拟移动结果携带 id/operation/status 以复用生产撤销识别
  * [POS]: Landing Demo 的唯一内容源；不导入运行时业务代码，整理只改变父目录，内容主线为「散步 → 注意力 → 写作」
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -96,7 +96,7 @@ export function materializeSteps(steps: readonly DemoStep[], turnId: string, pen
     const input = { op: "move", title: step.title };
     return pending
       ? { type: "dynamic-tool", toolName: "edit_node", toolCallId, state: "input-available", input }
-      : { type: "dynamic-tool", toolName: "edit_node", toolCallId, state: "output-available", input, output: { id: stepCommandId(turnId, index), status: "succeeded" } };
+      : { type: "dynamic-tool", toolName: "edit_node", toolCallId, state: "output-available", input, output: { id: stepCommandId(turnId, index), operation: "move_node", status: "succeeded" } };
   });
 }
 

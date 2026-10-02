@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖 memo 标题/view 状态、可选文件操作能力、持久 Canvas 入口、整理 presentation、文件库定位回调、显式 AI 整理命令与浏览器 scroll timeline 能力
- * [OUTPUT]: 对外提供 sticky Paper Toolbar：左侧 Canvas 返回/归档落点/标题三段身份，右侧按扫描顺序排 中性「整理」（独立文字槽做光学对齐）→ 32px 图标控制簇（Canvas、阅读切换、更多）
+ * [INPUT]: 依赖memo/view状态、locale双语文案、共享WarmTooltipGroup/WarmTooltip/KeyboardShortcut、Canvas/整理/文件命令与浏览器scroll timeline能力
+ * [OUTPUT]: sticky Paper Toolbar保持身份/动作顺序；命令共用Canvas同款连续悬浮提示，整理与进入Canvas展示真实平台快捷键
  * [POS]: app/src/widgets 的纸张内命令条纯视图；左身份右能力各占稳定槽位，核心动作排首、「更多」只能排在簇尾，归档状态兼作归档线起点故必须留在纸的左上角，全局文件库/AI 开关归工作区控制层。凝结与下缘软边是同一个 CSS 滚动进度的两个读数，首选交给滚动本身，只有不支持 scroll timeline 的浏览器才挂一个哨兵做一次软切；本组件因此不含阈值、不读 scrollTop，也不知道软边有多高
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -14,7 +14,8 @@ import {
 } from "../shared/design-system/icons";
 
 import type { MemoDetailNode } from "../shared/api/memo";
-import { Button } from "../shared/design-system/components";
+import { Button, KeyboardShortcut, WarmTooltip, WarmTooltipGroup } from "../shared/design-system/components";
+import { useLocale } from "../shared/locale";
 import { MarkdownViewMenu } from "./MarkdownViewMenu";
 import { ArchiveStatus } from "./ArchiveStatus";
 import type { WorkspaceOrganizePresentation } from "./archiveCordPolicy";
@@ -77,12 +78,14 @@ function useCondensedFallback(): {
 }
 
 export function AppMainToolbar(props: AppMainToolbarProps) {
+  const { t } = useLocale();
   const { condensed, sentinelRef } = useCondensedFallback();
   return (
     <>
       {supportsScrollTimeline
         ? null
         : <div aria-hidden="true" className="app-main-toolbar-sentinel" ref={sentinelRef} />}
+    <WarmTooltipGroup>
     <header className="app-main-toolbar" data-condensed={supportsScrollTimeline ? undefined : condensed}>
       {/*
         * 左侧只放身份: 来路、落点、标题。归档状态住在这里而不是命令簇里, 有两个理由 ——
@@ -91,15 +94,16 @@ export function AppMainToolbar(props: AppMainToolbarProps) {
         */}
       <div className="app-main-toolbar-leading">
         {props.currentMemo !== null && props.onReturnCanvas !== undefined ? (
+          <WarmTooltip content={t(`返回「${props.canvasReturnTitle ?? "Canvas"}」`, `Back to ${props.canvasReturnTitle ?? "Canvas"}`)} side="bottom">
           <Button
-            aria-label={`返回 ${props.canvasReturnTitle ?? "Canvas"}`}
+            aria-label={t(`返回 ${props.canvasReturnTitle ?? "Canvas"}`, `Back to ${props.canvasReturnTitle ?? "Canvas"}`)}
             className="toolbar-return-canvas"
             icon={ArrowLeftIcon}
             onClick={props.onReturnCanvas}
             size="square"
-            title={`返回「${props.canvasReturnTitle ?? "Canvas"}」`}
             variant="ghost"
           />
+          </WarmTooltip>
         ) : null}
         {props.currentMemo !== null ? (
           <ArchiveStatus onLocate={props.onLocateArchive} presentation={props.organizePresentation} />
@@ -116,14 +120,19 @@ export function AppMainToolbar(props: AppMainToolbarProps) {
         */}
       <div className="note-view-actions">
         {props.currentMemo !== null ? <>
-          <Button aria-keyshortcuts="Meta+Enter Control+Enter" className="note-organize-button" icon={OrganizeNoteIcon} loading={props.organizing} onClick={() => void props.onOrganize()} size="default" title="整理（⌘/Ctrl + Enter）" variant="ghost"><span className="note-organize-label">整理</span></Button>
+          <WarmTooltip content={t("整理笔记", "Organize note")} disabled={props.organizing} side="bottom" shortcut={<KeyboardShortcut keys={["mod", "Enter"]} />}>
+            <Button aria-keyshortcuts="Meta+Enter Control+Enter" className="note-organize-button" icon={OrganizeNoteIcon} loading={props.organizing} onClick={() => void props.onOrganize()} size="default" variant="ghost"><span className="note-organize-label">{t("整理", "Organize")}</span></Button>
+          </WarmTooltip>
           <div className="note-view-cluster">
-            <Button aria-keyshortcuts="Meta+E Control+E" aria-label="进入 Canvas" className="note-explore-button" icon={CanvasIcon} loading={props.enteringCanvas} onClick={props.onEnterCanvas} size="square" title="进入 Canvas（⌘/Ctrl + E）" variant="ghost" />
+            <WarmTooltip content={t("进入 Canvas", "Open Canvas")} disabled={props.enteringCanvas} side="bottom" shortcut={<KeyboardShortcut keys={["mod", "E"]} />}>
+              <Button aria-keyshortcuts="Meta+E Control+E" aria-label={t("进入 Canvas", "Open Canvas")} className="note-explore-button" icon={CanvasIcon} loading={props.enteringCanvas} onClick={props.onEnterCanvas} size="square" variant="ghost" />
+            </WarmTooltip>
             <MarkdownViewMenu fileActionsEnabled={props.fileActionsEnabled} content={props.currentMemo.memo.content_mdx} documentView={props.documentView} editingMode={props.editingMode} onDocumentViewChange={props.onDocumentViewChange} onEditingModeChange={props.onEditingModeChange} title={props.currentMemoTitle} />
           </div>
         </> : null}
       </div>
     </header>
+    </WarmTooltipGroup>
     </>
   );
 }

@@ -1,10 +1,11 @@
 /**
- * [INPUT]: 依赖 motion/react、可选 CanvasEntryBootstrap、共享 EdgeDock、ArchiveCord 空闲上下文、canvasChromeStore/canvasWorkspaceStore、KnowledgeCanvas 会话控制与 Quiet Editorial token；左右工具由 Dashboard 持久宿主承载
+ * [INPUT]: 依赖 useLocale 的画布壳文案；依赖 motion/react、可选 CanvasEntryBootstrap、共享 EdgeDock、ArchiveCord 空闲上下文、canvasChromeStore/canvasWorkspaceStore、KnowledgeCanvas 会话控制与 Quiet Editorial token；左右工具由 Dashboard 持久宿主承载
  * [OUTPUT]: 对外提供可预载、可消费一次性 detail、可向路由暴露 flush 且中央始终保持同一 React Flow 实例的全视口 CanvasWorkspace
  * [POS]: widgets 的 Canvas V2 会话壳；负责返回 flush、Panel 会话状态、每画布布局记忆与空间布局，数据/交互/恢复归 KnowledgeCanvas；文件库宿主在路由壳外持久挂载，Canvas 只提供其开关语义，左右面板各自独立
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
+import { useLocale } from "../shared/locale";
 import {
   AnimatePresence,
   motion,
@@ -79,6 +80,7 @@ export function CanvasWorkspace({
   title,
   userId,
 }: CanvasWorkspaceProps) {
+  const { t } = useLocale();
   const reduceMotion = useReducedMotion();
   const sessionCanvasId = useCanvasWorkspaceStore((state) => state.canvasId);
   const sessionAssistantOpen = useCanvasWorkspaceStore((state) => state.assistantOpen);
@@ -204,7 +206,7 @@ export function CanvasWorkspace({
 
   return (
       <main
-        aria-label={`知识画布：${title}`}
+        aria-label={t(`知识画布：${title}`, `Knowledge canvas: ${title}`)}
         className="app-workspace canvas-workspace"
         data-assistant-open={assistantOpen}
         data-entry-motion={bootstrap === null ? "crossfade" : "view-transition"}
@@ -232,7 +234,7 @@ export function CanvasWorkspace({
                 >
                   <EdgeDock
                     icon={<SidebarSimpleIcon size={16} />}
-                    label="文件库"
+                    label={t("文件库", "Library")}
                     onClick={openLibrary}
                     side="left"
                   />
@@ -293,7 +295,7 @@ export function CanvasWorkspace({
         {overlayPanels && anyPanelOpen ? (
           <motion.button
             animate={{ opacity: 1 }}
-            aria-label="关闭浮动工具"
+            aria-label={t("关闭浮动工具", "Close floating tools")}
             className="workspace-panel-backdrop"
             exit={{ opacity: 0 }}
             initial={{ opacity: 0 }}

@@ -1,7 +1,7 @@
 <!doctype html>
 <!--
-  [INPUT]: 依赖 src/main.tsx 的浏览器端 React 入口、ThemeProvider 存储键、prefers-color-scheme 与 Vite MODE 替换，依赖品牌母图等比缩放的 PNG favicon
-  [OUTPUT]: 对外提供营销/APP 根级视觉场景、App 首屏同步解析 system/light/dark、全部营销路由预绘浅色画布、品牌 favicon 和 root 挂载点
+  [INPUT]: 依赖 src/main.tsx 的浏览器端 React 入口、ThemeProvider/LocaleProvider 存储键、prefers-color-scheme 与 Vite MODE 替换，依赖品牌母图等比缩放的 PNG favicon
+  [OUTPUT]: 对外提供营销/APP 根级视觉场景、首绘中英语言与 App system/light/dark、全部营销路由预绘浅色画布、品牌 favicon 和 root 挂载点
   [POS]: app 根 HTML 入口，被 Vite dev/build 消费
   [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 -->
@@ -15,6 +15,12 @@
         const pathname = window.location.pathname;
         root.dataset.visualContext = pathname === "/app" || pathname.startsWith("/app/")
           ? "app" : "marketing";
+        try {
+          root.dataset.locale = window.localStorage.getItem("folune-locale") === "en" ? "en" : "zh-CN";
+        } catch {
+          root.dataset.locale = "zh-CN";
+        }
+        root.lang = root.dataset.visualContext === "app" ? root.dataset.locale : "zh-CN";
         try {
           const storedTheme = window.localStorage.getItem("folune-theme")
             ?? window.localStorage.getItem("supernote-theme");

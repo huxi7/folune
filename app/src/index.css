@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 Kumo 样式表 @import、Tailwind v4，按层序导入生产样式、app-visual.css 的 APP 场景配色与 app-typography.css 的文字角色映射；Kumo 继续拥有 --text-sm/base/lg 与默认过渡时长
+ * [INPUT]: 依赖 Kumo 样式表 @import、Tailwind v4，按层序导入生产样式、app-visual.css 的 APP 场景配色与 app-typography.css 的文字角色映射及 account-typography.css 的同源 Montserrat；Kumo 继续拥有 --text-sm/base/lg 与默认过渡时长
  * [OUTPUT]: 对外提供 Landing/工作区入口同源纸白与墨色 token、Kumo 基础样式、Landing Light、Quiet Editorial Instrument 与隔离 Color Lab 蓝色终选候选：16px Control/12px inner、中性灰阶 Skeleton、低对比滚动条与 APP 场景样式入口、唯一静态语义 Color/Type/Spacing/Radius/Elevation 与 DS motion.ts 时长/曲线的消费别名、全站命令控件共读的单一 press 收紧比例（Reduced Motion 在此归 1）、极轻纵向同色面光与中性落地阴影构成的 Button 材质、Paper First Stage/Paper/Panel Toggle/Archive Cord/Cord、Tailwind 映射及样式模块入口
  * [POS]: app/src 的主题入口，被 main.tsx 引入；全局旧基线供营销使用，app-visual.css / app-typography.css 分别在 APP 文档根拥有语义颜色与角色排版
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -27,6 +27,7 @@
 @import "./styles/marketing-motion.css";
 @import "./styles/app-visual.css";
 @import "./styles/app-typography.css";
+@import "./styles/account-typography.css";
 
 @custom-variant dark (&:is(.dark *));
 

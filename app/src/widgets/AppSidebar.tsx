@@ -1,10 +1,12 @@
 /**
- * [INPUT]: 依赖 MemoTreeBranch/Skeleton、SidebarCreateMenu、memoLibrary 拖拽/祖先计划、memoTitleRules 的重名与可改名判据、持久化展开偏好、archiveCordPolicy 的代表解析、useTreeReorder 的结构重排与通过 Portal 锚定视口的 MotionSurface、Profile 与上层事务命令；结构键按不可变树引用复用
+ * [INPUT]: 依赖共享 ThemeProvider/LocaleProvider 向纯展示 UserMenu 传入偏好；依赖 MemoTreeBranch/Skeleton、SidebarCreateMenu、memoLibrary 拖拽/祖先计划、memoTitleRules 的重名与可改名判据、持久化展开偏好、archiveCordPolicy、useTreeReorder 与 Portal MotionSurface，以及 Profile、上层方案/额度快照和事务命令；结构键按不可变树引用复用
  * [OUTPUT]: 对外提供文件库 Header、搜索入口、复用上一布局原位插入笔记与即时选中、仅在定位目标本身变化（换目标/被搬走/树就绪）且离屏时才平滑定位、可聚焦真实文件树、正文意图预热、树内重排/跨视图笔记拖拽、底部导航、节点回收站命令，以及树内唯一的归档可见代表标记
- * [POS]: app/src/widgets 的按需文件库内容层；它是 expandedFolders 的所有者，因此也是「当前谁代表那篇被整理的笔记」唯一有资格回答的一层；结构键只在树形关系变化时递归计算，标题/摘要更新不触发整树 FLIP 判据；事务与路由切换由 Dashboard 编排
+ * [POS]: app/src/widgets 的按需文件库内容层；expandedFolders 与归档可见代表归本层，订阅事实只透传给 UserMenu 而不重复请求；结构键只随树形变化计算，标题/摘要不触发整树 FLIP，事务与路由归 Dashboard
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
+import { useLocale } from "../shared/locale";
+import { useTheme } from "../shared/theme/ThemeProvider";
 import {
   FileTextIcon,
   FolderIcon,
@@ -64,7 +66,6 @@ import { useMemoTreeExpansion } from "./useMemoTreeExpansion";
 export type SidebarView =
   | "note"
   | "trash"
-  | "subscription"
   | "design-system";
 
 type AppSidebarProps = {
@@ -92,6 +93,12 @@ type AppSidebarProps = {
   onOpenSettings: () => void;
   onOpenSearch: () => void;
   onOpenSubscription: () => void;
+  onOpenUsage?: () => void;
+  onOpenBilling?: () => void;
+  onOpenCredits?: () => void;
+  onOpenUserMenu?: () => void;
+  planName?: string;
+  remainingCredits?: number | null;
   onRenameNode: (nodeId: string, title: string) => Promise<void>;
   onSoftDeleteNode: (nodeId: string) => Promise<void>;
   onRequestCreateFolder: (parentId: string | null) => void;
@@ -196,6 +203,12 @@ export function AppSidebar({
   onOpenSettings,
   onOpenSearch,
   onOpenSubscription,
+  onOpenUsage,
+  onOpenBilling,
+  onOpenCredits,
+  onOpenUserMenu,
+  planName,
+  remainingCredits,
   onRenameNode,
   onSoftDeleteNode,
   onRequestCreateFolder,
@@ -209,6 +222,8 @@ export function AppSidebar({
   skeletonVisible,
   treeStatus,
 }: AppSidebarProps) {
+  const { theme, setTheme } = useTheme();
+  const { locale, setLocale, t } = useLocale();
   const contextMenuRef = useRef<HTMLDivElement>(null);
   const treeRef = useRef<HTMLDivElement>(null);
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
@@ -532,17 +547,17 @@ export function AppSidebar({
   const contextMenuNode = contextMenu?.node ?? null;
 
   return (
-    <aside aria-label="文件浏览器" className="app-sidebar">
+    <aside aria-label={t("文件浏览器", "Library")} className="app-sidebar">
       <div className="app-sidebar-header">
         <div className="app-sidebar-heading">
           <BrandMark />
           <Button
-            aria-label="收起文件库"
+            aria-label={t("收起文件库", "Close library")}
             className="sidebar-collapse-button"
             icon={SidebarSimpleIcon}
             onClick={onClose}
             size="square"
-            title="收起文件库"
+            title={t("收起文件库", "Close library")}
             variant="ghost"
           />
         </div>
@@ -550,12 +565,12 @@ export function AppSidebar({
         <div className="sidebar-primary-actions">
           <SidebarButton
             aria-keyshortcuts="Meta+K Control+K"
-            aria-label="搜索笔记、画布与文件夹"
+            aria-label={t("搜索笔记、画布与文件夹", "Search notes, canvases and folders")}
             className="sidebar-search-trigger"
-            label="搜索"
+            label={t("搜索", "Search")}
             leading={<MagnifyingGlassIcon size={16} />}
             onClick={onOpenSearch}
-            title="搜索（⌘/Ctrl + K）"
+            title={t("搜索（⌘/Ctrl + K）", "Search (⌘/Ctrl + K)")}
           />
           <SidebarCreateMenu
             disabled={mutating || treeStatus !== "ready"}
@@ -567,7 +582,7 @@ export function AppSidebar({
       </div>
 
       <div
-        aria-label="备忘录文件树"
+        aria-label={t("备忘录文件树", "Notes tree")}
           aria-busy={treeStatus === "loading"}
           className={[
             "app-sidebar-tree memo-tree-scroll-area",
@@ -584,13 +599,13 @@ export function AppSidebar({
           role="tree"
           tabIndex={0}
         >
-          <p className="sidebar-section-label">备忘录</p>
+          <p className="sidebar-section-label">{t("备忘录", "Notes")}</p>
           {treeStatus === "loading" ? (
             <MemoTreeSkeleton visible={skeletonVisible} />
           ) : treeStatus === "error" ? (
-            <div className="sidebar-tree-empty">暂时无法读取文件树。</div>
+            <div className="sidebar-tree-empty">{t("暂时无法读取文件树。", "Could not load your library.")}</div>
           ) : memoTree.length === 0 ? (
-            <div className="sidebar-tree-empty">右键空白处，创建第一个备忘录或文件夹。</div>
+            <div className="sidebar-tree-empty">{t("右键空白处，创建第一个备忘录或文件夹。", "Right-click here to create your first note or folder.")}</div>
           ) : (
             <MemoTreeBranch
               archiveRepresentative={archiveRepresentative}
@@ -634,12 +649,12 @@ export function AppSidebar({
       </div>
 
       <div className="app-sidebar-footer">
-        <nav aria-label="辅助导航" className="sidebar-utility-list">
+        <nav aria-label={t("辅助导航", "More")} className="sidebar-utility-list">
           {import.meta.env.DEV ? (
             <SidebarButton
               active={activeView === "design-system"}
               aria-current={activeView === "design-system" ? "page" : undefined}
-              aria-label="打开 Design System"
+              aria-label={t("打开 Design System", "Open Design System")}
               className="sidebar-utility-button"
               label="Design System"
               leading={<PaletteIcon size={16} />}
@@ -650,21 +665,31 @@ export function AppSidebar({
           <SidebarButton
             active={activeView === "trash"}
             aria-current={activeView === "trash" ? "page" : undefined}
-            aria-label="打开回收站"
+            aria-label={t("打开回收站", "Open trash")}
             className="sidebar-utility-button"
-            label="回收站"
+            label={t("回收站", "Trash")}
             leading={<TrashIcon size={16} />}
             onClick={() => onSelectView("trash")}
-            title="回收站"
+            title={t("回收站", "Trash")}
           />
         </nav>
         <UserMenu
           avatarUrl={profile.avatarUrl ?? undefined}
-          email={profile.email ?? "未提供邮箱"}
+          email={profile.email ?? t("未提供邮箱", "No email provided")}
           name={profile.username}
+          onOpen={onOpenUserMenu}
+          locale={locale}
+          onLocaleChange={setLocale}
+          onThemeChange={setTheme}
+          theme={theme}
           onOpenProfile={onOpenProfile}
           onOpenSettings={onOpenSettings}
           onOpenSubscription={onOpenSubscription}
+          onOpenUsage={onOpenUsage}
+          onOpenBilling={onOpenBilling}
+          onOpenCredits={onOpenCredits}
+          planName={planName}
+          remainingCredits={remainingCredits}
           onSignOut={onSignOut}
         />
       </div>
@@ -673,7 +698,7 @@ export function AppSidebar({
       {contextMenu ? (
         <ContextMenuPortal key="context">
         <MotionSurface
-          aria-label="备忘录操作"
+          aria-label={t("备忘录操作", "Note actions")}
           className="memo-context-menu"
           ref={contextMenuRef}
           role="menu"
@@ -690,7 +715,7 @@ export function AppSidebar({
             type="button"
           >
             <FileTextIcon size={14} />
-            新建备忘录
+            {t("新建备忘录", "New note")}
           </button>
           <button
             disabled={mutating}
@@ -703,7 +728,7 @@ export function AppSidebar({
             type="button"
           >
             <FolderIcon size={14} />
-            新建文件夹
+            {t("新建文件夹", "New folder")}
           </button>
           {contextMenuNode ? (
             <>
@@ -715,7 +740,7 @@ export function AppSidebar({
                 type="button"
               >
                 <PencilSimpleIcon size={14} />
-                <span className="memo-context-menu-label">重命名</span>
+                <span className="memo-context-menu-label">{t("重命名", "Rename")}</span>
                 <kbd className="memo-context-menu-shortcut">F2</kbd>
               </button>
               <button
@@ -730,7 +755,7 @@ export function AppSidebar({
                 type="button"
               >
                 <TrashIcon size={14} />
-                <span className="memo-context-menu-label">移至回收站</span>
+                <span className="memo-context-menu-label">{t("移至回收站", "Move to trash")}</span>
               </button>
             </>
           ) : null}

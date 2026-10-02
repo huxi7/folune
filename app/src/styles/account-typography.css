@@ -1,0 +1,30 @@
+/**
+ * [INPUT]: 依赖同源 Montserrat 字体与现有中文/正文回退，Laper 实际 font-family 提供参考
+ * [OUTPUT]: 账户、设置、订阅与积分界面共享英文排版；英文 APP 控件采用同一字体
+ * [POS]: styles 的账户字体边界；保留笔记正文与品牌标题各自排版，不改变字号和字重角色
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+@font-face {
+  font-family: 'Montserrat';
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url('/fonts/montserrat-latin-variable.woff2') format('woff2');
+}
+
+:root {
+  --font-account: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, 'Noto Sans SC', 'PingFang SC', sans-serif;
+}
+
+html:root[data-visual-context='app']:lang(en) {
+  --font-sans: var(--font-account);
+}
+
+.ds-user-menu-popover,
+.ds-user-menu-submenu,
+.ds-user-account-card,
+.account-center-layout,
+.folune-subscription,
+.folune-credits-purchase {
+  font-family: var(--font-account);
+}

@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖 index.css 的 landing-paper 与共享几何/材质/动效、文档根 data-visual-context/html.dark，以及 Workspace/DS/Canvas、认证页面与营销 Button/GlowButton 类
- * [OUTPUT]: APP 与独立 Demo 的纸白/黑灰语义色；认证与营销全部标准按钮共读中性文字、表面、边界、阴影与错误色，认证全体输入共用 APP 渐进焦点；排版由 app-typography.css 映射
+ * [INPUT]: 依赖共享几何/动效与浅暗主题；Laper 实测提供60%淡灰边框及菜单/设置/内卡三档贴边阴影，Folune 将微绿灰投影为微蓝灰
+ * [OUTPUT]: APP/Demo 共享 #E4E6E8/60% 框线、#F4F5F6 分组/导航灰底、#EFF0F1 轨道与灰阶贴边阴影；主题底片白亮，认证与营销保持独立映射
  * [POS]: APP 完整主题在文档根映射并覆盖 Portal；营销控件按共享组件类接入，覆盖 Hero/顶栏/页尾/文章返回而不依赖容器名单，营销正文、品牌与布局仍由原组件拥有
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -37,15 +37,26 @@ html:root[data-visual-context="app"],
 
 /* ---- APP 完整主题只在文档根定义；不在面板或 Dialog 内创建第二份主题 ---- */
 html:root[data-visual-context="app"] {
+  --border: rgb(228 230 232 / 60%);
+  --input: var(--border);
+  --app-input-hover: #d4d6d8;
+  --app-theme-track: #eff0f1;
+  --surface-neutral: #f4f5f6;
+  --muted: #f6f7f8;
+  --secondary: #edeeef;
+  --interactive-hover: var(--secondary);
+  --shadow-color: #000000;
+  --processing-border: var(--border);
+  --shadow-sm: 0 2px 4px rgb(var(--app-shadow-rgb) / 5%), 0 4px 6px -1px rgb(var(--app-shadow-rgb) / 5%);
   --radius-panel: 1.25rem;
   --background: #ffffff;
   --workspace-stage: var(--landing-paper);
   --paper-surface: #ffffff;
   --paper-foreground: var(--foreground);
-  --paper-edge: #e2e5e5;
+  --paper-edge: var(--border);
   --popover: #ffffff;
   --popover-foreground: var(--foreground);
-  --surface-accent-subtle: #f7f8f8;
+  --surface-accent-subtle: #f7f8f9;
   --accent: var(--interactive-hover);
   --accent-foreground: var(--foreground);
   --primary: #395875;
@@ -54,7 +65,7 @@ html:root[data-visual-context="app"] {
   --primary-active: #284158;
   --primary-soft: var(--accent);
   --primary-soft-foreground: var(--accent-foreground);
-  --border-strong: #aaafaf;
+  --border-strong: rgb(0 0 0 / 18%);
   --sidebar: var(--card);
   --sidebar-foreground: var(--foreground);
   --sidebar-primary: var(--foreground);
@@ -72,7 +83,7 @@ html:root[data-visual-context="app"] {
   --archive-cord: #474d55;
   --overlay: rgb(24 24 24 / 38%);
   --app-message-surface: color-mix(in srgb, var(--primary) 6%, white);
-  --app-message-border: color-mix(in srgb, var(--primary) 12%, white);
+  --app-message-border: var(--border);
   --app-assistant-foreground: #50585c;
   --canvas-interaction-ink: #686e6e;
   --app-selected-surface: var(--accent);
@@ -92,8 +103,8 @@ html:root[data-visual-context="app"] {
     0 22px 44px -12px rgb(var(--app-shadow-rgb) / 4%),
     0 0 60px rgb(var(--app-shadow-rgb) / 3%),
     0 40px 80px -24px rgb(var(--app-shadow-rgb) / 3%);
-  --shadow-2xs: 0 1px 2px rgb(var(--app-shadow-rgb) / 3%);
-  --shadow-xs: 0 2px 8px -5px rgb(var(--app-shadow-rgb) / 12%);
+  --shadow-2xs: 0 1px 2px rgb(var(--app-shadow-rgb) / 6%), 0 0 1px rgb(var(--app-shadow-rgb) / 3%);
+  --shadow-xs: 0 2px 4px rgb(var(--app-shadow-rgb) / 5%), 0 1px 2px -1px rgb(var(--app-shadow-rgb) / 5%);
   --shadow: 0 12px 30px -20px rgb(var(--app-shadow-rgb) / 22%);
   --shadow-lg: 0 24px 54px -30px rgb(var(--app-shadow-rgb) / 28%);
   --shadow-xl: 0 30px 68px -36px rgb(var(--app-shadow-rgb) / 30%);
@@ -105,13 +116,14 @@ html:root.dark[data-visual-context="app"] {
   --foreground: #e8e8e8;
   --workspace-stage: #181818;
   --paper-surface: #242424;
-  --paper-edge: #393939;
+  --paper-edge: var(--border);
   --card: #222222;
   --popover: #292929;
   --secondary: #2d2d2d;
   --muted: #262626;
   --muted-foreground: #aaaaaa;
   --surface-neutral: #2d2d2d;
+  --app-theme-track: var(--surface-neutral);
   --surface-accent-subtle: #292929;
   --interactive-hover: #2d2d2d;
   --accent: var(--interactive-hover);
@@ -120,9 +132,9 @@ html:root.dark[data-visual-context="app"] {
   --primary-foreground: #1b2732;
   --primary-hover: #a0b8ce;
   --primary-active: #7b95ae;
-  --border: #393939;
-  --border-strong: #626262;
-  --input: #424242;
+  --border: rgb(255 255 255 / 10%);
+  --border-strong: rgb(255 255 255 / 20%);
+  --input: var(--border);
   --ring: #949494;
   --warning: #d5b06c;
   --warning-soft: #393123;
@@ -134,18 +146,26 @@ html:root.dark[data-visual-context="app"] {
   --archive-cord: #b8b8b8;
   --overlay: rgb(0 0 0 / 54%);
   --app-message-surface: color-mix(in srgb, var(--primary) 6%, var(--card));
-  --app-message-border: color-mix(in srgb, var(--primary) 12%, var(--border));
+  --app-message-border: var(--border);
   --app-assistant-foreground: #c3c7cb;
-  --app-input-hover: #5c5c5c;
+  --app-input-hover: rgb(255 255 255 / 18%);
   --canvas-interaction-ink: #aaaaaa;
   --app-shadow-rgb: 0 0 0;
   --shadow-color: #000000;
   --button-shadow-neutral-rest: rgb(0 0 0 / 42%);
   --button-shadow-neutral-hover: rgb(0 0 0 / 52%);
+  --shadow-sm: 0 2px 4px rgb(var(--app-shadow-rgb) / 20%), 0 4px 6px -1px rgb(var(--app-shadow-rgb) / 20%);
+  --shadow-2xs: 0 1px 2px rgb(var(--app-shadow-rgb) / 18%), 0 0 1px rgb(var(--app-shadow-rgb) / 10%);
+  --shadow-xs: 0 2px 4px rgb(var(--app-shadow-rgb) / 20%), 0 1px 2px -1px rgb(var(--app-shadow-rgb) / 20%);
   --paper-shadow: 0 1px 2px rgb(0 0 0 / 18%), 0 4px 10px -6px rgb(0 0 0 / 38%), 0 10px 18px -12px rgb(0 0 0 / 48%);
 }
 
 @layer components {
+  /* ---- 普通框线统一消费透明灰阶，不在卡片/头像/引用中掺入品牌色 ---- */
+  :root[data-visual-context="app"] :is(.ds-card-accent, .ds-user-avatar) { border-color: var(--border); }
+  :root[data-visual-context="app"] .markdown-reading-view blockquote { border-color: var(--border-strong); }
+  :root[data-visual-context="app"] .ds-dialog-panel { box-shadow: var(--shadow-xs); }
+
   /* ---- 气泡只留极淡品牌底与内侧细线；正文颜色不牵连过程、工具或图标 ---- */
   :root[data-visual-context="app"] .ds-user-message-bubble {
     border-radius: var(--radius-panel);
@@ -182,7 +202,7 @@ html:root.dark[data-visual-context="app"] {
   :root[data-visual-context="app"] .command-row[data-active="true"] :is(.command-row-open, .command-row-copy strong) {
     color: var(--app-selected-foreground);
   }
-  :root[data-visual-context="app"] .ds-segmented-control-indicator { background: var(--app-selected-surface); }
+  :root[data-visual-context="app"] .ds-segmented-control-indicator { background: var(--segmented-indicator-surface, var(--app-selected-surface)); }
   :root[data-visual-context="app"] .ds-segmented-control-option[data-active="true"] {
     color: var(--app-selected-foreground);
   }

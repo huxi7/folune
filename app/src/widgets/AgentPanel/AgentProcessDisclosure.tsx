@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 Collapse micro 披露、React 本地展开状态、ThinkingMark 与整轮 active 状态
+ * [INPUT]: 依赖 locale 状态文案、Collapse micro 披露、React 本地展开状态、ThinkingMark 与整轮 active 状态
  * [OUTPUT]: 对外提供处理期展开、正文开始仅自动收起一次、后续由用户控制回看的 AgentProcessDisclosure；手动开合只在原地铺开/收拢内容，绝不跟随滚动到底部
  * [POS]: 单条回复的披露生命周期；进入正文后不再因迟到工具/思考自动展开，新消息通过父层 key 重置。跟随滚动回调身份恒定、只按 manualToggleRef 短路——切换 onMotionEnd 引用会触发 Collapse 的 cleanup 补调，反而在点击那刻把视口甩到底部
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -15,6 +15,7 @@ import {
 } from "react";
 
 import { ThinkingMark, Collapse } from "../../shared/design-system/components";
+import { useLocale } from "../../shared/locale";
 
 type AgentProcessDisclosureProps = {
   active: boolean;
@@ -27,10 +28,12 @@ type AgentProcessDisclosureProps = {
 export function AgentProcessDisclosure({
   active,
   autoExpand = true,
-  activeLabel = "正在思考",
+  activeLabel,
   onProgress,
   children,
 }: AgentProcessDisclosureProps) {
+  const { t } = useLocale();
+  const resolvedActiveLabel = activeLabel ?? t("正在思考", "Thinking");
   const contentId = useId();
   const [mode, setMode] = useState<"auto" | "open" | "closed">(active && autoExpand ? "auto" : "closed");
   // 这次开合是不是用户手动触发的。手动展开/收起只在原地铺开或收拢内容，绝不跟随
@@ -53,12 +56,12 @@ export function AgentProcessDisclosure({
     <div className="agent-process-disclosure" data-expanded={expanded}>
       {automaticallyExpanded ? (
         <div
-          aria-label={activeLabel}
+          aria-label={resolvedActiveLabel}
           className="agent-process-status"
           role="status"
         >
           <ThinkingMark active aria-hidden="true" size={14} />
-          <span>{activeLabel}</span>
+          <span>{resolvedActiveLabel}</span>
         </div>
       ) : (
         <button
@@ -72,7 +75,7 @@ export function AgentProcessDisclosure({
           type="button"
         >
           <ThinkingMark active={active} aria-hidden="true" size={14} />
-          <span>{active ? activeLabel : "思考过程"}</span>
+          <span>{active ? resolvedActiveLabel : t("思考过程", "Thought process")}</span>
           <CaretRightIcon aria-hidden="true" size={14} />
         </button>
       )}

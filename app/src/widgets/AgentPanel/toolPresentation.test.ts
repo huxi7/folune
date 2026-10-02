@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun 测试运行器、共享 Lucide 图标与基于工具 part 的展示适配器
- * [OUTPUT]: 验证读取快照支持执行中/失败动作的目标名、自然动作命名、安全详情、状态结果及未知协议不外露
+ * [OUTPUT]: 验证中英动作保留原笔记标题、读取快照目标名、安全详情、状态结果及未知协议不外露
  * [POS]: AgentPanel 工具 Message UI 的展示契约测试，防止协议名、UUID、正文或原始 JSON 回流界面
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -118,4 +118,15 @@ it("失败命令仍可通过 before_state 命名，更新正文读取命令节�
       input: { op: "delete" }, output: { before_state: { node: { title: "研究笔记" } } }, state: "output-error",
     }).name).toContain("研究笔记");
   }
+});
+
+it("英文只翻译动作与状态，中文笔记标题原样保留", () => {
+  const result = getAgentToolPresentation("edit_node", {
+    input: { op: "rename", title: "研究笔记" }, state: "approval-requested",
+  }, undefined, "en");
+  expect(result.name).toBe("Rename note “研究笔记”");
+  expect(result.details).toEqual([
+    { label: "Target", value: "「研究笔记」" },
+    { label: "Status", value: "Waiting for your approval." },
+  ]);
 });

@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 shared/api/memo 的轻量 MemoTreeNode（canvas 节点携带 MemoCanvasIdentity）与服务端正文命中 ID
+ * [INPUT]: 依赖 shared/api/memo 的轻量 MemoTreeNode（canvas 节点携带 MemoCanvasIdentity）、服务端正文命中 ID 与调用方可本地化的根路径标签
  * [OUTPUT]: 对外提供 CommandResult/CommandMatch 类型、buildCommandResults 排序纯函数与 recentCommandResults 空查询列表
  * [POS]: app/src/widgets 的全局搜索唯一排序真相；Command Palette 只消费结果，任何组件都不得再自己排一遍。两种画布都是独立结果行，同名时笔记恒排在它的画布之前，血缘由 originTitle 说明而不由缺席表达
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -56,12 +56,13 @@ const flatten = (
   nodes: readonly MemoTreeNode[],
   folders: readonly string[],
   out: FlatNode[],
+  rootPathLabel: string,
 ): FlatNode[] => {
   for (const node of nodes) {
-    const path = folders.length === 0 ? ROOT_PATH : folders.join(" / ");
+    const path = folders.length === 0 ? rootPathLabel : folders.join(" / ");
     if (node.node_type === "folder") {
       out.push({ kind: "folder", node, path });
-      flatten(node.children, [...folders, node.title], out);
+      flatten(node.children, [...folders, node.title], out, rootPathLabel);
       continue;
     }
     out.push({
@@ -177,12 +178,13 @@ export const buildCommandResults = (input: {
   limit?: number;
   query: string;
   recentIds?: readonly string[];
+  rootPathLabel?: string;
   tree: readonly MemoTreeNode[];
 }): CommandResult[] => {
   const query = normalizeCommandQuery(input.query);
   if (query.length === 0) return [];
 
-  const flat = flatten(input.tree, [], []);
+  const flat = flatten(input.tree, [], [], input.rootPathLabel ?? ROOT_PATH);
   const index = indexTree(flat);
   const bodyHits = new Set(input.bodyHitIds ?? []);
   const recentIndex = new Map(
@@ -207,9 +209,10 @@ export const buildCommandResults = (input: {
 export const recentCommandResults = (input: {
   limit?: number;
   recentIds: readonly string[];
+  rootPathLabel?: string;
   tree: readonly MemoTreeNode[];
 }): CommandResult[] => {
-  const flat = flatten(input.tree, [], []);
+  const flat = flatten(input.tree, [], [], input.rootPathLabel ?? ROOT_PATH);
   const index = indexTree(flat);
   const byId = new Map(flat.map((entry) => [entry.node.id, entry]));
   const results: CommandResult[] = [];

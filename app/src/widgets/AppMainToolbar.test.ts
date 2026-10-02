@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 读取 AppMainToolbar、workspace.css 与 brand-spec 的 Toolbar 命令层级契约
+ * [INPUT]: 读取 AppMainToolbar、workspace.css 与 brand-spec 的命令层级和共享悬浮提示/真实快捷键契约
  * [OUTPUT]: 锁定 Toolbar 不再接收拼接路径；整理是排在首位的 中性核心动作（有图标与文字、不是 Filled Primary、静止无容器身体），进入 Canvas 收成无标签 32px 图标，三枚图标组成 4px 紧凑簇，整理与簇也以 4px 相隔，弹层型「更多」排在簇尾，归档状态是左侧身份段的独立元素，命令不带选中指示，顶栏 control 的 32px 高度只声明一次且中性 hover/press 只有一个答案，sticky 钉在 Panel 内缩线，顶栏与 Paper 同表面同颜色且永远不画底边线，凝结只有一个被动画的进度且下缘软边的高度/模糊/遮罩都乘它
  * [POS]: Paper Toolbar 结构/样式静态回归门禁；不发起导航、整理请求或文件树事务
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -30,7 +30,7 @@ describe("AppMainToolbar", () => {
 
   test("整理是唯一带文字的核心动作, 但不是 Filled Primary", () => {
     const organize = jsxLineWith(toolbar, 'className="note-organize-button"');
-    expect(organize).toContain('<span className="note-organize-label">整理</span>');
+    expect(organize).toContain('<span className="note-organize-label">{t("整理", "Organize")}</span>');
     expect(organize).toContain("icon={OrganizeNoteIcon}");
     expect(organize).toContain('size="default"');
     expect(organize).toContain('variant="ghost"');
@@ -40,7 +40,10 @@ describe("AppMainToolbar", () => {
     expect(organize).toContain("loading={props.organizing}");
     expect(organize).toContain('aria-keyshortcuts="Meta+Enter Control+Enter"');
     // 界面陈述用户的结果: 可见文字、tooltip 与可访问名都不写「AI 整理」
-    expect(organize).toContain('title="整理（⌘/Ctrl + Enter）"');
+    expect(toolbarCode).toContain('content={t("整理笔记", "Organize note")}');
+    expect(toolbarCode).toContain('keys={["mod", "Enter"]}');
+    expect(toolbarCode).toContain('keys={["mod", "E"]}');
+    expect(organize).not.toContain('title=');
     expect(toolbarCode).not.toContain("AI 整理");
   });
 
@@ -71,8 +74,10 @@ describe("AppMainToolbar", () => {
     expect(explore).toContain('variant="ghost"');
     expect(toolbar).not.toContain("进入 Canvas</Button>");
     // 图标按钮的可访问名只剩 aria-label 一个来源, 丢了它就是一颗没有名字的按钮
-    expect(explore).toContain('aria-label="进入 Canvas"');
-    expect(explore).toContain("title=");
+    expect(explore).toContain('aria-label={t("进入 Canvas", "Open Canvas")}');
+    expect(explore).not.toContain("title=");
+    expect(toolbarCode).toContain('<WarmTooltipGroup>');
+    expect(toolbarCode).toContain('content={t("进入 Canvas", "Open Canvas")}');
   });
 
   test("弹层型「更多」排在簇尾: 菜单右对齐垂下, 别处都会悬在同侧控件头上", () => {

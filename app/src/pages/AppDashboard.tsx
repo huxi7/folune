@@ -1,10 +1,16 @@
 /**
- * [INPUT]: 依赖 useAppDashboardController 的状态/命令投影、Paper/Canvas 内容壳、持久文件库与统一 Dialog
- * [OUTPUT]: 对外提供 /app 的稳定空间装配，文件树消费即时选择、正文消费已提交路由，左右工具跨路由保留实例，拖拽边界独立于内容裁切插槽，Paper 与 Canvas 各自拥有内容生命周期
- * [POS]: pages 的 Workspace 视觉组合根；业务/路由/flush 编排归 controller，动画不能通过重挂载这个根来驱动
+ * [INPUT]: 依赖双语 locale、useAppDashboardController、Paper/Canvas 内容壳、持久文件库与统一 Dialog、独立 SubscriptionPage，积分购买弹窗，以及菜单打开时刷新的用户级 BillingProvider 快照
+ * [OUTPUT]: 对外提供 /app 的稳定空间装配与 /app/subscription 独立页，文件树消费即时选择、正文消费已提交路由；订阅打开时隐藏并保留工作区/左右工具实例，积分弹窗按来路保留工作区或订阅背景，键盘边界阻止常驻工作区快捷键
+ * [POS]: pages 的 Workspace 视觉组合根；按 profile.id 持有唯一计费快照，菜单/设置/订阅同源，路由返回由受限来路解析；业务/flush 归 controller，动画不重挂载根
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
+import { useLocale } from "../shared/locale";
 import { lazy, Suspense } from "react";
+import { useLoaderData, useLocation, useNavigate } from "react-router-dom";
+import { BillingProvider, useBilling } from "../shared/api/useBilling";
+import type { WorkspaceLoaderData } from "./appDashboardTypes";
+import { CREDITS_PATH, SUBSCRIPTION_PATH, isCreditsPath, isSubscriptionPath, subscriptionReturnPath } from "./subscriptionNavigation";
+import { useSubscriptionKeyboardBoundary } from "./useSubscriptionKeyboardBoundary";
 import { memoNodeTitleTaken } from "../shared/store/memoTitleRules";
 import { findNode } from "../shared/store/memoTree";
 import { useMemoTreeStore } from "../shared/store/memoTreeStore";
@@ -35,7 +41,26 @@ import {
 const AgentPanel = lazy(() => loadAgentPanel().then((module) => ({
   default: module.AgentPanel,
 })));
+const SubscriptionPage = lazy(() => import("./SubscriptionPage").then(module => ({ default: module.SubscriptionPage })));
+const CreditsPage = lazy(() => import("./CreditsPage").then(module => ({ default: module.CreditsPage })));
 export function AppDashboard() {
+  const { profile } = useLoaderData() as WorkspaceLoaderData;
+  return <BillingProvider key={profile.id}><DashboardContent /></BillingProvider>;
+}
+function DashboardContent() {
+  const { t } = useLocale();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const subscriptionOpen = isSubscriptionPath(location.pathname);
+  const creditsOpen = isCreditsPath(location.pathname);
+  const workspaceBehindCredits = creditsOpen && location.state?.creditsFrom === "workspace";
+  const workspaceHidden = subscriptionOpen && !workspaceBehindCredits;
+  useSubscriptionKeyboardBoundary(subscriptionOpen);
+  const billing = useBilling();
+  const openSubscription = () => {
+    void billing.refresh();
+    void navigate(SUBSCRIPTION_PATH, { state: { workspacePath: location.pathname } });
+  };
   const {
     activeView,
     sidebarSelectedMemoId,
@@ -135,10 +160,16 @@ export function AppDashboard() {
         onPrefetchMemo={(memoId) => {
           void preloadMemo(accessToken, memoId).catch(() => undefined);
         }}
-        onOpenProfile={() => handleOpenAccountDialog("account")}
+        onOpenUserMenu={() => { void billing.refresh(); }}
+        onOpenProfile={() => handleOpenAccountDialog("profile")}
         onOpenSearch={openCommandPalette}
         onOpenSettings={() => handleOpenAccountDialog("appearance")}
-        onOpenSubscription={() => handleSelectAuxView("subscription")}
+        onOpenSubscription={openSubscription}
+        onOpenCredits={() => void navigate(CREDITS_PATH, { state: { workspacePath: location.pathname, creditsFrom: "workspace" } })}
+        onOpenUsage={() => { void billing.refresh(); handleOpenAccountDialog("usage"); }}
+        onOpenBilling={() => { void billing.refresh(); handleOpenAccountDialog("billing"); }}
+        planName={billing.catalog?.plans.find(plan => plan.id === billing.overview?.subscription.plan_id)?.name ?? "—"}
+        remainingCredits={billing.overview?.credits.balance ?? null}
         onRenameNode={handleRenameNode}
         onSoftDeleteNode={async (nodeId) => {
           await memoDeletion.deleteNode(nodeId);
@@ -254,9 +285,10 @@ export function AppDashboard() {
   const routeKindPending = routeMemoId !== null && treeStatus === "loading";
   return (
     <>
+      <div hidden={workspaceHidden} inert={subscriptionOpen} style={{ display: workspaceHidden ? "none" : "contents" }}>
       {routeKindPending ? (
         <main
-          aria-label="正在打开内容"
+          aria-label={t("正在打开内容", "Opening your content")}
           className="canvas-workspace"
         >
           <CanvasStageLoading label="正在打开内容" visible />
@@ -317,7 +349,7 @@ export function AppDashboard() {
         style={workspaceStyle}
         resizeHandle={
           <PanelResizeHandle
-            ariaLabel="调整聊天区域宽度"
+            ariaLabel={t("调整聊天区域宽度", "Resize chat panel")}
             direction={-1}
             max={AGENT_MAX_WIDTH}
             min={AGENT_MIN_WIDTH}
@@ -350,6 +382,12 @@ export function AppDashboard() {
         onCreateFolder={handleCreateFolder}
         onMemoDialogClose={() => setMemoDialog(null)}
         onProfileChange={setProfile}
+        onSignOut={handleSignOut}
+        onViewPlans={() => {
+          setAccountProfileRefreshing(false);
+          setAccountDialog(null);
+          openSubscription();
+        }}
         profile={profile}
       />
       <WorkspaceCommandPalette
@@ -369,6 +407,22 @@ export function AppDashboard() {
           handleSelectMemo(nodeId);
         }}
       />
+      </div>
+      {subscriptionOpen ? (
+        <Suspense fallback={<main className="fixed inset-0 bg-background" aria-label={t("正在打开订阅计划", "Opening plans")} />}>
+          {!workspaceBehindCredits ? <div inert={creditsOpen} aria-hidden={creditsOpen || undefined}>
+            <SubscriptionPage
+              profile={profile}
+              onBack={() => void navigate(subscriptionReturnPath(location.state), { replace: true })}
+              onBuyCredits={() => void navigate(CREDITS_PATH, { state: { workspacePath: subscriptionReturnPath(location.state) } })}
+            />
+          </div> : null}
+          {creditsOpen ? <CreditsPage
+            onBack={() => void navigate(location.state?.creditsFrom === "workspace" ? subscriptionReturnPath(location.state) : SUBSCRIPTION_PATH, { replace: true, state: location.state })}
+            onUpgrade={() => void navigate(SUBSCRIPTION_PATH, { replace: true, state: { workspacePath: subscriptionReturnPath(location.state) } })}
+          /> : null}
+        </Suspense>
+      ) : null}
     </>
   );
 }

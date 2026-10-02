@@ -1,10 +1,11 @@
 /**
- * [INPUT]: 依赖 @xyflow/react、motion/react、workspaceMotion spatialSpring、CanvasFlowNode UI-only motionState、NotePaper（纸面身份由它命名壳与正文）、空间文字几何、设计系统图标、稳定 canvasActions 与显式交互状态
+ * [INPUT]: 依赖 useLocale 的界面文案（用户内容保留原文）；依赖 @xyflow/react、motion/react、workspaceMotion spatialSpring、CanvasFlowNode UI-only motionState、NotePaper（纸面身份由它命名壳与正文）、空间文字几何、设计系统图标、稳定 canvasActions 与显式交互状态
  * [OUTPUT]: 对外提供无业务 Store 的 CanvasCardView，可按本地 receipt 入场且纸面可飞向 Preview 的 memo_ref 卡、底栏行尾连接抓手/整卡 target、源节点确认反馈与 1:1 拖拽/等比缩放 native 文字
  * [POS]: KnowledgeCanvas 的节点表现层；正式中心 Handle 仍只登记关系身份，底栏抓手与会话期 whole-card target 只承载直接操纵，真实正式端点继续由 CanvasCordEdge 读取节点矩形求解
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
+import { useLocale } from "../../shared/locale";
 import {
   Handle,
   NodeResizeControl,
@@ -95,6 +96,7 @@ export const CanvasCardView = memo(function CanvasCardView({
   data, height, id, selected, width,
   editing, previewing, aiLoading, connectionSourceId, validConnectionTarget,
 }: CanvasCardViewProps) {
+  const { t } = useLocale();
   const actions = useCanvasActions();
   const reduceMotion = Boolean(useReducedMotion());
   const [text, setText] = useState(data.body ?? "");
@@ -258,7 +260,7 @@ export const CanvasCardView = memo(function CanvasCardView({
         <div className="canvas-text-surface" style={surfaceStyle}>
           {editing ? (
             <textarea
-              aria-label="自由文字"
+              aria-label={t("自由文字", "Text")}
               className="canvas-text-editor nodrag nowheel"
               maxLength={5000}
               onBlur={finishEditing}
@@ -311,9 +313,9 @@ export const CanvasCardView = memo(function CanvasCardView({
    * 一个既验证不了、也处理不掉的警告只会让人以为出了故障。
    */
   const status = data.tombstone
-    ? "原笔记已被永久删除"
+    ? t("原笔记已被永久删除", "The original note was permanently deleted")
     : data.targetDeleted
-      ? "在回收站"
+      ? t("在回收站", "In trash")
       : "";
   const motionStyle = data.motionState === undefined
     ? undefined
@@ -389,17 +391,17 @@ export const CanvasCardView = memo(function CanvasCardView({
           && !previewing
           ? data.targetNodeId
           : null}
-        emptyLabel={data.tombstone ? "原文已不在库中" : "这页还没有正文"}
+        emptyLabel={data.tombstone ? t("原文已不在库中", "The original note is no longer available") : t("这页还没有正文", "This page is still blank")}
         excerpt={data.body}
         overlay={available ? (
           <button
-            aria-label={`展开阅读${data.title}`}
+            aria-label={t(`展开阅读${data.title}`, `Read ${data.title}`)}
             className="canvas-card-expand nodrag"
             onClick={(event) => {
               event.stopPropagation();
               actions.onPreview(id);
             }}
-            title="展开阅读"
+            title={t("展开阅读", "Expand to read")}
             type="button"
           >
             <ExpandIcon size={16} />
@@ -421,21 +423,21 @@ export const CanvasCardView = memo(function CanvasCardView({
         <span className="canvas-card-actions">
           {available ? (
             <button
-              aria-label="AI 拓展这条分支"
+              aria-label={t("AI 拓展这条分支", "Explore this branch with AI")}
               className="canvas-card-action"
               disabled={aiLoading}
               onClick={() => void actions.onExpand(id)}
-              title="AI 拓展"
+              title={t("AI 拓展", "Explore with AI")}
               type="button"
             >
               <ExpandFromNoteIcon size={14} />
             </button>
           ) : null}
           <button
-            aria-label="从画布移除"
+            aria-label={t("从画布移除", "Remove from canvas")}
             className="canvas-card-action"
             onClick={() => void actions.onRemove(id).catch(() => undefined)}
-            title="移除"
+            title={t("移除", "Remove")}
             type="button"
           >
             <TrashIcon size={14} />
@@ -443,7 +445,7 @@ export const CanvasCardView = memo(function CanvasCardView({
         </span>
         {available ? (
           <Handle
-            aria-label="从这张卡片建立关系"
+            aria-label={t("从这张卡片建立关系", "Connect this card")}
             className="canvas-card-connect-handle nodrag"
             id="connection-source"
             isConnectable
@@ -467,7 +469,7 @@ export const CanvasCardView = memo(function CanvasCardView({
             position={Position.Right}
             role="button"
             tabIndex={0}
-            title="拖到另一张卡片，或点击后再选择目标"
+            title={t("拖到另一张卡片，或点击后再选择目标", "Drag to another card, or click then choose a target")}
             type="source"
           >
             <ConnectionHandleIcon aria-hidden size={14} />

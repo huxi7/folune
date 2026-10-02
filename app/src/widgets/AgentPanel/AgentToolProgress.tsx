@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖有序过程 parts、工具展示适配、执行事实订阅与明确批量快照
+ * [INPUT]: 依赖有序过程 parts、locale 读屏状态、工具展示适配、执行事实订阅与明确批量快照
  * [OUTPUT]: 原始推理和普通工具原序展示，只有明确批量请求可折叠；转圈数量完全来自真实执行状态
  * [POS]: AgentPanel 过程展示边界；不做摘要、工具同名猜测或全局数量裁剪
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -8,11 +8,13 @@ import { getToolName, isToolUIPart, type UIMessage } from "ai";
 import { ToolCallBubble } from "../../shared/design-system/components";
 import { MarkdownReadingView } from "../MarkdownReadingView";
 import { BatchToolProgress } from "./BatchToolProgress";
-import { getAgentToolState, normalizeAgentToolName, type AgentToolPresentation } from "./toolPresentation";
+import { englishToolStateLabels, getAgentToolState, normalizeAgentToolName, type AgentToolPresentation } from "./toolPresentation";
 import { readBatchSnapshot, useToolExecution } from "./toolExecutionState";
+import { useLocale } from "../../shared/locale";
 
 type ToolPart = Extract<UIMessage["parts"][number], { toolCallId: string }>;
 function ToolProgress({ part, presentation, live, checkpoint }: { part: ToolPart; presentation: AgentToolPresentation; live: boolean; checkpoint?: unknown }) {
+  const { locale } = useLocale();
   const execution = useToolExecution(part.toolCallId);
   const batch = readBatchSnapshot(part.output) ?? execution?.batch ?? readBatchSnapshot(checkpoint);
   if (normalizeAgentToolName(getToolName(part)) === "edit_nodes" && batch) return <BatchToolProgress batch={batch} live={live} />;
@@ -21,7 +23,7 @@ function ToolProgress({ part, presentation, live, checkpoint }: { part: ToolPart
   const state = terminal ? sdkState : execution?.state === "running" ? "running"
     : execution?.state === "succeeded" ? "output-available" : execution?.state === "failed" ? "output-error"
     : execution?.state === "cancelled" ? "output-denied" : sdkState === "input-available" ? "queued" : sdkState;
-  return <div className="agent-tool-stack"><ToolCallBubble {...presentation} live={live} state={state} /></div>;
+  return <div className="agent-tool-stack"><ToolCallBubble {...presentation} labels={locale === "en" ? englishToolStateLabels : undefined} live={live} state={state} /></div>;
 }
 
 export function AgentToolProgress({ parts, presentations, live }: {

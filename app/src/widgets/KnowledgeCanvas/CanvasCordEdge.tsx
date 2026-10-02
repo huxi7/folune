@@ -1,10 +1,11 @@
 /**
- * [INPUT]: 依赖 PresenceSurface 的顶部关系说明入退场与 CSS 独立居中定位、 @xyflow/react、CanvasFlowEdge UI-only motionState、共享 Cord draw/矩形射线几何、设计系统图标与 canvasActions
+ * [INPUT]: 依赖 useLocale 的界面文案（用户内容保留原文）；依赖 PresenceSurface 的顶部关系说明入退场与 CSS 独立居中定位、 @xyflow/react、CanvasFlowEdge UI-only motionState、共享 Cord draw/矩形射线几何、设计系统图标与 canvasActions
  * [OUTPUT]: 对外提供可由本地 receipt 单次绘制的动态浮动 Cord、整线命中区、几何适配器与理由检查/删除入口
  * [POS]: KnowledgeCanvas 的关系交互层；每次节点移动都从两张卡片的真实中心连线求边界交点，彻底绕过固定左右 Handle 坐标；线本身是指向面，中点标记只是它常驻可见的把手与键盘入口
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
+import { useLocale } from "../../shared/locale";
 import { PresenceSurface } from "../../shared/design-system/components/PresenceSurface";
 import { useDismissable } from "../../shared/design-system/useDismissable";
 import {
@@ -120,6 +121,7 @@ export function CanvasEdgeReasonInspector({
   selected = false,
   style,
 }: CanvasEdgeReasonInspectorProps) {
+  const { t } = useLocale();
   const detailsId = `canvas-edge-reason-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
   const [expanded, setExpanded] = useState(false);
   const [hovered, setHovered] = useState(false);
@@ -156,11 +158,11 @@ export function CanvasEdgeReasonInspector({
     open: showDetails,
     shellRef,
   });
-  const relationKind = createdBy === "ai" ? "AI 关联理由" : "手工关联";
+  const relationKind = createdBy === "ai" ? t("AI 关联理由", "AI connection rationale") : t("手工关联", "Manual connection");
   const reason = normalizedRationale.length === 0
     ? createdBy === "ai"
-      ? "这条 AI 关系暂时没有可用的说明。"
-      : "这条关系由你手动建立。"
+      ? t("这条 AI 关系暂时没有可用的说明。", "No explanation is available for this AI connection yet.")
+      : t("这条关系由你手动建立。", "You created this connection manually.")
     : normalizedRationale;
 
   return (
@@ -179,14 +181,14 @@ export function CanvasEdgeReasonInspector({
       <button
         aria-controls={detailsId}
         aria-expanded={showDetails}
-        aria-label={`查看${relationKind}`}
+        aria-label={t(`查看${relationKind}`, `View ${relationKind}`)}
         className="canvas-edge-reason-trigger"
         onClick={(event) => {
           event.stopPropagation();
           setExpanded((current) => !current);
         }}
         ref={triggerRef}
-        title={`查看${relationKind}`}
+        title={t(`查看${relationKind}`, `View ${relationKind}`)}
         type="button"
       >
         <InfoIcon aria-hidden size={14} />
@@ -202,13 +204,13 @@ export function CanvasEdgeReasonInspector({
             <span>{reason}</span>
           </span>
           <button
-            aria-label="删除关系"
+            aria-label={t("删除关系", "Remove connection")}
             className="canvas-edge-delete"
             onClick={(event) => {
               event.stopPropagation();
               onRemove();
             }}
-            title="删除关系"
+            title={t("删除关系", "Remove connection")}
             type="button"
           >
             <TrashIcon size={14} />

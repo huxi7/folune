@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 标题字重消费 section 文字角色； 依赖 Motion presence、Portal、useModalLifecycle 与 React id/ref，依赖 共享 Lucide XIcon，依赖 Button 与 design-system.css 暴露的 ds-dialog-overlay/ds-dialog-panel/ds-dialog-shell 模态材质类
- * [OUTPUT]: 对外提供密度/宽度/对齐/表面/标题、default|none 入退场模式、标题描述关联、Esc、焦点循环、滚动锁定的 Dialog
+ * [OUTPUT]: 对外提供密度/宽度/对齐/表面/标题/可本地化关闭标签、default|none 入退场模式、标题描述关联、Esc、焦点循环、滚动锁定的 Dialog
  * [POS]: app/src/shared/design-system/components 的唯一模态基础件；motion=none 交出入场编排让遮罩随 root 视图过渡一起换（遮罩绝不自带过渡身份，否则会盖住正在放大的纸），模态行为仍由此统一
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -17,6 +17,7 @@ type DialogProps = {
   /** top 让弹窗贴近视口上方，命令面板需要它才不会在长结果时上下跳 */
   align?: DialogAlign;
   children: ReactNode;
+  closeLabel?: string;
   density?: DialogDensity;
   description?: string;
   headerMode?: DialogHeaderMode;
@@ -53,6 +54,7 @@ export function Dialog(props: DialogProps) {
 function DialogFrame({
   align = "center",
   children,
+  closeLabel = "关闭弹窗",
   density = "default",
   description,
   headerMode = "default",
@@ -156,11 +158,11 @@ function DialogFrame({
               ) : null}
             </div>
             <Button
-              aria-label="关闭弹窗"
+              aria-label={closeLabel}
               icon={XIcon}
               onClick={() => onOpenChange(false)}
               size="square"
-              title="关闭"
+              title={closeLabel}
               variant="ghost"
             />
           </div>

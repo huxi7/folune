@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 Collapse 的按需高度披露、 React 折叠状态、共享 Lucide 工具图标与自带圆形轮廓的结果图标、人话名称/详情、AI SDK 状态与执行器 running/queued 状态
+ * [INPUT]: 依赖 Collapse/React 状态、共享图标、人话名称/详情、可选界面语言文案和 AI SDK/执行器状态
  * [OUTPUT]: 对外提供不暴露原始载荷、固定状态位仅 running 展示单弧旋转，等待静止，完成展示成功/失败、有详情才可聚焦展开的 ToolCallBubble
  * [POS]: design-system AI 消息家族的工具披露控件，以 Secondary Button 同源材质承载动作入口，详情保持普通信息排版
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -36,6 +36,7 @@ type ToolCallBubbleProps = {
   live?: boolean;
   name: string;
   state: ToolCallState;
+  labels?: { states: Record<ToolCallState, string>; interrupted: string; details: string };
 };
 
 const stateLabel: Record<ToolCallState, string> = {
@@ -56,6 +57,7 @@ export function ToolCallBubble({
   live = true,
   name,
   state,
+  labels,
 }: ToolCallBubbleProps) {
   const detailsId = useId();
   const [expanded, setExpanded] = useState(false);
@@ -71,7 +73,7 @@ export function ToolCallBubble({
     : failed || denied || interrupted
       ? XCircleIcon
       : null;
-  const status = interrupted ? "未完成" : stateLabel[state];
+  const status = interrupted ? labels?.interrupted ?? "未完成" : (labels?.states ?? stateLabel)[state];
   const bubbleClassName = "ds-button-secondary ds-tool-call-bubble";
   const bubbleContent = (
     <>
@@ -99,7 +101,7 @@ export function ToolCallBubble({
           aria-busy={active || undefined}
           aria-controls={detailsId}
           aria-expanded={expanded}
-          aria-label={`${name}：${status}，查看详情`}
+          aria-label={labels ? `${name}: ${status}, ${labels.details}` : `${name}：${status}，查看详情`}
           className={bubbleClassName}
           data-expandable="true"
           onClick={() => setExpanded((value) => !value)}
@@ -110,7 +112,7 @@ export function ToolCallBubble({
       ) : (
         <div
           aria-busy={active || undefined}
-          aria-label={`${name}：${status}`}
+          aria-label={labels ? `${name}: ${status}` : `${name}：${status}`}
           className={bubbleClassName}
           data-expandable="false"
           role="status"

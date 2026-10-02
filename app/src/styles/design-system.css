@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 消费 APP app-typography.css 文字角色，变量回退保持非 APP 原排版； 依赖设计系统的半径/曲线配对规则与 index.css 的 Quiet Editorial 语义 Color/Type/Spacing/Radius/Elevation/Motion、统一中性 interactive-hover 与 Tailwind v4 layer
- * [OUTPUT]: 统一业务/Select/账户弹出菜单的唯一材质规则； 对外提供平面 Input/Select/Card、紧边界图与 5:4 布局比的固定字标 BrandMark、克制 Dialog panel/bare 与 default|none 入场（motion=none 交出入场编排给 root 视图过渡，因此磨砂玻璃得以保留）、Skeleton/Thinking/loading 信息态；Select 临时指向状态与普通菜单共享中性 hover，Button 由 button.css 独立维护
+ * [OUTPUT]: 统一菜单材质、平面Input/Select/Card与BrandMark；Dialog的panel/bare共用85%页面底色遮罩且无背景模糊，default|none入场保持与root视图过渡同步；提供Skeleton/Thinking/loading状态
  * [POS]: app/src/styles 的组件视觉层，被 index.css 统一导入
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -332,14 +332,10 @@
    * motion="none" 是一句真话: 这层遮罩不拥有自己的动效。
    *
    * 视图过渡在 update 返回后的下一帧就拍新截图, 那时遮罩自己的淡入才刚开到第 0 毫秒,
-   * 于是"新状态"里根本没有磨砂 —— 整段放大过程中画布上其他卡片仍然清清楚楚, 直到过渡
-   * 结束真实 DOM 接手, 磨砂才一下盖上来。世界后退因此变成一个与纸无关的独立事件。
+   * 于是"新状态"里根本没有淡化遮罩，画布与纸的过渡结束后背景才突然变淡。
    * 交给 root 那对截图去带, 它天然与纸同拍。没有视图过渡的浏览器才需要自己淡入。
    *
-   * 也正因为它属于 root 那张截图, 磨砂玻璃在这里是完整可用的: backdrop-filter 采样的
-   * 就是同一次绘制里它身后的画布。反过来若给遮罩单独一个 view-transition-name, 它会被
-   * 提到过渡层并排到兄弟末尾, 整段动画都盖在那张正在放大的纸之上 —— 那不是"材质不对",
-   * 而是把主角挡住了。
+   * 遮罩属于root截图，不另设view-transition-name，避免它被提升到正在放大的纸上方。
    */
   .ds-dialog-overlay[data-motion="none"] {
     animation: none;
@@ -366,19 +362,10 @@
 
   .ds-dialog-overlay {
     z-index: var(--layer-dialog);
-    background: color-mix(in srgb, var(--shadow-color) 38%, transparent);
+    background: color-mix(in srgb, var(--background) 85%, transparent);
     /* 入退场归 Dialog presence。 */
-    backdrop-filter: blur(12px);
-  }
-
-  /*
-   * bare 表面把视觉完全交给 children，而 children 通常是一张自带柔影的纸。
-   * 压暗式遮罩会把那圈阴影吃掉——阴影是暗的，背景更暗时它不可见。所以这里改成
-   * 明亮的磨砂玻璃：世界仍然退后，但纸的投影重新读得出来。
-   */
-  .ds-dialog-overlay[data-surface="bare"] {
-    background: color-mix(in srgb, var(--background) 66%, transparent);
-    backdrop-filter: blur(20px) saturate(1.04);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
   }
 
   .ds-select-shell {

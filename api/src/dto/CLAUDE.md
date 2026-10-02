@@ -4,6 +4,7 @@
 成员清单
 CLAUDE.md: 记录业务 DTO 层职责与文档协议
 auth.dto.ts: 校验 Supabase /auth/v1/user 响应并 infer Auth payload
+billing.dto.ts: 校验只读订阅事实及有效日期区间；订阅 checkout 只收方案/周期、积分 checkout 只收 pack_id，严格拒绝客户端金额、积分数、身份、状态和回跳地址
 health.dto.ts: 定义健康检查数据 schema 与 zod infer 类型
 memo.dto.ts: node_type 枚举含 canvas，故整树读取认得画布节点；校验含 deleted_root_id 的 memo_nodes、完整/摘要 memos、关键词搜索 query、related strict body（查询文字上限与排除节点白名单）、关键词/混合召回两个检索 RPC 结果、Trash 最小摘要及四个删除 RPC 返回，并维持创建/更新/重命名/移动 strict body 与 UUID param 白名单
 ai.dto.ts: 校验无归档状态的 AI threads、原始 UIMessage parts、携带 expected revision 的消息级冻结 context、bootstrap/prepare-chat 增量消息、稳定 assistant message id、最多五篇 refs、三档权限、六种 Command、OrganizePlan/Run 行、每日用量行与 increment_ai_usage_daily 累计值 RPC 结果、记账 body 与全部 strict HTTP/RPC 输入

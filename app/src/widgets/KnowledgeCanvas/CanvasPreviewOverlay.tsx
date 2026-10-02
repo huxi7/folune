@@ -1,10 +1,11 @@
 /**
- * [INPUT]: 依赖 design-system motion=none Dialog/Skeleton、纸面视图过渡身份、NotePaper reader、卡片摘录快照、正文缓存与 MarkdownReadingView
+ * [INPUT]: 依赖 useLocale 的界面文案（用户内容保留原文）；依赖 design-system motion=none Dialog/Skeleton、纸面视图过渡身份、NotePaper reader、卡片摘录快照、正文缓存与 MarkdownReadingView
  * [OUTPUT]: 对外提供不卸载 Canvas、只有纸拥有过渡身份而遮罩随 root 一起换、正文未到时以卡片摘录保持同一段字的小开本 Preview
  * [POS]: KnowledgeCanvas 的正文阅读边界；Canvas API 永不携带 content_mdx，只有用户明确预览时才按目标 memo ID 加载正文；纸内只有正文，动作一律在纸外，因此正文长度不影响任何入口的可达性；Esc/遮罩/焦点归还统一复用 Dialog 的模态行为，不另造第二套弹窗
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
+import { useLocale } from "../../shared/locale";
 import { useEffect } from "react";
 
 import {
@@ -35,6 +36,7 @@ export function CanvasPreviewOverlay({
   pendingExcerpt = null,
   title,
 }: CanvasPreviewOverlayProps) {
+  const { t } = useLocale();
   const document = useMemoDocumentStore((state) => state.documents[memoId]);
   const status = useMemoDocumentStore((state) => state.statuses[memoId] ?? "idle");
   const error = useMemoDocumentStore((state) => state.errors[memoId]);
@@ -52,7 +54,7 @@ export function CanvasPreviewOverlay({
 
   return (
     <Dialog
-      description="预览不会改变画布位置或尺寸。"
+      description={t("预览不会改变画布位置或尺寸。", "Preview keeps your canvas position and size.")}
       motion="none"
       onOpenChange={(open) => {
         if (!open) onClose();
@@ -76,14 +78,14 @@ export function CanvasPreviewOverlay({
             pendingExcerpt !== null && pendingExcerpt.trim().length > 0 ? (
               <p aria-busy="true" className="note-paper-excerpt">{pendingExcerpt}</p>
             ) : (
-              <SkeletonGroup label="正在读取原文">
+              <SkeletonGroup label={t("正在读取原文", "Loading note")}>
                 <Skeleton className="canvas-preview-line-skeleton" />
                 <Skeleton className="canvas-preview-line-skeleton" />
                 <Skeleton className="canvas-preview-line-skeleton" />
               </SkeletonGroup>
             )
           ) : status === "error" ? (
-            <p className="canvas-preview-error">{error ?? "原文读取失败。"}</p>
+            <p className="canvas-preview-error">{error ?? t("原文读取失败。", "Could not load the note.")}</p>
           ) : (
             <MarkdownReadingView
               content={document?.memo.content_mdx ?? ""}
@@ -97,20 +99,20 @@ export function CanvasPreviewOverlay({
         */}
         <div className="canvas-preview-tools">
           <button
-            aria-label="关闭预览"
+            aria-label={t("关闭预览", "Close preview")}
             className="canvas-preview-tool"
             onClick={onClose}
-            title="关闭预览"
+            title={t("关闭预览", "Close preview")}
             type="button"
           >
             <XIcon size={16} />
           </button>
           <button
-            aria-label="编辑原文"
+            aria-label={t("编辑原文", "Edit original")}
             className="canvas-preview-tool"
             disabled={document === undefined}
             onClick={() => void onEditOriginal()}
-            title="编辑原文"
+            title={t("编辑原文", "Edit original")}
             type="button"
           >
             <PencilSimpleIcon size={16} />

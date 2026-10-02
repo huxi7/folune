@@ -1,10 +1,10 @@
 /**
- * [INPUT]: 账户名消费 navigation 字重角色； 依赖 React 原生 button 属性、共享 Lucide CaretUpDownIcon 与 index.css 的 ds-user-button/avatar 类
- * [OUTPUT]: 对外提供可复用 UserAvatar 与打开账户菜单的 UserButton 触发器
- * [POS]: app/src/shared/design-system/components 的用户身份原子层，被 UserMenu 与收起态 AppSidebar 复用，不承载业务跳转
+ * [INPUT]: 账户名消费 navigation 字重角色； 依赖 React 原生 button 属性、共享 Lucide CaretDownIcon 与 index.css 的 ds-user-button/avatar 类
+ * [OUTPUT]: 对外提供真实头像/双字符回退的 UserAvatar 与姓名/方案/单向展开箭头的 UserButton；方案名只从上层真实快照传入
+ * [POS]: app/src/shared/design-system/components 的用户身份原子层，被 UserMenu 与 LandingDemo 复用，不承载业务跳转
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
-import { CaretUpDownIcon } from "../icons";
+import { CaretDownIcon } from "../icons";
 import type { ComponentPropsWithRef } from "react";
 
 type UserButtonProps = ComponentPropsWithRef<"button"> & {
@@ -12,6 +12,7 @@ type UserButtonProps = ComponentPropsWithRef<"button"> & {
   email: string;
   name: string;
   open?: boolean;
+  planName?: string;
 };
 
 type UserAvatarProps = {
@@ -25,7 +26,7 @@ export function UserAvatar({
   className = "",
   name,
 }: UserAvatarProps) {
-  const initial = name.trim().charAt(0).toUpperCase() || "U";
+  const initial = Array.from(name.trim()).slice(0, 2).join("").toUpperCase() || "U";
 
   return avatarUrl ? (
     <img alt="" className={["ds-user-avatar", className].join(" ")} src={avatarUrl} />
@@ -45,6 +46,7 @@ export function UserButton({
   email,
   name,
   open = false,
+  planName,
   type = "button",
   ...props
 }: UserButtonProps) {
@@ -56,11 +58,11 @@ export function UserButton({
       {...props}
     >
       <UserAvatar avatarUrl={avatarUrl} name={name} />
-      <span className="min-w-0 flex-1 text-left">
-        <span className="block truncate text-sm ds-user-button-name text-foreground">{name}</span>
-        <span className="mt-1 block truncate text-xs text-muted-foreground">{email}</span>
+      <span className="ds-user-button-copy">
+        <span className="ds-user-button-name">{name}</span>
+        <span className="ds-user-button-detail">{planName ?? email}</span>
       </span>
-      <CaretUpDownIcon aria-hidden="true" className="shrink-0 text-muted-foreground" size={16} />
+      <CaretDownIcon aria-hidden="true" className="ds-user-button-caret" size={14} />
     </button>
   );
 }

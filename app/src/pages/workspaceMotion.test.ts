@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun test、workspaceMotion 语义 token、Canvas/Workspace/Dialog/Cord reduced-motion CSS 与 Paper/Canvas 路由协调器源码
- * [OUTPUT]: 锁定标准时长/spring/stagger、纸面零过冲、纸壳等比取景与正文永不缩放、交接严格互补、四方向世界先落定、当前曲线不变、两条跨路由纸面通道不丢失、入口 bootstrap 在单次 Canvas 挂载内不漂移、只有纸与纸内正文拥有过渡身份、画布会话只认登录用户与画布，并证明 Reduced Motion 取消空间位移与路径绘制
+ * [OUTPUT]: 锁定标准时长/spring/stagger、纸面零过冲、纸壳等比取景与正文永不缩放、交接严格互补、四方向世界先落定、当前曲线不变、两条跨路由纸面通道不丢失、入口 bootstrap 在单次 Canvas 挂载内不漂移、只有纸与纸内正文拥有过渡身份、85%无模糊遮罩随root同步、画布会话只认登录用户与画布，并证明 Reduced Motion 取消空间位移与路径绘制
  * [POS]: pages 的统一 Motion Language 回归门禁；防止组件重新发明时长、给遮罩单独命名而盖住正在放大的纸、把正文当图片拉伸，或以缩短原空间 keyframe 冒充 reduced-motion
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -180,8 +180,7 @@ describe("Workspace Motion Language", () => {
    *
    * 过渡层的兄弟顺序由被捕获的先后决定, 与 z-index、DOM 嵌套无关: 只在新状态出现的名字
    * 一律排到最后。于是自带名字的全屏遮罩稳稳盖住那张正在放大的纸, 用户看到一片空白, 过渡
-   * 结束才"跳"出结果。遮罩留在 root 那张截图里, 磨砂玻璃反而完整可用 —— backdrop-filter
-   * 采样的就是同一次绘制里它身后的画布。
+   * 结束才"跳"出结果。85%淡化遮罩留在root截图里，与纸面同步过渡；背景无需额外模糊。
    */
   test("只有纸与纸内正文拥有过渡身份", () => {
     const named = readFileSync(join(import.meta.dir, "viewTransition.ts"), "utf8");
@@ -191,12 +190,13 @@ describe("Workspace Motion Language", () => {
       expect(css).not.toContain("canvas-preview-veil");
     }
     expect(dialogTsx).not.toContain("viewTransitionName");
-    // 遮罩因此可以留着设计系统那层磨砂玻璃, 不需要为截图退化成一块不透明色
+    // 85%页面底色遮罩随root截图同步，不另设过渡身份，也不恢复旧的背景模糊。
     const veil = designSystemCss.slice(
       designSystemCss.indexOf('.ds-dialog-overlay[data-motion="none"]'),
     );
     expect(veil).toContain("animation: none;");
-    expect(veil).not.toContain("backdrop-filter: none");
+    expect(veil).toContain("backdrop-filter: none;");
+    expect(veil).toContain("background: color-mix(in srgb, var(--background) 85%, transparent);");
     expect(designSystemCss).toContain("@supports not (view-transition-name: none)");
   });
   /*

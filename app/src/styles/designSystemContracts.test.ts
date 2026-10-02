@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 读取 DS motionTokenStyles、index.css、button.css、sidebar-button.css 与 workspace.css 的 Control radius、Button 共享别名、Composer 圆形例外与统一 press
  * [OUTPUT]: 检查所有生产圆角与曲线配对及菜单 Compact 分档；锁定 16px Control、显式 12px inner、Button 不建立私有半径、实体 Button 使用极轻纵向同色面光且没有 1px 全周内环、Ghost 无实体阴影、Press 收回外影、Composer 继续显式使用 round，以及四处命令控件共读同一份 press 缩放并在 Reduced Motion 下归 1、创建 split 的 hover 与 press 只认外壳那两半而不认展开的菜单项
- * [POS]: app/src/styles 的设计系统静态契约测试；在浏览器视觉验收之外阻止 Radius 与 press 两条公理被局部覆盖
+ * [POS]: app/src/styles 的静态契约测试；区分静态文字校正与按压反馈，逐项约束已确认的账户/认证/Canvas 曲率例外
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -79,8 +79,10 @@ describe("press 公理", () => {
      * translateY 在 32px 控件上读作"掉格", 而且每个组合控件各写一遍位移量与时长,
      * 「按下是什么感觉」就有四五个答案。这条断言不允许任何一处私藏第二个数值。
      */
-    expect(commandControlCss).not.toContain("translateY(1px)");
-    expect(commandControlCss).not.toContain("translateY(0.0625rem)");
+    const opticalCorrection = /\.note-organize-label\s*\{\s*transform:\s*translateY\(0\.0625rem\);\s*\}/g;
+    expect(commandControlCss.match(opticalCorrection)).toHaveLength(1);
+    const interactiveCss = commandControlCss.replace(opticalCorrection, "");
+    expect(interactiveCss).not.toMatch(/translateY\((?:1px|0\.0625rem)\)/);
     expect(commandControlCss).not.toMatch(/transition-duration:\s*\d+ms/);
     expect(commandControlCss).not.toMatch(/transform:\s*scale\(0\.\d+\)/);
 
@@ -129,6 +131,17 @@ describe("press 公理", () => {
 
 describe("平滑圆角完整性", () => {
   test("生产圆角必须与曲线同处声明，不得私算半径", () => {
+    // 已确认的局部几何逐项登记，不能放宽成任意像素半径或任意曲线。
+    const localGeometry: Record<string, readonly [string, string]> = {
+      "user-menu: .ds-user-menu-header": ["8px", "superellipse(2)"],
+      "user-menu: .ds-user-menu-plan": ["0.1875rem", "round"],
+      "user-menu: .ds-user-account-card": ["24px", "superellipse(2)"],
+      "user-menu: .ds-user-menu-shell .ds-user-account-card .ds-user-button": ["12px", "superellipse(2)"],
+      "user-menu: .account-subscribe-button.glow-button": ["24px", "superellipse(2)"],
+      "knowledge-canvas: .knowledge-canvas .react-flow__nodesselection-rect, .canvas-selection-bounds-rect": ["var(--canvas-object-selection-radius, 0px)", "var(--canvas-object-selection-corner, round)"],
+      "auth: .auth-provider-button.ds-button, .auth-submit-button.glow-button, .auth-input.ds-input": ["var(--auth-control-radius)", "var(--corner-shape-smooth)"],
+    };
+    const checkedGeometry = new Set<string>();
     const styles = ["workspace", "design-system", "ai-message", "user-menu", "knowledge-canvas", "codemirror", "auth", "toast", "segmented-control", "button", "sidebar-button", "note-paper", "motion"];
     for (const name of styles) {
       const css = readFileSync(join(import.meta.dir, `${name}.css`), "utf8");
@@ -137,12 +150,21 @@ describe("平滑圆角完整性", () => {
         const body = match[2]!;
         const radius = /border-radius:\s*([^;]+);/.exec(body)?.[1];
         if (!radius || radius === "0" || selector === ".ds-brand-tab") continue;
+        const geometryKey = `${name}: ${selector.replace(/\s+/g, " ")}`;
+        const geometry = localGeometry[geometryKey];
+        if (geometry) {
+          expect(radius, geometryKey).toBe(geometry[0]);
+          expect(body, geometryKey).toContain(`corner-shape: ${geometry[1]};`);
+          checkedGeometry.add(geometryKey);
+          continue;
+        }
         expect(radius, `${name}: ${selector}`).not.toContain("calc(");
         expect(radius, `${name}: ${selector}`).toMatch(/^(inherit|50%|(?:var\(--(?:radius-[a-z-]+|button-radius|ds-radius-[a-z-]+)\)|0)(?: (?:var\(--(?:radius-[a-z-]+|button-radius|ds-radius-[a-z-]+)\)|0))*)$/);
         const curve = radius === "inherit" ? "inherit" : radius === "50%" || radius === "var(--radius-pill)" ? "round" : "var(--corner-shape-smooth)";
         expect(body, `${name}: ${selector}`).toContain(`corner-shape: ${curve};`);
       }
     }
+    expect([...checkedGeometry].sort()).toEqual(Object.keys(localGeometry).sort());
   });
   test("固定笔记与菜单 hover 使用 Compact，外壳使用 Menu", () => {
     for (const selector of [".agent-composer-sources > span", ".agent-composer-sources button", ".note-more-menu-item", ".memo-context-menu button", ".agent-permission-menu > button"]) {

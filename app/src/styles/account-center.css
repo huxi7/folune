@@ -1,0 +1,193 @@
+/**
+ * [INPUT]: 消费 APP 微蓝灰框线/轨道、灰阶阴影、字重/圆角/动效与共享 Dialog/Button/Input/SidebarButton；主题底片变量与场景映射协作
+ * [OUTPUT]: 设置中心900×600外壳、24px内外曲率与紧凑控件；主题灰蓝轨道上白亮底片独立于普通选中底色，黑色近边阴影形成凸起
+ * [POS]: app/src/styles 的账户界面唯一几何层；参考实测比例，直接使用参考 superellipse(2) 与 4px 分组内缩，Primary 只用于升级动作和用量线
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+@layer components {
+  .account-dialog-panel[data-width="account"] {
+    width: min(56.25rem, calc(100vw - 3rem));
+    height: min(37.5rem, calc(100dvh - 3rem));
+    max-width: none;
+    max-height: none;
+    overflow: hidden;
+    border-radius: 24px;
+    corner-shape: superellipse(2);
+  }
+  .account-center-layout {
+    display: grid;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    grid-template-columns: 12.5rem minmax(0, 1fr);
+    overflow: hidden;
+    border-radius: inherit;
+    corner-shape: inherit;
+    background: var(--popover);
+  }
+  .account-center-sidebar { min-width: 0; min-height: 0; border-right: 1px solid var(--border); background: var(--surface-neutral); }
+  .account-center-sidebar-heading { display: flex; height: 4.5rem; align-items: center; border-bottom: 1px solid var(--border); padding-inline: var(--space-4); color: var(--foreground); font-size: 16px; font-weight: var(--weight-heading, 600); }
+  .account-center-sidebar-nav { display: grid; align-content: start; gap: var(--space-1); padding: 8px; }
+  .account-center-sidebar-nav .ds-sidebar-button {
+    min-height: 32.5px;
+    height: 32.5px;
+    padding-inline: var(--space-3);
+    border-color: transparent;
+    border-radius: var(--radius-compact);
+    corner-shape: superellipse(2);
+    background: transparent;
+    color: var(--muted-foreground);
+    font-size: 12px;
+    font-weight: var(--weight-body, 400);
+    box-shadow: none;
+  }
+  .account-center-sidebar-nav .ds-sidebar-button[data-active="true"],
+  :root[data-visual-context="app"] .account-center-sidebar-nav .ds-sidebar-button[data-active="true"] { background: transparent; color: var(--foreground); font-weight: var(--weight-navigation, 600); box-shadow: none; }
+  .account-center-sidebar-nav .ds-sidebar-button:hover,
+  .account-center-sidebar-nav .ds-sidebar-button:focus-visible,
+  :root[data-visual-context="app"] .account-center-sidebar-nav .ds-sidebar-button[data-active="true"]:is(:hover, :active, :focus-visible) { background: var(--interactive-hover); color: var(--foreground); box-shadow: none; }
+  .account-center-sidebar-nav .ds-sidebar-button:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
+  .account-center-main { display: grid; min-width: 0; min-height: 0; grid-template-rows: 70.4px minmax(0, 1fr); background: var(--popover); }
+  .account-center-main-header { display: flex; min-width: 0; align-items: center; justify-content: space-between; gap: var(--space-4); padding-inline: var(--space-6); }
+  .account-center-main-header h3 { color: var(--foreground); font-size: 16px; font-weight: 600; line-height: 22.4px; }
+  .account-center-close.ds-button { width: 2.5rem; height: 2.5rem; flex-shrink: 0; border: 1px solid var(--border); border-radius: var(--radius-pill); corner-shape: round; }
+  .account-center-content { position: relative; overflow: hidden; }
+  .account-center-content,
+  .account-center-panel { min-width: 0; min-height: 0; height: 100%; }
+  .account-dialog-form { height: 100%; min-height: 0; margin: 0; }
+  .account-dialog-scroll,
+  .settings-dialog-body { height: 100%; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 0 var(--space-6) var(--space-6); scrollbar-width: thin; scrollbar-gutter: auto; }
+  .account-dialog-section {
+    overflow: hidden;
+    border: 0;
+    border-radius: 24px;
+    corner-shape: superellipse(2);
+    padding: var(--space-1);
+    background: var(--surface-neutral);
+    box-shadow: inset 0 0 1.5px 0.5px color-mix(in srgb, var(--shadow-color) 12%, transparent);
+  }
+  .account-dialog-section + .account-dialog-section { margin-top: var(--space-4); }
+  .account-dialog-section-header { padding: var(--space-4) var(--space-6); }
+  .account-dialog-section-header-action { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); }
+  .account-dialog-section-title { color: var(--foreground); font-size: 12px; font-weight: 500; line-height: 17.1429px; }
+  .account-dialog-section-description { margin-top: var(--space-1); color: var(--muted-foreground); font-size: 12px; font-weight: 400; line-height: 16.5px; }
+  .account-dialog-rows,
+  .account-dialog-bio { overflow: hidden; border: 0; border-radius: 24px; box-shadow: 0 1px 2px color-mix(in srgb, var(--shadow-color) 6%, transparent), 0 0 1px color-mix(in srgb, var(--shadow-color) 3%, transparent); corner-shape: superellipse(2); background: var(--popover); }
+  .account-dialog-row { display: grid; min-height: 5rem; grid-template-columns: minmax(6rem, 1fr) minmax(0, 16rem); align-items: start; gap: var(--space-4); padding: 24px; }
+  .account-dialog-row + .account-dialog-row,
+  .account-usage-detail { border-top: 1px solid var(--border); }
+  .account-dialog-label { color: var(--foreground); font-size: 12px; font-weight: 500; line-height: 17.1429px; }
+  .account-dialog-row-copy { min-width: 0; }
+  .account-dialog-control { min-width: 0; }
+  .account-dialog-control > .ds-input { width: 100%; height: 2.25rem; }
+  .account-center-content .ds-input,
+  .account-center-content .ds-segmented-control { border-radius: 12px; corner-shape: superellipse(2); }
+  .account-center-content .ds-segmented-control-option { border-radius: var(--radius-compact); corner-shape: superellipse(2); }
+  .account-dialog-readonly-input { color: var(--muted-foreground); }
+  .account-dialog-value { min-width: 0; overflow-wrap: anywhere; color: var(--foreground); font-size: 12px; line-height: 17.1429px; text-align: right; }
+  .account-dialog-avatar-row { min-height: 128px; }
+  .account-dialog-avatar-control { display: flex; min-width: 0; align-items: center; justify-content: flex-end; gap: 24px; }
+  .account-dialog-avatar-preview { display: flex; width: 80px; height: 80px; flex-shrink: 0; align-items: center; justify-content: center; overflow: hidden; border: 1px solid var(--border); border-radius: var(--radius-pill); corner-shape: round; background: repeating-linear-gradient(45deg, var(--surface-neutral), var(--surface-neutral) 5px, var(--interactive-hover) 5px, var(--interactive-hover) 10px); color: var(--muted-foreground); }
+  .account-dialog-avatar-image { width: 100%; height: 100%; object-fit: cover; }
+  .account-dialog-avatar-actions { display: flex; min-width: 0; flex-direction: column; align-items: flex-start; gap: var(--space-2); }
+  .account-dialog-avatar-actions > span { max-width: 10rem; color: var(--muted-foreground); font-size: 0.625rem; line-height: 1.4; }
+  .account-dialog-upload-trigger { position: relative; cursor: pointer; }
+  .account-dialog-upload-trigger[data-disabled="true"] { pointer-events: none; opacity: 0.48; }
+  .account-dialog-upload-trigger:focus-within { outline: 2px solid var(--ring); outline-offset: 2px; }
+  .account-dialog-avatar-input { position: absolute; inset: 0; z-index: 2; width: 100%; height: 100%; cursor: pointer; opacity: 0; }
+  .account-dialog-bio { padding: var(--space-4) var(--space-6); }
+  .account-dialog-textarea { display: block; width: 100%; min-height: 6rem; max-height: 12rem; resize: vertical; padding-block: var(--space-3); line-height: 1.55; }
+  .account-dialog-meta { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); margin-top: var(--space-2); color: var(--muted-foreground); font-size: 0.625rem; line-height: 1.5; }
+  .account-dialog-row-actions { display: flex; justify-content: flex-end; align-items: center; gap: var(--space-3); }
+  .appearance-theme-control,
+  .appearance-language-control { justify-self: end; flex-shrink: 0; max-width: 100%; }
+  .account-usage-plan { grid-template-columns: minmax(0, 1fr) auto; min-height: 85.64px; }
+  .account-usage-plan-name { margin-top: var(--space-1); color: var(--muted-foreground); font-size: 12px; line-height: 16.5px; }
+  .account-usage-allowance { color: var(--foreground); font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .account-usage-detail { padding: var(--space-6) var(--space-6) var(--space-4); }
+  .account-usage-number-row { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-4); margin-block: var(--space-3) var(--space-4); font-variant-numeric: tabular-nums; }
+  .account-usage-number { display: flex; align-items: baseline; gap: var(--space-2); }
+  .account-usage-number strong { color: var(--foreground); font-size: 30px; font-weight: var(--weight-heading, 600); line-height: 36px; letter-spacing: normal; }
+  .account-usage-number > span:not(.ds-skeleton),
+  .account-usage-total { color: var(--muted-foreground); font-size: 12px; }
+  .account-usage-number-skeleton { width: 3rem; height: 2.25rem; }
+  .account-usage-meter { position: relative; height: 0.5rem; overflow: hidden; border-radius: var(--radius-pill); corner-shape: round; background: var(--surface-neutral); }
+  .account-usage-meter-fill { display: block; height: 100%; border-radius: inherit; corner-shape: inherit; background: var(--primary); transition: width var(--motion-normal) var(--ease-standard); }
+  .account-usage-note { min-height: 1.125rem; margin-top: var(--space-3); color: var(--muted-foreground); font-size: 0.6875rem; line-height: 1.6; }
+  .account-usage-note[data-exceeded="true"] { color: var(--warning); }
+  .account-dialog-load-error { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); margin-top: var(--space-3); padding-inline: var(--space-1); color: var(--muted-foreground); font-size: 0.75rem; line-height: 1.5; }
+  .account-billing-footnote { margin-top: var(--space-4); padding-inline: var(--space-1); color: var(--muted-foreground); font-size: 0.75rem; line-height: 1.6; }
+
+  /* ---- 参考尺寸仅限设置：文字角色不能再被全局 APP 权重放大 ---- */
+  .account-center-layout { --weight-section: 500; --weight-control-label: 500; }
+  .account-center-sidebar-nav .ds-sidebar-button-label { font-size: 12px; line-height: 16.5px; font-weight: inherit; }
+  :root[data-visual-context="app"] .account-center-content .account-dialog-section-description,
+  .account-center-content .account-dialog-section-description { font-size: 12px; font-weight: 400; line-height: 16.5px; }
+  .account-center-content .ds-input { font-size: 13px; font-weight: 400; line-height: 19.5px; }
+  .account-center-content .ds-button {
+    --button-font-size: 12px; --button-line-height: 17.1429px; --button-content-gap: 6px;
+    --button-state-shadow-pressed: var(--button-state-shadow);
+    height: 28px; min-height: 28px; padding: 0 12px;
+    border-radius: 24px; corner-shape: superellipse(2); font-size: 12px; font-weight: 500; line-height: 17.1429px;
+  }
+  .account-center-content .ds-button-secondary {
+    --button-face-top-rest: var(--popover); --button-face-bottom-rest: var(--popover);
+    --button-face-top-hover: var(--interactive-hover); --button-face-bottom-hover: var(--interactive-hover);
+    --button-face-top-active: var(--interactive-hover); --button-face-bottom-active: var(--interactive-hover);
+    --button-border-rest: var(--border); --button-border-hover: var(--border); --button-border-active: var(--border);
+    --button-state-shadow: 0 2px 4px color-mix(in srgb, var(--shadow-color) 5%, transparent), 0 1px 2px -1px color-mix(in srgb, var(--shadow-color) 5%, transparent);
+    --button-state-shadow-hover: var(--button-state-shadow);
+    --button-foreground-rest: var(--foreground);
+  }
+  .account-center-content .ds-button-primary { border-width: 0; }
+  .account-center-content .account-signout-button { --button-content-gap: 8px; height: 32px; min-height: 32px; padding: 0 20px 0 12px; font-size: 13px; line-height: 19.5px; }
+  .account-center-content .account-language-section,
+  .account-language-section .account-dialog-rows { overflow: visible; }
+  .account-language-section { position: relative; z-index: 2; }
+  .account-language-row { grid-template-columns: minmax(0, 1fr) minmax(0, 240px); }
+  .appearance-language-control { width: 240px; }
+  .appearance-language-control .ds-select-trigger { width: 100%; height: 36px; min-height: 36px; border-radius: 12px; corner-shape: superellipse(2); padding: 0 12px; font-size: 13px; font-weight: 400; }
+  .appearance-language-control .ds-select-label { font-size: 13px; font-weight: 400; }
+  .account-theme-row { grid-template-columns: minmax(0, 1fr) minmax(0, 320px); }
+  .appearance-theme-control { --segmented-indicator-surface: var(--popover); width: 320px; height: 32px; padding: 1px 2px; gap: 0; border-radius: 24px; corner-shape: superellipse(2); background: var(--app-theme-track, var(--surface-neutral)); }
+  .appearance-theme-control .ds-segmented-control-option { flex: 1; min-width: 0; height: 28px; min-height: 28px; padding: 0 12px; font-size: 12px; font-weight: 500; line-height: 17.1429px; border-radius: 24px; }
+
+  .appearance-theme-control .ds-segmented-control-indicator {
+    border-radius: 24px; corner-shape: superellipse(2); background: var(--popover);
+    box-shadow: 0 1px 3px color-mix(in srgb, var(--shadow-color) 8%, transparent), 0 1px 2px color-mix(in srgb, var(--shadow-color) 4%, transparent);
+  }
+  .account-dialog-meta { justify-content: flex-end; }
+
+  @media (max-width: 700px) {
+    .account-dialog-panel[data-width="account"] { width: calc(100vw - 1rem); height: min(42rem, calc(100dvh - 1rem)); }
+    .account-center-layout { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); }
+    .account-center-sidebar { border-right: 0; border-bottom: 1px solid var(--border); }
+    .account-center-sidebar-heading { display: none; }
+    .account-center-sidebar-nav { display: flex; overflow-x: auto; gap: var(--space-1); padding: var(--space-2); }
+    .account-center-sidebar-nav .ds-sidebar-button { width: auto; min-width: max-content; flex-shrink: 0; padding-inline: var(--space-3); }
+    .account-center-main { grid-template-rows: 4rem minmax(0, 1fr); }
+    .account-center-main-header { padding-inline: var(--space-4); }
+    .account-dialog-scroll,
+    .settings-dialog-body { padding: 0 var(--space-4) var(--space-4); }
+    .account-dialog-row { grid-template-columns: minmax(5rem, 1fr) minmax(0, 1.5fr); }
+    .account-usage-plan { grid-template-columns: minmax(0, 1fr) auto; }
+    .account-theme-row { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 440px) {
+    .account-dialog-section-header,
+    .account-dialog-row,
+    .account-dialog-bio,
+    .account-usage-detail { padding-inline: var(--space-4); }
+    .account-dialog-row { grid-template-columns: 1fr; gap: var(--space-2); }
+    .account-dialog-control { width: 100%; }
+    .account-dialog-avatar-control { justify-content: flex-start; }
+    .account-dialog-value { text-align: left; }
+    .account-dialog-row-actions { justify-content: flex-start; flex-wrap: wrap; }
+    .appearance-theme-control,
+    .appearance-language-control { justify-self: start; }
+    .account-usage-plan { grid-template-columns: minmax(0, 1fr) auto; }
+    .account-usage-plan .account-dialog-row-actions { flex-direction: column; align-items: flex-end; gap: var(--space-2); }
+    .account-usage-allowance { font-size: 0.75rem; }
+  }
+  @media (prefers-reduced-motion: reduce) { .account-usage-meter-fill { transition: none; } }
+}

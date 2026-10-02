@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖本目录 supabase client 的 Auth API，依赖浏览器 origin 或可选桌面 bridge 生成 OAuth 回调，桌面授权在系统浏览器打开
- * [OUTPUT]: 对外提供邮箱密码登录/注册、邮箱验证码、OAuth、当前 access token 读取、退出登录与错误文案
+ * [OUTPUT]: 对外提供邮箱密码登录/注册、邮箱验证码、OAuth、当前 access token 与仅展示的注册时间读取、退出登录与错误文案
  * [POS]: app/src/shared/supabase 的纯认证服务层，隔离 SDK/会话细节并向统一 API 中枢提供请求期 token，不承载业务资料读写
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -157,6 +157,14 @@ export async function getAuthenticatedAccessToken() {
   }
 
   return data.session.access_token;
+}
+
+// ---- 仅供账户资料展示，不作为身份校验或权限判定 ----
+export async function getAuthenticatedCreatedAt(): Promise<string | null> {
+  const { data, error } = await supabase.auth.getSession();
+  const createdAt = data.session?.user.created_at;
+  if (error || !createdAt || !Number.isFinite(Date.parse(createdAt))) return null;
+  return createdAt;
 }
 
 export async function signOutAuthenticatedUser() {

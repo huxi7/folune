@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖 AccountDialog/MemoNodeDialog、Profile 与 Dashboard 的受控 Dialog 状态/回调与 AnimatePresence 退出宿主
- * [OUTPUT]: 对外提供 DashboardDialogs，集中渲染账户与新建文件夹两个互斥覆盖层，并把新文件夹的落点交给弹窗做同级重名判定
+ * [INPUT]: 依赖 AccountDialog/MemoNodeDialog、Profile、Dashboard 的栏目/退出/订阅命令与 AnimatePresence 退出宿主
+ * [OUTPUT]: 对外提供 DashboardDialogs，组合五栏设置与新建文件夹覆盖层，透传独立订阅入口及退出命令，文件夹落点仍交给弹窗做同级重名判定
  * [POS]: pages 的纯覆盖层组合；AppDashboard 只保留业务状态与命令，不展开重复 Dialog 生命周期标记
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -24,6 +24,8 @@ type DashboardDialogsProps = {
   onCreateFolder: (title: string) => Promise<void>;
   onMemoDialogClose: () => void;
   onProfileChange: (profile: Profile) => void;
+  onSignOut: () => Promise<void>;
+  onViewPlans: () => void;
   profile: Profile;
 };
 
@@ -37,6 +39,8 @@ export function DashboardDialogs({
   onCreateFolder,
   onMemoDialogClose,
   onProfileChange,
+  onSignOut,
+  onViewPlans,
   profile,
 }: DashboardDialogsProps) {
   return (
@@ -49,7 +53,9 @@ export function DashboardDialogs({
             if (!open) onAccountClose();
           }}
           onProfileChange={onProfileChange}
+          onSignOut={onSignOut}
           onSectionChange={onAccountSectionChange}
+          onViewPlans={onViewPlans}
           open
           profile={profile}
           section={accountDialog}

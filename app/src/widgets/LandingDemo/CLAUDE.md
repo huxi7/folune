@@ -9,7 +9,7 @@ DemoWorkspace.tsx: Paper 与 Canvas 的状态装配，左右 Panel 持续挂载�
 DemoSidebar.tsx: 复用 MemoTreeBranch、SidebarCreateMenu 和用户身份组件；仅展开和选择在内存中完成；搜索禁用，新建保留正常点击反馈但不执行创建
 DemoAssistant.tsx: 复用生产 Header、ChatMessage、MentionInput、deriveAssistantActivity 与输入/滚动规则；点击和回车直接共用发送动作，不依赖 iframe 禁止的原生表单提交；引用保留生产 @ 图标、标题与容器，14px 图标换算为 0.875rem 跟随演示根字号同比缩放，不增加置顶/移除管理。把对话脚本逐步物化成 AI SDK parts——工具先以 input-available 亮起流光、落定后翻成 output-available，写操作等文件树真正落定才打勾，最后才流式吐正文。发送时的 memoId 随脚本冻结，回复中途换笔记也不会写错对象
 DemoCanvas.tsx: 受控 React Flow，复用 CanvasCardView/Cord/纸面过渡；直接进入显示固定三卡关系图且无返回按钮，笔记工具条进入才用该笔记作源卡并提供返回；保持原有静态展示，不开放卡片点击、拖动、缩放或编辑图。取景只有两个数且必须一起读——`positions` 给出卡片之间的**空**，`VIEW_PADDING` 给出框与内容之间的空。间距小到 52px 时三张纸会连成一整块填满整帧，只加大留白又会把字缩到读不出来；当前约 90/106 的间距配 0.14。**取景不用 React Flow 的 `fitView`**：它把内容居中在整个画布上，而画布是全视口的、两侧面板浮在它上面，于是最右那张卡会正好顶到 AI 栏底下。这里自己算视口（`setViewport`），把"居中于什么"从整块画布换成两侧面板之间**真正看得见的那条带**，两端直接量面板元素——宽度规则住在 CSS，在这里再写一遍就是第二份真相。带的两端只依赖 stage 尺寸、不依赖面板开合，所以面板开合不重取景。**画布 stage 必须是全视口的**（见 landing-demo.css）：一旦按面板宽度给它加 margin，每收一次面板它就会变宽、ResizeObserver 随即重取景——卡片在用户收面板时自己变大，而 Canvas 宪法明令开合不得改变 React Flow 几何
-model.ts: 固定笔记/层级、`DemoStep` 对话脚本与物化器；内容主线为「散步 → 注意力 → 写作」，深浅搭配；所有 ID、时间和结果确定
+model.ts: 模拟移动结果携带 id/operation/status 以被生产消息层识别为可撤销命令；固定笔记/层级、`DemoStep` 对话脚本与物化器；内容主线为「散步 → 注意力 → 写作」，深浅搭配；所有 ID、时间和结果确定
 model.test.ts: 数据一致性、整理保真、历史只读、工具名不越界、生产分区器契约及运行时导入边界门禁
 
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md

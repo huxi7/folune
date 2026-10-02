@@ -1,5 +1,5 @@
 /**
- * [INPUT]: happy-dom、真实 ElectricBorder 与记录 Canvas 绘制点的替身
+ * [INPUT]: happy-dom、真实 ElectricBorder 与测试期间安装并恢复的 Canvas/尺寸替身
  * [OUTPUT]: 验证沿传播方向追踪同一段纹理时仍发生形变，暂停时停止帧循环，以及多卡共享计算、外观隔离和首卡释放接管
  * [POS]: ElectricBorder 时间演化回归门禁；剔除平移后比较真实绘制位移，防止定向模式再次冻结噪声时间
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -20,9 +20,12 @@ const context = {
   moveTo(x: number, y: number) { points.push({ x, y }); },
   lineTo(x: number, y: number) { points.push({ x, y }); },
 };
-Object.defineProperty(browser.HTMLCanvasElement.prototype, 'getContext', { value: () => context });
-Object.defineProperty(browser.HTMLElement.prototype, 'offsetWidth', { get: () => 280 });
-Object.defineProperty(browser.HTMLElement.prototype, 'offsetHeight', { get: () => 360 });
+const prototypeMocks = [
+  { target: browser.HTMLCanvasElement.prototype, key: 'getContext', mock: { value: () => context } },
+  { target: browser.HTMLElement.prototype, key: 'offsetWidth', mock: { get: () => 280 } },
+  { target: browser.HTMLElement.prototype, key: 'offsetHeight', mock: { get: () => 360 } },
+];
+let prototypeDescriptors: Array<PropertyDescriptor | undefined>;
 const globals = {
   window: browser, document: browser.document,
   HTMLElement: browser.HTMLElement, Element: browser.Element,
@@ -33,6 +36,11 @@ const globals = {
 };
 let descriptors: Record<string, PropertyDescriptor | undefined>;
 beforeEach(() => {
+  prototypeDescriptors = prototypeMocks.map(({ target, key, mock }) => {
+    const descriptor = Object.getOwnPropertyDescriptor(target, key);
+    Object.defineProperty(target, key, { ...mock, configurable: true });
+    return descriptor;
+  });
   descriptors = Object.fromEntries(Object.keys(globals).map((key) => [key, Object.getOwnPropertyDescriptor(globalThis, key)]));
   Object.assign(globalThis, globals);
   frames.clear();
@@ -43,6 +51,11 @@ const { render, cleanup, act } = await import('@testing-library/react/pure');
 const { default: ElectricBorder } = await import('./ElectricBorder');
 afterEach(() => {
   cleanup();
+  prototypeMocks.forEach(({ target, key }, index) => {
+    const descriptor = prototypeDescriptors[index];
+    if (descriptor) Object.defineProperty(target, key, descriptor);
+    else Reflect.deleteProperty(target, key);
+  });
   for (const [key, descriptor] of Object.entries(descriptors)) {
     if (descriptor) Object.defineProperty(globalThis, key, descriptor);
     else Reflect.deleteProperty(globalThis, key);

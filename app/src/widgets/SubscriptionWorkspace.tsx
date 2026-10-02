@@ -1,110 +1,192 @@
 /**
- * [INPUT]: 依赖 React 局部选择状态、本地 Button/Card 与 共享 Lucide 图标展示产品宪法中定义的三档订阅
- * [OUTPUT]: 对外提供纯白画布、三档可选方案、权益清单与选中反馈组成的 SubscriptionWorkspace
- * [POS]: app/src/widgets 的订阅入口工作区，被 AppDashboard 从 UserMenu 命令切换显示
+ * [INPUT]: 依赖服务端套餐/积分投影、双语 locale、React 聚焦、Button/GlowButton/Skeleton 与 Folune 图标
+ * [OUTPUT]: 对外提供三档付费方案、年付开关、分层铭牌、普通/流光 CTA 和完整账户积分条
+ * [POS]: widgets 的订阅展示层；布局按 Laper 实际 DOM/CSS 还原，颜色沿用 Folune，报价/余额不在 UI 生成
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
-import { CheckIcon, ShieldCheckIcon, SparkleIcon } from "../shared/design-system/icons";
-import { useState } from "react";
+import { useEffect, useId, useRef } from "react";
+import { Button, GlowButton, Skeleton, SkeletonGroup, useDelayedSkeleton } from "../shared/design-system/components";
+import { ArrowCounterClockwiseIcon, CheckIcon, InfoIcon, PlusIcon, SparkleIcon, XIcon } from "../shared/design-system/icons";
+import { type BillingCredits } from "../shared/api/subscription";
 
-import { Button, Card } from "../shared/design-system/components";
+import { useLocale } from "../shared/locale";
+import { formatCreditAmount } from "../shared/locale/credits";
 
-const plans = [
-  {
-    description: "适合轻量记录，把每天的碎片先安静地收纳整齐。",
-    features: ["基础 AI 归档", "个人文件树", "月度整理报告"],
-    name: "Starter",
-    price: "$5",
-    summary: "从不再手动整理开始",
-  },
-  {
-    description: "适合高频记录和长期知识沉淀，让文件树跟着内容一起生长。",
-    features: ["高级主题识别", "自动创建新节点", "跨文件夹检索建议", "优先 AI 整理队列"],
-    name: "Pro",
-    price: "$20",
-    recommended: true,
-    summary: "把完整的整理工作交给 AI",
-  },
-  {
-    description: "适合团队、研究室和内容工作室，共同维护可审计的知识结构。",
-    features: ["团队知识空间", "归档策略审计", "优先 AI 配额", "优先产品支持"],
-    name: "Studio",
-    price: "$100",
-    summary: "为一组人维护同一棵知识树",
-  },
-];
+export type SubscriptionInterval = "month" | "year";
+export type SubscriptionPlan = {
+  currency: string;
+  description: string;
+  features: readonly string[];
+  id: string;
+  name: string;
+  prices: { month: number; year: number | null };
+  dailyCredits: number;
+  monthlyCredits: number;
+  premium?: boolean;
+  recommended?: boolean;
+};
+export type SubscriptionWorkspaceProps = {
+  currentInterval: SubscriptionInterval | null;
+  currentPlanId: string | null;
+  credits: BillingCredits | null;
+  error: string | null;
+  interval: SubscriptionInterval;
+  loading: boolean;
+  onBack: () => void;
+  onBuyCredits: () => void;
+  onIntervalChange: (interval: SubscriptionInterval) => void;
+  onRetry: () => void;
+  onSelectPlan: (plan: SubscriptionPlan) => void;
+  plans: readonly SubscriptionPlan[];
+  profile: { avatarUrl: string | null; username: string };
+};
 
-export function SubscriptionWorkspace() {
-  const [selectedPlan, setSelectedPlan] = useState("Pro");
+export function formatSubscriptionPrice(amount: number, currency: string) {
+  return new Intl.NumberFormat("en-US", { style: "currency", currency, maximumFractionDigits: amount % 100 === 0 ? 0 : 2 }).format(amount / 100);
+}
+
+export function SubscriptionWorkspace({
+  currentInterval, currentPlanId, credits, error, interval, loading, onBack, onBuyCredits,
+  onIntervalChange, onRetry, onSelectPlan, plans, profile,
+}: SubscriptionWorkspaceProps) {
+  const { t, locale } = useLocale();
+  const formatCredits = (value: number) => formatCreditAmount(value, locale);
+  const skeletonVisible = useDelayedSkeleton(loading && plans.length === 0);
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const cycleId = useId();
+  const hasAnnualPlan = plans.some(plan => plan.id !== "free" && plan.prices.year !== null);
+  const hasAnnualSaving = plans.some(plan => plan.prices.year !== null && plan.prices.year < plan.prices.month * 12);
+  const currentPlan = plans.find(plan => plan.id === currentPlanId);
+  useEffect(() => { titleRef.current?.focus({ preventScroll: true }); }, []);
 
   return (
-    <main className="ui-page subscription-workspace">
-      <div className="subscription-inner">
-        <header className="subscription-header motion-safe:animate-blueprint-rise motion-reduce:animate-none">
-          <div className="subscription-kicker">
-            <SparkleIcon aria-hidden="true" size={14} />
-            Upgrade Folune
-          </div>
-          <h1>为你的记录速度，选一个刚好的方案。</h1>
-          <p>
-            所有方案都保留你对文件树的最终控制权。AI 只在保存之后工作，不打断写作。
-          </p>
-          <div className="subscription-billing-note">
-            <span>按月订阅</span>
-            <span>随时可调整</span>
-          </div>
+    <main className="folune-subscription" aria-labelledby="subscription-title">
+      <div className="folune-subscription-ambient" aria-hidden="true" />
+      <Button aria-label={t("关闭订阅页面", "Close subscription page")} className="folune-subscription-close" icon={XIcon} onClick={onBack} size="square" title={t("返回工作区", "Back to workspace")} variant="ghost" />
+      <div className="folune-subscription-inner">
+        <header className="folune-subscription-heading">
+          <h1 id="subscription-title" ref={titleRef} tabIndex={-1}>{t('为值得积累的想法而生的 Folune 订阅计划', 'Folune plans for ideas worth keeping')}</h1>
+          <p className="folune-subscription-description">{t('随手记录，自动归档。让每一次思考，成为下一次创作的起点。', 'Capture freely. Organize naturally. Give every idea a place to grow.')}</p>
         </header>
-
-        <section className="subscription-grid" aria-label="订阅方案">
-          {plans.map((plan) => {
-            const isSelected = selectedPlan === plan.name;
-
-            return (
-              <Card
-                className="subscription-plan"
-                data-recommended={plan.recommended || undefined}
-                data-selected={isSelected}
-                key={plan.name}
-                tone={plan.recommended ? "accent" : "default"}
-              >
-                <div className="subscription-plan-topline">
-                  <span>{plan.name}</span>
-                </div>
-                <p className="subscription-plan-summary">{plan.summary}</p>
-                <div className="subscription-price">
-                  <strong>{plan.price}</strong>
-                  <span>USD / month</span>
-                </div>
-                <p className="subscription-plan-description">{plan.description}</p>
-                <div className="subscription-plan-divider" />
-                <div className="subscription-features">
-                  {plan.features.map((feature) => (
-                    <p key={feature}>
-                      <CheckIcon aria-hidden="true" size={14} />
-                      {feature}
-                    </p>
-                  ))}
-                </div>
-                <Button
-                  className="mt-auto w-full"
-                  onClick={() => setSelectedPlan(plan.name)}
-                  variant={plan.recommended || isSelected ? "primary" : "secondary"}
-                >
-                  {isSelected ? `已选择 ${plan.name}` : `选择 ${plan.name}`}
-                </Button>
-              </Card>
-            );
-          })}
-        </section>
-
-        <footer className="subscription-footer" aria-live="polite">
-          <div>
-            <ShieldCheckIcon aria-hidden="true" size={16} />
-            <span>已选择 {selectedPlan}，支付能力接入后可在此继续。</span>
+        <div className="folune-subscription-cycle">
+          <label htmlFor={cycleId}>{hasAnnualSaving ? t("选择年付方案节省更多", "Save more with annual billing") : t("选择年付方案，专注长久积累", "Choose annual billing for the long run")}</label>
+          <button
+            aria-checked={interval === "year"} aria-label={t("按年订阅", "Annual billing")} className="folune-subscription-switch"
+            disabled={!hasAnnualPlan} id={cycleId} onClick={() => onIntervalChange(interval === "year" ? "month" : "year")}
+            role="switch" type="button"
+          ><span aria-hidden="true" /></button>
+        </div>
+        {error ? (
+          <div className="folune-subscription-error" role="alert">
+            <InfoIcon aria-hidden="true" size={16} /><span>{error}</span>
+            <Button icon={ArrowCounterClockwiseIcon} loading={loading} onClick={onRetry}>{t('重试', 'Try again')}</Button>
           </div>
-          <span>账户数据与归档结果不会因切换方案丢失。</span>
+        ) : null}
+        {skeletonVisible || loading && plans.length === 0 ? (
+          <SubscriptionPlanSkeleton visible={skeletonVisible} />
+        ) : plans.length > 0 ? (
+          <section aria-label={t("Folune 订阅方案", "Folune plans")} className="folune-subscription-grid">
+            {plans.map(plan => (
+              <SubscriptionPlanCard
+                current={plan.id === currentPlanId && (plan.id === "free" || interval === currentInterval)} interval={interval} key={plan.id}
+                onSelect={() => plan.id === "free" ? onBack() : onSelectPlan(plan)} plan={plan}
+              />
+            ))}
+          </section>
+        ) : !error ? <p className="folune-subscription-empty" role="status">{t('订阅计划正在准备中', 'Plans are on their way')}</p> : null}
+        <div className="folune-subscription-account-scroll">
+          <div className="folune-subscription-account" aria-label={t("当前账户积分", "Account credits")}>
+            <strong className="folune-subscription-account-name">{profile.username}</strong>
+            <span>{currentPlan?.name ?? (currentPlanId === "free" ? "Free" : "—")}</span>
+            <span className="folune-subscription-account-divider" aria-hidden="true" />
+            <span>{t("每日积分", "Daily credits")} <strong>{credits ? formatCredits(credits.daily) : "—"}</strong></span>
+            <span>{t("每月积分", "Monthly credits")} <strong>{credits ? formatCredits(credits.monthly) : "—"}</strong></span>
+            <span className="folune-subscription-account-divider" aria-hidden="true" />
+            <span className="folune-subscription-balance"><SparkleIcon aria-hidden="true" size={16} />{t("当前余额", "Balance")} <strong>{credits ? formatCredits(credits.balance) : "—"}</strong> {t("积分", "credits")}</span>
+            <Button className="folune-subscription-buy-credits" icon={PlusIcon} onClick={onBuyCredits} variant="ghost">{t('购买积分', 'Buy credits')}</Button>
+          </div>
+        </div>
+        <div className="folune-subscription-help">
+          <p>{t("仅供个人使用 · 受我们的", "For personal use · Our ")}<a href="/terms" rel="noreferrer" target="_blank">{t('服务条款', 'Terms of service')}</a>{t("约束", " apply")}</p>
+          <details className="folune-subscription-credit-rules">
+            <summary>{t('积分如何使用？', 'How do credits work?')}</summary>
+            <div className="folune-subscription-credit-rules-content">
+              {credits ? <p>{t(`1 积分 = ${credits.tokens_per_credit.toLocaleString("zh-CN")} Token。用量最多显示一位小数，后台按实际 Token 记账。`, `1 credit = ${credits.tokens_per_credit.toLocaleString("en")} tokens. Usage displays up to one decimal; actual tokens are recorded.`)}</p> : null}
+              <p>{t('AI 对话、写作、整理与画布探索共用积分，按处理内容的用量扣除，不按固定对话次数计费。', 'AI chat, writing, organizing and canvas exploration share credits. Usage depends on the content processed, not a fixed number of conversations.')}</p>
+              <p>{t('每日积分在 UTC 00:00（北京时间 08:00）刷新，不累计到下一天。目前每月额外赠送积分为 0，余额为当日剩余可用积分。', 'Daily credits reset at 00:00 UTC and do not roll over. Monthly bonus credits are currently zero. Your balance is today’s remaining allowance.')}</p>
+              <p>{t('普通笔记编辑不消耗积分。购买积分功能尚未开放。', 'Editing notes does not use credits. Credit purchases are coming soon.')}</p>
+            </div>
+          </details>
+        </div>
+        <footer className="folune-subscription-legal">
+          <div><span>Folune</span><span aria-hidden="true">·</span><span>{t('随手记下，自然有序', 'A place for every thought')}</span><span aria-hidden="true">·</span><a href="/blog" rel="noreferrer" target="_blank">{t('阅读与灵感', 'Ideas & reading')}</a></div>
+          <div><a href="/terms" rel="noreferrer" target="_blank">{t('服务条款', 'Terms of service')}</a><span aria-hidden="true">·</span><a href="/privacy" rel="noreferrer" target="_blank">{t('隐私政策', 'Privacy policy')}</a></div>
         </footer>
       </div>
     </main>
   );
+}
+
+function SubscriptionPlanCard({ current, interval, onSelect, plan }: {
+  current: boolean; interval: SubscriptionInterval; onSelect: () => void; plan: SubscriptionPlan;
+}) {
+  const { t, locale } = useLocale();
+  const formatCredits = (value: number) => formatCreditAmount(value, locale);
+  const free = plan.id === "free";
+  const annual = interval === "year" && !free;
+  const amount = plan.prices[annual ? "year" : "month"];
+  const annualSaving = annual && amount !== null && plan.prices.month > 0 ? Math.round((1 - amount / (plan.prices.month * 12)) * 100) : 0;
+  const label = free ? current ? t("当前方案", "Current plan") : t("返回工作区", "Back to workspace") : current ? t("当前方案", "Current plan") : t(`订阅 ${plan.name}`, `Subscribe to ${plan.name}`);
+  return (
+    <article className="folune-subscription-plan" data-plan-id={plan.id} data-recommended={plan.recommended || undefined}>
+      <div className="folune-subscription-plan-content">
+        <div className="folune-subscription-plan-topline">
+          <h2 className="folune-subscription-tier" aria-label={`Folune ${plan.name}`}>
+            <span className="folune-subscription-tier-brand" aria-hidden="true">Folune</span>
+            <span className="folune-subscription-tier-word" aria-hidden="true">
+              <span className="folune-subscription-tier-chip" />
+              <span className="folune-subscription-tier-sharp">{plan.name}</span>
+              <span className="folune-subscription-tier-blurred">{plan.name}</span>
+            </span>
+          </h2>
+          {plan.recommended ? <span className="folune-subscription-plan-badge">{t('流行', 'Popular')}</span> : null}
+        </div>
+        <p className="folune-subscription-plan-description">{plan.description}</p>
+        <div className="folune-subscription-price-block">
+          <p className="folune-subscription-price">
+            <strong>{amount === null ? "—" : formatSubscriptionPrice(amount, plan.currency)}</strong>
+            <span>/ {annual ? t("年", "year") : t("月", "month")}</span>
+            {annualSaving > 0 ? <span className="folune-subscription-saving">{t("节省", "Save")} {annualSaving}%</span> : null}
+          </p>
+          <p className="folune-subscription-price-note">{amount === null ? t("此方案暂不提供年付", "Annual billing is unavailable") : annual ? `${formatSubscriptionPrice(amount / 12, plan.currency)} / ${t("月", "month")}` : "\u00a0"}</p>
+        </div>
+        <ul className="folune-subscription-features">
+          <li><CheckIcon aria-hidden="true" size={14} /><span>{t("每日", "Every day:")} <strong>{formatCredits(plan.dailyCredits)}</strong> {t("积分，用于 AI 对话、写作与整理", "credits for AI chat, writing and organizing")}</span></li>
+          {plan.monthlyCredits > 0 ? <li><CheckIcon aria-hidden="true" size={14} /><span>{t("每月", "Every month:")} <strong>{formatCredits(plan.monthlyCredits)}</strong> {t("额外赠送积分", "bonus credits")}</span></li> : null}
+          {plan.features.map(feature => {
+            const [lead, ...rest] = feature.split(" · ");
+            return <li key={feature}><CheckIcon aria-hidden="true" size={14} /><span>{rest.length ? <><strong>{lead}</strong> · {rest.join(" · ")}</> : feature}</span></li>;
+          })}
+        </ul>
+        <div className="folune-subscription-plan-action">
+          {plan.premium && !current ? <GlowButton className="folune-subscription-plan-button" disabled={amount === null} onClick={onSelect}>{label}</GlowButton>
+            : <Button className="folune-subscription-plan-button" disabled={current || amount === null} onClick={onSelect} variant="primary">{label}</Button>}
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function SubscriptionPlanSkeleton({ visible }: { visible: boolean }) {
+  const { t } = useLocale();
+  return <SkeletonGroup className="folune-subscription-grid" label={t("正在读取订阅方案", "Loading plans")} visible={visible}>
+    {[0, 1, 2].map(index => <div className="folune-subscription-plan folune-subscription-plan-loading" key={index}>
+      <Skeleton className="folune-subscription-skeleton-brand" shape="text" />
+      <Skeleton className="folune-subscription-skeleton-name" shape="text" />
+      <Skeleton className="folune-subscription-skeleton-description" shape="text" />
+      <Skeleton className="folune-subscription-skeleton-price" shape="text" />
+      <div className="folune-subscription-features">{[0, 1, 2, 3, 4].map(row => <Skeleton key={row} shape="text" />)}</div>
+      <Skeleton className="folune-subscription-skeleton-button" />
+    </div>)}
+  </SkeletonGroup>;
 }

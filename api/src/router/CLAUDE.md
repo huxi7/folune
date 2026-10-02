@@ -4,7 +4,8 @@
 成员清单
 CLAUDE.md: 记录业务路由装配层职责与文档协议
 health.router.ts: 挂载 GET / 并通过 service 返回已校验健康状态
-index.ts: 聚合 health/profile、memo tree/search/detail、Canvas V2 memo 入口与 canvas 资源，以及 ai-threads/context/settings/commands/runs/usage 路径；更具体的 /memos/:nodeId/canvas 在通用 memo 路由前挂载
+index.ts: 聚合 health/profile/billing、memo tree/search/detail、Canvas V2 memo 入口与 canvas 资源，以及 ai-threads/context/settings/commands/runs/usage 路径；更具体的 /memos/:nodeId/canvas 在通用 memo 路由前挂载
+billing.router.ts: 提供公开套餐/积分包目录、JWT 账户概览及两类严格 checkout；积分只收 pack_id，全部响应 no-store，用户身份由现有 Auth 验证后下传
 ai.router.ts: 挂载无归档 query 的 /ai-threads（含首开 bootstrap 与单会话 content）、/ai-context/resolve 与 prepare-chat、消息定点 PATCH、/ai-settings、/ai-commands、/ai-runs 与 /ai-usage（GET 查今日额度状态、POST /record 记账）全部 JWT 资源，只负责 zod 输入与 AI services 下传
 memo.router.ts: 提供不含正文的 active tree、关键词命中摘要、POST /memo-search/related 相似召回、单篇正文 CRUD 及回收站列表/清空、节点软删/恢复/永久删除；只做认证、参数/query/body 校验与 service 调用。related 用 POST 而非 query string，因为查询文字可以是一整段正文，且日志契约禁止 query string 落盘
 profile.router.ts: 提供 JWT 保护的 GET/PATCH /profile 与 PUT /profile/avatar，认证后读取 JSON 或 multipart avatar File 并下传 service

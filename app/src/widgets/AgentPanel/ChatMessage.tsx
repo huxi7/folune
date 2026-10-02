@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 FoluneUIMessage 的 AI SDK 有序 parts、覆盖工具续写间隙的整轮 activity、本轮读取快照的工具命名、过程分区与 design-system AI 消息组件
+ * [INPUT]: 依赖 locale 界面状态、FoluneUIMessage 有序 parts、整轮 activity、工具命名/过程分区与 design-system 消息组件
  * [OUTPUT]: 对外提供用户/assistant 回复、按真实 activity 退出的空回复占位、原始推理与有界工具交错展示的过程区及整轮结束后的撤销入口
  * [POS]: AgentPanel 消息语义适配层，只负责对话与过程；人工审批由 AgentConversation 固定在 Composer 上方，冻结上下文不进入对话视觉层
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -25,6 +25,7 @@ import { AgentProcessDisclosure } from "./AgentProcessDisclosure";
 import type { AssistantActivity } from "./activityState";
 import { deriveAgentMessagePresentation } from "./messagePresentation";
 import { getAgentToolPresentations } from "./toolPresentation";
+import { useLocale } from "../../shared/locale";
 
 type ChatMessageProps = {
   activity: AssistantActivity;
@@ -60,6 +61,7 @@ function AssistantMessageContent({
   onProgress,
   onUndo = async () => undefined,
 }: AssistantMessageContentProps) {
+  const { t, locale } = useLocale();
   const [undoState, setUndoState] = useState<"idle" | "running" | "done">("idle");
   const [publishedAnswerIndexes, setPublishedAnswerIndexes] = useState<readonly number[]>([]);
   const responseActive = activity !== "none";
@@ -71,7 +73,7 @@ function AssistantMessageContent({
   if (answerPartIndexes.some((index) => !publishedAnswerIndexes.includes(index))) {
     setPublishedAnswerIndexes(answerPartIndexes);
   }
-  const toolPresentations = useMemo(() => getAgentToolPresentations(message.parts), [message.parts]);
+  const toolPresentations = useMemo(() => getAgentToolPresentations(message.parts, locale), [message.parts, locale]);
   const hasProcess = processParts.length > 0;
 
   return (
@@ -83,7 +85,7 @@ function AssistantMessageContent({
         <AgentProcessDisclosure
           active={processActive}
           autoExpand={publishedAnswerIndexes.length === 0}
-          activeLabel={activity === "tool" ? "正在处理" : "正在思考"}
+          activeLabel={activity === "tool" ? t("正在处理", "Working") : t("正在思考", "Thinking")}
           onProgress={onProgress}
         >
           <AgentToolProgress parts={processParts} presentations={toolPresentations} live={responseActive} />
@@ -98,7 +100,7 @@ function AssistantMessageContent({
       streaming={activity === "streaming"}
       />
       {undoCommands.length > 0 && !responseActive ? (
-        <div aria-label="回复操作" className="agent-response-actions">
+        <div aria-label={t("回复操作", "Response actions")} className="agent-response-actions">
           <Button
             className="agent-response-action"
             disabled={undoState !== "idle"}
@@ -111,7 +113,7 @@ function AssistantMessageContent({
             }}
             variant="ghost"
           >
-            {undoState === "running" ? "正在撤销…" : undoState === "done" ? "已撤销" : "撤销"}
+            {undoState === "running" ? t("正在撤销…", "Undoing…") : undoState === "done" ? t("已撤销", "Undone") : t("撤销", "Undo")}
           </Button>
         </div>
       ) : null}
@@ -177,6 +179,7 @@ export function LiveAssistantTurn({
   onProgress,
   onUndo = async () => undefined,
 }: LiveAssistantTurnProps) {
+  const { t } = useLocale();
   if (activity === "none" && (!message || !hasAssistantContent(message))) return null;
   return (
     <article className="agent-chat-turn">
@@ -192,7 +195,8 @@ export function LiveAssistantTurn({
         <ThinkingIndicator
           active={activity !== "none"}
           className="agent-live-thinking"
-          label="备忘录助手正在思考"
+          label={t("备忘录助手正在思考", "Your note assistant is thinking")}
+          statuses={[t("思考", "Thinking"), t("整理思路", "Organizing thoughts"), t("斟酌", "Considering")]}
         />
       )}
     </article>

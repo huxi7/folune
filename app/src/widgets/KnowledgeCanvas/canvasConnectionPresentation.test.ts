@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 读取 knowledge-canvas.css 的连接抓手、whole-card target、目标反馈与临时绳样式契约
+ * [INPUT]: 读取 knowledge-canvas.css 的连接抓手、whole-card target、中性 canvas-interaction-ink 目标反馈与临时绳契约
  * [OUTPUT]: 锁定静止 target 零命中、会话期才开放、抓手融入底栏且拖拽隐藏，以及两档目标反馈只改轮廓不改背景/布局
  * [POS]: KnowledgeCanvas 连接直接操纵的 CSS 回归门禁；补足组件 DOM 测试无法证明的层叠与命中边界
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -91,8 +91,8 @@ describe("Canvas 连接命中与反馈", () => {
      * 因此外环仍是 1px, 不许靠加粗外环或上底色把这一档喊出来。
      */
     const hovered = declarationsFor(".canvas-card-whole-target.connectingto.valid");
-    expect(hovered).toContain("var(--primary) 78%");
-    expect(target).toContain("var(--primary) 46%");
+    expect(hovered).toContain("var(--canvas-interaction-ink, var(--primary)) 78%");
+    expect(target).toContain("var(--canvas-interaction-ink, var(--primary)) 46%");
     expect(hovered).toContain("0 0 0 1px");
     expect(hovered).not.toContain("0 0 0 2px");
     expect(hovered).not.toContain("transform:");

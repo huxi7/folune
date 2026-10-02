@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 PresenceSurface 的统一入退场、 shared/api/ai settings GET/PATCH、AgentPanel 权限设置缓存、后端确认状态、全局 Toast、当前用户/access token 与 busy 状态
+ * [INPUT]: 依赖 locale 界面文案、PresenceSurface、权限 GET/PATCH 缓存、后端确认状态、Toast、当前用户/access token 与 busy
  * [OUTPUT]: 对外提供账号全局三档权限切换；首屏默认完全访问，加载/保存期间不可切换，失败保留显示并允许重试
  * [POS]: AgentPanel Composer 的权限视图；只接收当前账号当前请求，保存交由共享协调器跨卸载与凭据刷新完成
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -14,12 +14,7 @@ import type { AiPermissionMode } from "../../shared/api/ai";
 import { Button, useToast } from "../../shared/design-system/components";
 import { useAgentPanelStore } from "../../shared/store/agentPanelStore";
 import { readAiSettings, saveAiSettings } from "./aiSettingsCache";
-
-const labels: Record<AiPermissionMode, string> = {
-  ask: "每次询问",
-  auto_approve: "智能审批 · 实验",
-  full_access: "完全访问",
-};
+import { useLocale } from "../../shared/locale";
 
 type PermissionModeControlProps = {
   accessToken: string;
@@ -34,6 +29,14 @@ export function PermissionModeControl({
   compact = false,
   userId,
 }: PermissionModeControlProps) {
+  const { t } = useLocale();
+  const latestTranslate = useRef(t);
+  latestTranslate.current = t;
+  const labels: Record<AiPermissionMode, string> = {
+    ask: t("每次询问", "Ask every time"),
+    auto_approve: t("智能审批 · 实验", "Smart approval · Beta"),
+    full_access: t("完全访问", "Full access"),
+  };
   const [open, setOpen] = useState(false);
   const shellRef = useRef<HTMLDivElement>(null);
   const requestSequence = useRef(0);
@@ -57,11 +60,12 @@ export function PermissionModeControl({
       })
       .catch((error: unknown) => {
         if (sequence !== requestSequence.current) return;
-        const message = error instanceof Error ? error.message : "无法读取审批设置。";
+        const translate = latestTranslate.current;
+        const message = translate(error instanceof Error ? error.message : "无法读取审批设置。", "Unable to load approval settings.");
         failPermission(message);
         toast({
-          description: `${message} 请重新选择审批模式，确认后再发送。`,
-          title: "审批设置加载失败",
+          description: `${message} ${translate("请重新选择审批模式，确认后再发送。", "Choose an approval mode again before sending.")}`,
+          title: translate("审批设置加载失败", "Approval settings unavailable"),
           variant: "error",
         });
       });
@@ -90,11 +94,11 @@ export function PermissionModeControl({
       resolvePermission(settings.permission_mode);
     } catch (error) {
       if (sequence !== requestSequence.current) return;
-      const message = error instanceof Error ? error.message : "无法保存审批设置。";
+      const message = t(error instanceof Error ? error.message : "无法保存审批设置。", "Unable to save approval settings.");
       failPermission(message);
       toast({
-        description: `${message} 尚未确认切换，请重新选择后再发送。`,
-        title: "审批模式切换失败",
+        description: `${message} ${t("尚未确认切换，请重新选择后再发送。", "The change was not confirmed. Choose a mode again before sending.")}`,
+        title: t("审批模式切换失败", "Approval mode not changed"),
         variant: "error",
       });
     }
@@ -103,7 +107,7 @@ export function PermissionModeControl({
   return (
     <div className="agent-permission-control" data-compact={compact || undefined} ref={shellRef}>
       <Button
-        aria-label={`审批模式：${labels[mode]}`}
+        aria-label={`${t("审批模式：", "Approval mode: ")}${labels[mode]}`}
         aria-expanded={open}
         aria-haspopup="menu"
         className={["agent-permission-trigger", compact ? "agent-composer-tool" : ""].join(" ")}
@@ -111,7 +115,7 @@ export function PermissionModeControl({
         icon={ShieldCheckIcon}
         onClick={() => setOpen((value) => !value)}
         size={compact ? "square" : "default"}
-        title={`审批模式：${labels[mode]}`}
+        title={`${t("审批模式：", "Approval mode: ")}${labels[mode]}`}
         type="button"
         variant="ghost"
       >
@@ -129,9 +133,9 @@ export function PermissionModeControl({
               <strong>{labels[value]}</strong>
               {mode === value ? <CheckIcon aria-hidden="true" className="agent-permission-check" size={16} /> : null}
               <small>
-                {value === "ask" && "写入前都先询问。"}
-                {value === "auto_approve" && "低风险自动执行，不确定时询问。"}
-                {value === "full_access" && "无需询问，直接执行。"}
+                {value === "ask" && t("写入前都先询问。", "Ask before every change.")}
+                {value === "auto_approve" && t("低风险自动执行，不确定时询问。", "Apply low-risk changes; ask when uncertain.")}
+                {value === "full_access" && t("无需询问，直接执行。", "Apply changes without asking.")}
               </small>
             </button>
           ))}

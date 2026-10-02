@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 happy-dom、Testing Library 与真实 ToastProvider/useToast/useToastCountdown
- * [OUTPUT]: 验证重复触发保留、三条可见、悬停展开/收回、独立撤销及倒计时在交互/隐藏/失焦后准确续走
+ * [OUTPUT]: 验证重复入栈、三条可见、独立撤销/倒计时续走及更新常驻；保留底层非模态 dialog 语义，禁止更新触发模态弹窗
  * [POS]: 全局瞬时反馈行为门禁；以可控帧时钟验证到期和剩余细线共享时间，不依赖真实等待
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -138,7 +138,10 @@ test("更新 Toast 常驻且稍后不会执行安装", () => {
   let installs = 0;
   const view = render(<ToastProvider><UpdateTrigger onInstall={() => { installs++; }} /></ToastProvider>);
   fireEvent.click(view.getByText("显示更新"));
-  expect(document.querySelector("[role=dialog]")).toBeNull();
+  // Base UI Toast 自带非模态 dialog 语义，只有模态或 Folune Dialog 外壳才是更新弹窗。
+  expect(document.querySelector('[role="dialog"][aria-modal="true"], .ds-dialog-overlay') === null).toBe(true);
+  const updateToast = view.getByText("新版本已经准备好").closest('.ds-toast');
+  expect(updateToast?.getAttribute("aria-modal")).toBe("false");
   expect(document.querySelector(".ds-toast-countdown")).toBeNull();
   expect(view.getByText("重启更新")).toBeDefined();
   fireEvent.click(view.getByText("稍后"));

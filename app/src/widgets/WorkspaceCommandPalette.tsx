@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 commandPaletteStore 的唯一开合与 Canvas 次级动作、memoTreeStore 轻量树、recentNodesStore 最近顺序、useMemoSearch 正文命中与 commandResults 排序纯函数
+ * [INPUT]: 依赖 commandPaletteStore 的唯一开合与 Canvas 次级动作、memoTreeStore 轻量树、recentNodesStore 最近顺序、locale 文案/数字、useMemoSearch 正文命中与 commandResults 排序纯函数
  * [OUTPUT]: 对外提供全局唯一 Command Palette：⌘K 开合、可聚焦 option、稳定 active 身份、六档排序、Tab 进画布与 Canvas 连续加入
  * [POS]: widgets 的唯一 Command Surface，由 AppDashboard 挂载一次即覆盖 Paper 与 Canvas；关闭时不扫描树生成结果，排序归 commandResults，模态行为归 Dialog
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -24,6 +24,7 @@ import {
   type CommandResult,
 } from "./commandResults";
 import { useMemoSearch } from "./useMemoSearch";
+import { useLocale } from "../shared/locale";
 
 type WorkspaceCommandPaletteProps = {
   accessToken: string;
@@ -56,17 +57,17 @@ const kindIcon = {
   memo: FileTextIcon,
 } as const;
 
-const matchLabel: Partial<Record<CommandResult["match"], string>> = {
-  body: "正文命中",
-  path: "路径命中",
-  recent: "最近打开",
-};
-
 export function WorkspaceCommandPalette({
   accessToken,
   onOpenCanvas,
   onOpenNode,
 }: WorkspaceCommandPaletteProps) {
+  const { t, formatNumber } = useLocale();
+  const matchLabel: Partial<Record<CommandResult["match"], string>> = {
+    body: t("正文命中", "Content match"),
+    path: t("路径命中", "Path match"),
+    recent: t("最近打开", "Recently opened"),
+  };
   const open = useCommandPaletteStore((state) => state.open);
   const close = useCommandPaletteStore((state) => state.close);
   const toggle = useCommandPaletteStore((state) => state.toggle);
@@ -107,14 +108,15 @@ export function WorkspaceCommandPalette({
 
   const results = useMemo(
     () => !open ? [] : trimmed.length === 0
-      ? recentCommandResults({ recentIds, tree })
+      ? recentCommandResults({ recentIds, tree, rootPathLabel: t("根目录", "Library") })
       : buildCommandResults({
         bodyHitIds: [...bodyHitIds],
         query,
         recentIds,
+        rootPathLabel: t("根目录", "Library"),
         tree,
       }),
-    [bodyHitIds, open, query, recentIds, tree, trimmed],
+    [bodyHitIds, open, query, recentIds, t, tree, trimmed],
   );
 
   /*
@@ -171,7 +173,7 @@ export function WorkspaceCommandPalette({
         title: result.title,
       });
       // 连续加入: 面板保持打开, 只清查询并就地给回执
-      setFeedback(`已加入《${result.title}》`);
+      setFeedback(t(`已加入《${result.title}》`, `Added “${result.title}”`));
       setQuery("");
       setActiveId(null);
     } finally {
@@ -180,16 +182,16 @@ export function WorkspaceCommandPalette({
   };
 
   const statusLine = status === "error"
-    ? "正文搜索暂时不可用，下面只有标题与路径结果。"
+    ? t("正文搜索暂时不可用，下面只有标题与路径结果。", "Content search is unavailable. Showing title and path matches.")
     : trimmed.length === 0
       ? results.length === 0
-        ? "输入关键词，搜索标题、正文或文件夹路径。"
-        : "最近打开"
+        ? t("输入关键词，搜索标题、正文或文件夹路径。", "Search titles, content, or folder paths.")
+        : t("最近打开", "Recently opened")
       : status === "loading"
-        ? results.length === 0 ? "正在搜索…" : "正在补入正文结果…"
+        ? results.length === 0 ? t("正在搜索…", "Searching…") : t("正在补入正文结果…", "Searching content…")
         : results.length === 0
-          ? `没有与“${trimmed}”匹配的对象。`
-          : `${results.length} 个结果`;
+          ? t(`没有与“${trimmed}”匹配的对象。`, `No results for “${trimmed}”.`)
+          : t(`${formatNumber(results.length)} 个结果`, `${formatNumber(results.length)} ${results.length === 1 ? "result" : "results"}`);
 
   /*
    * 提示条只声明此刻真能按的键: 语境决定条目在不在（不在画布里就没有"加入当前
@@ -197,19 +199,19 @@ export function WorkspaceCommandPalette({
    * 时提示条不左右跳动, 而灰掉的那条仍然让用户知道这个键存在。
    */
   const hints: PaletteHint[] = [
-    { keys: "↑↓", label: "导航", muted: results.length === 0 },
-    { keys: "↵", label: "打开", muted: active === null },
+    { keys: "↑↓", label: t("导航", "Navigate"), muted: results.length === 0 },
+    { keys: "↵", label: t("打开", "Open"), muted: active === null },
     {
       keys: "⇥",
-      label: "打开画布",
+      label: t("打开画布", "Open canvas"),
       muted: (active?.defaultCanvasId ?? null) === null,
     },
     ...canvas === null ? [] : [{
       keys: `${MODIFIER}↵`,
-      label: "加入当前画布",
+      label: t("加入当前画布", "Add to canvas"),
       muted: active === null || !addable(active),
     }],
-    { keys: "esc", label: "关闭", muted: false },
+    { keys: "esc", label: t("关闭", "Close"), muted: false },
   ];
 
   return (
@@ -220,7 +222,7 @@ export function WorkspaceCommandPalette({
         if (!next) close();
       }}
       open={open}
-      title="打开或搜索对象"
+      title={t("打开或搜索对象", "Open or search")}
       width="command"
     >
       <div className="command-palette">
@@ -233,7 +235,7 @@ export function WorkspaceCommandPalette({
             aria-autocomplete="list"
             aria-controls={LISTBOX_ID}
             aria-expanded
-            aria-label="搜索笔记、画布与文件夹"
+            aria-label={t("搜索笔记、画布与文件夹", "Search notes, canvases and folders")}
             className="command-palette-input"
             data-dialog-autofocus=""
             onChange={(event) => {
@@ -280,8 +282,8 @@ export function WorkspaceCommandPalette({
               openResult(active);
             }}
             placeholder={canvas === null
-              ? "搜索笔记、画布或文件夹…"
-              : "搜索并加入当前画布…"}
+              ? t("搜索笔记、画布或文件夹…", "Search notes, canvases or folders…")
+              : t("搜索并加入当前画布…", "Search and add to this canvas…")}
             role="combobox"
             spellCheck={false}
             value={query}
@@ -293,7 +295,7 @@ export function WorkspaceCommandPalette({
         </p>
 
         <div
-          aria-label="搜索结果"
+          aria-label={t("搜索结果", "Search results")}
           className="command-palette-results"
           id={LISTBOX_ID}
           ref={listRef}
@@ -329,7 +331,7 @@ export function WorkspaceCommandPalette({
                       {result.path}
                       {result.originTitle === null ? null : (
                         <span className="command-row-origin">
-                          {`由《${result.originTitle}》展开`}
+                          {t(`由《${result.originTitle}》展开`, `From “${result.originTitle}”`)}
                         </span>
                       )}
                       {tag === undefined ? null : (
@@ -347,12 +349,12 @@ export function WorkspaceCommandPalette({
                   {result.defaultCanvasId === null ? null : (
                     <button
                       aria-keyshortcuts="Tab"
-                      aria-label={`以画布打开${result.title}`}
+                      aria-label={t(`以画布打开${result.title}`, `Open ${result.title} as a canvas`)}
                       className="command-row-action"
                       onClick={() => openAsCanvas(result)}
                       onMouseDown={(event) => event.preventDefault()}
                       tabIndex={-1}
-                      title="以画布打开（Tab）"
+                      title={t("以画布打开（Tab）", "Open as canvas (Tab)")}
                       type="button"
                     >
                       <CanvasIcon aria-hidden size={16} />
@@ -360,13 +362,13 @@ export function WorkspaceCommandPalette({
                   )}
                   {!addable(result) ? null : (
                     <button
-                      aria-label={`加入当前画布：${result.title}`}
+                      aria-label={t(`加入当前画布：${result.title}`, `Add to this canvas: ${result.title}`)}
                       className="command-row-action"
                       disabled={addingId !== null}
                       onClick={() => void addToCanvas(result)}
                       onMouseDown={(event) => event.preventDefault()}
                       tabIndex={-1}
-                      title="加入当前画布（⌘/Ctrl + Enter）"
+                      title={t("加入当前画布（⌘/Ctrl + Enter）", "Add to this canvas (⌘/Ctrl + Enter)")}
                       type="button"
                     >
                       <AddNoteIcon aria-hidden size={16} />

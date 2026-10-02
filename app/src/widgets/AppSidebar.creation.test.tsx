@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 happy-dom、Testing Library、真实 AppSidebar 与可控的节点身份对账
+ * [INPUT]: 依赖 happy-dom、Testing Library、ThemeProvider 与真实 AppSidebar 与可控的节点身份对账
  * [OUTPUT]: 验证主按钮/右键创建均即时插入，已有展开/折叠与 DOM 实例保留，连续新建及乱序落库不重挂；删除别处节点不把用户收起的目录撑回，定位目标被搬进收起目录才跟随展开
  * [POS]: 新建笔记的文件树交互门禁；服务端事务由 memoTreeStore.test 覆盖，此处只核对实际组件状态
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -21,6 +21,7 @@ window.matchMedia = ((query: string) => ({ matches: true, media: query, onchange
 const { act, cleanup, fireEvent, render } = await import("@testing-library/react/pure");
 const { AppSidebar } = await import("./AppSidebar");
 const { ToastProvider } = await import("../shared/design-system/components/Toast");
+const { ThemeProvider } = await import("../shared/theme/ThemeProvider");
 const { useMemoTreeStore } = await import("../shared/store/memoTreeStore");
 const originalClientKey = useMemoTreeStore.getState().getMemoClientKey;
 afterEach(() => {
@@ -69,7 +70,7 @@ test("新建与乱序确认全过程保留目录开合及已有行实例", async
       setSelected(id);
     }} />;
   }
-  const view = render(<ToastProvider><Harness /></ToastProvider>);
+  const view = render(<ThemeProvider><ToastProvider><Harness /></ToastProvider></ThemeProvider>);
   const treeElement = view.getByRole("tree");
   const row = view.getByRole("button", { name: "existing" });
   const open = view.getByRole("button", { name: "open" }).closest('[role="treeitem"]');
@@ -124,7 +125,7 @@ test("删除别处节点不重放定位，目标被搬走才跟过去", async ()
     }, []);
     return <AppSidebar {...baseProps} memoTree={tree} selectedMemoId="existing" onCreateMemo={noop} />;
   }
-  const view = render(<ToastProvider><Harness /></ToastProvider>);
+  const view = render(<ThemeProvider><ToastProvider><Harness /></ToastProvider></ThemeProvider>);
   const folder = (name: string) => view.getByRole("button", { name }).closest('[role="treeitem"]');
   fireEvent.click(view.getByRole("button", { name: "open" }));
   expect(folder("open")?.getAttribute("aria-expanded")).toBe("false");
