@@ -11,7 +11,7 @@ Object.assign(globalThis, { window: browserWindow, document: browserWindow.docum
 const { render, fireEvent, cleanup } = await import("@testing-library/react/pure");
 const { AssistantWindowResize } = await import("./AssistantWindowResize");
 afterEach(cleanup);
-const initial = { left: 600, top: 200, width: 360, height: 500 };
+const initial = { left: 600, top: 200, width: 360, height: 520 };
 
 function setup() {
   const onChange = mock(() => {});
@@ -32,12 +32,12 @@ test("四边四角入口，连续边角调整只在松手提交一次偏好", ()
   expect(v.getAllByRole("button")).toHaveLength(8);
   fireEvent.pointerDown(v.handle, v.pointer);
   fireEvent.pointerMove(v.handle, { ...v.pointer, clientX: 480, clientY: 120 });
-  expect(v.onChange).toHaveBeenLastCalledWith({ left: 480, top: 120, width: 480, height: 580 });
+  expect(v.onChange).toHaveBeenLastCalledWith({ left: 480, top: 120, width: 480, height: 600 });
   fireEvent.pointerMove(v.handle, { ...v.pointer, clientX: 440, clientY: 80 });
   expect(v.onCommit).not.toHaveBeenCalled();
   fireEvent.pointerUp(v.handle, v.pointer);
   expect(v.onCommit).toHaveBeenCalledTimes(1);
-  expect(v.onCommit).toHaveBeenLastCalledWith({ left: 440, top: 80, width: 520, height: 620 });
+  expect(v.onCommit).toHaveBeenLastCalledWith({ left: 440, top: 80, width: 520, height: 640 });
   expect(document.documentElement.dataset.assistantResizing).toBeUndefined();
 });
 
@@ -67,5 +67,17 @@ test("丢失捕获只结算一次，方向键可单轴调整边角", () => {
   fireEvent.pointerUp(v.handle, v.pointer);
   expect(v.onCommit).toHaveBeenCalledTimes(1);
   fireEvent.keyDown(v.handle, { key: "ArrowUp", shiftKey: true });
-  expect(v.onCommit).toHaveBeenLastCalledWith({ left: 600, top: 168, width: 360, height: 532 });
+  expect(v.onCommit).toHaveBeenLastCalledWith({ left: 600, top: 168, width: 360, height: 552 });
+});
+
+test("鼠标和键盘都不能把窗口缩到默认短窗以下", () => {
+  const v = setup();
+  fireEvent.pointerDown(v.handle, v.pointer);
+  fireEvent.pointerMove(v.handle, { ...v.pointer, clientX: 1400, clientY: 800 });
+  expect(v.onChange).toHaveBeenLastCalledWith(initial);
+  fireEvent.pointerUp(v.handle, v.pointer);
+  fireEvent.keyDown(v.handle, { key: "ArrowDown", shiftKey: true });
+  expect(v.onCommit).toHaveBeenLastCalledWith(initial);
+  fireEvent.keyDown(v.handle, { key: "ArrowRight", shiftKey: true });
+  expect(v.onCommit).toHaveBeenLastCalledWith(initial);
 });

@@ -4,10 +4,10 @@
 成员清单
 WorkspaceAssistantLayer.test.tsx: 演示87.5%尺寸投影与无中间帧硬切回归，往返保持同一输入实例与草稿
 AssistantWindowResize.tsx: 助手专属四边四角命中区；对边固定、拖拽不更新业务状态、松手一次提交；取消/Escape/捕获丢失清理与键盘尺寸调整
-AssistantWindowResize.test.tsx: 八方向入口、边角同时改变宽高、只松手提交、取消恢复、第二指针隔离与全局光标清理门禁
+AssistantWindowResize.test.tsx: 八方向入口、边角同时改变宽高、只松手提交、取消恢复、第二指针隔离、指针/键盘不可缩到短窗以下与全局光标清理门禁
 WorkspaceAssistantLayer.tsx: 常驻三态与自由尺寸助手外壳；局部MotionValue驱动拖拽，四边四角调整、恢复自定义窗口，Demo按根字号缩放并硬切、可禁用调整；默认右下锚点、自定义保留调整位置，仅外壳尺寸/裁切变化、正文不缩放，关闭inert与焦点归还；复用品牌流光并显示真实工作/审批/完成/异常状态
-assistantGeometry.test.ts: 锁定同宽同底边、Panel顶部对齐、短窗2/3限制与手机键盘/低矮视口可用边界
-assistantGeometry.ts: 助手尺寸/八方向调整纯策略；自定义窗口完整钳制在可视区域，最小264×280，默认130×44胶囊，短窗最高520且不超过可用高度2/3，全高对齐Panel；共用窗口宽度，键盘/窄屏限制在可视区域
+assistantGeometry.test.ts: 锁定默认短窗最小宽高、八方向缩小与旧偏好恢复、同宽同底边、Panel顶部对齐、短窗2/3限制与手机键盘/低矮视口可用边界
+assistantGeometry.ts: 助手尺寸/八方向调整纯策略；自定义窗口完整钳制在可视区域，默认短窗同时是最小尺寸（常规桌面360×520，低矮/窄屏按可见空间收敛），拖拽/键盘/旧偏好恢复共用此边界，默认130×44胶囊，短窗最高520且不超过可用高度2/3，全高对齐Panel；共用窗口宽度，键盘/窄屏限制在可视区域
 MenuComparison/: 独立本地菜单对照入口与1c1fe55历史快照；复用生产菜单/侧栏表面、保持数据一致并默认展开，只为对比尺寸和定位，不装配业务状态
 CreditsPurchaseDialog.tsx: 用户选定的同源蓝色生成图横幅、实测超椭圆曲率与六档积分选购的受控展示层，640px/24px圆角弹窗内呈现服务端报价、原生单选、当前积分余额、支付状态/升级入口与规则；复用 Dialog 模态和 locale，网络与生命周期交给 CreditsPage
 DesktopDownloadButton.tsx: Header/Hero 共用原生下载，可靠识别时直接下载，未知架构时明确选择 Mac arm64/Windows x64
