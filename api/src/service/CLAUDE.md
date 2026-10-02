@@ -15,7 +15,7 @@ ai-run.service.ts: 将 Run 创建/读取/记录方案/应用/拒绝/失败/撤�
 ai-usage.service.ts: getAccountUsage 统一设置/订阅页和 Chat 门禁的 UTC 日 token 口径；从 subscriptionService 获取可信付费权益，使用同一上限与真实累计值；recordUsage 只增不减并按当前 UTC 日重读，避免跨午夜误标日期
 billing.service.ts: 组装公共套餐/积分包目录及有效订阅/真实日额度，10,000 token 确定换算 1 积分；选购只从服务器选价，积分 preview 在支付适配前封闭，不产生订单或购买余额
 subscription.service.ts: 只认本人已确认付款事实，active 且处于有效期才赋予对应套餐额度；欠费、到期、取消或未来周期回落 Free，资料 metadata 不参与授权
-canvas.service.ts: 将 Canvas V2 默认/standalone 入口、读取、人工 mutation、AI expansion commit/context 编排为稳定 HTTP 契约；新建 standalone 的系统默认名撞名时与新建备忘录同规则顺位让开，409 回传当前 version/mutation_id 供 WAL rebase，运行期只有这一套写路径
+canvas.service.ts: 将 Canvas V2 默认/standalone 入口、读取、人工 mutation、AI expansion commit/context 编排为稳定 HTTP 契约；新建 standalone 与备忘录共用最大编号分配器，同级 canvas 名称包含默认与独立画布；客户端占号优先写入，旧请求或撞号时重读最大号加一，409 回传当前 version/mutation_id 供 WAL rebase，运行期只有这一套写路径
 profile.service.ts: 以 Web Crypto 生成单一默认 username 与头像 UUID 路径，执行幂等建档、owner 校验、5MB/JPEG-PNG-WebP 签名验证、avatar_url CAS、失败补偿与旧 Storage 对象清理
 
 职责: 业务编排与权限判断层；禁止依赖 Hono Context，数据访问通过 repository，token 禁止记录、返回或持久化。

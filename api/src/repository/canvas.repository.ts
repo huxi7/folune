@@ -1,11 +1,12 @@
 /**
  * [INPUT]: 依赖唯一 supabase-rest 适配器、Canvas V2 entry/read/mutation/context RPC schemas 与请求期 access token
- * [OUTPUT]: 对外提供默认/独立 Canvas 创建、V2 读取、统一人工/AI mutation、可信 expansion context RPC 调用与整树用的画布身份只读
+ * [OUTPUT]: 对外提供默认/独立 Canvas 创建（保留独立入口的重名错误供服务层让号）、V2 读取、统一人工/AI mutation、可信 expansion context RPC 调用与整树用的画布身份只读
  * [POS]: repository 层 Canvas V2 唯一数据访问器；所有图写入只调用 apply_canvas_mutation，不逐表写、不触达 memo_relations；canvases 表的只读身份查询也在此收口，memo 域不得自己去读这张表
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
 import { HttpError } from "../common/http-error.ts";
+import { isMemoTitleConflict } from "../common/memo-title.ts";
 import {
   canvasEntryRpcResultSchema,
   canvasIdentityRowsSchema,
@@ -38,7 +39,9 @@ const callRpc = async <T>(
       body: JSON.stringify(body),
       method: "POST",
     });
-  } catch {
+  } catch (error) {
+    // 独立画布的唯一约束冲突由命名分配器处理，不能提前折叠为存储故障。
+    if (name === "create_standalone_canvas" && isMemoTitleConflict(error)) throw error;
     throw canvasStorageError();
   }
   const parsed = parse(payload);

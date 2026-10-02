@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 shared/api/memo 的 MemoTreeNode 领域契约
- * [OUTPUT]: 对外提供 findNode/findSiblings/insertNode/removeNode/replaceNode/updateNode/moveNodeInTree/isDescendant/sortNodes 、同级默认笔记名分配与稀疏排序计算
+ * [OUTPUT]: 对外提供 findNode/findSiblings/insertNode/removeNode/replaceNode/updateNode/moveNodeInTree/isDescendant/sortNodes 、同级默认笔记/画布名分配与稀疏排序计算
  * [POS]: app/src/shared/store 的纯树算法内核；查询用线性栈，排序/删除保留未变子树引用，Store 与拖拽视图共享同一套父子、防环和 sort_order 规则
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -246,16 +246,27 @@ export function moveNodeInTree(
   return insertNode(withoutNode, node, parentId, sortOrder);
 }
 
-// 只看当前同级备忘录，临时节点也参与占号；不持久化永远递增的计数器。
-export function nextDefaultMemoTitle(siblings: readonly MemoTreeNode[]): string {
+// 只看当前同级同类型节点，临时节点也参与占号；不持久化永远递增的计数器。
+function nextDefaultNodeTitle(
+  siblings: readonly MemoTreeNode[],
+  nodeType: "memo" | "canvas",
+  base: string,
+): string {
+  const pattern = new RegExp(`^${base}(?: ([1-9]\\d*))?$`, "i");
   let maximum = 0n;
   for (const node of siblings) {
-    if (node.node_type !== "memo") continue;
-    const match = /^未命名备忘录(?: ([1-9]\d*))?$/.exec(node.title.trim().replace(/\s+/g, " "));
+    if (node.node_type !== nodeType) continue;
+    const match = pattern.exec(node.title.trim().replace(/\s+/g, " "));
     if (match) {
       const ordinal = BigInt(match[1] ?? "1");
       if (ordinal > maximum) maximum = ordinal;
     }
   }
-  return maximum === 0n ? "未命名备忘录" : `未命名备忘录 ${maximum + 1n}`;
+  return maximum === 0n ? base : `${base} ${maximum + 1n}`;
 }
+
+export const nextDefaultMemoTitle = (siblings: readonly MemoTreeNode[]): string =>
+  nextDefaultNodeTitle(siblings, "memo", "未命名备忘录");
+
+export const nextDefaultCanvasTitle = (siblings: readonly MemoTreeNode[]): string =>
+  nextDefaultNodeTitle(siblings, "canvas", "未命名 Canvas");

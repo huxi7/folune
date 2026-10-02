@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖 Bun test、Hono app、只实现 Canvas V2 RPC 的内存 Supabase HTTP mock 与 service/auth 的身份缓存测试清空口
- * [OUTPUT]: 覆盖默认/空白 Canvas 入口、strict protocol=2、人工/AI 共用 mutation、自由文字 scale=8 边界、409 恢复事实与可信 expansion context
+ * [INPUT]: 依赖 Bun test、Hono app、实现 Canvas V2 RPC/同级节点查询/标题唯一约束的内存 Supabase HTTP mock 与 service/auth 的身份缓存测试清空口
+ * [OUTPUT]: 覆盖默认/空白 Canvas 入口、同级默认名最大编号与并发让号/存储错误边界、strict protocol=2、人工/AI 共用 mutation、自由文字 scale=8 边界、409 恢复事实与可信 expansion context
  * [POS]: api/test 的 Canvas V2 HTTP 纵向契约；数据库原子性由 staging 回滚事务验证，本文件锁定 router→service→repository 的唯一 RPC 路径
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -64,6 +64,12 @@ const canvas = {
 
 class CanvasV2Mock {
   readonly calls: Array<{ name: string; body: Record<string, unknown> }> = [];
+  readonly nodes: Array<Omit<typeof treeNode, "parent_id" | "deleted_at"> & {
+    parent_id: string | null;
+    deleted_at: string | null;
+  }> = [];
+  readonly namingQueries: URL[] = [];
+  creationError: string | null = null;
   headersMatched = true;
 
   readonly fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -76,6 +82,16 @@ class CanvasV2Mock {
 
     if (url.pathname === "/auth/v1/user") {
       return json({ id: USER_ID, email: "canvas-v2@example.com" });
+    }
+
+    if (url.pathname === "/rest/v1/memo_nodes" && request.method === "GET") {
+      this.namingQueries.push(url);
+      const parentId = url.searchParams.get("parent_id");
+      return json(this.nodes.filter((node) =>
+        `eq.${node.user_id}` === url.searchParams.get("user_id")
+        && `eq.${node.node_type}` === url.searchParams.get("node_type")
+        && node.deleted_at === null
+        && (node.parent_id === null ? "is.null" : `eq.${node.parent_id}`) === parentId));
     }
 
     if (!url.pathname.startsWith("/rest/v1/rpc/")) {
@@ -100,16 +116,28 @@ class CanvasV2Mock {
     }
 
     if (name === "create_standalone_canvas") {
+      if (this.creationError !== null) return json({ code: this.creationError, message: "private storage details" }, 400);
+      const title = String(body["p_title"]);
+      const parentId = body["p_parent_id"] == null ? null : String(body["p_parent_id"]);
+      const normalize = (value: string) => value.trim().replace(/\s+/g, " ").toLowerCase();
+      if (this.nodes.some((node) => node.node_type === "canvas"
+        && node.user_id === USER_ID && node.parent_id === parentId
+        && node.deleted_at === null && normalize(node.title) === normalize(title))) {
+        return json({ code: "23505", message: "duplicate title" }, 409);
+      }
+      const node = { ...treeNode, id: crypto.randomUUID(), title, parent_id: parentId };
+      this.nodes.push(node);
       return json({
         status: "created",
         canvas: {
           ...canvas,
+          node_id: node.id,
           canvas_kind: "standalone",
           origin_node_id: null,
           origin_revision: null,
           version: 0,
         },
-        node: treeNode,
+        node,
         focus_node_id: null,
       });
     }
@@ -209,6 +237,60 @@ const mutationBody = (overrides: Record<string, unknown> = {}) => ({
 });
 
 describe("Canvas V2 持久入口", () => {
+  const createBlank = (input: Record<string, unknown> = {}) => app.request(request("/canvases", {
+    method: "POST",
+    body: JSON.stringify({ protocol_version: 2, ...input }),
+  }));
+
+  test("已有未命名 Canvas 后仍可连续创建，省略标题也走同一编号规则", async () => {
+    mock.nodes.push({ ...treeNode, title: "未命名 Canvas" });
+    for (let ordinal = 2; ordinal <= 5; ordinal++) {
+      const response = await createBlank();
+      expect(response.status).toBe(200);
+      expect((await response.json()).data.node.title).toBe(`未命名 Canvas ${ordinal}`);
+    }
+    expect(new Set(mock.nodes.map((node) => node.id)).size).toBe(5);
+  });
+
+  test("超过 20 个画布直接取同目录最大号，不填空号、不跨类型/目录/用户或回收站", async () => {
+    mock.nodes.push(
+      { ...treeNode, title: "未命名 Canvas 2" },
+      { ...treeNode, title: "  未命名   canvas 35  " },
+      { ...treeNode, title: "未命名 Canvas 90", node_type: "memo" },
+      { ...treeNode, title: "未命名 Canvas 91", parent_id: MEMO_ID },
+      { ...treeNode, title: "未命名 Canvas 92", user_id: MEMO_ID },
+      { ...treeNode, title: "未命名 Canvas 93", deleted_at: NOW },
+    );
+    const response = await createBlank({ title: "未命名 Canvas" });
+    expect(response.status).toBe(200);
+    expect((await response.json()).data.node.title).toBe("未命名 Canvas 36");
+    expect(mock.calls.filter((call) => call.name === "create_standalone_canvas")).toHaveLength(1);
+    const scoped = await createBlank({ parent_id: MEMO_ID, title: "未命名 Canvas" });
+    expect(scoped.status).toBe(200);
+    expect((await scoped.json()).data.node.title).toBe("未命名 Canvas 92");
+    expect(mock.namingQueries[1]?.searchParams.get("parent_id")).toBe(`eq.${MEMO_ID}`);
+  });
+
+  test("已占号请求直接创建，两个客户端撞号后重读最大号继续创建", async () => {
+    const responses = await Promise.all([
+      createBlank({ title: "未命名 Canvas 3" }),
+      createBlank({ title: "未命名 Canvas 3" }),
+    ]);
+    expect(responses.map((response) => response.status)).toEqual([200, 200]);
+    const bodies = await Promise.all(responses.map((response) => response.json()));
+    expect(bodies.map((body) => body.data.node.title).sort()).toEqual(["未命名 Canvas 3", "未命名 Canvas 4"]);
+    expect(mock.namingQueries).toHaveLength(1);
+  });
+
+  test("非重名的存储错误保持净化且不触发让号重试", async () => {
+    mock.creationError = "42501";
+    const response = await createBlank({ title: "未命名 Canvas 3" });
+    expect(response.status).toBe(502);
+    expect((await response.json()).code).toBe("CANVAS_STORAGE_ERROR");
+    expect(mock.calls).toHaveLength(1);
+    expect(mock.namingQueries).toHaveLength(0);
+  });
+
   test("同一 memo 的并发 PUT 只接收数据库返回的同一个 Canvas ID", async () => {
     const responses = await Promise.all([
       app.request(request(`/memos/${MEMO_ID}/canvas`, { method: "PUT" })),
@@ -239,7 +321,7 @@ describe("Canvas V2 持久入口", () => {
     expect(body.data).toMatchObject({
       created: true,
       focus_node_id: null,
-      canvas: { node_id: CANVAS_ID, canvas_kind: "standalone", version: 0 },
+      canvas: { node_id: body.data.node.id, canvas_kind: "standalone", version: 0 },
     });
     expect(mock.calls[0]).toMatchObject({ name: "create_standalone_canvas" });
   });

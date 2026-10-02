@@ -20,8 +20,8 @@ aiCommandTree.test.ts: 覆盖命令改名、软删除、stale 不变、创建撤
 aiCommandProjection.ts: AI 写工具乐观逆投影纯函数，以字段 CAS 精确撤销未获批/失败意图，不覆盖用户在途编辑
 memoTitleRules.ts: 命名规则纯策略，与 api/supabase/memo-naming.sql 的 memo_title_norm 同语义；提供规范化、同父同类型重名判据与服务端 MEMO_TITLE_CONFLICT 识别。它只负责即时反馈，重名的最终真相永远是数据库唯一索引；命名零特例，因此这里不再有「谁不可改名」与「谁的标题跟随谁」两类判据
 memoTitleRules.test.ts: 命名规则门禁，覆盖空白/大小写折叠、跨类型与笔记-默认画布同名合法、根节点作用域与 parent 缺失时不误报冲突
-memoTree.ts: 默认名按同级 memo 现存最大编号加一，不填空号； 备忘录树的不可变领域算法，统一递归查找、同级定位、插入、移除、替换、更新、移动、防环与稀疏 sort_order 排序 查询使用线性栈，排序/删除保留未变化子树引用。
-memoTree.test.ts: 覆盖默认名最大编号及同级同类型边界； 树算法回归测试，覆盖无限嵌套、根/文件夹移动、首尾/中间排序、子树保留与自己/后代防环 验证排序、插入、删除不重建未变化分支。
+memoTree.ts: 笔记/画布共用默认名算法，按同级同类型现存最大编号加一，不填空号，空白/Canvas 大小写与命名约束同语义； 备忘录树的不可变领域算法，统一递归查找、同级定位、插入、移除、替换、更新、移动、防环与稀疏 sort_order 排序 查询使用线性栈，排序/删除保留未变化子树引用。
+memoTree.test.ts: 覆盖笔记/画布默认名最大编号及同级同类型、子目录、空白/大小写边界； 树算法回归测试，覆盖无限嵌套、根/文件夹移动、首尾/中间排序、子树保留与自己/后代防环 验证排序、插入、删除不重建未变化分支。
 memoTreeStore.ts: 默认笔记名同步占号，临时节点参与且首帧即完整名称； Zustand 轻量 active tree 唯一数据源；路由 loader 的轻量 tree 通过 hydrateTree 注入，mergeServerNode 让服务端已建成的节点（保存的画布、晋升出的笔记）就地落位而不刷新整棵树；memo 与 folder 乐观创建成功都登记 getMemoClientKey 映射，使临时→真实 id 替换对文件树是同一身份、行不重挂；只保存结构与摘要，除真人 CRUD 乐观事务外接收 Worker plan 转换后的结构命令并按 tool_call_id 只投影一次，最终以 command_id+status 对账服务端事实
 memoTreeStore.test.ts: 覆盖连续八次创建不等网络即得到完整编号、乱序回包不改名； 轻量 Tree Store 事务回归测试，覆盖真人 CRUD 并发/回滚、临时 ID 与 Document Store 对账及 AI rename/create 投影去重
 memoDocumentStore.ts: Zustand 单篇正文共享数据源；按 ID 加载缓存、意图预取与在途合并，用 generation/version 拒绝迟到响应，并承载保存、临时 ID 对账与 AI 正文投影/回滚；逐键草稿留在编辑会话，保存边界才投影回来 预取/点击/多阅读者共用同一在途请求，每个阅读者独立取消，最后一个离开才中止传输；删除与 reset 门禁迟到响应，已有草稿不被读响应覆盖。

@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun test、MemoTreeNode 与 memoTree 的不可变树算法
- * [OUTPUT]: 验证默认名最大编号及嵌套查找、未变化分支引用保留、同级排序、插入/移除/替换/更新、根与文件夹移动和后代防环
+ * [OUTPUT]: 验证笔记/画布默认名共用最大编号规则及嵌套查找、未变化分支引用保留、同级排序、插入/移除/替换/更新、根与文件夹移动和后代防环
  * [POS]: app/src/shared/store 的领域算法回归测试，为 Zustand 乐观事务提供无浏览器的确定性底座
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -11,6 +11,7 @@ import type { MemoTreeNode } from "../api/memo";
 import {
   findNode,
   nextDefaultMemoTitle,
+  nextDefaultCanvasTitle,
   findSiblings,
   insertNode,
   isDescendant,
@@ -25,7 +26,7 @@ const TIME = "2026-08-08T00:00:00.000Z";
 
 const makeNode = (
   id: string,
-  type: "folder" | "memo",
+  type: MemoTreeNode["node_type"],
   parentId: string | null,
   sortOrder: string,
   children: MemoTreeNode[] = [],
@@ -181,4 +182,15 @@ test("默认编号只取同级 memo 最大值，不填空号、不跨文件夹�
   expect(nextDefaultMemoTitle([note("未命名备忘录 2")])).toBe("未命名备忘录 3");
   expect(nextDefaultMemoTitle([note("未命名备忘录"), note("未命名备忘录 28"), note("未命名备忘录 7")])).toBe("未命名备忘录 29");
   expect(nextDefaultMemoTitle([makeNode("未命名备忘录 99", "folder", null, "1000", [note("未命名备忘录 100")])])).toBe("未命名备忘录");
+});
+
+test("画布复用笔记最大编号规则，忽略其他类型和子目录且折叠空白/大小写", () => {
+  const canvas = (title: string) => makeNode(title, "canvas", null, "1000");
+  expect(nextDefaultCanvasTitle([])).toBe("未命名 Canvas");
+  expect(nextDefaultCanvasTitle([canvas("未命名 Canvas")])).toBe("未命名 Canvas 2");
+  expect(nextDefaultCanvasTitle([
+    canvas("未命名 Canvas 2"), canvas("  未命名   canvas 35  "),
+    makeNode("未命名 Canvas 90", "memo", null, "1000"),
+    makeNode("未命名 Canvas 99", "folder", null, "1000", [canvas("未命名 Canvas 100")]),
+  ])).toBe("未命名 Canvas 36");
 });

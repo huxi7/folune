@@ -47,7 +47,8 @@ useAccountProfileRefresh.ts: 账户资料生命周期协调器；每次打开只
 useMemoOrganize.ts: AI 整理生命周期协调器；发送前 required flush，按用户恢复最近 Run，编排 plan/apply/reject/undo，并把成功或撤销结果局部归并到 Memo Store、把 stale 诚实反馈给用户。刷新取回的最近 succeeded/undone 以 restored 交回展示层：刷新不是语义事件，因此不重播 fresh、也不强行展开文件库。切 memo 才清除 presentation，而「首帧还没有 currentMemo」不算切换——恢复请求是异步的，把它当切换会在树刚到达时把刚恢复的关系抹掉
 useMemoOrganize.test.ts: 锁定 succeeded/undone 唤醒文件库、canonical 目标恒为 memo、路径按当前树重算（memo 被移动后 run 快照不再作为落点来源）、fresh/restored 原样透传、根级人话落点，以及 awaiting_confirmation 唤醒 AI、stale/failed/过程态与 memo 已不在树中都不产生归档展示
 useMemoCanvasEntry.ts: memo↔默认 Canvas 路由协调器；真实点击后先 required flush，再依次取得默认 Canvas 身份与完整 detail，等待期间保留原 Paper；detail 写入对应一次性 bootstrap 后才由 navigate 带 viewTransition 导航，失败则留在原页恢复入口状态。返回画布复用同一 memo 纸面名字，且同样先预取 detail 再导航——否则卡片要等画布自己请求完才出现在 DOM 里，浏览器拍新截图时落点那张纸还不存在，整段就只剩硬切；预取失败退回普通跳转，返回本身不被动画绑架
-useStandaloneCanvasCreation.ts: standalone Canvas 创建协调器；重复提交门禁后只接受服务器事务返回的真实身份，再局部并入 tree、登记 standalone 进入语境并导航；创建成功以页面切换反馈，失败才 Toast
+useStandaloneCanvasCreation.ts: standalone Canvas 创建协调器；从当前树读取同级 Canvas 并复用笔记编号算法，ref 门禁同步拒绝重复提交；只接受服务器事务返回的真实身份，再局部并入 tree、登记 standalone 进入语境并导航；创建成功以页面切换反馈，失败才 Toast
+useStandaloneCanvasCreation.test.tsx: 真实 Hook/Tree Store 验证同目录连续编号、服务端让号回名、同帧重复提交门禁与失败后可重试
 canvasIncrementalLayout.ts: Canvas 候选增量布局纯策略；复用既有分支向外生长并以确定性角度/半径寻找无碰撞位置，人工加入和 AI expansion 共用且永不移动旧节点
 canvasIncrementalLayout.test.ts: 锁定候选稳定排序、分支外向生长、无碰撞与旧节点对象/坐标不变
 canvasEntryBootstrap.ts: Paper→Canvas 的短命数据交接边界；按 canvasId/userId/token 暂存已经取得的 Canvas detail，30s 后自动失效且只允许对应 Coordinator 消费一次，不持久化也不替代后续重取

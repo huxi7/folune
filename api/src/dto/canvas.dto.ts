@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 zod 的 UUID/strict object/判别联合能力与 memo.dto 的 memoNodeRowSchema
- * [OUTPUT]: 对外提供 Canvas V2 创建、读取、含自由文字持久缩放的统一 mutation、AI expansion、可信 context 与整树画布身份行的 HTTP/RPC schemas
+ * [OUTPUT]: 对外提供默认名为「未命名 Canvas」的 V2 创建、读取、含自由文字持久缩放的统一 mutation、AI expansion、可信 context 与整树画布身份行的 HTTP/RPC schemas
  * [POS]: dto 层 Canvas V2 唯一协议边界；只承认 protocol_version=2、node_id 单一身份、有限几何与最多 100 个原子操作
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -160,7 +160,7 @@ export const canvasOperationSchema = z.discriminatedUnion("type", [
 
 export const createCanvasV2Schema = z.object({
   protocol_version: z.literal(2),
-  title: titleSchema.default("未命名画布"),
+  title: titleSchema.default("未命名 Canvas"),
   parent_id: z.uuid().nullable().optional(),
 }).strict();
 

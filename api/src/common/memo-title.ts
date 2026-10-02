@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 common/HttpError 与 lib/supabase-rest 的 postgrestErrorCode 原始 SQLSTATE
- * [OUTPUT]: 对外提供 MEMO_TITLE_CONFLICT 业务错误、isMemoTitleConflict 判据、withTitleConflictTranslation 翻译、默认名候选序列、通用分配器与按同级最大编号分配的 createWithDefaultMemoTitle
+ * [OUTPUT]: 对外提供 MEMO_TITLE_CONFLICT 业务错误、isMemoTitleConflict 判据、withTitleConflictTranslation 翻译、默认名候选序列及笔记/画布共用的 createWithDefaultTitle 最大编号分配器
  * [POS]: common 层的命名冲突边界；唯一约束的最终裁决在数据库，本模块只负责把 23505 翻译成稳定业务错误，并让系统生成的默认名在冲突时顺位让开
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -13,7 +13,7 @@ const UNIQUE_VIOLATION = "23505";
 /** memo_nodes_title_check 的上限 */
 const TITLE_MAX_LENGTH = 500;
 /**
- * 默认名分配的并发冲突重试上限；备忘录每次直接跳到最新最大编号，
+ * 默认名分配的并发冲突重试上限；笔记/画布每次直接跳到最新最大编号，
  * 此上限约束竞争重试次数，不限制已有默认笔记数量。
  */
 const MAX_TITLE_ATTEMPTS = 20;
@@ -78,13 +78,15 @@ export const createWithAvailableTitle = async <T>(
 };
 
 /** 客户端已经同步占号时直接尝试；旧客户端的无编号请求与真正的并发撞名才读取同级快照。 */
-export const createWithDefaultMemoTitle = async <T>(
+export const createWithDefaultTitle = async <T>(
+  base: "未命名备忘录" | "未命名 Canvas",
   proposed: string,
   readTitles: () => Promise<readonly string[]>,
   create: (title: string) => Promise<T>,
 ): Promise<T> => {
-  const defaultPattern = /^未命名备忘录(?: ([1-9]\d*))?$/;
-  if (!defaultPattern.test(proposed)) return createWithAvailableTitle(proposed, create);
+  const defaultPattern = new RegExp(`^${base}(?: ([1-9]\\d*))?$`, "i");
+  const proposedMatch = defaultPattern.exec(proposed);
+  if (proposedMatch === null) return createWithAvailableTitle(proposed, create);
   const nextTitle = async () => {
     let maximum = 0n;
     for (const title of await readTitles()) {
@@ -94,9 +96,9 @@ export const createWithDefaultMemoTitle = async <T>(
         if (ordinal > maximum) maximum = ordinal;
       }
     }
-    return maximum === 0n ? "未命名备忘录" : `未命名备忘录 ${maximum + 1n}`;
+    return maximum === 0n ? base : `${base} ${maximum + 1n}`;
   };
-  let title = proposed === "未命名备忘录" ? await nextTitle() : proposed;
+  let title = proposedMatch[1] === undefined ? await nextTitle() : proposed;
   for (let attempt = 0; attempt < MAX_TITLE_ATTEMPTS; attempt++) {
     try { return await create(title); }
     catch (error) {

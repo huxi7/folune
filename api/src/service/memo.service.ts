@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖可信 AuthUser、请求期 access token、memo DTO 输入、memo repository、领域模型与 HttpError
+ * [INPUT]: 依赖可信 AuthUser、请求期 access token、memo DTO、memo repository 同级快照/读写、笔记与画布共享的默认名分配器、领域模型与 HttpError
  * [OUTPUT]: 对外提供 nextSortOrder/memoContentData 派生规则、轻量 tree/单篇读取、检索与 CRUD、默认名直接占号/冲突按最大编号兜底；正文替换不下载旧正文，标题单独更新仍读取原文返回完整详情
  * [POS]: service 层 active 备忘录写入与读取编排边界；独立的节点/正文读取并发启动以消除首开瀑布，树组装委托 memo-tree.service，正文原样存储并派生摘要；检索 RPC 的失败在此收敛为稳定 HTTP 错误，且相似候选只出摘录不出正文。PATCH /memos 固定先写正文后写标题——标题会撞唯一约束、正文不会，先写正文才让重名只挂起 title 而不连坐正文，也就不再需要半写回滚
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -7,7 +7,7 @@
 
 import { HttpError } from "../common/http-error.ts";
 import {
-  createWithDefaultMemoTitle,
+  createWithDefaultTitle,
   withTitleConflictTranslation,
 } from "../common/memo-title.ts";
 import type {
@@ -262,10 +262,13 @@ const createMemo = async (
   const sortOrder = input.sort_order
     ?? (await nextSortOrder(authUser, accessToken, parentId));
   // 前端已占用完整默认名时直接写入；旧客户端和并发冲突只读一次同级最大编号。
-  const node = await createWithDefaultMemoTitle(input.title,
-    async () => (await memoRepository.listActiveSiblingMemos(authUser.id, parentId, accessToken)).map(node => node.title),
-    (title) =>
-    memoRepository.createNode(
+  const node = await createWithDefaultTitle(
+    "未命名备忘录",
+    input.title,
+    async () => (await memoRepository.listActiveSiblingNodes(
+      authUser.id, parentId, "memo", accessToken,
+    )).map((node) => node.title),
+    (title) => memoRepository.createNode(
       {
         user_id: authUser.id,
         parent_id: parentId,
@@ -274,7 +277,8 @@ const createMemo = async (
         sort_order: sortOrder,
       },
       accessToken,
-    ));
+    ),
+  );
 
   if (node === null) {
     throw new HttpError(
