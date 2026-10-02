@@ -4,7 +4,7 @@
 Electron + Forge 桌面宿主，复用 app 静态构建与云端业务服务。开发加载 Vite，安装版固定使用 folune-app://app 来源，独立持久化浏览器会话。
 
 成员清单
-package.json: 桌面版本、运行依赖与开发/打包命令；正式版本由 Git Tag 注入
+package.json: 当前桌面版本1.1.0、运行依赖与开发/打包命令；正式安装包版本仍由稳定Git Tag校验并注入
 package-lock.json: npm 跨平台锁文件，CI 使用 npm ci
 forge.config.cjs: 仅 macOS arm64 DMG / Windows x64 Squirrel，隔离打包内容并保留签名配置入口
 src/: 主进程、受限 preload、协议安全与更新策略
