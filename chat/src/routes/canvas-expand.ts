@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 authMiddleware、Business API 可信 Canvas context/正文/召回、runCanvasExpansion 与既有 explore-notes Workflow
  * [OUTPUT]: 对外提供 POST /v1/canvas-expand；返回 up_to_date 或已逐字复核候选，不写 Canvas 或任何业务表
- * [POS]: routes 层 Canvas AI 入口；浏览器只交 Canvas/node 定位，所有 memo/revision/邻居/corpus 均由 Business API 重取
+ * [POS]: routes 层 Canvas AI 入口；浏览器只交 Canvas/node 定位，所有 memo/revision/邻居/corpus 均由 Business API 重取 等待估算用量记账，失败不会被静默忽略。
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -78,10 +78,10 @@ export const canvasExpandRoute = registerApiRoute("/v1/canvas-expand", {
           await businessApi.searchRelatedMemos(input, accessToken),
       }, parsed.data);
       // 精确 usage 在 expansion service 内取不到，按判断的邻居篇数（源+limit 篇）保守估算记账。
-      void businessApi.recordUsage(
+      await businessApi.recordUsage(
         (parsed.data.limit + 1) * 3000,
         accessToken,
-      ).catch(() => null);
+      );
       return context.json(result);
     } catch (error) {
       const status = error instanceof BusinessApiError

@@ -2,6 +2,7 @@
 > L2 | 父级: ../CLAUDE.md
 
 成员清单
+payments.ts: 旧报价替换标识、本人列表/单一订单、管理审计和权威核对的统一 HTTP 边界，以及固定供应商收银台导航。
 CLAUDE.md: 定义浏览器业务 API 边界、依赖方向与文档回环协议
 access-token.ts: 无环境副作用的长会话鉴权决策层，优先当前认证会话，只在无会话时回退显式 access token 快照
 client.ts: 唯一后端 HTTP 中枢，以 access-token 策略请求期读取可自动刷新的当前认证会话，统一注入 Bearer、透传 AbortSignal、区分 JSON/FormData、解析信封并收敛错误
@@ -14,7 +15,7 @@ memo.ts: 与后端 snake_case 同构的备忘录领域/API 边界，区分不含
 memo.mapper.ts: 无副作用 DTO 适配层，把 PostgREST 数字 sort_order 归一为 Store 字符串，并分别收敛轻量 active tree、完整单篇正文与 Trash 响应字段
 memo.test.ts: DTO 纯映射回归测试，验证 Trash 最小契约、恢复 subtree 排序归一及正文只存在于 detail 契约
 canvas.ts: Canvas V2 唯一 HTTP 边界；定义 protocol 2 身份/节点/边/operation/receipt/context，提供 memo 默认入口、standalone 创建、无正文图读取、空间文字 text_scale、人工/AI 统一 mutation 与 48KiB pagehide keepalive；两个入口把画布身份补回返回的 tree node，使就地并入目录的节点与整树读取携带同一套事实；accessToken 可省，省略时请求期读取当前会话
-subscription.ts: API返回换算比例与精确used/balance，前端不再自行换算Token； 与后端 billing DTO 同构的套餐/积分包/概览及两类 checkout 边界，复用 apiRequest 鉴权与取消；金额只读服务端目录、选购只传 ID，今日积分不能充当购买钱包
+subscription.ts: 服务端目录/权益/购买余额、管理员能力与稳定幂等结账契约。
 useBilling.ts: Dashboard 内以用户为生命周期的 BillingProvider/useBilling Context，并发读取目录/概览、合并在途刷新、15 秒中止、可见性/焦点后按 30 秒新鲜度刷新；刷新保留旧值，卸载中止，禁止跨账户全局缓存
 useBilling.test.tsx: 验证多消费者只发一组读取、刷新失败保留旧值和重试、账户 key 切换清空快照并忽略迟到请求，以及 StrictMode 清理重放不锁死在途状态
 profile.ts: 五字段 profile 业务 API 边界，以非空 username 统一展示名称、限制 username/bio PATCH；首屏 GET 可随路由取消，并以 multipart 调用后端头像替换接口

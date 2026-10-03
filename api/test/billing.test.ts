@@ -1,13 +1,16 @@
 /**
  * [INPUT]: 依赖真实 Hono router/service/repository 与 Supabase HTTP 替身
  * [OUTPUT]: 验证订阅与积分付款未接入、严格选购意图、有效期与日用量同源，以及错误时不伪造免费/零用量
- * [POS]: API 订阅与 Chat 门禁的安全契约测试；数据库权限另由 staging 事务回滚实测，不把内存替身当作 RLS 证明
+ * [POS]: 显式隔离本机已开售配置； API 订阅与 Chat 门禁的安全契约测试；数据库权限另由 staging 事务回滚实测，不把内存替身当作 RLS 证明
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { afterEach, beforeEach, expect, test } from "bun:test";
 import type { BillingCatalog, BillingOverview, CreditPackCatalog, SubscriptionRecord } from "../src/model/billing.model.ts";
 
 Bun.env["NODE_ENV"] = "test";
+Bun.env["BILLING_LEDGER_ENABLED"] = "false";
+Bun.env["PAYMENT_CHECKOUT_ENABLED"] = "false";
+Bun.env["PAYMENT_DB_JWT"] = "";
 Bun.env["SUPABASE_URL"] = "https://profile-test.supabase.co";
 Bun.env["SUPABASE_PUBLISHABLE_KEY"] = "sb_publishable_profile_test";
 const { app } = await import("../src/app.ts");

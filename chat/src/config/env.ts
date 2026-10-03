@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 zod 的运行时校验能力与服务进程环境变量
  * [OUTPUT]: 对外提供经过校验、转换并冻结的 chat 服务 env 配置
- * [POS]: config 层唯一环境入口，集中约束运行模式、服务名、端口、CORS、Supabase 鉴权、Business API、唯一模型与整理阈值/预算
+ * [POS]: config 层唯一环境入口，集中约束运行模式、服务名、端口、CORS、Supabase 鉴权、Business API、唯一模型与整理阈值/预算 读取仅 API/Chat 共享的 BILLING_USAGE_SECRET，不能进入浏览器。
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -33,6 +33,7 @@ const envSchema = z.object({
     .url()
     .default("http://localhost:10001")
     .transform((value) => value.replace(/\/+$/, "")),
+  BILLING_USAGE_SECRET: z.string().trim().optional(),
   DEEPSEEK_API_KEY: z.string().trim().min(1),
   DEFAULT_MODEL: z
     .literal("deepseek/deepseek-v4-flash")
@@ -50,6 +51,7 @@ const result = envSchema.safeParse({
   SUPABASE_URL: process.env["SUPABASE_URL"],
   SUPABASE_PUBLISHABLE_KEY: process.env["SUPABASE_PUBLISHABLE_KEY"],
   BUSINESS_API_BASE_URL: process.env["BUSINESS_API_BASE_URL"],
+  BILLING_USAGE_SECRET: process.env["BILLING_USAGE_SECRET"],
   DEEPSEEK_API_KEY: process.env["DEEPSEEK_API_KEY"],
   DEFAULT_MODEL: process.env["DEFAULT_MODEL"],
   MAX_STEPS: process.env["MAX_STEPS"],

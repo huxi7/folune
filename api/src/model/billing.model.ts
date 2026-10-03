@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 AiDailyUsageStatus 的既有 UTC 日 token 口径
- * [OUTPUT]: 对外提供套餐/积分包目录、只读订阅事实、含服务端换算比例及精确已用积分的日额度快照与分别受控的订阅/积分支付适配契约
- * [POS]: model 层订阅领域边界；展示目录与付款事实分离，checkout 结果永不等于订阅生效
+ * [INPUT]: 依赖 AiDailyUsageStatus 与既有套餐标识
+ * [OUTPUT]: 定义订阅快照、购买/每日积分投影、管理员能力和结账结果
+ * [POS]: 目录、订单准备和已付权益分离，pending 不等于付款成功
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import type { AiDailyUsageStatus } from "./ai.model.ts";
@@ -79,9 +79,10 @@ export interface CreditPackCatalog {
 }
 
 export interface BillingOverview {
+  is_payment_admin?: boolean;
   subscription: SubscriptionSnapshot;
   usage: BillingUsage;
-  credits: { daily: number; monthly: number; used: number; balance: number; tokens_per_credit: number; resets_at: string };
+  credits: { daily: number; monthly: number; used: number; balance: number; tokens_per_credit: number; resets_at: string; purchased?: number; daily_remaining?: number };
   checkout: CheckoutAvailability;
 }
 
@@ -90,21 +91,8 @@ export type CheckoutResult = {
   code: "PAYMENT_NOT_CONFIGURED";
   message: string;
   checkout_url: null;
-} | {
+} | { status: "pending"; order_id: string; message: string; } | {
   status: "ready";
   checkout_url: string;
+  order_id?: string;
 };
-
-export interface PaymentProvider {
-  availability: Readonly<CheckoutAvailability>;
-  createCheckout(input: {
-    user_id: string;
-    plan_id: PaidPlanId;
-    billing_interval: BillingInterval;
-    price: PlanPrice;
-  }): Promise<CheckoutResult>;
-  createCreditCheckout(input: {
-    user_id: string;
-    pack: CreditPack;
-  }): Promise<CheckoutResult>;
-}

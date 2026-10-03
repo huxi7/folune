@@ -178,3 +178,12 @@ test("模型创建流直接抛出402时仍显示余额不足", async () => {
   expect((await collect(f.options)).at(-1)).toEqual({ type: "error", errorText: MODEL_BALANCE_MESSAGE });
   expect(f.saves[0]?.status).toBe("error");
 });
+
+test("finish 等待用量记账完成，回复保存仍可并行推进", async () => {
+  const f=fixture([...answer,{type:"finish",finishReason:"stop",messageMetadata:{folune_total_tokens:123}}]);
+  const receipt=deferred<void>();let called=0;let ended=false;
+  const pending=collect({...f.options,onUsage:async tokens=>{called=tokens;await receipt.promise;}}).then(()=>{ended=true;});
+  await new Promise(resolve=>setTimeout(resolve,10));
+  expect(called).toBe(123);expect(ended).toBe(false);expect(f.saves.length).toBe(1);
+  receipt.resolve();await pending;expect(ended).toBe(true);
+});

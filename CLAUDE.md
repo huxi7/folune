@@ -9,7 +9,7 @@ Folune 的本质不是普通文本收纳，而是把“随手写”转化为“�
 用户只负责记录。系统在消息级冻结当前笔记、@引用与 revision，账号权限默认完全访问并保留用户后续明确选择；智能审批模式才调用无工具无记忆的独立审批 Agent。发送须等当前账号权限确认，初始化不得覆盖已保存选择；所有写操作仍经可撤销命令台账维护文件 tree。模型只在用户显式发送消息或触发整理时运行，autosave 不唤醒模型。
 
 ## 商业模式
-订阅制。
+订阅与积分直购并存。
 
 价格梯度:
 - 5 美金: 入门订阅
@@ -18,7 +18,7 @@ Folune 的本质不是普通文本收纳，而是把“随手写”转化为“�
 
 积分统一为1积分=10,000 Token，日额度为Free 10、Starter 200、Pro 1,000、Studio 5,000积分；订阅按月/年收费、权益每日刷新，不另计对话次数或虚构月到账额度。菜单/设置/订阅共用服务端积分事实，余额最多显示一位小数且不足0.1保留阈值提示。
 
-独立订阅地址为 `/app/subscription`，账户菜单、设置与订阅页共享按用户隔离的订阅/用量快照；价格、有效订阅和 AI 日额度由 API 唯一裁决。当前升级页只展示三档付费套餐，提供年付 20% 折扣、账户每日/月赠积分及余额、六档积分预览弹窗与结账准备，支付网关尚未连接，选择方案不产生订单或权益变更。付款事实只读表已在Staging验证，2026-10-03生产已补齐每日用量与只读订阅契约；迁移留档与真实支付接入边界见 [api/BILLING.md](api/BILLING.md) 执行。
+独立订阅地址 `/app/subscription` 与积分弹窗共用服务端目录/余额。NOWPayments 统一订单、Invoice、验签查单、事务幂等发放/退款、管理审计与独立对账已接到本机 main 与 Staging；订阅周期顺延、每日赠送优先消耗。本机开售/账本已开启，正式 Invoice 已由前端创建；production 分支与生产支付库未部署。取消强制固定汇率后，新的 $5 订单已由正式 API 生成 USDT/BSC 付款地址；Tron 等网络仍受各自最低额限制，真实转账到账尚未验证。前端打开收银台后跟踪同一订单，pending 可查询、返回焦点主动核对。当前接通证据与剩余限制见 [api/NOWPAYMENTS.md](api/NOWPAYMENTS.md)。
 
 ## AI 角色
 AI 是用户的备忘录协作伙伴与智能档案管理员。
@@ -30,7 +30,7 @@ AI 是用户的备忘录协作伙伴与智能档案管理员。
 
 - app: 用户端，Bun + Vite 8 + React 19 + React Router 7 + Zustand 5 + Motion for React 12 + @xyflow/react 12 + CodeMirror 6/Lezer Markdown + react-markdown/remark/rehype-sanitize + Vercel AI SDK 6 (`@ai-sdk/react`) + `@mastra/client-js` + zod 4 + canvas-confetti + Kumo UI 2 + Tailwind CSS v4 + 本地 design system（含同源 Motion token 与完整入退场原语）+ Lucide React + Supabase Auth SDK
 - chat: AI 能力服务，Bun + Mastra 1.57 + `@mastra/ai-sdk` + Vercel AI SDK 6 + zod 4；模型白名单只含 DeepSeek V4 Flash 且拒绝任何切换；对话/审批/整理三个 Agent 分离，模型只见 read_tree/read_memo/edit_memo/edit_node 四个原子笔记工具、明确清单的 edit_nodes 批量工具与 celebration
-- api: 业务接口服务，Bun + Hono 4 + zod 4 + Supabase REST/PostgREST/Storage HTTP API；只以用户 JWT 访问数据，禁止 service role、连接串与 ORM
+- api: 业务接口服务，Bun + Hono 4 + zod 4 + Supabase REST/PostgREST/Storage HTTP API；普通业务以用户 JWT 访问；支付仓储使用无 BYPASSRLS 的专用 folune_billing JWT，仅获支付/用量权限，禁止 service role、连接串与 ORM
 
 ## 运行形态
 app 跑在本机 Bun/Vite 固定 10000；api 与 chat 由 folune Compose 项目编排为 folune-api-dev(10001)/folune-chat-dev(10002)，各自持有独立健康探针与被 Git 忽略的私有 `.env`。chat 依赖 api 健康后启动，容器内经 `http://api:10001` 访问业务 API；浏览器只接收 `VITE_` 前缀的公开配置。
@@ -51,9 +51,9 @@ Canvas V2 是一级持久知识 Workspace：memo 默认 Canvas 与 standalone Ca
 | .github | 桌面 Tag 构建与跨仓库 Release 发布，Web/后端仍沿原 production 分支发布 | [.github/CLAUDE.md](.github/CLAUDE.md) |
 | app | 用户端，五栏设置与独立订阅页共用用户级计费快照；以 Paper First 舞台承载写作与共享左右工具；Canvas 路由切换到始终挂载同一 React Flow 实例的独立 Workspace，支持 memo Picker、预览/返回、自由文字、连接/删除/框选/整组移动/缩放、显式 AI 增量拓展与可靠自动保存；服务端文档、交互会话、WAL/传输状态分别收口，选择只有 React Flow 一个所有者，正文只按 memo ID 读取 | [app/CLAUDE.md](app/CLAUDE.md) |
 | chat | AI 能力服务，冻结消息上下文；聊天流原样透传推理，APP 直接以纯文本将原始推理与真实工具进度交错展示，不添加摘要模型调用，明确批量请求由共享八并发队列执行且可停止，转圈与实际运行同构，完成记录一次展开，正文首分块触发前端一次性收起过程，不等待步骤结束；对话、审批、整理与逐篇关联判断职责分离；Canvas expansion 只从 api 重取可信 context/正文/语料版本，复用 Explore 判断和逐字引文复核后返回候选，最终写入仍由浏览器经 api 统一 mutation 提交 | [chat/CLAUDE.md](chat/CLAUDE.md) |
-| api | 业务接口服务，承载 profile、服务端套餐目录/只读付款事实/有效订阅与共享 AI 日额度、明确未接入的结账边界、memo、回收站、AI 状态机与 Canvas V2 默认/空白入口、无正文图读取、expansion context、人工/AI 共用 mutation；owner-only RLS、行锁、version、稳定 intent digest、receipt、原子 checkpoint 与同父同类型标题唯一索引共同构成唯一持久化边界，重名由数据库裁决；两种 Canvas 共用一条命名规则，标题不跟随任何东西 | [api/CLAUDE.md](api/CLAUDE.md) |
+| api | 业务接口服务，承载 profile、服务端套餐目录、统一支付订单/账本/周期/审计与共享 AI 额度、memo、回收站、AI 状态机与 Canvas V2 默认/空白入口、无正文图读取、expansion context、人工/AI 共用 mutation；owner-only RLS、行锁、version、稳定 intent digest、receipt、原子 checkpoint 与同父同类型标题唯一索引共同构成唯一持久化边界，重名由数据库裁决；两种 Canvas 共用一条命名规则，标题不跟随任何东西 | [api/CLAUDE.md](api/CLAUDE.md) |
 | deploy | 后端构建基础设施，提供 API/Chat 共用的开发与生产多阶段镜像及运行时配置隔离契约 | [deploy/CLAUDE.md](deploy/CLAUDE.md) |
-| scripts | 本地开发运维入口，统一启动、停止与查看 folune-api-dev/folune-chat-dev 双服务 Docker 日志 | [scripts/CLAUDE.md](scripts/CLAUDE.md) |
+| scripts | 本地开发运维入口，统一管理双服务 Docker 日志/生命周期，并复用 API 执行 NOWPayments 只读连接预检 | [scripts/CLAUDE.md](scripts/CLAUDE.md) |
 
 ## 根配置
 | 文件 | 职责 |

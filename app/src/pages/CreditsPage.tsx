@@ -1,14 +1,16 @@
 /**
- * [INPUT]: 依赖共享 BillingProvider 的真实日额度、积分包 API、双语 locale 与 CreditsPurchaseDialog
- * [OUTPUT]: 对外提供积分购买弹窗装配，处理目录/选择/结账、请求中止与关闭/升级命令
- * [POS]: pages 的积分选购流程；父级拥有订阅背景和路由，当前预留接口不创建订单、钱包或权益
+ * [INPUT]: 依赖共享余额、积分包接口、外部收银台与购买弹窗
+ * [OUTPUT]: 装配积分选购、幂等重试与同单跟踪；从订单返回后重新获取当前有效报价
+ * [POS]: 只提交 pack ID 与幂等键，创建未知时引导订单查询，不显示虚假到账
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
+import { openCheckout } from "../shared/api/payments";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createCreditCheckout, getCreditPacks, type CreditPackCatalog, type CreditPackId } from "../shared/api/subscription";
 import { useBilling } from "../shared/api/useBilling";
 import { useLocale } from "../shared/locale";
 import { CreditsPurchaseDialog, type CreditCheckoutState } from "../widgets/CreditsPurchaseDialog";
+import { PaymentOrders } from "../widgets/PaymentOrders";
 
 export function CreditsPage({ onBack, onUpgrade = onBack }: { onBack: () => void; onUpgrade?: () => void }) {
   const { overview } = useBilling();
@@ -19,7 +21,10 @@ export function CreditsPage({ onBack, onUpgrade = onBack }: { onBack: () => void
   const [reload, setReload] = useState(0);
   const [selectedId, setSelectedId] = useState<CreditPackId | null>(null);
   const [checkout, setCheckout] = useState<CreditCheckoutState>({ status: "idle" });
+  const [activeOrderId, setActiveOrderId] = useState<string | undefined>();
+  const [ordersOpen, setOrdersOpen] = useState(false);
   const checkoutVersion = useRef(0);
+  const checkoutKey = useRef(crypto.randomUUID());
   const checkoutController = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -50,7 +55,11 @@ export function CreditsPage({ onBack, onUpgrade = onBack }: { onBack: () => void
 
   async function prepareCheckout() {
     if (!selectedId || checkout.status === "loading") return;
-    if (checkout.status === "ready") { window.location.assign(checkout.checkoutUrl); return; }
+    if (checkout.status === "ready") {
+      openCheckout(checkout.checkoutUrl);
+      setOrdersOpen(true);
+      return;
+    }
     cancelCheckout();
     const version = checkoutVersion.current;
     const controller = new AbortController();
@@ -58,13 +67,19 @@ export function CreditsPage({ onBack, onUpgrade = onBack }: { onBack: () => void
     const timeout = window.setTimeout(() => controller.abort(), 15_000);
     setCheckout({ status: "loading" });
     try {
-      const result = await createCreditCheckout({ pack_id: selectedId }, controller.signal);
+      const result = await createCreditCheckout({ pack_id: selectedId, idempotency_key: checkoutKey.current }, controller.signal);
       if (version !== checkoutVersion.current) return;
       if (result.status === "ready") {
         const url = new URL(result.checkout_url);
         if (url.protocol !== "https:") throw new Error("Invalid checkout URL");
         setCheckout({ status: "ready", checkoutUrl: url.href });
-      } else setCheckout({ status: "unavailable" });
+        setActiveOrderId(result.order_id);
+      } else if (result.status === "pending") {
+        setActiveOrderId(result.order_id);
+        setCheckout({ status: "idle" });
+        setOrdersOpen(true);
+      }
+      else setCheckout({ status: "unavailable" });
     } catch {
       if (version !== checkoutVersion.current) return;
       setCheckout({ status: "error", message: controller.signal.aborted
@@ -75,7 +90,7 @@ export function CreditsPage({ onBack, onUpgrade = onBack }: { onBack: () => void
 
   function leave(action: () => void) { cancelCheckout(); action(); }
 
-  return <CreditsPurchaseDialog
+  return <><CreditsPurchaseDialog
     catalog={catalog}
     checkout={checkout}
     credits={overview?.credits ?? null}
@@ -84,9 +99,13 @@ export function CreditsPage({ onBack, onUpgrade = onBack }: { onBack: () => void
     onCheckout={() => void prepareCheckout()}
     onClose={() => leave(onBack)}
     onRetry={() => setReload(value => value + 1)}
-    onSelect={id => { cancelCheckout(); setSelectedId(id); setCheckout({ status: "idle" }); }}
+    onSelect={id => { checkoutKey.current=crypto.randomUUID(); cancelCheckout(); setSelectedId(id); setCheckout({ status: "idle" }); }}
     onUpgrade={() => leave(onUpgrade)}
-    open
+    open={!ordersOpen}
     selectedId={selectedId}
-  />;
+  /><PaymentOrders open={ordersOpen} orderId={activeOrderId} onClose={() => {
+    checkoutKey.current = crypto.randomUUID();
+    setCheckout({ status: "idle" });
+    setOrdersOpen(false);
+  }} /></>;
 }

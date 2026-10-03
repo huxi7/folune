@@ -2,8 +2,13 @@
 > L2 | 父级: ../CLAUDE.md
 
 成员清单
+payment-postgres.py: 验证普通汇率新单不复用固定旧单且保留迟到付款；一次性 PostgreSQL 17 验证并发发放/扣减、金额、退款、周期与真实权限；--http 启动受限 authenticator 的 PostgREST 14.1，结束清理独立容器。
+payment-http.ts: 真实 HTTP→router/service/repository→PostgREST→SQL 的支付门禁，覆盖结账、并发回调/扣减、订阅接续、漏通知/创建超时补偿及 RLS；仅 Auth/商户使用替身，外部出站被拒绝。
+payment-scheduler.test.ts: 真实子进程验证本地补查的目标/鉴权、HTTP 失败退出、不跟随重定向与 watch 可终止。
+payment-flow.test.ts: 真实 service/router 的验签→权威查询→事务边界、身份和独立调度回归，单独进程运行。
 CLAUDE.md: 记录 API 内存集成测试职责与文档协议
 billing.test.ts: 验证套餐/六档积分预览报价、JWT、两类 strict checkout 反注入、未付款不升级或造钱包、过期/欠费降级与 billing/Chat 同源真实日额度，存储失败不能伪装零消耗
+nowpayments.test.ts: 按用户指定 API 协议验证币种大小写、invoiceId 筛选、商户令牌缓存、重复入金拦截、精确金额及 Invoice/验签，另验证预检显式排序和手续费净额不影响入金判定。
 billing-rls.sql: staging PostgreSQL 事务验证订阅 owner 隔离、私有列不可读、用户三种 DML 与匿名读取被拒绝；测试记录全部回滚，不保留伪造付款事实
 support/: 测试替身模块，提供 memo 域两组契约测试共用的内存 Supabase Auth/PostgREST/RPC mock，并忠实复刻 memo_nodes 的两条标题 partial 唯一索引与默认画布标题同步触发器
 memo.test.ts: 以 Hono app 和共享 mock 验证 active memo 整树、canvas 节点的画布身份与无 canvas 时不多发请求、创建补偿、JWT owner 隔离、标题/正文更新、空白保真、移动防环及回收站端点认证 另验证正文替换不读取旧正文、CORS 预检复用/来源隔离与 gzip 解压逐字一致。

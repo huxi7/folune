@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 authMiddleware、Business API Run 状态机、Mastra organize workflow、整理领域投影与服务端阈值
  * [OUTPUT]: 对外提供 POST /v1/organize，幂等规划并按风险进入确认态或通过 runId 原子应用
- * [POS]: routes 层整理编排边界，JWT 只局部转发；模型只给计划，数据库写入始终由 Business API 的受控 RPC 完成
+ * [POS]: routes 层整理编排边界，JWT 只局部转发；模型只给计划，数据库写入始终由 Business API 的受控 RPC 完成 等待用量落账后继续应用计划；记账失败进入既有错误出口。
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -131,10 +131,10 @@ export const organizeRoute = registerApiRoute("/v1/organize", {
       }
 
       // 精确 usage 封装在 workflow 内取不到，按输入正文保守估算记账，使整理也计入额度。
-      void businessApi.recordUsage(
+      await businessApi.recordUsage(
         estimateTokens(plannerInput.memo.content_mdx),
         accessToken,
-      ).catch(() => null);
+      );
 
       run = await businessApi.recordRunPlan(
         run.id,

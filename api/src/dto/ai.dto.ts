@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 zod 的 strict object、JSON、UUID、联合与 infer 能力
  * [OUTPUT]: 对外提供 AI threads/messages/refs/context/runs/settings/commands HTTP 与 PostgREST/RPC schema；聊天准备支持增量消息与稳定 assistant 续写
- * [POS]: dto 层 AI Native V2 数据边界，原样接纳 UIMessage.parts，同时严格限制冻结上下文、权限模式、命令种类、revision 与整理方案结构
+ * [POS]: dto 层 AI Native V2 数据边界，原样接纳 UIMessage.parts，同时严格限制冻结上下文、权限模式、命令种类、revision 与整理方案结构 记账接受 usage_id，供新账本按服务端请求唯一标识去重。
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -175,7 +175,7 @@ export const aiUsageDailyRowsSchema = z.array(aiUsageDailyRowSchema);
 export const incrementAiUsageResultSchema = z.coerce.number().int().nonnegative();
 
 export const recordAiUsageSchema = z
-  .object({ total_tokens: z.number().int().nonnegative().max(100_000_000) })
+  .object({ total_tokens: z.number().int().nonnegative().max(100_000_000), usage_id: z.uuid().optional() })
   .strict();
 
 export const patchAiUserSettingsSchema = z

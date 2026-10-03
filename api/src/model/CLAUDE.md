@@ -2,9 +2,10 @@
 > L2 | 父级: ../../CLAUDE.md
 
 成员清单
+payment.model.ts: 订单/汇率策略/网关事实的类型及用户投影；旧固定汇率未付款订单提示重新选购，金额精度不变。
 CLAUDE.md: 记录业务模型层职责与文档协议
 auth.model.ts: 定义只能由 Supabase Auth 校验建立的可信 AuthUser
-billing.model.ts: 定义套餐/积分包目录、付款事实、有效权益与日用量/精确积分概览（含换算比例与已用积分）；PaymentProvider 区分订阅/积分结账，预览、会话就绪与购买生效不是同一事实
+billing.model.ts: 目录/权益/购买余额、管理员能力和 unavailable/pending/ready 结账契约。
 health.model.ts: 定义 healthy 健康状态领域类型
 memo.model.ts: 定义含删除批次的 MemoNode、完整 MemoContent、不含 content_mdx 的 MemoContentSummary、递归轻量 MemoTreeNode（canvas 节点附带 MemoCanvasIdentity，folder/memo 连键都不出现）、单篇 MemoDetailNode、关键词命中 MemoSearchHit、带命中通道与融合名次的相似候选 MemoRelatedHit 与 Trash/写入领域类型
 ai.model.ts: 定义无归档状态的 AI thread/message/reference、可信 memo context、账号权限、Command/审批/风险、OrganizePlan/Run/Action 与可撤销结果，以及每日用量行 AiUsageDaily 与额度门禁判定 AiDailyUsageStatus（总量/上限/剩余/是否超限）的纯领域契约

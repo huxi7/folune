@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖服务端套餐/积分投影、双语 locale、React 聚焦、Button/GlowButton/Skeleton 与 Folune 图标
  * [OUTPUT]: 对外提供三档付费方案、年付开关、分层铭牌、普通/流光 CTA 和完整账户积分条
- * [POS]: widgets 的订阅展示层；布局按 Laper 实际 DOM/CSS 还原，颜色沿用 Folune，报价/余额不在 UI 生成
+ * [POS]: widgets 的订阅展示层；布局按 Laper 实际 DOM/CSS 还原，颜色沿用 Folune，报价/余额不在 UI 生成 展示购买积分余额、订单入口及服务端授权的管理入口。
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { useEffect, useId, useRef } from "react";
@@ -34,6 +34,8 @@ export type SubscriptionWorkspaceProps = {
   loading: boolean;
   onBack: () => void;
   onBuyCredits: () => void;
+  onOrders?: () => void;
+  onAdmin?: () => void;
   onIntervalChange: (interval: SubscriptionInterval) => void;
   onRetry: () => void;
   onSelectPlan: (plan: SubscriptionPlan) => void;
@@ -47,7 +49,7 @@ export function formatSubscriptionPrice(amount: number, currency: string) {
 
 export function SubscriptionWorkspace({
   currentInterval, currentPlanId, credits, error, interval, loading, onBack, onBuyCredits,
-  onIntervalChange, onRetry, onSelectPlan, plans, profile,
+  onIntervalChange, onRetry, onSelectPlan, plans, profile, onOrders, onAdmin,
 }: SubscriptionWorkspaceProps) {
   const { t, locale } = useLocale();
   const formatCredits = (value: number) => formatCreditAmount(value, locale);
@@ -68,6 +70,10 @@ export function SubscriptionWorkspace({
           <h1 id="subscription-title" ref={titleRef} tabIndex={-1}>{t('为值得积累的想法而生的 Folune 订阅计划', 'Folune plans for ideas worth keeping')}</h1>
           <p className="folune-subscription-description">{t('随手记录，自动归档。让每一次思考，成为下一次创作的起点。', 'Capture freely. Organize naturally. Give every idea a place to grow.')}</p>
         </header>
+        <div className="flex justify-center gap-2">
+          {onOrders?<Button onClick={onOrders} variant="ghost">{t("订单记录","Order history")}</Button>:null}
+          {onAdmin?<Button onClick={onAdmin} variant="ghost">{t("支付管理","Payment admin")}</Button>:null}
+        </div>
         <div className="folune-subscription-cycle">
           <label htmlFor={cycleId}>{hasAnnualSaving ? t("选择年付方案节省更多", "Save more with annual billing") : t("选择年付方案，专注长久积累", "Choose annual billing for the long run")}</label>
           <button
@@ -100,7 +106,7 @@ export function SubscriptionWorkspace({
             <span>{currentPlan?.name ?? (currentPlanId === "free" ? "Free" : "—")}</span>
             <span className="folune-subscription-account-divider" aria-hidden="true" />
             <span>{t("每日积分", "Daily credits")} <strong>{credits ? formatCredits(credits.daily) : "—"}</strong></span>
-            <span>{t("每月积分", "Monthly credits")} <strong>{credits ? formatCredits(credits.monthly) : "—"}</strong></span>
+            <span>{t("购买积分", "Purchased credits")} <strong>{credits ? formatCredits(credits.purchased ?? 0) : "—"}</strong></span>
             <span className="folune-subscription-account-divider" aria-hidden="true" />
             <span className="folune-subscription-balance"><SparkleIcon aria-hidden="true" size={16} />{t("当前余额", "Balance")} <strong>{credits ? formatCredits(credits.balance) : "—"}</strong> {t("积分", "credits")}</span>
             <Button className="folune-subscription-buy-credits" icon={PlusIcon} onClick={onBuyCredits} variant="ghost">{t('购买积分', 'Buy credits')}</Button>
@@ -136,7 +142,7 @@ function SubscriptionPlanCard({ current, interval, onSelect, plan }: {
   const annual = interval === "year" && !free;
   const amount = plan.prices[annual ? "year" : "month"];
   const annualSaving = annual && amount !== null && plan.prices.month > 0 ? Math.round((1 - amount / (plan.prices.month * 12)) * 100) : 0;
-  const label = free ? current ? t("当前方案", "Current plan") : t("返回工作区", "Back to workspace") : current ? t("当前方案", "Current plan") : t(`订阅 ${plan.name}`, `Subscribe to ${plan.name}`);
+  const label = free ? current ? t("当前方案", "Current plan") : t("返回工作区", "Back to workspace") : current ? t(`续费 ${plan.name}`, `Renew ${plan.name}`) : t(`订阅 ${plan.name}`, `Subscribe to ${plan.name}`);
   return (
     <article className="folune-subscription-plan" data-plan-id={plan.id} data-recommended={plan.recommended || undefined}>
       <div className="folune-subscription-plan-content">
@@ -170,7 +176,7 @@ function SubscriptionPlanCard({ current, interval, onSelect, plan }: {
         </ul>
         <div className="folune-subscription-plan-action">
           {plan.premium && !current ? <GlowButton className="folune-subscription-plan-button" disabled={amount === null} onClick={onSelect}>{label}</GlowButton>
-            : <Button className="folune-subscription-plan-button" disabled={current || amount === null} onClick={onSelect} variant="primary">{label}</Button>}
+            : <Button className="folune-subscription-plan-button" disabled={free && current || amount === null} onClick={onSelect} variant="primary">{label}</Button>}
         </div>
       </div>
     </article>

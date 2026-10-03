@@ -2,6 +2,8 @@
 > L2 | 父级: ../../CLAUDE.md
 
 成员清单
+PaymentOrders.test.tsx: 验证回跳不冒充成功、权威查单后更新以及管理员无关联订单事件读取。
+PaymentOrders.tsx: 本人/管理订单弹窗，旧报价引导返回选购；支付后精确读取指定订单，返回焦点或定时核对服务器，已付款/退款刷新共享权益，管理员另可查看审计。
 WorkspaceAssistantLayer.test.tsx: 演示87.5%尺寸投影与无中间帧硬切回归，往返保持同一输入实例与草稿
 AssistantWindowResize.tsx: 助手专属四边四角命中区；对边固定、拖拽不更新业务状态、松手一次提交；取消/Escape/捕获丢失清理与键盘尺寸调整
 AssistantWindowResize.test.tsx: 八方向入口、边角同时改变宽高、只松手提交、取消恢复、第二指针隔离、指针/键盘不可缩到短窗以下与全局光标清理门禁

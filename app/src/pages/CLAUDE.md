@@ -2,9 +2,9 @@
 > L2 | 父级: ../../CLAUDE.md
 
 成员清单
-CreditsPage.tsx: `/app/subscription/credits` 的购买弹窗装配；共享真实日额度并读取服务端六档目录，管理选择/超时/重试/关闭中止，路由与背景归父级，预览不创建订单或购买余额
+CreditsPage.tsx: 积分购买弹窗从服务端目录创建幂等订单；收银台打开后跟踪同一订单，未知创建结果直接核对，关闭中止迟到响应。
 CreditsPage.test.tsx: 真实组件验证服务端卡片/严格 pack_id、未知余额、目录失败重试、关闭后迟到结果隔离与英文购买界面
-SubscriptionPage.tsx: 独立订阅流程装配，从共享 BillingProvider 投影服务端付费套餐、积分与身份；Free 不进升级卡片、年付总价与 20% 折扣同源，购买积分进入独立路由弹窗；处理月年切换、真实 checkout 准备/未开放/失败重试及取消中止，HTTPS 会话跳转不等于权益生效
+SubscriptionPage.tsx: 独立订阅页共享服务端报价与权益；稳定幂等创建、收银台导航与指定订单跟踪串联，待核对状态可直接查看订单，回跳只携带订单身份。
 SubscriptionPage.test.tsx: 中英界面切换保留账户名称与报价，真实组件验证服务端月年报价、未开放不冒充订阅成功、失败重试同一方案、未知用量不造零及取消后晚到响应不能重开弹窗
 subscriptionNavigation.ts: 订阅导航的纯路径边界，以 isSubscriptionPath 同时识别标准地址与尾斜杠，只允许 /app 或 /app/notes/:noteId 来路，保留底层笔记身份且拒绝外部/无关路径
 subscriptionNavigation.test.ts: 验证 memo/Canvas 来路保真、外部/非法路径回退、直达订阅默认落点和普通工作区忽略陈旧返回 state

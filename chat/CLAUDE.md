@@ -20,4 +20,6 @@ tsconfig.json: ES2022 + bundler 解析、严格类型与 @/ -> src/ 别名
 
 运行边界: 本机可用 `bun run dev`；根 Docker Compose 固定暴露 10002、探测 `/health`，密钥只来自被忽略的 `chat/.env`。
 
+计费边界：新账本通过 BILLING_USAGE_SECRET 鉴别 API/Chat，模型结束后等待带唯一收据的用量上报，失败有限重试且不静默丢弃。
+
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md

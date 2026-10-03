@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 authMiddleware、Business API 的混合召回与单篇正文读取、Mastra explore workflow 与 explore 领域契约
  * [OUTPUT]: 对外提供 POST /v1/explore，返回已复核引文的关联笔记与丢弃计数
- * [POS]: routes 层探索编排边界，与 organize 同构且全同步。它是只读的: 不创建 Run、不写任何数据库、不经审批链——AI 推荐是瞬时结果，落库只在用户确认后由 api 完成
+ * [POS]: routes 层探索编排边界，与 organize 同构且全同步。它是只读的: 不创建 Run、不写任何数据库、不经审批链——AI 推荐是瞬时结果，落库只在用户确认后由 api 完成 等待估算用量记账，失败不会被静默忽略。
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -158,10 +158,10 @@ export const exploreRoute = registerApiRoute("/v1/explore", {
       }
 
       // 精确 usage 封装在 workflow 内取不到，按查询+召回正文保守估算记账，使探索也计入额度。
-      void businessApi.recordUsage(
+      await businessApi.recordUsage(
         estimateTokens(queryText, ...[...bodies.values()].map((body) => body.content_mdx)),
         accessToken,
-      ).catch(() => null);
+      );
 
       return context.json(workflowResult.result);
     } catch (error) {

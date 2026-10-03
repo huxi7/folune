@@ -36,6 +36,10 @@ Cloud Build 使用 deploy/cloudbuild.yaml。两个 GitHub push 触发器都只�
 
 不要将未经配置的空服务直接交给更新流水线：服务不存在时，`gcloud run deploy` 会尝试使用默认 Compute 账号，构建身份未获其 actAs 权限；即使增加这一权限，也仍缺少业务环境变量。应完成服务初始化，随后运行正常触发器验证更新。已完成初始化的日常发布无需重复这些步骤。
 
+## 支付发布配置
+
+NOWPayments 正式 API 可在 main 本地开发联调；它与 Git production 分支及 Supabase 生产库是独立选择。当前供应商默认 production。合并分支只发布代码，不会上传被忽略的 api/.env，也不会自动创建支付表或定时任务。首次上线还需支付 SQL、Secret Manager、固定线上回调和外部对账调度，详见 [api/NOWPAYMENTS.md](../api/NOWPAYMENTS.md)。开发测试订单留在开发库，不能复制成线上用户权益。
+
 ## 运行配置
 
 | 位置 | 生产配置 |

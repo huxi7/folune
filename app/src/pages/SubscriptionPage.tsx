@@ -1,9 +1,11 @@
 /**
- * [INPUT]: 依赖双语 locale、共享 useBilling 的服务端套餐/账户快照、createCheckout 支付会话边界、Profile 身份与本地 Dialog/Button
- * [OUTPUT]: 对外提供独立订阅页 SubscriptionPage，筛选三档付费套餐并读取服务端积分，完整处理月年报价、方案确认、结算准备及未开放/失败状态
- * [POS]: pages 的订阅流程装配层；父级负责鉴权与工作区来路，本页把后端事实投影给 SubscriptionWorkspace，不自行写订阅或生成订单
+ * [INPUT]: 依赖共享 useBilling、支付接口、PaymentOrders 和既有订阅组件
+ * [OUTPUT]: 装配月/年付款，打开收银台后跟踪同一订单，待核对可直接查看订单
+ * [POS]: 页面只负责生命周期与导航，已付周期按服务端规则顺延，收银台在外部打开
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
+import { PaymentOrders } from "../widgets/PaymentOrders";
+import { openCheckout } from "../shared/api/payments";
 import { useEffect, useRef, useState } from "react";
 
 import { useLocale, type Locale } from "../shared/locale";
@@ -22,7 +24,7 @@ import {
 
 import "../styles/subscription.css";
 
-type Selection = { plan: SubscriptionPlan; interval: SubscriptionInterval };
+type Selection = { plan: SubscriptionPlan; interval: SubscriptionInterval; key: string };
 type CheckoutState =
   | { status: "idle" }
   | { status: "loading" }
@@ -60,6 +62,9 @@ function toDisplayPlan(plan: BillingPlan, locale: Locale): SubscriptionPlan {
 export function SubscriptionPage({ profile, onBack, onBuyCredits }: { profile: Profile; onBack: () => void; onBuyCredits: () => void }) {
   const { t, locale } = useLocale();
   const { catalog, overview, loading, refreshing, error, refresh } = useBilling();
+  const [ordersOpen,setOrdersOpen]=useState(()=>new URLSearchParams(window.location.search).has("order"));
+  const [activeOrderId, setActiveOrderId] = useState<string | undefined>(() => new URLSearchParams(window.location.search).get("order") ?? undefined);
+  const [adminOpen,setAdminOpen]=useState(false);
   const [interval, setInterval] = useState<SubscriptionInterval>("month");
   const [selection, setSelection] = useState<Selection | null>(null);
   const [checkout, setCheckout] = useState<CheckoutState>({ status: "idle" });
@@ -88,6 +93,7 @@ export function SubscriptionPage({ profile, onBack, onBuyCredits }: { profile: P
     try {
       const result = await createCheckout({
         plan_id: next.plan.id,
+        idempotency_key: next.key,
         billing_interval: next.interval === "year" ? "yearly" : "monthly",
       }, controller.signal);
       if (version !== requestVersion.current) return;
@@ -109,7 +115,7 @@ export function SubscriptionPage({ profile, onBack, onBuyCredits }: { profile: P
   }
 
   function selectPlan(plan: SubscriptionPlan) {
-    const next = { plan, interval };
+    const next = { plan, interval, key:crypto.randomUUID() };
     setSelection(next);
     void prepareCheckout(next);
   }
@@ -119,6 +125,11 @@ export function SubscriptionPage({ profile, onBack, onBuyCredits }: { profile: P
     requestController.current?.abort();
     setSelection(null);
     setCheckout({ status: "idle" });
+  }
+  function showOrder(id?: string) {
+    closeCheckout();
+    setActiveOrderId(id);
+    setOrdersOpen(true);
   }
 
   return (
@@ -137,7 +148,11 @@ export function SubscriptionPage({ profile, onBack, onBuyCredits }: { profile: P
         profile={profile}
         credits={overview?.credits ?? null}
         onBuyCredits={onBuyCredits}
+        onOrders={()=>showOrder()}
+        onAdmin={overview?.is_payment_admin?()=>setAdminOpen(true):undefined}
       />
+      <PaymentOrders open={ordersOpen} orderId={activeOrderId} onClose={()=>setOrdersOpen(false)} />
+      <PaymentOrders open={adminOpen} onClose={()=>setAdminOpen(false)} admin />
       <Dialog
         closeLabel={t("关闭", "Close")}
         description={t("确认适合你的方案与订阅周期。", "Confirm your plan and billing period.")}
@@ -150,6 +165,7 @@ export function SubscriptionPage({ profile, onBack, onBuyCredits }: { profile: P
             checkout={checkout}
             onClose={closeCheckout}
             onRetry={() => void prepareCheckout(selection)}
+            onOrder={showOrder}
             selection={selection}
           />
         ) : null}
@@ -158,10 +174,11 @@ export function SubscriptionPage({ profile, onBack, onBuyCredits }: { profile: P
   );
 }
 
-function CheckoutSummary({ checkout, onClose, onRetry, selection }: {
+function CheckoutSummary({ checkout, onClose, onRetry, onOrder, selection }: {
   checkout: CheckoutState;
   onClose: () => void;
   onRetry: () => void;
+  onOrder: (id?: string) => void;
   selection: Selection;
 }) {
   const { t } = useLocale();
@@ -175,7 +192,7 @@ function CheckoutSummary({ checkout, onClose, onRetry, selection }: {
         <div className="folune-subscription-checkout-plan">
           <div>
             <h3>Folune {plan.name}</h3>
-            <p>{interval === "year" ? t('按年订阅 · 每年结算', 'Annual subscription · Billed yearly') : t('按月订阅 · 每月结算', 'Monthly subscription · Billed monthly')}</p>
+            <p>{interval === "year" ? t('一年使用期 · 单次付款', 'One year · One-time payment') : t('一个月使用期 · 单次付款', 'One month · One-time payment')}</p>
           </div>
           <CreditCardIcon aria-hidden="true" size={24} />
         </div>
@@ -188,9 +205,10 @@ function CheckoutSummary({ checkout, onClose, onRetry, selection }: {
       <div aria-live="polite" className="folune-subscription-checkout-status" role="status">
         <InfoIcon aria-hidden="true" size={16} />
         <div>
-          <strong>{paymentPending ? t('正在准备订阅', 'Preparing your subscription') : checkout.status === "unavailable" ? t("在线订阅即将开放", "Subscriptions are coming soon") : checkout.status === "ready" ? t('可以继续前往支付', 'Ready for checkout') : t('暂时无法准备订阅', 'Unable to prepare checkout')}</strong>
+          <strong>{paymentPending ? t('正在准备订阅', 'Preparing your subscription') : checkout.status === "pending" ? t('订单正在核对', 'Checking your order') : checkout.status === "unavailable" ? t("在线订阅即将开放", "Subscriptions are coming soon") : checkout.status === "ready" ? t('可以继续前往支付', 'Ready for checkout') : t('暂时无法准备订阅', 'Unable to prepare checkout')}</strong>
           <p>
             {paymentPending ? t('正在确认方案与付款方式，请稍候。', 'Confirming your plan and payment options.')
+              : checkout.status === "pending" ? t('订单已经创建，请查看订单进度，无需重复购买。', 'Your order exists. Check its progress without purchasing again.')
               : checkout.status === "unavailable" ? t('在线支付开放后，即可在这里完成订阅。当前方案保持不变。', 'You can subscribe here when payments open. Your current plan is unchanged.')
               : checkout.status === "ready" ? t('在支付页面完成付款后，你的订阅状态会自动更新。', 'Your subscription will update after payment is confirmed.')
               : checkout.status === "error" ? checkout.message : t('请稍后重试。', 'Please try again later.')}
@@ -209,8 +227,9 @@ function CheckoutSummary({ checkout, onClose, onRetry, selection }: {
         </Button>
         {paymentPending ? <Button disabled loading>{t('准备中', 'Preparing')}</Button> : null}
         {checkout.status === "error" ? <Button onClick={onRetry} variant="primary">{t('重试', 'Try again')}</Button> : null}
+        {checkout.status === "pending" ? <Button onClick={() => onOrder(checkout.order_id)} variant="primary">{t('查看订单', 'View order')}</Button> : null}
         {checkout.status === "ready" ? (
-          <GlowButton onClick={() => window.location.assign(checkout.checkout_url)}>{t('前往支付', 'Continue to payment')}</GlowButton>
+          <GlowButton onClick={() => { openCheckout(checkout.checkout_url); onOrder(checkout.order_id); }}>{t('前往支付', 'Continue to payment')}</GlowButton>
         ) : null}
       </div>
     </div>

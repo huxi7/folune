@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 zod 的枚举、UUID、日期与严格对象校验
- * [OUTPUT]: 对外提供只读订阅行、套餐/周期 checkout 与只含 pack_id 的积分 checkout 校验
- * [POS]: DTO 层隔离客户端选购意图与可信订阅事实，拒绝金额、身份、回跳地址和状态注入
+ * [INPUT]: 依赖 zod 的白名单/UUID/日期校验
+ * [OUTPUT]: 校验订阅读取和订阅/积分结账意图及可选幂等键
+ * [POS]: 严格拒绝客户端价格、用户归属、支付状态与回跳来源
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { z } from "zod";
@@ -23,11 +23,13 @@ export const subscriptionRowsSchema = z.array(z.object({
 export const createCheckoutSchema = z.object({
   plan_id: paidPlanIdSchema,
   billing_interval: billingIntervalSchema,
+  idempotency_key: z.uuid().optional(),
 }).strict();
 
 export type CreateCheckoutInput = z.infer<typeof createCheckoutSchema>;
 
 export const createCreditCheckoutSchema = z.object({
+  idempotency_key: z.uuid().optional(),
   pack_id: z.enum(["credits_500", "credits_1000", "credits_2000", "credits_5000", "credits_8000", "credits_10000"]),
 }).strict();
 

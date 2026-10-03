@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 authMiddleware、Business API、冻结 memo context、独立审批协调器、客户端工具、Mastra 流桥与 chat-stream 的终态/静默超时协调
  * [OUTPUT]: 对外提供消息级上下文冻结、一次性 turn prepare、三档写审批、同轮 assistant 续写、胖工具流转、明确的模型余额错误与增量 parts 持久化的 POST /v1/chat
- * [POS]: routes 层 AI Native V2 HTTP 协调边界；审批/工具续跑复用同一回复 ID，先完成审批再让浏览器 Worker 规划，最终安全仍由 api command 决定
+ * [POS]: routes 层 AI Native V2 HTTP 协调边界；审批/工具续跑复用同一回复 ID，先完成审批再让浏览器 Worker 规划，最终安全仍由 api command 决定 onUsage 返回可等待的记账 Promise，不脱离请求生命周期。
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -326,11 +326,7 @@ export const chatRoute = registerApiRoute("/v1/chat", {
           : null;
       },
       persist: (message, status) => businessApi.syncMessage(threadId, message, status, accessToken),
-      onUsage: (totalTokens) => {
-        void businessApi.recordUsage(totalTokens, accessToken).catch(() =>
-          context.get("mastra").getLogger().warn("Usage record failed", { threadId }),
-        );
-      },
+      onUsage: async (totalTokens) => { await businessApi.recordUsage(totalTokens, accessToken); },
       onPersistenceError: () => context.get("mastra").getLogger().error(
         "Chat response persistence failed", { threadId, assistantMessageId },
       ),

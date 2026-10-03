@@ -2,6 +2,7 @@
 > L2 | 父级: ../../CLAUDE.md
 
 成员清单
+payment.service.ts: 旧固定汇率 Invoice 不再作为新结账返回，统一结账、签名通知二次查单与重复入金拦截、用户/管理权限和持久对账；过期只认供应商，继续补查迟到款。
 CLAUDE.md: 记录业务服务层职责与文档协议
 auth.service.ts: 将 router 提取的用户 access token 转换为经 Supabase Auth 校验的可信 AuthUser；在途按原始 token 合并同一校验，已完成身份按 SHA-256(token) 键入 45 秒 TTL 缓存，原始 token 不越过请求生命周期；只缓存成功身份，401/502 永不入缓存，撤销延迟窗口上限等于 TTL
 health.service.ts: 提供不依赖 Hono Context 的健康状态用例
@@ -12,9 +13,9 @@ ai-thread.service.ts: prepare 的历史读取与 thread/settings/context 同一 
 ai-context.service.ts: 无引用普通聊天不读取文件树/正文/会话引用，显式冻结引用不再重读会话引用；从服务端 memo tree/正文解析本轮冻结 primary/显式/置顶引用，先以 expected revision 拒绝审批续写期间的漂移，再生成可信路径并分配 60k 字符预算；prepare-chat 可与 thread/settings 校验并行启动
 ai-command.service.ts: 编排默认完全访问的账号权限 GET/PATCH；首次读取只补缺失行、冲突重读胜出选择，不能覆盖并发 PATCH；另负责命令创建/查询/批准/拒绝/撤销及 Postgres 404/409 映射
 ai-run.service.ts: 将 Run 创建/读取/记录方案/应用/拒绝/失败/撤销命令映射到数据库状态机，apply/undo 只接收 runId 并输出稳定 404/409
-ai-usage.service.ts: getAccountUsage 统一设置/订阅页和 Chat 门禁的 UTC 日 token 口径；从 subscriptionService 获取可信付费权益，使用同一上限与真实累计值；recordUsage 只增不减并按当前 UTC 日重读，避免跨午夜误标日期
-billing.service.ts: 组装公共套餐/积分包目录及有效订阅/真实日额度，10,000 token 确定换算 1 积分；选购只从服务器选价，积分 preview 在支付适配前封闭，不产生订单或购买余额
-subscription.service.ts: 只认本人已确认付款事实，active 且处于有效期才赋予对应套餐额度；欠费、到期、取消或未来周期回落 Free，资料 metadata 不参与授权
+ai-usage.service.ts: 每日赠送优先、购买余额补充与带唯一收据的实际用量记账。
+billing.service.ts: 服务器目录定价、购买/每日余额投影与两类统一订单入口。
+subscription.service.ts: 当前已付周期优先，兼容历史订阅，无 metadata 提权。
 canvas.service.ts: 将 Canvas V2 默认/standalone 入口、读取、人工 mutation、AI expansion commit/context 编排为稳定 HTTP 契约；新建 standalone 与备忘录共用最大编号分配器，同级 canvas 名称包含默认与独立画布；客户端占号优先写入，旧请求或撞号时重读最大号加一，409 回传当前 version/mutation_id 供 WAL rebase，运行期只有这一套写路径
 profile.service.ts: 以 Web Crypto 生成单一默认 username 与头像 UUID 路径，执行幂等建档、owner 校验、5MB/JPEG-PNG-WebP 签名验证、avatar_url CAS、失败补偿与旧 Storage 对象清理
 

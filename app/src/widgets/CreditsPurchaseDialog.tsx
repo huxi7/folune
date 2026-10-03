@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖服务端积分包/日额度、双语locale、共享Dialog/Button/Skeleton及积分图标；顶部直接使用用户选定的同源蓝色生成图
  * [OUTPUT]: 对外提供受控积分购买弹窗，呈现六档报价、单选、支付状态、升级入口与可展开规则
- * [POS]: widgets 的积分选购展示层；不发网络请求、不生成钱包余额，支付事实与关闭行为交给页面装配
+ * [POS]: widgets 的积分选购展示层；不发网络请求、不生成钱包余额，支付事实与关闭行为交给页面装配 说明每日优先、购买长期有效与退款冲正规则。
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { useState } from "react";
@@ -113,8 +113,8 @@ export function CreditsPurchaseDialog({
         </footer>
         {rulesOpen ? <div className="folune-credits-rules">
           {tokensPerCredit ? <p>{t(`1 积分对应 ${formatNumber(tokensPerCredit)} Token，对话、写作与整理共享用量，按实际消耗扣除。`, `1 credit equals ${formatNumber(tokensPerCredit)} tokens. Conversations, writing, and organization share the same usage allowance.`)}</p> : null}
-          <p>{t("上方显示当前计划的今日剩余额度，每日北京时间 08:00 重置，不累计；它不是已购买积分余额。", "The balance above is today's remaining plan allowance. It resets at 00:00 UTC without rollover and is separate from purchased credits.")}</p>
-          <p>{t("积分购买尚未开放，积分包报价为预览；购买积分的有效期与使用规则将在开售前公布。", "Credit packs and prices are previews. Expiration and usage terms will be published before sales open.")}</p>
+          <p>{t("可用余额包含今日剩余额度与购买积分。每日额度于北京时间 08:00 重置，优先使用；购买积分长期有效。", "Available balance combines daily and purchased credits. Daily credits reset at 00:00 UTC and are used first; purchased credits do not expire.")}</p>
+          <p>{t("付款确认后到账。退款会冲正对应购买积分；已消耗部分形成欠额，由后续余额抵扣。", "Credits arrive after confirmed payment. Refunds reverse the purchase; spent credits become a balance adjustment.")}</p>
         </div> : null}
       </div>
     </section>

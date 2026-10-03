@@ -1,27 +1,26 @@
 /**
- * [INPUT]: 依赖 PaymentProvider 契约，不读取用户 JWT 或引入支付 SDK
- * [OUTPUT]: 对外提供尚未接入网关的订阅与积分 paymentProvider，两条入口均明确不可支付
- * [POS]: lib 层未来支付服务的唯一适配接缝；未签约网关时不伪造 checkout URL、订单或付款成功，订阅激活必须另经可信回调落账
+ * [INPUT]: 依赖统一 env 与 NOWPayments 网关适配器
+ * [OUTPUT]: 提供真实配置门禁和单一 NOWPayments 客户端
+ * [POS]: 支付基础设施选择边界；开售开关与已购买权益读取相互独立
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
-import type { PaymentProvider } from "../model/billing.model.ts";
-
-export const paymentProvider: PaymentProvider = Object.freeze({
-  availability: Object.freeze({ available: false, provider: null }),
-  async createCheckout() {
-    return {
-      status: "unavailable" as const,
-      code: "PAYMENT_NOT_CONFIGURED" as const,
-      message: "在线订阅即将开放",
-      checkout_url: null,
-    };
+import { env } from "../config/env.ts";
+import { nowpaymentsClient } from "./nowpayments.ts";
+export const paymentProvider = {
+  get availability() {
+    const available = Boolean(
+      env.BILLING_LEDGER_ENABLED &&
+      env.PAYMENT_CHECKOUT_ENABLED &&
+      env.NOWPAYMENTS_API_KEY &&
+      env.NOWPAYMENTS_IPN_SECRET &&
+      env.PAYMENT_DB_JWT &&
+      env.PAYMENT_APP_ORIGIN &&
+      env.PAYMENT_API_ORIGIN &&
+      env.PAYMENT_RECONCILE_SECRET &&
+      env.NOWPAYMENTS_EMAIL &&
+      env.NOWPAYMENTS_PASSWORD,
+    );
+    return { available, provider: available ? "nowpayments" : null };
   },
-  async createCreditCheckout() {
-    return {
-      status: "unavailable" as const,
-      code: "PAYMENT_NOT_CONFIGURED" as const,
-      message: "积分购买即将开放",
-      checkout_url: null,
-    };
-  },
-});
+  client: nowpaymentsClient(env),
+};

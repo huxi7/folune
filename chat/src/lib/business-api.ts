@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 config/env、当前 Bearer JWT、upstream-http 的完整响应期限与 zod
  * [OUTPUT]: 对外提供 thread/消息/冻结 context、一次性 Chat turn prepare、轻量 tree、单篇正文、Canvas expansion 可信上下文、账号权限、命令与 Run 的 authenticated Business API client
- * [POS]: lib 层 chat→api 唯一业务边界，每次请求临时转发用户 JWT，统一解析信封且绝不记录或持久化凭据；canvas 可穿过资源校验，再由各模型投影显式过滤
+ * [POS]: lib 层 chat→api 唯一业务边界，每次请求临时转发用户 JWT，统一解析信封且绝不记录或持久化凭据；canvas 可穿过资源校验，再由各模型投影显式过滤 新账本记账使用稳定 UUID 和服务密钥，失败仅以同一收据重试一次。
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -389,11 +389,15 @@ export const businessApi = {
   },
 
   // 记账：模型调用结束后上报本轮真实 token（输入+输出总和）。
-  recordUsage(totalTokens: number, accessToken: string) {
-    return request("/ai-usage/record", accessToken, usageStatusSchema, {
-      method: "POST",
-      body: JSON.stringify({ total_tokens: totalTokens }),
-    });
+  async recordUsage(totalTokens: number, accessToken: string) {
+    const body=JSON.stringify({total_tokens:totalTokens,usage_id:crypto.randomUUID()});
+    const init:RequestInit={method:"POST",body,headers:env.BILLING_USAGE_SECRET?{"X-Folune-Usage-Key":env.BILLING_USAGE_SECRET}:{}};
+    try { return await request("/ai-usage/record",accessToken,usageStatusSchema,init); }
+    catch(error) {
+      // 仅新账本支持收据去重；旧记账接口不能安全重试。
+      if (!env.BILLING_USAGE_SECRET || !(error instanceof BusinessApiError) || error.status<500) throw error;
+      return request("/ai-usage/record",accessToken,usageStatusSchema,init);
+    }
   },
 
   getMemoTree(accessToken: string) {

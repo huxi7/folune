@@ -1,10 +1,12 @@
 /**
  * [INPUT]: 依赖 Hono、router/request、AI zod schemas、auth 与 AI thread/context/run services、统一 ok helper
  * [OUTPUT]: 对外提供 /ai-threads（含首开 bootstrap、单会话 content 与消息定点 PATCH）、/ai-context（含 prepare-chat）、/ai-runs、/ai-settings、/ai-commands 的 JWT 保护资源 routers
- * [POS]: router 层 AI Native V2 HTTP 适配器，只做认证、param/body 校验和 service 下传；会话列表无状态 query，不调用模型或直接访问 Supabase
+ * [POS]: router 层 AI Native V2 HTTP 适配器，只做认证、param/body 校验和 service 下传；会话列表无状态 query，不调用模型或直接访问 Supabase 新账本记账同时校验服务密钥与用户 JWT，并把 usage_id 交给事务层。
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
+import { env } from "../config/env.ts";
+import { requireInternalSecret } from "../service/payment.service.ts";
 import type { Context } from "hono";
 import { Hono } from "hono";
 
@@ -264,6 +266,7 @@ aiUsageRouter.get("/", async (c) => {
 // 记账：chat 在每次模型调用结束后上报本轮真实 token（输入+输出总和）。
 aiUsageRouter.post("/record", async (c) => {
   const { accessToken, authUser } = await authenticate(c);
-  const { total_tokens } = await parseJsonBody(c, recordAiUsageSchema, "Invalid AI usage");
-  return ok(c, await aiUsageService.recordUsage(authUser, accessToken, total_tokens));
+  if (env.BILLING_LEDGER_ENABLED) requireInternalSecret(c.req.header("X-Folune-Usage-Key"),env.BILLING_USAGE_SECRET);
+  const { total_tokens, usage_id } = await parseJsonBody(c, recordAiUsageSchema, "Invalid AI usage");
+  return ok(c, await aiUsageService.recordUsage(authUser, accessToken, total_tokens, usage_id));
 });

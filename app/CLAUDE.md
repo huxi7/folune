@@ -89,6 +89,8 @@ Paper First V1.1 / Quiet Editorial 覆盖约束: 本节覆盖上文遗留的 V1 
 
 流式 Markdown 生命周期约束: SSE 内容增长时必须复用模块级 Markdown 渲染器身份，通过 Context 传递当前正文与动效状态。StreamingText 不拥有文本显示队列、全文时间轴或布局阶段同步状态更新，网络每次送达的完整正文必须在同次上游 React 更新中进入视图；历史正文始终使用原生文本节点，只允许最后可见块的末尾最多 5 个词使用动画 span，使 DOM 规模不随回复长度增长。55ms 仅是五个尾词的负时间错峰，绝不能延迟文字显示；模糊拖尾是生成状态的唯一视觉语言，禁止光标 DOM、样式、状态或关键帧。
 
+支付现状：订阅与积分共用 NOWPayments 订单，订单记录/管理审计只读服务端事实，购买余额与每日赠送分开展示；本机 main 已接通 Staging 和正式供应商；实际到账仍待验证，生产未发布。
+
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 
 2026-09-02 形制收口投影：归档线已由 fixed `ArchiveCordOverlay` 取代 react-archer；source 是 Paper Toolbar **左上角身份段**里的 `ArchiveStatus`（放在右侧命令簇里那条线必须横穿整张纸才够得到左边的文件树），target 是真实 tree row 标记，离屏目标由纯策略钳制，窄屏 overlay 只保留目标高亮。上文遗留的 Archive Port/Target Port 叙述不再代表当前实现。

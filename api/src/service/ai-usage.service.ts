@@ -1,10 +1,12 @@
 /**
- * [INPUT]: 依赖 aiRepository 的 findTodayUsage/incrementUsage、subscriptionService 的可信权益与 AuthUser
- * [OUTPUT]: 对外提供共享 getAccountUsage、Chat getDailyStatus 与 recordUsage，按同一 UTC 日和有效订阅上限编排
- * [POS]: service 层唯一 AI 用量口径；设置/订阅页与 Chat 门禁同源，计数只以验签用户身份经 RLS/受控 RPC 累加
+ * [INPUT]: 依赖订阅权益、支付钱包/用量事务和旧日用量仓储
+ * [OUTPUT]: 提供购买积分与每日赠送合并门禁及带收据的记账
+ * [POS]: 新账本优先消耗当日赠送后购买余额，记录实际用量不抹掉欠额；旧模式仅用于迁移窗口
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
+import { env } from "../config/env.ts";
+import { paymentRepository } from "../repository/payment.repository.ts";
 import type { AiDailyUsageStatus } from "../model/ai.model.ts";
 import { HttpError } from "../common/http-error.ts";
 import type { AuthUser } from "../model/auth.model.ts";
@@ -34,6 +36,14 @@ const getAccountUsage = async (
   accessToken: string,
 ): Promise<{ subscription: SubscriptionSnapshot; usage: BillingUsage }> => {
   const usageDate = utcToday();
+  if (env.BILLING_LEDGER_ENABLED) {
+    const [row,balance,entitlement]=await Promise.all([paymentRepository.usage(authUser.id,usageDate),paymentRepository.wallet(authUser.id),subscriptionService.getEntitlement(authUser,accessToken)]);
+    const dailyRemaining=Math.max(0,entitlement.dailyLimit-row.free_tokens_used);
+    const remaining=dailyRemaining+Math.max(0,balance);
+    const resets=new Date(`${usageDate}T00:00:00Z`);resets.setUTCDate(resets.getUTCDate()+1);
+    return {subscription:entitlement.subscription,usage:{usage_date:usageDate,total_tokens:row.total_tokens,daily_limit:entitlement.dailyLimit,
+      remaining,exceeded:remaining<=0,purchased_tokens:Math.max(0,balance),daily_remaining:dailyRemaining,resets_at:resets.toISOString(),timezone:"UTC"}};
+  }
   const [row, entitlement] = await Promise.all([
     aiRepository.findTodayUsage(authUser.id, usageDate, accessToken),
     subscriptionService.getEntitlement(authUser, accessToken),
@@ -65,9 +75,16 @@ export const aiUsageService = {
     authUser: AuthUser,
     accessToken: string,
     tokens: number,
+    usageId?: string,
   ): Promise<AiDailyUsageStatus> {
     if (!Number.isFinite(tokens) || tokens <= 0) {
       return readStatus(authUser, accessToken);
+    }
+    if (env.BILLING_LEDGER_ENABLED) {
+      if (!usageId) throw new HttpError(400,"USAGE_ID_REQUIRED","用量记账缺少幂等标识。");
+      const entitlement=await subscriptionService.getEntitlement(authUser,accessToken);
+      await paymentRepository.recordUsage(authUser.id,usageId,Math.floor(tokens),entitlement.dailyLimit);
+      return readStatus(authUser,accessToken);
     }
     await aiRepository.incrementUsage(
       authUser.id,
