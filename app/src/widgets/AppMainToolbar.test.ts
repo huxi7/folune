@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 读取 AppMainToolbar、workspace.css 与 brand-spec 的命令层级和页面级共享悬浮提示/真实快捷键契约
- * [OUTPUT]: 锁定 Toolbar 不再接收拼接路径；整理是排在首位的 中性核心动作（有图标与文字、不是 Filled Primary、静止无容器身体），进入 Canvas 收成无标签 32px 图标，三枚图标组成 4px 紧凑簇，整理与簇也以 4px 相隔，弹层型「更多」排在簇尾，归档状态是左侧身份段的独立元素，命令不带选中指示，顶栏 control 的 32px 高度只声明一次且中性 hover/press 只有一个答案，sticky 钉在 Panel 内缩线，顶栏与 Paper 同表面同颜色且永远不画底边线，凝结只有一个被动画的进度且下缘软边的高度/模糊/遮罩都乘它
+ * [OUTPUT]: 锁定 Toolbar 不再接收拼接路径；整理是排在首位的 中性核心动作（有图标与文字、不是 Filled Primary、静止无容器身体），进入 Canvas 收成无标签 32px 图标，三枚图标组成 4px 紧凑簇，整理与簇也以 4px 相隔，弹层型「更多」排在簇尾，归档状态是左侧身份段的独立元素，命令不带选中指示，顶栏 control 的 32px 高度只声明一次且中性 hover/不透明press 只有一个答案，sticky 钉在 Panel 内缩线，顶栏与 Paper 同表面同颜色且永远不画底边线，凝结只有一个被动画的进度且下缘软边的高度/模糊/遮罩都乘它
  * [POS]: Paper Toolbar 结构/样式静态回归门禁；不发起导航、整理请求或文件树事务
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -132,7 +132,7 @@ describe("AppMainToolbar", () => {
       "--button-surface-hover: var(--interactive-hover)",
       "--button-face-top-hover: var(--interactive-hover)",
       "--button-face-bottom-hover: var(--interactive-hover)",
-      "--button-surface-active: var(--border)",
+      "--button-surface-active: var(--secondary)",
     ]) expect(neutral).toContain(token);
     // 整理也属于中性命令，共享规则不引用 primary
     expect(neutral).not.toContain("primary");

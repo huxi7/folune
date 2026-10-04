@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 读取 DS motionTokenStyles、index.css、button.css、sidebar-button.css 与 workspace.css 的 Control radius、Button 共享别名、Composer 圆形例外与统一 press
- * [OUTPUT]: 检查所有生产圆角与曲线配对及菜单 Compact 分档；锁定 16px Control、显式 12px inner、Button 不建立私有半径、强调 Button 使用极轻纵向同色面光、中性按钮使用可插值纯色且没有 1px 全周内环、Ghost 无实体阴影、Press 收回外影、Composer 继续显式使用 round，以及四处命令控件共读同一份 press 缩放并在 Reduced Motion 下归 1、创建 split 的 hover 与 press 只认外壳那两半而不认展开的菜单项
+ * [OUTPUT]: 检查所有生产圆角与曲线配对及菜单 Compact 分档；锁定 16px Control、显式 12px inner、Button 不建立私有半径、强调 Button 使用极轻纵向同色面光、中性按钮使用可插值纯色且没有 1px 全周内环、Ghost 无实体阴影、Press 使用不透明语义表面并收回外影、Composer 继续显式使用 round，以及四处命令控件共读同一份 press 缩放并在 Reduced Motion 下归 1、创建 split 的 hover 与 press 只认外壳那两半而不认展开的菜单项
  * [POS]: app/src/styles 的静态契约测试；区分静态文字校正与按压反馈，逐项约束已确认的账户/认证/Canvas 曲率例外
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -58,6 +58,12 @@ describe("Button material 公理", () => {
     expect(declarationsFor(buttonCss, ".ds-button-secondary")).toContain("--button-state-shadow-hover: var(--button-state-shadow)");
     expect(buttonCss).toContain("inset 0 2px 4px var(--button-press-depth)");
     expect(declarationsFor(buttonCss, ".ds-button-ghost")).toContain("--button-state-shadow: none");
+    // 按压表面不能消费可透明的边框；横幅浮动入口自行声明通透材质。
+    for (const variant of [".ds-button-secondary", ".ds-button-ghost"]) {
+      const material = declarationsFor(buttonCss, variant);
+      expect(material).toContain("--button-surface-active: var(--secondary)");
+      expect(material).not.toMatch(/--button-(?:surface|face-top|face-bottom)-active:[^;]*var\(--border\)/);
+    }
     const pressedShadow = /--button-shadow-pressed:\s*([^;]+);/.exec(buttonCss)?.[1] ?? "";
     expect(pressedShadow).not.toMatch(/\n\s*0\s/);
   });

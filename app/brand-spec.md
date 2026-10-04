@@ -159,7 +159,7 @@ Moving the 36px Button family to `999px` was evaluated and rejected. The Compose
 
 ### Neutral Ghost — the organize action's material (2026-09-26)
 
-The organize command keeps its `32px` hit geometry (see the 2026-09-04 refinement below — the toolbar owns that height, not the control), `16px` semantic glyph, existing `14/18px` Button typography and `12px` Control curvature. It inherits the shared Ghost foreground and toolbar `interactive-hover` / `border` press tokens. Loading still consumes the shared Processing tokens; no dedicated Button variant or color is needed.
+The organize command keeps its `32px` hit geometry (see the 2026-09-04 refinement below — the toolbar owns that height, not the control), `16px` semantic glyph, existing `14/18px` Button typography and `12px` Control curvature. It inherits the shared Ghost foreground and toolbar `interactive-hover` / `secondary` press tokens. Loading still consumes the shared Processing tokens; no dedicated Button variant or color is needed.
 
 | State | Spec |
 | --- | --- |
@@ -242,6 +242,7 @@ One axis is deliberately singular:
 - Primary, Secondary and Danger do not draw a crisp full-perimeter inset ring. A broad, low-opacity top inset may support the face, but it must not resolve as an outline.
 - Rest uses a short neutral gray-black grounding shadow. Hover remains in place; Secondary keeps its resting shadow, while Primary and Danger become slightly softer and wider. Press removes the outer shadow and keeps only a shallow inset compression.
 - Primary and Danger may add one very weak, downward-biased same-color ambient layer behind the neutral shadow; it is auxiliary separation, never blue/red glow. Secondary stays neutral and Ghost carries no solid-button shadow.
+- 中性 Secondary/Ghost 的按压填充使用不透明 `secondary`，`border` 的透明度只影响框线；Paper 工具栏与归档入口沿用同一规则。图片上方的积分弹窗关闭按钮显式保留轻通透：默认90%、悬停94%、按压78%卡片底色及6px背景模糊，三态无影；普通确认/购买按钮保持稳定表面。
 - Press tightens in place with `transform: scale(var(--press-scale))` (`0.98`, 90ms, center origin). No `translateY` drop, bounce or overshoot curve. Split controls scale as one shell, loading and disabled never scale, and Reduced Motion keeps the active color, border and shadow compression without the scale.
 - Saving uses the same radius, a low-frequency narrow shimmer swept on a subtle diagonal, and the specimen label stays simply `Saving` without trailing dots.
 

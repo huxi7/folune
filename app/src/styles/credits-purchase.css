@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 消费 Folune 品牌蓝/灰框线、共享 Button/Dialog/Skeleton、用户选定的蓝色生成图与实测640px/4:1/24px超椭圆曲率及12px间距
- * [OUTPUT]: 直接呈现蓝色横幅/原有彩色柔光、品牌蓝选中边框/外圈、积分图标近边阴影及六档卡片/余额/操作区，覆盖窄屏与浅暗主题
+ * [OUTPUT]: 直接呈现蓝色横幅/原有彩色柔光、品牌蓝选中边框/外圈、积分图标近边阴影及六档卡片/余额/操作区，横幅关闭入口使用明确的轻通透三态与背景模糊，覆盖窄屏与浅暗主题
  * [POS]: styles 的积分弹窗视觉边界；共享 Dialog 拥有模态行为，本层定义内容比例，外壳复用设置的近边柔影
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -28,6 +28,13 @@
   }
   .folune-credits-banner img { display: block; width: 100%; height: 100%; position: absolute; inset: 0; object-fit: cover; }
   .folune-credits-purchase .folune-credits-close {
+    /* ---- 横幅上的浮动入口：通透是材质选择，不继承边框的透明度 ---- */
+    --button-fill-rest: color-mix(in srgb, var(--card) 90%, transparent);
+    --button-fill-hover: color-mix(in srgb, var(--card) 94%, transparent);
+    --button-fill-active: color-mix(in srgb, var(--card) 78%, transparent);
+    --button-state-shadow: none;
+    --button-state-shadow-hover: none;
+    --button-state-shadow-pressed: none;
     position: absolute;
     z-index: 3;
     top: 16px;
@@ -39,7 +46,7 @@
     border: 1px solid var(--border);
     border-radius: 50%;
     corner-shape: round;
-    background: var(--card);
+    backdrop-filter: blur(6px);
     box-shadow: none;
   }
   .folune-credits-body { padding: 24px; }

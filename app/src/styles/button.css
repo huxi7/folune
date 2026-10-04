@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 消费 APP app-typography.css 文字角色，变量回退保持非 APP 原排版； 依赖设计系统的半径/曲线配对规则与 index.css 的 Soft Ink Primary、轻纵向同色面光、中性落地阴影、Processing、Type/Spacing/Radius/Motion token 与唯一的 --press-scale/--motion-press
- * [OUTPUT]: 对外提供 36px 标准 Button 的 primary/secondary/ghost/danger、square、loading、disabled、focus 与 reduced-motion 视觉状态；中性 hover 按 Laper 200ms 变色且保持外影，按下原地 scale 收紧并收回外影
+ * [OUTPUT]: 对外提供 36px 标准 Button 的 primary/secondary/ghost/danger、square、loading、disabled、focus 与 reduced-motion 视觉状态；中性 hover 按 Laper 200ms 变色且保持外影，按下用不透明 Secondary 表面原地 scale 收紧并收回外影，边框透明度不再决定底色
  * [POS]: app/src/styles 的命令按钮专用视觉层，以 14/18px 文字比例、14px 横向留白、6px 图文间距和不成环的微弱面光统一全站 Button；Ghost 始终保持无实体阴影
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -207,13 +207,13 @@
     --button-border-active: color-mix(in srgb, var(--border) 86%, var(--card));
     --button-surface-rest: var(--card);
     --button-surface-hover: var(--interactive-hover);
-    --button-surface-active: var(--border);
+    --button-surface-active: var(--secondary);
     --button-face-top-rest: color-mix(in srgb, var(--card) 98%, white);
     --button-face-bottom-rest: color-mix(in srgb, var(--card) 98%, var(--button-depth));
     --button-face-top-hover: var(--interactive-hover);
     --button-face-bottom-hover: var(--interactive-hover);
-    --button-face-top-active: color-mix(in srgb, var(--border) 99%, white);
-    --button-face-bottom-active: color-mix(in srgb, var(--border) 99%, var(--button-depth));
+    --button-face-top-active: var(--button-surface-active);
+    --button-face-bottom-active: var(--button-surface-active);
     --button-foreground-rest: var(--card-foreground);
     --button-shimmer-color: var(--foreground);
     --button-press-depth: var(--button-secondary-press-depth);
@@ -224,11 +224,11 @@
 
   .ds-button-ghost {
     --button-surface-hover: var(--interactive-hover);
-    --button-surface-active: var(--border);
+    --button-surface-active: var(--secondary);
     --button-face-top-hover: var(--interactive-hover);
     --button-face-bottom-hover: var(--interactive-hover);
-    --button-face-top-active: var(--border);
-    --button-face-bottom-active: var(--border);
+    --button-face-top-active: var(--button-surface-active);
+    --button-face-bottom-active: var(--button-surface-active);
     --button-foreground-rest: var(--muted-foreground);
     --button-shimmer-color: var(--foreground);
     --button-state-shadow: none;
