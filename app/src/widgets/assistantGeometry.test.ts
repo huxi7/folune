@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun test 与助手纯几何策略
- * [OUTPUT]: 锁定默认短窗即最小尺寸、八方向对边固定/旧偏好恢复边界，以及屏幕变化和键盘出现时的完整可达性
+ * [OUTPUT]: 锁定默认短窗即最小尺寸、八方向对边固定/旧偏好恢复边界，以及屏幕变化和键盘出现时的完整可达性；Demo面板宽度不受真实窗口下限影响
  * [POS]: widgets 的助手空间约束门禁；浏览器动效观感另由真实页面验证
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -71,4 +71,21 @@ test("手机键盘出现后窗口完整落在可视区域，低矮屏仍能使�
   expect(window.bottom).toBe(484);
   expect(window.height).toBe(316);
   expect(812 - window.bottom - window.height).toBe(12);
+});
+
+
+test("演示面板严格使用预留栏宽，正式窗口仍保留360px下限", () => {
+  for (const viewportWidth of [760, 900, 1088, 1200, 1440]) {
+    const panelWidth = Math.max(240, Math.min(viewportWidth * .26, 340));
+    const inset = (viewportWidth < 1200 ? .75 : 1) * 14;
+    const input = { viewportWidth, viewportHeight: 736, panelWidth, size: "expanded" as const, inset, uiScale: .875 };
+    const panel = resolveAssistantGeometry({ ...input, widthMode: "panel" });
+    const window = resolveAssistantGeometry(input);
+    expect(panel.width).toBe(panelWidth);
+    expect(window.width).toBe(Math.max(360 * .875, panelWidth));
+    // 写作纸为轨道+30px留白预留空间；助手不能越过这条边界。
+    const paperRight = viewportWidth - panelWidth - 30;
+    expect(viewportWidth - panel.right - panel.width).toBeGreaterThan(paperRight);
+    expect(panel.height + panel.bottom).toBe(736 - inset);
+  }
 });

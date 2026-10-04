@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 React Portal、tooltipTriggerProps 事件/ref 组合、Motion 动态值和共享 motion token；触发器只传入提示内容、快捷键与外观
- * [OUTPUT]: 对外提供 WarmTooltip/WarmTooltipGroup；asChild 原位组合事件/ref，同组共用首次等待、温热窗口与单一提示浮层
+ * [OUTPUT]: 对外提供 WarmTooltip/WarmTooltipGroup；asChild 原位组合事件/ref，同组共用首次等待、温热窗口与单一提示浮层，enabled=false关闭整组触发与Portal
  * [POS]: Design System 的 React Bits WarmTooltip 适配；保留上游运动模型，收敛主题/幅度并补齐 Escape、点击、卸载与减少动态效果的清理
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  * 来源：https://reactbits.dev/r/WarmTooltip-TS-CSS.json（2026-09-24）
@@ -45,6 +45,7 @@ export type WarmTooltipSide = 'top' | 'bottom' | 'left' | 'right';
 export type WarmTooltipSize = 'sm' | 'md' | 'lg';
 
 export interface WarmTooltipGroupProps {
+  enabled?: boolean;
   delay?: number;
   warmWindow?: number;
   travel?: number;
@@ -119,6 +120,7 @@ interface GroupState {
 }
 
 interface GroupApi {
+  enabled: boolean;
   id: string;
   delay: number;
   warmWindow: number;
@@ -201,7 +203,7 @@ const LAYER: Variants = {
 const GroupContext = createContext<GroupApi | null>(null);
 
 export const WarmTooltipGroup = forwardRef<WarmTooltipGroupHandle, WarmTooltipGroupProps>(function WarmTooltipGroup(
-  { delay = 360, warmWindow = 300, travel = motionDuration.panelEnter * 1000, lean = 0, onWarmChange, children },
+  { enabled = true, delay = 360, warmWindow = 300, travel = motionDuration.panelEnter * 1000, lean = 0, onWarmChange, children },
   ref
 ) {
   const reduce = useReducedMotion();
@@ -288,7 +290,7 @@ export const WarmTooltipGroup = forwardRef<WarmTooltipGroupHandle, WarmTooltipGr
   };
 
   api.current.show = (payload: Payload, mode: Mode) => {
-    if (document.hidden || !payload.trigger.isConnected || payload.trigger.closest('[inert], [hidden], [aria-hidden="true"]')) return;
+    if (!enabled || document.hidden || !payload.trigger.isConnected || payload.trigger.closest('[inert], [hidden], [aria-hidden="true"]')) return;
     clearTimeout(st.current.closeTimer);
     clearTimeout(st.current.leaveTimer);
     const prev = st.current.current;
@@ -346,6 +348,7 @@ export const WarmTooltipGroup = forwardRef<WarmTooltipGroupHandle, WarmTooltipGr
   const group = useMemo(
     () => ({
       id,
+      enabled,
       delay,
       warmWindow,
       activeId: current ? current.id : null,
@@ -360,7 +363,7 @@ export const WarmTooltipGroup = forwardRef<WarmTooltipGroupHandle, WarmTooltipGr
       }
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [id, delay, warmWindow, current]
+    [id, enabled, delay, warmWindow, current]
   );
   useImperativeHandle(ref, () => ({ reset: group.reset }), [group]);
 
@@ -450,7 +453,7 @@ export const WarmTooltipGroup = forwardRef<WarmTooltipGroupHandle, WarmTooltipGr
   return (
     <GroupContext.Provider value={group}>
       {children}
-      {state !== 'closed' && current && canPortal
+      {enabled && state !== 'closed' && current && canPortal
         ? createPortal(
             <motion.span
               id={id}
@@ -527,10 +530,11 @@ const Trigger: React.FC<TriggerProps> = ({
   popBlur,
   showFuse,
   longPress,
-  disabled,
+  disabled: disabledProp,
   className
 }) => {
   const group = useContext(GroupContext) as GroupApi;
+  const disabled = disabledProp || !group.enabled;
   const groupRef = useRef(group);
   useLayoutEffect(() => { groupRef.current = group; }, [group]);
   const id = useId();
@@ -542,7 +546,7 @@ const Trigger: React.FC<TriggerProps> = ({
   const t = useRef<TriggerState>({ open: undefined, press: undefined, press0: null, suppressClick: false });
   const preset = SIZES[size] || SIZES.md;
   const coldDelay = delay ?? group.delay;
-  const active = group.activeId === id;
+  const active = !disabled && group.activeId === id;
 
   const payload = (): Payload => ({
     id,

@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 WarmTooltip 原位功能提示；依赖跨空间助手开关/尺寸/自定义浮窗、用户共享宽度、八方向调整器、真实活动状态、DS 材质/动态偏好与 MotionValue
- * [OUTPUT]: 对外提供常驻三态与自由尺寸宿主；胶囊固定右下，四边四角拖拽逐帧只更新局部几何，松手提交；可供Demo按uiScale投影全部胶囊尺寸并关闭几何/透明度过渡与调整能力
+ * [OUTPUT]: 对外提供常驻三态与自由尺寸宿主；胶囊固定右下，四边四角拖拽逐帧只更新局部几何，松手提交；可供Demo按uiScale投影胶囊并用panel宽度模式匹配预留栏宽，关闭几何/透明度过渡与调整能力
  * [POS]: widgets 的助手专属外壳；Dashboard持有会话，纯策略裁决边界，MotionValue持有动画/手势同一几何，避免正文缩放、会话重挂或逐帧重渲染工作区
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -14,7 +14,7 @@ import { useMotionPreference } from "../shared/design-system/useMotionPreference
 import { useLocale } from "../shared/locale";
 import type { AssistantFrame, AssistantSize } from "../shared/store/workspaceChromeStore";
 import type { AgentPresence } from "./AgentPanel/activityState";
-import { ASSISTANT_CAPSULE, resolveAssistantGeometry, type AssistantRect } from "./assistantGeometry";
+import { ASSISTANT_CAPSULE, resolveAssistantGeometry, type AssistantRect, type AssistantWidthMode } from "./assistantGeometry";
 import { AssistantWindowResize } from "./AssistantWindowResize";
 
 type WorkspaceAssistantLayerProps = {
@@ -22,6 +22,7 @@ type WorkspaceAssistantLayerProps = {
   open: boolean;
   size: AssistantSize;
   panelWidth: number;
+  widthMode?: AssistantWidthMode;
   presence?: AgentPresence;
   onOpen: () => void;
   frame?: AssistantFrame | null;
@@ -39,7 +40,7 @@ const readViewport = () => ({
   inset: typeof window === "undefined" ? 16 : (parseFloat(window.getComputedStyle(document.documentElement).fontSize) || 16) * (window.innerWidth < 1200 ? 0.75 : 1),
 });
 
-export function WorkspaceAssistantLayer({ children, open, size, panelWidth, presence = "idle", onOpen, frame = null, onResize, resizable = true, uiScale = 1, animateGeometry = true }: WorkspaceAssistantLayerProps) {
+export function WorkspaceAssistantLayer({ children, open, size, panelWidth, presence = "idle", onOpen, frame = null, onResize, resizable = true, uiScale = 1, animateGeometry = true, widthMode = "window" }: WorkspaceAssistantLayerProps) {
   const { t } = useLocale();
   const reduced = useMotionPreference();
   const [viewport, setViewport] = useState(readViewport);
@@ -47,8 +48,8 @@ export function WorkspaceAssistantLayer({ children, open, size, panelWidth, pres
   const buttonRef = useRef<HTMLButtonElement>(null);
   const wasOpenRef = useRef(open);
   const shellRef = useRef<HTMLDivElement>(null);
-  const geometry = resolveAssistantGeometry({ ...viewport, panelWidth, size, frame, uiScale });
-  const fullGeometry = resolveAssistantGeometry({ ...viewport, panelWidth, size: "expanded", uiScale });
+  const geometry = resolveAssistantGeometry({ ...viewport, panelWidth, size, frame, uiScale, widthMode });
+  const fullGeometry = resolveAssistantGeometry({ ...viewport, panelWidth, size: "expanded", uiScale, widthMode });
   const capsuleWidth = ASSISTANT_CAPSULE.width * uiScale;
   const capsuleHeight = ASSISTANT_CAPSULE.height * uiScale;
   const capsuleRadius = ASSISTANT_CAPSULE.radius * uiScale;

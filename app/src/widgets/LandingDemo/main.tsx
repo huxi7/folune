@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 demo.html 预载生产样式，React、Motion/Toast/WarmTooltipGroup 与 DemoWorkspace
- * [OUTPUT]: 对外提供独立 Demo 页面；`?v=` 选择对比版本，缺省即线上一档
+ * [OUTPUT]: 对外提供不显示任何Tooltip的独立 Demo 页面；hash选择对比版本，缺省即线上一档
  * [POS]: iframe 入口；不挂载 Auth、Router 或持久化主题 Provider，版本开关只为对比页服务
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -20,5 +20,5 @@ const variant = VARIANTS.find(value => value === requested) ?? "uniform";
 document.documentElement.dataset.demoVariant = variant;
 
 createRoot(document.getElementById("root")!).render(<StrictMode><MotionConfig reducedMotion="user">
-  <style>{motionTokenStyles}</style><WarmTooltipGroup><ToastProvider><DemoWorkspace variant={variant} /></ToastProvider></WarmTooltipGroup>
+  <style>{motionTokenStyles}</style><WarmTooltipGroup enabled={false}><ToastProvider><DemoWorkspace variant={variant} /></ToastProvider></WarmTooltipGroup>
 </MotionConfig></StrictMode>);

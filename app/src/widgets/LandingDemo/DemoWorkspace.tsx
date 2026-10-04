@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖生产 PaperWorkspaceShell/Toolbar/Markdown/文件库Panel/三态助手外壳/归档线与确定性 Demo 数据
  * [OUTPUT]: 对外提供笔记/画布直接切换、工具条进入与返回的纸面过渡、内存编辑、整理和本页会话
- * [POS]: Demo 唯一状态所有者；文件树导航清除笔记来路，工具条入口才记录返回对象，文件库与助手持续挂载；助手按演示根字号同比缩小；笔记固定全高、画布固定胶囊，先硬切助手再启动纸面过渡，避免根截图把助手一起带走
+ * [POS]: Demo 唯一状态所有者；文件树导航清除笔记来路，工具条入口才记录返回对象，文件库与助手持续挂载；助手按演示根字号同比缩小并严格匹配演示栏宽，不消费正式窗口最小宽度；笔记固定全高、画布固定胶囊，先硬切助手再启动纸面过渡，避免根截图把助手一起带走
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
@@ -160,7 +160,7 @@ export function DemoWorkspace({ variant = "uniform" }: { variant?: DemoVariant }
         </>} />}
       <WorkspacePanelLayer side="library" open={libraryOpen} style={style}><DemoSidebar tree={tree} selected={canvas ? "demo-canvas" : selected}
         expanded={expanded} onExpanded={setExpanded} onSelect={select} onClose={closeLibrary} onHint={hint} presentation={presentation} /></WorkspacePanelLayer>
-      <WorkspaceAssistantLayer open={assistantOpen} size="expanded" panelWidth={assistantWidth} onOpen={hint} resizable={false} uiScale={uiScale} animateGeometry={false}><DemoAssistant memoId={selected} title={note.title} filedAt={filedAt} onClose={closeAssistant} onHint={hint} onOrganize={organize} onUndo={undo} /></WorkspaceAssistantLayer>
+      <WorkspaceAssistantLayer open={assistantOpen} size="expanded" panelWidth={assistantWidth} widthMode="panel" onOpen={hint} resizable={false} uiScale={uiScale} animateGeometry={false}><DemoAssistant memoId={selected} title={note.title} filedAt={filedAt} onClose={closeAssistant} onHint={hint} onOrganize={organize} onUndo={undo} /></WorkspaceAssistantLayer>
       {!canvas && <ArchiveCordOverlay libraryOpen={libraryOpen} overlayPanels={compact} presentation={presentation} onLocate={locate} />}
     </div>
   </div>;

@@ -282,7 +282,7 @@ The motion language is part of the Design System. `src/shared/design-system/moti
 
 ## Functional tooltips
 
-- APP 与独立 Demo 各在入口装配唯一 WarmTooltipGroup，Paper、文件库、AI、Canvas 和 Portal 共用温热窗口及单一浮层；业务工具栏不再创建局部提示组。
+- APP入口装配唯一WarmTooltipGroup，Paper、文件库、AI、Canvas和Portal共用温热窗口及单一浮层；业务工具栏不创建局部提示组。Landing独立Demo在根级enabled=false，所有功能提示均禁用，不排队或渲染浮层；正式APP默认启用。
 - 不够直观的图标 Button 从 aria-label 生成提示，title/tooltip 可提供补充说明；关闭、收起、密码显隐以及已写明用途的文字导航不重复提示，只保留可访问名称/状态。显式 tooltip=false 关闭提示，已有外层 WarmTooltip 时去重。原位 asChild 保留 DOM、业务事件及 React 19 ref 清理，原生 title 不产生第二套提示。
 - 提示关联 aria-describedby，键盘焦点即时显示，Escape 先收提示再关闭菜单/模态；短触保持点击，长按展示说明且不误触命令。浮层避让视口、长文换行，并高于模态与通知；隐藏页面不会显示或保留提示，恢复可见不误关。
 

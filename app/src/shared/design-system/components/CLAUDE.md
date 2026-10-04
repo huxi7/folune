@@ -21,10 +21,10 @@ MentionInput.tsx: 原生 contenteditable 多行输入件，以受控纯文本和
 MentionInput.test.ts: MentionInput 纯文本分段回归测试，锁定中文标题、最长标题优先和特殊字符标题的内联 token 边界
 PasswordInput.tsx: 密码显隐保留可访问名称与状态，不重复文字提示； Input 家族的隐私输入组合件，复用 Input 内凹表面，提供受控明文/掩码切换、显隐图标按钮、aria-label/aria-pressed 与原生 input 属性/ref
 Card.tsx: 静态信息表面默认不动；显式 motion=lift 才启用 4px/1.012 的 hover 层级反馈，几何由 Motion、阴影由 CSS 单独拥有，减少动态效果取消空间变化
-WarmTooltip.tsx: asChild 保留原 DOM/ref/事件，去除原生 title；浮层双轴避让视口、长文本换行； React Bits 上游共享浮层适配，首次等待 360ms、温热窗口 300ms、同组 220ms 无回弹滑动；12px 字号、160ms/0.98/1px 淡入，无倾斜/箭头/引线；悬停与键盘焦点可达，点击/捕获阶段Escape/失焦/真实隐藏/卸载结束提示，恢复可见不误关，减少动态取消空间变化
+WarmTooltip.tsx: enabled=false禁用整组触发、排队及Portal，默认APP仍启用；asChild 保留原 DOM/ref/事件，去除原生 title；浮层双轴避让视口、长文本换行； React Bits 上游共享浮层适配，首次等待 360ms、温热窗口 300ms、同组 220ms 无回弹滑动；12px 字号、160ms/0.98/1px 淡入，无倾斜/箭头/引线；悬停与键盘焦点可达，点击/捕获阶段Escape/失焦/真实隐藏/卸载结束提示，恢复可见不误关，减少动态取消空间变化
 WarmTooltip.css: 消费 --layer-tooltip，提示高于 Dialog/Toast；内容按自身宽度测量并限制视口最大宽度； 提示定位层/表面分层与主题 token 接线，Portal 高于 Dialog 与 Toast，键帽独立由 KeyboardShortcut 提供
 tooltipTriggerProps.ts: 原位提示与业务事件/ref 的组合边界，支持 React 19 ref 清理与长按点击抑制
-WarmTooltip.test.tsx: 真实 DOM 验证原位/ref、单组去重、禁用/展开、延迟取消、触屏短触/长按与模态 Escape 分层、页面可见性恢复/隐藏期延迟取消、跨区域快速切换、侧栏去重及键盘/菜单Escape
+WarmTooltip.test.tsx: 覆盖整组禁用时点击/ref/焦点保留及切换后提示恢复；真实 DOM 验证原位/ref、单组去重、禁用/展开、延迟取消、触屏短触/长按与模态 Escape 分层、页面可见性恢复/隐藏期延迟取消、跨区域快速切换、侧栏去重及键盘/菜单Escape
 WarmTooltip.LICENSE.md: React Bits WarmTooltip 的原始版权与 MIT + Commons Clause 许可
 KeyboardShortcut.tsx: 共享快捷键表现层，把组合键拆成真实键帽；Mac 使用 Command/Delete 符号，其他平台使用 Ctrl/Backspace，只呈现不绑定行为
 KeyboardShortcut.css: 22px 紧凑键帽、浅边框与底部细阴影，提示和帮助面板共用浅暗色语义

@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 happy-dom、Testing Library 与生产助手宿主的演示比例/无过渡模式
- * [OUTPUT]: 验证演示胶囊全部几何按比例收缩，场景切换同次提交硬切，聊天输入实例与草稿保留
+ * [OUTPUT]: 验证演示胶囊全部几何按比例收缩，场景切换同次提交硬切，聊天输入实例与草稿保留，面板模式不被生产最小宽度撑大
  * [POS]: widgets 的演示投影回归门禁；防止固定像素胶囊压过缩小后的界面，或重新引入助手开合动画
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -13,12 +13,12 @@ const { WorkspaceAssistantLayer } = await import("./WorkspaceAssistantLayer");
 afterEach(cleanup);
 
 test("87.5%演示胶囊立即变成113.75×38.5，恢复全高也不经过中间帧", () => {
-  const scene = (open: boolean) => <WorkspaceAssistantLayer open={open} size="expanded" panelWidth={315} uiScale={0.875} animateGeometry={false} resizable={false} onOpen={() => {}}><input aria-label="保留草稿" defaultValue="草稿" /></WorkspaceAssistantLayer>;
+  const scene = (open: boolean) => <WorkspaceAssistantLayer open={open} size="expanded" panelWidth={260} widthMode="panel" uiScale={0.875} animateGeometry={false} resizable={false} onOpen={() => {}}><input aria-label="保留草稿" defaultValue="草稿" /></WorkspaceAssistantLayer>;
   const view = render(scene(true));
   const shell = view.container.querySelector<HTMLElement>(".workspace-assistant-layer")!;
   const input = view.getByRole("textbox") as HTMLInputElement;
   input.value = "正在写的草稿";
-  expect(shell.style.width).toBe("315px");
+  expect(shell.style.width).toBe("260px");
   view.rerender(scene(false));
   expect(shell.dataset.animated).toBe("false");
   expect(shell.style.width).toBe("113.75px");
@@ -28,7 +28,7 @@ test("87.5%演示胶囊立即变成113.75×38.5，恢复全高也不经过中间
   expect(view.container.querySelector<HTMLElement>(".workspace-assistant-body")?.style.opacity).toBe("0");
   expect(view.getByRole("button", { name: "打开 AI 助手" }).style.opacity).toBe("1");
   view.rerender(scene(true));
-  expect(shell.style.width).toBe("315px");
+  expect(shell.style.width).toBe("260px");
   expect(shell.style.borderRadius).toBe("17.5px");
   expect(view.getByRole("textbox")).toBe(input);
   expect(input.value).toBe("正在写的草稿");

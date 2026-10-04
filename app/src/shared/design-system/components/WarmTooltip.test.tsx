@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 happy-dom、Testing Library 与真实 WarmTooltip/Button/SidebarButton/Dialog 与 useDismissable
- * [OUTPUT]: 验证提示去重、原位 DOM/ref、点击/触屏、延迟取消、禁用、跨区域切换、键盘焦点与菜单/模态分层 Escape
+ * [OUTPUT]: 验证提示去重、原位 DOM/ref、点击/触屏、延迟取消、禁用、跨区域切换、键盘焦点与菜单/模态分层 Escape、演示整组禁用
  * [POS]: 全站统一提示的交互门禁，确保提示不改变业务命令和焦点生命周期
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -226,4 +226,36 @@ test("键盘焦点直接显示提示；菜单内Escape先收提示，再关菜�
   expect(document.activeElement).toBe(button);
   fireEvent.keyDown(document, { key: "Escape" });
   expect(view.queryByRole("button")).toBeNull();
+});
+
+
+test("演示作用域禁用全部提示，悬停/焦点/长按仍保留原按钮行为", async () => {
+  const ref = createRef<HTMLButtonElement>();
+  let clicked = 0;
+  const scene = (enabled: boolean) => <WarmTooltipGroup enabled={enabled} delay={0}>
+    <WarmTooltip asChild content="工具栏" longPress={10}><Button ref={ref} size="square" aria-label="工具栏" title="原生提示" onClick={() => clicked++} /></WarmTooltip>
+    <Button size="square" aria-label="新对话" onClick={() => clicked++} />
+  </WarmTooltipGroup>;
+  const view = render(scene(false));
+  const button = view.getByRole("button", { name: "工具栏" });
+  expect(ref.current === button).toBe(true);
+  hover(button);
+  await act(() => button.focus());
+  fireEvent.pointerDown(button, { pointerType: "touch", pointerId: 1 });
+  await act(() => new Promise(resolve => setTimeout(resolve, 20)));
+  fireEvent.pointerUp(button, { pointerType: "touch", pointerId: 1 });
+  fireEvent.click(button);
+  fireEvent.click(view.getByRole("button", { name: "新对话" }));
+  expect(clicked).toBe(2);
+  expect(view.queryByRole("tooltip")).toBeNull();
+  expect(button.hasAttribute("title")).toBe(false);
+  expect(button.hasAttribute("aria-describedby")).toBe(false);
+  // 正式APP缺省仍可显示；开关不会重建业务按钮或丢失ref。
+  view.rerender(scene(true));
+  expect(view.getByRole("button", { name: "工具栏" })).toBe(button);
+  hover(button);
+  await waitFor(() => expect(view.getByRole("tooltip").textContent).toBe("工具栏"));
+  view.rerender(scene(false));
+  expect(view.queryByRole("tooltip")).toBeNull();
+  expect(button.hasAttribute("aria-describedby")).toBe(false);
 });
