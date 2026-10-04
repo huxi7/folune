@@ -1,10 +1,11 @@
 /**
- * [INPUT]: 依赖 useLocale 的界面文案（用户内容保留原文）；依赖 design-system motion=none Dialog/Skeleton、纸面视图过渡身份、NotePaper reader、卡片摘录快照、正文缓存与 MarkdownReadingView
+ * [INPUT]: 依赖 WarmTooltip 原位功能提示；依赖 useLocale 的界面文案（用户内容保留原文）；依赖 design-system motion=none Dialog/Skeleton、纸面视图过渡身份、NotePaper reader、卡片摘录快照、正文缓存与 MarkdownReadingView
  * [OUTPUT]: 对外提供不卸载 Canvas、只有纸拥有过渡身份而遮罩随 root 一起换、正文未到时以卡片摘录保持同一段字的小开本 Preview
  * [POS]: KnowledgeCanvas 的正文阅读边界；Canvas API 永不携带 content_mdx，只有用户明确预览时才按目标 memo ID 加载正文；纸内只有正文，动作一律在纸外，因此正文长度不影响任何入口的可达性；Esc/遮罩/焦点归还统一复用 Dialog 的模态行为，不另造第二套弹窗
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
+import WarmTooltip from "../../shared/design-system/components/WarmTooltip";
 import { useLocale } from "../../shared/locale";
 import { useEffect } from "react";
 
@@ -98,25 +99,27 @@ export function CanvasPreviewOverlay({
           正文再长也不会把「编辑原文」推到看不见的地方, 而纸面保持一张干净的纸。
         */}
         <div className="canvas-preview-tools">
+          <WarmTooltip asChild content={t("关闭预览", "Close preview")}>
           <button
             aria-label={t("关闭预览", "Close preview")}
             className="canvas-preview-tool"
             onClick={onClose}
-            title={t("关闭预览", "Close preview")}
             type="button"
           >
             <XIcon size={16} />
           </button>
+          </WarmTooltip>
+          <WarmTooltip asChild content={t("编辑原文", "Edit original")} disabled={document === undefined}>
           <button
             aria-label={t("编辑原文", "Edit original")}
             className="canvas-preview-tool"
             disabled={document === undefined}
             onClick={() => void onEditOriginal()}
-            title={t("编辑原文", "Edit original")}
             type="button"
           >
             <PencilSimpleIcon size={16} />
           </button>
+          </WarmTooltip>
         </div>
       </div>
     </Dialog>

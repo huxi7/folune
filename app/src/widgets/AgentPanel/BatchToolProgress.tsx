@@ -1,9 +1,10 @@
 /**
- * [INPUT]: 依赖 locale 状态文案、明确批量快照、真实执行状态、DS 时长与工具胶囊，不猜测归属
+ * [INPUT]: 依赖 WarmTooltip 原位功能提示；依赖 locale 状态文案、明确批量快照、真实执行状态、DS 时长与工具胶囊，不猜测归属
  * [OUTPUT]: 提供八槽执行视图和一次展开的虚拟完成记录；少于十项直接保留每项，新结果短暂反馈且失败计数始终可见
  * [POS]: AgentPanel 单批次的展示边界，不调度任务、不改写推理，展开状态由用户控制
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
+import WarmTooltip from "../../shared/design-system/components/WarmTooltip";
 import { useEffect, useRef, useState } from "react";
 import { motionDuration } from "../../shared/design-system/motion";
 import { CheckCircleIcon, XCircleIcon } from "../../shared/design-system/icons";
@@ -40,7 +41,7 @@ function CompletedRecords({ items }: { items: BatchItem[] }) {
       {items.slice(start, start + WINDOW_ROWS + OVERSCAN * 2).map((item, index) => <div className="agent-batch-record" key={item.id}
         style={{ position: "absolute", top: (start + index) * RECORD_HEIGHT, height: RECORD_HEIGHT, width: "100%" }}>
         <span data-result={item.state === "succeeded" ? "success" : "failure"}>{item.state === "succeeded" ? <CheckCircleIcon size={16} /> : <XCircleIcon size={16} />}</span>
-        <span title={item.error ? `${item.title}：${item.error}` : item.title}>{item.title}</span>
+        <WarmTooltip asChild content={item.error ? `${item.title}：${item.error}` : item.title}><span>{item.title}</span></WarmTooltip>
         <span>{item.state === "succeeded" ? t("已完成", "Done") : item.state === "cancelled" ? t("未执行", "Not run") : t("未完成", "Failed")}</span>
       </div>)}
     </div>

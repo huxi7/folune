@@ -1,9 +1,10 @@
 /**
- * [INPUT]: 依赖跨空间助手开关/尺寸/自定义浮窗、用户共享宽度、八方向调整器、真实活动状态、DS 材质/动态偏好与 MotionValue
+ * [INPUT]: 依赖 WarmTooltip 原位功能提示；依赖跨空间助手开关/尺寸/自定义浮窗、用户共享宽度、八方向调整器、真实活动状态、DS 材质/动态偏好与 MotionValue
  * [OUTPUT]: 对外提供常驻三态与自由尺寸宿主；胶囊固定右下，四边四角拖拽逐帧只更新局部几何，松手提交；可供Demo按uiScale投影全部胶囊尺寸并关闭几何/透明度过渡与调整能力
  * [POS]: widgets 的助手专属外壳；Dashboard持有会话，纯策略裁决边界，MotionValue持有动画/手势同一几何，避免正文缩放、会话重挂或逐帧重渲染工作区
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
+import WarmTooltip from "../shared/design-system/components/WarmTooltip";
 import { animate, motion, useMotionValue } from "motion/react";
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { ShaderGlow } from "../shared/design-system/components/ShaderGlow";
@@ -143,6 +144,7 @@ export function WorkspaceAssistantLayer({ children, open, size, panelWidth, pres
         transition={{ ...fade, delay: open && !reduced ? 0.08 : 0 }}
         style={{ width: animateGeometry ? bodyWidth : geometry.width, height: animateGeometry ? bodyHeight : geometry.height, opacity: animateGeometry ? undefined : open ? 1 : 0, pointerEvents: open ? "auto" : "none" }}
       >{children}</motion.div>
+      <WarmTooltip asChild content={`${t("打开 AI 助手", "Open AI assistant")}${presence === "idle" ? "" : ` · ${label}`}`} disabled={open}>
       <motion.button
         className="workspace-assistant-launcher"
         ref={buttonRef}
@@ -162,6 +164,7 @@ export function WorkspaceAssistantLayer({ children, open, size, panelWidth, pres
         {presence === "complete" ? <CheckIcon size={16} /> : presence === "approval" || presence === "error" ? <WarningCircleIcon size={16} /> : <ArrowUpIcon className="workspace-assistant-arrow" size={16} />}
         <span>{label}</span>
       </motion.button>
+      </WarmTooltip>
     </div>
     {open && resizable && onResize ? <AssistantWindowResize
       bounds={{ left: fullGeometry.inset, top: viewport.viewportHeight - fullGeometry.bottom - fullGeometry.height, right: viewport.viewportWidth - fullGeometry.inset, bottom: viewport.viewportHeight - fullGeometry.bottom }}

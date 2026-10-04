@@ -1,10 +1,11 @@
 /**
- * [INPUT]: 依赖整理后的 WorkspaceOrganizePresentation、locale 双语界面文案与文件库定位回调
+ * [INPUT]: 依赖 WarmTooltip 原位功能提示；依赖整理后的 WorkspaceOrganizePresentation、locale 双语界面文案与文件库定位回调
  * [OUTPUT]: 对外提供安静的归档落点状态元素，显示 `归档于〈末级目录〉`、暴露稳定 source 标记并支持点击定位
  * [POS]: Paper Toolbar 左侧身份段的持久事实展示层；它是归档线的语义起点，因此不另造端口、圆点或 Badge 身体，也不拥有归档线、不读取文件树、不改变整理状态
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
+import WarmTooltip from "../shared/design-system/components/WarmTooltip";
 import type { WorkspaceOrganizePresentation } from "./archiveCordPolicy";
 import { useLocale } from "../shared/locale";
 
@@ -28,15 +29,16 @@ export function ArchiveStatus({ onLocate, presentation }: ArchiveStatusProps) {
   const label = lastPathSegment(presentation.path);
   const fullName = t(`归档于 ${presentation.path}`, `Filed in ${presentation.path}`);
   return (
+    <WarmTooltip asChild content={fullName} side="bottom">
     <button
       aria-label={fullName}
       className="archive-status"
       data-archive-source="true"
       onClick={onLocate}
-      title={fullName}
       type="button"
     >
       {t(`归档于${label}`, `Filed in ${label}`)}
     </button>
+    </WarmTooltip>
   );
 }

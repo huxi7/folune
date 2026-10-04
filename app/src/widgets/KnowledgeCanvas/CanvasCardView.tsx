@@ -1,10 +1,11 @@
 /**
- * [INPUT]: 依赖 useLocale 的界面文案（用户内容保留原文）；依赖 @xyflow/react、motion/react、workspaceMotion spatialSpring、CanvasFlowNode UI-only motionState、NotePaper（纸面身份由它命名壳与正文）、空间文字几何、设计系统图标、稳定 canvasActions 与显式交互状态
+ * [INPUT]: 依赖 WarmTooltip 原位功能提示；依赖 useLocale 的界面文案（用户内容保留原文）；依赖 @xyflow/react、motion/react、workspaceMotion spatialSpring、CanvasFlowNode UI-only motionState、NotePaper（纸面身份由它命名壳与正文）、空间文字几何、设计系统图标、稳定 canvasActions 与显式交互状态
  * [OUTPUT]: 对外提供无业务 Store 的 CanvasCardView，可按本地 receipt 入场且纸面可飞向 Preview 的 memo_ref 卡、底栏行尾连接抓手/整卡 target、源节点确认反馈与 1:1 拖拽/等比缩放 native 文字
  * [POS]: KnowledgeCanvas 的节点表现层；正式中心 Handle 仍只登记关系身份，底栏抓手与会话期 whole-card target 只承载直接操纵，真实正式端点继续由 CanvasCordEdge 读取节点矩形求解
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
+import WarmTooltip from "../../shared/design-system/components/WarmTooltip";
 import { useLocale } from "../../shared/locale";
 import {
   Handle,
@@ -394,6 +395,7 @@ export const CanvasCardView = memo(function CanvasCardView({
         emptyLabel={data.tombstone ? t("原文已不在库中", "The original note is no longer available") : t("这页还没有正文", "This page is still blank")}
         excerpt={data.body}
         overlay={available ? (
+          <WarmTooltip asChild content={t("展开阅读", "Expand to read")}>
           <button
             aria-label={t(`展开阅读${data.title}`, `Read ${data.title}`)}
             className="canvas-card-expand nodrag"
@@ -401,11 +403,11 @@ export const CanvasCardView = memo(function CanvasCardView({
               event.stopPropagation();
               actions.onPreview(id);
             }}
-            title={t("展开阅读", "Expand to read")}
             type="button"
           >
             <ExpandIcon size={16} />
           </button>
+          </WarmTooltip>
         ) : null}
         title={data.title}
         variant="thumbnail"
@@ -422,28 +424,31 @@ export const CanvasCardView = memo(function CanvasCardView({
         <span className="canvas-card-status">{status}</span>
         <span className="canvas-card-actions">
           {available ? (
+            <WarmTooltip asChild content={t("AI 拓展", "Explore with AI")} disabled={aiLoading}>
             <button
               aria-label={t("AI 拓展这条分支", "Explore this branch with AI")}
               className="canvas-card-action"
               disabled={aiLoading}
               onClick={() => void actions.onExpand(id)}
-              title={t("AI 拓展", "Explore with AI")}
               type="button"
             >
               <ExpandFromNoteIcon size={14} />
             </button>
+            </WarmTooltip>
           ) : null}
+          <WarmTooltip asChild content={t("移除", "Remove")}>
           <button
             aria-label={t("从画布移除", "Remove from canvas")}
             className="canvas-card-action"
             onClick={() => void actions.onRemove(id).catch(() => undefined)}
-            title={t("移除", "Remove")}
             type="button"
           >
             <TrashIcon size={14} />
           </button>
+          </WarmTooltip>
         </span>
         {available ? (
+          <WarmTooltip asChild content={t("拖到另一张卡片，或点击后再选择目标", "Drag to another card, or click then choose a target")}>
           <Handle
             aria-label={t("从这张卡片建立关系", "Connect this card")}
             className="canvas-card-connect-handle nodrag"
@@ -469,11 +474,11 @@ export const CanvasCardView = memo(function CanvasCardView({
             position={Position.Right}
             role="button"
             tabIndex={0}
-            title={t("拖到另一张卡片，或点击后再选择目标", "Drag to another card, or click then choose a target")}
             type="source"
           >
             <ConnectionHandleIcon aria-hidden size={14} />
           </Handle>
+          </WarmTooltip>
         ) : null}
       </footer>
 

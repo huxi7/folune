@@ -278,6 +278,12 @@ One axis is deliberately singular:
 
 The motion language is part of the Design System. `src/shared/design-system/motion.ts` is the single source for shared durations, easing and springs and generates the CSS declarations consumed by controls. Full A/B decisions, component recipes and verification evidence live in [MOTION_SYSTEM.md](MOTION_SYSTEM.md). Menus use Laper menuPop: 150/150ms ease-out, .95 scale, y=8 in both placements, center origin. Create and note More explicitly select compact-menu (120ms enter / 100ms exit), retaining the same .95 scale, y=8, center origin and ease-out. Submenus use the same clock and x=-10 without scale. Workspace sidebars retain Folune original motion: 220ms enter with (.22,1,.36,1), 170ms exit with (.4,0,1,1), x=-8 on the left and x=+8 on the right, opacity only alongside translation, scale fixed at 1. Popover scaling must never be applied to these sidebars. Settings/command/confirmation modals use 150/150ms cubic-bezier(.4,0,.2,1), .9 center scale and the same parent-plus-child entrance opacity as Laper settings. Production and the Design System read surfaceMotionCatalog and surfaceVariants; the panel specimen mounts the actual WorkspacePanelLayer. The brand entrance and Paper transition remain unchanged. Reduced Motion removes spatial changes and hover color transitions, and keeps at most 90ms opacity feedback. Paper/Canvas geometry retains its dedicated browser View Transition contract.
 
+## Functional tooltips
+
+- APP 与独立 Demo 各在入口装配唯一 WarmTooltipGroup，Paper、文件库、AI、Canvas 和 Portal 共用温热窗口及单一浮层；业务工具栏不再创建局部提示组。
+- 图标 Button 从 aria-label 生成提示，title/tooltip 可提供补充说明；显式 tooltip=false 关闭提示，已有外层 WarmTooltip 时去重。原位 asChild 保留 DOM、业务事件及 React 19 ref 清理，原生 title 不产生第二套提示。
+- 提示关联 aria-describedby，键盘焦点即时显示，Escape 先收提示再关闭菜单/模态；短触保持点击，长按展示说明且不误触命令。浮层避让视口、长文换行，并高于模态与通知；隐藏页面不会显示或保留提示，恢复可见不误关。
+
 ## Neutral loading and settings (2026-09-07)
 
 - Secondary uses a restrained, visible 1px neutral border in rest and hover; tool calls consume the same material. Result icons contain their own circular outline, with no additional status box.

@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖memo/view状态、locale双语文案、共享WarmTooltipGroup/WarmTooltip/KeyboardShortcut、Canvas/整理/文件命令与浏览器scroll timeline能力
+ * [INPUT]: 依赖memo/view状态、locale双语文案、共享页面级WarmTooltip/KeyboardShortcut、Canvas/整理/文件命令与浏览器scroll timeline能力
  * [OUTPUT]: sticky Paper Toolbar保持身份/动作顺序；命令共用Canvas同款连续悬浮提示，整理与进入Canvas展示真实平台快捷键
  * [POS]: app/src/widgets 的纸张内命令条纯视图；左身份右能力各占稳定槽位，核心动作排首、「更多」只能排在簇尾，归档状态兼作归档线起点故必须留在纸的左上角，全局文件库/AI 开关归工作区控制层。凝结与下缘软边是同一个 CSS 滚动进度的两个读数，首选交给滚动本身，只有不支持 scroll timeline 的浏览器才挂一个哨兵做一次软切；本组件因此不含阈值、不读 scrollTop，也不知道软边有多高
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -14,7 +14,7 @@ import {
 } from "../shared/design-system/icons";
 
 import type { MemoDetailNode } from "../shared/api/memo";
-import { Button, KeyboardShortcut, WarmTooltip, WarmTooltipGroup } from "../shared/design-system/components";
+import { Button, KeyboardShortcut, WarmTooltip } from "../shared/design-system/components";
 import { useLocale } from "../shared/locale";
 import { MarkdownViewMenu } from "./MarkdownViewMenu";
 import { ArchiveStatus } from "./ArchiveStatus";
@@ -85,7 +85,6 @@ export function AppMainToolbar(props: AppMainToolbarProps) {
       {supportsScrollTimeline
         ? null
         : <div aria-hidden="true" className="app-main-toolbar-sentinel" ref={sentinelRef} />}
-    <WarmTooltipGroup>
     <header className="app-main-toolbar" data-condensed={supportsScrollTimeline ? undefined : condensed}>
       {/*
         * 左侧只放身份: 来路、落点、标题。归档状态住在这里而不是命令簇里, 有两个理由 ——
@@ -132,7 +131,6 @@ export function AppMainToolbar(props: AppMainToolbarProps) {
         </> : null}
       </div>
     </header>
-    </WarmTooltipGroup>
     </>
   );
 }

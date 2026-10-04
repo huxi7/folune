@@ -2,7 +2,7 @@
 > L2 | 父级: ../CLAUDE.md
 
 成员清单
-AgentConversation.tsx: 单会话Composer/流/审批/八并发工具执行与恢复边界；权限确认后发送，草稿首发保持实例，停止取消排队，后台同步真实消息/命令；完成提示仅来自本次实际处理结束
+AgentConversation.tsx: 引用置顶/移除原位显示 WarmTooltip，发送/停止由 Button 同源提供； 单会话Composer/流/审批/八并发工具执行与恢复边界；权限确认后发送，草稿首发保持实例，停止取消排队，后台同步真实消息/命令；完成提示仅来自本次实际处理结束
 chatErrorCopy.test.ts: SSE 余额错误显示专门标题，登录和通用错误分类保持
 batchCheckpoint.test.ts: 并行批次检查点串行合并不丢记录、末轮恢复与终态不重跑门禁
 batchRecovery.ts: 末条 assistant 的审批/检查点恢复候选纯判定，终态和旧轮次不重跑
@@ -11,12 +11,12 @@ chatErrorCopy.ts: 中英错误分类只翻译界面，不改变服务端事实�
 batchCheckpoint.ts: 串行检查点写入，保存时从最新消息合并目标批次，不把进度当最终工具结果
 batchToolExecution.test.ts: 慢保存合并、失败检查点在途补取与双端 schema 同构、100项八并发与补位、失败/停止、初始落库门禁、幂等恢复和批量撤销验证
 batchToolExecution.ts: 批量预检与八槽共享调度；稳定子命令幂等键、整批初始检查点、每八项触发合并检查点，只保留在途及最新快照、失败取消本批排队及刷新恢复
-BatchToolProgress.tsx: 中英批量状态与读屏标签由locale驱动，目标标题保真；明确批次展示：不足十项直接展示；大量任务显示真实运行项、待执行数量和失败计数，新结果短暂显示勾叉但不占执行槽，完成记录一次展开，以固定行高虚拟列表控制 DOM
+BatchToolProgress.tsx: 截断目标与失败原因使用 WarmTooltip 展示； 中英批量状态与读屏标签由locale驱动，目标标题保真；明确批次展示：不足十项直接展示；大量任务显示真实运行项、待执行数量和失败计数，新结果短暂显示勾叉但不占执行槽，完成记录一次展开，以固定行高虚拟列表控制 DOM
 AgentToolProgress.tsx: 工具读屏状态按locale投影，推理/正文不翻译；过程展示边界，原始推理与普通工具按顺序显示；转圈只来自实际运行状态，只有明确 edit_nodes 批次交由 BatchToolProgress 聚合
 clientToolQueue.ts: 共享工具队列最多八项并发，完成一项立即补位；停止取消排队而保留已提交结果
 clientToolQueue.test.ts: 98 项任务并发上限、单项失败释放执行槽、停止取消排队与后续队列复用门禁
 CLAUDE.md: 记录 AgentPanel 子域成员、依赖方向与 GEB 回环协议
-AgentPanelHeader.tsx: 无状态同源Header；历史/返回、即时新对话、可选短窗/全高切换与向下收起，复用DS Ghost Button，尺寸模式归外壳
+AgentPanelHeader.tsx: 功能图标复用 Button 默认提示并朝下展开； 无状态同源Header；历史/返回、即时新对话、可选短窗/全高切换与向下收起，复用DS Ghost Button，尺寸模式归外壳
 useConversationScroll.test.tsx: 验证首次非平滑定位与退出冻结、迟到内容回调不追尾
 useConversationScroll.ts: 消息滚动唯一边界，首次绘制前定位、退出取消平滑滚动并冻结位置，隐藏历史拒绝追尾
 AgentPanel.draft.test.tsx: 覆盖首开权限与保存期间按钮/Enter/直接提交不发送；子进程隔离、真实组件/Hook/SDK/transport，验证零写草稿、首发创建/引用/持续消息实例、失败重试、删除与迟到请求隔离

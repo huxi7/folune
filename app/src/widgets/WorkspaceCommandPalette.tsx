@@ -1,13 +1,14 @@
 /**
- * [INPUT]: 依赖 commandPaletteStore 的唯一开合与 Canvas 次级动作、memoTreeStore 轻量树、recentNodesStore 最近顺序、locale 文案/数字、useMemoSearch 正文命中与 commandResults 排序纯函数
+ * [INPUT]: 依赖 WarmTooltip/KeyboardShortcut 原位功能提示与平台键帽；依赖 commandPaletteStore 的唯一开合与 Canvas 次级动作、memoTreeStore 轻量树、recentNodesStore 最近顺序、locale 文案/数字、useMemoSearch 正文命中与 commandResults 排序纯函数
  * [OUTPUT]: 对外提供全局唯一 Command Palette：⌘K 开合、可聚焦 option、稳定 active 身份、六档排序、Tab 进画布与 Canvas 连续加入
  * [POS]: widgets 的唯一 Command Surface，由 AppDashboard 挂载一次即覆盖 Paper 与 Canvas；关闭时不扫描树生成结果，排序归 commandResults，模态行为归 Dialog
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
+import WarmTooltip from "../shared/design-system/components/WarmTooltip";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import { Dialog } from "../shared/design-system/components";
+import { Dialog, KeyboardShortcut } from "../shared/design-system/components";
 import {
   AddNoteIcon,
   CanvasIcon,
@@ -347,6 +348,7 @@ export function WorkspaceCommandPalette({
                   */}
                 <span className="command-row-actions">
                   {result.defaultCanvasId === null ? null : (
+                    <WarmTooltip asChild content={t("以画布打开", "Open as canvas")} shortcut={<KeyboardShortcut keys={["Tab"]} />}>
                     <button
                       aria-keyshortcuts="Tab"
                       aria-label={t(`以画布打开${result.title}`, `Open ${result.title} as a canvas`)}
@@ -354,13 +356,14 @@ export function WorkspaceCommandPalette({
                       onClick={() => openAsCanvas(result)}
                       onMouseDown={(event) => event.preventDefault()}
                       tabIndex={-1}
-                      title={t("以画布打开（Tab）", "Open as canvas (Tab)")}
                       type="button"
                     >
                       <CanvasIcon aria-hidden size={16} />
                     </button>
+                    </WarmTooltip>
                   )}
                   {!addable(result) ? null : (
+                    <WarmTooltip asChild content={t("加入当前画布", "Add to this canvas")} shortcut={<KeyboardShortcut keys={["mod", "Enter"]} />} disabled={addingId !== null}>
                     <button
                       aria-label={t(`加入当前画布：${result.title}`, `Add to this canvas: ${result.title}`)}
                       className="command-row-action"
@@ -368,11 +371,11 @@ export function WorkspaceCommandPalette({
                       onClick={() => void addToCanvas(result)}
                       onMouseDown={(event) => event.preventDefault()}
                       tabIndex={-1}
-                      title={t("加入当前画布（⌘/Ctrl + Enter）", "Add to this canvas (⌘/Ctrl + Enter)")}
                       type="button"
                     >
                       <AddNoteIcon aria-hidden size={16} />
                     </button>
+                    </WarmTooltip>
                   )}
                 </span>
               </div>

@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖 React Portal、Motion 动态值和共享 motion token；触发器只传入提示内容、快捷键与外观
- * [OUTPUT]: 对外提供 WarmTooltip/WarmTooltipGroup，同组共用首次等待、温热窗口与单一平移变宽的提示浮层
+ * [INPUT]: 依赖 React Portal、tooltipTriggerProps 事件/ref 组合、Motion 动态值和共享 motion token；触发器只传入提示内容、快捷键与外观
+ * [OUTPUT]: 对外提供 WarmTooltip/WarmTooltipGroup；asChild 原位组合事件/ref，同组共用首次等待、温热窗口与单一提示浮层
  * [POS]: Design System 的 React Bits WarmTooltip 适配；保留上游运动模型，收敛主题/幅度并补齐 Escape、点击、卸载与减少动态效果的清理
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  * 来源：https://reactbits.dev/r/WarmTooltip-TS-CSS.json（2026-09-24）
@@ -8,6 +8,7 @@
  */
 import React, {
   cloneElement,
+  useCallback,
   createContext,
   forwardRef,
   useContext,
@@ -22,6 +23,7 @@ import React, {
   type ReactElement,
   type ReactNode
 } from 'react';
+import { composeTooltipTriggerProps, attachTooltipRef } from './tooltipTriggerProps';
 import { createPortal } from 'react-dom';
 import {
   AnimatePresence,
@@ -56,6 +58,7 @@ export interface WarmTooltipGroupHandle {
 }
 
 export interface WarmTooltipProps {
+  asChild?: boolean;
   content: ReactNode;
   shortcut?: ReactNode;
   children: ReactElement<Record<string, unknown>>;
@@ -173,10 +176,10 @@ const layoutOf = (x: number, y: number, width: number, height: number, side: War
   if (typeof window === 'undefined') return { X: 0, Y: 0 };
   if (horizontal(side)) {
     const X = clamp(x - width / 2, MARGIN, Math.max(MARGIN, window.innerWidth - MARGIN - width));
-    return { X, Y: side === 'top' ? y - height : y };
+    return { X, Y: clamp(side === 'top' ? y - height : y, MARGIN, Math.max(MARGIN, window.innerHeight - MARGIN - height)) };
   }
   const Y = clamp(y - height / 2, MARGIN, Math.max(MARGIN, window.innerHeight - MARGIN - height));
-  return { X: side === 'left' ? x - width : x, Y };
+  return { X: clamp(side === 'left' ? x - width : x, MARGIN, Math.max(MARGIN, window.innerWidth - MARGIN - width)), Y };
 };
 
 const LAYER: Variants = {
@@ -285,7 +288,7 @@ export const WarmTooltipGroup = forwardRef<WarmTooltipGroupHandle, WarmTooltipGr
   };
 
   api.current.show = (payload: Payload, mode: Mode) => {
-    if (!payload.trigger.isConnected) return;
+    if (document.hidden || !payload.trigger.isConnected || payload.trigger.closest('[inert], [hidden], [aria-hidden="true"]')) return;
     clearTimeout(st.current.closeTimer);
     clearTimeout(st.current.leaveTimer);
     const prev = st.current.current;
@@ -407,22 +410,24 @@ export const WarmTooltipGroup = forwardRef<WarmTooltipGroupHandle, WarmTooltipGr
     const onHidden = () => {
       if (st.current.current) api.current.hide(st.current.current.id, true);
     };
+    const onVisibilityChange = () => { if (document.hidden) onHidden(); };
     const onEscape = (event: KeyboardEvent) => {
       if (event.key !== 'Escape' || event.defaultPrevented || !st.current.current) return;
       event.preventDefault();
+      event.stopPropagation();
       api.current.hide(st.current.current.id, true);
     };
     window.addEventListener('scroll', follow, { capture: true, passive: true });
     window.addEventListener('resize', follow);
-    document.addEventListener('visibilitychange', onHidden);
-    document.addEventListener('keydown', onEscape);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    document.addEventListener('keydown', onEscape, true);
     window.addEventListener('blur', onHidden);
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener('scroll', follow, { capture: true });
       window.removeEventListener('resize', follow);
-      document.removeEventListener('visibilitychange', onHidden);
-      document.removeEventListener('keydown', onEscape);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      document.removeEventListener('keydown', onEscape, true);
       window.removeEventListener('blur', onHidden);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -484,6 +489,7 @@ export const WarmTooltipGroup = forwardRef<WarmTooltipGroupHandle, WarmTooltipGr
                         if (el) textRef.current = el;
                       }}
                       className="warm-tooltip__text"
+                      style={{ maxWidth: `calc(100vw - ${MARGIN * 2 + current.px * 2}px)` }}
                     >
                       {current.content}
                       {current.shortcut ? <span className="warm-tooltip__shortcut">{current.shortcut}</span> : null}
@@ -503,6 +509,7 @@ export const WarmTooltipGroup = forwardRef<WarmTooltipGroupHandle, WarmTooltipGr
 });
 
 const Trigger: React.FC<TriggerProps> = ({
+  asChild,
   content,
   shortcut,
   children,
@@ -527,7 +534,9 @@ const Trigger: React.FC<TriggerProps> = ({
   const groupRef = useRef(group);
   useLayoutEffect(() => { groupRef.current = group; }, [group]);
   const id = useId();
-  const triggerRef = useRef<HTMLSpanElement>(null);
+  const triggerRef = useRef<HTMLElement>(null);
+  const childRef = asChild ? children.props.ref : undefined;
+  const attachRef = useCallback((node: HTMLElement | null) => attachTooltipRef(triggerRef, childRef, node), [childRef]);
   const [fuse, setFuse] = useState<'idle' | 'arming'>('idle');
   const [pressing, setPressing] = useState(false);
   const t = useRef<TriggerState>({ open: undefined, press: undefined, press0: null, suppressClick: false });
@@ -537,7 +546,7 @@ const Trigger: React.FC<TriggerProps> = ({
 
   const payload = (): Payload => ({
     id,
-    trigger: triggerRef.current as HTMLSpanElement,
+    trigger: triggerRef.current as HTMLElement,
     content,
     shortcut,
     side,
@@ -664,10 +673,18 @@ const Trigger: React.FC<TriggerProps> = ({
       };
 
   const described = children.props['aria-describedby'] as string | undefined;
+  const childProps = {
+    'aria-describedby': active ? [described, group.id].filter(Boolean).join(' ') : described,
+    'data-warm-tooltip-trigger': true,
+    title: undefined,
+  };
+  if (asChild) return cloneElement(children, {
+    ...composeTooltipTriggerProps(children.props, handlers), ...childProps, ref: attachRef,
+  });
 
   return (
     <span
-      ref={triggerRef}
+      ref={attachRef}
       className={`warm-tooltip__trigger${className ? ` ${className}` : ''}`}
       data-pressing={pressing ? '' : undefined}
       style={
@@ -678,13 +695,14 @@ const Trigger: React.FC<TriggerProps> = ({
       }
       {...handlers}
     >
-      {cloneElement(children, { 'aria-describedby': active ? [described, group.id].filter(Boolean).join(' ') : described })}
+      {cloneElement(children, childProps)}
       {showFuse ? <span className="warm-tooltip__fuse" data-side={side} data-fuse={fuse} aria-hidden="true" /> : null}
     </span>
   );
 };
 
 const WarmTooltip: React.FC<WarmTooltipProps> = ({
+  asChild = false,
   content,
   shortcut,
   children,
@@ -707,6 +725,7 @@ const WarmTooltip: React.FC<WarmTooltipProps> = ({
 }) => {
   const context = useContext(GroupContext);
   const props = {
+    asChild,
     content,
     shortcut,
     children,

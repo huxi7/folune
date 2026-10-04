@@ -1,9 +1,10 @@
 /**
- * [INPUT]: 依赖可后台刷新的后端 Profile、shared/api/profile 的 username/bio PATCH 与 5MB 头像上传、React 受控草稿/800ms 防抖副作用/原生文件 input、locale 双语文案与本地 UI/共享 Lucide 图标
+ * [INPUT]: 依赖 WarmTooltip 头像格式提示；依赖可后台刷新的后端 Profile、shared/api/profile 的 username/bio PATCH 与 5MB 头像上传、React 受控草稿/800ms 防抖副作用/原生文件 input、locale 双语文案与本地 UI/共享 Lucide 图标
  * [OUTPUT]: 对外提供 AccountDialog 内分组嵌套卡片式个人资料面板、仅按 bio/username 合并后台 Profile 与本地草稿、静默自动保存、无图标紧凑头像上传入口，成功仅本地可访问反馈、异常进入全局 Toast
  * [POS]: app/src/widgets 的账户资料栏，以 stale-while-revalidate 字段级冲突保护和串行防抖保存消除整页 Loading 与显式提交区
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
+import WarmTooltip from "../shared/design-system/components/WarmTooltip";
 import {
   ImageSquareIcon,
 } from "../shared/design-system/icons";
@@ -280,15 +281,16 @@ export function AccountProfilePanel({
                     className="ds-button ds-button-secondary ds-button-size-default account-dialog-upload-trigger"
                     data-disabled={uploadingAvatar || savingProfile}
                   >
+                    <WarmTooltip asChild content={t("JPEG、PNG 或 WebP，最大 5MB。", "JPEG, PNG or WebP, up to 5MB.")} disabled={uploadingAvatar || savingProfile}>
                     <input
                       accept={AVATAR_ACCEPTED_TYPES.join(",")}
                       aria-label={t("选择头像图片", "Choose a profile photo")}
                       className="account-dialog-avatar-input"
-                      title={t("JPEG、PNG 或 WebP，最大 5MB。", "JPEG, PNG or WebP, up to 5MB.")}
                       disabled={uploadingAvatar || savingProfile}
                       onChange={(event) => void handleAvatarChange(event)}
                       type="file"
                     />
+                    </WarmTooltip>
                     <span className="ds-button-content">
                       {uploadingAvatar ? t("上传中…", "Uploading…") : t("上传文件", "Upload file")}
                     </span>

@@ -1,9 +1,10 @@
 /**
- * [INPUT]: 依赖生产 ChatMessage/Header/MentionInput、活动判定、输入判据、滚动 Hook 与 Demo 对话脚本
+ * [INPUT]: 依赖 WarmTooltip 原位功能提示；依赖生产 ChatMessage/Header/MentionInput、活动判定、输入判据、滚动 Hook 与 Demo 对话脚本
  * [OUTPUT]: 对外提供固定展开的Demo AI窗口；尺寸/收起命令静态，点击/回车仍共用模拟发送与可取消的真实内存归档
  * [POS]: 只模拟消息传输；引用保留生产 @ 图标与标题，图标按根字号同比缩放；发送不依赖 iframe 禁止的原生表单提交
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
+import WarmTooltip from "../../shared/design-system/components/WarmTooltip";
 import { useEffect, useRef, useState } from "react";
 import { useReducedMotion } from "motion/react";
 import type { AiCommand, FoluneUIMessage } from "../../shared/api/ai";
@@ -93,7 +94,7 @@ export function DemoAssistant({ memoId, title, filedAt, onClose, onHint, onOrgan
         {status !== "ready" && <LiveAssistantTurn activity={activity} message={live} onProgress={scrollToLatestAuto} onUndo={onUndo} />}
       </div>
       <div className="agent-composer">
-        <div className="agent-composer-sources"><span title={title}><AtIcon aria-hidden="true" size={14} style={{ width: "0.875rem", height: "0.875rem", flexShrink: 0 }} /><strong>{title}</strong></span></div>
+        <div className="agent-composer-sources"><WarmTooltip asChild content={title}><span><AtIcon aria-hidden="true" size={14} style={{ width: "0.875rem", height: "0.875rem", flexShrink: 0 }} /><strong>{title}</strong></span></WarmTooltip></div>
         <MentionInput aria-label="输入消息" className="agent-chat-input" mentions={[]} value={input}
           onValueChange={value => setInput(value.slice(0,1200))} placeholder="试着问问这些笔记…"
           onKeyDown={e => { if (isComposerSubmitKey({ ...e, isComposing: e.nativeEvent.isComposing, keyCode: e.nativeEvent.keyCode })) { e.preventDefault(); send(); } }} />

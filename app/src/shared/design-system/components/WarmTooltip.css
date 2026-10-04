@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 WarmTooltip 的定位/动态变量与项目 card、foreground、border、shadow 主题 token
- * [OUTPUT]: 提供同组提示的轻量表面、短文字与可选箭头/长按反馈；键帽由 KeyboardShortcut 单独拥有
+ * [OUTPUT]: 提供弹窗上方的轻量提示表面、长文换行与可选箭头/长按反馈；键帽由 KeyboardShortcut 单独拥有
  * [POS]: React Bits WarmTooltip 的主题适配，Portal 从文档根继承浅色与暗色语义，不改变触发器几何
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  * 来源：https://reactbits.dev/r/WarmTooltip-TS-CSS.json；许可见 WarmTooltip.LICENSE.md。
@@ -91,7 +91,7 @@
   position: fixed;
   top: 0;
   left: 0;
-  z-index: calc(var(--layer-dialog) - 1);
+  z-index: var(--layer-tooltip);
   display: block;
   pointer-events: auto;
   font-family: inherit;
@@ -119,13 +119,16 @@
 
 .warm-tooltip__text {
   display: inline-flex;
+  flex: none;
+  width: max-content;
   align-items: center;
   gap: var(--space-2);
   font-size: var(--wt-font);
   font-weight: var(--weight-mono);
   line-height: var(--leading-label);
   letter-spacing: 0;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .warm-tooltip__shortcut { display: inline-flex; align-items: center; }

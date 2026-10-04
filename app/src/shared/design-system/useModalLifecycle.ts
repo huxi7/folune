@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 React effect/ref、DOM 焦点/键盘/滚动状态与 Motion 的 present 语义
+ * [INPUT]: 依赖 React effect/ref、DOM 焦点/键盘/滚动状态、WarmTooltip 的描述关联与 Motion present 语义
  * [OUTPUT]: 对外提供 useModalLifecycle，协调多层模态的焦点、Escape、退出与滚动锁
  * [POS]: Dialog 的行为边界；行为不依赖动画时长，关闭即归还焦点，最后一层视觉退出才解除滚动锁
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -30,6 +30,10 @@ export function useModalLifecycle(panelRef: RefObject<HTMLDivElement | null>, pr
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.defaultPrevented || stack.at(-1) !== panel) return;
       if (event.key === "Escape") {
+        // 提示浮层先消费 Escape，下一次才关闭承载它的弹窗。
+        if ([...panel.querySelectorAll('[aria-describedby]')].some((trigger) =>
+          trigger.getAttribute('aria-describedby')?.split(/\s+/).some((id) => document.getElementById(id)?.getAttribute('role') === 'tooltip'),
+        )) return;
         // 菜单先消费 Escape；仅在浮层完全收起后，下一次 Escape 才关外层 Dialog。
         if (panel.querySelector('[data-motion-surface][data-state="open"]:is([role="menu"],[role="listbox"])')) return;
         event.preventDefault();

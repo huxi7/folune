@@ -1,9 +1,10 @@
 /**
- * [INPUT]: 依赖 AccountSubscribeButton 独立流光按钮、PresenceSurface菜单/子菜单配方与useDismissable 的浮层生命周期、UserButton 的视口几何/ResizeObserver 与上层受控的语言/主题、真实积分和账户命令
+ * [INPUT]: 依赖 WarmTooltip 原位功能提示；依赖 AccountSubscribeButton 独立流光按钮、PresenceSurface菜单/子菜单配方与useDismissable 的浮层生命周期、UserButton 的视口几何/ResizeObserver 与上层受控的语言/主题、真实积分和账户命令
  * [OUTPUT]: 提供两层账户底卡、以身份按钮为锚点左移8px并间隔8px向上展开的256px主菜单（仅窄视口缩宽）及1px贴边子菜单；子菜单末行与触发行对齐、其余行向上排列，国旗/主题状态及悬停/键盘/触屏交互同源
  * [POS]: 账户菜单纯展示边界；Portal 避开侧栏裁剪，统一内容边界负责外点关闭，价格/语言持久化/业务跳转均交给上层
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
+import WarmTooltip from "./WarmTooltip";
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent } from "react";
 import { createPortal } from "react-dom";
 import { CaretRightIcon, CreditCardIcon, DesktopIcon, GearSixIcon, GlobeIcon, MoonIcon, SunIcon } from "../icons";
@@ -220,9 +221,11 @@ export function UserMenu({
     <div className="ds-user-account-card">
       {onOpenUsage ?
         <div className="ds-user-account-summary">
+          <WarmTooltip asChild content={t(`今日剩余 ${credits} 积分`, `${credits} credits remaining today`)} side="bottom">
           <button className="ds-user-account-credits" onClick={onOpenUsage} type="button" aria-label={t(`今日剩余 ${credits} 积分`, `${credits} credits remaining today`)}>
             <strong>{credits}</strong><span>{t("积分", "credits")}</span>
           </button>
+          </WarmTooltip>
           <button className="ds-user-account-upgrade" onClick={onOpenSubscription} type="button">{t("订阅 Folune", "Get Folune")}</button>
         </div>
       : null}
@@ -235,31 +238,35 @@ export function UserMenu({
         style={{ ...menuPosition, visibility: menuPosition ? "visible" : "hidden" }}
       >
         <div className="ds-user-menu-header" role="none">
+          <WarmTooltip asChild content={email} side="bottom">
           <button aria-label={t(`打开 ${name} 的个人资料`, `Open ${name}'s profile`)} className="ds-user-menu-identity"
-            onClick={() => closeAndRun(onOpenProfile)} role="menuitem" title={email} type="button">
+            onClick={() => closeAndRun(onOpenProfile)} role="menuitem" type="button">
             <UserAvatar avatarUrl={avatarUrl} className="ds-user-menu-identity-avatar" name={name} />
             <span className="ds-user-menu-identity-copy"><strong>{name}</strong><span className="ds-user-menu-plan">{planName ?? t("个人账户", "Personal")}</span></span>
           </button>
+          </WarmTooltip>
           <AccountSubscribeButton className="ds-user-menu-subscribe" onClick={() => closeAndRun(onOpenSubscription)} role="menuitem">{t("订阅 Folune", "Get Folune")}</AccountSubscribeButton>
         </div>
         {onOpenUsage ? <button className="ds-user-menu-item ds-user-menu-credits" onClick={() => closeAndRun(onOpenUsage)} role="menuitem" type="button"><span>{t("积分", "Credits")}</span><strong>{credits}</strong></button> : null}
         {onOpenCredits ? <button className="ds-user-menu-item ds-user-menu-add-credits" onClick={() => closeAndRun(onOpenCredits)} role="menuitem" type="button">{t("添加积分", "Add credits")}</button> : null}
         {onOpenBilling ? <button className="ds-user-menu-item" onClick={() => closeAndRun(onOpenBilling)} role="menuitem" type="button"><span>{t("订阅与账单", "Subscription & billing")}</span><CreditCardIcon aria-hidden="true" size={16} /></button> : null}
         <div aria-hidden="true" className="ds-user-menu-divider" role="separator" />
-        {onLocaleChange ? <button
+        {onLocaleChange ? <WarmTooltip asChild content={t("界面语言：简体中文", "Language: English")} side="bottom" disabled={submenu === "language"}>
+        <button
           aria-label={t("界面语言：简体中文", "Language: English")} aria-controls={submenu === "language" ? submenuId : undefined}
           aria-expanded={submenu === "language"} aria-haspopup="menu" className="ds-user-menu-item" data-submenu="language"
           onClick={() => { if (submenu === "language") setSubmenu(null); else openSubmenu("language"); }}
           onPointerEnter={(event) => { if (event.pointerType !== "touch") openSubmenu("language"); }} onPointerLeave={scheduleSubmenuClose} ref={languageTriggerRef} role="menuitem" type="button">
           <span>{locale === "en" ? "English" : "简体中文"}</span><GlobeIcon aria-hidden="true" size={16} />
-        </button> : null}
-        {onThemeChange ? <button
+        </button></WarmTooltip> : null}
+        {onThemeChange ? <WarmTooltip asChild content={t(`界面主题：${activeTheme.label}`, `Appearance: ${activeTheme.english}`)} side="bottom" disabled={submenu === "theme"}>
+        <button
           aria-label={t(`界面主题：${activeTheme.label}`, `Appearance: ${activeTheme.english}`)} aria-controls={submenu === "theme" ? submenuId : undefined}
           aria-expanded={submenu === "theme"} aria-haspopup="menu" className="ds-user-menu-item" data-submenu="theme"
           onClick={() => { if (submenu === "theme") setSubmenu(null); else openSubmenu("theme"); }}
           onPointerEnter={(event) => { if (event.pointerType !== "touch") openSubmenu("theme"); }} onPointerLeave={scheduleSubmenuClose} ref={themeTriggerRef} role="menuitem" type="button">
           <span>{t(activeTheme.label, activeTheme.english)}</span><CaretRightIcon aria-hidden="true" size={16} />
-        </button> : null}
+        </button></WarmTooltip> : null}
         <button className="ds-user-menu-item" onClick={() => closeAndRun(onOpenSettings)} role="menuitem" type="button"><span>{t("设置", "Settings")}</span><GearSixIcon aria-hidden="true" size={16} /></button>
         <div aria-hidden="true" className="ds-user-menu-divider" role="separator" />
         <button className="ds-user-menu-item" role="menuitem" type="button" onClick={() => closeAndRun(() => { void onSignOut().catch(() => toast({ title: t("退出失败，请重试。", "Could not sign out. Please try again."), variant: "error" })); })}>{t("退出登录", "Log out")}</button>
