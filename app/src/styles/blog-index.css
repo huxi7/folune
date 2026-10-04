@@ -1,0 +1,115 @@
+/**
+ * [INPUT]: 依赖 BlogPage 目录结构、Blueprint 导轨、TruchetPattern 与 Folune 颜色/字体/动态偏好
+ * [OUTPUT]: 提供博客与动态目录的点阵刊头、纸面颗粒、紧凑文章行、四色压边标签和 72px 曲线侧纹
+ * [POS]: styles 的公开目录边界；按 Laper 公开 DOM/CSS 对齐几何，正文阅读仍归 blog.css，顶栏与页脚不继承局部覆盖
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+@layer components {
+  .blog-index-page {
+    --blog-typewriter:"Courier New",Courier,"Noto Serif SC","Songti SC","Songti TC",SimSun,serif;
+    --blog-pattern-line:color-mix(in srgb,var(--landing-border) 72%,transparent);
+    --blog-pattern-accent:color-mix(in srgb,var(--primary) 32%,transparent);
+    --blog-pattern-duration:1800ms;
+    --blog-pattern-delay:500ms;
+    --blog-pattern-ease:cubic-bezier(.16,1,.3,1);
+    min-height:0;
+  }
+  /* ---- 颗粒只在内容背景内；不覆盖文字，也不延伸到营销页脚 ---- */
+  .blog-index-content { position:relative; isolation:isolate; }
+  .blog-index-content::before {
+    content:""; position:absolute; inset-block:0; left:calc(50% - 50vw); width:100vw;
+    z-index:-1; pointer-events:none; opacity:.16; mix-blend-mode:multiply;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' opacity='.35' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .blog-index-prelude { height:64px; }
+  .blog-index-after { height:104px; }
+  .blog-index-gap { height:40px; }
+  /* ---- 刊头：原页 64px 留白、46/1.08 标题、7px 点阵与两条内轨 ---- */
+  .blog-index-heading {
+    position:relative; isolation:isolate; padding:64px 48px; text-align:center;
+    background:color-mix(in srgb,var(--landing-bg) 80%,transparent);
+  }
+  .blog-index-heading::before {
+    content:""; position:absolute; inset:0; z-index:-1; pointer-events:none;
+    background-image:radial-gradient(ellipse at 18% 38%,color-mix(in srgb,var(--primary) 9%,transparent) 0 13%,transparent 33%),radial-gradient(ellipse at 52% 18%,color-mix(in srgb,var(--primary) 7%,transparent) 0 12%,transparent 34%),radial-gradient(ellipse at 82% 46%,color-mix(in srgb,var(--primary) 8%,transparent) 0 12%,transparent 34%);
+  }
+  .blog-index-heading::after {
+    content:""; position:absolute; inset:0; z-index:-1; pointer-events:none; opacity:.55;
+    background:radial-gradient(color-mix(in srgb,var(--muted-foreground) 20%,transparent) 1px,transparent 1px) 0 0/7px 7px;
+  }
+  .blog-index-heading > .blueprint-divider { position:absolute; inset-inline:0; top:0; }
+  .blog-index-heading > .blueprint-divider:last-child { top:100%; }
+  .blog-index-heading-rails { position:absolute; inset:0; pointer-events:none; }
+  .blog-index-heading-rails > span {
+    position:absolute; inset-block:0; width:1px; opacity:.85;
+    background:linear-gradient(180deg,var(--landing-border) 0 31%,transparent 31% 43%,var(--landing-border) 43% 100%);
+  }
+  .blog-index-heading-rails > span:first-child { left:48px; }
+  .blog-index-heading-rails > span:last-child { right:48px; }
+  .blog-index-heading-rails > span::before,.blog-index-heading-rails > span::after {
+    content:""; position:absolute; left:50%; top:0; width:6px; height:6px;
+    border:1px solid var(--landing-border); background:var(--landing-bg); transform:translate(-50%,-50%) rotate(45deg);
+  }
+  .blog-index-heading-rails > span::after { top:100%; }
+  .blog-index-eyebrow { display:inline-block; font:400 13px/20px var(--font-sans); letter-spacing:.18em; padding-left:.18em; }
+  .blog-index-heading h1 { margin:12px auto 0; color:var(--primary); font:300 46px/1.08 var(--blog-typewriter); letter-spacing:normal; }
+  .blog-index-heading p { max-width:672px; margin:16px auto 0; color:var(--muted-foreground); font:400 16px/28px var(--font-sans); }
+  /* ---- 整行单一链接；高度随内容生长，桌面 28px / 手机 20px 留白 ---- */
+  .blog-index-list { background:color-mix(in srgb,var(--landing-bg) 70%,transparent); }
+  .blog-index-list article + article { border-top:1px solid var(--landing-border); }
+  .blog-index-link { display:block; padding:28px 32px; transition:background-color var(--motion-hover) var(--ease-surface); }
+  .blog-index-link:is(:hover,:focus-visible) { background:var(--interactive-hover); }
+  .blog-index-link:focus-visible { outline:2px solid var(--primary); outline-offset:-2px; }
+  .blog-index-meta { display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin-bottom:12px; }
+  .blog-index-meta time { color:var(--muted-foreground); font:400 14px/16px var(--font-sans); }
+  .blog-index-copy h2 { margin:0; color:var(--foreground); font:300 24px/1.18 var(--blog-typewriter); letter-spacing:normal; transition:color var(--motion-hover) var(--ease-surface); }
+  .blog-index-link:is(:hover,:focus-visible) h2 { color:var(--primary); }
+  .blog-index-copy p { max-width:768px; margin-top:10px; color:var(--muted-foreground); font:400 14px/24px var(--font-sans); }
+  .blog-index-empty { min-height:240px; }
+  /* ---- 参考四色浅底压边：主色映射 Folune，标签不伪装成按钮 ---- */
+  .blog-index-page .blog-tag {
+    --blog-tag-ink:var(--primary);
+    display:inline-flex; justify-content:center; align-items:center; max-width:100%; height:19px;
+    padding:0 6px; border:0; border-bottom:2px solid color-mix(in srgb,var(--blog-tag-ink) 34%,var(--border));
+    border-radius:5px; corner-shape:round;
+    background:linear-gradient(180deg,color-mix(in srgb,var(--blog-tag-ink) 6%,var(--landing-bg)),color-mix(in srgb,var(--blog-tag-ink) 8%,var(--muted)));
+    color:color-mix(in srgb,var(--blog-tag-ink) 56%,var(--muted-foreground));
+    box-shadow:inset 0 1px 0 rgb(255 255 255 / 80%); text-shadow:0 1px 0 rgb(255 255 255 / 80%);
+    font:700 9px/10px var(--font-sans); white-space:nowrap; letter-spacing:normal;
+  }
+  .blog-index-page .blog-tag[data-tone="1"] { --blog-tag-ink:#1565c0; }
+  .blog-index-page .blog-tag[data-tone="2"] { --blog-tag-ink:#5e35b1; }
+  .blog-index-page .blog-tag[data-tone="3"] { --blog-tag-ink:#c62828; }
+  .blog-index-page .blog-tag-category { height:20px; padding-inline:8px; font-size:10px; letter-spacing:.12em; }
+  .blog-index-page .blog-tags { display:flex; flex-wrap:wrap; gap:6px; margin:16px 0 0; padding:0; list-style:none; }
+  /* ---- 外框先显现，曲线描边与逐行揭示同拍；生命周期复用现有侧纹组件 ---- */
+  .blog-index-page .landing-rail-texture[data-variant="truchet"] { display:none; opacity:.82; }
+  .blog-index-page .landing-rail-texture-pattern { mask-image:none; transform:none; }
+  .blog-index-page .landing-rail-texture[data-reveal="revealing"] .landing-rail-texture-pattern {
+    animation:blog-index-pattern-reveal var(--blog-pattern-duration) var(--blog-pattern-ease) var(--blog-pattern-delay) both;
+  }
+  .blog-index-page .landing-rail-texture-pattern > svg { display:block; }
+  .blog-index-page .landing-rail-texture[data-reveal="revealing"] .blog-truchet-path {
+    stroke-dasharray:1; animation:blog-index-path-draw var(--blog-pattern-duration) var(--blog-pattern-ease) var(--blog-pattern-delay) both;
+  }
+  .landing-blueprint[data-marketing-transition] .blog-index-page :is(.landing-rail-texture-pattern,.blog-truchet-path) { animation-play-state:paused; }
+  @keyframes blog-index-pattern-reveal { from { clip-path:inset(0 0 100%); } to { clip-path:inset(0); } }
+  @keyframes blog-index-path-draw { from { stroke-dashoffset:1; } to { stroke-dashoffset:0; } }
+  @media (min-width:1280px) { .blog-index-page .landing-rail-texture[data-variant="truchet"] { display:block; } }
+  @media (max-width:767px) {
+    .blog-index-prelude { height:40px; }
+    .blog-index-after { height:72px; }
+    .blog-index-gap { height:32px; }
+    .blog-index-heading { padding:48px 20px; }
+    .blog-index-heading-rails { display:none; }
+    .blog-index-heading h1 { font-size:32px; }
+    .blog-index-heading p { font-size:14px; line-height:24px; }
+    .blog-index-link { padding:20px; }
+    .blog-index-meta time { font-size:12px; }
+    .blog-index-copy h2 { font-size:19px; }
+    .blog-index-copy p { font-size:13px; line-height:21px; }
+  }
+  @media (prefers-reduced-motion:reduce) {
+    .blog-index-page .landing-rail-texture[data-reveal] :is(.landing-rail-texture-pattern,.blog-truchet-path) { animation:none; clip-path:none; stroke-dashoffset:0; }
+  }
+}

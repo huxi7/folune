@@ -2,7 +2,8 @@
 > L2 | 父级: ../../CLAUDE.md
 
 成员清单
-PricingRailPattern.tsx: 价格正文专用72px Truchet三路径平铺，取自Laper公开DOM；左右16%渐隐与Blueprint外轨一致，只用Folune颜色，不改变博客侧纹。
+TruchetPattern.tsx: 72px 三层曲线的纯 SVG 定义；目录与价格共用公开参考路径，调用者提供唯一 ID、颜色与可选描边动效类，不持有布局或生命周期。
+PricingRailPattern.tsx: 价格正文的静态 Truchet 宿主，复用 TruchetPattern 三路径；左右16%渐隐与Blueprint外轨一致，色彩和布局继续由 pricing.css 持有。
 SignOutConfirmationDialog.test.tsx: 真实菜单/设置入口确认、取消/焦点、异步防重与失败重试、中英文门禁；不调用真实认证
 SignOutConfirmationDialog.tsx: Laper原组件字号/几何与dim黑色遮罩，取消仅变色、主题Primary参考400/40弹簧；菜单/设置共用的受控退出确认，右对齐取消/主动作、同步防连点与失败重试；不直接操作认证或业务存储
 CheckoutTransition.tsx: 订阅和积分共用的无确认结账过渡与原位错误反馈；复用 DS spinner/按钮，业务状态由页面提供，既不展示订单也不发起购买。
@@ -15,11 +16,11 @@ assistantGeometry.ts: 导出AssistantWidthMode，panel模式不消费真实窗�
 MenuComparison/: 独立本地菜单对照入口与1c1fe55历史快照；复用生产菜单/侧栏表面、保持数据一致并默认展开，只为对比尺寸和定位，不装配业务状态
 CreditsPurchaseDialog.tsx: 关闭入口保留轻通透材质与可访问名称，无重复提示；用户选定的同源蓝色生成图横幅、实测超椭圆曲率与六档积分选购的受控展示层，640px/24px圆角弹窗内呈现服务端报价、原生单选、当前积分余额、无确认结账过渡/升级入口与规则；复用 Dialog 模态和 locale，网络与生命周期交给 CreditsPage
 DesktopDownloadButton.tsx: Header/Hero 共用原生下载，可靠识别时直接下载，未知架构时明确选择 Mac arm64/Windows x64
-BlogTags.tsx: 独立博客目录的静态主题标签列表；接收文章同源标签，不创建筛选状态或嵌套链接
+BlogTags.tsx: 目录静态主题标签，最多四枚并按文章次序错开四色；只读数据，无嵌套链接或筛选状态，材质由 blog-index.css 持有。
 BlogFrameSection.tsx: 目录/阅读/价格页的外轨分区容器；静态区直接呈现外轨，花纹区独占外侧竖线与两段顶边的淡入，主内容边线仍由 BlueprintFrame 连续绘制
 PublicArticle.tsx: 博客、动态和法律文档共用的阅读模板；Hero 后复用目录同款 48px/28px 空轨，上沿带节点、下沿平直；BlogFrameSection 将静态主轨/中段横线与花纹局部外框拆开，weave 侧纹只覆盖正文及尾部导航，在两侧局部外框之后显现；内部保持导读与窄栏排版；只接收内容与导航插槽，不拥有内容集合或路由
 updatePosts.ts: 独立动态内容源，复用 BlogPost 类型并由 /updates 的共用列表/阅读页消费；初始为空，后续只需填充文章，不混入首页或博客集合
-LandingRailTexture.tsx: after-frame 模式交给博客 CSS 编排两侧花纹局部外框之后的显现，按路由重新挂载且不读写首页播放缓存；默认三种侧纹共用一次性 inView 触发和状态机，进入视口 240px 后左右绘制层同步执行 1050ms 原生 mask-position 动画，左侧 animationend 提交共同终态；pending 明确隐藏。模块 Set 在触发时登记，路由往返不重播、刷新重置；DS 减少动态时直接显示，窄屏隐藏不消耗机会，绘制归 landing.css
+LandingRailTexture.tsx: paper/weave/index/truchet 共享侧轨生命周期；首页保留一次性 inView 缓存，after-frame 按路由重播；Truchet 复用价格页几何，由 blog-index.css 编排描边与揭示，阅读 weave 仍沿 blog.css；减少动态立即显示。
 LandingConnections.tsx: 左侧叙述方法与实践，右侧两张相邻 NotePaper 标出支持关系的原句；短线随纸面布局连接，静态公开材料不装配业务会话
 LandingGuides.tsx: 六篇方法指南的紧凑三列两行目录，共读分类、标题与摘要，序号列于右上；上下空轨和交织侧纹交由 LandingSections 的章节外框装配，guides 为入口，保留 use-cases/extensions 锚点，返回复用博客协议
 guidePosts.ts: 逐篇维护三个正文主题标签； 六篇完整记录方法文章，独立于首页三篇精选，以 BlogPost 类型加入同一公开目录

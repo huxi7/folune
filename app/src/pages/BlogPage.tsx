@@ -1,11 +1,10 @@
 /**
- * [INPUT]: 依赖 Router slug/历史导航、MarketingLink、共享 Secondary Button 材质与 ArrowLeftIcon、独立博客/动态集合及 BlogTags 内容标签、PublicArticle/usePublicPageMetadata、BlogFrameSection、LandingRailTexture 与 Blueprint 导轨；正文由营销壳编排浮现
- * [OUTPUT]: 对外提供 /blog 与 /updates 的共用目录/阅读页及回退；目录提供轻量返回按钮和品牌刊物署名，含分类与主题标签，整行是单一链接，无重复阅读按钮；仅花纹顶部两段横线和外侧竖线先现，再显现花纹，pathname 重播、query/锚点不重播
- * [POS]: pages 的公开文章视图；section 选择内容与文案，目录和正文的 Hero 后空轨上沿带节点、下沿平直，边界横线延伸到两侧外轨，侧纹只覆盖内容，标题与共享营销壳只有一套实现
+ * [INPUT]: 依赖 Router slug/历史导航、MarketingLink、独立博客/动态集合、BlogTags、PublicArticle/usePublicPageMetadata、共享公告、BlogFrameSection/LandingRailTexture 与 Blueprint 导轨
+ * [OUTPUT]: 对外提供 /blog 与 /updates 的共用目录/阅读页；目录按 Laper 实际结构呈现点阵刊头、紧凑文章行、彩色标签与 Truchet 侧纹，不重复提供返回首页；动态为空时仅保留空框
+ * [POS]: pages 的公开文章视图；目录几何与动效由 blog-index.css 隔离，正文阅读和来路返回保持 PublicArticle 契约；顶栏/页脚仍由营销壳持有，pathname 重播装饰、query/锚点不重播
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeftIcon } from "../shared/design-system/icons";
 import { MarketingLink as Link } from "../widgets/LandingMotion/MarketingLink";
 import { supportsMarketingTransition } from "../widgets/LandingMotion/useMarketingMotion";
 import { BlueprintFrame } from "../widgets/BlueprintFrame";
@@ -16,11 +15,13 @@ import { updatePosts } from "../widgets/updatePosts";
 import { PublicArticle } from "../widgets/PublicArticle";
 import { BlogTags } from "../widgets/BlogTags";
 import { BlogFrameSection } from "../widgets/BlogFrameSection";
+import { MarketingAnnouncement } from "../widgets/MarketingAnnouncement";
 import { usePublicPageMetadata } from "./usePublicPageMetadata";
+import "../styles/blog-index.css";
 
 const sections = {
-  blog: { path: "/blog", title: "Folune 博客", mark: "FOLUNE JOURNAL", eyebrow: "FOLUNE 杂志", description: "让零散的灵感，长成自己的思想", home: "/#blog", directory: "博客目录", posts: blogPosts },
-  updates: { path: "/updates", title: "最新动态", mark: "FOLUNE NEWS", eyebrow: "FOLUNE 快讯", description: "产品更新、开发手记与新的想法。", home: "/", directory: "最新动态", posts: updatePosts },
+  blog: { path: "/blog", title: "Folune 博客", mark: "FOLUNE JOURNAL", eyebrow: "FOLUNE 杂志", description: "让零散的灵感，长成自己的思想", directory: "博客目录", posts: blogPosts },
+  updates: { path: "/updates", title: "最新动态", mark: "FOLUNE NEWS", eyebrow: "FOLUNE 快讯", description: "产品更新、开发手记与新的想法。", directory: "最新动态", posts: updatePosts },
 };
 
 export function BlogPage({ section = "blog" }: { section?: keyof typeof sections }) {
@@ -39,31 +40,38 @@ export function BlogPage({ section = "blog" }: { section?: keyof typeof sections
     else navigate(config.path, { viewTransition: supportsMarketingTransition() });
   }
 
-  return <BlueprintFrame key={location.pathname} className="landing-spine blog-spine" fullBleed>
+  return <BlueprintFrame key={location.pathname} className={`landing-spine blog-spine${!slug ? " blog-index-page" : ""}`} fullBleed>
     <main id="main-content">
       {!slug ? <>
-        <BlogFrameSection>
-          <nav className="blog-navigation" aria-label="返回导航">
-            <Link to={config.home} className="ds-button ds-button-secondary ds-button-size-default blog-home-link"><span className="ds-button-content"><ArrowLeftIcon size={14} aria-hidden="true" />返回首页</span></Link>
-          </nav>
-          <BlueprintDivider flush />
-          <header className="blog-index-heading"><span className="blog-eyebrow blog-index-eyebrow" data-marketing-reveal>{config.eyebrow}</span><h1 tabIndex={-1} data-marketing-reveal>{config.title}</h1><p data-marketing-reveal>{config.description}</p></header>
-          <BlueprintDivider fullBleed />
-          <div className="landing-chapter-gap" data-edge="end" aria-hidden="true"><BlueprintDivider flush showPins={false} /></div>
-        </BlogFrameSection>
-        <BlogFrameSection className="blog-index-list" patterned>
-          <LandingRailTexture variant="weave" reveal="after-frame" />
-          {config.posts.length === 0 ? <div className="blog-index-empty" data-marketing-reveal><p>新的动态，正在酝酿。</p><span>关于 Folune 的进展，会在这里与你分享。</span></div> : null}
-          {config.posts.map(item => <article key={item.slug}>
-            <Link to={`${config.path}/${item.slug}`} state={{ fromBlog: true }} className="blog-index-link">
-              <div className="blog-index-copy" data-marketing-reveal><div className="blog-index-meta"><span className="blog-tag blog-tag-category">{item.category}</span><time dateTime={item.date}>{item.date}</time></div><h2>{item.title}</h2><p>{item.description}</p><BlogTags tags={item.tags} /></div>
-            </Link>
-          </article>)}
-        </BlogFrameSection>
-        <BlogFrameSection>
-          <div className="landing-chapter-gap" data-edge="start" aria-hidden="true"><BlueprintDivider flush fullBleed /></div>
-          <BlueprintDivider fullBleed />
-        </BlogFrameSection>
+        <MarketingAnnouncement />
+        <div className="blog-index-content">
+          <div className="blog-index-prelude" aria-hidden="true" />
+          <header className="blog-index-heading">
+            <BlueprintDivider flush />
+            <div className="blog-index-heading-rails" aria-hidden="true"><span /><span /></div>
+            <span className="blog-eyebrow blog-index-eyebrow" data-marketing-reveal>{config.eyebrow}</span>
+            <h1 tabIndex={-1} data-marketing-reveal>{config.title}</h1>
+            <p data-marketing-reveal>{config.description}</p>
+            <BlueprintDivider flush />
+          </header>
+          <div className="blog-index-gap" aria-hidden="true" />
+          <BlogFrameSection className="blog-index-list" patterned>
+            <LandingRailTexture variant="truchet" reveal="after-frame" />
+            <BlueprintDivider flush fullBleed />
+            {config.posts.length === 0 ? <div className="blog-index-empty"><span className="sr-only">暂无动态</span></div> : null}
+            {config.posts.map((item, index) => <article key={item.slug}>
+              <Link to={`${config.path}/${item.slug}`} state={{ fromBlog: true }} className="blog-index-link">
+                <div className="blog-index-copy" data-marketing-reveal>
+                  <div className="blog-index-meta"><span className="blog-tag blog-tag-category" data-tone={index % 4}>{item.category}</span><time dateTime={item.date}>{item.date}</time></div>
+                  <h2>{item.title}</h2><p>{item.description}</p>
+                  <BlogTags tags={item.tags} colorOffset={index + 1} />
+                </div>
+              </Link>
+            </article>)}
+            <BlueprintDivider flush fullBleed />
+          </BlogFrameSection>
+          <div className="blog-index-after" aria-hidden="true" />
+        </div>
       </> : post ? <PublicArticle
         article={post}
         mark={<Link className="blog-eyebrow blog-journal-mark" to={config.path} data-marketing-reveal>{config.mark}</Link>}

@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 MarketingLayout 的中文语言与过渡状态、DS 字体/颜色/动效 token、共享空轨与 weave 侧纹，以及原生 CJK 间距和断行能力
- * [OUTPUT]: 对外提供紧凑返回按钮、疏朗品牌刊物署名；对外提供目录/文章分类共用的紧凑浅底细边标签材质与主题标签换行；对外提供无重复阅读按钮、共用150ms中性悬停的整行目录，以及博客/法律长文的紧凑字号、36 字宽阅读栏、细侧线导读、自然段距及中西文间距增强；仅花纹局部外框淡入后显示纹样
- * [POS]: styles 的博客局部表现层；blog-spine 隔离中文阅读规则，正文数据和复制内容不变，首页/APP 不继承；BlogFrameSection 保留既有局部外框入场
+ * [INPUT]: 依赖 MarketingLayout 的中文语言与过渡状态、DS 字体/颜色/动效 token、PublicArticle 共享空轨与 weave 侧纹，以及原生 CJK 间距和断行能力
+ * [OUTPUT]: 提供首页博客卡片、文章分类标签和博客/法律长文的紧凑字号、36 字宽阅读栏、细侧线导读及中西文间距增强；公共外框淡入后显示阅读侧纹
+ * [POS]: styles 的首页博客与公开阅读表现层；目录专属排版、标签与 Truchet 入场由 blog-index.css 持有，BlogFrameSection 保留共享局部外框入场
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 @layer components {
@@ -25,7 +25,7 @@
   .blog-author img { width:28px; height:28px; border-radius:50%; corner-shape:round; object-fit:cover; }
   .blog-card-link:hover h3 { color:var(--landing-accent); }
   .blog-card-link:focus-visible { outline-offset:4px; }
-  /* ---- 纸面标签：墨蓝、灰绿与石板灰沿用现有博客封面，底边保留轻微厚度 ---- */
+  /* ---- 阅读页分类标签：沿用品牌墨蓝，底边保留轻微厚度 ---- */
   .blog-tag {
     --blog-tag-ink:var(--landing-accent);
     display:inline-flex;
@@ -46,10 +46,6 @@
     letter-spacing:normal;
   }
   .blog-tag-category { padding-inline:7px; }
-  .blog-tags { display:flex; flex-wrap:wrap; gap:6px; margin:20px 0 0; padding:0; list-style:none; }
-  .blog-tags .blog-tag:nth-child(3n + 2) { --blog-tag-ink:#53756e; }
-  .blog-tags .blog-tag:nth-child(3n) { --blog-tag-ink:#626f83; }
-  .blog-index-copy .blog-tags { margin-top:24px; }
   /* ---- 中文屏幕阅读：保留衬线标题，正文回到比例字体与自然字距 ---- */
   .blog-spine {
     --landing-body:var(--font-sans);
@@ -96,28 +92,7 @@
     .blog-side-frame[data-animated] { animation:none; opacity:1; }
     .blog-spine .landing-rail-texture-pattern { animation:none; mask-image:none; visibility:visible; }
   }
-  .blog-navigation { min-height:64px; padding:16px 32px; display:flex; align-items:center; gap:16px; font:11px/1.6 Landing Mono,var(--font-sans); color:#656c73; }
-  .blog-index-heading,.blog-article-heading { position:relative; text-align:center; background-image:radial-gradient(rgb(57 88 117 / 15%) .7px,transparent .7px); background-size:8px 8px; }
-  /* ---- 目录刊头：返回复用标准按钮材质，刊物署名以轻字重与疏朗字距建立层次 ---- */
-  .blog-navigation .blog-home-link { height:28px; min-height:28px; padding-inline:10px; font:500 11px/16px var(--font-sans); }
-  .blog-home-link .ds-button-content { gap:6px; }
-  .blog-index-heading { padding:72px 24px 80px; }
-  .blog-index-eyebrow { display:inline-block; font:400 12px/20px var(--font-sans); letter-spacing:.18em; padding-left:.18em; }
-  .blog-index-heading h1 { margin-top:16px; color:var(--landing-accent); font-size:48px; line-height:1.3; }
-  .blog-index-heading p { margin-top:24px; color:#656c73; font-size:var(--type-body); line-height:1.8; }
-  .blog-navigation a:hover { color:var(--landing-accent); }
-  .blog-index-list article + article { border-top:1px solid var(--landing-border); }
-  .blog-index-link { display:block; padding:32px; transition:background-color var(--motion-hover) var(--ease-surface); }
-  .blog-index-link:is(:hover,:focus-visible) { background:var(--interactive-hover); }
-  .blog-index-link:focus-visible { outline:2px solid var(--landing-accent); outline-offset:-2px; }
-  .blog-index-link:is(:hover,:focus-visible) h2 { color:var(--landing-accent); }
-  .blog-index-empty { min-height:240px; padding:64px 24px; text-align:center; color:#656c73; }
-  .blog-index-empty p { color:var(--landing-ink); font:24px/1.5 var(--landing-heading); }
-  .blog-index-empty span { display:block; margin-top:16px; font-size:14px; }
-  .blog-index-meta { display:flex; flex-wrap:wrap; gap:16px; align-items:center; }
-  .blog-index-meta time { font:11px/1.5 Landing Mono,var(--font-sans); color:#747a80; }
-  .blog-index-copy h2 { margin-top:16px; font-size:26px; line-height:1.5; }
-  .blog-index-copy p { max-width:36em; margin-top:12px; color:#656c73; font-size:var(--type-input); line-height:1.85; }
+  .blog-article-heading { position:relative; text-align:center; background-image:radial-gradient(rgb(57 88 117 / 15%) .7px,transparent .7px); background-size:8px 8px; }
   .blog-article-body { padding-bottom:64px; }
   .blog-article-prelude { height:64px; }
   .blog-article-heading { min-height:424px; padding:64px 48px; display:flex; flex-direction:column; align-items:center; justify-content:center; }
@@ -169,11 +144,6 @@
     .blog-card-copy { padding:20px; }
     .landing-blog-grid h3 { font-size:22px; }
     .landing-blog-grid p { font-size:14px; }
-    .blog-navigation { padding:12px 24px; min-height:48px; }
-    .blog-index-heading { padding:56px 24px; }
-    .blog-index-heading h1 { font-size:36px; }
-    .blog-index-link { padding:32px 24px; }
-    .blog-index-copy h2 { font-size:23px; }
     .blog-article-prelude { height:32px; }
     .blog-article-heading { min-height:0; padding:48px 24px; }
     .blog-article-heading h1 { font-size:30px; }

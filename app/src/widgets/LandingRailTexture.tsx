@@ -1,14 +1,15 @@
 /**
- * [INPUT]: 依赖 Motion inView、DS 实时动态偏好与 landing.css 的 Blueprint 坐标、纹样、水平渐隐和绘制层原生 mask-position 动画
- * [OUTPUT]: 对外提供 paper / weave / index 三种由上至下显现的 LandingRailTexture；默认视口触发，after-frame 交给阅读页 CSS 在花纹局部外框之后播放
- * [POS]: widgets 的共享侧轨装饰层；首页按纹样缓存一次视口显现，阅读页按路由重新入场且不读写首页缓存；定位容器决定覆盖范围，减少动态时直接显示
+ * [INPUT]: 依赖 Motion inView、DS 实时动态偏好、TruchetPattern，以及 landing.css/blog-index.css 的导轨定位和显现样式
+ * [OUTPUT]: 对外提供 paper / weave / index / truchet 四种 LandingRailTexture；首页由视口触发，after-frame 交给公开内容的局部外框与纹样时间线
+ * [POS]: widgets 的共享侧轨装饰层；首页缓存一次显现，公开目录/阅读按路由重新入场；Truchet 与价格页共用几何，减少动态时直接显示
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { inView } from "motion/react";
 import { useMotionPreference } from "../shared/design-system/useMotionPreference";
+import { TruchetPattern } from "./TruchetPattern";
 
-export type RailVariant = "paper" | "weave" | "index";
+export type RailVariant = "paper" | "weave" | "index" | "truchet";
 type RevealPhase = "pending" | "revealing" | "complete";
 
 // ---- 生命周期属于当前文档；卸载章节不清除，刷新自然重置 ----
@@ -19,6 +20,7 @@ export function LandingRailTexture({ variant, reveal = "viewport" }: {
   variant: RailVariant;
   reveal?: "viewport" | "after-frame";
 }) {
+  const patternId = useId();
   const hostRef = useRef<HTMLDivElement>(null);
   const reducedMotion = useMotionPreference();
   const [phase, setPhase] = useState<RevealPhase>(() => reveal === "after-frame"
@@ -62,15 +64,20 @@ export function LandingRailTexture({ variant, reveal = "viewport" }: {
     aria-hidden="true"
     onAnimationEnd={event => {
       // 左右动画同帧开始，只由左侧绘制层的结束事件提交共同终态。
-      if (event.animationName === "landing-rail-reveal"
-        && event.target instanceof HTMLElement
+      if (event.target instanceof HTMLElement
+        && event.target.classList.contains("landing-rail-texture-pattern")
         && event.target.parentElement?.dataset.side === "start") setPhase("complete");
     }}
   >
     {(["start", "end"] as const).map(side => <div className="landing-rail-texture-side" data-side={side} key={side}>
       <div className="landing-rail-texture-pattern">
-        <span className="landing-rail-detail" />
-        <span className="landing-rail-main" />
+        {variant === "truchet" ? <svg width="100%" height="100%" preserveAspectRatio="none">
+          <defs><TruchetPattern id={`${patternId}-${side}`} line="var(--blog-pattern-line)" accent="var(--blog-pattern-accent)" pathClassName="blog-truchet-path" /></defs>
+          <rect width="100%" height="100%" fill={`url(#${patternId}-${side})`} />
+        </svg> : <>
+          <span className="landing-rail-detail" />
+          <span className="landing-rail-main" />
+        </>}
       </div>
     </div>)}
   </div>;

@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 happy-dom、真实 Router/AuthForm/LegalPage/BlogPage 与 Testing Library
- * [OUTPUT]: 验证匿名直达、协议导航与元信息、共享阅读回归，以及装饰完成后只在路径变化时重播，不请求认证或业务数据
+ * [OUTPUT]: 验证匿名直达、协议导航与元信息、共享阅读回归、目录去除返回首页和动态空集合，以及装饰完成后只在路径变化时重播，不请求认证或业务数据
  * [POS]: pages 的公开协议路由集成门禁，保护共享模板提取后博客身份和独立法律 URL 的边界
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -35,13 +35,14 @@ function renderRoute(path: string) {
     { path: "/terms", element: <LegalPage document="terms" /> },
     { path: "/privacy", element: <LegalPage document="privacy" /> },
     { path: "/blog", element: <BlogPage /> },
+    { path: "/updates", element: <BlogPage section="updates" /> },
     { path: "/blog/:slug", element: <BlogPage /> },
   ], { initialEntries: [path] });
   return { router, ...render(<RouterProvider router={router} />) };
 }
 
 describe("公开法律页面", () => {
-  test.each(["/blog", "/blog/write-first-organize-later", "/privacy"])("%s 仅花纹局部外框进入动画容器，内容和普通分隔线不受影响", (path) => {
+  test.each(["/blog", "/updates", "/blog/write-first-organize-later", "/privacy"])("%s 仅花纹局部外框进入动画容器，内容和普通分隔线不受影响", (path) => {
     const view = renderRoute(path);
     const animated = view.container.querySelectorAll(".blog-side-frame[data-animated]");
     expect(animated.length).toBe(1);
@@ -49,9 +50,19 @@ describe("公开法律页面", () => {
     expect(animated[0]!.querySelectorAll(".blueprint-rail-edge-start,.blueprint-rail-edge-end").length).toBe(2);
     expect(animated[0]!.querySelector(".blueprint-rail-start,.blueprint-rail-end,.blueprint-divider,h1,p")).toBeNull();
     expect(animated[0]!.parentElement?.querySelector(":scope > .landing-rail-texture")).toBeTruthy();
-    const gap = view.container.querySelector('.landing-chapter-gap[data-edge="end"]')!;
-    expect(gap.querySelector(".blueprint-divider[data-full-bleed],.blueprint-pin")).toBeNull();
-    expect(gap.querySelector(".blueprint-divider-line")).toBeTruthy();
+    const gap = view.container.querySelector('.landing-chapter-gap[data-edge="end"]');
+    if (path === "/blog" || path === "/updates") {
+      expect(view.queryByRole("link", { name: "返回首页" })).toBeNull();
+      expect(view.queryByRole("button", { name: "返回首页" })).toBeNull();
+      if (path === "/updates") {
+        expect(view.getByRole("heading", { level: 1 }).textContent).toBe("最新动态");
+        expect(view.container.querySelectorAll("article").length).toBe(0);
+        expect(view.queryByText("新的动态，正在酝酿。")).toBeNull();
+      }
+    } else {
+      expect(gap!.querySelector(".blueprint-divider[data-full-bleed],.blueprint-pin")).toBeNull();
+      expect(gap!.querySelector(".blueprint-divider-line")).toBeTruthy();
+    }
   });
 
   test("目录与正文共用花纹入场，query 和锚点保留终态，路径切换重新播放", async () => {
