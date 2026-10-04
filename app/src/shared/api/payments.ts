@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖统一 apiRequest 与服务端订单/审计接口
- * [OUTPUT]: 提供订单/旧报价替换标识、付款核对和管理员日志访问
+ * [OUTPUT]: 提供订单/旧报价替换标识、付款核对、收银台 URL 校验与 Web/桌面导航
  * [POS]: 浏览器只请求和展示支付事实，不把跳转参数或本地状态当作付款依据
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -17,18 +17,6 @@ export type PaymentOrder = {
   created_at: string;
   fulfilled_at: string | null;
 };
-export type PaymentEvent = {
-  id: string;
-  source: string;
-  outcome: string;
-  provider_status: string | null;
-  received_at: string;
-};
-export const getOrders = (admin = false, signal?: AbortSignal) =>
-  apiRequest<PaymentOrder[]>(
-    admin ? "/billing/admin/orders" : "/billing/orders",
-    { signal },
-  );
 export const getOrder = (id: string, signal?: AbortSignal) =>
   apiRequest<PaymentOrder>(`/billing/orders/${encodeURIComponent(id)}`, { signal });
 export const refreshOrder = (id: string, admin = false, signal?: AbortSignal) =>
@@ -36,14 +24,7 @@ export const refreshOrder = (id: string, admin = false, signal?: AbortSignal) =>
     `/billing/${admin ? "admin/" : ""}orders/${encodeURIComponent(id)}/refresh`,
     { method: "POST", ...(admin ? { body: JSON.stringify({}) } : {}), signal },
   );
-export const getOrderEvents = (id: string | undefined, signal?: AbortSignal) =>
-  apiRequest<PaymentEvent[]>(
-    id
-      ? `/billing/admin/orders/${encodeURIComponent(id)}/events`
-      : "/billing/admin/events",
-    { signal },
-  );
-export function openCheckout(url: string) {
+export function checkoutUrl(url: string) {
   const parsed = new URL(url);
   if (
     parsed.protocol !== "https:" ||
@@ -57,5 +38,12 @@ export function openCheckout(url: string) {
     parsed.port
   )
     throw new Error("Invalid checkout URL");
-  window.open(parsed.href, "_blank", "noopener,noreferrer");
+  return parsed.href;
+}
+
+export function openCheckout(url: string) {
+  const target = checkoutUrl(url);
+  // 桌面宿主把新窗口交给系统浏览器；Web 同页导航不依赖弹窗权限。
+  if (window.foluneDesktop) window.open(target, "_blank", "noopener,noreferrer");
+  else window.location.assign(target);
 }

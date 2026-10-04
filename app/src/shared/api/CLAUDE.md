@@ -2,7 +2,8 @@
 > L2 | 父级: ../CLAUDE.md
 
 成员清单
-payments.ts: 旧报价替换标识、本人列表/单一订单、管理审计和权威核对的统一 HTTP 边界，以及固定供应商收银台导航。
+payments.ts: 当前付款的权威查询与旧报价标识；统一校验供应商 HTTPS 链接，Web 同页导航避免弹窗拦截，桌面沿宿主打开系统浏览器。
+payments.test.ts: 验证 Web 同页导航、桌面系统浏览器交接，以及协议/主机/凭据/端口非法链接拒绝。
 CLAUDE.md: 定义浏览器业务 API 边界、依赖方向与文档回环协议
 access-token.ts: 无环境副作用的长会话鉴权决策层，优先当前认证会话，只在无会话时回退显式 access token 快照
 client.ts: 唯一后端 HTTP 中枢，以 access-token 策略请求期读取可自动刷新的当前认证会话，统一注入 Bearer、透传 AbortSignal、区分 JSON/FormData、解析信封并收敛错误

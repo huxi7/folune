@@ -2,10 +2,12 @@
 > L2 | 父级: ../../CLAUDE.md
 
 成员清单
-CreditsPage.tsx: 积分购买弹窗从服务端目录创建幂等订单；收银台打开后跟踪同一订单，未知创建结果直接核对，关闭中止迟到响应。
-CreditsPage.test.tsx: 真实组件验证服务端卡片/严格 pack_id、未知余额、目录失败重试、关闭后迟到结果隔离与英文购买界面
-SubscriptionPage.tsx: 独立订阅页共享服务端报价与权益；稳定幂等创建、收银台导航与指定订单跟踪串联，待核对状态可直接查看订单，回跳只携带订单身份。
-SubscriptionPage.test.tsx: 中英界面切换保留账户名称与报价，真实组件验证服务端月年报价、未开放不冒充订阅成功、失败重试同一方案、未知用量不造零及取消后晚到响应不能重开弹窗
+useCheckoutFlow.ts: 订阅/积分共用结账编排；同步防连点、稳定幂等键、创建未知只查原付款、自动安全导航与离开中止；付款身份沿原路保留，后台及返回窗口主动核对后刷新权益。
+useCheckoutFlow.test.tsx: 验证连点幂等、未知创建恢复自动跳转、迟到响应隔离、后退清理过渡、返回核对及服务端确认前不发成功回执。
+CreditsPage.tsx: 积分弹窗读取服务端目录并委托 useCheckoutFlow 一次点击结账；页面只持有选择、目录重试与关闭生命周期。
+CreditsPage.test.tsx: 验证积分一次点击自动跳转、无二次确认或订单面板、目录失败重试、选择保留与关闭中止。
+SubscriptionPage.tsx: 独立订阅页投影服务端月年方案，委托共享流程直接结账；不装配确认弹窗、订单历史或支付管理。
+SubscriptionPage.test.tsx: 验证一次点击订阅、管理员也无支付管理入口、月年报价、同意图重试、关闭隔离与中英文界面。
 subscriptionNavigation.ts: 订阅导航的纯路径边界，以 isSubscriptionPath 同时识别标准地址与尾斜杠，只允许 /app 或 /app/notes/:noteId 来路，保留底层笔记身份且拒绝外部/无关路径
 subscriptionNavigation.test.ts: 验证 memo/Canvas 来路保真、外部/非法路径回退、直达订阅默认落点和普通工作区忽略陈旧返回 state
 subscriptionController.test.tsx: 真实 Router/controller 验证订阅往返保留 memo/Canvas 身份与挂载实例，直接深链不触发首屏恢复或自动创建笔记

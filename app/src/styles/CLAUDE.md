@@ -21,6 +21,7 @@ Hero 背景定稿（2026-09-19）：正式页采用 02A GrainGradient wave，60s
 登录背景：auth.css 在正文独立层叠上下文内承载 01A 散墨，32% 浓淡、上下边缘淡出；背景不占文档流且不截获指针，卡片与视频保持原布局。
 
 成员清单
+checkout-transition.css: 订阅/积分共用的原区域淡入加载层与紧凑错误反馈；背景覆盖原选择、不添加确认框，复用 spinner 和动效 token，减少动态时静态呈现。
 assistant-window.css: Demo胶囊所有尺寸/图文留白/柔影按同一--assistant-ui-scale投影，静态演示取消阴影过渡； 四边四角透明命中区与原生调整光标，不画文件库的细蓝线；右下胶囊/短窗/全高独立表面，复用品牌流光三层，32/24/20px平滑曲率，仅外壳裁切与材质反馈；不修改其他Panel，真实处理中才增加低频流光
 account-typography.css: 自托管 Montserrat 的账户/订阅字体边界与英文 APP font-sans 映射，保留品牌标题和笔记正文的既有字体角色
 credits-purchase.css: 品牌蓝选中框线/外圈、单个积分图标双层近边阴影；640px积分弹窗与4:1用户选定的蓝色生成图（无调色滤镜）/原有七色conic柔光、24px/superellipse(2)外壳与2:1积分卡、12px间距、Courier New 27.2px数字、40px关闭/操作按钮；配色复用品牌蓝与暖中性 token，窄屏双列内滚且选中不缩放
@@ -52,7 +53,7 @@ shader-glow.css: base/flow/sheen 同时继承宿主 radius 与 corner-shape，�
 segmented-control.css: 分段选择的静态文字/轨道材质与独立选中底片，底片布局迁移由组件 Motion 独占，文字不位移或缩放
 toast.css: Kumo Toast Parts 的视口顶部居中三条轻堆叠，桌面 16px/窄屏 12px 顶部留白与上沿滑入共用安全区偏移；Grid 让可见条目共享内容自然宽度且不超过 22rem，候补条目不参与定宽；14px 正文、中性不透明 Popover、12px 曲率与双层轻影，动作回执的 2px 中性进度条贴满整条底边并随剩余时间缩减；倒计时回执去掉关闭按钮，24px 高动作配 8px 横向内距、12px 尾部留白，hover/focus 共用中性灰阶，裁剪只属于 Content 以保留条目间隙的悬停衔接，减少动态时取消空间过渡
 account-center.css: 五栏设置的唯一几何层，参考实测 900×600/200px 侧栏、24px 外壳/分组/内卡与 superellipse(2) 曲线、12px 控件/8px 导航、28px 白净按钮、主题底片通过 --segmented-indicator-surface 保持白亮、不被全局选中底色覆盖，轨道灰蓝、双层黑色凸起影、16px 标题/12px 正文、4px 内缩，左侧文字导航与右侧独立标题/嵌套分组卡，资料行、用量大数字/进度条、窄屏重排复用 APP 表面、字重、边框与曲率
-subscription.css: 从 Laper DOM/CSS 提取的 932px 三栏与 540px 卡片、28px 打字机双遮罩铭牌、7px 点阵、32px 普通/流光按钮、18px 年付开关、使用 DS 暖琥珀语义色及不透明浅底的折扣标记与完整积分账户条；Starter 仅覆盖按压阴影，保留 DS 缩放和高阶流光；由订阅/积分预留页按需加载
+subscription.css: 从 Laper DOM/CSS 提取的 932px 三栏与 540px 卡片、28px 打字机双遮罩铭牌、7px 点阵、32px 普通/流光按钮、18px 年付开关、使用 DS 暖琥珀语义色及不透明浅底的折扣标记与完整积分账户条；Starter 仅覆盖按压阴影，保留 DS 缩放和高阶流光；由订阅页按需加载；旧结算摘要样式已删除，过渡归 checkout-transition.css
 user-menu.css: 浮层仅消费共享微蓝灰边框与黑色短柔影，不另叠阴影；账户外卡24/内卡12，积分摘要与身份卡仅保留两层、间距8px；身份头整体hover、独立AccountSubscribeButton的28px流光及白亮边缘，主菜单由UserMenu按身份按钮左移8px并向上间隔8px定位、固定256px且仅窄视口缩宽，12px曲率、34px/8px 行、40px 头像和28px 订阅 CTA；1px贴边/36px行悬停子菜单、中美国旗和当前项浅灰与紧凑账户底卡共用 DS 蓝色/中性 token，Portal 定位归 UserMenu，普通 hover 保持灰色
 codemirror.css: 未分层的 CodeMirror 6 适配层；写作 Paper 覆盖 height/overflow 让编辑器按正文自然增长并把唯一纵向滚动交还 paper-stage-scroll，其他宿主仍使用 100% 高度。继续维护 light/dark、14px source/15px live、Editorial 标题/引用与 GFM 显示，pre-wrap 保真空白
 cord.css: Cord Signature 表现层，按语境把 --cord-color 映射到既有 --archive-cord/--primary，承载 pathLength 归一化的出场自绘、虚实区分与自中点向两端流动的双层白光；外发光用更宽更淡的第二条描边而非 feGaussianBlur，reduced-motion 直接静态

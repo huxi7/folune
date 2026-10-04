@@ -1,21 +1,17 @@
 /**
  * [INPUT]: 依赖服务端积分包/日额度、双语locale、共享Dialog/Button/Skeleton及积分图标；顶部直接使用用户选定的同源蓝色生成图
- * [OUTPUT]: 对外提供受控积分购买弹窗，呈现六档报价、单选、支付状态、升级入口与可展开规则
+ * [OUTPUT]: 对外提供受控积分购买弹窗，呈现六档报价、单选、无确认结账过渡、升级入口与可展开规则
  * [POS]: widgets 的积分选购展示层；不发网络请求、不生成钱包余额，支付事实与关闭行为交给页面装配 说明每日优先、购买长期有效与退款冲正规则。
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { useState } from "react";
+import { CheckoutTransition, type CheckoutState } from "./CheckoutTransition";
 import type { BillingCredits, CreditPack, CreditPackCatalog, CreditPackId } from "../shared/api/subscription";
 import { Button, Dialog, Skeleton, SkeletonGroup, useDelayedSkeleton } from "../shared/design-system/components";
 import { InfoIcon, SparkleIcon, XIcon } from "../shared/design-system/icons";
 import { useLocale } from "../shared/locale";
 import { formatCreditAmount } from "../shared/locale/credits";
 import "../styles/credits-purchase.css";
-
-export type CreditCheckoutState =
-  | { status: "idle" | "loading" | "unavailable" }
-  | { status: "error"; message: string }
-  | { status: "ready"; checkoutUrl: string };
 
 type CreditsPurchaseDialogProps = {
   open: boolean;
@@ -24,7 +20,7 @@ type CreditsPurchaseDialogProps = {
   loading: boolean;
   error: string | null;
   selectedId: CreditPackId | null;
-  checkout: CreditCheckoutState;
+  checkout: CheckoutState;
   onSelect: (id: CreditPackId) => void;
   onCheckout: () => void;
   onRetry: () => void;
@@ -55,7 +51,7 @@ export function CreditsPurchaseDialog({
     <section className="folune-credits-purchase">
       <div aria-hidden="true" className="folune-credits-banner"><img alt="" src="/account/credits-header-blue.png" width={2170} height={725} decoding="async" draggable={false} /></div>
       <Button aria-label={t("关闭积分购买", "Close credit purchase")} className="folune-credits-close" icon={XIcon} onClick={onClose} size="square" variant="secondary" />
-      <div className="folune-credits-body">
+      <div className="folune-credits-body" inert={pending} aria-hidden={pending || undefined}>
         <header className="folune-credits-heading">
           <div>
             <h2>{title}</h2>
@@ -90,8 +86,7 @@ export function CreditsPurchaseDialog({
 
         <div className="folune-credits-actions">
           <Button className="folune-credits-pay" disabled={!selectedPack} loading={pending} onClick={onCheckout} variant="primary">
-            {pending ? t("正在准备", "Preparing")
-              : checkout.status === "ready" ? t("前往支付", "Continue to payment")
+            {pending ? t("正在前往收银台", "Opening checkout")
               : canPay ? `${t("立即支付", "Pay now")} ${selectedPack ? priceLabel(selectedPack) : ""}`
               : `${t("购买积分", "Buy credits")}${selectedPack ? ` ${priceLabel(selectedPack)}` : ""}`}
           </Button>
@@ -100,15 +95,14 @@ export function CreditsPurchaseDialog({
           </Button>
         </div>
 
-        {checkout.status === "unavailable" || checkout.status === "error" || checkout.status === "ready" ? <div aria-live="polite" className="folune-credits-status" role="status">
+        {checkout.status === "unavailable" || checkout.status === "error" ? <div aria-live="polite" className="folune-credits-status" role="status">
           <InfoIcon aria-hidden="true" size={16} />
           <p>{checkout.status === "error" ? checkout.message
-            : checkout.status === "ready" ? t("支付页面已准备好，请再次确认后继续。", "Your checkout is ready. Review your selection before continuing.")
             : t("积分购买即将开放。本次没有产生订单或扣款。", "Credit purchases are coming soon. No order or charge was created.")}</p>
         </div> : null}
 
         <footer className="folune-credits-footer">
-          <span>{preview || !canPay ? t("积分包预览，尚未开售。", "Credit pack preview. Sales are not open yet.") : t("付款前可再次确认金额。", "Review the total before paying.")}</span>{" "}
+          <span>{preview || !canPay ? t("积分包预览，尚未开售。", "Credit pack preview. Sales are not open yet.") : t("购买积分长期有效。", "Purchased credits do not expire.")}</span>{" "}
           <button aria-expanded={rulesOpen} className="folune-credits-rules-toggle" onClick={() => setRulesOpen(value => !value)} type="button">{t("查看积分规则", "View credit rules")}</button>
         </footer>
         {rulesOpen ? <div className="folune-credits-rules">
@@ -117,6 +111,7 @@ export function CreditsPurchaseDialog({
           <p>{t("付款确认后到账。退款会冲正对应购买积分；已消耗部分形成欠额，由后续余额抵扣。", "Credits arrive after confirmed payment. Refunds reverse the purchase; spent credits become a balance adjustment.")}</p>
         </div> : null}
       </div>
+      {pending ? <CheckoutTransition summary={selectedPack ? `${formatNumber(selectedPack.credits)} ${t("积分", "credits")} · ${priceLabel(selectedPack)}` : undefined} /> : null}
     </section>
   </Dialog>;
 }

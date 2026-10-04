@@ -1,10 +1,11 @@
 /**
  * [INPUT]: 依赖服务端套餐/积分投影、双语 locale、React 聚焦、Button/GlowButton/Skeleton 与 Folune 图标
  * [OUTPUT]: 对外提供三档付费方案、年付开关、分层铭牌、普通/流光 CTA 和完整账户积分条
- * [POS]: widgets 的订阅展示层；布局按 Laper 实际 DOM/CSS 还原，颜色沿用 Folune，报价/余额不在 UI 生成 展示购买积分余额、订单入口及服务端授权的管理入口。
+ * [POS]: widgets 的订阅展示层；布局按 Laper 实际 DOM/CSS 还原，颜色沿用 Folune，报价/余额不在 UI 生成 购买直接进入无确认过渡，不承载订单与管理界面。
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { useEffect, useId, useRef } from "react";
+import { CheckoutFeedback, CheckoutTransition, type CheckoutState } from "./CheckoutTransition";
 import { Button, GlowButton, Skeleton, SkeletonGroup, useDelayedSkeleton } from "../shared/design-system/components";
 import { ArrowCounterClockwiseIcon, CheckIcon, InfoIcon, PlusIcon, SparkleIcon, XIcon } from "../shared/design-system/icons";
 import { type BillingCredits } from "../shared/api/subscription";
@@ -34,8 +35,8 @@ export type SubscriptionWorkspaceProps = {
   loading: boolean;
   onBack: () => void;
   onBuyCredits: () => void;
-  onOrders?: () => void;
-  onAdmin?: () => void;
+  checkout?: CheckoutState;
+  onCheckoutRetry?: () => void;
   onIntervalChange: (interval: SubscriptionInterval) => void;
   onRetry: () => void;
   onSelectPlan: (plan: SubscriptionPlan) => void;
@@ -49,7 +50,7 @@ export function formatSubscriptionPrice(amount: number, currency: string) {
 
 export function SubscriptionWorkspace({
   currentInterval, currentPlanId, credits, error, interval, loading, onBack, onBuyCredits,
-  onIntervalChange, onRetry, onSelectPlan, plans, profile, onOrders, onAdmin,
+  onIntervalChange, onRetry, onSelectPlan, plans, profile, checkout, onCheckoutRetry,
 }: SubscriptionWorkspaceProps) {
   const { t, locale } = useLocale();
   const formatCredits = (value: number) => formatCreditAmount(value, locale);
@@ -65,15 +66,11 @@ export function SubscriptionWorkspace({
     <main className="folune-subscription" aria-labelledby="subscription-title">
       <div className="folune-subscription-ambient" aria-hidden="true" />
       <Button aria-label={t("关闭订阅页面", "Close subscription page")} className="folune-subscription-close" icon={XIcon} onClick={onBack} size="square" title={t("返回工作区", "Back to workspace")} variant="ghost" />
-      <div className="folune-subscription-inner">
+      <div className="folune-subscription-inner" inert={checkout?.status === "loading"} aria-hidden={checkout?.status === "loading" || undefined}>
         <header className="folune-subscription-heading">
           <h1 id="subscription-title" ref={titleRef} tabIndex={-1}>{t('为值得积累的想法而生的 Folune 订阅计划', 'Folune plans for ideas worth keeping')}</h1>
           <p className="folune-subscription-description">{t('随手记录，自动归档。让每一次思考，成为下一次创作的起点。', 'Capture freely. Organize naturally. Give every idea a place to grow.')}</p>
         </header>
-        <div className="flex justify-center gap-2">
-          {onOrders?<Button onClick={onOrders} variant="ghost">{t("订单记录","Order history")}</Button>:null}
-          {onAdmin?<Button onClick={onAdmin} variant="ghost">{t("支付管理","Payment admin")}</Button>:null}
-        </div>
         <div className="folune-subscription-cycle">
           <label htmlFor={cycleId}>{hasAnnualSaving ? t("选择年付方案节省更多", "Save more with annual billing") : t("选择年付方案，专注长久积累", "Choose annual billing for the long run")}</label>
           <button
@@ -82,6 +79,7 @@ export function SubscriptionWorkspace({
             role="switch" type="button"
           ><span aria-hidden="true" /></button>
         </div>
+        {checkout?.message ? <CheckoutFeedback message={checkout.message} onRetry={checkout.status === "error" ? onCheckoutRetry : undefined} /> : null}
         {error ? (
           <div className="folune-subscription-error" role="alert">
             <InfoIcon aria-hidden="true" size={16} /><span>{error}</span>
@@ -129,6 +127,7 @@ export function SubscriptionWorkspace({
           <div><a href="/terms" rel="noreferrer" target="_blank">{t('服务条款', 'Terms of service')}</a><span aria-hidden="true">·</span><a href="/privacy" rel="noreferrer" target="_blank">{t('隐私政策', 'Privacy policy')}</a></div>
         </footer>
       </div>
+      {checkout?.status === "loading" ? <CheckoutTransition /> : null}
     </main>
   );
 }

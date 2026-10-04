@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 使用已提取的 Laper 订阅 DOM/CSS 几何与叠层，消费 Folune 语义颜色/曲率/动效和 Button/GlowButton
- * [OUTPUT]: 三张 300px 付费卡、玻璃铭牌、普通/流光按钮、年付开关、暖琥珀折扣标记、账户积分条与结算样式
+ * [OUTPUT]: 三张 300px 付费卡、玻璃铭牌、普通/流光按钮、年付开关、暖琥珀折扣标记、账户积分条，结账过渡归 checkout-transition.css
  * [POS]: styles 的订阅专属层；原四栏收为 932px 三栏，颜色归 Folune，字体/间距/阴影按浏览器代码还原
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -99,21 +99,7 @@
   .folune-subscription-plan-loading .folune-subscription-features > .ds-skeleton { width: 84%; height: 16px; }
   .folune-subscription-skeleton-button { width: 100%; height: 32px; margin-top: 20px; }
   /* ---- 结算摘要与真正执行支付的动作分开，状态由 API 决定 ---- */
-  .folune-subscription-checkout { display: flex; flex-direction: column; gap: var(--space-5); margin-top: var(--space-5); }
-  .folune-subscription-checkout-summary { overflow: hidden; border: 1px solid var(--border); border-radius: var(--radius-panel); corner-shape: var(--corner-shape-smooth); background: var(--surface-neutral); }
-  .folune-subscription-checkout-plan { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); padding: var(--space-5); }
-  .folune-subscription-checkout-plan h3 { font-family: var(--font-serif); font-size: var(--type-heading); font-weight: var(--weight-heading); }
-  .folune-subscription-checkout-plan p { margin-top: var(--space-1); color: var(--muted-foreground); font-size: var(--type-label); }
-  .folune-subscription-checkout-plan svg { color: var(--muted-foreground); }
-  .folune-subscription-checkout-total { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); border-top: 1px solid var(--border); background: var(--card); padding: var(--space-4) var(--space-5); font-size: var(--type-label); }
-  .folune-subscription-checkout-total strong { font-size: 1.5rem; font-weight: var(--weight-emphasis, 700); font-variant-numeric: tabular-nums; }
-  .folune-subscription-checkout-status { display: flex; align-items: flex-start; gap: var(--space-3); border-radius: var(--radius-control); corner-shape: var(--corner-shape-smooth); background: var(--surface-neutral); padding: var(--space-4); }
-  .folune-subscription-checkout-status > svg { flex-shrink: 0; margin-top: var(--space-1); color: var(--muted-foreground); }
-  .folune-subscription-checkout-status strong { display: block; font-size: var(--type-ui); font-weight: var(--weight-label); line-height: var(--leading-input); }
-  .folune-subscription-checkout-status p { margin-top: var(--space-1); color: var(--muted-foreground); font-size: var(--type-label); line-height: var(--leading-input); }
-  .folune-subscription-checkout-disclaimer { color: var(--muted-foreground); font-size: var(--type-label); line-height: var(--leading-input); }
-  .folune-subscription-checkout-actions { display: flex; justify-content: flex-end; gap: var(--space-2); }
-  .folune-subscription-checkout-actions .glow-button { --glow-button-height: var(--control-height-default); }
+
 
   @media (max-width: 767px) {
     .folune-subscription-inner { padding: 72px 20px 40px; }

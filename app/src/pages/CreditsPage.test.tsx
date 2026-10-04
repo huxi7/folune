@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 happy-dom、真实 CreditsPage/Dialog、LocaleProvider 与可控积分 API/账户用量
- * [OUTPUT]: 包含支付后同单跟踪、待核对和返回窗口刷新回归； 验证目录选购、严格结账意图、未知余额、失败重试、关闭中止与英文界面
+ * [OUTPUT]: 验证一次点击自动跳转且不显示订单或二次确认； 验证目录选购、严格结账意图、未知余额、失败重试、关闭中止与英文界面
  * [POS]: pages 的积分购买交互门禁；证明预留支付不冒充成功，不替代真实支付或视觉验收 验证同选择重试保持幂等键与长期有效规则。
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -20,6 +20,7 @@ const billing = await import("../shared/api/useBilling");
 const api = await import("../shared/api/subscription");
 const payments = await import("../shared/api/payments");
 const { LocaleProvider } = await import("../shared/locale/LocaleProvider");
+const toastModule = await import("../shared/design-system/components/Toast");
 const { CreditsPage } = await import("./CreditsPage");
 
 const catalog: CreditPackCatalog = {
@@ -46,6 +47,8 @@ let checkoutSpy: ReturnType<typeof spyOn<typeof api, "createCreditCheckout">>;
 const paymentSpies: { mockRestore: () => void }[] = [];
 
 beforeEach(() => {
+  browserWindow.history.replaceState(null, "", "/app/subscription/credits");
+  paymentSpies.push(spyOn(toastModule, "useToast").mockReturnValue({ toast: () => 1, dismissToast: () => {} }));
   browserWindow.localStorage.clear();
   billingSpy = spyOn(billing, "useBilling").mockReturnValue({ catalog: null, overview, loading: false, refreshing: false, error: null, refresh: async () => {} });
   catalogSpy = spyOn(api, "getCreditPacks").mockResolvedValue(catalog);
@@ -53,30 +56,18 @@ beforeEach(() => {
 });
 afterEach(() => { cleanup(); billingSpy.mockRestore(); catalogSpy.mockRestore(); checkoutSpy.mockRestore(); paymentSpies.splice(0).forEach(spy => spy.mockRestore()); });
 
-test("积分收银台打开后直接显示对应订单，未知创建结果也进入订单核对", async () => {
-  const id = "11111111-1111-4111-8111-111111111111";
+test("积分购买一次点击自动跳转，不再切换为确认按钮或订单面板", async () => {
   const url = "https://nowpayments.io/payment/?iid=123";
-  const order = { id, kind: "credits" as const, sku: "credits_500", billing_interval: null, amount_cents: 500, status: "pending", checkout_url: url, created_at: new Date().toISOString(), fulfilled_at: null };
   const open = spyOn(payments, "openCheckout").mockImplementation(() => {});
-  const get = spyOn(payments, "getOrder").mockResolvedValue(order);
-  paymentSpies.push(open, get, spyOn(payments, "refreshOrder").mockResolvedValue(order));
-  checkoutSpy.mockResolvedValueOnce({ status: "ready", order_id: id, checkout_url: url });
-  let view = render(<CreditsPage onBack={() => {}} />);
+  paymentSpies.push(open);
+  checkoutSpy.mockResolvedValueOnce({ status: "ready", checkout_url: url });
+  const view = render(<CreditsPage onBack={() => {}} />);
   await waitFor(() => expect(view.getAllByRole("radio")).toHaveLength(6));
   fireEvent.click(view.getByRole("button", { name: "购买积分 $5" }));
-  await waitFor(() => expect(view.getByRole("button", { name: "前往支付" })).toBeTruthy());
-  fireEvent.click(view.getByRole("button", { name: "前往支付" }));
-  await waitFor(() => expect(view.getByText("等待付款")).toBeTruthy());
-  expect(open).toHaveBeenCalledWith(url);
-  expect(get).toHaveBeenCalledWith(id, expect.any(AbortSignal));
-  expect(view.queryByRole("radio")).toBeNull();
-  cleanup();
-  checkoutSpy.mockResolvedValueOnce({ status: "pending", order_id: id, message: "checking" });
-  view = render(<CreditsPage onBack={() => {}} />);
-  await waitFor(() => expect(view.getAllByRole("radio")).toHaveLength(6));
-  fireEvent.click(view.getByRole("button", { name: "购买积分 $5" }));
-  await waitFor(() => expect(view.getByText("等待付款")).toBeTruthy());
-  expect(open).toHaveBeenCalledTimes(1);
+  await waitFor(() => expect(open).toHaveBeenCalledWith(url));
+  expect(view.queryByRole("button", { name: "前往支付" })).toBeNull();
+  expect(view.queryByText("订单记录")).toBeNull();
+  expect(view.getByRole("status").textContent).toContain("正在前往收银台");
 });
 
 test("积分卡由服务端目录生成，选购仅传ID且未开放不冒充购买成功", async () => {
@@ -140,7 +131,7 @@ test("结账失败保留选择并允许重试，非HTTPS会话不能进入支付
   await waitFor(() => expect(view.getAllByRole("radio")).toHaveLength(6));
   fireEvent.click(view.getByRole("radio", { name: "1,000 积分 $10" }));
   fireEvent.click(view.getByRole("button", { name: "购买积分 $10" }));
-  await waitFor(() => expect(view.getByText("暂时无法准备购买，请重试。")).toBeTruthy());
+  await waitFor(() => expect(view.getByText("暂时无法打开收银台，请重试。")).toBeTruthy());
   expect(view.queryByRole("button", { name: "前往支付" })).toBeNull();
   fireEvent.click(view.getByRole("button", { name: "购买积分 $10" }));
   await waitFor(() => expect(view.getByText("积分购买即将开放。本次没有产生订单或扣款。")).toBeTruthy());

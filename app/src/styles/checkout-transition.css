@@ -1,0 +1,23 @@
+/**
+ * [INPUT]: 消费共享颜色/动效 token 与 Button spinner，宿主提供相对定位
+ * [OUTPUT]: 无卡片、无确认操作的原区域结账淡入过渡及紧凑异常反馈
+ * [POS]: 订阅和积分共用的支付交接样式；不改变宿主尺寸，减少动态时直接显示
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+@layer components {
+  .folune-checkout-transition {
+    position: absolute; z-index: 2; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px;
+    padding: 32px; background: color-mix(in srgb, var(--background) 96%, transparent);
+    color: var(--foreground); text-align: center;
+    animation: folune-checkout-enter var(--motion-normal) var(--ease-standard) both;
+  }
+  .folune-checkout-transition > .ds-button-spinner { width: 24px; height: 24px; }
+  .folune-subscription > .folune-checkout-transition { position: fixed; }
+  .folune-checkout-transition > strong { font-size: 16px; font-weight: var(--weight-label); }
+  .folune-checkout-transition > p { margin: 0; color: var(--muted-foreground); font-size: 13px; }
+  .folune-checkout-feedback { display: flex; align-items: center; justify-content: center; gap: 12px; color: var(--muted-foreground); font-size: 13px; }
+  .folune-checkout-feedback p { margin: 0; }
+  @keyframes folune-checkout-enter { from { opacity: 0; } to { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .folune-checkout-transition { animation: none; } }
+}
