@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 React lazy/Suspense、react-router-dom loader/redirect、theme/visualContext 场景同步、真实入口进度 Store、Supabase Auth token 读取与后端 Profile API
- * [OUTPUT]: 桌面保留登录/OAuth/工作区及独立订阅地址；Web 另提供共享营销壳、/login、法律页、博客/动态、旧 auth query 重定向和 DEV 实验页；/app/subscription 与笔记共用父级守卫和 Dashboard，已提交路由同步视觉作用域
+ * [OUTPUT]: 桌面保留登录/OAuth/工作区及独立订阅地址；Web 另提供共享营销壳、/pricing 公开价格、/login、法律页、博客/动态、旧 auth query 重定向和 DEV 实验页；/app/subscription 与笔记共用父级守卫和 Dashboard，已提交路由同步视觉作用域
  * [POS]: app/src/app/router 的路由装配文件；静态身份、Profile 与轻量 tree loader 并行装配，Dashboard 直接消费 bootstrap；/app 首次进入统一由根级品牌过渡覆盖，内容就绪才揭幕；左右工具偏好在 Dashboard 获得用户后恢复
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -134,6 +134,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, lazy: async () => ({ Component: (await import("../../pages/LandingPage")).LandingPage }) },
       { path: "login", lazy: async () => ({ Component: (await import("../../pages/LoginPage")).LoginPage }) },
+      { path: "pricing", lazy: async () => ({ Component: (await import("../../pages/PricingPage")).PricingPage }) },
       { path: "terms", lazy: async () => {
         const { LegalPage } = await import("../../pages/LegalPage");
         return { element: <LegalPage document="terms" /> };

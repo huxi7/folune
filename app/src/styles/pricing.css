@@ -1,0 +1,74 @@
+/**
+ * [INPUT]: 依赖 Laper 公开价格页实际 DOM/CSS 数值、Blueprint 导轨与 Folune DS 色彩/按钮/字体
+ * [OUTPUT]: 提供 26px 题头、年付开关、300×至少540px 卡片、24px 居中换行与原页72px侧纹
+ * [POS]: 仅作用于 pricing-spine；原页几何和层次映射品牌颜色，不继承账户铭牌遮罩、不添加额外营销区块
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+@layer components {
+  .pricing-spine {
+    --pricing-typewriter:"Courier New",Courier,"Noto Serif SC","Songti SC","Songti TC",SimSun,serif;
+    --pricing-muted:color-mix(in srgb,var(--muted-foreground) 70%,transparent);
+    --pricing-pattern-line:color-mix(in srgb,var(--landing-border) 72%,transparent);
+    --pricing-pattern-accent:color-mix(in srgb,var(--primary) 32%,transparent);
+    font-family:var(--font-account);
+  }
+  .pricing-prelude { height:57px; }
+  /* ---- 参考页题头：26/33，说明与年付开关留在同一个点阵区域 ---- */
+  .pricing-heading { position:relative; display:flex; min-height:197px; flex-direction:column; align-items:center; justify-content:center; padding:48px 24px; text-align:center; isolation:isolate; }
+  .pricing-heading::before { content:""; position:absolute; inset:0; z-index:-1; pointer-events:none; opacity:.55; background-image:radial-gradient(ellipse at 50% 8%,color-mix(in srgb,var(--primary) 10%,transparent) 0 16%,transparent 44%),radial-gradient(color-mix(in srgb,var(--muted-foreground) 18%,transparent) 1px,transparent 1px); background-size:auto,8px 8px; }
+  .pricing-heading h1 { color:var(--primary); font:300 26px/33px var(--pricing-typewriter); letter-spacing:normal; }
+  .pricing-heading > p { max-width:576px; margin-top:8px; color:color-mix(in srgb,var(--foreground) 75%,transparent); font:400 13px/24px var(--font-account); }
+  .pricing-cycle { display:inline-flex; align-items:center; gap:10px; margin-top:24px; }
+  .pricing-cycle label { color:var(--muted-foreground); font:400 12px/20px var(--font-account); cursor:pointer; }
+  .pricing-switch { position:relative; display:inline-flex; flex-shrink:0; width:36px; height:18px; padding:0; border:0; border-radius:10px; corner-shape:var(--corner-shape-smooth); outline:1px solid var(--border); background:var(--sidebar-accent); cursor:pointer; transition:background-color var(--motion-hover) var(--ease-surface); }
+  .pricing-switch[aria-checked="true"] { background:var(--primary); }
+  .pricing-switch > span { position:absolute; inset-block:0; left:0; width:18px; border-radius:10px; corner-shape:var(--corner-shape-smooth); background:var(--background); box-shadow:0 0 1px .5px rgb(0 0 0 / 12%),0 1px 2px rgb(0 0 0 / 8%); transition:transform var(--motion-hover) var(--ease-surface); }
+  .pricing-switch[aria-checked="true"] > span { transform:translateX(18px); }
+  /* ---- 原页固定300px卡片，24px间距，最后一行始终居中 ---- */
+  .pricing-plans { padding:56px 48px; }
+  .pricing-grid { display:flex; flex-wrap:wrap; align-items:stretch; justify-content:center; gap:24px; }
+  .pricing-card { position:relative; display:flex; flex-direction:column; width:300px; max-width:300px; min-height:540px; min-width:0; padding:24px 16px 16px; border:1px solid color-mix(in srgb,var(--border) 60%,transparent); border-radius:32px; corner-shape:var(--corner-shape-smooth); overflow:hidden; background:linear-gradient(180deg,color-mix(in srgb,var(--foreground) 4%,transparent) 0%,transparent 30%),var(--landing-bg); box-shadow:0 2px 4px rgb(0 0 0 / 5%),0 4px 6px -1px rgb(0 0 0 / 5%),inset 0 1px 0 rgb(255 255 255 / 8%),inset 0 -1px 0 rgb(0 0 0 / 4%); }
+  .pricing-card[data-recommended] { border-color:color-mix(in srgb,var(--primary) 25%,transparent); background:linear-gradient(180deg,color-mix(in srgb,var(--primary) 8%,transparent) 0%,transparent 35%),radial-gradient(140% 90% at 100% 0%,color-mix(in srgb,var(--primary) 18%,transparent) 0%,color-mix(in srgb,var(--primary) 5%,transparent) 45%,var(--landing-bg) 100%); box-shadow:0 2px 4px rgb(0 0 0 / 5%),0 4px 6px -1px rgb(0 0 0 / 5%),inset 0 1px 0 color-mix(in srgb,var(--primary) 28%,transparent),inset 0 -1px 0 rgb(0 0 0 / 4%); }
+  .pricing-card-top { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; margin-bottom:8px; }
+  .pricing-card h2 { margin:0; color:var(--foreground); font:500 20px/25px var(--pricing-typewriter); letter-spacing:-.025em; }
+  .pricing-badge { display:inline-flex; height:24px; align-items:center; gap:6px; padding-inline:6px; border:1px solid color-mix(in srgb,var(--border) 80%,transparent); border-radius:999px; corner-shape:round; background:var(--background); box-shadow:0 1px 2px rgb(0 0 0 / 5%); color:var(--foreground); font:400 10px/1 var(--font-account); }
+  .pricing-badge > span { width:5px; height:5px; border-radius:50%; background:var(--primary); }
+  .pricing-card .pricing-description { margin:0 0 16px; color:var(--pricing-muted); font:400 12px/19.5px var(--font-account); }
+  .pricing-price-block { margin-bottom:16px; }
+  .pricing-price { display:flex; flex-wrap:wrap; align-items:flex-end; gap:4px; }
+  .pricing-price strong { color:var(--foreground); font:700 30px/30px var(--pricing-typewriter); letter-spacing:-.025em; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .pricing-price > span { padding-bottom:2px; color:var(--muted-foreground); font:500 12px/20px var(--font-account); }
+  .pricing-card .pricing-price-note { height:16px; margin-top:6px; color:var(--pricing-muted); font:400 10px/16px var(--font-account); font-variant-numeric:tabular-nums; }
+  .pricing-card-body { flex:1; min-height:0; }
+  .pricing-features { display:flex; flex-direction:column; gap:10px; margin:0; padding:0; list-style:none; }
+  .pricing-features li { display:flex; align-items:flex-start; gap:8px; color:var(--pricing-muted); font:400 13px/1.625 var(--font-account); }
+  .pricing-features strong { font-weight:600; }
+  .pricing-features svg { flex-shrink:0; margin-top:3px; color:var(--primary); }
+  .pricing-card .pricing-action { --glow-button-height:32px; width:100%; min-height:32px; height:32px; margin-top:20px; padding-inline:16px; border-radius:24px; corner-shape:var(--corner-shape-smooth); font:500 13px/20px var(--font-account); }
+  .pricing-card-loading { gap:24px; }
+  .pricing-card-loading .pricing-skeleton-price { height:48px; margin-block:20px; }
+  .pricing-card-loading .ds-skeleton:last-child { height:32px; margin-top:auto; }
+  .pricing-error { display:flex; min-height:540px; flex-direction:column; align-items:center; justify-content:center; gap:20px; color:var(--muted-foreground); }
+  /* ---- 原页72px Truchet平铺，左右16%渐隐；只把绿色映射为品牌蓝 ---- */
+  .pricing-rail-pattern { position:absolute; inset:0; pointer-events:none; }
+  .pricing-rail-pattern svg { position:absolute; top:0; display:none; height:100%; width:calc(var(--blueprint-main-inset) - var(--blueprint-edge-inset)); opacity:.82; mask-image:linear-gradient(90deg,transparent 0%,black 16%,black 84%,transparent 100%); }
+  .pricing-rail-pattern svg[data-side="start"] { right:100%; }
+  .pricing-rail-pattern svg[data-side="end"] { left:100%; }
+  @media (min-width:1280px) { .pricing-rail-pattern svg { display:block; } }
+  @media (max-width:767px) {
+    .pricing-prelude { height:48px; }
+    .pricing-heading { padding:48px 16px; }
+    .pricing-heading h1 { text-wrap:balance; }
+    .pricing-heading > p { font-size:12px; }
+    .pricing-plans { padding:48px 16px; }
+    .pricing-grid { flex-direction:column; gap:16px; }
+    .pricing-card { width:100%; max-width:none; }
+  }
+  @supports not (corner-shape:squircle) {
+    .pricing-card { border-radius:10px; }
+    .pricing-card .pricing-action { border-radius:8px; }
+    .pricing-switch,.pricing-switch > span { border-radius:5px; }
+  }
+  @media (prefers-reduced-motion:reduce) { .pricing-switch,.pricing-switch > span { transition:none; } }
+  @media (forced-colors:active) { .pricing-card[data-recommended] { border:2px solid Highlight; } }
+}

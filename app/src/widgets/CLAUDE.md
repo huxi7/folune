@@ -2,6 +2,7 @@
 > L2 | 父级: ../../CLAUDE.md
 
 成员清单
+PricingRailPattern.tsx: 价格正文专用72px Truchet三路径平铺，取自Laper公开DOM；左右16%渐隐与Blueprint外轨一致，只用Folune颜色，不改变博客侧纹。
 SignOutConfirmationDialog.test.tsx: 真实菜单/设置入口确认、取消/焦点、异步防重与失败重试、中英文门禁；不调用真实认证
 SignOutConfirmationDialog.tsx: Laper原组件字号/几何与dim黑色遮罩，取消仅变色、主题Primary参考400/40弹簧；菜单/设置共用的受控退出确认，右对齐取消/主动作、同步防连点与失败重试；不直接操作认证或业务存储
 CheckoutTransition.tsx: 订阅和积分共用的无确认结账过渡与原位错误反馈；复用 DS spinner/按钮，业务状态由页面提供，既不展示订单也不发起购买。
@@ -15,7 +16,7 @@ MenuComparison/: 独立本地菜单对照入口与1c1fe55历史快照；复用�
 CreditsPurchaseDialog.tsx: 关闭入口保留轻通透材质与可访问名称，无重复提示；用户选定的同源蓝色生成图横幅、实测超椭圆曲率与六档积分选购的受控展示层，640px/24px圆角弹窗内呈现服务端报价、原生单选、当前积分余额、无确认结账过渡/升级入口与规则；复用 Dialog 模态和 locale，网络与生命周期交给 CreditsPage
 DesktopDownloadButton.tsx: Header/Hero 共用原生下载，可靠识别时直接下载，未知架构时明确选择 Mac arm64/Windows x64
 BlogTags.tsx: 独立博客目录的静态主题标签列表；接收文章同源标签，不创建筛选状态或嵌套链接
-BlogFrameSection.tsx: 目录/阅读页的外轨分区容器；静态区直接呈现外轨，花纹区独占外侧竖线与两段顶边的淡入，主内容边线仍由 BlueprintFrame 连续绘制
+BlogFrameSection.tsx: 目录/阅读/价格页的外轨分区容器；静态区直接呈现外轨，花纹区独占外侧竖线与两段顶边的淡入，主内容边线仍由 BlueprintFrame 连续绘制
 PublicArticle.tsx: 博客、动态和法律文档共用的阅读模板；Hero 后复用目录同款 48px/28px 空轨，上沿带节点、下沿平直；BlogFrameSection 将静态主轨/中段横线与花纹局部外框拆开，weave 侧纹只覆盖正文及尾部导航，在两侧局部外框之后显现；内部保持导读与窄栏排版；只接收内容与导航插槽，不拥有内容集合或路由
 updatePosts.ts: 独立动态内容源，复用 BlogPost 类型并由 /updates 的共用列表/阅读页消费；初始为空，后续只需填充文章，不混入首页或博客集合
 LandingRailTexture.tsx: after-frame 模式交给博客 CSS 编排两侧花纹局部外框之后的显现，按路由重新挂载且不读写首页播放缓存；默认三种侧纹共用一次性 inView 触发和状态机，进入视口 240px 后左右绘制层同步执行 1050ms 原生 mask-position 动画，左侧 animationend 提交共同终态；pending 明确隐藏。模块 Set 在触发时登记，路由往返不重播、刷新重置；DS 减少动态时直接显示，窄屏隐藏不消耗机会，绘制归 landing.css
@@ -35,7 +36,7 @@ useTreeReorder.test.tsx: 可控几何与 WAAPI 时钟回归，覆盖滚动/Panel
 TreeDisclosure.tsx: 文件树与 DS Collapse 的薄适配，声明可打断、成对释放的归档运动租约，让 Overlay 跟随真实高度几何；不读取业务数据
 .gitkeep: 保留业务组合组件层空目录
 CLAUDE.md: 记录业务组合组件层职责与文档协议
-MarketingHeader.tsx: 首页/登录/博客/动态共享的 56px 品牌、内容导航和双动作顶栏；下载在左用 Secondary、打开在右用品牌蓝 GlowButton 并导航至 /login，与 Hero 共用次主顺序；末端 CTA 独立为单个箭头开始按钮；下载入口目标待接入，认证状态归页面；手机以第二行横向导航保留全部入口
+MarketingHeader.tsx: 价格入口链接 /pricing；首页/登录/博客/动态/价格共享的 56px 品牌、内容导航和双动作顶栏；下载在左用 Secondary、打开在右用品牌蓝 GlowButton 并导航至 /login，与 Hero 共用次主顺序；末端 CTA 独立为单个箭头开始按钮；下载入口目标待接入，认证状态归页面；手机以第二行横向导航保留全部入口
 MarketingAnnouncement.tsx: 首页与登录页共用的 37px 公告栏，保持既有文案、浅蓝渐变和 BlueprintDivider；链接统一指向首页工作流，可选 ref 只供 Hero 量取高度
 BlueprintFrame.tsx: Landing 纵向导轨容器；导航、1120px 正文与页脚共用主轨/外轨坐标，fullBleed 增加可选外轨，颜色由当前区块局部覆盖
 BlueprintDivider.tsx: Landing 横向导轨；showPins=false 关闭节点而保留线宽/位置，用于博客空轨下沿；14px 分隔带上下两条边分别共置横线与菱形，flush 提供零高度边界，compact 保留 7px 内部分隔带而不添加参考中没有的节点
@@ -116,7 +117,7 @@ AccountSettingsPanel.tsx: 通用设置卡片，语言与外观各自分组，复
 AccountBillingPanel.tsx: 双语设置账单栏，以 locale 格式化账期，读取共享订阅事实展示方案/状态/周期/到期信息及真实空账单；支持刷新重试和28px「订阅」入口，不伪造支付记录
 AccountSecurityPanel.tsx: 双语账户生命周期栏，日期和加入天数随 locale 格式化，显示 Auth 真实注册时间（缺失则回退邮箱）并调用既有退出命令；带 pending/失败反馈，不添加未实现的注销按钮
 AccountUsagePanel.tsx: 双语文案、数字与日期同步消费 locale，只读消费共享 BillingProvider 的当前方案和真实已记账日用量，以大数字、进度条、当前周期、剩余积分及本地化重置时刻呈现；10,000 token 折为 1 积分，门禁只认后端 exceeded，刷新保留旧值并允许重试，升级使用28px流光入口进入独立订阅页
-SubscriptionWorkspace.tsx: 关闭入口无重复提示；双语文案与本地化数字， 独立订阅页的纯展示层，接收服务端套餐投影与真实账户摘要；按已提取 DOM/CSS 复现 932px 三栏、双遮罩玻璃铭牌、流行标签、年付总价/月均/真实折扣；Starter 普通按钮禁用按压凹陷影，Pro/Studio 保留 GlowButton；底部完整积分条、购买入口和规则说明共用 DS，去掉订单与管理入口，周期选择和 checkout 生命周期归 SubscriptionPage/useCheckoutFlow，不保存价格/权益真值
+SubscriptionWorkspace.tsx: 金额显示委托 locale/money 与官网同源； 关闭入口无重复提示；双语文案与本地化数字， 独立订阅页的纯展示层，接收服务端套餐投影与真实账户摘要；按已提取 DOM/CSS 复现 932px 三栏、双遮罩玻璃铭牌、流行标签、年付总价/月均/真实折扣；Starter 普通按钮禁用按压凹陷影，Pro/Studio 保留 GlowButton；底部完整积分条、购买入口和规则说明共用 DS，去掉订单与管理入口，周期选择和 checkout 生命周期归 SubscriptionPage/useCheckoutFlow，不保存价格/权益真值
 AgentPanel/: Paper 与 Canvas 共用的右侧思考空间；界面/权限/审批/工具状态中英切换，用户与AI正文、笔记标题保真；AI SDK useChat 承载对话/工具/审批/撤销，organize client 服务 Paper，Canvas expansion client 只取可信候选并把最终 intent 交还统一 Canvas 保存协调器
 
 职责: 业务组合组件层，承载 Landing、Paper/Canvas 两个一级 Workspace、共享文件库与 AI 思考空间、认证、账户和业务视图；Canvas 组件只产生 intent，可靠写入归 Store/Coordinator，正文归 memoDocumentStore；业务组件禁止裸写 fetch 或直连 Supabase 业务数据，AgentPanel transport/client 只在请求期读取 Auth token 访问 chat。

@@ -1,10 +1,10 @@
 /**
- * [INPUT]: 依赖统一 apiRequest 与服务端订阅/积分/权限投影
+ * [INPUT]: 依赖统一 apiRequest/publicApiRequest 与服务端订阅/积分/权限投影
  * [OUTPUT]: 提供目录/余额/结账类型与接口，支持幂等键和 pending 订单
  * [POS]: 客户端只提交选购意图并展示权威事实，不把回跳当支付证明
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
-import { apiRequest } from "./client";
+import { apiRequest, publicApiRequest } from "./client";
 
 export type PlanId = "free" | "starter" | "pro" | "studio";
 export type BillingInterval = "monthly" | "yearly";
@@ -58,7 +58,7 @@ export type CreditPackCatalog = {
 };
 
 export const getBillingCatalog = (signal?: AbortSignal) =>
-  apiRequest<BillingCatalog>("/billing/plans", { signal });
+  publicApiRequest<BillingCatalog>("/billing/plans", signal);
 export const getBillingOverview = (signal?: AbortSignal) =>
   apiRequest<BillingOverview>("/billing/overview", { signal });
 export const createCheckout = (input: { plan_id: Exclude<PlanId, "free">; billing_interval: BillingInterval; idempotency_key?: string }, signal?: AbortSignal) =>

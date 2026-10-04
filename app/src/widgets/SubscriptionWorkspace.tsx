@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖服务端套餐/积分投影、双语 locale、React 聚焦、Button/GlowButton/Skeleton 与 Folune 图标
+ * [INPUT]: 依赖服务端套餐/积分投影、双语 locale 与共享 money 金额显示、React 聚焦、Button/GlowButton/Skeleton 与 Folune 图标
  * [OUTPUT]: 返回工作区的关闭入口不重复提示；对外提供三档付费方案、年付开关、分层铭牌、普通/流光 CTA 和完整账户积分条
  * [POS]: widgets 的订阅展示层；布局按 Laper 实际 DOM/CSS 还原，颜色沿用 Folune，报价/余额不在 UI 生成 购买直接进入无确认过渡，不承载订单与管理界面。
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -12,6 +12,8 @@ import { type BillingCredits } from "../shared/api/subscription";
 
 import { useLocale } from "../shared/locale";
 import { formatCreditAmount } from "../shared/locale/credits";
+import { formatSubscriptionPrice } from "../shared/locale/money";
+export { formatSubscriptionPrice } from "../shared/locale/money";
 
 export type SubscriptionInterval = "month" | "year";
 export type SubscriptionPlan = {
@@ -43,10 +45,6 @@ export type SubscriptionWorkspaceProps = {
   plans: readonly SubscriptionPlan[];
   profile: { avatarUrl: string | null; username: string };
 };
-
-export function formatSubscriptionPrice(amount: number, currency: string) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency, maximumFractionDigits: amount % 100 === 0 ? 0 : 2 }).format(amount / 100);
-}
 
 export function SubscriptionWorkspace({
   currentInterval, currentPlanId, credits, error, interval, loading, onBack, onBuyCredits,

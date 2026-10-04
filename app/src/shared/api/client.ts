@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 VITE_API_BASE_URL、Web fetch/Headers API、access-token 的会话优先策略与 shared/supabase/auth 的请求期 access token
- * [OUTPUT]: 对外提供唯一 apiRequest<T>、ApiError 与 isUnauthorizedApiError，并正确透传当前 Bearer、JSON、FormData 与 AbortSignal
+ * [OUTPUT]: 对外提供鉴权 apiRequest<T>、匿名只读 publicApiRequest<T>、ApiError 与 isUnauthorizedApiError；共用信封、错误与取消语义
  * [POS]: app/src/shared/api 的网络请求中枢，统一后端 URL、Bearer、响应信封与 JSON/multipart 请求语义；浏览器当前 Supabase 会话是真相源，显式 token 只在无会话的测试/兼容调用中兜底
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -123,6 +123,16 @@ export const apiRequest = async <T>(
 
   const headers = new Headers(init.headers);
   headers.set("Authorization", `Bearer ${accessToken}`);
+
+  return requestApi<T>(path, { ...init, headers });
+};
+
+// ---- 公开目录无需会话；仅开放 GET，沿用同一个传输和错误边界 ----
+export const publicApiRequest = <T>(path: string, signal?: AbortSignal): Promise<T> =>
+  requestApi<T>(path, { method: "GET", credentials: "omit", signal });
+
+const requestApi = async <T>(path: string, init: RequestInit): Promise<T> => {
+  const headers = new Headers(init.headers);
 
   if (
     init.body !== undefined &&
