@@ -20,7 +20,7 @@ BlogTags.tsx: 目录静态主题标签，最多四枚并按文章次序错开四
 BlogFrameSection.tsx: 目录/阅读/价格页的外轨分区容器；静态区直接呈现外轨，花纹区独占外侧竖线与两段顶边的淡入，主内容边线仍由 BlueprintFrame 连续绘制
 PublicArticle.tsx: 博客、动态和法律文档共用的阅读模板；Hero 后复用目录同款 48px/28px 空轨，上沿带节点、下沿平直；BlogFrameSection 将静态主轨/中段横线与花纹局部外框拆开，weave 侧纹只覆盖正文及尾部导航，在两侧局部外框之后显现；内部保持导读与窄栏排版；只接收内容与导航插槽，不拥有内容集合或路由
 updatePosts.ts: 独立动态内容源，复用 BlogPost 类型并由 /updates 的共用列表/阅读页消费；初始为空，后续只需填充文章，不混入首页或博客集合
-LandingRailTexture.tsx: paper/weave/index/truchet 共享侧轨生命周期；首页保留一次性 inView 缓存，after-frame 按路由重播；Truchet 复用价格页几何，由 blog-index.css 编排描边与揭示，阅读 weave 仍沿 blog.css；减少动态立即显示。
+LandingRailTexture.tsx: paper/weave/index/truchet 共享侧轨生命周期；首页保留一次性 inView 缓存，after-frame 按路由重播；Truchet 复用价格页几何，延迟/路由快照结束后的 animationstart 量取可见区间并交给 blog-index.css，长短目录共用完整展开时长，结束后释放屏外纹样；阅读 weave 仍沿 blog.css，减少动态立即显示。
 LandingConnections.tsx: 左侧叙述方法与实践，右侧两张相邻 NotePaper 标出支持关系的原句；短线随纸面布局连接，静态公开材料不装配业务会话
 LandingGuides.tsx: 六篇方法指南的紧凑三列两行目录，共读分类、标题与摘要，序号列于右上；上下空轨和交织侧纹交由 LandingSections 的章节外框装配，guides 为入口，保留 use-cases/extensions 锚点，返回复用博客协议
 guidePosts.ts: 逐篇维护三个正文主题标签； 六篇完整记录方法文章，独立于首页三篇精选，以 BlogPost 类型加入同一公开目录

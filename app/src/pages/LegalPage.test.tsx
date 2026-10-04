@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 happy-dom、真实 Router/AuthForm/LegalPage/BlogPage 与 Testing Library
- * [OUTPUT]: 验证匿名直达、协议导航与元信息、共享阅读回归、目录去除返回首页和动态空集合，以及装饰完成后只在路径变化时重播，不请求认证或业务数据
+ * [OUTPUT]: 验证匿名直达、协议导航与元信息、共享阅读回归、目录去除返回首页和动态空集合；侧纹按入场时可见区间展开，完成后只在路径变化时重播，不请求认证或业务数据
  * [POS]: pages 的公开协议路由集成门禁，保护共享模板提取后博客身份和独立法律 URL 的边界
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -89,6 +89,29 @@ describe("公开法律页面", () => {
     await act(async () => { await view.router.navigate("/privacy"); });
     expect(view.container.querySelector<HTMLElement>(".landing-rail-texture")!.dataset.reveal).toBe("revealing");
     expect(view.getByRole("heading", { level: 1 }).textContent).toBe("隐私政策");
+  });
+
+  test.each([
+    { path: "/updates", top: 100, height: 240 },
+    { path: "/blog", top: 100, height: 2600 },
+    { path: "/blog", top: 100, height: 5200 },
+    { path: "/blog", top: -900, height: 2600 },
+  ])("$path 高度 $height、起点 $top：只在动画真正开始时确定可见展开区间", ({ path, top, height }) => {
+    const view = renderRoute(path);
+    const texture = view.container.querySelector<HTMLElement>(".landing-rail-texture")!;
+    Object.defineProperty(texture, "getBoundingClientRect", { value: () => ({ top, height }) });
+    expect(texture.style.getPropertyValue("--blog-pattern-end")).toBe("");
+
+    const start = document.createEvent("Event");
+    start.initEvent("animationstart", true, false);
+    Object.defineProperty(start, "animationName", { value: "blog-index-pattern-reveal" });
+    fireEvent(texture.querySelector('[data-side="end"] .landing-rail-texture-pattern')!, start);
+    expect(texture.style.getPropertyValue("--blog-pattern-end")).toBe("");
+    fireEvent(texture.querySelector('[data-side="start"] .landing-rail-texture-pattern')!, start);
+
+    // 增加屏外文章不会加速当前视口；返回长页的中段也只展开当前可见部分。
+    expect(texture.style.getPropertyValue("--blog-pattern-start")).toBe(`${Math.max(0, -top)}px`);
+    expect(texture.style.getPropertyValue("--blog-pattern-end")).toBe(`${Math.min(height, window.innerHeight - top)}px`);
   });
 
   test.each(["terms", "privacy"] as const)("匿名直达 /%s，显示真实联系入口和独立元信息", async (kind) => {

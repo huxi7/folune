@@ -21,7 +21,7 @@ Hero 背景定稿（2026-09-19）：正式页采用 02A GrainGradient wave，60s
 登录背景：auth.css 在正文独立层叠上下文内承载 01A 散墨，32% 浓淡、上下边缘淡出；背景不占文档流且不截获指针，卡片与视频保持原布局。
 
 成员清单
-blog-index.css: 仅博客/动态目录的原页几何：64px/40px前空轨、46px/32px标题、64px/48px刊头留白、28px/20px行内留白、7px点阵、四色5px压边标签和72px Truchet侧纹；品牌蓝与暖纸色来自DS，描边/揭示尊重减少动态，背景不扩散到页脚。
+blog-index.css: 仅博客/动态目录的原页几何：64px/40px前空轨、46px/32px标题、64px/48px刊头留白、28px/20px行内留白、7px点阵、四色5px压边标签和72px Truchet侧纹；保留参考1800ms/500ms/cubic-bezier(.16,1,.3,1)，展开范围由入场时可见区间决定，避免长博客首屏过快扫完；品牌蓝与暖纸色来自DS，描边/揭示尊重减少动态，背景不扩散到页脚。
 pricing.css: Laper 原页几何映射：57px 上下留白、26/33px题头、题内年付开关、300px宽/至少540px高卡片、24px居中换行、32px超椭圆外壳、Courier名称/价格和32px按钮；原页72px Truchet侧纹保留路径与渐隐，绿色换DS品牌色，手机单列，无额外FAQ/工具栏。
 signout-confirmation.css: Laper源码确认的420px/24px留白、24px曲率、20px标题/12px说明、32px高13px中字重按钮与12px间距；取消无缩放，主动作复用主题Primary并保留上沿面光/细环/参考弹簧，遮罩归Dialog dim
 checkout-transition.css: 订阅/积分共用的原区域淡入加载层与紧凑错误反馈；背景覆盖原选择、不添加确认框，复用 spinner 和动效 token，减少动态时静态呈现。

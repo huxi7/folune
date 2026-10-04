@@ -16,7 +16,7 @@ subscriptionController.test.tsx: 真实 Router/controller 验证订阅往返保�
 useSubscriptionKeyboardBoundary.ts: 订阅可见时在 document 冒泡阶段隔离 keydown/keyup，阻止隐藏工作区的 window 快捷键监听器，保留控件默认行为和 Dialog 同层键盘仲裁
 useSubscriptionKeyboardBoundary.test.tsx: 验证订阅隔离键盘事件而保留控件默认行为与 document 监听，关闭/卸载后 window 工作区快捷键恢复
 LegalPage.tsx: 独立公开 /terms 与 /privacy 装配，共用 PublicArticle 和营销壳，pathname 变化重播同构的花纹局部外框/纹样入场；登录/页脚来路返回，协议互链不污染博客集合，提供真实邮件联系入口
-LegalPage.test.tsx: 匿名直达、登录到协议再返回、协议互链、元信息、页脚可发现性与原博客阅读回归；博客/动态目录不重复提供返回首页，动态保持空集合；花纹完成后 query/锚点保留终态，目录/正文/协议路径切换重新入场
+LegalPage.test.tsx: 匿名直达、登录到协议再返回、协议互链、元信息、页脚可发现性与原博客阅读回归；博客/动态目录不重复提供返回首页，动态保持空集合；长短目录及历史返回的侧纹按 animationstart 时可见区间展开，花纹完成后 query/锚点保留终态，目录/正文/协议路径切换重新入场
 legalSite.ts: 运营者 huxi、正式域名、经确认的联系邮箱和协议版本日期的单一事实源
 termsContent.tsx: 按实际功能撰写服务条款，区分内容权利、AI 操作、未接通支付、人工注销和法定救济
 privacyContent.tsx: 按真实数据流披露 Google 基础身份、Supabase、DeepSeek、公开头像、本地缓存、保存及删除权利，Google 数据单独限定用途

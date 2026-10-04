@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 Motion inView、DS 实时动态偏好、TruchetPattern，以及 landing.css/blog-index.css 的导轨定位和显现样式
- * [OUTPUT]: 对外提供 paper / weave / index / truchet 四种 LandingRailTexture；首页由视口触发，after-frame 交给公开内容的局部外框与纹样时间线
- * [POS]: widgets 的共享侧轨装饰层；首页缓存一次显现，公开目录/阅读按路由重新入场；Truchet 与价格页共用几何，减少动态时直接显示
+ * [OUTPUT]: 对外提供 paper / weave / index / truchet 四种 LandingRailTexture；首页由视口触发，after-frame 交给公开内容的局部外框与纹样时间线，Truchet 按入场时的可见区间展开
+ * [POS]: widgets 的共享侧轨装饰层；首页缓存一次显现，公开目录/阅读按路由重新入场；Truchet 与价格页共用几何，动画开始时量取视口以消除长短目录的速度差，减少动态直接显示
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { useEffect, useId, useRef, useState } from "react";
@@ -62,6 +62,20 @@ export function LandingRailTexture({ variant, reveal = "viewport" }: {
     data-variant={variant}
     data-reveal={phase}
     aria-hidden="true"
+    onAnimationStart={event => {
+      if (event.animationName !== "blog-index-pattern-reveal"
+        || !(event.target instanceof HTMLElement)
+        || event.target.parentElement?.dataset.side !== "start") return;
+      // 延迟和路由快照结束后才量取；只让当前看得见的花纹走完同一段时长。
+      const host = event.currentTarget;
+      const { top, height } = host.getBoundingClientRect();
+      const start = Math.min(height, Math.max(0, -top));
+      const end = Math.min(height, Math.max(start, window.innerHeight - top));
+      if (end > start) {
+        host.style.setProperty("--blog-pattern-start", `${start}px`);
+        host.style.setProperty("--blog-pattern-end", `${end}px`);
+      }
+    }}
     onAnimationEnd={event => {
       // 左右动画同帧开始，只由左侧绘制层的结束事件提交共同终态。
       if (event.target instanceof HTMLElement

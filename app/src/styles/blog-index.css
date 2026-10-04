@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 BlogPage 目录结构、Blueprint 导轨、TruchetPattern 与 Folune 颜色/字体/动态偏好
- * [OUTPUT]: 提供博客与动态目录的点阵刊头、纸面颗粒、紧凑文章行、四色压边标签和 72px 曲线侧纹
+ * [OUTPUT]: 提供博客与动态目录的点阵刊头、纸面颗粒、紧凑文章行、四色压边标签和 72px 曲线侧纹；可见侧纹共用 1800ms 展开，完整纹样在入场结束后释放
  * [POS]: styles 的公开目录边界；按 Laper 公开 DOM/CSS 对齐几何，正文阅读仍归 blog.css，顶栏与页脚不继承局部覆盖
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -82,7 +82,7 @@
   .blog-index-page .blog-tag[data-tone="3"] { --blog-tag-ink:#c62828; }
   .blog-index-page .blog-tag-category { height:20px; padding-inline:8px; font-size:10px; letter-spacing:.12em; }
   .blog-index-page .blog-tags { display:flex; flex-wrap:wrap; gap:6px; margin:16px 0 0; padding:0; list-style:none; }
-  /* ---- 外框先显现，曲线描边与逐行揭示同拍；生命周期复用现有侧纹组件 ---- */
+  /* ---- 外框先显现；按可见区间展开，避免长目录把首屏在动画开头就扫完 ---- */
   .blog-index-page .landing-rail-texture[data-variant="truchet"] { display:none; opacity:.82; }
   .blog-index-page .landing-rail-texture-pattern { mask-image:none; transform:none; }
   .blog-index-page .landing-rail-texture[data-reveal="revealing"] .landing-rail-texture-pattern {
@@ -93,7 +93,10 @@
     stroke-dasharray:1; animation:blog-index-path-draw var(--blog-pattern-duration) var(--blog-pattern-ease) var(--blog-pattern-delay) both;
   }
   .landing-blueprint[data-marketing-transition] .blog-index-page :is(.landing-rail-texture-pattern,.blog-truchet-path) { animation-play-state:paused; }
-  @keyframes blog-index-pattern-reveal { from { clip-path:inset(0 0 100%); } to { clip-path:inset(0); } }
+  @keyframes blog-index-pattern-reveal {
+    from { clip-path:inset(var(--blog-pattern-start,0px) 0 calc(100% - var(--blog-pattern-start,0px))); }
+    to { clip-path:inset(var(--blog-pattern-start,0px) 0 max(0px,calc(100% - var(--blog-pattern-end,100%)))); }
+  }
   @keyframes blog-index-path-draw { from { stroke-dashoffset:1; } to { stroke-dashoffset:0; } }
   @media (min-width:1280px) { .blog-index-page .landing-rail-texture[data-variant="truchet"] { display:block; } }
   @media (max-width:767px) {
