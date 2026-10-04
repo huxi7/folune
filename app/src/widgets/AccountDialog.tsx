@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖后端缓存 Profile、纯 Auth 注册时间读取、共享 locale 文案与 Dialog/SidebarButton/PersistentView、五个账户面板和上层栏目/退出/订阅命令
- * [OUTPUT]: 对外提供资料、通用、账单、用量、账户共用的设置模态框与 AccountSection；后台刷新保留既有资料和未提交草稿
+ * [OUTPUT]: 设置关闭入口不重复提示；对外提供资料、通用、账单、用量、账户共用的设置模态框与 AccountSection；后台刷新保留既有资料和未提交草稿
  * [POS]: app/src/widgets 的账户中心装配层；轻色文字导航与嵌套卡片共用 account-center.css，真实数据仍由 Profile 与共享 billing 边界拥有
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -79,7 +79,7 @@ export function AccountDialog({
         <div className="account-center-main">
           <header className="account-center-main-header">
             <h3 id="account-dialog-section-title">{activeSection?.label ?? t("个人资料", "Profile")}</h3>
-            <Button aria-label={t("关闭设置", "Close settings")} className="account-center-close" icon={XIcon} onClick={() => onOpenChange(false)} size="square" title={t("关闭", "Close")} variant="ghost" />
+            <Button aria-label={t("关闭设置", "Close settings")} className="account-center-close" icon={XIcon} onClick={() => onOpenChange(false)} size="square" tooltip={false} variant="ghost" />
           </header>
           <div className="account-center-content">
             <PersistentView active={section === "profile"} aria-label={t("个人资料", "Profile")} className="account-center-panel" fill>

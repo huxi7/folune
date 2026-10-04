@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖服务端积分包/日额度、双语locale、共享Dialog/Button/Skeleton及积分图标；顶部直接使用用户选定的同源蓝色生成图
- * [OUTPUT]: 对外提供受控积分购买弹窗，呈现六档报价、单选、无确认结账过渡、升级入口与可展开规则
+ * [OUTPUT]: 积分购买关闭入口不重复提示；对外提供受控积分购买弹窗，呈现六档报价、单选、无确认结账过渡、升级入口与可展开规则
  * [POS]: widgets 的积分选购展示层；不发网络请求、不生成钱包余额，支付事实与关闭行为交给页面装配 说明每日优先、购买长期有效与退款冲正规则。
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -50,7 +50,7 @@ export function CreditsPurchaseDialog({
   return <Dialog open={open} onOpenChange={next => { if (!next) onClose(); }} surface="bare" title={title}>
     <section className="folune-credits-purchase">
       <div aria-hidden="true" className="folune-credits-banner"><img alt="" src="/account/credits-header-blue.png" width={2170} height={725} decoding="async" draggable={false} /></div>
-      <Button aria-label={t("关闭积分购买", "Close credit purchase")} className="folune-credits-close" icon={XIcon} onClick={onClose} size="square" variant="secondary" />
+      <Button aria-label={t("关闭积分购买", "Close credit purchase")} className="folune-credits-close" icon={XIcon} onClick={onClose} size="square" tooltip={false} variant="secondary" />
       <div className="folune-credits-body" inert={pending} aria-hidden={pending || undefined}>
         <header className="folune-credits-heading">
           <div>

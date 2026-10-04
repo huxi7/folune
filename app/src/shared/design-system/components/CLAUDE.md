@@ -19,7 +19,7 @@ SegmentedControl.tsx: 紧凑互斥选择，保留 radiogroup/radio、单一 Tab 
 Input.tsx: 本地 36px 默认 Input 组件，使用 14px/20px 表单文字，封装 V1 语义边框、内凹背景、placeholder、focus 与原生 ref 能力
 MentionInput.tsx: 原生 contenteditable 多行输入件，以受控纯文本和不可编辑 token 同构承载 AI Composer；普通正文使用 foreground，已选 @笔记使用 primary，原生粘贴只接收纯文本
 MentionInput.test.ts: MentionInput 纯文本分段回归测试，锁定中文标题、最长标题优先和特殊字符标题的内联 token 边界
-PasswordInput.tsx: 密码显隐入口复用原位 WarmTooltip； Input 家族的隐私输入组合件，复用 Input 内凹表面，提供受控明文/掩码切换、显隐图标按钮、aria-label/aria-pressed 与原生 input 属性/ref
+PasswordInput.tsx: 密码显隐保留可访问名称与状态，不重复文字提示； Input 家族的隐私输入组合件，复用 Input 内凹表面，提供受控明文/掩码切换、显隐图标按钮、aria-label/aria-pressed 与原生 input 属性/ref
 Card.tsx: 静态信息表面默认不动；显式 motion=lift 才启用 4px/1.012 的 hover 层级反馈，几何由 Motion、阴影由 CSS 单独拥有，减少动态效果取消空间变化
 WarmTooltip.tsx: asChild 保留原 DOM/ref/事件，去除原生 title；浮层双轴避让视口、长文本换行； React Bits 上游共享浮层适配，首次等待 360ms、温热窗口 300ms、同组 220ms 无回弹滑动；12px 字号、160ms/0.98/1px 淡入，无倾斜/箭头/引线；悬停与键盘焦点可达，点击/捕获阶段Escape/失焦/真实隐藏/卸载结束提示，恢复可见不误关，减少动态取消空间变化
 WarmTooltip.css: 消费 --layer-tooltip，提示高于 Dialog/Toast；内容按自身宽度测量并限制视口最大宽度； 提示定位层/表面分层与主题 token 接线，Portal 高于 Dialog 与 Toast，键帽独立由 KeyboardShortcut 提供
@@ -28,7 +28,7 @@ WarmTooltip.test.tsx: 真实 DOM 验证原位/ref、单组去重、禁用/展开
 WarmTooltip.LICENSE.md: React Bits WarmTooltip 的原始版权与 MIT + Commons Clause 许可
 KeyboardShortcut.tsx: 共享快捷键表现层，把组合键拆成真实键帽；Mac 使用 Command/Delete 符号，其他平台使用 Ctrl/Backspace，只呈现不绑定行为
 KeyboardShortcut.css: 22px 紧凑键帽、浅边框与底部细阴影，提示和帮助面板共用浅暗色语义
-Dialog.tsx: panel/bare共享85%页面底色的无模糊遮罩，几何与交互不因材质变化而分支； 全站唯一模态基础件，closeLabel 由消费方传入本地化文案而不依赖语言Provider；Portal 脱离祖先 transform、--layer-dialog 置于归档线/侧栏之上，独立 AnimatePresence 负责完整入退场；空嵌套 Dialog 不注册父退出以免悬挂，语义/焦点/滚动锁归 useModalLifecycle。默认150/150ms standard Tween、.9中心缩放，父层/遮罩/面板同拍进入，内部两层退出；复现Laper设置模态的透明度叠加，motion=none 将纸面与遮罩完全交给原生 View Transition，遮罩永不命名
+Dialog.tsx: 关闭入口只保留无障碍名称，不显示Tooltip；panel/bare共享85%页面底色的无模糊遮罩，几何与交互不因材质变化而分支； 全站唯一模态基础件，closeLabel 由消费方传入本地化文案而不依赖语言Provider；Portal 脱离祖先 transform、--layer-dialog 置于归档线/侧栏之上，独立 AnimatePresence 负责完整入退场；空嵌套 Dialog 不注册父退出以免悬挂，语义/焦点/滚动锁归 useModalLifecycle。默认150/150ms standard Tween、.9中心缩放，父层/遮罩/面板同拍进入，内部两层退出；复现Laper设置模态的透明度叠加，motion=none 将纸面与遮罩完全交给原生 View Transition，遮罩永不命名
 AssistantMessage.tsx: AI 消息正文根，不绘制“助手”等可见身份标题，以零卡片表面依次组合可选过程槽、独立 StreamingText 最终正文与兼容 children 工具区；向纯文本/Markdown 渲染器透传统一词级动效状态，不拥有过程分区或折叠状态
 StreamingText.tsx: 首个真实 text part 后把 SSE 目标文本在同次上游更新中完整直出，不设置逐词显示队列、全文时间轴、冗余 performance 时钟或 useLayoutEffect 状态；历史正文保持原生文本，只有尾部最多 5 个词使用常数动画节点
 streamingTextSegments.ts: 语言无关的流式分词纯函数，以 Intl.Segmenter 同时支持英文单词和中文语义词组，并把标点、空白及 Markdown 标记完整归入相邻显示单元
@@ -42,7 +42,7 @@ ToolCallBubble.test.tsx: 工具披露最小 DOM 契约测试，锁定执行态�
 accessibilitySemantics.test.tsx: 基础无障碍语义回归测试，锁定 Thinking 单一播报源、隐藏 Skeleton 不宣告忙碌及 Assistant 正文不伪造具名地标
 BrandMark.tsx: 紧边界 PNG 与已选③字标的唯一组合入口；--brand-size 只表示可见图高，共享样式以 5:4 布局比和 7/22 间距比例派生整组，默认 1.375rem 让 Demo 随根字号缩小；iconOnly 保留原独立图的可见体量，整组只播报一次 Folune
 BrandWordmark.tsx: Source Serif 4 Medium 24pt 的固定 Folune 轮廓，资产内纵向光学收至 94% 并保持宽度/居中，只由 BrandMark 消费并继承 currentColor；不加载字体或复用 UI 字体，尺寸统一归 design-system.css，OFL 许可随 public/brand 分发
-Toast.tsx: 常驻通知的关闭入口复用 WarmTooltip； 全局瞬时反馈边界，Kumo 独占队列/焦点/滑动；贴近视口顶部居中并从上沿滑入，最多三条等宽可见，每次触发独立入栈并在悬停时展开；正文与动作簇分层，倒计时动作回执仅保留 24px 本地 Button 与整条底边进度，到期自动消失且不显示关闭按钮，常驻回执保留手动关闭，错误/警告即使带动作也保留状态图标；普通提示 2.6 秒、警告 5 秒、错误 6.5 秒、动作默认 6 秒；桌面更新可选稍后/更新双动作与 duration=0 常驻提示
+Toast.tsx: 关闭入口不显示Tooltip；常驻通知的关闭入口复用 WarmTooltip； 全局瞬时反馈边界，Kumo 独占队列/焦点/滑动；贴近视口顶部居中并从上沿滑入，最多三条等宽可见，每次触发独立入栈并在悬停时展开；正文与动作簇分层，倒计时动作回执仅保留 24px 本地 Button 与整条底边进度，到期自动消失且不显示关闭按钮，常驻回执保留手动关闭，错误/警告即使带动作也保留状态图标；普通提示 2.6 秒、警告 5 秒、错误 6.5 秒、动作默认 6 秒；桌面更新可选稍后/更新双动作与 duration=0 常驻提示
 useToastCountdown.ts: 动作回执唯一计时，Toast 整条底边的剩余长度与到期关闭同源，仅更新 transform、不触发 React 帧渲染；悬停/键盘展开/页面隐藏/失焦/非最前条时暂停，重新显示续走，Reduced Motion 按秒更新
 Toast.test.tsx: 验证更新双动作/常驻无倒计时/稍后不触发安装，区分底层非模态 dialog 与真正模态弹窗； 真实 Provider 的重复入栈/三条上限/悬停展开收回/独立撤销与可控帧时钟门禁，验证暂停续走、隐藏保留与到期关闭
 Select.tsx: combobox/listbox 选择器，键盘焦点保留在 trigger、option 不增加 Tab 停靠点；上/下浮层共用 PresenceSurface 的锚点入退场，选择与关闭语义仍在本组件

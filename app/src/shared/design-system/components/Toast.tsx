@@ -1,10 +1,9 @@
 /**
- * [INPUT]: 依赖 WarmTooltip 原位功能提示；依赖 Kumo Toast 可访问队列/焦点/滑动、本地 Button、useToastCountdown 动作时钟与 toast.css 的中性反馈材质
- * [OUTPUT]: 对外提供 ToastProvider/useToast/ToastVariant/ToastInput（支持次级动作）；贴近视口顶部居中并从上沿滑入、三条内容自适应等宽堆叠，倒计时动作回执只保留业务按钮与整条底边进度，到期自动消失
+ * [INPUT]: 依赖 Kumo Toast 可访问队列/焦点/滑动、本地 Button、useToastCountdown 动作时钟与 toast.css 的中性反馈材质
+ * [OUTPUT]: 通知关闭入口只保留无障碍名称，不重复提示；对外提供 ToastProvider/useToast/ToastVariant/ToastInput（支持次级动作）；贴近视口顶部居中并从上沿滑入、三条内容自适应等宽堆叠，倒计时动作回执只保留业务按钮与整条底边进度，到期自动消失
  * [POS]: app/src/shared/design-system/components 的全局瞬时反馈边界；Kumo 只拥有队列与交互机制，业务动作仍由 Folune 本地 Button 渲染，隔离业务和第三方表现实现
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
-import WarmTooltip from "./WarmTooltip";
 import {
   Toast as KumoToast,
   useKumoToastManager,
@@ -122,9 +121,9 @@ function ToastItem({ toast, frontmost }: { toast: KumoManagedToast; frontmost: b
             </Button>
           ))}
           {duration <= 0 ? (
-            <WarmTooltip asChild content="关闭提示"><KumoToast.Close aria-label="关闭提示" className="ds-toast-dismiss">
+            <KumoToast.Close aria-label="关闭提示" className="ds-toast-dismiss">
               <XIcon aria-hidden="true" size={14} />
-            </KumoToast.Close></WarmTooltip>
+            </KumoToast.Close>
           ) : null}
         </div>
         {duration > 0 ? (

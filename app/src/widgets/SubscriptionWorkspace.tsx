@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖服务端套餐/积分投影、双语 locale、React 聚焦、Button/GlowButton/Skeleton 与 Folune 图标
- * [OUTPUT]: 对外提供三档付费方案、年付开关、分层铭牌、普通/流光 CTA 和完整账户积分条
+ * [OUTPUT]: 返回工作区的关闭入口不重复提示；对外提供三档付费方案、年付开关、分层铭牌、普通/流光 CTA 和完整账户积分条
  * [POS]: widgets 的订阅展示层；布局按 Laper 实际 DOM/CSS 还原，颜色沿用 Folune，报价/余额不在 UI 生成 购买直接进入无确认过渡，不承载订单与管理界面。
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -65,7 +65,7 @@ export function SubscriptionWorkspace({
   return (
     <main className="folune-subscription" aria-labelledby="subscription-title">
       <div className="folune-subscription-ambient" aria-hidden="true" />
-      <Button aria-label={t("关闭订阅页面", "Close subscription page")} className="folune-subscription-close" icon={XIcon} onClick={onBack} size="square" title={t("返回工作区", "Back to workspace")} variant="ghost" />
+      <Button aria-label={t("关闭订阅页面", "Close subscription page")} className="folune-subscription-close" icon={XIcon} onClick={onBack} size="square" tooltip={false} variant="ghost" />
       <div className="folune-subscription-inner" inert={checkout?.status === "loading"} aria-hidden={checkout?.status === "loading" || undefined}>
         <header className="folune-subscription-heading">
           <h1 id="subscription-title" ref={titleRef} tabIndex={-1}>{t('为值得积累的想法而生的 Folune 订阅计划', 'Folune plans for ideas worth keeping')}</h1>

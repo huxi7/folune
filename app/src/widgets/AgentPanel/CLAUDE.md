@@ -16,7 +16,7 @@ AgentToolProgress.tsx: 工具读屏状态按locale投影，推理/正文不翻�
 clientToolQueue.ts: 共享工具队列最多八项并发，完成一项立即补位；停止取消排队而保留已提交结果
 clientToolQueue.test.ts: 98 项任务并发上限、单项失败释放执行槽、停止取消排队与后续队列复用门禁
 CLAUDE.md: 记录 AgentPanel 子域成员、依赖方向与 GEB 回环协议
-AgentPanelHeader.tsx: 功能图标复用 Button 默认提示并朝下展开； 无状态同源Header；历史/返回、即时新对话、可选短窗/全高切换与向下收起，复用DS Ghost Button，尺寸模式归外壳
+AgentPanelHeader.tsx: 收起入口仅保留无障碍名称，历史/新建/窗口尺寸仍有功能提示；功能图标复用 Button 默认提示并朝下展开； 无状态同源Header；历史/返回、即时新对话、可选短窗/全高切换与向下收起，复用DS Ghost Button，尺寸模式归外壳
 useConversationScroll.test.tsx: 验证首次非平滑定位与退出冻结、迟到内容回调不追尾
 useConversationScroll.ts: 消息滚动唯一边界，首次绘制前定位、退出取消平滑滚动并冻结位置，隐藏历史拒绝追尾
 AgentPanel.draft.test.tsx: 覆盖首开权限与保存期间按钮/Enter/直接提交不发送；子进程隔离、真实组件/Hook/SDK/transport，验证零写草稿、首发创建/引用/持续消息实例、失败重试、删除与迟到请求隔离

@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 WarmTooltip 原位功能提示；依赖 React Flow、生产 CanvasCardView/Cord/NotePaper/Dialog、本地节点正文与可空的笔记来路
- * [OUTPUT]: 对外提供固定关系的静态示例画布；右侧胶囊由外层承载、不再预留整栏，只有笔记工具条入口提供返回该笔记
+ * [OUTPUT]: 预览关闭入口不重复提示，编辑命令保留功能提示；对外提供固定关系的静态示例画布；右侧胶囊由外层承载、不再预留整栏，只有笔记工具条入口提供返回该笔记
  * [POS]: 仅替换 Canvas 的会话/数据适配；卡片、关系线、预览纸与 Transition 沿生产实现
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -132,7 +132,7 @@ function CanvasScene({ notes, active, origin, onEdit, onHint, libraryOpen, onLib
         <div className="canvas-preview-shell"><NotePaper autoFocus title={notes[preview]!.title} transitionIdentity={preview} variant="reader">
           <MarkdownReadingView content={notes[preview]!.memo.content_mdx} preserveSoftBreaks />
         </NotePaper><div className="canvas-preview-tools">
-          <WarmTooltip asChild content="关闭预览"><button aria-label="关闭预览" className="canvas-preview-tool" onClick={closePreview}><XIcon size={16} /></button></WarmTooltip>
+          <button aria-label="关闭预览" className="canvas-preview-tool" onClick={closePreview}><XIcon size={16} /></button>
           <WarmTooltip asChild content="编辑原文"><button aria-label="编辑原文" className="canvas-preview-tool" onClick={() => { setPreview(null); onEdit(preview); }}><PencilSimpleIcon size={16} /></button></WarmTooltip>
         </div></div>
       </Dialog>}

@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖共享 ThemeProvider/LocaleProvider 向纯展示 UserMenu 传入偏好；搜索/新建复用页面级 WarmTooltip 与 KeyboardShortcut；依赖 MemoTreeBranch/Skeleton、SidebarCreateMenu、memoLibrary 拖拽/祖先计划、memoTitleRules 的重名与可改名判据、持久化展开偏好、archiveCordPolicy、useTreeReorder 与 Portal MotionSurface，以及 Profile、上层方案/额度快照和事务命令；结构键按不可变树引用复用
- * [OUTPUT]: 对外提供文件库 Header、搜索入口、复用上一布局原位插入笔记与即时选中、仅在定位目标本身变化（换目标/被搬走/树就绪）且离屏时才平滑定位、可聚焦真实文件树、正文意图预热、树内重排/跨视图笔记拖拽、底部导航、节点回收站命令，以及树内唯一的归档可见代表标记
+ * [OUTPUT]: 收起与文字导航不重复提示，保留可访问语义；对外提供文件库 Header、搜索入口、复用上一布局原位插入笔记与即时选中、仅在定位目标本身变化（换目标/被搬走/树就绪）且离屏时才平滑定位、可聚焦真实文件树、正文意图预热、树内重排/跨视图笔记拖拽、底部导航、节点回收站命令，以及树内唯一的归档可见代表标记
  * [POS]: app/src/widgets 的按需文件库内容层；expandedFolders 与归档可见代表归本层，订阅事实只透传给 UserMenu 而不重复请求；结构键只随树形变化计算，标题/摘要不触发整树 FLIP，事务与路由归 Dashboard
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -559,7 +559,7 @@ export function AppSidebar({
             icon={SidebarSimpleIcon}
             onClick={onClose}
             size="square"
-            title={t("收起文件库", "Close library")}
+            tooltip={false}
             variant="ghost"
           />
         </div>
@@ -662,7 +662,6 @@ export function AppSidebar({
               label="Design System"
               leading={<PaletteIcon size={16} />}
               onClick={onOpenDesignSystem}
-              title="Design System"
             />
           ) : null}
           <SidebarButton
@@ -673,7 +672,6 @@ export function AppSidebar({
             label={t("回收站", "Trash")}
             leading={<TrashIcon size={16} />}
             onClick={() => onSelectView("trash")}
-            title={t("回收站", "Trash")}
           />
         </nav>
         <UserMenu
