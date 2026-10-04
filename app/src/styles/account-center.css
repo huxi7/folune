@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 消费 APP 微蓝灰框线/轨道、灰阶阴影、字重/圆角/动效与共享 Dialog/Button/Input/SidebarButton；主题底片变量与场景映射协作
- * [OUTPUT]: 设置中心900×600外壳、24px内外曲率与紧凑控件；主题灰蓝轨道上白亮底片独立于普通选中底色，黑色近边阴影形成凸起
+ * [OUTPUT]: 设置中心900×600外壳、24px内外曲率与紧凑控件；文字导航原位同字重、无悬停/按压底色，选中仅切换主题墨色；主题灰蓝轨道上白亮底片独立于普通选中底色，黑色近边阴影形成凸起
  * [POS]: app/src/styles 的账户界面唯一几何层；参考实测比例，直接使用参考 superellipse(2) 与 4px 分组内缩，Primary 只用于升级动作和用量线
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -40,12 +40,15 @@
     font-size: 12px;
     font-weight: var(--weight-body, 400);
     box-shadow: none;
+    transform: none;
+    transition: color var(--motion-hover) var(--ease-surface);
   }
+  /* ---- 栏目导航只表达当前位置，不模拟实体按钮的按压 ---- */
+  .account-center-sidebar-nav .ds-sidebar-button:is(:hover, :active, :focus-visible):not(:disabled) { background: transparent; color: var(--muted-foreground); box-shadow: none; transform: none; }
   .account-center-sidebar-nav .ds-sidebar-button[data-active="true"],
-  :root[data-visual-context="app"] .account-center-sidebar-nav .ds-sidebar-button[data-active="true"] { background: transparent; color: var(--foreground); font-weight: var(--weight-navigation, 600); box-shadow: none; }
-  .account-center-sidebar-nav .ds-sidebar-button:hover,
-  .account-center-sidebar-nav .ds-sidebar-button:focus-visible,
-  :root[data-visual-context="app"] .account-center-sidebar-nav .ds-sidebar-button[data-active="true"]:is(:hover, :active, :focus-visible) { background: var(--interactive-hover); color: var(--foreground); box-shadow: none; }
+  .account-center-sidebar-nav .ds-sidebar-button[data-active="true"]:is(:hover, :active, :focus-visible),
+  :root[data-visual-context="app"] .account-center-sidebar-nav .ds-sidebar-button[data-active="true"],
+  :root[data-visual-context="app"] .account-center-sidebar-nav .ds-sidebar-button[data-active="true"]:is(:hover, :active, :focus-visible) { background: transparent; color: var(--foreground); box-shadow: none; }
   .account-center-sidebar-nav .ds-sidebar-button:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
   .account-center-main { display: grid; min-width: 0; min-height: 0; grid-template-rows: 70.4px minmax(0, 1fr); background: var(--popover); }
   .account-center-main-header { display: flex; min-width: 0; align-items: center; justify-content: space-between; gap: var(--space-4); padding-inline: var(--space-6); }
