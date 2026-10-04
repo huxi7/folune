@@ -307,3 +307,10 @@ The motion language is part of the Design System. `src/shared/design-system/moti
 - A local `maxDisplacement={2}` guard bounds the 2D displacement magnitude to 2 layout pixels: offsets up to 1px remain unchanged, larger offsets smoothly approach the limit without hard clipping. This integration option controls occasional spikes independently of upstream Chaos; stroke width and glow are unaffected.
 - Integration changes are limited to local layout measurements for React Flow zoom, 2.75px line width, semantic color, smooth card corners, animation suspension, directional noise-coordinate mapping, and the local displacement guard. The upstream neon glow layers are hidden; only the animated outline and two soft, same-color edge glows following the actual animated contour are shown.
 - Reduced Motion retains a static manipulation contour only while held. Offscreen/background painting stops, and forced-colors uses a system outline. No gesture or animation state enters Canvas persistence.
+
+
+## Sign-out confirmation
+
+菜单与设置的退出入口共用一次确认；标题“退出登录?”、说明“需要重新登录才能继续。”，按当前Laper组件/CSS参数设置420px（最大90vw）窄表面、24px留白和24px/superellipse(2)曲率；标题20px/400/26.667px行高，说明12px/400/17.143px行高；底部右对齐32px高、13px/500/19.5px行高、16px横距的取消/退出文字按钮，按钮间距12px，无额外图标或关闭叉。退出单独使用40%纯黑遮罩，不模糊；父层不额外淡入，背景与0.9→1面板同为150ms标准曲线，设置等普通模态仍是85%页面底色。取消为中性Secondary且不缩放，退出为Folune Primary，复现上沿面光/1px同色环/小影及1.02hover、共读0.98press的400/40弹簧；确认前不保存或退出，确认后沿既有保存/认证边界执行，失败保留当前工作区并允许重试。
+
+参数依据：2026-10-04读取Laper当前加载的index-DLokLNxL.js（确认组件与medium Button）及index-DR2bI1QM.css（字号/曲率/颜色/阴影），本地实际渲染核对420×157.8px、取消60×32px、主动作84×32px与40%黑色遮罩。

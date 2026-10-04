@@ -21,6 +21,7 @@ Hero 背景定稿（2026-09-19）：正式页采用 02A GrainGradient wave，60s
 登录背景：auth.css 在正文独立层叠上下文内承载 01A 散墨，32% 浓淡、上下边缘淡出；背景不占文档流且不截获指针，卡片与视频保持原布局。
 
 成员清单
+signout-confirmation.css: Laper源码确认的420px/24px留白、24px曲率、20px标题/12px说明、32px高13px中字重按钮与12px间距；取消无缩放，主动作复用主题Primary并保留上沿面光/细环/参考弹簧，遮罩归Dialog dim
 checkout-transition.css: 订阅/积分共用的原区域淡入加载层与紧凑错误反馈；背景覆盖原选择、不添加确认框，复用 spinner 和动效 token，减少动态时静态呈现。
 assistant-window.css: Demo胶囊所有尺寸/图文留白/柔影按同一--assistant-ui-scale投影，静态演示取消阴影过渡； 四边四角透明命中区与原生调整光标，不画文件库的细蓝线；右下胶囊/短窗/全高独立表面，复用品牌流光三层，32/24/20px平滑曲率，仅外壳裁切与材质反馈；不修改其他Panel，真实处理中才增加低频流光
 account-typography.css: 自托管 Montserrat 的账户/订阅字体边界与英文 APP font-sans 映射，保留品牌标题和笔记正文的既有字体角色
@@ -46,7 +47,7 @@ mobileToolbar.test.ts: 窄屏 Paper Toolbar 几何契约，锁定 479px 以下�
 ai-message.css: 批量完成记录虚拟滚动与显式 round 曲线的静止圆形等待点， 工具固定状态位与单 SVG 圆弧伸缩旋转，原始推理纯文本即时显示、自然换行、blueprint-success 墨绿圆勾/foreground 中性圆叉，批量进度与分页入口； AgentPanel 与 Design System 共用的 AI 消息视觉层，默认承载 Primary 同源用户气泡，APP 由 app-visual.css 映射为近白细线气泡并继承原 12px 排版、无卡片最终正文、最多五词常数节点错峰模糊拖尾、Formation ThinkingIndicator，以及带按需人话详情、克制成功色/中性失败色和状态位转圈的 Secondary 同源工具披露控件；流式正文不提供光标，非末条历史消息使用原生 content-visibility 降低长会话布局成本，末条保持完整测量，过程与正文之间只使用自然留白，不绘制固定分隔线
 aiMessagePerformance.test.ts: 静态锁定 Chat 历史消息 content-visibility 只作用于非末条，防止流式末尾滚动测量回归
 auth.css: 登录/注册大按钮和邮箱/密码输入共用局部 20px 平滑圆角及桌面 44px/手机 48px 高度，流光主按钮沿真实 glow-button 类接入并继承轮廓裁剪；验证码、状态提示与 OAuth 回调卡片共用认证排版，协议链接保留可见下划线与键盘焦点；独立登录页的 384px 表单/96px 桌面栏距与完整 3:4 背景视频布局；01A 散墨在正文后层以 32% 浓淡和上下遮罩融入纸面，不截获交互；卡片和按钮边界/阴影共读 APP 中性灰，全部认证输入沿 APP 默认/悬停/聚焦灰阶递进，焦点仅用细边与轻影，密码容器和显隐按钮保留键盘焦点，眼睛只作灰黑变化；959px 以下保留单列表单
-design-system.css: 菜单、密码显隐与身份入口共用150ms中性变色；Quiet Editorial基础组件材质与BrandMark的5:4字标/94%纵向收缩；Dialog panel/bare共用Laper实测85%页面底色遮罩、无backdrop模糊，保留焦点/滚动锁定与default|none入场；motion=none让遮罩随root视图过渡同步，不另设遮罩过渡身份；Input/Select/Skeleton/Loading/减少动态仍由本层统一
+design-system.css: 菜单、密码显隐与身份入口共用150ms中性变色；Quiet Editorial基础组件材质与BrandMark的5:4字标/94%纵向收缩；Dialog panel/bare默认共用Laper实测85%页面底色遮罩，退出dim用独立40%黑色单层遮罩、无backdrop模糊，保留焦点/滚动锁定与default|none入场；motion=none让遮罩随root视图过渡同步，不另设遮罩过渡身份；Input/Select/Skeleton/Loading/减少动态仍由本层统一
 button.css: Button 专用视觉层；Secondary/Ghost按压及工具栏覆盖只用不透明secondary，不把border当填充；中性按钮用纯色背景实现200ms连续变色，hover保持原外影；统一 36px 标准命令高度、14px/18px UI 文字、14px 横向留白、6px 图文间距、16px Control 曲率，以极轻 180deg 同色明度坡度、短中性落地阴影和不成环的宽淡面光恢复实体材质；hover 固定原位，强调按钮放宽外影，press 共读 scale(var(--press-scale)) 且撤掉外影只留浅内压，Primary/Danger 仅有极弱同色环境层，Secondary 保持中性，Ghost 无实体阴影，Saving 继续使用 16 度倾斜窄光带
 sidebar-button.css: 150ms浅灰hover与独立选中表面；SidebarButton 专用 32px compact 平面视觉层，APP/账户导航与 36px 标准 Button 共享 16px Control 曲率而不强制等高；hover 消费全局中性 interactive-hover，默认 active 使用轻中性表面和墨色，APP 当前项由 app-visual.css 映射为独立浅蓝灰并共读全局 press 收紧比例，hover/press/选中不抬升，侧栏底部 Design System/回收站以 12px/16px Label 文字和 primary 前景色表达当前位置
 shader-glow.css: base/flow/sheen 同时继承宿主 radius 与 corner-shape，模糊只作用于被裁剪的 canvas，静态柔光以品牌蓝托底而不混白，玻璃高光压低白度，避免暗相位空壳和按钮整体泛白，外阴影收短；强调 CTA 专用视觉层，与 button.css 平级；文字/曲率/内容间距复用 button.css 的控件 token，流光算法与强度仍由 ShaderGlow 拥有，标准 Button 材质不受影响
@@ -62,7 +63,7 @@ design-system-workspace.css: 图标命令与归档按压共用不透明secondary
 archive-cord-lab.css: DEV `/archive-cord-lab` 验收台的隔离样式，只提供说明正文与坐在纸外的验收控制条；刻意不含任何归档线、代表行或 source 规则——那些必须由 workspace.css 提供，否则 fixture 验的就不是线上那条线
 color-lab.css: DEV `/color-lab` 蓝色终选决策画布，以同构静态 Library/Paper/AI 工作区、候选选择与 Light/Dark 响应式控制消费 index.css 隔离的现有蓝/灰蓝/标准墨蓝/柔和墨蓝 token；不定义颜色值、不读取业务状态、不改生产主题
 
-职责: UI 样式实现层；landing.css 隔离营销页，workspace.css 承载 Paper/Canvas 共用产品壳，note-paper.css 收口共享纸面，knowledge-canvas.css 隔离图交互，ai-message.css 让生产 Activity 跨 AgentPanel/Design System 同源，design-system-workspace.css、color-lab.css 与 archive-cord-lab.css 分别负责组件陈列、隔离配色决策与归档线真实交互验收，codemirror.css 跨越第三方级联边界；所有文件消费 app/src/index.css 的静态语义 token 与 DS motion.ts 注入的同源动效变量，颜色插值统一使用 sRGB。
+职责: UI 样式实现层；landing.css 隔离营销页，workspace.css 承载 Paper/Canvas 共用产品壳，note-paper.css 收口共享纸面，knowledge-canvas.css 隔离图交互，ai-message.css 让生产 Activity 跨 AgentPanel/Design System 同源，design-system-workspace.css、color-lab.css 与 archive-cord-lab.css 分别负责组件陈列、隔离配色决策与归档线真实交互验收，codemirror.css 跨越第三方级联边界；所有文件消费 app/src/index.css 的静态语义 token 与 DS motion.ts 注入的同源动效变量，普通表面颜色插值统一使用sRGB；退出确认的局部强调面光保留参考OKLCH配方。
 
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 

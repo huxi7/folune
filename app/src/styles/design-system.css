@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 消费 APP app-typography.css 文字角色，变量回退保持非 APP 原排版； 依赖设计系统的半径/曲线配对规则与 index.css 的 Quiet Editorial 语义 Color/Type/Spacing/Radius/Elevation/Motion、统一中性 interactive-hover 与 Tailwind v4 layer
- * [OUTPUT]: 菜单、密码显隐与身份入口共用150ms中性变色；统一菜单材质、平面Input/Select/Card与BrandMark；Dialog的panel/bare共用85%页面底色遮罩，普通模态父层与背景/面板同拍淡入，纸面模式随root过渡；提供Skeleton/Thinking/loading状态
+ * [OUTPUT]: 菜单、密码显隐与身份入口共用150ms中性变色；统一菜单材质、平面Input/Select/Card与BrandMark；Dialog的panel/bare默认85%页面底色遮罩，dim确认改用单层40%黑色遮罩，普通模态父层与背景/面板同拍淡入，纸面模式随root过渡；提供Skeleton/Thinking/loading状态
  * [POS]: app/src/styles 的组件视觉层，被 index.css 统一导入
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -362,16 +362,19 @@
 
   .ds-dialog-overlay {
     z-index: var(--layer-dialog);
-    background: color-mix(in srgb, var(--background) 85%, transparent);
+    --dialog-backdrop-color: color-mix(in srgb, var(--background) 85%, transparent);
+    background: var(--dialog-backdrop-color);
     /* 入退场归 Dialog presence。 */
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }
 
+  .ds-dialog-overlay[data-backdrop="dim"] { --dialog-backdrop-color: rgb(0 0 0 / 40%); z-index: var(--layer-confirmation); }
+
   /* 普通模态按Laper由父层与内部两层同拍进入；父层保持透明底，纸面模式仍捕获完整root。 */
   .ds-dialog-overlay[data-motion="default"] { background: transparent; }
   .ds-dialog-overlay[data-motion="default"] > .ds-dialog-backdrop {
-    background: color-mix(in srgb, var(--background) 85%, transparent);
+    background: var(--dialog-backdrop-color);
   }
 
   .ds-select-shell {

@@ -2,6 +2,8 @@
 > L2 | 父级: ../../CLAUDE.md
 
 成员清单
+SignOutConfirmationDialog.test.tsx: 真实菜单/设置入口确认、取消/焦点、异步防重与失败重试、中英文门禁；不调用真实认证
+SignOutConfirmationDialog.tsx: Laper原组件字号/几何与dim黑色遮罩，取消仅变色、主题Primary参考400/40弹簧；菜单/设置共用的受控退出确认，右对齐取消/主动作、同步防连点与失败重试；不直接操作认证或业务存储
 CheckoutTransition.tsx: 订阅和积分共用的无确认结账过渡与原位错误反馈；复用 DS spinner/按钮，业务状态由页面提供，既不展示订单也不发起购买。
 WorkspaceAssistantLayer.test.tsx: 面板宽度不被生产下限撑大；演示87.5%尺寸投影与无中间帧硬切回归，往返保持同一输入实例与草稿
 AssistantWindowResize.tsx: 助手专属四边四角命中区；对边固定、拖拽不更新业务状态、松手一次提交；取消/Escape/捕获丢失清理与键盘尺寸调整

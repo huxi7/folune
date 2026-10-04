@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖双语 locale、useAppDashboardController、Paper/Canvas 内容壳、三态助手宿主、持久文件库与统一 Dialog、独立 SubscriptionPage，积分购买弹窗，以及菜单打开时刷新的用户级 BillingProvider 快照
- * [OUTPUT]: 对外提供 /app 的稳定空间装配与 /app/subscription 独立页，文件树消费即时选择、正文消费已提交路由；订阅打开时隐藏并保留工作区/左右工具实例，积分弹窗按来路保留工作区或订阅背景，键盘边界阻止常驻工作区快捷键
+ * [INPUT]: 依赖统一SignOutConfirmationDialog、双语 locale、useAppDashboardController、Paper/Canvas 内容壳、三态助手宿主、持久文件库与统一 Dialog、独立 SubscriptionPage，积分购买弹窗，以及菜单打开时刷新的用户级 BillingProvider 快照
+ * [OUTPUT]: 对外提供菜单/设置共用的退出确认、/app稳定空间装配与/app/subscription独立页，文件树消费即时选择、正文消费已提交路由；订阅打开时隐藏并保留工作区/左右工具实例，积分弹窗按来路保留工作区或订阅背景，键盘边界阻止常驻工作区快捷键
  * [POS]: pages 的 Workspace 视觉组合根；按 profile.id 持有唯一计费快照，菜单/设置/订阅同源，路由返回由受限来路解析；业务/flush 归 controller，动画不重挂载根
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -30,6 +30,7 @@ import type { AgentPresence } from "../widgets/AgentPanel/activityState";
 import { WorkspacePanelLayer } from "../widgets/WorkspacePanelLayer";
 import { peekCanvasEntryBootstrap } from "./canvasEntryBootstrap";
 import { CanvasRouteCoordinator } from "./CanvasRouteCoordinator";
+import { SignOutConfirmationDialog } from "../widgets/SignOutConfirmationDialog";
 import { DashboardDialogs } from "./DashboardDialogs";
 import { isMemo, loadAgentPanel, useAppDashboardController } from "./useAppDashboardController";
 import {
@@ -144,6 +145,8 @@ function DashboardContent() {
     openActiveLibrary,
     setRevealTarget,
   } = useAppDashboardController();
+  const [signOutOpen, setSignOutOpen] = useState(false);
+  const requestSignOut = async () => { setSignOutOpen(true); };
   const [assistantPresence, setAssistantPresence] = useState<AgentPresence>("idle");
   const library = (
     <>
@@ -181,7 +184,7 @@ function DashboardContent() {
         onRequestCreateFolder={(parentId) => setMemoDialog({ parentId })}
         onSelectMemo={handleSelectMemo}
         onSelectView={handleSelectAuxView}
-        onSignOut={handleSignOut}
+        onSignOut={requestSignOut}
         profile={profile}
         reveal={revealTarget}
         revealContent={revealInitialTreeContent}
@@ -386,7 +389,7 @@ function DashboardContent() {
         onCreateFolder={handleCreateFolder}
         onMemoDialogClose={() => setMemoDialog(null)}
         onProfileChange={setProfile}
-        onSignOut={handleSignOut}
+        onSignOut={requestSignOut}
         onViewPlans={() => {
           setAccountProfileRefreshing(false);
           setAccountDialog(null);
@@ -394,6 +397,7 @@ function DashboardContent() {
         }}
         profile={profile}
       />
+      <SignOutConfirmationDialog open={signOutOpen} onOpenChange={setSignOutOpen} onConfirm={handleSignOut} />
       <WorkspaceCommandPalette
         accessToken={accessToken}
         onOpenCanvas={(memoId) => void memoCanvasEntry.enterCanvas(memoId)}

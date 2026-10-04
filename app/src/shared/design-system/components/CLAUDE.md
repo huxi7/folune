@@ -28,7 +28,7 @@ WarmTooltip.test.tsx: 覆盖整组禁用时点击/ref/焦点保留及切换后�
 WarmTooltip.LICENSE.md: React Bits WarmTooltip 的原始版权与 MIT + Commons Clause 许可
 KeyboardShortcut.tsx: 共享快捷键表现层，把组合键拆成真实键帽；Mac 使用 Command/Delete 符号，其他平台使用 Ctrl/Backspace，只呈现不绑定行为
 KeyboardShortcut.css: 22px 紧凑键帽、浅边框与底部细阴影，提示和帮助面板共用浅暗色语义
-Dialog.tsx: 关闭入口只保留无障碍名称，不显示Tooltip；panel/bare共享85%页面底色的无模糊遮罩，几何与交互不因材质变化而分支； 全站唯一模态基础件，closeLabel 由消费方传入本地化文案而不依赖语言Provider；Portal 脱离祖先 transform、--layer-dialog 置于归档线/侧栏之上，独立 AnimatePresence 负责完整入退场；空嵌套 Dialog 不注册父退出以免悬挂，语义/焦点/滚动锁归 useModalLifecycle。默认150/150ms standard Tween、.9中心缩放，父层/遮罩/面板同拍进入，内部两层退出；复现Laper设置模态的透明度叠加，motion=none 将纸面与遮罩完全交给原生 View Transition，遮罩永不命名
+Dialog.tsx: surface沿85%页面底色父层同拍淡入，dim确认用40%黑色单层遮罩、独立高层级；关闭入口只保留无障碍名称，不显示Tooltip；panel/bare默认共享85%页面底色的无模糊遮罩，几何与交互不因材质变化而分支； 全站唯一模态基础件，closeLabel 由消费方传入本地化文案而不依赖语言Provider；Portal 脱离祖先 transform、--layer-dialog 置于归档线/侧栏之上，独立 AnimatePresence 负责完整入退场；空嵌套 Dialog 不注册父退出以免悬挂，语义/焦点/滚动锁归 useModalLifecycle。默认150/150ms standard Tween、.9中心缩放，父层/遮罩/面板同拍进入，内部两层退出；复现Laper设置模态的透明度叠加，motion=none 将纸面与遮罩完全交给原生 View Transition，遮罩永不命名
 AssistantMessage.tsx: AI 消息正文根，不绘制“助手”等可见身份标题，以零卡片表面依次组合可选过程槽、独立 StreamingText 最终正文与兼容 children 工具区；向纯文本/Markdown 渲染器透传统一词级动效状态，不拥有过程分区或折叠状态
 StreamingText.tsx: 首个真实 text part 后把 SSE 目标文本在同次上游更新中完整直出，不设置逐词显示队列、全文时间轴、冗余 performance 时钟或 useLayoutEffect 状态；历史正文保持原生文本，只有尾部最多 5 个词使用常数动画节点
 streamingTextSegments.ts: 语言无关的流式分词纯函数，以 Intl.Segmenter 同时支持英文单词和中文语义词组，并把标点、空白及 Markdown 标记完整归入相邻显示单元

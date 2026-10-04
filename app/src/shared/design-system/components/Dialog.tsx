@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 标题字重消费 section 文字角色； 依赖 Motion presence、Portal、useModalLifecycle 与 React id/ref，依赖 共享 Lucide XIcon，依赖 Button 与 design-system.css 暴露的 ds-dialog-overlay/ds-dialog-panel/ds-dialog-shell 模态材质类
- * [OUTPUT]: 关闭入口保留无障碍名称，不重复提示；对外提供密度/宽度/对齐/表面/标题/可本地化关闭标签、default|none 入退场模式、标题描述关联、Esc、焦点循环、滚动锁定的 Dialog
+ * [OUTPUT]: 关闭入口保留无障碍名称，不重复提示；对外提供surface泛白或dim黑色单层遮罩、密度/宽度/对齐/表面/标题/可本地化关闭标签、default|none 入退场模式、标题描述关联、Esc、焦点循环、滚动锁定的 Dialog
  * [POS]: 唯一模态基础件；按Laper设置弹窗复现父层/遮罩/本体150ms同拍渐入，内部150ms退场；motion=none把纸面交给root，焦点/滚动锁沿用同一生命周期
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -16,6 +16,7 @@ import { Button } from "./Button";
 type DialogProps = {
   /** top 让弹窗贴近视口上方，命令面板需要它才不会在长结果时上下跳 */
   align?: DialogAlign;
+  backdrop?: DialogBackdrop;
   children: ReactNode;
   closeLabel?: string;
   density?: DialogDensity;
@@ -30,6 +31,7 @@ type DialogProps = {
   width?: DialogWidth;
 };
 
+export type DialogBackdrop = "surface" | "dim";
 export type DialogAlign = "center" | "top";
 export type DialogDensity = "compact" | "default";
 export type DialogHeaderMode = "default" | "embedded";
@@ -53,6 +55,7 @@ export function Dialog(props: DialogProps) {
 
 function DialogFrame({
   align = "center",
+  backdrop = "surface",
   children,
   closeLabel = "关闭弹窗",
   density = "default",
@@ -82,12 +85,13 @@ function DialogFrame({
       inert={!present}
       className="ds-dialog-overlay fixed inset-0 flex justify-center p-4"
       data-align={align}
+      data-backdrop={backdrop}
       data-motion={motion}
       data-surface={surface}
       role={present ? "dialog" : undefined}
-      initial={motion === "none" || reduced ? false : "hidden"}
+      initial={motion === "none" || reduced || backdrop === "dim" ? false : "hidden"}
       animate="visible"
-      variants={motion === "none" || reduced ? undefined : modalBackdropVariants(false)}
+      variants={motion === "none" || reduced || backdrop === "dim" ? undefined : modalBackdropVariants(false)}
     >
       <m.button
         aria-hidden="true"

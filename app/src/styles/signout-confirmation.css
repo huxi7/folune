@@ -1,0 +1,63 @@
+/**
+ * [INPUT]: 消费Laper当前退出确认的组件/CSS实测参数，Folune Primary及400/500字重、账户字体与共享Button/Dialog行为
+ * [OUTPUT]: 提供420px/24px内距、24px曲率、20px标题/12px说明、32px高/13px字/16px横距按钮与12px动作间距
+ * [POS]: 退出确认的局部材质层；取消只有变色，主动作保留1.02/.98反馈，黑色单层遮罩归Dialog dim模式，普通控件不受影响
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+@property --signout-button-from { syntax: "<color>"; inherits: false; initial-value: transparent; }
+@layer components {
+  .signout-confirmation {
+    --signout-surface: #fcfdfc;
+    --signout-ink: #171a19;
+    --signout-muted: #6b7370;
+    --signout-border: #e4e8e6;
+    --signout-accent: #f4f6f5;
+    width: 420px;
+    max-width: 90vw;
+    max-height: 90vh;
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--signout-border) 60%, transparent);
+    border-radius: 1.5rem;
+    corner-shape: superellipse(2);
+    padding: var(--space-6);
+    background: var(--signout-surface);
+    color: var(--signout-ink);
+    font-family: var(--font-account, var(--font-sans));
+    box-shadow: 0 2px 4px rgb(0 0 0 / 5%), 0 1px 2px -1px rgb(0 0 0 / 5%);
+  }
+  .signout-confirmation h2 { margin: 0; font-family: inherit; font-size: 1.25rem; font-weight: var(--font-weight-regular, 400); line-height: calc(2 / 1.5); }
+  .signout-confirmation-description { margin: var(--space-2) 0 0; color: var(--signout-muted); font-size: 0.75rem; font-weight: var(--font-weight-regular, 400); line-height: calc(1.25 / 0.875); }
+  .signout-confirmation-error { margin: var(--space-3) 0 0; color: var(--destructive); font-size: 0.75rem; line-height: calc(1.25 / 0.875); }
+  .signout-confirmation-actions { display: flex; justify-content: flex-end; align-items: center; gap: var(--space-3); margin-top: var(--space-6); }
+  .signout-confirmation-actions .ds-button {
+    height: 32px; min-height: 32px; padding-inline: var(--space-4);
+    border-radius: 1.5rem; corner-shape: superellipse(2);
+    font-family: inherit; letter-spacing: normal; font-size: 0.8125rem; font-weight: var(--font-weight-medium, 500); line-height: 1.5;
+    transition: background-color var(--motion-button-hover) var(--ease-surface), box-shadow var(--motion-button-hover) var(--ease-surface), color var(--motion-button-hover) var(--ease-surface), border-color var(--motion-button-hover) var(--ease-surface);
+  }
+  .signout-confirmation-actions .ds-button-secondary {
+    --button-fill-rest: var(--signout-surface); --button-fill-hover: var(--signout-accent); --button-fill-active: var(--signout-accent);
+    --button-foreground-rest: var(--signout-ink);
+    --button-border-rest: var(--signout-border); --button-border-hover: var(--signout-border); --button-border-active: var(--signout-border);
+    --button-state-shadow: 0 2px 4px rgb(0 0 0 / 5%), 0 1px 2px -1px rgb(0 0 0 / 5%);
+    --button-state-shadow-hover: var(--button-state-shadow); --button-state-shadow-pressed: var(--button-state-shadow);
+  }
+  .signout-confirmation-actions .ds-button-secondary:active:not(:disabled) { transform: none; transition-duration: var(--motion-button-hover); }
+  .signout-confirmation-actions .ds-button-primary {
+    --signout-button-from: color-mix(in oklch, var(--primary), white 15%);
+    --signout-button-ring: color-mix(in oklch, var(--primary), black 10%);
+    --button-fill-rest: linear-gradient(to bottom, var(--signout-button-from), var(--primary));
+    --button-fill-hover: var(--button-fill-rest); --button-fill-active: var(--button-fill-rest);
+    border: 0;
+    --button-border-rest: transparent; --button-border-hover: transparent; --button-border-active: transparent;
+    --button-state-shadow: inset 0 1px 0 color-mix(in oklch, var(--primary), white 30%), 0 0 0 1px var(--signout-button-ring), 0 2px 4px rgb(0 0 0 / 3%);
+    --button-state-shadow-hover: var(--button-state-shadow); --button-state-shadow-pressed: var(--button-state-shadow);
+    --button-loading-border: transparent; --button-loading-foreground: var(--primary-foreground); --button-loading-shadow: var(--button-state-shadow);
+    --processing-surface-top: var(--signout-button-from); --processing-surface-bottom: var(--primary);
+    transition: --signout-button-from var(--motion-hover) var(--ease-surface), background-color var(--motion-button-hover) var(--ease-surface), box-shadow var(--motion-button-hover) var(--ease-surface), color var(--motion-button-hover) var(--ease-surface);
+  }
+  .signout-confirmation-actions .ds-button-primary:hover:not(:disabled) { --signout-button-from: color-mix(in oklch, var(--primary), white 30%); }
+  .signout-confirmation-actions .ds-button:focus-visible { outline: 2px solid color-mix(in srgb, var(--primary) 40%, transparent); outline-offset: 0; }
+  .signout-confirmation-actions .ds-button-loading .signout-confirmation-submit-label { opacity: 0.5; }
+  :root.dark .signout-confirmation { --signout-surface: var(--background); --signout-ink: var(--foreground); --signout-muted: var(--muted-foreground); --signout-border: var(--border); --signout-accent: var(--secondary); }
+}

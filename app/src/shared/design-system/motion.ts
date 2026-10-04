@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Motion 的 Transition/Variants 类型与 CSS 自定义属性协议
- * [OUTPUT]: 对外提供借鉴Laper的菜单/模态与紧凑菜单档、保持原侧向淡入的工作区侧栏、Laper 150ms/200ms 中性悬停及同源CSS token和DS目录；品牌入口/纸面独立
+ * [OUTPUT]: 对外提供借鉴Laper的菜单/模态与紧凑菜单档、保持原侧向淡入的工作区侧栏、Laper确认按钮400/40 tap spring、150ms/200ms中性悬停及同源CSS token和DS目录；品牌入口/纸面独立
  * [POS]: Design System 的唯一通用动效语言；组件不复制数字，纸面/绳线的领域几何仍归 pages/widgets
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -39,6 +39,7 @@ export const motionEase = {
   surface: [0.4, 0, 0.2, 1],
 } as const;
 export const motionSpring = {
+  tap: { type: "spring", stiffness: 400, damping: 40 },
   // 回弹只服务短距离的直接操控，文本/大面板不用物理长尾。
   response: { type: "spring", visualDuration: 0.18, bounce: 0 },
   spatial: { type: "spring", visualDuration: motionDuration.spatial, bounce: 0.04 },
