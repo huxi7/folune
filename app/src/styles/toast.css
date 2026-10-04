@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 消费 APP app-typography.css 文字角色，变量回退保持非 APP 原排版； 依赖设计系统的半径/曲线配对规则与 Kumo Toast Parts 的堆叠/滑动状态、共享动作时钟、本地 Button 与 index.css 的中性 Popover、Radius、Elevation、Motion token
- * [OUTPUT]: 对外提供贴近视口顶部居中并从上沿滑入的内容自适应 Toast、三条等宽悬停展开堆叠、整条底边的剩余时间进度条与 24px 紧凑动作；倒计时隐藏关闭后独立平衡尾部留白，安全区与 reduced-motion 同源适配
+ * [OUTPUT]: 关闭入口复用150ms中性悬停； 对外提供贴近视口顶部居中并从上沿滑入的内容自适应 Toast、三条等宽悬停展开堆叠、整条底边的剩余时间进度条与 24px 紧凑动作；倒计时隐藏关闭后独立平衡尾部留白，安全区与 reduced-motion 同源适配
  * [POS]: app/src/styles 的瞬时反馈视觉层；Kumo 负责队列交互，Folune 定义安静纸面材质与本地动作层级
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -253,7 +253,7 @@
     color: var(--muted-foreground);
     opacity: 0.65;
     transition:
-      background var(--motion-fast) var(--ease-standard),
+      background-color var(--motion-hover) var(--ease-surface),
       color var(--motion-fast) var(--ease-standard),
       opacity var(--motion-fast) var(--ease-standard);
   }

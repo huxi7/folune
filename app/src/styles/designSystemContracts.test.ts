@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 读取 DS motionTokenStyles、index.css、button.css、sidebar-button.css 与 workspace.css 的 Control radius、Button 共享别名、Composer 圆形例外与统一 press
- * [OUTPUT]: 检查所有生产圆角与曲线配对及菜单 Compact 分档；锁定 16px Control、显式 12px inner、Button 不建立私有半径、实体 Button 使用极轻纵向同色面光且没有 1px 全周内环、Ghost 无实体阴影、Press 收回外影、Composer 继续显式使用 round，以及四处命令控件共读同一份 press 缩放并在 Reduced Motion 下归 1、创建 split 的 hover 与 press 只认外壳那两半而不认展开的菜单项
+ * [OUTPUT]: 检查所有生产圆角与曲线配对及菜单 Compact 分档；锁定 16px Control、显式 12px inner、Button 不建立私有半径、强调 Button 使用极轻纵向同色面光、中性按钮使用可插值纯色且没有 1px 全周内环、Ghost 无实体阴影、Press 收回外影、Composer 继续显式使用 round，以及四处命令控件共读同一份 press 缩放并在 Reduced Motion 下归 1、创建 split 的 hover 与 press 只认外壳那两半而不认展开的菜单项
  * [POS]: app/src/styles 的静态契约测试；区分静态文字校正与按压反馈，逐项约束已确认的账户/认证/Canvas 曲率例外
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -44,18 +44,18 @@ describe("Control radius 公理", () => {
 });
 
 describe("Button material 公理", () => {
-  test("实体 Button 只使用极轻纵向同色面光, 不再画 1px 全周内环", () => {
-    expect(buttonCss).toContain("background: linear-gradient(180deg, var(--button-face-top-rest), var(--button-face-bottom-rest));");
-    expect(buttonCss).toContain("background: linear-gradient(180deg, var(--button-face-top-hover), var(--button-face-bottom-hover));");
-    expect(buttonCss).toContain("background: linear-gradient(180deg, var(--button-face-top-active), var(--button-face-bottom-active));");
+  test("强调 Button 保留同色面光，中性 Button 允许可插值纯色且没有全周内环", () => {
+    expect(buttonCss).toContain("background: var(--button-fill-rest, linear-gradient(180deg, var(--button-face-top-rest), var(--button-face-bottom-rest)));");
+    expect(buttonCss).toContain("background: var(--button-fill-hover, linear-gradient(180deg, var(--button-face-top-hover), var(--button-face-bottom-hover)));");
+    expect(buttonCss).toContain("background: var(--button-fill-active, linear-gradient(180deg, var(--button-face-top-active), var(--button-face-bottom-active)));");
     expect(buttonCss).toContain("background: linear-gradient(180deg, var(--processing-surface-top), var(--processing-surface-bottom));");
     expect(buttonCss).not.toContain("linear-gradient(135deg");
     expect(buttonCss).not.toMatch(/inset 0 0 0 1px/);
     expect(buttonCss).not.toContain("filter: saturate(");
   });
 
-  test("Hover 放宽中性外影, Press 只保留内压感, Ghost 始终无影", () => {
-    expect(buttonCss).toContain("0 6px 14px -8px var(--button-shadow-neutral-hover)");
+  test("中性 Hover 保持外影，Press 保留内压感，Ghost 始终无影", () => {
+    expect(declarationsFor(buttonCss, ".ds-button-secondary")).toContain("--button-state-shadow-hover: var(--button-state-shadow)");
     expect(buttonCss).toContain("inset 0 2px 4px var(--button-press-depth)");
     expect(declarationsFor(buttonCss, ".ds-button-ghost")).toContain("--button-state-shadow: none");
     const pressedShadow = /--button-shadow-pressed:\s*([^;]+);/.exec(buttonCss)?.[1] ?? "";

@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 MarketingLayout 的中文语言与过渡状态、DS 字体/颜色/动效 token、共享空轨与 weave 侧纹，以及原生 CJK 间距和断行能力
- * [OUTPUT]: 对外提供紧凑返回按钮、疏朗品牌刊物署名；对外提供目录/文章分类共用的紧凑浅底细边标签材质与主题标签换行；对外提供无重复阅读按钮的整行目录，以及博客/法律长文的紧凑字号、36 字宽阅读栏、细侧线导读、自然段距及中西文间距增强；仅花纹局部外框淡入后显示纹样
+ * [OUTPUT]: 对外提供紧凑返回按钮、疏朗品牌刊物署名；对外提供目录/文章分类共用的紧凑浅底细边标签材质与主题标签换行；对外提供无重复阅读按钮、共用150ms中性悬停的整行目录，以及博客/法律长文的紧凑字号、36 字宽阅读栏、细侧线导读、自然段距及中西文间距增强；仅花纹局部外框淡入后显示纹样
  * [POS]: styles 的博客局部表现层；blog-spine 隔离中文阅读规则，正文数据和复制内容不变，首页/APP 不继承；BlogFrameSection 保留既有局部外框入场
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -107,7 +107,7 @@
   .blog-index-heading p { margin-top:24px; color:#656c73; font-size:var(--type-body); line-height:1.8; }
   .blog-navigation a:hover { color:var(--landing-accent); }
   .blog-index-list article + article { border-top:1px solid var(--landing-border); }
-  .blog-index-link { display:block; padding:32px; transition:background-color var(--motion-fast) var(--ease-standard); }
+  .blog-index-link { display:block; padding:32px; transition:background-color var(--motion-hover) var(--ease-surface); }
   .blog-index-link:is(:hover,:focus-visible) { background:var(--interactive-hover); }
   .blog-index-link:focus-visible { outline:2px solid var(--landing-accent); outline-offset:-2px; }
   .blog-index-link:is(:hover,:focus-visible) h2 { color:var(--landing-accent); }

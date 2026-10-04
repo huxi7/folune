@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖共享几何/动效与浅暗主题；Laper 实测提供60%淡灰边框及菜单/设置/内卡三档贴边阴影，Folune 将微绿灰投影为微蓝灰
- * [OUTPUT]: APP/Demo 共享 #E4E6E8/60% 框线、#F4F5F6 分组/导航灰底、#EFF0F1 轨道与灰阶贴边阴影；主题底片白亮，认证与营销保持独立映射
+ * [OUTPUT]: APP/Demo 共享 Laper #F4F6F5 悬停（暗色以卡片底色混入4%白，保持不透明）、独立选中底色、#E4E6E8/60% 框线、#F4F5F6 分组/导航灰底、#EFF0F1 轨道与灰阶贴边阴影；主题底片白亮，认证与营销保持独立映射
  * [POS]: APP 完整主题在文档根映射并覆盖 Portal；营销控件按共享组件类接入，覆盖 Hero/顶栏/页尾/文章返回而不依赖容器名单，营销正文、品牌与布局仍由原组件拥有
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -18,7 +18,7 @@ html:root[data-visual-context="app"],
   --muted: #f6f7f7;
   --muted-foreground: #707676;
   --surface-neutral: #f5f6f6;
-  --interactive-hover: #eceeee;
+  --interactive-hover: #f4f6f5;
   --interactive-hover-foreground: var(--foreground);
   --border: #e2e5e5;
   --input: #dcdede;
@@ -44,7 +44,6 @@ html:root[data-visual-context="app"] {
   --surface-neutral: #f4f5f6;
   --muted: #f6f7f8;
   --secondary: #edeeef;
-  --interactive-hover: var(--secondary);
   --shadow-color: #000000;
   --processing-border: var(--border);
   --shadow-sm: 0 2px 4px rgb(var(--app-shadow-rgb) / 5%), 0 4px 6px -1px rgb(var(--app-shadow-rgb) / 5%);
@@ -57,7 +56,7 @@ html:root[data-visual-context="app"] {
   --popover: #ffffff;
   --popover-foreground: var(--foreground);
   --surface-accent-subtle: #f7f8f9;
-  --accent: var(--interactive-hover);
+  --accent: var(--secondary);
   --accent-foreground: var(--foreground);
   --primary: #395875;
   --primary-foreground: #f8fafc;
@@ -125,8 +124,8 @@ html:root.dark[data-visual-context="app"] {
   --surface-neutral: #2d2d2d;
   --app-theme-track: var(--surface-neutral);
   --surface-accent-subtle: #292929;
-  --interactive-hover: #2d2d2d;
-  --accent: var(--interactive-hover);
+  --interactive-hover: color-mix(in srgb, var(--card) 96%, white);
+  --accent: var(--secondary);
   --accent-foreground: #e8e8e8;
   --primary: #91abc4;
   --primary-foreground: #1b2732;

@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Motion 的 Transition/Variants 类型与 CSS 自定义属性协议
- * [OUTPUT]: 对外提供借鉴Laper的菜单/模态与紧凑菜单档、保持原侧向淡入的工作区侧栏、同源CSS token和DS目录；品牌入口/纸面独立
+ * [OUTPUT]: 对外提供借鉴Laper的菜单/模态与紧凑菜单档、保持原侧向淡入的工作区侧栏、Laper 150ms/200ms 中性悬停及同源CSS token和DS目录；品牌入口/纸面独立
  * [POS]: Design System 的唯一通用动效语言；组件不复制数字，纸面/绳线的领域几何仍归 pages/widgets
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -8,6 +8,8 @@ import type { Transition, Variants } from "motion/react";
 
 export const motionDuration = {
   press: 0.09,
+  hover: 0.15,
+  buttonHover: 0.2,
   microEnter: 0.16,
   microExit: 0.13,
   menuEnter: 0.15,
@@ -149,7 +151,7 @@ const cssName = (name: string) => name.replace(/[A-Z]/g, (letter) => `-${letter.
 export const motionTokenStyles = `:root{${Object.entries(motionDuration)
   .map(([name, seconds]) => `--motion-${cssName(name)}:${seconds * 1000}ms;`).join("")}${Object.entries(motionEase)
   .map(([name, points]) => `--ease-${name}:cubic-bezier(${points.join(",")});`).join("")}--motion-stagger-step:${staggerStepMs}ms;--motion-stagger-max:${staggerMaxMs}ms;}
-@media(prefers-reduced-motion:reduce){:root{--motion-press:90ms;--motion-micro-enter:90ms;--motion-micro-exit:90ms;--motion-menu-enter:90ms;--motion-menu-exit:90ms;--motion-compact-menu-enter:90ms;--motion-compact-menu-exit:90ms;--motion-panel-enter:90ms;--motion-panel-exit:90ms;--motion-modal-enter:90ms;--motion-modal-exit:90ms;--motion-view-enter:90ms;--motion-view-exit:90ms;--motion-tree:0ms;--motion-reveal:90ms;}}`;
+@media(prefers-reduced-motion:reduce){:root{--motion-press:90ms;--motion-hover:0ms;--motion-button-hover:0ms;--motion-micro-enter:90ms;--motion-micro-exit:90ms;--motion-menu-enter:90ms;--motion-menu-exit:90ms;--motion-compact-menu-enter:90ms;--motion-compact-menu-exit:90ms;--motion-panel-enter:90ms;--motion-panel-exit:90ms;--motion-modal-enter:90ms;--motion-modal-exit:90ms;--motion-view-enter:90ms;--motion-view-exit:90ms;--motion-tree:0ms;--motion-reveal:90ms;}}`;
 
 export function revealVariants(reduced: boolean, scale = false): Variants {
   return {

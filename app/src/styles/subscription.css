@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 使用已提取的 Laper 订阅 DOM/CSS 几何与叠层，消费 Folune 语义颜色/曲率/动效和 Button/GlowButton
- * [OUTPUT]: 三张 300px 付费卡、玻璃铭牌、普通/流光按钮、年付开关、暖琥珀折扣标记、账户积分条，结账过渡归 checkout-transition.css
+ * [OUTPUT]: 三张 300px 付费卡、玻璃铭牌、普通/流光按钮、年付开关、暖琥珀折扣标记、账户积分条与 Laper 150ms 浅灰关闭反馈，结账过渡归 checkout-transition.css
  * [POS]: styles 的订阅专属层；原四栏收为 932px 三栏，颜色归 Folune，字体/间距/阴影按浏览器代码还原
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -18,9 +18,9 @@
   }
   .folune-subscription-ambient::before { position: absolute; inset: 0; opacity: 0.55; background-image: radial-gradient(color-mix(in srgb, var(--muted-foreground) 20%, transparent) 1px, transparent 1px); background-size: 7px 7px; content: ''; }
   .folune-subscription-ambient::after { position: absolute; inset: 0; background: linear-gradient(90deg, var(--background) 0%, transparent 20%, transparent 80%, var(--background) 100%); content: ''; }
-  .folune-subscription .folune-subscription-close { position: fixed; z-index: 20; top: 24px; right: 24px; width: 40px; height: 40px; min-width: 40px; padding: 0; border: 1px solid var(--border); border-radius: var(--radius-pill); corner-shape: round; background: color-mix(in srgb, var(--background) 80%, transparent); box-shadow: none; }
+  .folune-subscription .folune-subscription-close { position: fixed; z-index: 20; top: 24px; right: 24px; width: 40px; height: 40px; min-width: 40px; padding: 0; border: 1px solid var(--border); border-radius: var(--radius-pill); corner-shape: round; background: color-mix(in srgb, var(--background) 80%, transparent); box-shadow: none; transition: background-color var(--motion-hover) var(--ease-surface), color var(--motion-hover) var(--ease-surface), transform var(--motion-press) var(--ease-standard); }
   .folune-subscription-close svg { width: 16px; height: 16px; }
-  .folune-subscription .folune-subscription-close:hover { background: var(--surface-neutral); }
+  .folune-subscription .folune-subscription-close:hover { background-color: var(--interactive-hover); }
   .folune-subscription-inner { display: flex; min-height: 100%; flex-direction: column; align-items: center; justify-content: center; gap: 24px; padding: 48px 24px; }
   .folune-subscription-heading { max-width: 100%; text-align: center; }
   .folune-subscription-heading h1 { margin: 0 0 6px; font-family: var(--subscription-typewriter); font-size: 28px; font-weight: 300; letter-spacing: -0.025em; line-height: 1.333333; text-wrap: balance; }
