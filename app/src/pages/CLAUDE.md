@@ -2,7 +2,7 @@
 > L2 | 父级: ../../CLAUDE.md
 
 成员清单
-PricingPage.tsx: 匿名 /pricing 按 Laper 实际 DOM/CSS 还原题头、年付开关与 300px/540px 卡片，24px 居中换行；独立 Truchet 侧纹映射品牌色；服务端目录驱动月年价与日积分，全部开始/订阅到 /login，取消/超时/重试不依赖账户。
+PricingPage.tsx: 匿名 /pricing 在顶栏下复用 MarketingAnnouncement，与首页/登录/博客/动态目录共享公告；按 Laper 实际 DOM/CSS 还原题头、年付开关与 300px/540px 卡片，24px 居中换行；独立 Truchet 侧纹映射品牌色；服务端目录驱动月年价与日积分，全部开始/订阅到 /login，取消/超时/重试不依赖账户。
 PricingPage.test.tsx: 真实公开目录传输与 Router 验证匿名四档、月年报价/日额度、登录引导、失败重试和卸载中止，不替代视觉验收。
 useCheckoutFlow.ts: 订阅/积分共用结账编排；同步防连点、稳定幂等键、创建未知只查原付款、自动安全导航与离开中止；付款身份沿原路保留，后台及返回窗口主动核对后刷新权益。
 useCheckoutFlow.test.tsx: 验证连点幂等、未知创建恢复自动跳转、迟到响应隔离、后退清理过渡、返回核对及服务端确认前不发成功回执。

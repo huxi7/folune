@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 MarketingLink 的锚点过渡、BlueprintDivider 与 Landing 公告栏样式，接收可选容器 ref 供 Hero 量取高度
  * [OUTPUT]: 对外提供通往首页工作流的 37px 产品公告栏，沿用浅蓝渐变和共轴导轨
- * [POS]: widgets 的首页与登录页共享公告；文案和形制只有一份，Hero 只读取高度，不拥有另一套标记
+ * [POS]: widgets 的首页、登录、博客/动态目录与价格页共享公告；文案和形制只有一份，各页面沿自己的导轨装配，Hero 只读取高度
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import type { Ref } from "react";

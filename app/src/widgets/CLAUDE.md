@@ -38,7 +38,7 @@ TreeDisclosure.tsx: 文件树与 DS Collapse 的薄适配，声明可打断、�
 .gitkeep: 保留业务组合组件层空目录
 CLAUDE.md: 记录业务组合组件层职责与文档协议
 MarketingHeader.tsx: 价格入口链接 /pricing；首页/登录/博客/动态/价格共享的 56px 品牌、内容导航和双动作顶栏；下载在左用 Secondary、打开在右用品牌蓝 GlowButton 并导航至 /login，与 Hero 共用次主顺序；末端 CTA 独立为单个箭头开始按钮；下载入口目标待接入，认证状态归页面；手机以第二行横向导航保留全部入口
-MarketingAnnouncement.tsx: 首页与登录页共用的 37px 公告栏，保持既有文案、浅蓝渐变和 BlueprintDivider；链接统一指向首页工作流，可选 ref 只供 Hero 量取高度
+MarketingAnnouncement.tsx: 首页、登录、博客/动态目录与价格页共用的 37px 公告栏，保持既有文案、浅蓝渐变和 BlueprintDivider；链接统一指向首页工作流，可选 ref 只供 Hero 量取高度
 BlueprintFrame.tsx: Landing 纵向导轨容器；导航、1120px 正文与页脚共用主轨/外轨坐标，fullBleed 增加可选外轨，颜色由当前区块局部覆盖
 BlueprintDivider.tsx: Landing 横向导轨；showPins=false 关闭节点而保留线宽/位置，用于博客空轨下沿；14px 分隔带上下两条边分别共置横线与菱形，flush 提供零高度边界，compact 保留 7px 内部分隔带而不添加参考中没有的节点
 AuthForm.tsx: 桌面条款/隐私使用系统浏览器； LoginPage 的唯一认证表单，复用共享 Input/PasswordInput 承载邮箱、双密码与显隐控制；主提交动作(登录/注册)改用墨蓝流光 GlowButton，登录态增加无提交/导航行为的忘记密码占位，协议提示通过 MarketingLink 接通 /terms 与 /privacy、保留六格 OTP 自动校验与 Google OAuth，请求动作独占加载反馈、其余控件暂禁，验证码与状态提示复用 auth 样式；认证成功通过回调交还页面导航

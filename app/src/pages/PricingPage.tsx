@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖公开套餐目录、共享金额/积分格式、BlogFrameSection/Blueprint 导轨、原页 Truchet 花纹、DS 按钮及营销导航
+ * [INPUT]: 依赖公开套餐目录、共享金额/积分格式、MarketingAnnouncement 公告、BlogFrameSection/Blueprint 导轨、原页 Truchet 花纹、DS 按钮及营销导航
  * [OUTPUT]: 对外提供 /pricing 四档方案、月年报价切换、每日积分与目录重试；全部开始/订阅入口导航到 /login
  * [POS]: 营销壳内的匿名价格展示；仅投影服务端价格与权益，不装配账户遮罩、余额或结账生命周期
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -14,6 +14,7 @@ import { formatSubscriptionPrice } from "../shared/locale/money";
 import { BlogFrameSection } from "../widgets/BlogFrameSection";
 import { BlueprintDivider } from "../widgets/BlueprintDivider";
 import { BlueprintFrame } from "../widgets/BlueprintFrame";
+import { MarketingAnnouncement } from "../widgets/MarketingAnnouncement";
 import { PricingRailPattern } from "../widgets/PricingRailPattern";
 import { supportsMarketingTransition } from "../widgets/LandingMotion/useMarketingMotion";
 import { usePublicPageMetadata } from "./usePublicPageMetadata";
@@ -51,6 +52,7 @@ export function PricingPage() {
 
   return <BlueprintFrame key={pathname} className="landing-spine blog-spine pricing-spine" fullBleed>
     <main id="main-content">
+      <MarketingAnnouncement />
       <BlogFrameSection>
         <div className="pricing-prelude" aria-hidden="true" />
         <BlueprintDivider flush fullBleed />
