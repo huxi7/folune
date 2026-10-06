@@ -33,4 +33,6 @@ end $$;
 notify pgrst, 'reload schema';
 commit;
 
--- 2026-10-03: Staging 已应用 20261003092113 / billing_variable_rate；生产未应用。
+-- 2026-10-03: Staging 已应用 20261003092113 / billing_variable_rate；生产后续独立部署。
+
+-- 2026-10-07: Production 已应用 20261006175933；不复制 Staging 订单、钱包或事件。

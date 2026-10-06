@@ -35,3 +35,5 @@ billing.sql: 最小 billing_subscriptions 付款事实契约；用户仅获本�
 职责: 保存可审阅、可顺序部署的 Database/Storage SQL 契约；画布沿用备忘录树而不新建第二套结构；重名的最终裁决在唯一索引而非应用层预检查；业务表以 owner-only RLS 与显式 grants 隔离租户，AI 方案只经受控状态机和单事务执行器落地，远端是否已部署必须单独验证，禁止把仓库文件存在误报为线上已应用。
 
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+
+2026-10-07：Production 已应用 billing_payments（20261006175849）和 billing_variable_rate（20261006175933），环境绑定 production；未复制开发订单或余额。开账本后撤销旧用户记账权限，执行状态见 API 发布记录。

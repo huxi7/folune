@@ -38,7 +38,7 @@ Cloud Build 使用 deploy/cloudbuild.yaml。两个 GitHub push 触发器都只�
 
 ## 支付发布配置
 
-NOWPayments 正式 API 可在 main 本地开发联调；它与 Git production 分支及 Supabase 生产库是独立选择。当前供应商默认 production。合并分支只发布代码，不会上传被忽略的 api/.env，也不会自动创建支付表或定时任务。首次上线还需支付 SQL、Secret Manager、固定线上回调和外部对账调度，详见 [api/NOWPAYMENTS.md](../api/NOWPAYMENTS.md)。开发测试订单留在开发库，不能复制成线上用户权益。
+NOWPayments 正式 API 可在 main 本地开发联调；它与 Git production 分支及 Supabase 生产库是独立选择。当前供应商默认 production。合并分支只发布代码，不会上传被忽略的 api/.env，也不会自动创建支付表或定时任务。2026-10-07 已准备生产支付 SQL、受限签名身份和 Secret Manager；发布时仍须验证固定线上回调和外部对账调度，详见 [api/NOWPAYMENTS.md](../api/NOWPAYMENTS.md)。开发测试订单留在开发库，不能复制成线上用户权益。
 
 ## 运行配置
 

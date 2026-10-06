@@ -271,4 +271,6 @@ end $$;
 commit;
 
 -- 2026-10-03: Staging 已应用 20261003063924 / billing_payments，environment=production。
--- 本机新账本启用后另行撤销 authenticated 对 increment_ai_usage_daily(uuid,bigint) 的 execute；生产未部署。
+-- 本机新账本启用后另行撤销 authenticated 对 increment_ai_usage_daily(uuid,bigint) 的 execute；生产后续独立部署。
+
+-- 2026-10-07: Production 已应用 20261006175849；不复制 Staging 订单、钱包或事件。

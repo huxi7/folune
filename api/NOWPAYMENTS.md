@@ -1,12 +1,26 @@
 # NOWPayments 支付闭环
 
+## v1.2.0 生产发布（2026-10-07）
+
+Production 已应用 `20261006175849/billing_payments` 与 `20261006175933/billing_variable_rate`，环境绑定为 production；没有复制 Staging 订单或钱包。受限 `folune_billing` 角色无 LOGIN/BYPASSRLS，支付表启用 RLS，普通用户无支付写 RPC 权限。
+
+新增独立 ES256 standby key 签发服务 JWT，保留当前用户登录密钥。私钥位于仓库外受限运维目录，API 仅接收专用 JWT。当前令牌于 **2026-11-06 02:01:52（北京时间）到期**；到期前必须用同一运维签名密钥续签、添加 `folune-production-payment-db-jwt` Secret 版本并更新 API 引用，随后复跑生产预检。不得向服务注入签名私钥。
+
+Secret Manager 保存正式商户 Key/IPN/登录凭据、生产 DB JWT、对账和用量密钥。API 读取七项；Chat 只新增用量密钥。运行配置使用正式 APP/API origin，保留既有 Supabase、CORS 和 DeepSeek 配置。上线顺序为新版 Chat/API 就绪 → 开账本 → 配置并验证 Cloud Scheduler → 撤销旧用户记账 RPC → 开售。
+
+对账作业约定为 `folune-payment-reconcile`，位于 `folune7/asia-southeast1`，每两分钟 POST `/billing/internal/reconcile`；请求期限 90 秒，不配置即时重试，下一轮沿数据库五分钟租约补偿。供应商或数据库异常由接口返回失败，平台记录调度状态。生产管理员白名单初始为空；日常付款和对账不依赖管理接口。
+
+当前生产配置预检已确认正式 API/商户查询可用、359 个商户币种、受限 JWT 验签与环境一致，无缺失字段；此结果不是线上开售状态。实际开售由 Cloud Run 开关与公开目录确认。真实转账、真实 IPN 签名和退款到账仍待用户验收。
+
+本次回归通过 APP/API/Chat 类型检查及现有测试、APP/Chat 构建和桌面测试。额外通过真实 PostgreSQL 并发/权限门禁与八组 HTTP/PostgREST 支付链路；商户和 Auth 仍为受控替身，无真实资金。HTTP 测试代理显式重建请求并移除 Host，避免当前 Bun 复用入站 Request 的连接信息。
+
 2026-10-03：本机 main 已接通 Folune-staging 支付数据库、正式 NOWPayments Invoice、回调窄入口和独立对账；本地账本与开售已开启。用户在本机测试，production 分支/生产支付库未部署。最新修复取消强制固定汇率，新 $5 订单已通过正式 API 生成 USDT/BSC 付款地址（201、waiting）；未进行实际转账或验证到账。
 
 本次以用户提供的 [NOWPayments API 文档 2s93JusNJt](https://documenter.getpostman.com/view/7907941/2s93JusNJt) 的原始 Postman collection 为准。此前主要参考 S1a32n38，创建 Invoice 和验签主流程一致，但币种格式、按发票查询、重复/错币入金和过期处理已按本次核对修正。
 
 代码分支决定发布哪版代码；NOWPAYMENTS_ENV 决定访问哪套供应商 API；SUPABASE_URL 决定数据保存到哪个库，三者互相独立。本地可用正式支付 API 配开发数据库，但订单和回调必须落到创建它的那套服务/数据库，不能把开发订单复制成线上用户购买记录。
 
-## 当前接通状态（2026-10-03，用户接手视觉验收）
+## 开发接通记录（2026-10-03，用户接手视觉验收）
 
 用户要求实际接顺前后端后，本轮已把本机 main API/APP 接到 Folune-staging 的支付持久化；未改 Folune-production 数据库或 production Git 分支，未推送部署。
 
