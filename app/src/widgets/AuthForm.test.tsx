@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 happy-dom、Testing Library、MemoryRouter、真实 AuthForm 与可替换的认证服务调用
- * [OUTPUT]: 验证登录/注册/验证码与动作独占加载；退出注册的动画输入立即停用，邮箱保留，密码隐藏；不发送真实认证请求
+ * [OUTPUT]: 验证登录/注册/验证码与 Google/GitHub 动作独占加载；退出注册的动画输入立即停用，邮箱保留，密码隐藏；不发送真实认证请求
  * [POS]: widgets 的认证迁移回归门禁；只替换服务边界，真实表单事件与局部状态完整运行
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -99,13 +99,20 @@ describe("AuthForm", () => {
     expect((view.getByRole("button", { name: "登录" }) as HTMLButtonElement).disabled).toBe(false);
   });
 
-  test("Google 请求只显示自身加载，失败后可重新选择登录方式", async () => {
+  test.each([
+    ["Google", "signInWithGoogle"],
+    ["GitHub", "signInWithGitHub"],
+  ] as const)("%s 请求只显示自身加载，失败后可重新选择登录方式", async (provider, method) => {
     const request = deferred<Awaited<ReturnType<typeof auth.signInWithGoogle>>>();
-    spyOn(auth, "signInWithGoogle").mockReturnValue(request.promise);
+    const signIn = spyOn(auth, method).mockReturnValue(request.promise);
     const view = renderForm();
-    fireEvent.click(view.getByRole("button", { name: "使用 Google 账号继续" }));
+    fireEvent.click(view.getByRole("button", { name: `使用 ${provider} 账号继续` }));
+    expect(signIn).toHaveBeenCalledTimes(1);
 
-    expect(view.getByRole("button", { name: "使用 Google 账号继续" }).getAttribute("aria-busy")).toBe("true");
+    expect(view.getByRole("button", { name: `使用 ${provider} 账号继续` }).getAttribute("aria-busy")).toBe("true");
+    const other = view.getByRole("button", { name: `使用 ${provider === "Google" ? "GitHub" : "Google"} 账号继续` }) as HTMLButtonElement;
+    expect(other.disabled).toBe(true);
+    expect(other.getAttribute("aria-busy")).toBeNull();
     const submit = view.getByRole("button", { name: "登录" }) as HTMLButtonElement;
     expect(submit.disabled).toBe(true);
     expect(submit.getAttribute("aria-busy")).toBeNull();

@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 React 局部状态、Motion/DS authMotion、共享认证控件、MarketingLink 与既有认证服务
- * [OUTPUT]: 提供登录、双密码注册、六格验证码与 Google OAuth；确认密码展开时保留表单，退出时立即停用校验；主按钮消费参考弹簧，背景不重建
+ * [OUTPUT]: 提供登录、双密码注册、六格验证码与 Google/GitHub OAuth；确认密码展开时保留表单，退出时立即停用校验；主按钮消费参考弹簧，背景不重建
  * [POS]: widgets 的唯一认证表单，由 LoginPage 承载；表单负责认证步骤，页面负责布局和导航，不直接持有 Supabase client
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -10,6 +10,7 @@ import { authMotion, motionSpring } from "../shared/design-system/motion";
 import { useMotionPreference } from "../shared/design-system/useMotionPreference";
 import {
   ArrowLeftIcon,
+  GitHubLogoIcon,
   GoogleLogoIcon,
 } from "../shared/design-system/icons";
 import {
@@ -28,6 +29,7 @@ import {
   resendSignupOtp,
   signInWithPassword,
   signInWithGoogle,
+  signInWithGitHub,
   signUpWithPassword,
   verifyEmailOtp,
 } from "../shared/supabase/auth";
@@ -43,7 +45,7 @@ const AuthSubmitButton = motion.create(GlowButton);
 
 type AuthStep = "credentials" | "verification";
 type AuthMode = "login" | "register";
-type PendingAuthAction = "credentials" | "google" | "verification" | "resend";
+type PendingAuthAction = "credentials" | "google" | "github" | "verification" | "resend";
 
 type AuthFormProps = {
   onAuthenticated: () => void;
@@ -134,13 +136,13 @@ export function AuthForm({ onAuthenticated }: AuthFormProps) {
     }
   }
 
-  async function handleGoogleSignIn() {
-    setPendingAction("google");
+  async function handleOAuthSignIn(provider: "google" | "github") {
+    setPendingAction(provider);
     setErrorMessage(null);
     setNoticeMessage(null);
 
     try {
-      await signInWithGoogle();
+      await (provider === "google" ? signInWithGoogle() : signInWithGitHub());
     } catch (error) {
       setErrorMessage(getAuthErrorMessage(error));
       setPendingAction(null);
@@ -315,10 +317,21 @@ export function AuthForm({ onAuthenticated }: AuthFormProps) {
             disabled={busy}
             icon={GoogleLogoIcon}
             loading={pendingAction === "google"}
-            onClick={handleGoogleSignIn}
+            onClick={() => handleOAuthSignIn("google")}
             variant="secondary"
           >
             使用 Google 账号继续
+          </Button>
+
+          <Button
+            className="auth-provider-button w-full"
+            disabled={busy}
+            icon={GitHubLogoIcon}
+            loading={pendingAction === "github"}
+            onClick={() => handleOAuthSignIn("github")}
+            variant="secondary"
+          >
+            使用 GitHub 账号继续
           </Button>
 
           <div className="auth-divider" aria-hidden="true">

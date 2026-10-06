@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依据当前 Google/Supabase 身份链路、DeepSeek 任务处理、公开头像、本地缓存和删除边界，依赖 legalSite 与 MarketingLink
- * [OUTPUT]: 对外提供独立 /privacy 的中文隐私政策，明确 Google 数据用途、分享、保留及删除请求规则
+ * [INPUT]: 依据当前 Google/GitHub/Supabase 身份链路、DeepSeek 任务处理、公开头像、本地缓存和删除边界，依赖 legalSite 与 MarketingLink
+ * [OUTPUT]: 对外提供独立 /privacy 的中文隐私政策，明确第三方身份数据用途、分享、保留及删除请求规则
  * [POS]: pages 的公开数据处理说明；与运行时事实同向维护，不把尚未接通的能力描述为可用
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -24,11 +24,12 @@ export const privacyContent: PublicArticleContent = {
       "当前上传头像通过 Supabase Storage 的公开图片地址提供。拥有图片地址的人可能在无需登录的情况下查看该图片；账号权限对笔记的保护不应被理解为头像图片同样私密。请只上传你愿意以这种方式展示的头像，避免使用证件、儿童照片或其他敏感图片。",
       "当你向我们提出问题、举报或隐私请求时，我们会处理来信邮箱、问题描述、必要的身份核验信息及往来记录，用来答复、核实身份、处理争议和保留处理记录。请优先提供问题发生时间和必要截图，并遮挡与请求无关的个人信息。",
     ] },
-    { title: "三、通过 Google 登录取得的数据", paragraphs: [
+    { title: "三、通过 Google 或 GitHub 登录取得的数据", paragraphs: [
       "选择“使用 Google 账号继续”时，你会进入 Google 的授权流程。当前登录使用基础身份权限：openid、电子邮箱及基本个人资料（对应 userinfo.email、userinfo.profile）。Google 可向认证服务返回账号唯一标识、邮箱和邮箱验证状态，以及可用的姓名、头像等基本资料。实际返回字段取决于 Google 账号设置和授权结果。",
       "这些资料通过 Supabase Auth 建立或识别 Folune 用户身份、关联账号、验证登录并保持会话。Folune 业务系统使用用户标识和邮箱维护账号资料及数据归属；基础身份资料也可能保存在认证系统中，以便后续登录识别。我们不接收你的 Google 密码。",
       "Folune 当前不申请读取 Gmail 邮件、Google Drive 文件、联系人、日历或其他 Google 业务数据的权限，也不通过 Google API 替你发送邮件、修改文件或管理通讯录。使用 Folune 的 AI，不会自动扩大 Google 授权范围。",
       "登录会产生认证所需的授权代码和令牌。Supabase 负责交换并建立 Folune 会话；浏览器会保存必要的会话数据，登录响应也可能携带 Google 提供方令牌。Folune 没有使用提供方令牌调用额外 Google 业务 API 的功能，也没有为持续访问此类数据而申请离线权限。",
+      "选择 GitHub 登录时，Supabase Auth 读取 GitHub 的账号标识、公开基本资料及登录邮箱（user:email），用于身份识别和建立 Folune 会话。我们不接收 GitHub 密码，不申请仓库或组织权限，也不使用提供方令牌读取代码、提交记录或代你修改仓库。基础身份资料按本政策的账号保留与删除规则保存，不用于广告或训练通用模型。",
       "如果以后新增必须访问其他 Google 数据的功能，我们会先说明需要哪些权限、为何需要以及如何处理数据，并在使用该功能时请求相应授权。不会将当前登录授权解释成对未来新增用途的概括同意。",
     ] },
     { title: "四、Google 用户数据的用途限制", paragraphs: [
@@ -62,7 +63,7 @@ export const privacyContent: PublicArticleContent = {
       "基于同意进行的处理，你可以撤回同意。撤回不影响撤回前合法进行的处理，但可能使依赖该数据的特定功能无法继续。对超出原先已披露用途的处理，我们会先说明并依法确定新的处理依据，不把你继续浏览网站当作对敏感或新增用途的默认同意。",
     ] },
     { title: "九、服务商、披露与数据转移", paragraphs: [
-      <>我们使用 Google 提供可选账号登录，使用 Supabase 提供认证、数据库和头像对象存储，使用 DeepSeek 提供主动触发的 AI 任务计算。你可分别查阅 <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Google 隐私政策</a>、<a href="https://supabase.com/privacy" target="_blank" rel="noopener noreferrer">Supabase 隐私政策</a> 和 <a href="https://cdn.deepseek.com/policies/zh-CN/deepseek-privacy-policy.html" target="_blank" rel="noopener noreferrer">DeepSeek 隐私政策</a>。这些链接用于说明服务商，不能替代 Folune 自身的披露和责任。</>,
+      <>我们使用 Google 或 GitHub 提供可选账号登录，使用 Supabase 提供认证、数据库和头像对象存储，使用 DeepSeek 提供主动触发的 AI 任务计算。你可分别查阅 <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Google 隐私政策</a>、<a href="https://docs.github.com/site-policy/privacy-policies/github-privacy-statement" target="_blank" rel="noopener noreferrer">GitHub 隐私声明</a>、<a href="https://supabase.com/privacy" target="_blank" rel="noopener noreferrer">Supabase 隐私政策</a> 和 <a href="https://cdn.deepseek.com/policies/zh-CN/deepseek-privacy-policy.html" target="_blank" rel="noopener noreferrer">DeepSeek 隐私政策</a>。这些链接用于说明服务商，不能替代 Folune 自身的披露和责任。</>,
       "网站托管、网络传输、安全防护和必要邮件服务提供者也可能处理为完成其职责所需的信息。我们仅应向服务商提供相应功能所必需的数据，依据适用约定限制处理目的，并采取适当保护措施，不因其技术上能够访问数据就允许无关使用。",
       "我们不出售你的个人信息。除服务所必需的受托处理、你的明确请求或同意、依法必须履行的义务及合法必要的安全保护外，不向其他独立主体披露私人内容。收到法律请求时，会核查请求的合法性和范围，仅在法律要求或允许的必要范围内披露。",
       "若发生运营主体变更、合并或服务转移并涉及个人信息，我们会告知接收方身份和联系方式，要求其继续受本政策及适用义务约束；如果处理目的或方式发生实质变化，将依法重新告知并取得所需同意。不会把主体变更当作无限扩大数据用途的依据。",
@@ -84,8 +85,9 @@ export const privacyContent: PublicArticleContent = {
       "我们会在必要且相称的范围内验证请求者身份，避免把资料交给冒用者。可以使用账号邮箱控制权或其他合理证据核实，不会索要密码、验证码或无关证件。若请求由代理人提出，我们可能需要核实代理授权；无法核实时会说明原因。",
       "我们会在适用法律规定的期限内答复，告知已采取的措施、未能处理的部分及理由。对于法律允许拒绝或收取合理成本的明显重复、过度或无法核实的请求，会先作出说明。你仍可以向有权监管机关投诉，或使用法律规定的其他救济途径。",
     ] },
-    { title: "十三、撤销 Google 授权与退出登录", paragraphs: [
+    { title: "十三、撤销第三方授权与退出登录", paragraphs: [
       <>你可前往 <a href="https://myaccount.google.com/connections" target="_blank" rel="noopener noreferrer">Google 账号的第三方连接管理页面</a>，找到 Folune 并按 Google 提供的方式移除连接或撤回授权。这样可以限制后续通过 Google 的授权访问；Folune 不会绕过你的撤销决定继续获取新的 Google 数据。</>,
+      <>GitHub 登录可在 <a href="https://github.com/settings/applications" target="_blank" rel="noopener noreferrer">GitHub 的 Authorized OAuth Apps</a> 中撤销 Folune 授权。撤销会影响后续 GitHub 登录，但不会自动删除 Folune 数据或结束既有 Folune 会话；退出和删除请求仍沿本政策执行。GitHub 身份资料与认证令牌不会被自动附加到 AI 任务中。</>,
       "撤销 Google 授权不会自动删除已经建立的 Folune 账号、现有笔记、聊天记录或本地缓存，也不保证既有 Folune 登录会话立即结束。若要停止当前会话，请在 Folune 退出登录；若要删除已存储的信息，请同时提交注销或删除请求。",
       "删除 Folune 数据不会删除 Google 账号或 Google 自己持有的数据。Google 侧资料的更正与删除，应通过其账号管理功能处理。如你仅用 Google 登录，撤销前请确认其他实际可用的访问方式；我们不承诺尚未提供的登录方式会自动为你开通。",
     ] },

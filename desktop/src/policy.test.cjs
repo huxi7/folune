@@ -31,3 +31,23 @@ test('授权请求必须同 Supabase、同回调、S256', () => {
   url.hostname = 'evil.test';
   assert.equal(isAuthorizationUrl(url.href,'https://example.supabase.co',redirect),false);
 });
+
+test('Google/GitHub 均要求固定来源、回调与 S256，拒绝其他提供商', () => {
+  const base = 'https://example.supabase.co';
+  const redirect = 'folune://auth/callback?state=expected';
+  for (const provider of ['google', 'github']) {
+    const url = new URL(`${base}/auth/v1/authorize`);
+    url.search = new URLSearchParams({ provider, redirect_to: redirect, code_challenge: 'challenge', code_challenge_method: 's256' }).toString();
+    assert.equal(isAuthorizationUrl(url.href, base, redirect), true);
+    assert.equal(isAuthorizationUrl(url.href, base, `${redirect}-wrong`), false);
+    assert.equal(isAuthorizationUrl(url.href, 'https://other.supabase.co', redirect), false);
+    url.searchParams.set('code_challenge_method', 'plain');
+    assert.equal(isAuthorizationUrl(url.href, base, redirect), false);
+    url.searchParams.set('code_challenge_method', 's256');
+    url.searchParams.delete('code_challenge');
+    assert.equal(isAuthorizationUrl(url.href, base, redirect), false);
+    url.searchParams.set('code_challenge', 'challenge');
+    url.searchParams.set('provider', 'gitlab');
+    assert.equal(isAuthorizationUrl(url.href, base, redirect), false);
+  }
+});

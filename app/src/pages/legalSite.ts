@@ -8,5 +8,5 @@ export const legalSite = {
   operator: "huxi（Folune 独立开发者）",
   origin: "https://folune.huxi7.com",
   email: "oxygen777@2925.com",
-  updatedAt: "2026-09-25",
+  updatedAt: "2026-10-07",
 };

@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Node URL/path 与 semver 的版本比较
- * [OUTPUT]: 对外提供固定发布地址、导航/授权/资源路径校验与稳定版本判断
+ * [OUTPUT]: 对外提供固定发布地址、导航/资源路径校验、Google/GitHub PKCE 授权白名单与稳定版本判断
  * [POS]: 桌面主进程的纯安全策略；所有不可信 URL 在进入原生能力前经过此边界
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -40,7 +40,7 @@ function isAuthorizationUrl(value, supabaseUrl, redirectTo) {
   try {
     const url = new URL(value);
     return !url.username && !url.password && url.origin === new URL(supabaseUrl).origin && url.pathname === '/auth/v1/authorize'
-      && url.searchParams.get('provider') === 'google'
+      && ['google', 'github'].includes(url.searchParams.get('provider'))
       && url.searchParams.get('redirect_to') === redirectTo
       && url.searchParams.get('code_challenge_method')?.toLowerCase() === 's256'
       && Boolean(url.searchParams.get('code_challenge'));

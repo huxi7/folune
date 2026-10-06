@@ -57,6 +57,8 @@ Chat 的生产入口仅开放 /health 及四个 /v1 业务路径，关闭 Mastra
 
 Production Supabase 的 Site URL 为 `https://folune.huxi7.com`，重定向白名单为 `https://folune.huxi7.com/auth/callback`；Google 登录已启用。更换登录提供商或调整邮件、Storage 时，仍需单独核实对应服务配置。
 
+GitHub OAuth App 已创建，代码沿用 Google 的 PKCE 链路。Client Secret 生成受 GitHub 本人两步验证阻塞，两库 Provider 尚未启用；恢复执行和实测边界见 [OAUTH.md](OAUTH.md)。
+
 ## 发布与验证
 
 先检查生产镜像的 /health、业务接口无 token 的 401、CORS 与实际业务链路，再将验证后的代码从 main 合入 production。Cloudflare 和 Cloud Build 独立触发，不保证完成顺序；跨层变化必须兼容旧版本，或按数据库迁移、后端、前端分步发布。

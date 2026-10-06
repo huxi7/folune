@@ -2,6 +2,7 @@
 > L2 | 父级: ../CLAUDE.md
 
 成员清单
+octicons-LICENSE.txt: GitHub 官方登录图标的上游 MIT 许可，随静态资源分发
 account/: 账户积分弹窗用户选定的蓝色生成图及原始生成参考及独立绘制的中美国旗，全部同源托管
 fonts/: 同源 Montserrat 拉丁可变字体与 SIL 许可，供账户和 APP 英文控件消费
 auth/: 登录页本地 3:4 书房花园循环视频与同源首帧；保留原视频画幅并移除展示不需要的音轨
