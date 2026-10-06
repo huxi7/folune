@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 AI SDK UI stream、可注入模型流/审批/持久化函数与请求取消信号
  * [OUTPUT]: 对外提供 createChatResponseStream；正文即时透传，余额不足文案跨包装保留，静默超时/流内错误/无 finish 均进入失败终态
- * [POS]: 聊天流生命周期边界；等待落库保证切换一致性，审批最多四项并发且逐项计时，工具续写只在审批与本轮落库完成后开放 onFinish 等待用量记账与回复持久化，记账失败不静默吞掉。
+ * [POS]: 聊天流生命周期边界；审批最多四项并发且逐项计时，工具续写等待审批、落库与记账；用量只取本次模型 finish，避免续写继承旧 metadata 重复扣费
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -28,8 +28,8 @@ type Options = {
 };
 
 // finish 时经 messageMetadata 注入的本轮真实 token（输入+输出总和）；缺失或非正数视为 0。
-const readUsageTokens = (message: UIMessage): number => {
-  const meta = message.metadata as { folune_total_tokens?: unknown } | undefined;
+const readUsageTokens = (metadata: unknown): number => {
+  const meta = metadata as { folune_total_tokens?: unknown } | undefined;
   const value = meta?.folune_total_tokens;
   return typeof value === "number" && Number.isFinite(value) && value > 0 ? value : 0;
 };
@@ -41,6 +41,7 @@ export function createChatResponseStream(options: Options) {
   let timeout = false;
   let phase = "startup";
   let chunks = 0;
+  let usageTokens = 0;
   let failureMessage = GENERATION_ERROR;
   const errorText = () => timeout ? GENERATION_TIMEOUT : failureMessage;
 
@@ -90,6 +91,8 @@ export function createChatResponseStream(options: Options) {
           const { value: chunk, done } = await waitForProgress(reader.read());
           if (done) throw new Error(GENERATION_ERROR);
           chunks++;
+          // 续写消息会合并上轮 metadata；只接受当前上游的 finish，且先保留失败生成的真实消耗。
+          if (chunk.type === "finish") usageTokens = readUsageTokens(chunk.messageMetadata);
           if (chunk.type === "error") {
             failureMessage = modelErrorMessage(chunk.errorText);
             throw new Error(failureMessage);
@@ -143,14 +146,20 @@ export function createChatResponseStream(options: Options) {
       }
     },
     onFinish: async ({ responseMessage, isAborted }) => {
-      const usageTokens = readUsageTokens(responseMessage);
-      const usageResult = usageTokens > 0 ? Promise.resolve().then(()=>options.onUsage?.(usageTokens)).then(()=>null,()=>new Error("用量记账失败，请稍后重试。")) : Promise.resolve(null);
+      const usageResult = usageTokens > 0
+        ? Promise.resolve()
+          .then(() => options.onUsage?.(usageTokens))
+          .then(() => null, () => new Error("用量记账失败，请稍后重试。"))
+        : Promise.resolve(null);
       const saved = await persistWithOneRetry(() => options.persist(
         responseMessage,
         isAborted || options.signal.aborted ? "aborted" : failed ? "error" : "complete",
       ));
-      const usageError=await usageResult;
-      if (usageError) { options.onPersistenceError(); throw usageError; }
+      const usageError = await usageResult;
+      if (usageError) {
+        options.onPersistenceError();
+        throw usageError;
+      }
       if (!saved) {
         options.onPersistenceError();
         throw new Error("回复保存失败，请稍后重试。");

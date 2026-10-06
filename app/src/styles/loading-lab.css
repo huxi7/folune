@@ -1,0 +1,52 @@
+/**
+ * [INPUT]: 依赖生产Skeleton/卡片/版心构图及共享明暗主题token
+ * [OUTPUT]: DEV加载验收页的三栏实景、卡片与交接样板排版
+ * [POS]: 仅LoadingLabPage导入；不进入生产路由，不覆盖正式组件参数
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+@layer components {
+  .loading-lab { min-height: 100vh; padding: 64px 32px 80px; background: var(--background); color: var(--foreground); }
+  .loading-lab-inner { max-width: 1320px; margin: auto; }
+  .loading-lab-header { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 40px; }
+  .loading-lab-eyebrow { margin-bottom: 16px; color: var(--muted-foreground); font: 10px/1.4 var(--font-sans); letter-spacing: 0.16em; }
+  .loading-lab-header h1 { font-family: var(--font-serif); font-size: clamp(28px, 4vw, 40px); font-weight: 400; letter-spacing: -0.04em; }
+  .loading-lab-header h1 + p { margin-top: 12px; color: var(--muted-foreground); font-size: 12px; }
+  .loading-lab-controls { display: flex; gap: 8px; }
+  .loading-lab-workspace { display: grid; grid-template-columns: minmax(150px, .68fr) minmax(340px, 1.9fr) minmax(250px, 1fr); gap: 20px; align-items: start; padding: 28px; border: 1px solid var(--border); border-radius: var(--radius-dialog); corner-shape: var(--corner-shape-smooth); background: color-mix(in srgb, var(--skeleton-base) 16%, var(--background)); }
+  .loading-lab-library,.loading-lab-assistant { overflow: hidden; display: flex; flex-direction: column; min-height: 400px; border: 1px solid var(--border); border-radius: var(--radius-panel); corner-shape: var(--corner-shape-smooth); background: var(--card); }
+  .loading-lab-library { min-height: 286px; }
+  .loading-lab-panel-heading,.loading-lab-paper-toolbar { display: flex; justify-content: space-between; padding: 16px; font-size: 11px; font-weight: 500; }
+  .loading-lab-panel-heading span,.loading-lab-paper-toolbar span:last-child { color: var(--muted-foreground); font-size: 10px; font-weight: 400; }
+  .loading-lab-paper { min-height: 482px; background: var(--card); border: 1px solid color-mix(in srgb, var(--border) 60%, transparent); border-radius: var(--radius-paper); corner-shape: var(--corner-shape-smooth); box-shadow: 0 2px 3px rgb(0 0 0 / 2%), 0 16px 26px -20px rgb(0 0 0 / 14%); container-type: inline-size; }
+  .loading-lab-paper .note-editor-canvas { min-height: 0; grid-template-rows: auto auto; padding-top: 28px; }
+  .loading-lab-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-block: 42px; }
+  .loading-lab-section-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
+  .loading-lab-section-heading h2 { font-size: 13px; font-weight: 500; }
+  .loading-lab-section-heading span { color: var(--muted-foreground); font-size: 10px; }
+  .loading-lab-credits { --credits-card-radius: 24px; }
+  .loading-lab-credits .folune-credits-packs { margin: 0; }
+  .loading-lab-handoff { min-height: 204px; padding: 32px; border: 1px solid var(--border); border-radius: var(--radius-panel); corner-shape: var(--corner-shape-smooth); background: var(--card); }
+  .loading-lab-handoff .ds-skeleton-group { display: grid; gap: 18px; }
+  .loading-lab-handoff .ds-skeleton { width: 84%; height: 8px; }
+  .loading-lab-handoff .loading-lab-handoff-title { height: 16px; width: 60%; margin-bottom: 12px; }
+  .loading-lab-handoff .ds-skeleton:last-child { width: 58%; }
+  .loading-lab-handoff h3 { margin-bottom: 20px; font: 400 20px/1.4 var(--font-serif); }
+  .loading-lab-handoff p { max-width: 32em; color: var(--muted-foreground); font-size: 12px; line-height: 2; }
+  .loading-lab-plans { --subscription-width: 58.25rem; --subscription-typewriter: 'Courier New', Courier, serif; }
+  .loading-lab-plans .folune-subscription-grid { margin-inline: auto; }
+  @media (max-width: 980px) {
+    .loading-lab { padding: 36px 20px; }
+    .loading-lab-workspace { grid-template-columns: minmax(0, 1.6fr) minmax(220px, 1fr); padding: 20px; }
+    .loading-lab-library { display: none; }
+    .loading-lab-detail-grid { gap: 24px; }
+  }
+  @media (max-width: 620px) {
+    .loading-lab { padding: 28px 16px; }
+    .loading-lab-header { align-items: flex-start; flex-direction: column; }
+    .loading-lab-workspace { grid-template-columns: minmax(0, 1fr); padding: 12px; gap: 16px; }
+    .loading-lab-paper { min-height: 410px; }
+    .loading-lab-assistant { min-height: 360px; }
+    .loading-lab-detail-grid { grid-template-columns: minmax(0, 1fr); }
+    .loading-lab-section-heading { flex-wrap: wrap; }
+  }
+}

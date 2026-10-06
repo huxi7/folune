@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Canvas V2 API、canvasDocument 纯投影、canvasWal 持久存储与可注入 transport/sink/clock
- * [OUTPUT]: 对外提供单 Canvas 单标签页保存协调器：手势级原子入账、600ms 封装、稳定 mutation、串行发送、0.5/1/2s 重试、receipt 重放、一次 409 rebase 与 48KiB pagehide 上限
+ * [OUTPUT]: 对外提供单 Canvas 单标签页保存协调器：恢复/手势串行入账、离场隔离并保留 WAL、600ms 封装、稳定 mutation、串行重试、receipt 重放、一次 409 rebase 与 48KiB pagehide 上限
  * [POS]: shared/store 的 CanvasSaveCoordinator；计时器、网络与 IndexedDB 生命周期只住这里，React 组件只产生 intent 并消费状态
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -207,32 +207,35 @@ export class CanvasSaveCoordinator {
   }
 
   async recover(serverDetail: CanvasDetail): Promise<void> {
-    this.sink.setPersistence("recovering", 0);
+    if (this.disposed) return;
+    this.setPersistence("recovering", 0);
     try {
-      const records = await this.storage.list(this.scope);
-      const drafts = records.filter(
-        (record): record is CanvasWalDraft => record.kind === "draft",
-      );
-      if (drafts.length > 1) {
-        throw new Error("发现多份 Canvas 草稿，已停止自动恢复。");
-      }
-      this.draft = drafts[0] ?? null;
-      this.queue = records.filter(
-        (record): record is CanvasWalMutation => record.kind === "mutation",
-      );
-      const pending = this.pendingIntents();
-      this.sink.replaceServer(serverDetail, pending);
-      this.updateStatus("recovering");
+      // 画布在磁盘读取结束前已可交互；恢复必须先占同一把锁，不能覆盖新手势。
+      await this.withWalLock(async () => {
+        if (this.disposed) return;
+        const records = await this.storage.list(this.scope);
+        if (this.disposed) return;
+        const drafts = records.filter(
+          (record): record is CanvasWalDraft => record.kind === "draft",
+        );
+        if (drafts.length > 1) {
+          throw new Error("发现多份 Canvas 草稿，已停止自动恢复。");
+        }
+        this.draft = drafts[0] ?? null;
+        this.queue = records.filter(
+          (record): record is CanvasWalMutation => record.kind === "mutation",
+        );
+        this.sink.replaceServer(serverDetail, this.pendingIntents());
+        this.updateStatus("recovering");
 
-      if (this.draft !== null && this.draft.intents.length > 0) {
-        await this.sealDraft();
-      }
+        await this.sealDraftLocked();
+      });
       await this.processQueue();
       if (this.draft === null && this.queue.length === 0) {
         this.updateStatus("idle");
       }
     } catch (error) {
-      this.sink.setPersistence(
+      this.setPersistence(
         "recovery_error",
         this.pendingCount(),
         error instanceof Error ? error.message : "Canvas 恢复失败。",
@@ -254,6 +257,8 @@ export class CanvasSaveCoordinator {
     if (intents.length === 0) return;
 
     await this.withWalLock(async () => {
+      // 仍在等待恢复的旧手势不可覆盖尚未读出的历史草稿。
+      if (this.disposed) throw new Error("Canvas 保存会话已经结束。");
       const draft: CanvasWalDraft = this.draft ?? {
         canvas_id: this.scope.canvasId,
         created_at: this.nextCreatedAt(),
@@ -268,7 +273,7 @@ export class CanvasSaveCoordinator {
       try {
         await this.storage.put(next);
       } catch (error) {
-        this.sink.setPersistence(
+        this.setPersistence(
           "local_recovery_unavailable",
           this.pendingCount(),
           error instanceof Error ? error.message : "本机恢复不可用。",
@@ -277,6 +282,7 @@ export class CanvasSaveCoordinator {
       }
 
       this.draft = next;
+      if (this.disposed) return;
       for (const intent of intents) this.sink.applyLocal(intent);
       this.updateStatus(this.processing === null ? "idle" : "saving");
       this.scheduleSeal();
@@ -287,11 +293,13 @@ export class CanvasSaveCoordinator {
     intents: readonly CanvasIntent[],
     expansion: CanvasExpansionEnvelope,
   ): Promise<void> {
+    if (this.disposed) throw new Error("Canvas 保存会话已经结束。");
     try {
       await this.withWalLock(async () => {
         // AI 等待模型期间用户仍可编辑。先把这些人工 intent 封成队列前项，
         // 才能保证 expansion 的 base_version 与用户实际操作顺序一致。
         await this.sealDraftLocked();
+        if (this.disposed) throw new Error("Canvas 保存会话已经结束。");
         const baseVersion = this.nextBaseVersion();
         const chunks = intents.length === 0
           ? [{ id: this.randomUUID(), intents: [] }]
@@ -306,11 +314,12 @@ export class CanvasSaveCoordinator {
           baseVersion,
           expansion,
         );
+        if (this.disposed) throw new Error("Canvas 保存会话已经结束。");
 
         try {
           await this.storage.put(mutation);
         } catch (error) {
-          this.sink.setPersistence(
+          this.setPersistence(
             "local_recovery_unavailable",
             this.pendingCount(),
             error instanceof Error ? error.message : "本机恢复不可用。",
@@ -319,6 +328,7 @@ export class CanvasSaveCoordinator {
         }
 
         this.queue.push(mutation);
+        if (this.disposed) return;
         for (const intent of intents) this.sink.applyLocal(intent);
         this.updateStatus("saving");
       });
@@ -348,11 +358,13 @@ export class CanvasSaveCoordinator {
   }
 
   flushForPageHide(): void {
+    if (this.disposed) return;
     this.clearSealTimer();
     void this.sealDraft().then(() => {
       const mutation = this.queue[0];
       if (
-        mutation === undefined
+        this.disposed
+        || mutation === undefined
         || mutation.expansion !== null
         || canvasMutationByteLength(mutation) > CANVAS_KEEPALIVE_MAX_BYTES
       ) {
@@ -368,6 +380,7 @@ export class CanvasSaveCoordinator {
   }
 
   private scheduleSeal(): void {
+    if (this.disposed) return;
     this.clearSealTimer();
     this.flushTimer = setTimeout(() => {
       this.flushTimer = null;
@@ -388,7 +401,7 @@ export class CanvasSaveCoordinator {
 
   private async sealDraftLocked(): Promise<void> {
     const draft = this.draft;
-    if (draft === null || draft.intents.length === 0) return;
+    if (this.disposed || draft === null || draft.intents.length === 0) return;
 
     const baseVersion = this.nextBaseVersion();
     const normalized = normalizeCanvasIntents(draft.intents);
@@ -401,11 +414,12 @@ export class CanvasSaveCoordinator {
         null,
       ),
     ));
+    if (this.disposed) return;
 
     try {
       await this.storage.replaceDraft(draft.key, mutations);
     } catch (error) {
-      this.sink.setPersistence(
+      this.setPersistence(
         "local_recovery_unavailable",
         this.pendingCount(),
         error instanceof Error ? error.message : "Canvas 草稿无法封装。",
@@ -448,6 +462,7 @@ export class CanvasSaveCoordinator {
   }
 
   private async processQueue(): Promise<void> {
+    if (this.disposed) return;
     if (this.processing !== null) {
       await this.processing;
       return;
@@ -466,7 +481,8 @@ export class CanvasSaveCoordinator {
       const current = this.queue[0]!;
       this.updateStatus("saving");
       const result = await this.sendWithRetry(current);
-      if (result === null) return;
+      // 旧请求可能已在服务器提交；留同一 mutation 的 WAL 给下次 receipt 重放。
+      if (this.disposed || result === null) return;
       if (result === "discarded") continue;
 
       const pending = this.pendingIntents(1);
@@ -476,7 +492,7 @@ export class CanvasSaveCoordinator {
       try {
         await this.storage.delete(current.key);
       } catch (error) {
-        this.sink.setPersistence(
+        this.setPersistence(
           "recovery_error",
           this.pendingCount(),
           error instanceof Error
@@ -495,13 +511,16 @@ export class CanvasSaveCoordinator {
     mutation: CanvasWalMutation,
   ): Promise<CanvasMutationResult | "discarded" | null> {
     for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt += 1) {
+      if (this.disposed) return null;
       try {
         mutation.attempts += 1;
         await this.storage.put(mutation);
+        if (this.disposed) return null;
         return mutation.expansion === null
           ? await this.transport.mutate(mutationRequest(mutation))
           : await this.transport.commitExpansion(expansionRequest(mutation));
       } catch (error) {
+        if (this.disposed) return null;
         if (
           error instanceof ApiError
           && error.status === 409
@@ -522,7 +541,7 @@ export class CanvasSaveCoordinator {
         }
 
         if (!isTransient(error) || attempt === RETRY_DELAYS_MS.length) {
-          this.sink.setPersistence(
+          this.setPersistence(
             "unsaved",
             this.pendingCount(),
             error instanceof Error ? error.message : "Canvas 尚未保存。",
@@ -542,8 +561,10 @@ export class CanvasSaveCoordinator {
   ): Promise<boolean> {
     try {
       const latest = await this.transport.getCanvas();
+      if (this.disposed) return false;
       await this.storage.delete(mutation.key);
       this.queue.shift();
+      if (this.disposed) return true;
       this.sink.replaceServer(latest, this.pendingIntents());
       this.updateStatus(this.queue.length === 0 ? "idle" : "saving");
       this.onDiscardedExpansion(error);
@@ -557,7 +578,7 @@ export class CanvasSaveCoordinator {
     mutation: CanvasWalMutation,
   ): Promise<CanvasMutationResult | null> {
     if (mutation.conflict_replays >= 1) {
-      this.sink.setPersistence(
+      this.setPersistence(
         "conflict",
         this.pendingCount(),
         "Canvas 在另一处持续变化，请检查本地恢复内容。",
@@ -567,13 +588,16 @@ export class CanvasSaveCoordinator {
 
     try {
       const latest = await this.transport.getCanvas();
+      if (this.disposed) return null;
       mutation.base_version = latest.canvas.version;
       mutation.conflict_replays += 1;
       await this.storage.put(mutation);
+      if (this.disposed) return null;
       for (let index = 1; index < this.queue.length; index += 1) {
         const queued = this.queue[index]!;
         queued.base_version = latest.canvas.version + index;
         await this.storage.put(queued);
+        if (this.disposed) return null;
       }
       this.sink.replaceServer(latest, this.pendingIntents());
 
@@ -581,7 +605,7 @@ export class CanvasSaveCoordinator {
         ? await this.transport.mutate(mutationRequest(mutation))
         : await this.transport.commitExpansion(expansionRequest(mutation));
     } catch (error) {
-      this.sink.setPersistence(
+      this.setPersistence(
         "conflict",
         this.pendingCount(),
         error instanceof Error ? error.message : "Canvas 冲突无法自动合并。",
@@ -628,6 +652,12 @@ export class CanvasSaveCoordinator {
   private updateStatus(
     status: "idle" | "recovering" | "saving",
   ): void {
-    this.sink.setPersistence(status, this.pendingCount());
+    this.setPersistence(status, this.pendingCount());
+  }
+
+  private setPersistence(
+    ...parameters: Parameters<CanvasCoordinatorSink["setPersistence"]>
+  ): void {
+    if (!this.disposed) this.sink.setPersistence(...parameters);
   }
 }

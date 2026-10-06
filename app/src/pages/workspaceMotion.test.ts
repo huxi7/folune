@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun test、workspaceMotion 语义 token、Canvas/Workspace/Dialog/Cord reduced-motion CSS 与 Paper/Canvas 路由协调器源码
- * [OUTPUT]: 锁定分场景节奏、模态缓起步且无弹簧长尾、纸面原300/240ms零过冲、正文不缩放、交接互补及路由/会话身份；Reduced Motion取消空间位移与路径绘制
+ * [OUTPUT]: 锁定分场景节奏、模态缓起步且无弹簧长尾、纸面原300/240ms零过冲、正文不缩放、交接互补及路由/会话身份；遮罩沿语义变量保持85%底色，Reduced Motion取消空间位移与路径绘制
  * [POS]: pages 的统一 Motion Language 回归门禁；防止组件重新发明时长、给遮罩单独命名而盖住正在放大的纸、把正文当图片拉伸，或以缩短原空间 keyframe 冒充 reduced-motion
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -229,7 +229,9 @@ describe("Workspace Motion Language", () => {
     );
     expect(veil).toContain("animation: none;");
     expect(veil).toContain("backdrop-filter: none;");
-    expect(veil).toContain("background: color-mix(in srgb, var(--background) 85%, transparent);");
+    const backdrop = designSystemCss.match(/\.ds-dialog-overlay\s*\{([^}]+)\}/)?.[1];
+    expect(backdrop).toContain("--dialog-backdrop-color: color-mix(in srgb, var(--background) 85%, transparent);");
+    expect(backdrop).toContain("background: var(--dialog-backdrop-color);");
     expect(designSystemCss).toContain("@supports not (view-transition-name: none)");
   });
   /*

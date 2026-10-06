@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 消费 APP app-typography.css 文字角色，变量回退保持非 APP 原排版； 依赖设计系统的半径/曲线配对规则与 index.css 的 Quiet Editorial 语义 Color/Type/Spacing/Radius/Elevation/Motion、统一中性 interactive-hover 与 Tailwind v4 layer
- * [OUTPUT]: 菜单、密码显隐与身份入口共用150ms中性变色；统一菜单材质、平面Input/Select/Card与BrandMark；Dialog的panel/bare默认85%页面底色遮罩，dim确认改用单层40%黑色遮罩，普通模态父层与背景/面板同拍淡入，纸面模式随root过渡；提供Skeleton/Thinking/loading状态
+ * [OUTPUT]: 菜单、密码显隐与身份入口共用150ms中性变色；统一菜单材质、平面Input/Select/Card与BrandMark；Dialog的panel/bare默认85%页面底色遮罩，dim确认改用单层40%黑色遮罩，普通模态父层与背景/面板同拍淡入，纸面模式随root过渡；提供中性细槽Skeleton/单组无模糊掠光、Thinking/loading状态
  * [POS]: app/src/styles 的组件视觉层，被 index.css 统一导入
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -22,62 +22,63 @@
     box-shadow: var(--shadow-sm);
   }
 
+  /* ---- 单组掠光：只沿低对比占位移动，静止留白不叠模糊或多重动画 ---- */
   .ds-skeleton-group {
     position: relative;
-    isolation: isolate;
     overflow: hidden;
+    pointer-events: none;
   }
 
   .ds-skeleton-group::after {
     content: "";
     position: absolute;
-    inset-block: -18%;
-    left: -72%;
+    inset-block: 0;
+    left: -36%;
     z-index: 2;
-    width: 64%;
-    background: linear-gradient(
-      90deg,
+    width: 32%;
+    background: linear-gradient(105deg,
       transparent 0%,
-      color-mix(in srgb, var(--skeleton-highlight) 18%, transparent) 18%,
-      color-mix(in srgb, var(--skeleton-highlight) 72%, transparent) 50%,
-      color-mix(in srgb, var(--skeleton-highlight) 18%, transparent) 82%,
-      transparent 100%
-    );
-    filter: blur(0.18rem);
+      color-mix(in srgb, var(--skeleton-highlight) 12%, transparent) 24%,
+      color-mix(in srgb, var(--skeleton-highlight) 80%, transparent) 50%,
+      color-mix(in srgb, var(--skeleton-highlight) 12%, transparent) 76%,
+      transparent 100%);
     opacity: 0;
     pointer-events: none;
     transform: translateX(0);
+    mix-blend-mode: var(--skeleton-blend, lighten);
   }
 
   .ds-skeleton-group[data-visible="true"]::after {
     animation: ds-skeleton-shimmer 3.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
   }
 
-  .ds-skeleton {
+  :where(.ds-skeleton) {
     display: block;
     min-width: 0;
     overflow: hidden;
-    background: var(--skeleton-base);
+    background: linear-gradient(180deg,
+      color-mix(in srgb, var(--skeleton-base) 88%, var(--skeleton-highlight)),
+      var(--skeleton-base));
     opacity: 1;
     transition: opacity var(--motion-micro-enter) var(--ease-standard);
   }
 
-  .ds-skeleton-group[data-visible="false"] .ds-skeleton {
-    opacity: 0;
+  .ds-skeleton-group[data-visible="false"] {
+    visibility: hidden;
   }
 
-  .ds-skeleton-rect {
-    border-radius: var(--button-radius);
-    corner-shape: var(--corner-shape-smooth);
-  }
-
-  .ds-skeleton-text {
-    height: 0.72em;
+  :where(.ds-skeleton-rect) {
     border-radius: var(--radius-compact);
     corner-shape: var(--corner-shape-smooth);
   }
 
-  .ds-skeleton-circle {
+  :where(.ds-skeleton-text) {
+    height: 0.62em;
+    border-radius: var(--radius-skeleton);
+    corner-shape: var(--corner-shape-smooth);
+  }
+
+  :where(.ds-skeleton-circle) {
     aspect-ratio: 1;
     border-radius: var(--radius-pill);
     corner-shape: round;
@@ -565,16 +566,10 @@
   }
 
   @keyframes ds-skeleton-shimmer {
-    0%, 16% {
-      opacity: 0;
-      transform: translateX(0);
-    }
-    25% { opacity: 0.52; }
-    74% { opacity: 0.52; }
-    84%, 100% {
-      opacity: 0;
-      transform: translateX(285%);
-    }
+    0%, 14% { opacity: 0; transform: translateX(0); }
+    22% { opacity: 0.7; }
+    56% { opacity: 0.7; }
+    64%, 100% { opacity: 0; transform: translateX(438%); }
   }
 
   @keyframes ds-content-reveal {
@@ -624,5 +619,12 @@
       stroke-dashoffset: 0;
       transform: none;
     }
+  }
+}
+
+@media (forced-colors: active) {
+  @layer components {
+    .ds-skeleton-group::after { display: none; }
+    .ds-skeleton { background: Canvas; outline: 1px solid GrayText; outline-offset: -1px; }
   }
 }

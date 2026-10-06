@@ -16,14 +16,14 @@ src/repository/: 数据访问层，携带已验证用户 JWT 通过 Supabase RES
 src/middleware/: HTTP 横切层，提供请求 ID、开发态彩色 ASCII 请求卡片、生产态 JSON 日志与统一错误处理
 src/common/: 通用层，提供 HttpError、统一响应 helper 与命名冲突翻译/默认名分配
 src/config/: 配置层，集中校验 API 环境变量并提供唯一套餐目录与四档日额度
-src/lib/: 基础设施层，提供 Supabase Auth/PostgREST 共享完整响应期限/只读重试、Storage HTTP 适配器、NOWPayments Invoice/查单/验签/连通预检、统一支付适配器与启动横幅
+src/lib/: 基础设施层，提供 Supabase Auth/PostgREST/Storage 共享完整响应期限/只读重试、Storage HTTP 适配器、NOWPayments Invoice/查单/验签/连通预检、统一支付适配器与启动横幅
 supabase/: 数据库契约层，保存 profiles、只读付款事实、memo tree/检索/命名唯一约束（画布命名零特例，标题不跟随任何东西）、AI 状态机、Canvas V2 schema/入口/统一 mutation/cutover/rollback、owner-only RLS 与原子 RPC；旧 Canvas SQL 定义仅为显式代码回滚面
 test/: Bun 内置 API 回归、订阅真实 PostgreSQL RLS 回滚验证与显式 Docker PostgreSQL 并发锁门禁；内存 Supabase HTTP/RPC mock 验证认证、profile、订阅/用量、memo/Trash/命名重名、AI 生命周期与 Canvas V2 唯一写内核契约
 .env.example: 无真实凭据的本地环境变量模板，使用 Supabase Publishable key、后端端口 10001、前端 CORS 来源端口 10000，以及默认正式环境的 NOWPayments 字段；逐项说明商户凭据与开发内部配置的分工
 BILLING.md: 订阅接口、金额/额度口径、付款事实/RLS、未接支付边界与未来可信事件接入要求；记录staging验证与2026-10-03生产用量/订阅迁移的版本、权限复核及后续环境的部署顺序
 NOWPAYMENTS.md: 已实现支付闭环、数据/服务身份边界、正式 API 联调步骤和 Production 清单，记录 Staging/main 接通、生产未部署与供应商最低金额限制
 .gitignore: api 模块忽略规则
-package.json: Bun scripts（含 typecheck/test/payment:check/payment:reconcile/payment:watch/payment:test:db/payment:test:http）与 hono、zod、lossless-json 运行依赖清单；payment:gateway 提供开发回调窄入口，payment:watch 独立运行开发补查，HTTP 门禁只用隔离本地数据库
+package.json: Bun scripts（含 typecheck/test/payment:check/payment:reconcile/payment:watch/payment:test:db/payment:test:http）与 hono、zod、lossless-json 运行依赖清单；test 用 --isolate 隔离各文件环境与模块缓存，payment:gateway 提供开发回调窄入口，payment:watch 独立运行开发补查，HTTP 门禁只用隔离本地数据库
 bun.lock: Bun 锁定依赖版本
 tsconfig.json: TypeScript 严格类型检查约束，覆盖 src 与 test
 

@@ -2,6 +2,7 @@
 > L2 | 父级: ../CLAUDE.md
 
 成员清单
+Skeleton.test.tsx: 可控时钟验证快请求防闪、就绪首帧退出、快速重载、显式最短展示、配置变化与 StrictMode/卸载清理；锁定单一读屏状态，不替代 CSS 验收
 AccountSubscribeButton.tsx: 账户专用28px流光CTA，组合既有GlowButton/ShaderGlow，12px文案、24px曲率及独立白亮边缘参数归user-menu.css；不影响普通按钮或其他CTA
 motionLifecycle.test.tsx: 验证父面板退出不连带折叠常驻详情； 真实 DOM 行为门禁，覆盖菜单快速反向开关、退出交互隔离、input 实例/光标保留、菜单/模态分层 Escape 与嵌套滚动锁；动画完成时间另由浏览器测量
 Collapse.tsx: 常驻详情同样使用独立且不传播父退出的 presence 边界，防止 Panel 退出使内部高度归零； Tree/披露控件的高度生命周期原语，默认 210ms tree 或 160/130ms micro 同源曲线，透明度与高度使用相同进退方向、逐帧回调支持滚动对齐、可打断、退出立即 inert；keepMounted 保留工具详情状态，减少动态效果即时改变高度
@@ -13,7 +14,7 @@ Button.tsx: 图标按钮默认从 aria-label 生成 WarmTooltip，title/tooltip 
 ShaderGlow.tsx: 唯一 WebGL2 光线步进原语；从宿主品牌 token 构建渐变，立即绘制非空初始相位并保留静态帧；ResizeObserver 独立负责布局尺寸，离屏/隐藏/减少动态共同控制唯一 RAF，恢复上下文重建资源，所有退出路径释放资源；GPU 不可用时由消费方底色托底
 ShaderGlow.test.tsx: 使用可控 WebGL/Observer/RAF 验证 StrictMode 首帧、暂停续播、静态尺寸重绘、上下文恢复与失败清理；不替代真实 GPU 和视觉验收
 GlowButton.tsx: 与 Button 平级、材质独立的强调型 CTA，仅用于登录/升级一类主动作；以「墨蓝底色对角渐变 + ShaderGlow 流光 + 玻璃高光」三层在同一 overflow 裁剪的 squircle 内叠加合成质感，复用全站 --press-scale 与 ds-button-spinner，视觉数值全部落在 styles/shader-glow.css，不侵入也不改动标准 Button 的四个变体
-Skeleton.tsx: 统一低对比占位加载原语，提供 rect/text/circle 形状、单组宽光带 SkeletonGroup 与 180ms 延迟出现/360ms 最短可见时长的 useDelayedSkeleton；业务只按真实内容结构组合，不自建动画或计时器
+Skeleton.tsx: 统一低对比占位加载原语，提供 rect/text/circle 形状、单组无模糊掠光 SkeletonGroup 与 180ms 延迟出现/内容就绪立即退出的 useDelayedSkeleton；显式最短展示可选，隐藏时不宣告忙碌；业务只按真实内容结构组合，不自建动画或计时器
 SidebarButton.tsx: title 与 icon 模式可访问名称复用原位 WarmTooltip，保留原生ref并对外层提示去重； 本地 32px compact 侧栏导航原子组件，以 active、default/icon 等高尺寸、default/prominent 层级和 leading/label/trailing 槽位统一 APP 与账户模态框导航；与 36px Button 共享平滑圆角和材质语言但不强制等高，hover 固定原位，选中态和 prominent 态直接复用弱边缘的 Secondary Button 材质
 SegmentedControl.tsx: 紧凑互斥选择，保留 radiogroup/radio、单一 Tab 入口和方向键；只有共享选中底片做 layout 迁移，文字固定原位，减少动态效果取消底片滑动
 Input.tsx: 本地 36px 默认 Input 组件，使用 14px/20px 表单文字，封装 V1 语义边框、内凹背景、placeholder、focus 与原生 ref 能力

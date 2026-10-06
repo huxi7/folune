@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖服务端套餐/积分投影、双语 locale 与共享 money 金额显示、React 聚焦、Button/GlowButton/Skeleton 与 Folune 图标
- * [OUTPUT]: 返回工作区的关闭入口不重复提示；对外提供三档付费方案、年付开关、分层铭牌、普通/流光 CTA 和完整账户积分条
- * [POS]: widgets 的订阅展示层；布局按 Laper 实际 DOM/CSS 还原，颜色沿用 Folune，报价/余额不在 UI 生成 购买直接进入无确认过渡，不承载订单与管理界面。
+ * [INPUT]: 依赖服务端套餐/积分投影、双语 locale 与共享 money 金额显示、React 聚焦、Button/GlowButton/Skeleton 延迟占位与 Folune 图标
+ * [OUTPUT]: 对外提供 SubscriptionWorkspace 订阅展示与可独立验收的 SubscriptionPlanSkeleton；关闭入口不重复提示，三档方案/年付/CTA/积分条与同卡壳骨架共用槽位
+ * [POS]: widgets 的订阅展示层；首次无方案时延迟显示占位，数据就绪立即进入原卡片，刷新保留已有方案；报价/余额不在 UI 生成，购买直接进入无确认过渡，不承载订单与管理界面。
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { useEffect, useId, useRef } from "react";
@@ -52,7 +52,7 @@ export function SubscriptionWorkspace({
 }: SubscriptionWorkspaceProps) {
   const { t, locale } = useLocale();
   const formatCredits = (value: number) => formatCreditAmount(value, locale);
-  const skeletonVisible = useDelayedSkeleton(loading && plans.length === 0);
+  const skeletonVisible = useDelayedSkeleton(loading && plans.length === 0 && !error, { minimumVisibleMs: 0 });
   const titleRef = useRef<HTMLHeadingElement>(null);
   const cycleId = useId();
   const hasAnnualPlan = plans.some(plan => plan.id !== "free" && plan.prices.year !== null);
@@ -84,10 +84,10 @@ export function SubscriptionWorkspace({
             <Button icon={ArrowCounterClockwiseIcon} loading={loading} onClick={onRetry}>{t('重试', 'Try again')}</Button>
           </div>
         ) : null}
-        {skeletonVisible || loading && plans.length === 0 ? (
+        {!error && loading && plans.length === 0 ? (
           <SubscriptionPlanSkeleton visible={skeletonVisible} />
         ) : plans.length > 0 ? (
-          <section aria-label={t("Folune 订阅方案", "Folune plans")} className="folune-subscription-grid">
+          <section aria-label={t("Folune 订阅方案", "Folune plans")} className="folune-subscription-grid loading-content-reveal">
             {plans.map(plan => (
               <SubscriptionPlanCard
                 current={plan.id === currentPlanId && (plan.id === "free" || interval === currentInterval)} interval={interval} key={plan.id}
@@ -180,16 +180,39 @@ function SubscriptionPlanCard({ current, interval, onSelect, plan }: {
   );
 }
 
-function SubscriptionPlanSkeleton({ visible }: { visible: boolean }) {
+export function SubscriptionPlanSkeleton({ visible }: { visible: boolean }) {
   const { t } = useLocale();
   return <SkeletonGroup className="folune-subscription-grid" label={t("正在读取订阅方案", "Loading plans")} visible={visible}>
-    {[0, 1, 2].map(index => <div className="folune-subscription-plan folune-subscription-plan-loading" key={index}>
-      <Skeleton className="folune-subscription-skeleton-brand" shape="text" />
-      <Skeleton className="folune-subscription-skeleton-name" shape="text" />
-      <Skeleton className="folune-subscription-skeleton-description" shape="text" />
-      <Skeleton className="folune-subscription-skeleton-price" shape="text" />
-      <div className="folune-subscription-features">{[0, 1, 2, 3, 4].map(row => <Skeleton key={row} shape="text" />)}</div>
-      <Skeleton className="folune-subscription-skeleton-button" />
+    {[0, 1, 2].map(index => <div aria-hidden="true" className="folune-subscription-plan folune-subscription-plan-loading" key={index}>
+      <div className="folune-subscription-plan-content">
+        <div className="folune-subscription-plan-topline">
+          <div className="folune-subscription-tier">
+            <Skeleton className="folune-subscription-skeleton-brand" shape="text" />
+            <Skeleton className="folune-subscription-skeleton-name" shape="text" />
+          </div>
+        </div>
+        <div className="folune-subscription-plan-description">
+          <Skeleton className="folune-subscription-skeleton-description" shape="text" />
+        </div>
+        <div className="folune-subscription-price-block">
+          <div className="folune-subscription-price">
+            <Skeleton className="folune-subscription-skeleton-price" shape="text" />
+            <Skeleton className="folune-subscription-skeleton-period" shape="text" />
+          </div>
+          <div className="folune-subscription-price-note">
+            <Skeleton className="folune-subscription-skeleton-note" shape="text" />
+          </div>
+        </div>
+        <ul className="folune-subscription-features">
+          {[0, 1, 2, 3, 4].map(row => <li key={row}>
+            <Skeleton className="folune-subscription-skeleton-feature-icon" />
+            <Skeleton className="folune-subscription-skeleton-feature" shape="text" />
+          </li>)}
+        </ul>
+        <div className="folune-subscription-plan-action">
+          <Skeleton className="folune-subscription-skeleton-button" />
+        </div>
+      </div>
     </div>)}
   </SkeletonGroup>;
 }

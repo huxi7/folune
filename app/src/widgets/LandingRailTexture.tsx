@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 Motion inView、DS 实时动态偏好、TruchetPattern，以及 landing.css/blog-index.css 的导轨定位和显现样式
- * [OUTPUT]: 对外提供 paper / weave / index / truchet 四种 LandingRailTexture；首页由视口触发，after-frame 交给公开内容的局部外框与纹样时间线，Truchet 按入场时的可见区间展开
- * [POS]: widgets 的共享侧轨装饰层；首页缓存一次显现，公开目录/阅读按路由重新入场；Truchet 与价格页共用几何，动画开始时量取视口以消除长短目录的速度差，减少动态直接显示
+ * [OUTPUT]: 对外提供 paper 几何竖纹、weave 72px Truchet、index 同轴网格点阵与目录 truchet；首页按 Laper 视口门槛、500ms准备+500ms动画延迟和1800ms展开
+ * [POS]: widgets 的共享侧轨装饰层；首页/阅读/价格共用 Truchet 几何，首页缓存一次显现；目录按入场时可见区间展开，减少动态直接显示，材质切换不重播
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { useEffect, useId, useRef, useState } from "react";
@@ -14,7 +14,8 @@ type RevealPhase = "pending" | "revealing" | "complete";
 
 // ---- 生命周期属于当前文档；卸载章节不清除，刷新自然重置 ----
 const revealedRails = new Set<RailVariant>();
-const revealViewport = { margin: "0px 0px -240px 0px" } as const;
+const revealViewport = { margin: "-8% 0px -18% 0px" } as const;
+const drawPreparationMs = 500;
 
 export function LandingRailTexture({ variant, reveal = "viewport" }: {
   variant: RailVariant;
@@ -40,10 +41,12 @@ export function LandingRailTexture({ variant, reveal = "viewport" }: {
       return;
     }
 
+    let preparation: ReturnType<typeof setTimeout> | undefined;
     const revealInViewport = () => {
       // 触发即登记，用户在动画途中离开再返回也不会重复播放。
       revealedRails.add(variant);
-      setPhase(reducedMotion ? "complete" : "revealing");
+      if (reducedMotion) setPhase("complete");
+      else preparation = setTimeout(() => setPhase("revealing"), drawPreparationMs);
     };
 
     if (!("IntersectionObserver" in window)) {
@@ -53,7 +56,8 @@ export function LandingRailTexture({ variant, reveal = "viewport" }: {
     }
 
     // 回调不返回离场处理，Motion 会在首次进入后解除此元素的观察。
-    return inView(element, revealInViewport, revealViewport);
+    const stop = inView(element, revealInViewport, revealViewport);
+    return () => { stop(); clearTimeout(preparation); };
   }, [variant, reducedMotion, reveal]);
 
   return <div
@@ -85,8 +89,11 @@ export function LandingRailTexture({ variant, reveal = "viewport" }: {
   >
     {(["start", "end"] as const).map(side => <div className="landing-rail-texture-side" data-side={side} key={side}>
       <div className="landing-rail-texture-pattern">
-        {variant === "truchet" ? <svg width="100%" height="100%" preserveAspectRatio="none">
-          <defs><TruchetPattern id={`${patternId}-${side}`} line="var(--blog-pattern-line)" accent="var(--blog-pattern-accent)" pathClassName="blog-truchet-path" /></defs>
+        {variant === "truchet" || variant === "weave" ? <svg width="100%" height="100%" preserveAspectRatio="none">
+          <defs><TruchetPattern id={`${patternId}-${side}`}
+            line={variant === "truchet" ? "var(--blog-pattern-line)" : "var(--rail-pattern-line)"}
+            accent={variant === "truchet" ? "var(--blog-pattern-accent)" : "var(--rail-pattern-accent)"}
+            pathClassName={variant === "truchet" ? "blog-truchet-path" : "landing-rail-path"} /></defs>
           <rect width="100%" height="100%" fill={`url(#${patternId}-${side})`} />
         </svg> : <>
           <span className="landing-rail-detail" />

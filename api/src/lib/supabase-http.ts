@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 Bun fetch、AbortSignal 与调用方组装的 Supabase URL/鉴权头
  * [OUTPUT]: 对外提供覆盖响应体读取的 fetchSupabaseResponse；读请求最多重试一次，写请求不重放
- * [POS]: Auth/PostgREST 共用的网络生命周期，不解析业务状态；失败重试禁用连接复用，主动取消原样传播
+ * [POS]: Auth/PostgREST/Storage 共用的网络生命周期，不解析业务状态；失败重试禁用连接复用，主动取消原样传播
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 

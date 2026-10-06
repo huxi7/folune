@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖服务端积分包/日额度、双语locale、共享Dialog/Button/Skeleton及积分图标；顶部直接使用用户选定的同源蓝色生成图
- * [OUTPUT]: 积分购买关闭入口不重复提示；对外提供受控积分购买弹窗，呈现六档报价、单选、无确认结账过渡、升级入口与可展开规则
- * [POS]: widgets 的积分选购展示层；不发网络请求、不生成钱包余额，支付事实与关闭行为交给页面装配 说明每日优先、购买长期有效与退款冲正规则。
+ * [INPUT]: 依赖服务端积分包/日额度、双语locale、共享Dialog/Button/Skeleton延迟占位及积分图标；顶部直接使用用户选定的同源蓝色生成图
+ * [OUTPUT]: 对外提供 CreditsPurchaseDialog 受控购买弹窗与独立 CreditPacksSkeleton；关闭入口不重复提示，六档报价单选与骨架共用卡壳/图标/积分/价格结构，保留结账过渡及规则
+ * [POS]: widgets 的积分选购展示层；首次无目录时延迟占位且不预判销售状态，目录到达立即可选且刷新保留已有卡片；不发请求、不生成余额，支付事实与关闭行为交给页面装配。
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { useState } from "react";
@@ -39,7 +39,7 @@ export function CreditsPurchaseDialog({
 }: CreditsPurchaseDialogProps) {
   const { t, formatNumber, locale } = useLocale();
   const [rulesOpen, setRulesOpen] = useState(false);
-  const skeletonVisible = useDelayedSkeleton(loading && !catalog);
+  const skeletonVisible = useDelayedSkeleton(loading && !catalog && !error, { minimumVisibleMs: 0 });
   const selectedPack = catalog?.packs.find(pack => pack.id === selectedId);
   const pending = checkout.status === "loading";
   const preview = catalog?.status === "preview";
@@ -67,7 +67,7 @@ export function CreditsPurchaseDialog({
           <p>{error}</p><Button onClick={onRetry}>{t("重新加载", "Try again")}</Button>
         </div> : null}
 
-        {catalog ? <fieldset className="folune-credits-packs" disabled={pending}>
+        {catalog ? <fieldset className="folune-credits-packs loading-content-reveal" disabled={pending}>
           <legend className="sr-only">{t("选择积分包", "Choose a credit pack")}</legend>
           {catalog.packs.map((pack, index) => <label aria-label={`${formatNumber(pack.credits)} ${t("积分", "credits")} ${priceLabel(pack)}`} className="folune-credit-pack" key={pack.id}>
             <input checked={selectedId === pack.id} name="credit-pack" onChange={() => onSelect(pack.id)} type="radio" value={pack.id} />
@@ -80,9 +80,7 @@ export function CreditsPurchaseDialog({
               <span className="folune-credit-pack-price">{priceLabel(pack)}</span>
             </span>
           </label>)}
-        </fieldset> : !error ? <SkeletonGroup className="folune-credits-packs" label={t("正在加载积分包", "Loading credit packs")} visible={skeletonVisible}>
-          {Array.from({ length: 6 }, (_, index) => <Skeleton className="folune-credit-pack-skeleton" key={index} />)}
-        </SkeletonGroup> : null}
+        </fieldset> : !error && loading ? <CreditPacksSkeleton visible={skeletonVisible} /> : null}
 
         <div className="folune-credits-actions">
           <Button className="folune-credits-pay" disabled={!selectedPack} loading={pending} onClick={onCheckout} variant="primary">
@@ -102,7 +100,7 @@ export function CreditsPurchaseDialog({
         </div> : null}
 
         <footer className="folune-credits-footer">
-          <span>{preview || !canPay ? t("积分包预览，尚未开售。", "Credit pack preview. Sales are not open yet.") : t("购买积分长期有效。", "Purchased credits do not expire.")}</span>{" "}
+          {catalog ? <span>{preview || !canPay ? t("积分包预览，尚未开售。", "Credit pack preview. Sales are not open yet.") : t("购买积分长期有效。", "Purchased credits do not expire.")}</span> : null}{" "}
           <button aria-expanded={rulesOpen} className="folune-credits-rules-toggle" onClick={() => setRulesOpen(value => !value)} type="button">{t("查看积分规则", "View credit rules")}</button>
         </footer>
         {rulesOpen ? <div className="folune-credits-rules">
@@ -114,4 +112,19 @@ export function CreditsPurchaseDialog({
       {pending ? <CheckoutTransition summary={selectedPack ? `${formatNumber(selectedPack.credits)} ${t("积分", "credits")} · ${priceLabel(selectedPack)}` : undefined} /> : null}
     </section>
   </Dialog>;
+}
+
+export function CreditPacksSkeleton({ visible }: { visible: boolean }) {
+  const { t } = useLocale();
+  return <SkeletonGroup className="folune-credits-packs folune-credits-packs-loading" label={t("正在加载积分包", "Loading credit packs")} visible={visible}>
+    {Array.from({ length: 6 }, (_, index) => <div aria-hidden="true" className="folune-credit-pack-surface folune-credit-pack-skeleton" key={index}>
+      <div className="folune-credit-pack-icons">
+        <Skeleton className="folune-credit-pack-skeleton-icon" />
+      </div>
+      <Skeleton className="folune-credit-pack-skeleton-amount" shape="text" />
+      <div className="folune-credit-pack-price">
+        <Skeleton className="folune-credit-pack-skeleton-price" shape="text" />
+      </div>
+    </div>)}
+  </SkeletonGroup>;
 }

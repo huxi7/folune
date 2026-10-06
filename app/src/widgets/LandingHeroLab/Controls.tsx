@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 LabController、候选元数据与实际有效的参数范围
- * [OUTPUT]: 对外提供 A/B 调参面板、多组本地收藏和配置交换
+ * [OUTPUT]: 对外提供具有明确方案名称的 A/B 调参面板、多组本地收藏和配置交换
  * [POS]: Lab 操作层；每项控制直达背景参数，原版参照只开放共用高度与播放
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -44,7 +44,7 @@ export function Controls({ lab, close, showApp, setShowApp, actualHeight, status
   return <aside className="grain-lab-panel" id="grain-lab-panel" aria-label="首屏材质调节">
     <div className="grain-lab-panel-heading"><div><span className="grain-lab-eyebrow">FOLUNE / MATERIAL STUDIES</span><h2>首屏材质研究</h2></div><button type="button" onClick={close} aria-label="收起调节面板">收起</button></div>
     <div className="grain-lab-panel-scroll">
-      <div className="grain-lab-choices" role="group" aria-label="01A 与 02A 方案">{variants.map(item => <button type="button" key={item.id} aria-pressed={!comparing && current.choice === item.id} onClick={() => lab.select(item.id)}>
+      <div className="grain-lab-choices" role="group" aria-label="01A 与 02A 方案">{variants.map(item => <button type="button" key={item.id} aria-label={`${item.code} ${item.name}`} aria-pressed={!comparing && current.choice === item.id} onClick={() => lab.select(item.id)}>
         <span className={`grain-lab-swatch grain-lab-swatch-${item.id}`} aria-hidden="true" />
         <span><small>{item.code}</small><strong>{item.name}</strong><em>{item.subtitle}</em></span>
       </button>)}</div>

@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖共享 useBilling 账户快照、服务端精确积分投影及统一显示策略、locale 文案/日期数字格式、DS Button/Skeleton/AccountSubscribeButton 与真实方案入口
+ * [INPUT]: 依赖共享 useBilling 账户快照、服务端精确积分投影及统一显示策略、locale 文案/日期数字格式、DS Button/延迟数值Skeleton/AccountSubscribeButton 与真实方案入口
  * [OUTPUT]: 对外提供当前方案、每日额度、大数字用量、重置时刻与可重试刷新卡片
  * [POS]: app/src/widgets 的只读用量视图；与订阅页/菜单消费同一账单快照，额度按后端 token 事实换算，超限判定只认后端 exceeded
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -7,7 +7,7 @@
 import { useBilling } from "../shared/api/useBilling";
 import { formatCreditAmount } from "../shared/locale/credits";
 import { AccountSubscribeButton } from "../shared/design-system/components/AccountSubscribeButton";
-import { Button, Skeleton } from "../shared/design-system/components";
+import { Button, Skeleton, SkeletonGroup, useDelayedSkeleton } from "../shared/design-system/components";
 import { useLocale } from "../shared/locale";
 
 export function AccountUsagePanel({ onViewPlans }: { onViewPlans: () => void }) {
@@ -15,6 +15,7 @@ export function AccountUsagePanel({ onViewPlans }: { onViewPlans: () => void }) 
   const formatCredits = (value: number) => formatCreditAmount(value, locale);
   const { catalog, overview, loading, refreshing, error, refresh } = useBilling();
   const usage = overview?.usage;
+  const skeletonVisible = useDelayedSkeleton(loading && !usage);
   const plan = catalog?.plans.find((item) => item.id === overview?.subscription.plan_id);
   const usedPercent = usage ? Math.min(100, Math.max(0, usage.total_tokens / Math.max(1, usage.daily_limit) * 100)) : 0;
   const usedCredits = overview?.credits.used ?? 0;
@@ -50,7 +51,7 @@ export function AccountUsagePanel({ onViewPlans }: { onViewPlans: () => void }) 
             <p className="account-dialog-section-description">{usage ? t(`当前周期 ${usage.usage_date}`, `Current period · ${formatDate(`${usage.usage_date}T00:00:00Z`, { timeZone: "UTC", year: "numeric", month: "short", day: "numeric" })}`) : t("按日统计 AI 使用量", "AI usage is measured daily")}</p>
             <div className="account-usage-number-row">
               <div className="account-usage-number">
-                {usage ? <strong>{formatCredits(usedCredits)}</strong> : loading ? <Skeleton className="account-usage-number-skeleton" /> : <strong>—</strong>}
+                {usage ? <strong>{formatCredits(usedCredits)}</strong> : loading ? <SkeletonGroup visible={skeletonVisible} label={t("正在读取用量", "Loading usage")}><Skeleton className="account-usage-number-skeleton" shape="text" /></SkeletonGroup> : <strong>—</strong>}
                 <span>{t("已用", "used")}</span>
               </div>
               <span className="account-usage-total">/ {usage ? formatCredits(totalCredits) : "—"}</span>

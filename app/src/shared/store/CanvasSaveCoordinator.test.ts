@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun test、内存 WAL、ApiError、CanvasSaveCoordinator 与 canvasDocument 投影
- * [OUTPUT]: 覆盖空恢复归闲、WAL 先于 UI、手势级原子入账、稳定 ID 重试、单次 409 rebase、串行回执清理和 48KiB pagehide 有界发送
+ * [OUTPUT]: 覆盖恢复/新编辑串行、离场后异步隔离、WAL 先于 UI、手势级原子入账、稳定 ID 重试、单次 409 rebase 与 48KiB pagehide 有界发送
  * [POS]: shared/store 的 Canvas persistenceSlice/协调器回归门禁；断网与响应丢失不能复制或丢弃用户意图
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -29,6 +29,12 @@ const USER_ID = "11111111-1111-4111-8111-111111111111";
 const CANVAS_ID = "22222222-2222-4222-8222-222222222222";
 const ROOT_ID = "33333333-3333-4333-8333-333333333333";
 const MEMO_ID = "44444444-4444-4444-8444-444444444444";
+
+const deferred = <T>() => {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((complete) => { resolve = complete; });
+  return { promise, resolve };
+};
 
 const detail = (version = 1): CanvasDetail => ({
   canvas: {
@@ -113,6 +119,268 @@ const createSink = (initial: CanvasDetail) => {
 };
 
 describe("CanvasSaveCoordinator", () => {
+  test("WAL 恢复读取期间的新编辑排在恢复后，不能被旧快照覆盖", async () => {
+    const memory = createMemoryCanvasWalStorage();
+    const sinkState = createSink(detail());
+    const reading = deferred<void>();
+    const releaseRead = deferred<void>();
+    const requests: CanvasMutationRequest[] = [];
+    const coordinator = new CanvasSaveCoordinator({
+      scope: { canvasId: CANVAS_ID, userId: USER_ID },
+      sink: sinkState.sink,
+      storage: {
+        ...memory,
+        async list(scope) {
+          const snapshot = await memory.list(scope);
+          reading.resolve();
+          await releaseRead.promise;
+          return snapshot;
+        },
+      },
+      transport: {
+        async commitExpansion(request) { return resultFor(request); },
+        async getCanvas() { return detail(); },
+        keepalive() { return false; },
+        async mutate(request) { requests.push(request); return resultFor(request); },
+      },
+    });
+
+    const recovery = coordinator.recover(detail());
+    await reading.promise;
+    const editing = coordinator.enqueue({
+      operation: { node_id: ROOT_ID, type: "update_node", x: 42, y: 24 },
+    });
+    // 让新手势有机会完成 WAL；恢复快照仍固定为读取开始时的空列表。
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    releaseRead.resolve();
+    await Promise.all([recovery, editing]);
+    const flushed = await coordinator.flush();
+    coordinator.dispose();
+
+    expect(flushed).toEqual({ persisted: true, synced: true });
+    expect(sinkState.view.nodes[0]).toMatchObject({ x: 42, y: 24 });
+    expect(requests).toHaveLength(1);
+    expect(memory.records.size).toBe(0);
+  });
+
+  test("离场后迟到的恢复读取不得替换新画布或发布状态", async () => {
+    const memory = createMemoryCanvasWalStorage();
+    const sinkState = createSink(detail());
+    const reading = deferred<void>();
+    const releaseRead = deferred<void>();
+    const coordinator = new CanvasSaveCoordinator({
+      scope: { canvasId: CANVAS_ID, userId: USER_ID },
+      sink: sinkState.sink,
+      storage: {
+        ...memory,
+        async list(scope) {
+          reading.resolve();
+          await releaseRead.promise;
+          return memory.list(scope);
+        },
+      },
+      transport: {
+        async commitExpansion(request) { return resultFor(request); },
+        async getCanvas() { return detail(); },
+        keepalive() { return false; },
+        async mutate(request) { return resultFor(request); },
+      },
+    });
+
+    const recovery = coordinator.recover(detail());
+    await reading.promise;
+    coordinator.dispose();
+    const nextCanvas = detail(8);
+    nextCanvas.canvas.node_id = "55555555-5555-4555-8555-555555555555";
+    sinkState.sink.replaceServer(nextCanvas, []);
+    const statuses = [...sinkState.statuses];
+    releaseRead.resolve();
+    await recovery;
+
+    expect(sinkState.server).toBe(nextCanvas);
+    expect(sinkState.statuses).toEqual(statuses);
+  });
+
+  test("离场后的保存回包保留 WAL 回执供重放，不写进新画布", async () => {
+    const memory = createMemoryCanvasWalStorage();
+    const sinkState = createSink(detail());
+    const sending = deferred<CanvasMutationRequest>();
+    const response = deferred<CanvasMutationResult>();
+    let receipts = 0;
+    const coordinator = new CanvasSaveCoordinator({
+      onResult() { receipts += 1; },
+      scope: { canvasId: CANVAS_ID, userId: USER_ID },
+      sink: sinkState.sink,
+      storage: memory,
+      transport: {
+        async commitExpansion(request) { return resultFor(request); },
+        async getCanvas() { return detail(); },
+        keepalive() { return false; },
+        async mutate(request) { sending.resolve(request); return response.promise; },
+      },
+    });
+    await coordinator.recover(detail());
+    await coordinator.enqueue({ operation: { node_id: ROOT_ID, type: "update_node", x: 42 } });
+    const flushing = coordinator.flush();
+    const request = await sending.promise;
+    coordinator.dispose();
+    const nextCanvas = detail(8);
+    nextCanvas.canvas.node_id = "55555555-5555-4555-8555-555555555555";
+    sinkState.sink.replaceServer(nextCanvas, []);
+    const statuses = [...sinkState.statuses];
+    response.resolve(resultFor(request));
+    const flushed = await flushing;
+
+    expect(sinkState.server).toBe(nextCanvas);
+    expect(sinkState.statuses).toEqual(statuses);
+    expect(receipts).toBe(0);
+    expect(flushed).toEqual({ persisted: true, synced: false });
+    expect(memory.records.size).toBe(1);
+
+    const restored = createSink(detail());
+    const recoveredRequests: CanvasMutationRequest[] = [];
+    const reopened = new CanvasSaveCoordinator({
+      scope: { canvasId: CANVAS_ID, userId: USER_ID },
+      sink: restored.sink,
+      storage: memory,
+      transport: {
+        async commitExpansion(next) { return resultFor(next); },
+        async getCanvas() { return detail(); },
+        keepalive() { return false; },
+        async mutate(next) { recoveredRequests.push(next); return resultFor(next); },
+      },
+    });
+    await reopened.recover(detail());
+    reopened.dispose();
+    expect(recoveredRequests.map((next) => next.mutation_id)).toEqual([request.mutation_id]);
+    expect(restored.server.nodes[0]?.x).toBe(42);
+    expect(memory.records.size).toBe(0);
+  });
+
+  test("离场后结束的 WAL 写入只留下恢复记录，不投影 UI 或重开计时器", async () => {
+    const memory = createMemoryCanvasWalStorage();
+    const sinkState = createSink(detail());
+    const writing = deferred<void>();
+    const releaseWrite = deferred<void>();
+    const coordinator = new CanvasSaveCoordinator({
+      scope: { canvasId: CANVAS_ID, userId: USER_ID },
+      sink: sinkState.sink,
+      storage: {
+        ...memory,
+        async put(record) {
+          writing.resolve();
+          await releaseWrite.promise;
+          await memory.put(record);
+        },
+      },
+      transport: {
+        async commitExpansion(request) { return resultFor(request); },
+        async getCanvas() { return detail(); },
+        keepalive() { return false; },
+        async mutate(request) { return resultFor(request); },
+      },
+    });
+    await coordinator.recover(detail());
+    const editing = coordinator.enqueue({ operation: { node_id: ROOT_ID, type: "update_node", x: 42 } });
+    await writing.promise;
+    coordinator.dispose();
+    const statuses = [...sinkState.statuses];
+    releaseWrite.resolve();
+    await editing;
+
+    expect(sinkState.view.nodes[0]?.x).toBe(0);
+    expect(sinkState.statuses).toEqual(statuses);
+    expect(memory.records.size).toBe(1);
+  });
+
+  test("离场中断退避，旧会话不再发送下一次重试", async () => {
+    const memory = createMemoryCanvasWalStorage();
+    const sinkState = createSink(detail());
+    const waiting = deferred<void>();
+    const releaseWait = deferred<void>();
+    let requests = 0;
+    const coordinator = new CanvasSaveCoordinator({
+      scope: { canvasId: CANVAS_ID, userId: USER_ID },
+      sink: sinkState.sink,
+      storage: memory,
+      async wait() { waiting.resolve(); await releaseWait.promise; },
+      transport: {
+        async commitExpansion(request) { return resultFor(request); },
+        async getCanvas() { return detail(); },
+        keepalive() { return false; },
+        async mutate() { requests += 1; throw new ApiError(0, "NETWORK_ERROR", "offline"); },
+      },
+    });
+    await coordinator.recover(detail());
+    await coordinator.enqueue({ operation: { node_id: ROOT_ID, type: "update_node", x: 42 } });
+    const flushing = coordinator.flush();
+    await waiting.promise;
+    coordinator.dispose();
+    const statuses = [...sinkState.statuses];
+    releaseWait.resolve();
+    await flushing;
+
+    expect(requests).toBe(1);
+    expect(sinkState.statuses).toEqual(statuses);
+    expect(memory.records.size).toBe(1);
+  });
+
+  test.each([
+    "CANVAS_VERSION_CONFLICT",
+    "CANVAS_SOURCE_REVISION_CONFLICT",
+  ])("离场后迟到的 %s 重取不覆盖新画布或清掉待恢复 mutation", async (code) => {
+    const memory = createMemoryCanvasWalStorage();
+    const sinkState = createSink(detail());
+    const reading = deferred<void>();
+    const latest = deferred<CanvasDetail>();
+    let requests = 0;
+    let discarded = 0;
+    const send = async (): Promise<CanvasMutationResult> => {
+      requests += 1;
+      throw new ApiError(409, code, "changed");
+    };
+    const coordinator = new CanvasSaveCoordinator({
+      onDiscardedExpansion() { discarded += 1; },
+      scope: { canvasId: CANVAS_ID, userId: USER_ID },
+      sink: sinkState.sink,
+      storage: memory,
+      transport: {
+        commitExpansion: send,
+        async getCanvas() { reading.resolve(); return latest.promise; },
+        keepalive() { return false; },
+        mutate: send,
+      },
+    });
+    await coordinator.recover(detail());
+    if (code === "CANVAS_VERSION_CONFLICT") {
+      await coordinator.enqueue({ operation: { node_id: ROOT_ID, type: "update_node", x: 42 } });
+    } else {
+      await coordinator.enqueueExpansion([], {
+        candidate_revisions: [],
+        completion_status: "complete",
+        corpus_version: 4,
+        request_id: "99999999-9999-4999-8999-999999999999",
+        source_canvas_node_id: ROOT_ID,
+        source_revision: 1,
+      });
+    }
+    const flushing = coordinator.flush();
+    await reading.promise;
+    coordinator.dispose();
+    const nextCanvas = detail(8);
+    nextCanvas.canvas.node_id = "55555555-5555-4555-8555-555555555555";
+    sinkState.sink.replaceServer(nextCanvas, []);
+    const statuses = [...sinkState.statuses];
+    latest.resolve(detail(3));
+    await flushing;
+
+    expect(sinkState.server).toBe(nextCanvas);
+    expect(sinkState.statuses).toEqual(statuses);
+    expect(requests).toBe(1);
+    expect(discarded).toBe(0);
+    expect(memory.records.size).toBe(1);
+  });
+
   test("空 WAL 恢复完成后明确回到已同步状态", async () => {
     const sinkState = createSink(detail());
     const coordinator = new CanvasSaveCoordinator({

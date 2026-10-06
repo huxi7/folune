@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun test、Hono app、Web File/FormData、内存 Supabase Auth/PostgREST/Storage fetch mock、Profile 模型与 service/auth 的身份缓存测试清空口
- * [OUTPUT]: 覆盖五字段 /profile 与 PUT /profile/avatar 的认证、默认/可修改 username、5MB/签名验证、旧文件删除、并发补偿及请求头测试
+ * [OUTPUT]: 覆盖五字段 /profile 与 PUT /profile/avatar 的认证、默认/可修改 username、5MB/签名验证、提交或旧文件清理响应丢失仍保留新头像、并发补偿及请求头测试
  * [POS]: api/test 的 profile HTTP 全链路契约测试，不连接远端服务且不保存或输出真实凭据
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -539,6 +539,56 @@ describe("PUT /profile/avatar", () => {
       "profile:patch",
     ]);
   });
+
+  test("旧头像已删除但响应丢失时保留已提交的新头像，不回滚成失效 URL", async () => {
+    const oldObjectPath = `${USER_ID}/old-avatar.png`;
+    const oldAvatarUrl = `${AVATAR_PUBLIC_PREFIX}${oldObjectPath}`;
+    supabase.profiles.set(USER_ID, profileFixture({ avatar_url: oldAvatarUrl }));
+    supabase.storageObjects.add(oldObjectPath);
+    globalThis.fetch = (async (input, init) => {
+      const response = await supabase.fetch(input, init);
+      if (new Request(input, init).method === "DELETE") {
+        throw new TypeError("Storage delete response lost after commit");
+      }
+      return response;
+    }) as typeof fetch;
+
+    const response = await requestAvatar(avatarForm(pngFile()));
+    const payload = (await response.json()) as { data: Profile };
+
+    expect(response.status).toBe(200);
+    expect(payload.data.avatar_url).not.toBe(oldAvatarUrl);
+    expect(supabase.profiles.get(USER_ID)?.avatar_url).toBe(payload.data.avatar_url);
+    expect(supabase.storageObjects.has(oldObjectPath)).toBe(false);
+    expect(supabase.storageObjects.has(payload.data.avatar_url!.slice(AVATAR_PUBLIC_PREFIX.length))).toBe(true);
+    expect(supabase.storageEvents).toEqual(["storage:upload", "profile:patch", "storage:delete"]);
+  });
+
+  for (const recoveryReadFails of [false, true]) {
+    test(`头像 CAS 已提交但响应丢失时${recoveryReadFails ? "核对失败仍不能删除可能已引用的新文件" : "只读核对成功后返回新头像"}`, async () => {
+      supabase.profiles.set(USER_ID, profileFixture());
+      let committed = false;
+      globalThis.fetch = (async (input, init) => {
+        const request = new Request(input, init);
+        if (committed && recoveryReadFails && request.method === "GET") {
+          throw new TypeError("Recovery read is unavailable");
+        }
+        const response = await supabase.fetch(input, init);
+        if (request.method === "PATCH") {
+          committed = true;
+          throw new TypeError("Profile response lost after commit");
+        }
+        return response;
+      }) as typeof fetch;
+
+      const response = await requestAvatar(avatarForm(pngFile()));
+      expect(response.status).toBe(recoveryReadFails ? 503 : 200);
+      const avatarUrl = supabase.profiles.get(USER_ID)?.avatar_url;
+      expect(avatarUrl).toBeTruthy();
+      expect(supabase.storageObjects.has(avatarUrl!.slice(AVATAR_PUBLIC_PREFIX.length))).toBe(true);
+      expect(supabase.storageEvents).toEqual(["storage:upload", "profile:patch"]);
+    });
+  }
 
   test("profile 并发更新持续冲突时删除新对象并返回 409", async () => {
     useSupabase({ rejectAvatarUpdates: true });

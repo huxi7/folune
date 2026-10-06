@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖 PersistentView 的实例保留式读写淡换、按需加载的 MemoDetailNode、跨临时/真实 ID 保持不变的 memoClientKey、新建聚焦意图、正文加载状态、DocumentView/EditingMode、useMemoAutosave、MarkdownEditor/ReadingView、ThemeProvider 与 Toast
- * [OUTPUT]: 对外提供临时节点提交期间不重挂载的纸张内本地草稿写作/阅读列与 NotesWorkspaceHandle，并仅在笔记身份切换时聚焦新纸标题/编辑器
+ * [INPUT]: 依赖 PersistentView 的实例保留式读写淡换、按需加载的 MemoDetailNode、跨临时/真实 ID 保持不变的 memoClientKey、新建聚焦意图、正文加载状态、locale 加载文案、DocumentView/EditingMode、useMemoAutosave、MarkdownEditor/ReadingView、ThemeProvider 与 Toast
+ * [OUTPUT]: 对外提供保留编辑会话的写作/阅读列、NotesWorkspaceHandle 与共用版心的 NotesWorkspaceSkeleton；仅在笔记身份切换时聚焦新纸标题/编辑器
  * [POS]: app/src/widgets 的备忘录编辑会话边界；Paper 外壳不拥有编辑状态，客户端身份隔离后端 ID 置换，Dashboard 只能经显式 handle 跨越自动保存边界；按需正文未到达前绝不把空标题反写轻量树；同级重名在标题区原位提示且不阻断正文自动保存
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -26,6 +26,7 @@ import {
   useToast,
 } from "../shared/design-system/components";
 import { useTheme } from "../shared/theme/ThemeProvider";
+import { useLocale } from "../shared/locale";
 import {
   MarkdownEditor,
   type MarkdownEditorHandle,
@@ -75,21 +76,30 @@ export type NotesWorkspaceHandle = {
   resumeAfterDeleteFailure: () => void;
 };
 
-function NotesWorkspaceSkeleton({ visible }: { visible: boolean }) {
+export function NotesWorkspaceSkeleton({ visible }: { visible: boolean }) {
+  const { t } = useLocale();
   return (
     <main className="notes-workspace notes-workspace-loading">
       <SkeletonGroup
         className="note-editor-canvas note-editor-skeleton"
-        label="正在加载备忘录正文"
+        label={t("正在加载备忘录正文", "Loading your note")}
         visible={visible}
       >
         <Skeleton className="note-skeleton-title" shape="text" />
         <div className="note-skeleton-body" aria-hidden="true">
-          <Skeleton className="note-skeleton-line note-skeleton-line-wide" shape="text" />
-          <Skeleton className="note-skeleton-line" shape="text" />
-          <Skeleton className="note-skeleton-line note-skeleton-line-short" shape="text" />
-          <Skeleton className="note-skeleton-line note-skeleton-line-wide" shape="text" />
-          <Skeleton className="note-skeleton-line note-skeleton-line-medium" shape="text" />
+          <div className="note-skeleton-paragraph">
+            <Skeleton className="note-skeleton-line note-skeleton-line-wide" shape="text" />
+            <Skeleton className="note-skeleton-line" shape="text" />
+            <Skeleton className="note-skeleton-line note-skeleton-line-short" shape="text" />
+          </div>
+          <div className="note-skeleton-paragraph">
+            <Skeleton className="note-skeleton-line note-skeleton-line-wide" shape="text" />
+            <Skeleton className="note-skeleton-line note-skeleton-line-medium" shape="text" />
+          </div>
+          <div className="note-skeleton-paragraph">
+            <Skeleton className="note-skeleton-line" shape="text" />
+            <Skeleton className="note-skeleton-line note-skeleton-line-short" shape="text" />
+          </div>
         </div>
       </SkeletonGroup>
     </main>

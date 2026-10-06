@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 React 服务端渲染、Bun test 与纯 TrashWorkspaceView props
- * [OUTPUT]: 覆盖回收站 loading/empty/error/真实根列表、Folder 不展开、危险确认与提交锁 UI
+ * [OUTPUT]: 覆盖回收站首帧延迟占位/empty/error/真实根列表、Folder 不展开、危险确认与提交锁 UI；计时由 Skeleton.test.tsx 验证
  * [POS]: app/src/widgets 的回收站纯视图回归测试，不发网络请求或挂载浏览器 DOM
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -44,7 +44,10 @@ const renderView = (
 
 describe("TrashWorkspaceView", () => {
   test("renders loading, empty, and retryable error states", () => {
-    expect(renderView("loading")).toContain("正在加载回收站");
+    const loadingHtml = renderView("loading");
+    expect(loadingHtml).toContain("trash-loading-list");
+    expect(loadingHtml).toContain('data-visible="false"');
+    expect(loadingHtml).not.toContain('role="status"');
     expect(renderView("empty")).toContain("回收站是空的");
     const errorHtml = renderView("error");
     expect(errorHtml).toContain("回收站加载失败");

@@ -2,12 +2,13 @@
 > L2 | 父级: ../../CLAUDE.md
 
 成员清单
-PricingPage.tsx: 匿名 /pricing 在顶栏下复用 MarketingAnnouncement，与首页/登录/博客/动态目录共享公告；按 Laper 实际 DOM/CSS 还原题头、年付开关与 300px/540px 卡片，24px 居中换行；独立 Truchet 侧纹映射品牌色；服务端目录驱动月年价与日积分，全部开始/订阅到 /login，取消/超时/重试不依赖账户。
+LoadingLabPage.tsx: DEV /loading-lab 复用正式文件树/笔记/会话/订阅/积分加载组件与对应 CSS，支持临时浅暗主题和交接演示；离场恢复主题，不连接业务 API
+PricingPage.tsx: 匿名 /pricing 在顶栏下复用 MarketingAnnouncement，与首页/登录/博客/动态目录共享公告；按 Laper 实际 DOM/CSS 还原题头、年付开关与 300px/540px 卡片，24px 居中换行；独立 Truchet 侧纹映射品牌色；服务端目录驱动月年价与日积分，全部开始/订阅到 /login，取消/超时/重试不依赖账户。 首次无目录使用同卡壳 PricingPlanSkeleton，180ms 防闪、就绪立即显示，刷新保留目录。
 PricingPage.test.tsx: 真实公开目录传输与 Router 验证匿名四档、月年报价/日额度、登录引导、失败重试和卸载中止，不替代视觉验收。
 useCheckoutFlow.ts: 订阅/积分共用结账编排；同步防连点、稳定幂等键、创建未知只查原付款、自动安全导航与离开中止；付款身份沿原路保留，后台及返回窗口主动核对后刷新权益。
 useCheckoutFlow.test.tsx: 验证连点幂等、未知创建恢复自动跳转、迟到响应隔离、后退清理过渡、返回核对及服务端确认前不发成功回执。
 CreditsPage.tsx: 积分弹窗读取服务端目录并委托 useCheckoutFlow 一次点击结账；页面只持有选择、目录重试与关闭生命周期。
-CreditsPage.test.tsx: 验证积分一次点击自动跳转、无二次确认或订单面板、目录失败重试、选择保留与关闭中止。
+CreditsPage.test.tsx: 验证积分一次点击自动跳转、无二次确认或订单面板、目录失败重试、选择保留与关闭中止。 未返回目录时不显示尚未开售，真实可售目录到达后即时启用选购。
 SubscriptionPage.tsx: 独立订阅页投影服务端月年方案，委托共享流程直接结账；不装配确认弹窗、订单历史或支付管理。
 SubscriptionPage.test.tsx: 验证一次点击订阅、管理员也无支付管理入口、月年报价、同意图重试、关闭隔离与中英文界面。
 subscriptionNavigation.ts: 订阅导航的纯路径边界，以 isSubscriptionPath 同时识别标准地址与尾斜杠，只允许 /app 或 /app/notes/:noteId 来路，保留底层笔记身份且拒绝外部/无关路径
@@ -22,7 +23,7 @@ termsContent.tsx: 按实际功能撰写服务条款，区分内容权利、AI �
 privacyContent.tsx: 按真实数据流披露 Google 基础身份、Supabase、DeepSeek、公开头像、本地缓存、保存及删除权利，Google 数据单独限定用途
 usePublicPageMetadata.ts: 博客和法律页共用的标题/摘要生命周期，离场恢复已有元信息
 useWorkspaceEntryReady.ts: Paper/Canvas 共用的一次性首屏就绪桥梁；等待导航空闲与两帧提交，错误撤销覆盖层，入口编号阻止旧页面推进新加载
-MarketingLayout.tsx: 首页、登录、博客、动态和独立法律页持续挂载的公共壳，持有唯一 MarketingHeader 与 Router ScrollRestoration；登录内容使用弹性单屏布局并省去 Footer，其余页面保留 Footer，路径变化聚焦主标题；useMarketingMotion 在滚动恢复后编排可视正文，路径/锚点原生过渡与一次性滚动浮现共用节奏，query 不重播
+MarketingLayout.tsx: 统一纸感背景，不保留白底模式或材质开关； 首页、登录、博客、动态和独立法律页持续挂载的公共壳，持有唯一 MarketingHeader 与 Router ScrollRestoration；登录内容使用弹性单屏布局并省去 Footer，其余页面保留 Footer，路径变化聚焦主标题；useMarketingMotion 在滚动恢复后编排可视正文，路径/锚点原生过渡与一次性滚动浮现共用节奏，query 不重播
 LoginPage.tsx: 桌面复用正文与表单但不挂营销壳，保留原字体/背景； /login 公开认证页，384px 表单与完整 3:4 插画左右并置，共享首页公告和 Header；公告单独包入 fullBleed BlueprintFrame，使主轨/外轨与顶栏及首页同轴；正文铺设终选 01A 极慢散墨，标题去除行末标点以视觉居中，视频静音自动循环；AuthForm 独占认证步骤，成功仍经 /app Profile 守卫准入
 BlogPage.tsx: /blog 与 /updates 共用公开目录与 :slug 阅读路由；目录装配公告、点阵刊头、单链接文章行、四色标签和 Truchet 侧纹，按 Laper DOM/CSS 对齐且移除返回首页，动态空集合只保留空框。目录表现归 blog-index.css，正文继续交给 PublicArticle；pathname 重播装饰、query/锚点保留终态，历史返回、404、同分区推荐与元信息沿既有协议。
 workspacePreload.ts: 正文邻居与 Canvas 代码预热共用的在线/前台/省流/慢网判据，只约束非必要预取，不阻止主动打开
@@ -35,7 +36,7 @@ LandingPage.tsx: MarketingLayout 内的公开首页正文，以 1120px 主轨和
 ArchiveCordLabPage.tsx: resizeHandle 复用宿主独立边界插槽； 仅 DEV `/archive-cord-lab` 归档线验收 fixture；复用生产 PaperSurface/ArchiveStatus/AppSidebar/WorkspacePanelLayer/PanelResizeHandle/ArchiveCordOverlay 与真实 organizePresentation 构造器，以三层嵌套 + 上下填充的确定性假树覆盖 fresh/restore/清除、逐层折叠展开、tree 滚动贴边、文件库开关、Panel resize 与 Light/Dark。纸必须由 PaperSurface 包出来——`.app-main-panel` 是单 grid area，7:9 比例基线与 `.paper-content-transition` 叠在同一格里，少了那层顶栏会被放到基线下面那一行、source 直接掉出视口。进入时清掉 fixture 专属的展开偏好键使结论可重跑；假 ID、假内容，不读写 API、数据库、真实用户正文或真实 AI run
 ColorLabPage.tsx: 仅 DEV `/color-lab` 色彩决策实验页，以同一静态 Paper First/Library/AI DOM、共享生产组件与候选选择、Light/Dark 控制公平比较现有蓝、02 灰蓝、04 标准墨蓝与 05 柔和墨蓝 scoped token，不读取鉴权、业务数据或主题持久化
 AuthCallbackPage.tsx: /auth/callback 路由页面，交换 Google OAuth PKCE code，成功进入 /app，失败提供返回登录入口；状态卡片复用 auth.css 的中性表面、文字角色与状态提示，会话 Spinner 在 reduced-motion 下静止
-AppDashboard.tsx: 菜单/设置统一先打开退出确认，确认后才调用真实退出；Workspace视觉装配根与用户级BillingProvider；文件库走原常驻宿主，AI走胶囊/短窗/全高宿主，AgentPanel实例跨Paper/Canvas持续；订阅隐藏/inert保留底层会话，积分路由沿原来路返回
+AppDashboard.tsx: 菜单/设置统一先打开退出确认，确认后才调用真实退出；Workspace视觉装配根与用户级BillingProvider；文件库走原常驻宿主，AI走胶囊/短窗/全高宿主，AgentPanel实例跨Paper/Canvas持续；订阅隐藏/inert保留底层会话，积分路由沿原来路返回 助手代码加载复用 AgentConversationSkeleton，与业务冷加载同构。
 CanvasRouteCoordinator.tsx: `/app/notes/:id` 的 Canvas 路由协调器；把入口 Canvas bootstrap 冻结为本次挂载的不可变快照，避免缓存消费后在浏览器拍新帧前撤掉目标纸面身份，也避免下一轮离场 bootstrap 反向注入仍在场的旧 Canvas 并制造重复 transition name；另统一 Canvas→原文→Canvas 返回描述、画布重命名与会话 flush 暴露，不持有图数据、保存队列或跨路由文件库。画布→写作区那一跳由它的 navigate 带 viewTransition 起——路由状态落地是异步的，谁持有 navigate 谁才能在正确的那一刻开始过渡
 DashboardDialogs.tsx: 五栏设置与新建文件夹的纯受控组合，透传真实退出命令和独立订阅入口；外层 presence 等待 Dialog 自身退出，文件夹落点与重名裁决不变
 appDashboardTypes.ts: Dashboard 私有状态类型边界，集中定义含首屏 tree bootstrap 与入口编号的 loader、账户/文件夹弹窗、标题草稿与树加载状态，不承载运行时逻辑
@@ -63,7 +64,7 @@ organizePresentation.ts: 整理 Run 到 Workspace 工具唤醒及归档展示快
 workspaceLayout.ts: Paper First 浮层几何与宽度持久化边界，集中维护文件库/AI 尺寸约束、CSS 变量类型和 localStorage 校验，AI 默认/最小宽度同源读取 assistantGeometry 的短窗宽度，旧的过小宽度读取时钳制；另持有 Workspace 唯一的覆盖式布局判据 useOverlayPanels（1200 单 Panel / 1400 双开两个断点），由 Dashboard 持有一份 state 下传给 Paper 壳与归档 Overlay——任何在 render 里裸读 window.innerWidth 的地方都会成为漂移的第二真相
 viewTransition.ts: 同文档过渡唯一入口，也是纸面命名的唯一真相。卡片↔预览、笔记↔画布、预览↔写作区都只是「把这次 DOM 更新包进一次视图过渡」，截图/变形/交叉淡换全归浏览器；手写那条路要逐项复刻落点的圆角形状、字形抗锯齿、阴影缩放与容器查询字号，那张清单没有尽头。一次手势里只有两个名字：纸壳 paper-<memo> 与纸内正文 paper-body-<memo>——分开是因为壳是纯色圆角矩形拉伸看不出来，而位图化的字一放大就是「字在膨胀」。除此之外任何元素都不许命名：过渡层的兄弟顺序由被捕获的先后决定，与 z-index、DOM 嵌套无关，只在新状态出现的名字一律排到最后，因此一层自带名字的全屏遮罩会稳稳盖住那张正在放大的纸——用户看到的是一整段空白然后结果「跳」出来。名字同时只能属于一个元素，所以卡片/预览/写作区三处永不共存。它只服务纯本地 DOM 更新（配 flushSync 保证新截图拍到的是新 DOM），跨路由三条归 React Router 的 viewTransition：导航是异步的，在外面包一层只会拍到还没换的旧页面。四种方向写进 html[data-paper-transition]，节奏由 CSS 解释
 workspaceMotion.ts: 工作台领域适配层，从 DS motion.ts 重导出基础配置；只额外提供 tree FLIP 的 CSS 曲线与 JS 求值，使结构重排、树展开与归档端点共用 210ms 时间轴
-workspaceMotion.test.ts: 锁定左右侧栏外侧8px/原220与170ms/全程scale1，禁止Popover缩放回流；无模糊85%遮罩随root同步且不拥有独立过渡身份； 锁定唯一语义时长/spring/stagger 与纸面过渡规矩——承载正文的表面零过冲（控制点 ≤ 1）、纸壳等比取景（cover，非等比会把圆角拉成椭圆）、纸内正文永不缩放只被 image-pair 取景框裁切（object-fit: none + overflow: clip）、两端排版的交接严格互补（浏览器用 plus-lighter 混合，不互补就发灰或叠字）、四个方向的世界都不长于纸的形变、纸面恢复300ms/240ms并保留完整加减速曲线、预览→编辑区与编辑区→Canvas 都必须由路由纸面通道接管、入口 bootstrap 在单次 Canvas 挂载内保持不可变、只有纸与纸内正文拥有过渡身份；另锁画布会话的 deps 只认 (登录用户, 画布)，防止上层记录一次返回描述就 reset Store 并让预览在取景前消失；并跨 Canvas/Panel/Dialog/Cord 样式证明 reduced-motion 只保留 90ms 淡入
+workspaceMotion.test.ts: 锁定左右侧栏外侧8px/原220与170ms/全程scale1，禁止Popover缩放回流；沿语义变量声明和消费的无模糊85%遮罩随root同步且不拥有独立过渡身份； 锁定唯一语义时长/spring/stagger 与纸面过渡规矩——承载正文的表面零过冲（控制点 ≤ 1）、纸壳等比取景（cover，非等比会把圆角拉成椭圆）、纸内正文永不缩放只被 image-pair 取景框裁切（object-fit: none + overflow: clip）、两端排版的交接严格互补（浏览器用 plus-lighter 混合，不互补就发灰或叠字）、四个方向的世界都不长于纸的形变、纸面恢复300ms/240ms并保留完整加减速曲线、预览→编辑区与编辑区→Canvas 都必须由路由纸面通道接管、入口 bootstrap 在单次 Canvas 挂载内保持不可变、只有纸与纸内正文拥有过渡身份；另锁画布会话的 deps 只认 (登录用户, 画布)，防止上层记录一次返回描述就 reset Store 并让预览在取景前消失；并跨 Canvas/Panel/Dialog/Cord 样式证明 reduced-motion 只保留 90ms 淡入
 
 职责: 页面层，承载 URL 级 Landing、独立登录、OAuth 回调、受保护 Dashboard、独立订阅流程与不进入生产状态的开发态视觉决策边界；Paper/Canvas 路由编排与 Canvas 增量布局/投影以协调 Hook 和纯函数收口，组件只消费结果。
 

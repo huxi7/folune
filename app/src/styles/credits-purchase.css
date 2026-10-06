@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 消费 Folune 品牌蓝/灰框线、共享 Button/Dialog/Skeleton、用户选定的蓝色生成图与实测640px/4:1/24px超椭圆曲率及12px间距
- * [OUTPUT]: 直接呈现蓝色横幅/原有彩色柔光、品牌蓝选中边框/外圈、积分图标近边阴影及六档卡片/余额/操作区，横幅关闭入口使用明确的轻通透三态与背景模糊，覆盖窄屏与浅暗主题
+ * [OUTPUT]: 积分加载复用2:1真实卡壳，分层图标/数字/金额且无彩色辉光； 直接呈现蓝色横幅/原有彩色柔光、品牌蓝选中边框/外圈、积分图标近边阴影及六档卡片/余额/操作区，横幅关闭入口使用明确的轻通透三态与背景模糊，覆盖窄屏与浅暗主题
  * [POS]: styles 的积分弹窗视觉边界；共享 Dialog 拥有模态行为，本层定义内容比例，外壳复用设置的近边柔影
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -70,7 +70,11 @@
   .folune-credit-pack-icons svg { filter: drop-shadow(0 1px 1px rgb(var(--app-shadow-rgb, 0 0 0) / 16%)) drop-shadow(0 2px 4px color-mix(in srgb, var(--primary) 35%, transparent)); }
   .folune-credit-pack-surface > strong { margin-top: 0; font-family: "Courier New", Courier, var(--font-serif); font-size: 27.2px; font-weight: var(--weight-emphasis, 700); letter-spacing: normal; line-height: 27.2px; font-variant-numeric: tabular-nums; }
   .folune-credit-pack-price { color: var(--muted-foreground); font-size: 13px; font-weight: var(--weight-section, 600); line-height: 13px; }
-  .folune-credit-pack-skeleton { min-height: 94px; border-radius: var(--credits-card-radius); corner-shape: superellipse(2); }
+  .folune-credits-packs-loading::before { display: none; }
+  .folune-credit-pack-skeleton { gap: 9px; min-height: 94px; border-color: color-mix(in srgb, var(--skeleton-base) 72%, transparent); }
+  .folune-credit-pack-skeleton-icon { width: 13px; height: 13px; border-radius: var(--radius-skeleton); corner-shape: var(--corner-shape-smooth); opacity: 0.6; }
+  .folune-credit-pack-skeleton-amount { width: 54px; height: 16px; }
+  .folune-credit-pack-skeleton-price { width: 28px; height: 6px; opacity: 0.65; }
   .folune-credits-actions { display: flex; flex-direction: column; gap: 12px; margin-top: 32px; }
   .folune-credits-actions .ds-button { width: 100%; min-height: 40px; height: auto; padding: 10px 12px; border-radius: var(--radius-pill); corner-shape: superellipse(2); font-size: 13px; line-height: 20px; --button-state-shadow-pressed: var(--button-state-shadow); }
   .folune-credits-actions .ds-button-content { white-space: normal; text-align: center; }

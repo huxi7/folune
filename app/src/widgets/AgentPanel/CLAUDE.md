@@ -20,7 +20,8 @@ AgentPanelHeader.tsx: 收起入口仅保留无障碍名称，历史/新建/窗�
 useConversationScroll.test.tsx: 验证首次非平滑定位与退出冻结、迟到内容回调不追尾
 useConversationScroll.ts: 消息滚动唯一边界，首次绘制前定位、退出取消平滑滚动并冻结位置，隐藏历史拒绝追尾
 AgentPanel.draft.test.tsx: 覆盖首开权限与保存期间按钮/Enter/直接提交不发送；子进程隔离、真实组件/Hook/SDK/transport，验证零写草稿、首发创建/引用/持续消息实例、失败重试、删除与迟到请求隔离
-AgentPanel.tsx: 历史/新对话导航与单会话装配；接收外壳尺寸/放大收起动作，将聊天与整理的真实状态上报胶囊；AgentConversation身份不因场景/尺寸变化而重建
+AgentPanel.tsx: 历史/新对话导航与单会话装配；冷启动与切历史共用延迟消息/输入槽位，数据就绪即接管；接收外壳尺寸/放大收起动作，将聊天与整理的真实状态上报胶囊；AgentConversation身份不因场景/尺寸变化而重建
+AgentConversationSkeleton.tsx: 冷启动、目标会话与代码加载共用的纯加载构图；180ms 后显示消息文字、浅用户容器与输入/工具行，Composer 保留边框壳，不把输入区涂成整块；不持有请求或会话，真实内容就绪立即卸载
 AgentPanel.streaming.test.tsx: 余额不足退出思考、明确提示且不自动重发； 新增流内错误立即停止思考、不执行未确认写工具/自动续写门禁； 子进程隔离 mock，使用真实 useChat/AgentPanel、可控直通流与延迟工具结果，验证连续两轮工具/自动续写稳定、正文首分块在 text-end/finish-step 前已显示且只折叠一次，独立读写工具并发、98 项独立工具顺序展示、100项明确批量八并发与完成列表 DOM 有界，以及停止后不再启动待执行工具或自动续写
 AgentPanelNavigation.test.tsx: 会话切换交互回归门禁，以未完成内容请求锁定历史列表立即退出、目标标题与加载壳同步接管
 ApprovalDock.tsx: Composer 上方唯一的紧凑非模态审批视觉原语，统一图标、标题、影响说明、按钮槽位与无蒙层语义；普通工具和 AI 整理审批只能适配它，禁止复制表面

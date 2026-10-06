@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 lib/supabase-auth 的 Auth HTTP 适配器与 router 提取的用户 access token
  * [OUTPUT]: 对外提供 authService.authenticate，将 access token 转换为可信 AuthUser
- * [POS]: service 层认证用例；在途按 access token 合并同一校验，已完成身份按 SHA-256(token) 键入 45 秒 TTL 缓存，原始 token 不越过请求生命周期，不依赖 Hono Context，不记录、返回或持久化 token；撤销延迟上限即 TTL
+ * [POS]: service 层认证用例；在途按 access token 合并同一校验，已完成身份按 SHA-256(token) 键入 45 秒 TTL/1024 项上限缓存，原始 token 不越过请求生命周期，不依赖 Hono Context，不记录、返回或持久化 token；撤销延迟上限即 TTL
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -10,6 +10,7 @@ import type { AuthUser } from "../model/auth.model.ts";
 
 // 撤销延迟上限即 TTL；调大即调大安全窗口，改动前先读 api/CLAUDE.md 分层禁令。
 const IDENTITY_TTL_MS = 45_000;
+const MAX_CACHED_IDENTITIES = 1_024;
 
 // 在途键是原始 token，但随 finally 在请求结束时删除，不越过请求生命周期。
 const inFlightAuthentications = new Map<string, Promise<AuthUser>>();
@@ -24,6 +25,14 @@ const resolvedIdentities = new Map<
 const identityKey = (accessToken: string): string =>
   new Bun.CryptoHasher("sha256").update(accessToken).digest("hex");
 
+const pruneResolvedIdentities = (now: number): void => {
+  // 成功写入按到期顺序排列；从最早项释放，不等轮换后再也不会到来的旧 token。
+  for (const [key, identity] of resolvedIdentities) {
+    if (identity.expiresAt > now) break;
+    resolvedIdentities.delete(key);
+  }
+};
+
 export const authService = {
   authenticate(accessToken: string): Promise<AuthUser> {
     const inFlight = inFlightAuthentications.get(accessToken);
@@ -31,10 +40,12 @@ export const authService = {
       return inFlight;
     }
 
+    const now = Date.now();
+    pruneResolvedIdentities(now);
     const key = identityKey(accessToken);
     const cached = resolvedIdentities.get(key);
     if (cached !== undefined) {
-      if (cached.expiresAt > Date.now()) {
+      if (cached.expiresAt > now) {
         return Promise.resolve(cached.user);
       }
       resolvedIdentities.delete(key);
@@ -43,9 +54,15 @@ export const authService = {
     const request = getSupabaseAuthUser(accessToken)
       .then((user) => {
         // 只缓存成功身份；401/502 永不入缓存，失效 token 过 TTL 后立即恢复拒绝。
+        const now = Date.now();
+        pruneResolvedIdentities(now);
+        if (resolvedIdentities.size >= MAX_CACHED_IDENTITIES) {
+          const oldestKey = resolvedIdentities.keys().next().value;
+          if (oldestKey !== undefined) resolvedIdentities.delete(oldestKey);
+        }
         resolvedIdentities.set(key, {
           user,
-          expiresAt: Date.now() + IDENTITY_TTL_MS,
+          expiresAt: now + IDENTITY_TTL_MS,
         });
         return user;
       })

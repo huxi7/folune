@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 Web Crypto/File、可信 AuthUser、请求期 access token、profile repository、Supabase Storage 适配器、Profile/Patch 类型与 HttpError
- * [OUTPUT]: 对外提供保留默认用户名生成的并发幂等 getOrCreate、username/bio update 与校验/补偿/清理完整的 replaceAvatar
- * [POS]: service 层单一 username 默认值、owner 与头像生命周期业务边界，串联 PostgREST CAS 更新和 Storage API 对象清理且不依赖 Hono
+ * [OUTPUT]: 对外提供保留默认用户名生成的并发幂等 getOrCreate、username/bio update 与校验/失败补偿/尽力清理旧文件的 replaceAvatar
+ * [POS]: service 层单一 username 默认值、owner 与头像生命周期业务边界；CAS 响应丢失只读核对，不删除可能已引用的新对象；提交后旧文件清理失败不回滚到可能已删除的旧对象，不依赖 Hono
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -235,14 +235,14 @@ const ownedAvatarObjectPath = (
     : null;
 };
 
-const cleanupUploadedAvatar = async (
+const cleanupAvatarObject = async (
   objectPath: string,
   accessToken: string,
 ): Promise<void> => {
   try {
     await removeAvatarObject(objectPath, accessToken);
   } catch {
-    // 补偿清理失败不能覆盖原始业务错误，也不得记录用户路径或凭据。
+    // 对象清理失败不能覆盖原始业务结果；超时也可能已删除对象，不能据此回滚头像。
   }
 };
 
@@ -295,12 +295,20 @@ const replaceAvatar = async (
       currentProfile = assertOwnedProfile(authUser, latestProfile);
     }
   } catch (error) {
-    await cleanupUploadedAvatar(newObjectPath, accessToken);
-    throw error;
+    // 断连不代表事务回滚；读回已提交头像可恢复成功，否则保留对象供后续核对。
+    // 即使此刻仍读到旧 URL，超时写入也可能随后提交，不能删除新对象。
+    let persisted: Profile | null;
+    try {
+      persisted = await profileRepository.findById(authUser.id, accessToken);
+    } catch {
+      throw error;
+    }
+    if (persisted?.avatar_url !== newAvatarUrl) throw error;
+    updatedProfile = assertOwnedProfile(authUser, persisted);
   }
 
   if (updatedProfile === null) {
-    await cleanupUploadedAvatar(newObjectPath, accessToken);
+    await cleanupAvatarObject(newObjectPath, accessToken);
     throw new HttpError(
       409,
       "AVATAR_UPDATE_CONFLICT",
@@ -314,26 +322,7 @@ const replaceAvatar = async (
   );
 
   if (oldObjectPath !== null && oldObjectPath !== newObjectPath) {
-    try {
-      await removeAvatarObject(oldObjectPath, accessToken);
-    } catch {
-      const rolledBack = await profileRepository.updateAvatarIfCurrent(
-        authUser.id,
-        newAvatarUrl,
-        currentProfile.avatar_url,
-        accessToken,
-      );
-
-      if (rolledBack !== null) {
-        await cleanupUploadedAvatar(newObjectPath, accessToken);
-      }
-
-      throw new HttpError(
-        502,
-        "AVATAR_REPLACEMENT_FAILED",
-        "Avatar replacement could not remove the previous file",
-      );
-    }
+    await cleanupAvatarObject(oldObjectPath, accessToken);
   }
 
   return assertOwnedProfile(authUser, updatedProfile);

@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 WarmTooltip 原位功能提示；依赖 useLocale 的界面文案（用户内容保留原文）；依赖 design-system motion=none Dialog/Skeleton、纸面视图过渡身份、NotePaper reader、卡片摘录快照、正文缓存与 MarkdownReadingView
+ * [INPUT]: 依赖 WarmTooltip 原位功能提示；依赖 useLocale 的界面文案（用户内容保留原文）；依赖 design-system motion=none Dialog/延迟文字Skeleton、纸面视图过渡身份、NotePaper reader、卡片摘录快照、正文缓存与 MarkdownReadingView
  * [OUTPUT]: 预览关闭入口不重复提示，编辑命令保留功能提示；对外提供不卸载 Canvas、只有纸拥有过渡身份而遮罩随 root 一起换、正文未到时以卡片摘录保持同一段字的小开本 Preview
  * [POS]: KnowledgeCanvas 的正文阅读边界；Canvas API 永不携带 content_mdx，只有用户明确预览时才按目标 memo ID 加载正文；纸内只有正文，动作一律在纸外，因此正文长度不影响任何入口的可达性；Esc/遮罩/焦点归还统一复用 Dialog 的模态行为，不另造第二套弹窗
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -13,6 +13,7 @@ import {
   Dialog,
   Skeleton,
   SkeletonGroup,
+  useDelayedSkeleton,
 } from "../../shared/design-system/components";
 import { PencilSimpleIcon, XIcon } from "../../shared/design-system/icons";
 import { useMemoDocumentStore } from "../../shared/store/memoDocumentStore";
@@ -41,6 +42,7 @@ export function CanvasPreviewOverlay({
   const document = useMemoDocumentStore((state) => state.documents[memoId]);
   const status = useMemoDocumentStore((state) => state.statuses[memoId] ?? "idle");
   const error = useMemoDocumentStore((state) => state.errors[memoId]);
+  const skeletonVisible = useDelayedSkeleton(document === undefined && status !== "error" && !pendingExcerpt?.trim());
   const loadMemo = useMemoDocumentStore((state) => state.loadMemo);
 
   // status 由本次 loadMemo 自己切到 loading；若加入依赖会 cleanup 并中止刚发出的请求。
@@ -79,10 +81,10 @@ export function CanvasPreviewOverlay({
             pendingExcerpt !== null && pendingExcerpt.trim().length > 0 ? (
               <p aria-busy="true" className="note-paper-excerpt">{pendingExcerpt}</p>
             ) : (
-              <SkeletonGroup label={t("正在读取原文", "Loading note")}>
-                <Skeleton className="canvas-preview-line-skeleton" />
-                <Skeleton className="canvas-preview-line-skeleton" />
-                <Skeleton className="canvas-preview-line-skeleton" />
+              <SkeletonGroup label={t("正在读取原文", "Loading note")} visible={skeletonVisible}>
+                <Skeleton className="canvas-preview-line-skeleton" shape="text" />
+                <Skeleton className="canvas-preview-line-skeleton" shape="text" />
+                <Skeleton className="canvas-preview-line-skeleton" shape="text" />
               </SkeletonGroup>
             )
           ) : status === "error" ? (

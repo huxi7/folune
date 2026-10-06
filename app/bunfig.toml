@@ -1,4 +1,4 @@
 # app 的 bun test 配置。preload 在任何测试文件之前补齐浏览器公开环境变量,
-# 使 `bun test` 裸跑即为真实结果, 不再依赖测试文件的执行顺序。
+# 与 `bun run test` 的逐文件隔离配合，避免环境变量、DOM 和模块替身依赖执行顺序。
 [test]
 preload = ["./src/testEnv.ts"]

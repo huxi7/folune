@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 BlogPage 目录结构、Blueprint 导轨、TruchetPattern 与 Folune 颜色/字体/动态偏好
+ * [INPUT]: 依赖 BlogPage 目录结构、Blueprint 原始框线色/7px 节点、TruchetPattern 与 Folune 颜色/字体/动态偏好
  * [OUTPUT]: 提供博客与动态目录的点阵刊头、纸面颗粒、紧凑文章行、四色压边标签和 72px 曲线侧纹；可见侧纹共用 1800ms 展开，完整纹样在入场结束后释放
  * [POS]: styles 的公开目录边界；按 Laper 公开 DOM/CSS 对齐几何，正文阅读仍归 blog.css，顶栏与页脚不继承局部覆盖
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -7,7 +7,7 @@
 @layer components {
   .blog-index-page {
     --blog-typewriter:"Courier New",Courier,"Noto Serif SC","Songti SC","Songti TC",SimSun,serif;
-    --blog-pattern-line:color-mix(in srgb,var(--landing-border) 72%,transparent);
+    --blog-pattern-line:color-mix(in srgb,var(--landing-border-base) 72%,transparent);
     --blog-pattern-accent:color-mix(in srgb,var(--primary) 32%,transparent);
     --blog-pattern-duration:1800ms;
     --blog-pattern-delay:500ms;
@@ -47,10 +47,10 @@
   .blog-index-heading-rails > span:first-child { left:48px; }
   .blog-index-heading-rails > span:last-child { right:48px; }
   .blog-index-heading-rails > span::before,.blog-index-heading-rails > span::after {
-    content:""; position:absolute; left:50%; top:0; width:6px; height:6px;
-    border:1px solid var(--landing-border); background:var(--landing-bg); transform:translate(-50%,-50%) rotate(45deg);
+    content:""; position:absolute; left:50%; top:.5px; width:var(--blueprint-pin-size); height:var(--blueprint-pin-size);
+    border:1px solid var(--landing-line); background:var(--landing-bg); transform:translate(-50%,-50%) rotate(45deg);
   }
-  .blog-index-heading-rails > span::after { top:100%; }
+  .blog-index-heading-rails > span::after { top:calc(100% + .5px); }
   .blog-index-eyebrow { display:inline-block; font:400 13px/20px var(--font-sans); letter-spacing:.18em; padding-left:.18em; }
   .blog-index-heading h1 { margin:12px auto 0; color:var(--primary); font:300 46px/1.08 var(--blog-typewriter); letter-spacing:normal; }
   .blog-index-heading p { max-width:672px; margin:16px auto 0; color:var(--muted-foreground); font:400 16px/28px var(--font-sans); }

@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 happy-dom、真实 CreditsPage/Dialog、LocaleProvider 与可控积分 API/账户用量
- * [OUTPUT]: 验证一次点击自动跳转且不显示订单或二次确认； 验证目录选购、严格结账意图、未知余额、失败重试、关闭中止与英文界面
+ * [OUTPUT]: 验证一次点击自动跳转且不显示订单或二次确认；验证目录到达前不预判销售状态、目录选购、严格结账意图、未知余额、失败重试、关闭中止与英文界面
  * [POS]: pages 的积分购买交互门禁；证明预留支付不冒充成功，不替代真实支付或视觉验收 验证同选择重试保持幂等键与长期有效规则。
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -55,6 +55,19 @@ beforeEach(() => {
   checkoutSpy = spyOn(api, "createCreditCheckout").mockResolvedValue(unavailable);
 });
 afterEach(() => { cleanup(); billingSpy.mockRestore(); catalogSpy.mockRestore(); checkoutSpy.mockRestore(); paymentSpies.splice(0).forEach(spy => spy.mockRestore()); });
+
+test("目录未到达不预判尚未开售，真实目录到达后立即显示销售状态", async () => {
+  let complete!: (value: CreditPackCatalog) => void;
+  catalogSpy.mockImplementation(() => new Promise(resolve => { complete = resolve; }));
+  const view = render(<CreditsPage onBack={() => {}} />);
+  expect(view.queryByText("积分包预览，尚未开售。")).toBeNull();
+  expect(view.getByRole("button", { name: "购买积分" }).hasAttribute("disabled")).toBe(true);
+  await act(async () => complete({ ...catalog, status: "available", checkout: { available: true, provider: "nowpayments" } }));
+  expect(view.getAllByRole("radio")).toHaveLength(6);
+  expect(view.getByText("购买积分长期有效。")).toBeTruthy();
+  expect(view.getByRole("button", { name: "立即支付 $5" }).hasAttribute("disabled")).toBe(false);
+  expect(view.queryByText("积分包预览，尚未开售。")).toBeNull();
+});
 
 test("积分购买一次点击自动跳转，不再切换为确认按钮或订单面板", async () => {
   const url = "https://nowpayments.io/payment/?iid=123";

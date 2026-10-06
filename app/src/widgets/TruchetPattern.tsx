@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖调用方提供的唯一 SVG 图案 ID、描边颜色与可选路径动效类
  * [OUTPUT]: 对外提供 72px TruchetPattern 三层曲线平铺，几何取自 Laper 公开页面
- * [POS]: widgets 的纯 SVG 纹样定义；价格与公开目录共用路径，宿主各自持有定位、色彩和显现生命周期
+ * [POS]: widgets 的纯 SVG 纹样定义；首页波浪、价格与公开目录共用路径，宿主各自持有定位、色彩和显现生命周期
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 export function TruchetPattern({ id, line, accent, pathClassName }: {

@@ -1,12 +1,13 @@
 /**
- * [INPUT]: 依赖 config/env 的 Supabase URL/Publishable key、已验证用户 access token 与 Web fetch API
- * [OUTPUT]: 对外提供 avatars bucket 的对象上传、Storage API 删除、公开 URL 构造与受管 URL 解析能力
+ * [INPUT]: 依赖 config/env 的 Supabase URL/Publishable key、已验证用户 access token 与 supabase-http 完整响应期限
+ * [OUTPUT]: 对外提供 avatars bucket 的对象上传、Storage API 删除、公开 URL 构造与受管 URL 解析能力；写操作 12 秒且不重放，网络错误统一净化
  * [POS]: lib 层 Supabase Storage HTTP 适配器，只处理对象协议与基础设施错误，不判断 profile owner 业务规则
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
 import { HttpError } from "../common/http-error.ts";
 import { env } from "../config/env.ts";
+import { fetchSupabaseResponse } from "./supabase-http.ts";
 
 export const AVATAR_BUCKET = "avatars";
 
@@ -56,13 +57,15 @@ const storageRequest = async (
   headers.set("Authorization", `Bearer ${accessToken}`);
   headers.set("apikey", env.SUPABASE_PUBLISHABLE_KEY);
 
-  const response = await fetch(
-    `${env.SUPABASE_URL}/storage/v1/${path.replace(/^\/+/, "")}`,
-    {
-      ...init,
-      headers,
-    },
-  );
+  let response: Response;
+  try {
+    response = await fetchSupabaseResponse(
+      `${env.SUPABASE_URL}/storage/v1/${path.replace(/^\/+/, "")}`,
+      { ...init, headers },
+    );
+  } catch {
+    throw new HttpError(502, "SUPABASE_STORAGE_ERROR", "Supabase Storage is unavailable");
+  }
 
   if (!response.ok) {
     throw new HttpError(

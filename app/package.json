@@ -7,7 +7,7 @@
     "build": "vite build",
     "lint": "oxlint --react-plugin --jsx-a11y-plugin -D react-hooks src",
     "preview": "vite preview",
-    "test": "bun test",
+    "test": "bun test --isolate",
     "typecheck": "tsc --noEmit --allowJs false"
   },
   "devDependencies": {

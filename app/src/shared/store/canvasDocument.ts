@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 shared/api/canvas 的 V2 文档、操作与 mutation 回执类型
- * [OUTPUT]: 对外提供 Canvas 来源卡片统一判据、带本地展示提示的 intent、操作合并、乐观投影、服务端回执归一与冲突 rebase 纯函数
+ * [OUTPUT]: 对外提供 Canvas 来源判据、带展示提示的 intent、尊重节点/关系生命周期的线性合并、乐观投影、回执归一与冲突 rebase 纯函数
  * [POS]: shared/store 的 Canvas documentSlice 领域内核；React、网络、IndexedDB 都不能进入这里，保证恢复与在线编辑走同一套确定性投影
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -234,13 +234,14 @@ const mergeUpdate = (
 });
 
 /**
- * 只合并确定可交换的高频操作：同节点连续更新、同一视口和同一边。
+ * 只合并同一生命周期内可交换的高频操作；删除/重建隔断索引，撤销不能越过删除。
  * 创建后删除仍交给数据库识别 no-op，避免客户端误删一个服务端本已存在的 memo 投影。
  */
 export const normalizeCanvasIntents = (
   intents: readonly CanvasIntent[],
 ): CanvasIntent[] => {
   const normalized: CanvasIntent[] = [];
+  const createIndex = new Map<string, number>();
   const updateIndex = new Map<string, number>();
   const edgeIndex = new Map<string, number>();
   let viewportIndex: number | null = null;
@@ -249,15 +250,11 @@ export const normalizeCanvasIntents = (
     const operation = intent.operation;
 
     if (operation.type === "update_node") {
-      const createIndex = normalized.findIndex(
-        (candidate) =>
-          candidate.operation.type === "create_text"
-          && candidate.operation.node_id === operation.node_id,
-      );
-      if (createIndex >= 0) {
-        const created = normalized[createIndex]!;
+      const createdAt = createIndex.get(operation.node_id);
+      if (createdAt !== undefined) {
+        const created = normalized[createdAt]!;
         if (created.operation.type === "create_text") {
-          normalized[createIndex] = {
+          normalized[createdAt] = {
             ...created,
             operation: {
               ...created.operation,
@@ -308,9 +305,33 @@ export const normalizeCanvasIntents = (
         edgeIndex.set(key, normalized.length);
         normalized.push(intent);
       } else {
-        normalized[index] = intent;
+        const previous = normalized[index]!;
+        if (previous.operation.type === "upsert_edge" && operation.rationale !== undefined) {
+          normalized[index] = {
+            ...previous,
+            operation: { ...previous.operation, rationale: operation.rationale },
+          };
+        }
       }
       continue;
+    }
+
+    if (operation.type === "create_text" || operation.type === "add_memo") {
+      // 新对象之后的编辑不能移到创建前；重复创建仍保留服务端的 no-op 判定。
+      updateIndex.delete(operation.node_id);
+      if (operation.type === "create_text" && !createIndex.has(operation.node_id)) {
+        createIndex.set(operation.node_id, normalized.length);
+      }
+      // add_memo 可附带关系，且此处不知道服务端 alias，保守隔断关系合并。
+      edgeIndex.clear();
+    } else if (operation.type === "remove_node") {
+      createIndex.delete(operation.node_id);
+      updateIndex.delete(operation.node_id);
+      // 删除节点隐式删除所有相邻边；之后的撤销必须保留在这一操作后面。
+      edgeIndex.clear();
+    } else if (operation.type === "remove_edge") {
+      // 删除入口只有 edge_id；无服务端图时不能反推它属于哪一对节点。
+      edgeIndex.clear();
     }
 
     normalized.push(intent);

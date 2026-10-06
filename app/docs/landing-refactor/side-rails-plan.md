@@ -1,3 +1,5 @@
+> 历史方案：2026-10-05按用户要求重新采集并替换三种纹样，当前几何、动画与材质对比以 [material-comparison.md](material-comparison.md) 为准。以下保留旧版推导与证据，不再作为当前参数。
+
 # Folune Landing 侧导轨改进 Plan
 
 > 日期：2026-09-20。

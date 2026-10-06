@@ -21,7 +21,7 @@ index.html: 首绘按 pathname 声明 APP/marketing 文档根场景；Vite HTML 
 AUTH_SETUP.md: Supabase 邮箱确认模板、URL allow list、自定义 SMTP 限制与 Google OAuth 后台配置；列明正式首页/隐私政策/服务条款 URL、Google 品牌验证和真实部署核查步骤；记录尚未启用的 Turnstile 前后端接入要求及忘记密码占位边界
 brand-spec.md: Folune 品牌真相源，记录已选 Soft Ink Light/Dark 轴、Saving Processing 状态、8/10/12/16/20px 同心曲率、Button 微雾材质及历史候选
 vite.config.ts: Vite 配置，从 app/.env.local 加载浏览器环境，将开发服务器严格固定到 10000，连接 React/Tailwind 插件，并用 Rolldown 按 Markdown、Language、Features 与其余 CodeMirror/Lezer 拆分 chunk（React 不再单独成 chunk，避免把编辑器 vendor 焊进首屏闭包）
-bunfig.toml: bun test 配置，声明 preload 在任何测试文件之前补齐浏览器公开环境变量，使裸跑 `bun test` 即为真实结果
+bunfig.toml: 测试 preload 配置，每个隔离测试文件之前补齐浏览器公开环境变量；完整门禁使用 `bun run test`，隔离 DOM、Motion 缓存与模块替身
 src/main.tsx: 全局 WarmTooltipGroup 统一功能提示热启动与单一浮层； React 挂载入口，以 WorkspaceEntryTransition 跨路由保持首次准入品牌过渡，先加载 index.css 建立 theme/base/components/utilities 层序，避免路由局部样式先于全局样式到达时被 Preflight 覆盖；注入 DS motion.ts 生成的 CSS 时长/曲线，以 MotionConfig reducedMotion=user 包围 ThemeProvider/LocaleProvider/ToastProvider/RouterProvider 并加载全局样式
 src/testEnv.ts: 测试期浏览器公开配置的唯一兜底，只补立刻拒连的回环 Supabase 占位值且不覆盖已注入的真实值；产品代码永不导入
 src/index.css: 普通悬停与选中底色分离，150/200ms变色由motion.ts统一提供；--layer-tooltip高于普通弹窗/通知，--layer-confirmation让退出确认独立居顶； 全局默认视觉保留营销既有表现，导入 app-visual.css / app-typography.css 按文档根场景分别覆盖 APP 浅暗色与文字角色；Landing 与入口共读原值不变的 landing-paper/landing-text token；Kumo/Tailwind v4 主题与样式入口（通用 Motion 的时长/曲线由 shared/design-system/motion.ts 单独生成），冻结 Quiet Editorial Color/Type/Spacing/Radius/Elevation/Motion、Paper 几何、Paper First 中性画布/纯净纸张及 light/dark 同轴语义，并隔离声明不写入生产主题的 Color Lab 蓝色终选候选、导入职责样式模块；浏览器元素基础规则下沉 global-base.css
@@ -31,13 +31,17 @@ src/pages/: 菜单/设置的退出共用确认表面，确认后沿笔记/Canvas
 src/widgets/: 业务组合组件层，承载 Landing、PaperWorkspaceShell/CanvasWorkspace、共享文件库/AI Panel、memo 编辑会话、五栏账户设置、纯订阅展示与回收站、全局对象命令与 Canvas V2 React Flow 交互
 src/shared/: 前端共享层，承载 memo/AI/Canvas/billing API、Dashboard 用户级 BillingProvider 快照、轻量 tree、按 ID 正文、Canvas document/WAL/Workspace Store/保存协调器、Paper 与 Canvas 各自独立的 Chrome 状态、design system、纯 Supabase Auth、主题与中英语言状态；前端禁止直连业务表或 Storage
 docs/: UI 验收与决策证据目录，保存 Design System 语义说明、computed Token 快照、Paper First V1.1 当前前后对比/验收截图及 Color Lab v0 同构配色快照
-package.json: Bun 包元数据、Vite dev/build/typecheck、Bun test 与 oxlint scripts 及用户端依赖清单；Paper Shaders 由正式 Hero 的选定颗粒波面及两处产品展示背景（APP 展示区与功能细节）按需加载
+package.json: Bun 包元数据、Vite dev/build/typecheck、逐文件隔离的 Bun test 与 oxlint scripts 及用户端依赖清单；Paper Shaders 由正式 Hero 的选定颗粒波面及两处产品展示背景（APP 展示区与功能细节）按需加载
 bun.lock: Bun 锁定依赖版本
 .oxlintrc.json: 前端静态检查策略，启用 React Hooks、JSX a11y 与未使用变量诊断；render 期 latest ref 写入等已证明安全的模式只允许带就地中文依据后局部豁免
 tsconfig.json: TypeScript 编辑器与编译约束
 .gitignore: app 模块忽略规则
 
 2026-09-22 营销动效：首页、博客、动态及登录继续共用一个 MarketingLayout，公开链接经 MarketingLink 接入 Router 原生 View Transition，历史返回和锚点在滚动落位后仅捕获可视正文。文字以 8px/360ms 上浮淡入、32ms 错峰且上限 128ms，顶栏固定、导轨和卡片骨架不位移；首次访问/无原生过渡时由同一 CSS 入场兜底，滚动按内容首次入视口播放。query 与 detail 清除已消费锚点不重播，减少动态立即呈现。此处覆盖旧版仅允许 3–4px reveal 的限制。
+
+2026-10-06 纸感定稿：移除白底模式、Header开关和sessionStorage材质读取。Header、公告与页底共用纸纹。导轨对比完成，临时demo已删除；正式首页恢复Git原版#DADDE2导轨、8px白填充SVG菱形与原斜纹。公告不建立独立层叠上下文，连续竖轨覆盖纸色背景；仅分隔带高于相邻背景，保护跨边界节点。三种侧纹保留既有几何与动画。
+
+2026-10-05 顶栏/公告/框线微调：按 Laper 实际 DOM/CSS 更新为48px Header、36px公告、70×28px下载与48×28px打开；12px导航、24px平滑曲率与灰阶短影仅作用于共享营销顶栏。主轨仍1120px，框线由#E4E8E6映射为#E4E6E8并按54/68/82%分层，7px旋转菱形以交叉线中心定位；手机用折叠菜单维持单行。此条覆盖下文旧顶栏尺寸/材质叙述，具体数值及验证归 docs/landing-refactor/header-frame-reference.md。
 
 Landing 的 Zed 参考基线已于 2026-09-14 获用户确认冻结：代码节点 1e34367，Git 标记 landing-zed-baseline；后续在 codex/landing-folune-stepwise 按用户指示逐项替换，默认保持已确认视觉关系。导航、1120px 正文与 Footer 复用 BlueprintFrame 的导轨坐标，公告保留参考浅蓝渐变；下文旧版 Landing 的纯白公告、1088px 主轨及无 BlueprintFrame 页脚描述不适用于该基线。首页仅禁止文档根的纵向越界回弹，正常滚动保留；Footer 下没有导入稿的 64px 留白。用户明确确认前，不将本次细节修正视为基线冻结。
 
@@ -67,7 +71,7 @@ APP 当前视觉（2026-09-24）：styles/app-visual.css 在 data-visual-context
 
 状态反馈约束: 不提供通用状态胶囊；进行中状态由对应 Button loading 表达，界面已明确变化的成功操作保持静默；复制、破坏性操作回执、失败和需要处理的异常才使用 Toast，页面长期信息使用上下文内的普通文字、图标或结构层级，不额外制造状态徽章。
 
-Skeleton 加载约束: Skeleton 只允许来自 shared/design-system；首次无旧内容且真实结构明确时才使用，业务层必须按最终尺寸组合，不得自建灰块、shimmer 或计时器。统一采用低对比表面、3.6s 单组宽光带、180ms 延迟出现与 360ms 最短可见时长，reduced-motion 下保持静态。已有内容刷新必须保留内容；页面级 Skeleton 仅用于 /app 首次 Profile 准入且第一眼只呈现 Paper，memo tree 在文件库打开后自然恢复。
+Skeleton 加载约束: Skeleton 只允许来自 shared/design-system；首次无旧内容且真实结构明确时才使用，业务层必须按最终尺寸组合，不得自建灰块、shimmer 或计时器。统一采用低对比表面、3.6s 单组窄掠光、180ms 延迟出现，内容就绪立即退出；显式最短时长只留给有真实需求的调用方，reduced-motion 下保持静态。已有内容刷新必须保留内容；页面级 Skeleton 仅用于 /app 首次 Profile 准入且第一眼只呈现 Paper，memo tree 在文件库打开后自然恢复。
 
 AI 消息组件约束: 账号权限默认完全访问，后续明确选择跨刷新保留；当前账号权限未确认或正在保存时，Composer 不允许发送，迟到初始化/读取不得覆盖已保存选择。用户气泡必须与 Primary Button 同源；消息角色只由气泡材质和对齐表达，用户与助手回复上方禁止重复显示“你”“备忘录助手”等身份标题。当前 memo、@引用与 revision 只在发送前 Composer 中显示并冻结到请求 metadata，对话历史中的用户消息与 AI 回复都禁止重复渲染引用笔记或“来源”行。AssistantMessage 最终正文严禁 border、background、radius、shadow 等任何卡片表面；流式正文必须把 SSE 已到达文本立即完整交给视图，不得用逐词计时队列限制模型吐字速度；英文按词、中文按语义词组仅为末尾最多 5 个单元提供轻微模糊拖尾，禁止添加尾部光标或第二种持续注意力动效，reduced-motion 下停止模糊动效。Chat 服务原样即时传递思考、工具与正文分块，禁止缓存 text 等待 finish-step；模型直接执行工具，执行完再输出正文，省去工具前过渡句。AI SDK `UIMessage.parts` 是回复显示顺序的唯一真相源：初次生成与工具/审批续写必须复用同一 assistant ID；同一 toolCallId 只展示一次。工具所在 step 的 text、全部 reasoning 与工具 part 按原序组成单一处理过程；后续无工具步骤的正文独立展示，无 step 的旧历史兼容最后一次工具分区。静态历史按 reasoning/step 分区；实时消息已显示的正文保持在原位，迟到工具不得把文字撤回折叠区。过程入口固定在全部过程文字和工具之上，普通无 reasoning/工具回复不制造空过程区。思考与工具阶段过程栏持续展开；SDK ready 只表示一次网络流结束，客户端工具执行、审批和自动续写仍沿整轮 continuation 保持展开，空白分块不改变阶段。首段有效正文到达即在同次渲染中开始 130ms 收起，并同时呈现正文，不等待动画或步骤结束；每条回复只自动收起一次，后续工具/思考不得重新弹开，用户可手动回看；新消息 ID 重置披露和撤销状态，历史默认折叠。处理过程视觉必须弱于最终正文，不展示耗时、步骤数、工具数，不添加厚重卡片或时间轴。只读工具在完整参数到达时提前并发执行，不阻塞后续流，结果仍在流末统一发布；停止/失败不发布迟到读取结果。同轮写命令仅合并在途权限请求，完成后的权限值不缓存。写工具不得在 input-available 到达时提前执行，只能在流结束且没有 approval-requested 后交给纯 Planner；Composer 上方只能存在一个无蒙层、无焦点劫持的 ApprovalDock，普通工具审批与 AI 整理 awaiting_confirmation 必须同构且普通审批优先，禁止整理另造卡片。普通审批点击后立即收起，并在执行前把 approval-responded 写回 thread messages；同一 approval 只响应一次，刷新后的已批准未完成工具只按 toolCallId 幂等恢复。AI 整理成功后不得在 AgentPanel 或 Paper 下方重复显示结果卡；当前结果只由文件库定位与目标高亮表达。智能审批或完全访问自动通过时不显示审批/审计大卡；同轮成功命令只有在整轮工具、续写和正文生成全部结束后才在回复末尾提供一个“撤销本次操作”，并按执行逆序逐条撤销。ToolCallBubble 只展示净化的人话详情，禁止 UUID、Token、原始 JSON 或完整正文。Prompt Bar 固化当前 memo、最多五篇置顶/@引用及 revision；Planner 只基于唯一 Store 快照规划，与调用方同一同步 tick 取快照，主线程乐观投影并提交 api Command，拒绝/error/stale 精确回滚。Planner 不访问 React/DOM/Zustand/API/数据库，也不是安全裁决者——该纯度由 memoToolPlannerBoundary.test.ts 静态门禁与「树必须作为只读入参」的签名保证。
 
@@ -83,7 +87,7 @@ Kumo Toast 约束: 全局瞬时反馈必须经本地 Toast API 适配 Kumo Toast
 
 Paper First V1.1 / Quiet Editorial 覆盖约束: 本节覆盖上文遗留的 V1 Classic Blueprint App 材质描述；Landing Blueprint 保持独立。APP/DEV Design System 只消费 `src/index.css` 的 Stage/Paper/Ink/Muted/Hairline/Soft Ink/Danger 语义轴，Button 仅允许轻微可触内外影，Paper 仍是唯一明显的非对称多层阴影，只有悬浮在遮罩之上的纸改用 --paper-float-shadow 的四周均匀柔影。Paper 使用 12px 曲率（宽度上限与 `--paper-max-width` token 已随高度优先开本一并移除），标题/Markdown 标题/引用/阅读态使用 Editorial 字体。关闭状态的 Library/AI 是桌面 32px、窄屏 44px 的纯 Ghost Panel Toggle；打开后 Stage Toggle 消失，文件库收起命令进入自身 Header 最右，AI 收起命令进入其 Header 最右，二者不做共享变形。整理 succeeded/undone 由 ArchiveCordOverlay 把 Paper 归档落点连接到当前唯一可见代表行，presentation 随当前笔记与最新结果持有；resize、Panel resize、树滚动/展开必须刷新几何，小屏覆盖模式只保留目标高亮。基础动效时间轴为 press 90ms（命令控件原地收紧 scale 0.98，Reduced Motion 归 1）、micro 160/130ms、紧凑Menu 120/100ms（仅新建下拉与笔记更多）、普通Menu 150/150ms、Panel 220/170ms、Modal 150/150ms、spatial 360ms、quiet 600ms，工作区侧栏复用原220/170ms、左侧从左/右侧从右8px平移加淡入淡出，禁止套用Popover缩放；纸张在两处之间的放大缩小不属于这套 token——它归浏览器的视图过渡，时长与曲线只在 `styles/knowledge-canvas.css` 声明一次。reduced-motion 直接呈现静态结果。
 
-本地环境约束: Vite 默认读取 app/.env.local/.env；Thread/Message/Reference/Run 等业务请求只允许经 src/shared/api/client.ts 使用 VITE_API_BASE_URL，默认指向 http://localhost:10001。AI 对话和整理规划由 AgentPanel transport/client 使用 VITE_CHAT_BASE_URL，默认指向 http://localhost:10002，并在请求期从 Supabase Auth 读取 access token；不传 userId，不直连 Supabase 业务数据。浏览器只接收 VITE_ 前缀的公开配置，api/chat 服务端密钥不得写入 app。测试期是另一条路径：`bun test` 把 NODE_ENV 设为 test，Bun 因此不读 `.env.local`，公开配置一律由 bunfig.toml 的 preload 加载 `src/testEnv.ts` 补齐，测试文件不得各自私藏第二份兜底；占位 Supabase 地址必须是立刻拒连的回环地址，换成可解析域名会让会话请求真的去做 DNS/TLS 并把测试拖过超时，制造与被测代码无关的假红。
+本地环境约束: Vite 默认读取 app/.env.local/.env；Thread/Message/Reference/Run 等业务请求只允许经 src/shared/api/client.ts 使用 VITE_API_BASE_URL，默认指向 http://localhost:10001。AI 对话和整理规划由 AgentPanel transport/client 使用 VITE_CHAT_BASE_URL，默认指向 http://localhost:10002，并在请求期从 Supabase Auth 读取 access token；不传 userId，不直连 Supabase 业务数据。浏览器只接收 VITE_ 前缀的公开配置，api/chat 服务端密钥不得写入 app。测试期是另一条路径：`bun run test` 以 `bun test --isolate` 逐文件重建全局与模块缓存，并把 NODE_ENV 设为 test，Bun 因此不读 `.env.local`，公开配置一律由 bunfig.toml 的 preload 加载 `src/testEnv.ts` 补齐，测试文件不得各自私藏第二份兜底；占位 Supabase 地址必须是立刻拒连的回环地址，换成可解析域名会让会话请求真的去做 DNS/TLS 并把测试拖过超时，制造与被测代码无关的假红。
 
 底部导航例外: Design System 与回收站的选中态表达“当前位置”而不是“可执行按钮”；两者继续复用 SidebarButton 的结构与尺寸，但选中时只使用 primary 前景色，禁止背景、边框、阴影和按压位移。此例外优先于上文通用 SidebarButton 选中材质规则。
 

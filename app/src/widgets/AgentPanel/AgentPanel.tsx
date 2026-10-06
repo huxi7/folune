@@ -1,16 +1,17 @@
 /**
- * [INPUT]: 依赖 useAiThreads、常驻 AgentConversation、AgentPanelHeader、DS 历史视图与调用方外壳尺寸/状态回调
+ * [INPUT]: 依赖 useAiThreads、常驻 AgentConversation、共用延迟加载构图 AgentConversationSkeleton、AgentPanelHeader、DS 历史视图与调用方外壳尺寸/状态回调
  * [OUTPUT]: 对外提供 AgentPanel，协调历史与新对话导航，将真实会话/整理状态交给胶囊外壳
  * [POS]: AgentPanel 的轻量组合根；会话执行归 AgentConversation，窗口形变归 Dashboard 宿主，切换尺寸与空间不重建会话
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { useEffect, useState } from "react";
-import { Button, PersistentView, Skeleton, SkeletonGroup, useToast } from "../../shared/design-system/components";
+import { Button, PersistentView, useToast } from "../../shared/design-system/components";
 import { useLocale } from "../../shared/locale";
 import type { AiRun } from "../../shared/api/ai";
 import type { MemoTreeNode } from "../../shared/api/memo";
 import type { AssistantSize } from "../../shared/store/workspaceChromeStore";
 import { AgentConversation } from "./AgentConversation";
+import { AgentConversationSkeleton } from "./AgentConversationSkeleton";
 import { AgentPanelHeader } from "./AgentPanelHeader";
 import type { AgentPresence } from "./activityState";
 import { ThreadHistory } from "./ThreadHistory";
@@ -90,19 +91,9 @@ export function AgentPanel(props: AgentPanelProps) {
       </PersistentView>
       <PersistentView active={!historyOpen} fill className="agent-panel-view-switch">
       {threads.loading && thread === null ? (
-        <div className="agent-panel-loading">{t("正在恢复会话…", "Restoring your conversations…")}</div>
+        <AgentConversationSkeleton label={t("正在恢复会话", "Restoring your conversations")} />
       ) : threads.selectedLoading ? (
-        <SkeletonGroup className="agent-conversation-loading" label={`${t("正在载入会话", "Loading conversation")} ${thread?.title ?? t("新对话", "New chat")}`}>
-          <div className="agent-conversation-loading-list">
-            <Skeleton className="agent-conversation-loading-user" />
-            <div className="agent-conversation-loading-answer">
-              <Skeleton shape="text" />
-              <Skeleton shape="text" />
-              <Skeleton shape="text" />
-            </div>
-          </div>
-          <Skeleton className="agent-conversation-loading-composer" />
-        </SkeletonGroup>
+        <AgentConversationSkeleton label={`${t("正在载入会话", "Loading conversation")} ${thread?.title ?? t("新对话", "New chat")}`} />
       ) : threads.selectedLoadError !== null ? (
         <div className="agent-panel-loading" role="alert">
           <span>{t("这个会话暂时没有加载出来。", "This conversation could not be loaded.")}</span>

@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 使用已提取的 Laper 订阅 DOM/CSS 几何与叠层，消费 Folune 语义颜色/曲率/动效和 Button/GlowButton
- * [OUTPUT]: 三张 300px 付费卡、玻璃铭牌、普通/流光按钮、年付开关、暖琥珀折扣标记、账户积分条与 Laper 150ms 浅灰关闭反馈，结账过渡归 checkout-transition.css
+ * [OUTPUT]: 真实槽位的精细加载构图、三张 300px 付费卡、玻璃铭牌、普通/流光按钮、年付开关、暖琥珀折扣标记、账户积分条与 Laper 150ms 浅灰关闭反馈，结账过渡归 checkout-transition.css
  * [POS]: styles 的订阅专属层；原四栏收为 932px 三栏，颜色归 Folune，字体/间距/阴影按浏览器代码还原
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -90,16 +90,21 @@
   .folune-subscription-error > span { flex: 1; }
   .folune-subscription-error > svg { flex-shrink: 0; }
   .folune-subscription-empty { padding: 64px 16px; text-align: center; }
-  .folune-subscription-plan-loading .ds-skeleton { display: block; }
-  .folune-subscription-skeleton-brand { width: 4rem; height: 20px; }
-  .folune-subscription-skeleton-name { width: 7rem; height: 28px; margin-top: 8px; }
-  .folune-subscription-skeleton-description { width: 80%; height: 16px; margin-top: 16px; }
-  .folune-subscription-skeleton-price { width: 6rem; height: 30px; margin-top: 16px; }
-  .folune-subscription-plan-loading .folune-subscription-features { margin-top: 24px; }
-  .folune-subscription-plan-loading .folune-subscription-features > .ds-skeleton { width: 84%; height: 16px; }
-  .folune-subscription-skeleton-button { width: 100%; height: 32px; margin-top: 20px; }
-  /* ---- 结算摘要与真正执行支付的动作分开，状态由 API 决定 ---- */
-
+  /* ---- 加载沿真实卡片槽位排版，灰条不再替代整张卡 ---- */
+  .folune-subscription-plan-loading .folune-subscription-plan-topline { min-height: 71px; }
+  .folune-subscription-skeleton-brand { width: 56px; height: 12px; margin-block: 5px 15px; }
+  .folune-subscription-skeleton-name { width: 96px; height: 20px; }
+  .folune-subscription-plan-loading .folune-subscription-plan-description { min-height: 19.5px; display: flex; align-items: center; }
+  .folune-subscription-skeleton-description { width: 84%; height: 7px; }
+  .folune-subscription-skeleton-price { width: 72px; height: 24px; margin-block: 3px; }
+  .folune-subscription-skeleton-period { width: 20px; height: 7px; margin: 0 0 5px 4px; }
+  .folune-subscription-price-note .folune-subscription-skeleton-note { width: 62px; height: 6px; position: relative; top: 5px; opacity: 0.6; }
+  .folune-subscription-plan-loading .folune-subscription-features li { min-height: 22px; align-items: center; }
+  .folune-subscription-skeleton-feature-icon { width: 10px; height: 10px; flex: 0 0 10px; border-radius: var(--radius-skeleton); corner-shape: var(--corner-shape-smooth); opacity: 0.55; }
+  .folune-subscription-skeleton-feature { width: 76%; height: 8px; }
+  .folune-subscription-features li:nth-child(2n) .folune-subscription-skeleton-feature { width: 64%; }
+  .folune-subscription-features li:nth-child(n+4) .folune-subscription-skeleton-feature { opacity: 0.65; }
+  .folune-subscription-skeleton-button { width: 100%; height: 32px; border-radius: var(--radius-panel); corner-shape: var(--corner-shape-smooth); opacity: 0.56; }
 
   @media (max-width: 767px) {
     .folune-subscription-inner { padding: 72px 20px 40px; }

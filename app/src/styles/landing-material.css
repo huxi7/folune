@@ -1,0 +1,28 @@
+/**
+ * [INPUT]: 依赖 MarketingLayout、Landing 现有表面边界与同源纸色/品牌蓝/hover token
+ * [OUTPUT]: 整页统一暖纸材质；页底、Header 与公告共用纸纹，公告背景低于连续竖轨
+ * [POS]: 营销材质唯一覆盖层；纸纹只位于背景层，不改变APP主题或互动Demo
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+@layer components {
+  .landing-blueprint {
+    --landing-grain:url('/landing-reference/grain.png');
+    --landing-grain-size:180px 180px;
+    --landing-grain-opacity:.03;
+    --landing-grain-filter:none;
+  }
+  /* ---- 纸感：页底、固定Header和公告各自的背景层共用一份纸纹，不覆盖控件 ---- */
+  .landing-reference::before,
+  .marketing-header::before,
+  .landing-announcement::after {
+    content:""; position:absolute; inset:0; z-index:-1; pointer-events:none;
+    background-image:var(--landing-grain); background-size:var(--landing-grain-size);
+    background-position:0 0; opacity:var(--landing-grain-opacity); filter:var(--landing-grain-filter);
+  }
+  .marketing-header { isolation:isolate; background:var(--marketing-surface); backdrop-filter:none; }
+  .landing-announcement::before { background:var(--marketing-surface); }
+  .landing-announcement::after { left:calc(50% - 50vw); width:100vw; z-index:0; }
+  .landing-announcement-link { position:relative; z-index:1; }
+  .marketing-mobile-menu nav { background-color:var(--marketing-surface); }
+
+}

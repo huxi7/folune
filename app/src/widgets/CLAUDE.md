@@ -2,7 +2,7 @@
 > L2 | 父级: ../../CLAUDE.md
 
 成员清单
-TruchetPattern.tsx: 72px 三层曲线的纯 SVG 定义；目录与价格共用公开参考路径，调用者提供唯一 ID、颜色与可选描边动效类，不持有布局或生命周期。
+TruchetPattern.tsx: 首页weave与现有价格/目录同源； 72px 三层曲线的纯 SVG 定义；目录与价格共用公开参考路径，调用者提供唯一 ID、颜色与可选描边动效类，不持有布局或生命周期。
 PricingRailPattern.tsx: 价格正文的静态 Truchet 宿主，复用 TruchetPattern 三路径；左右16%渐隐与Blueprint外轨一致，色彩和布局继续由 pricing.css 持有。
 SignOutConfirmationDialog.test.tsx: 真实菜单/设置入口确认、取消/焦点、异步防重与失败重试、中英文门禁；不调用真实认证
 SignOutConfirmationDialog.tsx: Laper原组件字号/几何与dim黑色遮罩，取消仅变色、主题Primary参考400/40弹簧；菜单/设置共用的受控退出确认，右对齐取消/主动作、同步防连点与失败重试；不直接操作认证或业务存储
@@ -14,13 +14,13 @@ WorkspaceAssistantLayer.tsx: widthMode区分真实窗口与演示面板，后者
 assistantGeometry.test.ts: 覆盖演示多视口栏宽/纸面留白与生产360px下限隔离；锁定默认短窗最小宽高、八方向缩小与旧偏好恢复、同宽同底边、Panel顶部对齐、短窗2/3限制与手机键盘/低矮视口可用边界
 assistantGeometry.ts: 导出AssistantWidthMode，panel模式不消费真实窗口最小宽度；助手尺寸/八方向调整纯策略；自定义窗口完整钳制在可视区域，默认短窗同时是最小尺寸（常规桌面360×520，低矮/窄屏按可见空间收敛），拖拽/键盘/旧偏好恢复共用此边界，默认130×44胶囊，短窗最高520且不超过可用高度2/3，全高对齐Panel；共用窗口宽度，键盘/窄屏限制在可视区域
 MenuComparison/: 独立本地菜单对照入口与1c1fe55历史快照；复用生产菜单/侧栏表面、保持数据一致并默认展开，只为对比尺寸和定位，不装配业务状态
-CreditsPurchaseDialog.tsx: 关闭入口保留轻通透材质与可访问名称，无重复提示；用户选定的同源蓝色生成图横幅、实测超椭圆曲率与六档积分选购的受控展示层，640px/24px圆角弹窗内呈现服务端报价、原生单选、当前积分余额、无确认结账过渡/升级入口与规则；复用 Dialog 模态和 locale，网络与生命周期交给 CreditsPage
-DesktopDownloadButton.tsx: Header/Hero 共用原生下载，可靠识别时直接下载，未知架构时明确选择 Mac arm64/Windows x64
+CreditsPurchaseDialog.tsx: 关闭入口保留轻通透材质与可访问名称，无重复提示；用户选定的同源蓝色生成图横幅、实测超椭圆曲率与六档积分选购的受控展示层，640px/24px圆角弹窗内呈现服务端报价、原生单选、当前积分余额、无确认结账过渡/升级入口与规则；复用 Dialog 模态和 locale，网络与生命周期交给 CreditsPage 导出 CreditPacksSkeleton，沿六张 2:1 卡壳占位；初读延迟、内容就绪立即可选，刷新保留旧目录。 销售状态只在目录返回后显示，等待期不误报尚未开售。
+DesktopDownloadButton.tsx: Header/Hero共用原生下载；可选icon允许Header展示语义下载图标，系统识别和未知架构的Mac arm64/Windows x64选择只维护一份。
 BlogTags.tsx: 目录静态主题标签，最多四枚并按文章次序错开四色；只读数据，无嵌套链接或筛选状态，材质由 blog-index.css 持有。
 BlogFrameSection.tsx: 目录/阅读/价格页的外轨分区容器；静态区直接呈现外轨，花纹区独占外侧竖线与两段顶边的淡入，主内容边线仍由 BlueprintFrame 连续绘制
 PublicArticle.tsx: 博客、动态和法律文档共用的阅读模板；Hero 后复用目录同款 48px/28px 空轨，上沿带节点、下沿平直；BlogFrameSection 将静态主轨/中段横线与花纹局部外框拆开，weave 侧纹只覆盖正文及尾部导航，在两侧局部外框之后显现；内部保持导读与窄栏排版；只接收内容与导航插槽，不拥有内容集合或路由
 updatePosts.ts: 独立动态内容源，复用 BlogPost 类型并由 /updates 的共用列表/阅读页消费；初始为空，后续只需填充文章，不混入首页或博客集合
-LandingRailTexture.tsx: paper/weave/index/truchet 共享侧轨生命周期；首页保留一次性 inView 缓存，after-frame 按路由重播；Truchet 复用价格页几何，延迟/路由快照结束后的 animationstart 量取可见区间并交给 blog-index.css，长短目录共用完整展开时长，结束后释放屏外纹样；阅读 weave 仍沿 blog.css，减少动态立即显示。
+LandingRailTexture.tsx: 首页paper为28×49px几何竖纹、weave复用72px Truchet、index为22/11px同轴格点；按参考视口门槛与500ms准备/500ms延迟/1800ms展开，材质切换不重播；目录truchet仍按可见区间展开并保留独立路由生命周期。
 LandingConnections.tsx: 左侧叙述方法与实践，右侧两张相邻 NotePaper 标出支持关系的原句；短线随纸面布局连接，静态公开材料不装配业务会话
 LandingGuides.tsx: 六篇方法指南的紧凑三列两行目录，共读分类、标题与摘要，序号列于右上；上下空轨和交织侧纹交由 LandingSections 的章节外框装配，guides 为入口，保留 use-cases/extensions 锚点，返回复用博客协议
 guidePosts.ts: 逐篇维护三个正文主题标签； 六篇完整记录方法文章，独立于首页三篇精选，以 BlogPost 类型加入同一公开目录
@@ -37,10 +37,10 @@ useTreeReorder.test.tsx: 可控几何与 WAAPI 时钟回归，覆盖滚动/Panel
 TreeDisclosure.tsx: 文件树与 DS Collapse 的薄适配，声明可打断、成对释放的归档运动租约，让 Overlay 跟随真实高度几何；不读取业务数据
 .gitkeep: 保留业务组合组件层空目录
 CLAUDE.md: 记录业务组合组件层职责与文档协议
-MarketingHeader.tsx: 价格入口链接 /pricing；首页/登录/博客/动态/价格共享的 56px 品牌、内容导航和双动作顶栏；下载在左用 Secondary、打开在右用品牌蓝 GlowButton 并导航至 /login，与 Hero 共用次主顺序；末端 CTA 独立为单个箭头开始按钮；下载入口目标待接入，认证状态归页面；手机以第二行横向导航保留全部入口
-MarketingAnnouncement.tsx: 首页、登录、博客/动态目录与价格页共用的 37px 公告栏，保持既有文案、浅蓝渐变和 BlueprintDivider；链接统一指向首页工作流，可选 ref 只供 Hero 量取高度
+MarketingHeader.tsx: 固定纸感顶栏，不接收材质切换控件； 首页/登录/博客/动态/价格共享48px顶栏；90px品牌槽、六项12px导航与70×28px下载/48×28px打开，复用真实下载与/login过渡；手机原生details折叠导航，双动作保持单行，Escape/跳转关闭。
+MarketingAnnouncement.tsx: 各营销页共用36px公告，1120px主轨内14%品牌蓝渐变、整栏工作流链接与13px箭头，正文单行截断；可选ref只供Hero量取高度。
 BlueprintFrame.tsx: Landing 纵向导轨容器；导航、1120px 正文与页脚共用主轨/外轨坐标，fullBleed 增加可选外轨，颜色由当前区块局部覆盖
-BlueprintDivider.tsx: Landing 横向导轨；showPins=false 关闭节点而保留线宽/位置，用于博客空轨下沿；14px 分隔带上下两条边分别共置横线与菱形，flush 提供零高度边界，compact 保留 7px 内部分隔带而不添加参考中没有的节点
+BlueprintDivider.tsx: Git原版8px SVG菱形，白色填充与#CBCFD4描边；提供14px双边分隔带、7px内部分隔带和零高度贴边线，节点与连续竖轨共轴，骨架层级高于区块背景。
 AuthForm.tsx: 桌面条款/隐私使用系统浏览器； LoginPage 的唯一认证表单，复用共享 Input/PasswordInput 承载邮箱、双密码与显隐控制；主提交动作(登录/注册)改用墨蓝流光 GlowButton，登录态增加无提交/导航行为的忘记密码占位，协议提示通过 MarketingLink 接通 /terms 与 /privacy、保留六格 OTP 自动校验与 Google OAuth，请求动作独占加载反馈、其余控件暂禁，验证码与状态提示复用 auth 样式；认证成功通过回调交还页面导航
 AuthForm.test.tsx: MemoryRouter 承载真实协议链接，真实表单事件覆盖登录成功/失败、双密码校验和注册→六格 OTP 粘贴验证，以及登录/Google/重发各自加载、互斥禁用与失败恢复；仅替换认证服务，不发送真实认证请求
 LandingHero.tsx: 共享公告、60svh 居中 Hero、三列价值条与真实 UI 互动插槽；主 slogan 无句末标点，装配选定 02A HeroBackdrop，并量取 Header/公告/三栏高度为矮屏保留 64px 产品露出；LandingActions 固定下载在左用 Secondary、打开在右并进入 /login，首屏打开用墨蓝流光 GlowButton；末端 CTA 传 startOnly，只显示 ArrowRightIcon 与开始并进入 /login；桌面版说明按最终上线状态展示，边界复用通栏 BlueprintDivider
@@ -61,7 +61,7 @@ ArchiveStatus.test.tsx: 归档状态元素结构与 Rest 材质回归测试，�
 AppMainToolbar.test.ts: 按压表面消费secondary而非透明border；不再创建局部提示组，WarmTooltip提示/真实平台快捷键且无原生title的接线门禁；Toolbar结构/scroll timeline静态回归测试，锁定明确 props、整理排在命令区最左且是带图标与文字的中性 Ghost（不是 Filled Primary、静止无背景/外影、hover 共用 interactive-hover、界面文案不写「AI 整理」）、Canvas 是自闭合无文字的 32px square（两者不再同形）、弹层型「更多」排在簇尾且菜单 right: 0、右侧统一 4px 留白、顶栏无标签图标只有一份 32px 几何、归档状态在左侧身份段且排在标题之前、命令不带任何选中下划线、顶栏 overflow: visible 而身份段用 clip，以及 sticky top 等于 Panel inset、凝结区间只有一份数值、被注册被动画的量只有 `--toolbar-condense-progress` 一个（旧的两个几何变量必须查无此名）、实底/软边高度/模糊半径都在消费点乘同一个进度且显式 linear 与 `animation-duration: auto`、顶栏三条规则里 `border-bottom`/`box-shadow` 一个都不许出现且实底只允许 `--paper-surface` 一种背景、软边 16px 与模糊 6px 只在纸上各出现一次、纸色顶端是满纸色而纸色与遮罩都收在 100%（因此既无鬼影也无残留层）、软边块里一个裸像素都没有、fallback 软切也只切那一个进度且哨兵高度不在 JS 里重写
 MemoTreeBranch.tsx: 递归树行与拖放/重命名渲染器，子级用 TreeDisclosure 连续开合，行本身保持固定高度/原位反馈；归档代表仍只由父 AppSidebar 解析
 MemoTreeBranch.test.tsx: 归档代表集成门禁，锁定全展开命中 memo、折叠后标记转到最近的可见祖先、多层折叠只标最外层那个、逐级展开连续回到 memo、树上标记永远至多一个、memo 缺失与树未 ready 时一个都不落，以及旧的 folder/memo 双高亮与零尺寸 marker 确已消失
-MemoTreeSkeleton.tsx: 文件库首次加载的真实行结构占位组件，只组合共享 Skeleton 并由调用方控制延迟显隐
+MemoTreeSkeleton.tsx: 文件库首次加载的真实行结构占位组件，只组合共享 Skeleton 并由调用方控制延迟显隐 五行明确区分文件/文件夹槽位与嵌套层级，加载播报随 locale。
 MemoNodeDialog.tsx: 文件树命名弹窗，以设计系统 Dialog/Input/Button 承载新建文件夹，负责非空校验、同级重名即时提示与提交拦截、提交锁与 API 错误展示（服务端 MEMO_TITLE_CONFLICT 也说人话），不使用浏览器 prompt 或直接访问 API
 memoLibrary.ts: 后端轻量文件树的纯视图模型工具，提供路径/搜索、树内稀疏移动计划，以及仅 memo 可生成和解析的 `application/x-folune-memo` Canvas 拖拽协议
 memoLibrary.test.ts: Bun 视图模型测试，覆盖嵌套查找、搜索/路径、稀疏移动、防环与跨视图拖拽载荷校验
@@ -100,7 +100,7 @@ MarkdownReadingView.tsx: react-markdown + remark-gfm + 可选 remark-breaks + re
 MarkdownReadingView.test.tsx: 阅读换行、安全、常数尾部动画节点与文件边界测试；正则按真实 HTML 属性匹配，不保留无意义的 quote 转义
 MarkdownViewMenu.tsx: 阅读/编辑与更多入口消费同组WarmTooltip，更多展开时禁用提示，保留焦点和文件操作；locale中英菜单/回执与空标题导出名；可选关闭文件操作能力，供嵌入展示保留按钮形制； 编辑/阅读与 Markdown 文件操作入口；More菜单共用PresenceSurface紧凑菜单120/100ms配方，保留原文复制/导出和键盘行为，不修改保存协议
 markdownViewTypes.ts: DocumentView editing/reading 与 EditingMode live/source 的共享状态协议，阅读状态不占用编辑模式槽位
-NotesWorkspace.tsx: 单篇笔记编辑会话边界，保持 memoClientKey 与原 autosave 协议；编辑/阅读共享定位框并用 PersistentView 淡换，CodeMirror 不重挂载，旧视图不再撑高或接收焦点
+NotesWorkspace.tsx: 单篇笔记编辑会话边界，保持 memoClientKey 与原 autosave 协议；编辑/阅读共享定位框并用 PersistentView 淡换，CodeMirror 不重挂载，旧视图不再撑高或接收焦点 导出共用版心的 NotesWorkspaceSkeleton，标题与三组段落对应真实槽位。
 PaperWorkspaceShell.tsx: Paper内容壳、文件库入口与窄屏遮罩/Escape；生产与Landing Demo助手入口/尺寸均由外层独立宿主承载
 useMemoAutosave.ts: 单 memo 本地草稿状态机；递归 required flush 使用具名 callback，session 只以 memoId 建立/销毁，逐键输入不写全局 Store，晚到初值由独立门禁接纳
 useMemoAutosave.test.ts: 覆盖迟到服务端正文接纳门禁、插入/删除/等长替换字符计数、三次有界指数退避，以及驱动真实 Hook 证明标题冲突只挂起 title 而正文照常落库
@@ -110,15 +110,15 @@ WorkspaceCommandPalette.test.tsx: 键盘状态机门禁，使用最小 Bun test 
 commandResults.ts: 全局搜索唯一排序纯函数，调用方可传本地化根路径标签而不触碰用户路径；六档命中顺序与同档内确定性 tie-break，两种画布都独立成行且画布行携带来源笔记标题，同档同名时按「本体先于派生物」让笔记恒排在它的画布之前
 commandResults.test.ts: 排序契约门禁，锁定六档顺序、两种画布都独立成行、同名时笔记先于画布、画布行的血缘、文件夹可导航与空查询最近项
 TrashWorkspace.tsx: /app 双语失败反馈的回收站控制器，读取真实顶层删除根并编排重试、恢复、永久删除和当前用户原子清空，成功由列表变化反馈，失败进入根级 Toast
-TrashWorkspaceView.tsx: 回收站数据纯视图，以 locale 同步中英文案/删除日期与危险确认，用户标题路径原样显示；稳定 presence 宿主承接最后一项退出；条目只做 opacity 与 layout=position，退出即 inert，列表/空态和确认 Dialog 不持有网络状态
-TrashWorkspace.test.tsx: 回收站纯视图回归测试，覆盖状态页、Folder 根不展开、永久删除/清空确认文案与防重复提交
+TrashWorkspaceView.tsx: 回收站数据纯视图，以 locale 同步中英文案/删除日期与危险确认，用户标题路径原样显示；稳定 presence 宿主承接最后一项退出；条目只做 opacity 与 layout=position，退出即 inert，列表/空态和确认 Dialog 不持有网络状态 首次加载延迟显示行图标、标题、日期与动作槽位。
+TrashWorkspace.test.tsx: 回收站纯视图回归测试，覆盖状态页、Folder 根不展开、永久删除/清空确认文案与防重复提交 服务端首帧验证隐藏骨架，不要求延迟结束前播报。
 AccountDialog.tsx: 关闭入口无重复提示；简中/英文个人资料/通用/账单/用量/账户五栏设置装配，标签随共享 locale 即时更新；文字侧栏、独立标题/关闭和嵌套卡片复用 account-center.css，PersistentView 保留表单实例；后台 Profile 刷新不清草稿，注册时间仅从 Auth 读取，订阅入口关闭模态后进入独立地址
 AccountProfilePanel.tsx: 头像上传格式提示统一 WarmTooltip； 双语设置个人资料栏，以基本信息/头像/简介嵌套卡片组织真实 Profile；后台刷新仅按 bio/username 合并未改草稿，停止输入 800ms 后串行 PATCH（无常驻自动保存提示），28px无图标白净按钮即时上传头像；成功保留可访问反馈，异常进入 Toast
 AccountSettingsPanel.tsx: 通用设置卡片，语言与外观各自分组，复用 Select 切换简中/English、无图标 SegmentedControl 切换跟随系统/白天/黑暗；主题与语言分别归共享状态边界所有
 AccountBillingPanel.tsx: 双语设置账单栏，以 locale 格式化账期，读取共享订阅事实展示方案/状态/周期/到期信息及真实空账单；支持刷新重试和28px「订阅」入口，不伪造支付记录
 AccountSecurityPanel.tsx: 双语账户生命周期栏，日期和加入天数随 locale 格式化，显示 Auth 真实注册时间（缺失则回退邮箱）并调用既有退出命令；带 pending/失败反馈，不添加未实现的注销按钮
 AccountUsagePanel.tsx: 双语文案、数字与日期同步消费 locale，只读消费共享 BillingProvider 的当前方案和真实已记账日用量，以大数字、进度条、当前周期、剩余积分及本地化重置时刻呈现；10,000 token 折为 1 积分，门禁只认后端 exceeded，刷新保留旧值并允许重试，升级使用28px流光入口进入独立订阅页
-SubscriptionWorkspace.tsx: 金额显示委托 locale/money 与官网同源； 关闭入口无重复提示；双语文案与本地化数字， 独立订阅页的纯展示层，接收服务端套餐投影与真实账户摘要；按已提取 DOM/CSS 复现 932px 三栏、双遮罩玻璃铭牌、流行标签、年付总价/月均/真实折扣；Starter 普通按钮禁用按压凹陷影，Pro/Studio 保留 GlowButton；底部完整积分条、购买入口和规则说明共用 DS，去掉订单与管理入口，周期选择和 checkout 生命周期归 SubscriptionPage/useCheckoutFlow，不保存价格/权益真值
+SubscriptionWorkspace.tsx: 金额显示委托 locale/money 与官网同源； 关闭入口无重复提示；双语文案与本地化数字， 独立订阅页的纯展示层，接收服务端套餐投影与真实账户摘要；按已提取 DOM/CSS 复现 932px 三栏、双遮罩玻璃铭牌、流行标签、年付总价/月均/真实折扣；Starter 普通按钮禁用按压凹陷影，Pro/Studio 保留 GlowButton；底部完整积分条、购买入口和规则说明共用 DS，去掉订单与管理入口，周期选择和 checkout 生命周期归 SubscriptionPage/useCheckoutFlow，不保存价格/权益真值 导出同卡壳 SubscriptionPlanSkeleton；初读延迟占位，目录到达立即呈现，刷新保留旧方案。
 AgentPanel/: Paper 与 Canvas 共用的右侧思考空间；界面/权限/审批/工具状态中英切换，用户与AI正文、笔记标题保真；AI SDK useChat 承载对话/工具/审批/撤销，organize client 服务 Paper，Canvas expansion client 只取可信候选并把最终 intent 交还统一 Canvas 保存协调器
 
 职责: 业务组合组件层，承载 Landing、Paper/Canvas 两个一级 Workspace、共享文件库与 AI 思考空间、认证、账户和业务视图；Canvas 组件只产生 intent，可靠写入归 Store/Coordinator，正文归 memoDocumentStore；业务组件禁止裸写 fetch 或直连 Supabase 业务数据，AgentPanel transport/client 只在请求期读取 Auth token 访问 chat。

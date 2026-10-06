@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖 Laper 公开价格页实际 DOM/CSS 数值、Blueprint 导轨与 Folune DS 色彩/按钮/字体
- * [OUTPUT]: 提供 26px 题头、年付开关、300×至少540px 卡片、24px 居中换行与原页72px侧纹
+ * [INPUT]: 依赖 Laper 公开价格页实际 DOM/CSS 数值、Blueprint 原始框线色与 Folune DS 色彩/按钮/字体
+ * [OUTPUT]: 同槽位精细骨架与即时内容交接，加载卡以纯净 card 表面保留标题灰条对比；提供 26px 题头、年付开关、300×至少540px 卡片、24px 居中换行与原页72px侧纹
  * [POS]: 仅作用于 pricing-spine；原页几何和层次映射品牌颜色，不继承账户铭牌遮罩、不添加额外营销区块
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -8,7 +8,7 @@
   .pricing-spine {
     --pricing-typewriter:"Courier New",Courier,"Noto Serif SC","Songti SC","Songti TC",SimSun,serif;
     --pricing-muted:color-mix(in srgb,var(--muted-foreground) 70%,transparent);
-    --pricing-pattern-line:color-mix(in srgb,var(--landing-border) 72%,transparent);
+    --pricing-pattern-line:color-mix(in srgb,var(--landing-border-base) 72%,transparent);
     --pricing-pattern-accent:color-mix(in srgb,var(--primary) 32%,transparent);
     font-family:var(--font-account);
   }
@@ -45,9 +45,23 @@
   .pricing-features strong { font-weight:600; }
   .pricing-features svg { flex-shrink:0; margin-top:3px; color:var(--primary); }
   .pricing-card .pricing-action { --glow-button-height:32px; width:100%; min-height:32px; height:32px; margin-top:20px; padding-inline:16px; border-radius:24px; corner-shape:var(--corner-shape-smooth); font:500 13px/20px var(--font-account); }
-  .pricing-card-loading { gap:24px; }
-  .pricing-card-loading .pricing-skeleton-price { height:48px; margin-block:20px; }
-  .pricing-card-loading .ds-skeleton:last-child { height:32px; margin-top:auto; }
+  .pricing-card-loading { background: var(--card); }
+  .pricing-skeleton-heading { display: grid; align-content: center; min-height: 25px; gap: 9px; padding-block: 5px; }
+  .pricing-skeleton-heading:has(.pricing-skeleton-brand) { min-height: 50px; }
+  .pricing-skeleton-brand { width: 60px; height: 12px; }
+  .pricing-skeleton-name { width: 86px; height: 16px; }
+  .pricing-card-loading .pricing-description { display: flex; min-height: 19.5px; align-items: center; }
+  .pricing-skeleton-description { width: 86%; height: 7px; }
+  .pricing-skeleton-price { width: 74px; height: 24px; margin-block: 3px; }
+  .pricing-skeleton-period { width: 20px; height: 7px; margin: 0 0 5px 4px; }
+  .pricing-skeleton-note { width: 64px; height: 6px; position: relative; top: 5px; opacity: 0.6; }
+  .pricing-card-loading .pricing-features li { min-height: 22px; align-items: center; }
+  .pricing-skeleton-feature-icon { width: 10px; height: 10px; flex: 0 0 10px; border-radius: var(--radius-skeleton); corner-shape: var(--corner-shape-smooth); opacity: 0.55; }
+  .pricing-skeleton-feature { width: 78%; height: 8px; }
+  .pricing-features li:nth-child(2n) .pricing-skeleton-feature { width: 66%; }
+  .pricing-features li:nth-child(n+4) .pricing-skeleton-feature { opacity: 0.65; }
+  .pricing-card .pricing-skeleton-action { padding: 0; }
+  .pricing-skeleton-button { width: 100%; height: 32px; border-radius: var(--radius-panel); corner-shape: var(--corner-shape-smooth); opacity: 0.56; }
   .pricing-error { display:flex; min-height:540px; flex-direction:column; align-items:center; justify-content:center; gap:20px; color:var(--muted-foreground); }
   /* ---- 原页72px Truchet平铺，左右16%渐隐；只把绿色映射为品牌蓝 ---- */
   .pricing-rail-pattern { position:absolute; inset:0; pointer-events:none; }

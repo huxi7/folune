@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 消费 APP 微蓝灰框线/轨道、灰阶阴影、字重/圆角/动效与共享 Dialog/Button/Input/SidebarButton；主题底片变量与场景映射协作
- * [OUTPUT]: 设置中心900×600外壳、24px内外曲率与紧凑控件；文字导航原位、无悬停/按压底色，选中使用主题墨色与导航字重；主题灰蓝轨道上白亮底片独立于普通选中底色，黑色近边阴影形成凸起
+ * [OUTPUT]: 用量加载保持数值行盒并显示细灰占位； 设置中心900×600外壳、24px内外曲率与紧凑控件；文字导航原位、无悬停/按压底色，选中使用主题墨色与导航字重；主题灰蓝轨道上白亮底片独立于普通选中底色，黑色近边阴影形成凸起
  * [POS]: app/src/styles 的账户界面唯一几何层；参考实测比例，直接使用参考 superellipse(2) 与 4px 分组内缩，Primary 只用于升级动作和用量线
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -113,7 +113,7 @@
   .account-usage-number strong { color: var(--foreground); font-size: 30px; font-weight: var(--weight-heading, 600); line-height: 36px; letter-spacing: normal; }
   .account-usage-number > span:not(.ds-skeleton),
   .account-usage-total { color: var(--muted-foreground); font-size: 12px; }
-  .account-usage-number-skeleton { width: 3rem; height: 2.25rem; }
+  .account-usage-number-skeleton { width: 3rem; height: 1.6rem; margin-block: 0.325rem; }
   .account-usage-meter { position: relative; height: 0.5rem; overflow: hidden; border-radius: var(--radius-pill); corner-shape: round; background: var(--surface-neutral); }
   .account-usage-meter-fill { display: block; height: 100%; border-radius: inherit; corner-shape: inherit; background: var(--primary); transition: width var(--motion-normal) var(--ease-standard); }
   .account-usage-note { min-height: 1.125rem; margin-top: var(--space-3); color: var(--muted-foreground); font-size: 0.6875rem; line-height: 1.6; }

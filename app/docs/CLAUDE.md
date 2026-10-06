@@ -2,6 +2,7 @@
 > L2 | 父级: ../CLAUDE.md
 
 成员清单
+performance-audit-2026-10-06.md: APP/API/Chat/Desktop 当前性能与稳定性审查，记录 Canvas 生命周期与合并、计费/认证/Storage 修复、合成微基准、完整门禁及浏览器/生产验证边界
 subscription-reference.md: 已登录 Laper 订阅/积分弹窗 DOM/CSS 参数、三栏投影、年付报价与最终 10,000 Token/积分及六档整数预览报价；区分组件预览与真实支付验收
 chinese-blog-typography.md: 中文博客排版研究、原代码诊断、方案取舍、原生 CSS 兼容边界与实现规格；区分标准、研究证据、设计选择和待用户视觉验收
 landing-refactor/: Figma 基线与最终 Landing 的截图、内容依据、设计取舍和两阶段验收记录

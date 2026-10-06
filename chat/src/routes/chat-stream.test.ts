@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun test、真实 AI SDK 流处理与可控模型/审批/落库替身
- * [OUTPUT]: 验证 finish 不等 EOF、流内错误正确落库、静默期限、主动取消、审批顺序与正文即时可见
+ * [OUTPUT]: 验证 finish 不等 EOF、错误/取消终态、审批顺序、正文即时可见，以及用量只来自本次模型 finish
  * [POS]: Chat 生命周期回归门禁，不调用模型、不读写业务数据
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -186,4 +186,42 @@ test("finish 等待用量记账完成，回复保存仍可并行推进", async (
   await new Promise(resolve=>setTimeout(resolve,10));
   expect(called).toBe(123);expect(ended).toBe(false);expect(f.saves.length).toBe(1);
   receipt.resolve();await pending;expect(ended).toBe(true);
+});
+
+test("续写失败或取消不能再次记账上一轮 assistant 的用量", async () => {
+  for (const terminal of [
+    { type: "error", errorText: "generation failed" },
+    { type: "abort" },
+  ] as UIMessageChunk[]) {
+    const f = fixture([terminal]);
+    f.options.messages = [{
+      id: "reply",
+      role: "assistant",
+      parts: [{ type: "text", text: "上一轮已完成" }],
+      metadata: { folune_total_tokens: 700 },
+    }];
+    const usages: number[] = [];
+    await collect({ ...f.options, onUsage: (tokens) => { usages.push(tokens); } });
+    expect(usages).toEqual([]);
+    expect(f.saves[0]?.status).toBe(terminal.type === "abort" ? "aborted" : "error");
+  }
+});
+
+test("续写只记本次 finish 的真实用量，错误 finish 也不丢失已消耗 token", async () => {
+  for (const finishReason of ["stop", "error"] as const) {
+    const f = fixture([
+      ...answer,
+      { type: "finish", finishReason, messageMetadata: { folune_total_tokens: 123 } },
+    ]);
+    f.options.messages = [{
+      id: "reply",
+      role: "assistant",
+      parts: [{ type: "text", text: "上一轮已完成" }],
+      metadata: { folune_total_tokens: 700 },
+    }];
+    const usages: number[] = [];
+    await collect({ ...f.options, onUsage: (tokens) => { usages.push(tokens); } });
+    expect(usages).toEqual([123]);
+    expect(f.saves[0]?.status).toBe(finishReason === "error" ? "error" : "complete");
+  }
 });

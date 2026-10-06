@@ -24,7 +24,7 @@ Folune is a quiet editorial instrument that lets users write first and allows AI
 - 场景边界：styles/app-visual.css 的完整主题仅作用于 html[data-visual-context="app"]，Portal 与 Demo 共同继承；认证页面及营销标准 Button/GlowButton 共用中性控件边界、悬停表面、阴影与文字角色；Landing、博客正文及品牌后景继续沿用默认值。
 - 浅色定稿：Stage 复用 landing-paper 的微暖纸白 #F4F4F2，正式 APP 工作区不加噪点；纸面/面板为白色，正文 #292B2B、次级字 #707676、边界 #E2E5E5 保持。温度由背景承担，控件保持中性；Landing 与首次加载过渡继续保留既有颗粒，Demo 默认同步无噪点纸白。
 - 排版按下方文字角色统一消费：主正文 15px/400、聊天 12px/500、导航与动作 600；字号与字重必须一起按角色选择，Demo 沿原 rem 比例缩放。
-- 普通 hover 使用 #F4F6F5，暗色用卡片底色混入 4% 白并保持不透明；菜单、关闭、工具栏和列表用 150ms，中性 Button 用 200ms，曲线统一 cubic-bezier(.4,0,.2,1)。文件树 selected/active 使用独立 secondary/accent 底色（APP 浅色 #EDEEEF、暗色 #2D2D2D），经过当前项不加深、不变蓝。
+- 普通 hover 使用同源 --interactive-hover-light（#F4F5F6 极淡蓝灰），暗色用卡片底色混入 4% 白并保持不透明；菜单、关闭、工具栏和列表用 150ms，中性 Button 用 200ms，曲线统一 cubic-bezier(.4,0,.2,1)。文件树 selected/active 使用独立 secondary/accent 底色（APP 浅色 #EDEEEF、暗色 #2D2D2D），经过当前项不加深、不变蓝。
 - 设置侧栏是文字导航：未选中保持次级灰与400正文档，选中使用主题墨色与600导航档；保持原位几何，悬停/按压不铺底、不缩放、不加影。键盘焦点保留细框。此规则仅限设置栏目，不改变普通命令按钮。
 - 固定笔记/@引用胶囊复用用户气泡的底色与细线 token：浅色以 primary 6% 混白得到约 #F3F5F7、12% 混白得到约 #E7EBEE；暗色分别以 primary 6% 混 card、12% 混 border；保留 1px 边框与 10px 平滑圆角，身份由尺寸、图标和位置表达。
 - 用户气泡使用上述极淡品牌底色与内侧 1px 同色细线；用户文字保持 foreground，AI 正文单独使用浅色 #50585C / 暗色 #C3C7CB，标题、强调、代码与链接保留各自语义色。气泡、输入框及 Panel 的平滑圆角统一到 20px；输入内层继续按内缩量推导，Paper 保持 12px，常规控件保持 16px。
@@ -76,9 +76,11 @@ Landing 中文化（2026-09-14）：保留参考布局、暖灰背景、纹理�
 - `text-autospace: normal` 只补中西文间距，不改文本和已有空格；严格中文断行，支持时启用 `text-spacing-trim: trim-start`，代码内容退出增强。不引入排版 JS 或额外字体，不强制两端对齐。
 - 依据、候选比较、浏览器版本与测试边界见 [中文博客排版研究](docs/chinese-blog-typography.md)。数值是设计选择而非学术最优值；视觉与阅读感受由用户验收。
 
-### Landing 侧轨（2026-09-21 用户修正）
+### Landing 材质与侧轨（2026-10-05 对比中）
 
-只在评价、指南、首页博客延伸墨蓝结构：每侧固定七条、端部与内部空隙等分的细纵线、每侧三组横向回环编织、完整小方格加密点阵。纹样上下铺满，取消纵向净空与渐隐，左右两端各 16% 范围渐隐。纸缘在轨间八等分点放置七条内线；主横纹以 36 源单位行距排列，大、小弧振幅为 18/14.25，小弧比大弧低约 20.8%，相邻弧最窄留缝 3.75 单位；大弧保持上一版的 18，仅小弧从 15.75 收至 14.25。次层仍为纵向振幅 32 的横向长幅摆线，相邻行翻转。纵向周期为横向的 15/16，SVG 高度为 72，行基线同步收紧。20px 网格/10px 点距保持；主线 17%、回环次曲线 8.5%、网格 9%、点 26%。正文和其他区块留白不变。已收紧至窄缝并拉开大小差异；本次构建与 git diff --check 通过，此前页面参数与小样检查不覆盖此次修正，完整页面视觉仍未验，Safari 与原生 125% 缩放未验，工程与截图证据边界见 `docs/landing-refactor/side-rails-plan.md` 第 12 节。
+完整Landing共用一套布局，在DEV Header原位切换纸感/白底。纸感保留#F4F4F2与原背景，Header和公告补齐180px/3%同源纸纹；白底采用#FCFCFD，内容面不透明隔开160px/16%细噪点，主展示面纯白。两版保持品牌蓝、真实内容与交互，默认纸感；白底尚未视觉定稿。
+
+三种侧纹以本次Laper实际DOM为准，替代9月的七条纸缘线与自定义回环：28×49px几何竖纹、72px三层Truchet、22px网格叠11px点阵。线/点统一.5px中心；框线底色72%、品牌蓝32%、墨色点28%，整体82%，左右16%渐隐。视口门槛-8%/0/-18%/0，500ms准备+500ms延迟后1800ms展开与描边，减少动态立即显示。原页采集、材质边界和验证见 `docs/landing-refactor/material-comparison.md`；此前记录保留在历史侧轨计划中。
 
 ## Processing / Saving
 
@@ -289,7 +291,7 @@ The motion language is part of the Design System. `src/shared/design-system/moti
 ## Neutral loading and settings (2026-09-07)
 
 - Secondary uses a restrained, visible 1px neutral border in rest and hover; tool calls consume the same material. Result icons contain their own circular outline, with no additional status box.
-- Skeleton base/highlight are achromatic: Light #ebebeb/#f6f6f6, Dark #363636/#454545. Loading placeholders never borrow brand blue. Canvas entry keeps only its clean Stage and accessible busy state, with no pretend paper card.
+- Skeleton base/highlight are achromatic: Light #ececec/#fafafa with lighten blending; Dark #343434/#252525 with darken blending so the sweep stays quiet on dark surfaces. One 3.6s group sweep uses transform/opacity without blur; text and icon slots share the 3px --radius-skeleton token. Placeholders appear after 180ms and release ready content immediately; reduced motion keeps them static and forced colors uses system outlines. Existing content remains visible during refresh. Loading placeholders never borrow brand blue. Canvas entry keeps only its clean Stage and accessible busy state, with no pretend paper card.
 - Dark settings consume the same APP Popover/Panel/neutral tokens as other overlays; the previous account-only charcoal map was removed on 2026-09-23.
 - Assistant undo uses Undo2 and the short label 撤销, with the shared 12px/16px Label typography.
 

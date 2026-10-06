@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 消费Laper当前退出确认的组件/CSS实测参数，Folune Primary及400/500字重、账户字体与共享Button/Dialog行为
+ * [INPUT]: 消费Laper当前退出确认的组件/CSS实测参数，Folune Primary/同源蓝灰hover及400/500字重、账户字体与共享Button/Dialog行为
  * [OUTPUT]: 提供420px/24px内距、24px曲率、20px标题/12px说明、32px高/13px字/16px横距按钮与12px动作间距
  * [POS]: 退出确认的局部材质层；取消只有变色，主动作保留1.02/.98反馈，黑色单层遮罩归Dialog dim模式，普通控件不受影响
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -11,7 +11,7 @@
     --signout-ink: #171a19;
     --signout-muted: #6b7370;
     --signout-border: #e4e8e6;
-    --signout-accent: #f4f6f5;
+    --signout-accent: var(--interactive-hover);
     width: 420px;
     max-width: 90vw;
     max-height: 90vh;

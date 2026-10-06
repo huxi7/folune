@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun test、Canvas V2 文档 fixture 与 canvasDocument 纯函数
- * [OUTPUT]: 覆盖高频操作合并、乐观投影、默认根脱离、无向边去重、dropped 与 alias 回执归一
+ * [OUTPUT]: 覆盖高频合并与删除/撤销的顺序等价、关系身份/理由保真、乐观投影、默认根脱离、dropped 与 alias 回执归一
  * [POS]: shared/store 的 Canvas documentSlice 回归门禁；线上、恢复和冲突重放必须得到同一结果
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -98,6 +98,99 @@ describe("normalizeCanvasIntents", () => {
     ]);
     expect(normalized.map((item) => item.operation.type))
       .toEqual(["create_text", "remove_node"]);
+  });
+
+  test("同一批关系创建、删除与撤销不能把恢复移到删除之前", () => {
+    const base = detail();
+    const sourceId = base.nodes[0]!.id;
+    const targetId = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
+    base.nodes.push({ ...base.nodes[0]!, id: targetId, target_node_id: targetId });
+    const edge = {
+      edge_id: "ffffffff-ffff-4fff-8fff-ffffffffffff",
+      rationale: "仍要保留的关系",
+      source_id: sourceId,
+      target_id: targetId,
+      type: "upsert_edge" as const,
+    };
+    const intents: CanvasIntent[] = [
+      { operation: edge },
+      { operation: { edge_id: edge.edge_id, type: "remove_edge" } },
+      { operation: edge },
+    ];
+
+    const projected = applyCanvasIntents(base, normalizeCanvasIntents(intents));
+    expect(projected).toEqual(applyCanvasIntents(base, intents));
+    expect(projected.edges).toHaveLength(1);
+  });
+
+  test("同一对关系的更新保留首次身份，省略理由不清除既有理由", () => {
+    const base = detail();
+    const sourceId = base.nodes[0]!.id;
+    const targetId = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
+    base.nodes.push({ ...base.nodes[0]!, id: targetId, target_node_id: targetId });
+    const edgeId = "ffffffff-ffff-4fff-8fff-ffffffffffff";
+    const intents: CanvasIntent[] = [
+      { operation: {
+        edge_id: edgeId,
+        rationale: "保留理由",
+        source_id: sourceId,
+        target_id: targetId,
+        type: "upsert_edge",
+      } },
+      { operation: {
+        edge_id: "99999999-9999-4999-8999-999999999999",
+        source_id: targetId,
+        target_id: sourceId,
+        type: "upsert_edge",
+      } },
+    ];
+
+    const projected = applyCanvasIntents(base, normalizeCanvasIntents(intents));
+    expect(projected).toEqual(applyCanvasIntents(base, intents));
+    expect(projected.edges[0]).toMatchObject({ id: edgeId, rationale: "保留理由" });
+    expect(normalizeCanvasIntents(intents)).toHaveLength(1);
+  });
+
+  test("新建文字删除后撤销，后续编辑只并入恢复的那次创建", () => {
+    const nodeId = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
+    const create = { node_id: nodeId, text: "初稿", type: "create_text" as const, x: 0, y: 0 };
+    const intents: CanvasIntent[] = [
+      { operation: create },
+      { operation: { node_id: nodeId, type: "remove_node" } },
+      { operation: create },
+      { operation: { node_id: nodeId, text: "恢复后定稿", type: "update_node", x: 42 } },
+    ];
+
+    const projected = applyCanvasIntents(detail(), normalizeCanvasIntents(intents));
+    expect(projected).toEqual(applyCanvasIntents(detail(), intents));
+    expect(projected.nodes.find((node) => node.id === nodeId))
+      .toMatchObject({ text: "恢复后定稿", x: 42 });
+  });
+
+  test("节点删除会隔断它的坐标和关联合并，撤销后保留新位置与关系", () => {
+    const base = detail();
+    const sourceId = base.nodes[0]!.id;
+    const targetId = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
+    base.nodes.push({ ...base.nodes[0]!, id: targetId, target_node_id: targetId });
+    const edge = {
+      edge_id: "ffffffff-ffff-4fff-8fff-ffffffffffff",
+      source_id: sourceId,
+      target_id: targetId,
+      type: "upsert_edge" as const,
+    };
+    const intents: CanvasIntent[] = [
+      { operation: { node_id: targetId, type: "update_node", x: 10 } },
+      { operation: edge },
+      { operation: { node_id: targetId, type: "remove_node" } },
+      { operation: { node_id: targetId, target_node_id: targetId, type: "add_memo", x: 10, y: 0 } },
+      { operation: edge },
+      { operation: { node_id: targetId, type: "update_node", x: 30 } },
+    ];
+
+    const projected = applyCanvasIntents(base, normalizeCanvasIntents(intents));
+    expect(projected).toEqual(applyCanvasIntents(base, intents));
+    expect(projected.edges).toHaveLength(1);
+    expect(projected.nodes.find((node) => node.id === targetId)?.x).toBe(30);
   });
 });
 

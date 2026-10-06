@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 React 原生 div/span 属性、index.css 的 Skeleton 语义 token 与 design-system.css 的单光带组动画
- * [OUTPUT]: 对外提供低对比 Skeleton、仅可见时宣告 busy/status 的 SkeletonGroup 与避免快速请求闪屏的 useDelayedSkeleton
+ * [OUTPUT]: 对外提供 Skeleton、仅可见时宣告 busy/status 的 SkeletonGroup 与默认延迟 180ms/内容就绪立即退出的 useDelayedSkeleton；支持显式最短展示时长
  * [POS]: app/src/shared/design-system/components 的统一占位加载原语；业务层只组合真实布局，不自行实现灰块、shimmer 或延迟计时器
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -30,7 +30,7 @@ type DelayedSkeletonOptions = {
 };
 
 const DEFAULT_DELAY_MS = 180;
-const DEFAULT_MINIMUM_VISIBLE_MS = 360;
+const DEFAULT_MINIMUM_VISIBLE_MS = 0;
 
 export function Skeleton({
   className = "",
@@ -101,6 +101,12 @@ export function useDelayedSkeleton(
 
     const elapsed = Date.now() - (visibleSinceRef.current ?? Date.now());
     const remaining = Math.max(0, minimumVisibleMs - elapsed);
+    if (remaining === 0) {
+      // 内容已就绪时直接复位本轮，不能由零毫秒计时器把旧可见状态带入下一次加载。
+      visibleSinceRef.current = null;
+      setVisible(false);
+      return;
+    }
     const timerId = window.setTimeout(() => {
       visibleSinceRef.current = null;
       setVisible(false);
@@ -109,5 +115,6 @@ export function useDelayedSkeleton(
     return () => window.clearTimeout(timerId);
   }, [active, delayMs, minimumVisibleMs, visible]);
 
-  return visible;
+  // 默认不让被动 Effect 的复位晚于本轮绘制；显式最短时长仍由计时器补足。
+  return visible && (active || minimumVisibleMs > 0);
 }

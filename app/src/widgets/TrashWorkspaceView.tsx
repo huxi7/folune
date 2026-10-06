@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 MotionSurface 条目入退场与位置重排、回收站最小 DTO、locale 文案/日期格式、共享 Button/Dialog/Skeleton 与 Lucide 图标
+ * [INPUT]: 依赖 MotionSurface 条目入退场与位置重排、回收站最小 DTO、locale 文案/日期格式、共享 Button/Dialog/延迟Skeleton 与 Lucide 图标
  * [OUTPUT]: 对外提供 TrashWorkspaceView 及其视图状态类型
  * [POS]: app/src/widgets 的纯回收站视图；不请求数据、不复制 active tree，供控制器和无网络测试复用
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -20,6 +20,7 @@ import {
   Dialog,
   Skeleton,
   SkeletonGroup,
+  useDelayedSkeleton,
 } from "../shared/design-system/components";
 import { useLocale } from "../shared/locale";
 
@@ -49,11 +50,12 @@ type TrashWorkspaceViewProps = {
 
 function TrashLoading() {
   const { t } = useLocale();
+  const visible = useDelayedSkeleton(true);
   return (
     <SkeletonGroup
       className="trash-loading-list"
       label={t("正在加载回收站", "Loading Trash")}
-      visible
+      visible={visible}
     >
       {[0, 1, 2].map((index) => (
         <div className="trash-loading-row" key={index}>
@@ -61,7 +63,9 @@ function TrashLoading() {
           <div className="trash-loading-copy">
             <Skeleton className="trash-loading-title" shape="text" />
             <Skeleton className="trash-loading-detail" shape="text" />
+            <Skeleton className="trash-loading-date" shape="text" />
           </div>
+          <div className="trash-loading-actions"><Skeleton shape="circle" /><Skeleton shape="circle" /></div>
         </div>
       ))}
     </SkeletonGroup>

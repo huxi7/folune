@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖公开套餐目录、共享金额/积分格式、MarketingAnnouncement 公告、BlogFrameSection/Blueprint 导轨、原页 Truchet 花纹、DS 按钮及营销导航
- * [OUTPUT]: 对外提供 /pricing 四档方案、月年报价切换、每日积分与目录重试；全部开始/订阅入口导航到 /login
- * [POS]: 营销壳内的匿名价格展示；仅投影服务端价格与权益，不装配账户遮罩、余额或结账生命周期
+ * [INPUT]: 依赖公开套餐目录、共享金额/积分格式、MarketingAnnouncement 公告、BlogFrameSection/Blueprint 导轨、原页 Truchet 花纹、DS 按钮/延迟骨架及营销导航
+ * [OUTPUT]: 对外提供 PricingPage 四档公开方案与可独立验收的 PricingPlanSkeleton；骨架复用卡壳/说明/价格/权益/按钮槽位，页面提供月年报价与目录重试，订阅入口导航到 /login
+ * [POS]: 营销壳内的匿名价格展示；首读延迟占位且就绪立即可用，刷新保留已有目录，只投影服务端价格与权益，不装配账户余额或结账生命周期
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { useEffect, useId, useState } from "react";
@@ -30,7 +30,7 @@ export function PricingPage() {
   const [attempt, setAttempt] = useState(0);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
-  const skeletonVisible = useDelayedSkeleton(loading);
+  const skeletonVisible = useDelayedSkeleton(loading && catalog === null && !failed, { minimumVisibleMs: 0 });
   usePublicPageMetadata("价格方案", "从免费记录开始，选择适合自己的 Folune 方案。AI 对话、写作与智能归档，让想法自然积累。");
 
   useEffect(() => {
@@ -70,23 +70,54 @@ export function PricingPage() {
       <BlogFrameSection patterned>
         <PricingRailPattern />
         <section className="pricing-plans" aria-label="Folune 价格方案" aria-busy={loading}>
-          {loading ? <SkeletonGroup className="pricing-grid" label="正在读取价格方案" visible={skeletonVisible}>
-            {[0, 1, 2, 3].map(index => <div className="pricing-card pricing-card-loading" key={index}>
-              <Skeleton shape="text" /><Skeleton shape="text" /><Skeleton className="pricing-skeleton-price" />
-              <Skeleton shape="text" /><Skeleton shape="text" /><Skeleton shape="text" /><Skeleton />
-            </div>)}
-          </SkeletonGroup> : failed || !catalog?.plans.length ? <div className="pricing-error" role="alert">
+          {failed || !loading && !catalog?.plans.length ? <div className="pricing-error" role="alert">
             <p>暂时无法读取价格方案，请稍后重试。</p>
             <Button onClick={() => setAttempt(value => value + 1)} variant="secondary">重新加载</Button>
-          </div> : <div className="pricing-grid">
+          </div> : catalog ? <div className="pricing-grid loading-content-reveal">
             {catalog.plans.map(plan => <PricingCard key={plan.id} plan={plan} interval={interval} />)}
-          </div>}
+          </div> : <PricingPlanSkeleton visible={skeletonVisible} />}
         </section>
         <BlueprintDivider flush fullBleed />
       </BlogFrameSection>
       <BlogFrameSection><div className="pricing-prelude" aria-hidden="true" /></BlogFrameSection>
     </main>
   </BlueprintFrame>;
+}
+
+export function PricingPlanSkeleton({ visible }: { visible: boolean }) {
+  return <SkeletonGroup className="pricing-grid" label="正在读取价格方案" visible={visible}>
+    {[0, 1, 2, 3].map(index => <div aria-hidden="true" className="pricing-card pricing-card-loading" key={index}>
+      <div className="pricing-card-top">
+        <div className="pricing-skeleton-heading">
+          {index > 0 ? <Skeleton className="pricing-skeleton-brand" shape="text" /> : null}
+          <Skeleton className="pricing-skeleton-name" shape="text" />
+        </div>
+      </div>
+      <div className="pricing-description">
+        <Skeleton className="pricing-skeleton-description" shape="text" />
+      </div>
+      <div className="pricing-price-block">
+        <div className="pricing-price">
+          <Skeleton className="pricing-skeleton-price" shape="text" />
+          <Skeleton className="pricing-skeleton-period" shape="text" />
+        </div>
+        <div className="pricing-price-note">
+          <Skeleton className="pricing-skeleton-note" shape="text" />
+        </div>
+      </div>
+      <div className="pricing-card-body">
+        <ul className="pricing-features">
+          {[0, 1, 2, 3, 4].map(row => <li key={row}>
+            <Skeleton className="pricing-skeleton-feature-icon" />
+            <Skeleton className="pricing-skeleton-feature" shape="text" />
+          </li>)}
+        </ul>
+      </div>
+      <div className="pricing-action pricing-skeleton-action">
+        <Skeleton className="pricing-skeleton-button" />
+      </div>
+    </div>)}
+  </SkeletonGroup>;
 }
 
 function PricingCard({ plan, interval }: { plan: BillingPlan; interval: BillingInterval }) {
