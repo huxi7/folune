@@ -16,7 +16,6 @@ import { BlueprintDivider } from "../widgets/BlueprintDivider";
 import { BlueprintFrame } from "../widgets/BlueprintFrame";
 import { MarketingAnnouncement } from "../widgets/MarketingAnnouncement";
 import { PricingRailPattern } from "../widgets/PricingRailPattern";
-import { supportsMarketingTransition } from "../widgets/LandingMotion/useMarketingMotion";
 import { usePublicPageMetadata } from "./usePublicPageMetadata";
 import "../styles/pricing.css";
 
@@ -127,7 +126,7 @@ function PricingCard({ plan, interval }: { plan: BillingPlan; interval: BillingI
   const price = plan.prices[annual ? "yearly" : "monthly"];
   const premium = plan.id === "pro" || plan.id === "studio";
   const label = free ? "免费开始" : `订阅 ${plan.name}`;
-  const start = () => navigate("/login", { viewTransition: supportsMarketingTransition() });
+  const start = () => navigate("/login");
 
   return <article className="pricing-card" data-plan-id={plan.id} data-recommended={plan.highlighted || undefined} aria-labelledby={`pricing-${plan.id}`}>
     <div className="pricing-card-top">

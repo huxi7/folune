@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖细节与文章同源数据、Router 查询/历史状态、MarketingLink、DS CSS 动效 token、语义图标和 ShowcaseBackdrop；章节标题/底部摘要复用浮现，手风琴独占展开动画
+ * [INPUT]: 依赖细节与文章同源数据、Router 查询/历史状态、MarketingLink、DS CSS 动效 token、语义图标和 ShowcaseBackdrop；完整章节首次入场，手风琴独占展开动画
  * [OUTPUT]: 对外提供固定展示区域内单项展开的功能细节、对应实景图、文章入口与紧凑四格摘要；展开项不提供收起动作
  * [POS]: widgets 的第 11 个 Landing 区块；query 保存当前项，切换清除已消费的定位锚点并替换历史，避免 Router 再次滚动；博客沿既有 fromBlog 协议返回
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -27,9 +27,9 @@ export function LandingFeatureDetails() {
     });
   }
 
-  return <section id="feature-details" className="landing-feature-details" aria-labelledby="landing-details-title">
+  return <section data-marketing-reveal="section" id="feature-details" className="landing-feature-details" aria-labelledby="landing-details-title">
     <header className="landing-section-heading">
-      <div data-marketing-reveal><h2 id="landing-details-title">小细节，让记录更踏实</h2><p>知道笔记去了哪里，带着哪些内容思考。<br />从整理到回看，每一步都清楚，也由你掌握。</p></div>
+      <div><h2 id="landing-details-title">小细节，让记录更踏实</h2><p>知道笔记去了哪里，带着哪些内容思考。<br />从整理到回看，每一步都清楚，也由你掌握。</p></div>
       <Link className="ds-button ds-button-secondary ds-button-size-default" to={`/blog/${active.post.slug}`} state={{ fromBlog: true }} aria-label={`了解更多：${active.title}`}>
         <span className="ds-button-content">了解更多 <ArrowRightIcon size={16} /></span>
       </Link>
@@ -59,7 +59,7 @@ export function LandingFeatureDetails() {
     </div>
     <BlueprintDivider compact />
     <div className="landing-details-summary">
-      {detailStories.map(item => <article key={item.id} data-marketing-reveal>
+      {detailStories.map(item => <article key={item.id}>
         <h3>{item.title}</h3><p>{item.takeaway}</p>
       </article>)}
     </div>

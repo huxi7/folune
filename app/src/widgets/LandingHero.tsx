@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖共享 DesktopDownloadButton/GlowButton、ArrowRightIcon、MarketingAnnouncement、BlueprintDivider、HeroBackdrop 与 LandingEditor；/login 走原生过渡，正文标记交给 MarketingLayout 编排浮现
+ * [INPUT]: 依赖共享 DesktopDownloadButton/GlowButton、ArrowRightIcon、MarketingAnnouncement、BlueprintDivider、HeroBackdrop 与 LandingEditor；/login 走 Router 导航，首屏整组交给 MarketingLayout 同拍浮现
  * [OUTPUT]: 对外提供渐变公告、60svh 居中 Hero、定稿三列价值条与真实 UI 展示；量取顶栏/公告/三栏为矮屏保留产品露出空间
  * [POS]: widgets 的中文首页首屏；02A 背景独立加载，LandingActions 统一下载在左、打开在右，打开引导进入 /login，首屏打开用墨蓝流光；末端 CTA 用 startOnly 模式只显示箭头与开始
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -13,11 +13,10 @@ import { BlueprintDivider } from "./BlueprintDivider";
 import { LandingEditor } from "./LandingEditor";
 import { HeroBackdrop } from "./LandingMotion/HeroBackdrop";
 import { MarketingAnnouncement } from "./MarketingAnnouncement";
-import { supportsMarketingTransition } from "./LandingMotion/useMarketingMotion";
 
 export function LandingActions({ startOnly = false }: { startOnly?: boolean } = {}) {
   const navigate = useNavigate();
-  const openApp = () => navigate("/login", { viewTransition: supportsMarketingTransition() });
+  const openApp = () => navigate("/login");
   return <div className="landing-actions">
     {!startOnly && <DesktopDownloadButton />}
     <GlowButton icon={startOnly ? ArrowRightIcon : undefined} onClick={openApp}>
@@ -51,14 +50,16 @@ export function LandingHero() {
     <MarketingAnnouncement ref={announcementRef} />
     <section ref={heroRef} className="landing-hero" aria-labelledby="landing-title">
       <HeroBackdrop />
-      <div className="landing-hero-copy"><h1 data-marketing-reveal id="landing-title" tabIndex={-1}>随手记下，自然有序</h1><p data-marketing-reveal>在 Folune，专注记录当下的想法。<br />让 AI 帮你整理、连接，再次发现。</p></div>
-      <div data-marketing-reveal><LandingActions /><p className="landing-action-note">网页版无需安装 · 桌面版随时下载</p></div>
+      <div className="landing-hero-content" data-marketing-reveal="hero">
+        <div className="landing-hero-copy"><h1 id="landing-title" tabIndex={-1}>随手记下，自然有序</h1><p>在 Folune，专注记录当下的想法。<br />让 AI 帮你整理、连接，再次发现。</p></div>
+        <div><LandingActions /><p className="landing-action-note">网页版无需安装 · 桌面版随时下载</p></div>
+      </div>
     </section>
     <BlueprintDivider flush fullBleed />
     <div ref={valuesRef} className="landing-value-strip">
-      <div><h2 data-marketing-reveal>专注记录</h2><p data-marketing-reveal>先把想法写下来，不必想好标题，也不必急着选文件夹。</p></div>
-      <div><h2 data-marketing-reveal>有序归档</h2><p data-marketing-reveal>让 AI 按内容整理笔记；归档去向看得见，不合适可以撤销。</p></div>
-      <div><h2 data-marketing-reveal>连接想法</h2><p data-marketing-reveal>把相关笔记放进画布，连一连、补几句，让思路继续展开。</p></div>
+      <div><h2>专注记录</h2><p>先把想法写下来，不必想好标题，也不必急着选文件夹。</p></div>
+      <div><h2>有序归档</h2><p>让 AI 按内容整理笔记；归档去向看得见，不合适可以撤销。</p></div>
+      <div><h2>连接想法</h2><p>把相关笔记放进画布，连一连、补几句，让思路继续展开。</p></div>
     </div>
     <BlueprintDivider flush fullBleed />
     <section className="landing-editor-section" aria-label="Folune 互动体验"><LandingEditor /></section>

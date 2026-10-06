@@ -1,12 +1,11 @@
 /**
  * [INPUT]: 依赖 Router slug/历史导航、MarketingLink、独立博客/动态集合、BlogTags、PublicArticle/usePublicPageMetadata、共享公告、BlogFrameSection/LandingRailTexture 与 Blueprint 导轨
- * [OUTPUT]: 对外提供 /blog 与 /updates 的共用目录/阅读页；目录按 Laper 实际结构呈现点阵刊头、紧凑文章行、彩色标签与 Truchet 侧纹，不重复提供返回首页；动态为空时仅保留空框
+ * [OUTPUT]: 对外提供 /blog 与 /updates 的共用目录/阅读页；目录按 Laper 实际结构呈现点阵刊头、紧凑文章行、彩色标签与 Truchet 侧纹，标题480ms、整行420ms/50ms错峰；不重复提供返回首页；动态为空时仅保留空框
  * [POS]: pages 的公开文章视图；目录几何与动效由 blog-index.css 隔离，正文阅读和来路返回保持 PublicArticle 契约；顶栏/页脚仍由营销壳持有，pathname 重播装饰、query/锚点不重播
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { MarketingLink as Link } from "../widgets/LandingMotion/MarketingLink";
-import { supportsMarketingTransition } from "../widgets/LandingMotion/useMarketingMotion";
 import { BlueprintFrame } from "../widgets/BlueprintFrame";
 import { BlueprintDivider } from "../widgets/BlueprintDivider";
 import { LandingRailTexture } from "../widgets/LandingRailTexture";
@@ -37,7 +36,7 @@ export function BlogPage({ section = "blog" }: { section?: keyof typeof sections
 
   function goBack() {
     if (location.state?.fromBlog === true) navigate(-1);
-    else navigate(config.path, { viewTransition: supportsMarketingTransition() });
+    else navigate(config.path);
   }
 
   return <BlueprintFrame key={location.pathname} className={`landing-spine blog-spine${!slug ? " blog-index-page" : ""}`} fullBleed>
@@ -49,9 +48,9 @@ export function BlogPage({ section = "blog" }: { section?: keyof typeof sections
           <header className="blog-index-heading">
             <BlueprintDivider flush />
             <div className="blog-index-heading-rails" aria-hidden="true"><span /><span /></div>
-            <span className="blog-eyebrow blog-index-eyebrow" data-marketing-reveal>{config.eyebrow}</span>
-            <h1 tabIndex={-1} data-marketing-reveal>{config.title}</h1>
-            <p data-marketing-reveal>{config.description}</p>
+            <span className="blog-eyebrow blog-index-eyebrow">{config.eyebrow}</span>
+            <h1 tabIndex={-1} data-marketing-reveal="heading">{config.title}</h1>
+            <p>{config.description}</p>
             <BlueprintDivider flush />
           </header>
           <div className="blog-index-gap" aria-hidden="true" />
@@ -59,9 +58,9 @@ export function BlogPage({ section = "blog" }: { section?: keyof typeof sections
             <LandingRailTexture variant="truchet" reveal="after-frame" />
             <BlueprintDivider flush fullBleed />
             {config.posts.length === 0 ? <div className="blog-index-empty"><span className="sr-only">暂无动态</span></div> : null}
-            {config.posts.map((item, index) => <article key={item.slug}>
+            {config.posts.map((item, index) => <article key={item.slug} data-marketing-reveal="row" data-marketing-order={index}>
               <Link to={`${config.path}/${item.slug}`} state={{ fromBlog: true }} className="blog-index-link">
-                <div className="blog-index-copy" data-marketing-reveal>
+                <div className="blog-index-copy">
                   <div className="blog-index-meta"><span className="blog-tag blog-tag-category" data-tone={index % 4}>{item.category}</span><time dateTime={item.date}>{item.date}</time></div>
                   <h2>{item.title}</h2><p>{item.description}</p>
                   <BlogTags tags={item.tags} colorOffset={index + 1} />

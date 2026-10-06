@@ -7,7 +7,6 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { BlueprintFrame } from "../widgets/BlueprintFrame";
 import { MarketingLink as Link } from "../widgets/LandingMotion/MarketingLink";
-import { supportsMarketingTransition } from "../widgets/LandingMotion/useMarketingMotion";
 import { PublicArticle } from "../widgets/PublicArticle";
 import { legalSite } from "./legalSite";
 import { privacyContent } from "./privacyContent";
@@ -22,7 +21,7 @@ export function LegalPage({ document }: { document: "terms" | "privacy" }) {
 
   function goBack() {
     if (location.state?.fromLegalLink === true) navigate(-1);
-    else navigate("/", { viewTransition: supportsMarketingTransition() });
+    else navigate("/");
   }
 
   const article = {

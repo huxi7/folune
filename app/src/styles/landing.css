@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖全局同源 landing-paper/landing-text（保持既有色值）、共享 Button/Blueprint DOM、营销顶栏品牌/导航/双动作分组与 DS compact 尺寸、LandingRailTexture 的一次性显现状态、共享 TruchetPattern 与 Laper 原页 clip-path/描边动画；HeroBackdrop、NotePaper 展示变体、六格方法指南、四项真实功能细节、BrandMark 紧边界组合及旧印章可见体量；顶栏品牌沿共享 5:4 图字比置于 90×32px 槽位，参考字体/纹理、独立 Demo iframe 和 ShowcaseBackdrop
+ * [INPUT]: 依赖全局同源 landing-paper/landing-text（保持既有色值）、共享 Button/Blueprint DOM、营销顶栏品牌/导航/双动作分组与 DS compact 尺寸、LandingRailTexture 的一次性显现状态、共享 TruchetPattern 与 Laper 原页 clip-path/描边动画；首屏同拍内容组、HeroBackdrop、NotePaper 展示变体、六格方法指南、四项真实功能细节、BrandMark 紧边界组合及旧印章可见体量；顶栏品牌沿共享 5:4 图字比置于 90×32px 槽位，参考字体/纹理、独立 Demo iframe 和 ShowcaseBackdrop
  * [OUTPUT]: 对外提供 60svh 颗粒 Hero 的 78% 后景与 65% 中央阅读层、48px 顶栏/36px 公告、28px 双按钮、跨区块背景完整显示的 8px 白填充 SVG 菱形与 #DADDE2 原版共轴导轨、APP 外壳、两处动态展示后景、侧栏叙述与原句标记的双纸面、分类序号横向六格、细节展开、信纸、评价、CTA 暖白双层平滑底座、放大标题与紧凑按钮和页脚；整页噪点位于隔离背景层，不覆盖正文/控件/视频；仅 Landing 禁止纵向越界回弹
  * [POS]: styles 的 Landing 几何层；四章共用48px/28px上下空轨，三种侧纹贯穿整章并止于主轨，72px曲线复用TruchetPattern，22px网格/11px点阵共用半像素中心；统一纸纹归landing-material.css，Header/Footer及正文保留同一套布局
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -140,7 +140,7 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
 .landing-hero-shader { position:absolute!important; inset:0; opacity:.78; }
 .landing-hero-shader canvas { display:block; }
 .landing-hero-reading-veil { position:absolute; inset:0; background:radial-gradient(ellipse min(36vw,480px) 210px at 50% 49%,rgb(244 244 242 / var(--landing-hero-clear)) 0%,rgb(244 244 242 / var(--landing-hero-clear)) 26%,transparent 100%),linear-gradient(180deg,#f4f4f25c,transparent 22%,transparent 72%,#f4f4f2),linear-gradient(90deg,#f4f4f28c,transparent 17%,transparent 83%,#f4f4f28c); }
-.landing-hero-copy,.landing-hero>div:last-child { position:relative; z-index:2; }
+.landing-hero-content { position:relative; z-index:2; display:flex; flex-direction:column; align-items:center; gap:32px; }
 .landing-hero h1 { font-size:42.9px; line-height:1.4; letter-spacing:.02em; text-align:center; color:var(--landing-accent); }
 .landing-hero-copy p { max-width:440px; margin:8px auto 0; text-align:center; font-size:16px; line-height:24px; letter-spacing:0; color:color-mix(in srgb,var(--landing-ink) 55%,var(--landing-bg)); }
 .landing-actions { display:flex; justify-content:center; gap:12px; }

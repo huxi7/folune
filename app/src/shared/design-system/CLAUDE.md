@@ -3,7 +3,7 @@
 
 成员清单
 useMotionPreference.ts: 用 useSyncExternalStore 订阅系统减少动态效果，Panel 与输入区无需刷新即可取消位移
-motion.ts: 唯一通用动效源；tap提供参考确认动作400/40弹簧；提供150ms菜单/图标悬停与200ms中性Button悬停，Reduced Motion取消变色过渡；compact-menu为新建/笔记更多共用的120/100ms时长档，几何/曲线沿用普通菜单；menu/submenu为150ms ease-out、8px/.95与-10px横移；panel保持Folune原220/170ms、左-8px/右+8px侧向淡入与原曲线，全程scale1；modal为150ms standard、.9中心缩放与父子同拍渐入。surfaceMotionCatalog直接引用生产常量供DS陈列，WorkspacePanelLayer/PresenceSurface/Dialog共用同一配方；品牌入口和纸面独立
+motion.ts: 唯一通用动效源；marketingMotion 冻结 Laper 首屏/章节/标题/文章行四种配方、50ms/250ms错峰与-80px触发边距，由同源CSS消费；tap提供参考确认动作400/40弹簧；提供150ms菜单/图标悬停与200ms中性Button悬停，Reduced Motion取消变色过渡；compact-menu为新建/笔记更多共用的120/100ms时长档，几何/曲线沿用普通菜单；menu/submenu为150ms ease-out、8px/.95与-10px横移；panel保持Folune原220/170ms、左-8px/右+8px侧向淡入与原曲线，全程scale1；modal为150ms standard、.9中心缩放与父子同拍渐入。surfaceMotionCatalog直接引用生产常量供DS陈列，WorkspacePanelLayer/PresenceSurface/Dialog共用同一配方；品牌入口和纸面独立
 useModalLifecycle.ts: Escape 先让关联的 Tooltip 收起，第二次才关模态； Dialog 行为边界，统一嵌套模态栈、焦点循环/归还与计数滚动锁；Escape 在 capture 层先让内菜单处理，关闭后立即退出交互，最后一个视觉层卸载才解锁
 .gitkeep: 保留 design system 层空目录
 CLAUDE.md: 记录 design system 职责与文档协议

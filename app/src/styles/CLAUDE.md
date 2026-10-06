@@ -36,7 +36,7 @@ typographyContracts.test.ts: 按用户/助手正文选择器验证角色，允�
 app-typography.css: APP 文字角色唯一映射，400/500/600 基元与 700 内容强调；组件与 data-text-role 共读字号/行高/字重，认证页面与营销标准 Button/GlowButton 共用角色和比例字体，营销正文保留既有排版
 app-visual.css: APP/认证/营销控件共用#F4F5F6微蓝灰hover，亮色真相源为index.css的--interactive-hover-light，暗色以卡片底色混入4%白保持不透明，选中沿独立secondary/accent；APP/Demo 将 Laper 微绿灰投影为 #E4E6E8/60% 框线、#F4F5F6 分组/导航与 #EFF0F1 轨道的极淡微蓝灰；菜单复用5%双层短影、设置外壳复用5%近边影、侧栏使用6%/3%贴边卡片影；暗色使用白色10%框线及同源黑影；认证与营销标准控件保留中性映射；文档根 APP 无噪点纸白/黑灰底盘，浅色舞台复用 landing-paper与同色 hover/当前项、气泡/引用胶囊同源底色与细线、20px 面板/气泡曲率和渐进输入焦点；颜色与排版分工，字重/字号统一由 app-typography.css 拥有，Portal 同源；营销按组件类接入，覆盖 Hero/顶栏/页尾/文章返回；页面背景与正文不命中
 workspace-entry.css: 首次进入 APP 的 Landing 同源纸白与紧凑浅灰字标，整组上下左右居中；180–232px 宽、8px 高（窄屏 7px）的纤细鲜艳流彩条配 11px 状态文字，间距收紧；色带每 1.6s 向右流动 240px，真实进度以 640ms 轻弹落定，完成后以 1.8s 播放 12° 高饱和全屏斜纹单次扫光；减少动态静止色带并淡出，不影响内部切换
-marketing-motion.css: 首页/博客/动态/登录共用 8px、360ms 正文浮现，32ms 错峰最多 128ms；原生路由快照中顶栏固定、导轨只淡换，可视正文独立入场，普通滚动用同一 CSS 曲线只播一次，减少动态立即显示，Paper 过渡不受影响
+marketing-motion.css: 消费 DS marketingMotion；首屏18px/550ms整组浮现，区块24px/550ms，标题16px/480ms，文章整行24px/420ms且50ms错峰最多250ms；共用cubic-bezier(.2,.7,.2,1)，减少动态直接显示，不再使用营销整页快照
 landing-demo.css: 静态助手按生产外壳展示；测量CSS宽度轨道，笔记固定全高、画布固定不可展开胶囊； Demo 的颜色与角色排版由宿主 app 视觉作用域同步生产，本文件只管嵌入几何；独立 Demo 入口专用，限定视口与三栏等高、Paper/Canvas 互斥显示；不增加底部工具栏或新视觉皮肤
 blog.css: 首页博客卡片与公开阅读样式；blog-spine 保留桌面16px/手机15px、1.85行高、36字宽正文和细侧线导读，PublicArticle 的点阵标题、文章标签、返回与48px/28px空轨不变；共享花纹外框先淡入，阅读 weave 后揭示。独立目录交给 blog-index.css，正文与法律页不继承其标签/几何覆盖。
 motion.css: 通用 Motion 消费与验收布局层，Panel 内容窗口裁剪顶部浮现但不改变自身高度，保留式视图定位、通用浮层单一动画所有权、普通路由淡换及共享 Canvas/Select/User press；原 Paper 方向的几何节奏继续由 knowledge-canvas.css 拥有

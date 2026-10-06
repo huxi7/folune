@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖真实 APP 功能截图、MarketingLink、LandingConnections、LandingGuides、LandingFeatureDetails、LandingBlog、LandingRailTexture、BlueprintDivider、共享 BrandMark 图字组合/独立印章、LandingActions 单个箭头开始 CTA 与 huxi 头像
- * [OUTPUT]: 正文浮现标记交给营销壳，章节/导轨/卡片骨架静止；对外提供五项图文一一对应的 Folune 功能与整理/画布文章入口，以及真实关联展示、独立功能细节、六篇方法指南、评价占位、创作者信件和博客；评价、产品功能组、指南、精选博客各由一对上下空轨包围，功能网格/关联展示/细节之间另有两条留白分隔框
+ * [OUTPUT]: 完整章节按营销配方同拍浮现，外部连续导轨保持原位；对外提供五项图文一一对应的 Folune 功能与整理/画布文章入口，以及真实关联展示、独立功能细节、六篇方法指南、评价占位、创作者信件和博客；评价、产品功能组、指南、精选博客各由一对上下空轨包围，功能网格/关联展示/细节之间另有两条留白分隔框
  * [POS]: widgets 的营销叙事组合；LandingChapter 成对生成上下空轨，并让评价/指南/博客的一层侧纹贯穿空轨与正文，内侧横线仅落在主轨内，外侧仍共用斜纹边界；产品功能、关联展示与功能细节作为完整章节，五项功能区底部、细节区顶部各补一条留白分隔框，后者位于斜纹带下方；创作者信件沿用首稿叙事，与 Laper 参考同构：问候与自我介绍各占一行，再以长短有别的段落分承初衷、打磨、AI 分寸与期待，一段只说一件事，由 huxi 个人署名
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -16,7 +16,7 @@ import { LandingActions } from "./LandingHero";
 import { LandingRailTexture, type RailVariant } from "./LandingRailTexture";
 
 export function LandingSectionHeading({title,body,children}: {title:string;body:string;children?:ReactNode}) {
-  return <header className="landing-section-heading"><div data-marketing-reveal><h2>{title}</h2><p>{body}</p></div><div className="landing-section-links">{children}</div></header>;
+  return <header className="landing-section-heading"><div><h2>{title}</h2><p>{body}</p></div><div className="landing-section-links">{children}</div></header>;
 }
 
 // ---- 侧纹覆盖整章；内侧横线止于主轨，让纹样贯穿上下空轨 ----
@@ -91,8 +91,8 @@ const quotes = [
 export function LandingSections(){
  return <>
   <LandingChapter railVariant="paper">
-  <section className="landing-trust" id="community" aria-labelledby="landing-trust-title">
-    <h2 id="landing-trust-title" data-marketing-reveal>为认真记录的个人与创作团队而做</h2>
+  <section data-marketing-reveal="section" className="landing-trust" id="community" aria-labelledby="landing-trust-title">
+    <h2 id="landing-trust-title">为认真记录的个人与创作团队而做</h2>
     <ul className="landing-studio-strip" aria-label="工作室与团队">
       {studios.map(({ mark, name }) => (
         <li key={name}><span aria-hidden="true">{mark}</span>{name}</li>
@@ -102,8 +102,8 @@ export function LandingSections(){
       {quotes.map((q, i) => (
         <figure key={q.name} data-featured={i === 1}>
           {i === 1 ? <div className="landing-quote-brand"><BrandMark /></div> : null}
-          <blockquote data-marketing-reveal>{q.quote}{q.emphasis ? <><br /><mark>{q.emphasis}</mark><br />{q.ending}</> : null}</blockquote>
-          <figcaption data-marketing-reveal>
+          <blockquote>{q.quote}{q.emphasis ? <><br /><mark>{q.emphasis}</mark><br />{q.ending}</> : null}</blockquote>
+          <figcaption>
             <span className="landing-quote-avatar" aria-hidden="true">{q.avatar}</span>
             <span>{q.name}<small>{q.role}</small></span>
             <span className="landing-quote-studio">{q.studio}</span>
@@ -115,7 +115,7 @@ export function LandingSections(){
   </LandingChapter>
   <BlueprintDivider fullBleed />
   <LandingChapter>
-  <section id="features" aria-label="Folune 产品功能">
+  <section data-marketing-reveal="section" id="features" aria-label="Folune 产品功能">
     <LandingSectionHeading title="写下来，理清楚，连起来" body="从一张纸开始，让 AI 帮忙归档，在画布上接着思考。">
       <Link to="/blog/a-place-for-every-note" state={{ fromBlog: true }}>了解笔记整理 <span aria-hidden="true">→</span></Link>
       <Link className="ds-button ds-button-secondary ds-button-size-default" to="/blog/think-between-notes" state={{ fromBlog: true }}>
@@ -125,7 +125,7 @@ export function LandingSections(){
     <div className="landing-feature-grid">
       {features.map((feature, i) => <article key={feature.image} data-wide={i < 2}>
         <img src={`/landing-features/${feature.image}.png`} alt={feature.alt} width={feature.width} height={feature.height} loading="lazy" decoding="async" />
-        <h3 data-marketing-reveal>{feature.title}</h3><p data-marketing-reveal>{feature.body}</p>
+        <h3>{feature.title}</h3><p>{feature.body}</p>
       </article>)}
     </div>
     <div className="landing-small-features">
@@ -133,7 +133,7 @@ export function LandingSections(){
         ["写作时自动保存", "先专心把话写完。日常编辑自动保存，需要整理时，再点一次「整理笔记」。"],
         ["卡片连着原文", "画布引用文件库里的笔记。展开阅读、进入原文编辑，不用维护两份内容。"],
         ["带走 Markdown 原文", "在纸面的更多菜单里复制或导出 Markdown，让写下的内容继续用在别处。"],
-      ].map(([title, body]) => <article key={title} data-marketing-reveal><h3>{title}</h3><p>{body}</p></article>)}
+      ].map(([title, body]) => <article key={title}><h3>{title}</h3><p>{body}</p></article>)}
     </div>
   </section>
   <div className="landing-chapter-gap" data-edge="start" aria-hidden="true">
@@ -152,24 +152,24 @@ export function LandingSections(){
   <LandingGuides />
   </LandingChapter>
   <BlueprintDivider fullBleed />
-  <section className="landing-letter-section" id="resources" aria-labelledby="landing-letter-title">
+  <section data-marketing-reveal="section" className="landing-letter-section" id="resources" aria-labelledby="landing-letter-title">
     <article className="landing-letter">
       <div className="landing-letter-paper">
         <BrandMark className="landing-letter-seal" iconOnly />
         <small>一封信</small>
-        <h2 id="landing-letter-title" data-marketing-reveal>一封来自创作者的信</h2>
-        <p className="landing-letter-subtitle" data-marketing-reveal>致愿意在 Folune 留下想法的你</p>
+        <h2 id="landing-letter-title">一封来自创作者的信</h2>
+        <p className="landing-letter-subtitle">致愿意在 Folune 留下想法的你</p>
         <div className="landing-letter-body">
-          <p data-marketing-reveal>你好，很高兴你来到这里：</p>
+          <p>你好，很高兴你来到这里：</p>
           <hr />
-          <p data-marketing-reveal>我是 huxi，Folune 的创作者。</p>
-          <p data-marketing-reveal>做这个产品，是想解决一件很普通的事：我们记下了很多东西，却不一定能在需要时找到它们。一闪而过的念头、一段读书时的感触、一个还没想清楚的问题，写下时都有意义，后来却慢慢散在各处。如果落笔之前，还要先想好标题、目录和分类，记录就又多了一道门槛。</p>
-          <p data-marketing-reveal>这就是 Folune 从一张纸开始的原因。哪怕只是一句话，哪怕暂时没有条理，也可以先写下来。做它的过程中，我反复调整纸面的留白、按钮的分寸，还有整理之后怎样让人看清笔记去了哪里。这些细节未必会被注意到，但我希望，你用起来时可以少一点犹豫。</p>
-          <p data-marketing-reveal>AI 在这里，是帮你梳理内容、找到联系的伙伴。它可以分担整理的麻烦，但什么值得留下，仍然由你决定。整理的结果要看得见，不合适的操作也要能撤销。把自己的记录交给一个工具，需要这样的踏实感。</p>
-          <p data-marketing-reveal>我期待的是，某一天，当你重新遇到一个问题，能找到自己曾经写下的几句话，发现那时的思考没有白费，还能接着往下走。比起催你写得更多，我更在意它能不能让你愿意再打开，继续写一点。</p>
-          <p data-marketing-reveal>Folune 还在慢慢打磨。谢谢你愿意试试这个还在生长的作品。愿那些尚未成形的想法，都能先有一个落脚的地方。</p>
+          <p>我是 huxi，Folune 的创作者。</p>
+          <p>做这个产品，是想解决一件很普通的事：我们记下了很多东西，却不一定能在需要时找到它们。一闪而过的念头、一段读书时的感触、一个还没想清楚的问题，写下时都有意义，后来却慢慢散在各处。如果落笔之前，还要先想好标题、目录和分类，记录就又多了一道门槛。</p>
+          <p>这就是 Folune 从一张纸开始的原因。哪怕只是一句话，哪怕暂时没有条理，也可以先写下来。做它的过程中，我反复调整纸面的留白、按钮的分寸，还有整理之后怎样让人看清笔记去了哪里。这些细节未必会被注意到，但我希望，你用起来时可以少一点犹豫。</p>
+          <p>AI 在这里，是帮你梳理内容、找到联系的伙伴。它可以分担整理的麻烦，但什么值得留下，仍然由你决定。整理的结果要看得见，不合适的操作也要能撤销。把自己的记录交给一个工具，需要这样的踏实感。</p>
+          <p>我期待的是，某一天，当你重新遇到一个问题，能找到自己曾经写下的几句话，发现那时的思考没有白费，还能接着往下走。比起催你写得更多，我更在意它能不能让你愿意再打开，继续写一点。</p>
+          <p>Folune 还在慢慢打磨。谢谢你愿意试试这个还在生长的作品。愿那些尚未成形的想法，都能先有一个落脚的地方。</p>
         </div>
-        <div className="landing-signature" data-marketing-reveal>
+        <div className="landing-signature">
           <img src="/brand/huxi-avatar.jpg" alt="huxi 的头像" width="32" height="32" loading="lazy" />
           <span>huxi</span>
           <small>Folune 创作者</small>
@@ -182,6 +182,6 @@ export function LandingSections(){
   <LandingBlog />
   </LandingChapter>
   <BlueprintDivider fullBleed />
-  <section className="landing-final-cta"><BrandMark className="landing-app-icon" iconOnly /><div data-marketing-reveal><h2>从今天，开始记录</h2><p>让想法落在纸上，让积累慢慢生长。</p></div><LandingActions startOnly /></section>
+  <section data-marketing-reveal="section" className="landing-final-cta"><BrandMark className="landing-app-icon" iconOnly /><div><h2>从今天，开始记录</h2><p>让想法落在纸上，让积累慢慢生长。</p></div><LandingActions startOnly /></section>
  </>;
 }

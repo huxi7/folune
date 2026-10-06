@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 NotePaper 共享纸面；引文取自「卡片笔记法 ↔ 散步时的灵感」，左侧叙述复用营销正文浮现，双纸面和连线保持静态
+ * [INPUT]: 依赖 NotePaper 共享纸面；引文取自「卡片笔记法 ↔ 散步时的灵感」，叙述、双纸面与连线作为完整区块浮现
  * [OUTPUT]: 对外提供侧栏叙述与双纸面相连的 LandingConnections；标出支持关系的原句，默认完整可读
  * [POS]: Landing 功能网格与细节之间的单次发现；仅呈现静态公开材料，不装配画布或业务会话
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -7,13 +7,13 @@
 import { NotePaper } from "./NotePaper";
 
 export function LandingConnections() {
-  return <section id="workflow" className="landing-connections" aria-labelledby="landing-connections-title">
+  return <section data-marketing-reveal="section" id="workflow" className="landing-connections" aria-labelledby="landing-connections-title">
     <div className="landing-connection-intro">
-      <header data-marketing-reveal>
+      <header>
         <h2 id="landing-connections-title">让旧笔记，<br />接上新思路。</h2>
         <p>在画布中选中笔记，让 AI 找到相关记录，并说清它们为什么有关。</p>
       </header>
-      <div className="landing-connection-reason" data-marketing-reveal>
+      <div className="landing-connection-reason">
         <h3>从一个方法，到一次实践。</h3>
         <p>把阅读中的角度与日常观察放在一起，让旧卡片成为新文章的起点。</p>
       </div>

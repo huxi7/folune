@@ -37,7 +37,7 @@ bun.lock: Bun 锁定依赖版本
 tsconfig.json: TypeScript 编辑器与编译约束
 .gitignore: app 模块忽略规则
 
-2026-09-22 营销动效：首页、博客、动态及登录继续共用一个 MarketingLayout，公开链接经 MarketingLink 接入 Router 原生 View Transition，历史返回和锚点在滚动落位后仅捕获可视正文。文字以 8px/360ms 上浮淡入、32ms 错峰且上限 128ms，顶栏固定、导轨和卡片骨架不位移；首次访问/无原生过渡时由同一 CSS 入场兜底，滚动按内容首次入视口播放。query 与 detail 清除已消费锚点不重播，减少动态立即呈现。此处覆盖旧版仅允许 3–4px reveal 的限制。
+2026-10-06 营销动效：按内置浏览器读取的 Laper 公开源码接入。首屏标题、说明和动作同组，18px/550ms；滚动章节24px/550ms，首次进入收缩80px的视口时播放。博客标题16px/480ms；文章整行24px/420ms，50ms错峰最多250ms。曲线统一cubic-bezier(.2,.7,.2,1)。导航沿普通Router切换，不再拍整页过渡快照；顶栏持续挂载。query和detail清除锚点不重播，减少动态直接显示。参数唯一源为shared/design-system/motion.ts的marketingMotion。
 
 2026-10-06 纸感定稿：移除白底模式、Header开关和sessionStorage材质读取。Header、公告与页底共用纸纹。导轨对比完成，临时demo已删除；正式首页恢复Git原版#DADDE2导轨、8px白填充SVG菱形与原斜纹。公告不建立独立层叠上下文，连续竖轨覆盖纸色背景；仅分隔带高于相邻背景，保护跨边界节点。三种侧纹保留既有几何与动画。
 

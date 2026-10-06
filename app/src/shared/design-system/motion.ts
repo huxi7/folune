@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Motion 的 Transition/Variants 类型与 CSS 自定义属性协议
- * [OUTPUT]: 对外提供借鉴Laper的菜单/模态与紧凑菜单档、保持原侧向淡入的工作区侧栏、Laper确认按钮400/40 tap spring、150ms/200ms中性悬停及同源CSS token和DS目录；品牌入口/纸面独立
+ * [OUTPUT]: 对外提供借鉴Laper的菜单/模态与紧凑菜单档、保持原侧向淡入的工作区侧栏、Laper确认按钮400/40 tap spring、150ms/200ms中性悬停及同源CSS token和DS目录；营销提供Laper首屏/区块/标题/文章行配方；品牌入口/纸面独立
  * [POS]: Design System 的唯一通用动效语言；组件不复制数字，纸面/绳线的领域几何仍归 pages/widgets
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -49,6 +49,18 @@ export const motionScale = { menu: 0.95, panel: 1, modal: 0.9 } as const;
 export const surfaceTransformOrigin = "50% 50%";
 export const staggerStepMs = 32;
 export const staggerMaxMs = 128;
+
+// ---- Laper 公开前端包实测；营销节奏独立于 APP 的短反馈 ----
+export const marketingMotion = {
+  ease: [0.2, 0.7, 0.2, 1],
+  hero: { distance: 18, duration: 550 },
+  section: { distance: 24, duration: 550 },
+  heading: { distance: 16, duration: 480 },
+  row: { distance: 24, duration: 420 },
+  rowStagger: 50,
+  rowStaggerMax: 250,
+  viewportMargin: "-80px",
+} as const;
 
 export const fadeTransition: Transition = { type: "tween", duration: motionDuration.microEnter, ease: motionEase.enter };
 export const microExitTransition: Transition = { type: "tween", duration: motionDuration.microExit, ease: motionEase.exit };
@@ -152,6 +164,7 @@ const cssName = (name: string) => name.replace(/[A-Z]/g, (letter) => `-${letter.
 export const motionTokenStyles = `:root{${Object.entries(motionDuration)
   .map(([name, seconds]) => `--motion-${cssName(name)}:${seconds * 1000}ms;`).join("")}${Object.entries(motionEase)
   .map(([name, points]) => `--ease-${name}:cubic-bezier(${points.join(",")});`).join("")}--motion-stagger-step:${staggerStepMs}ms;--motion-stagger-max:${staggerMaxMs}ms;}
+.landing-blueprint{--marketing-ease:cubic-bezier(${marketingMotion.ease.join(",")});${(["hero", "section", "heading", "row"] as const).map(kind => `--marketing-${kind}-distance:${marketingMotion[kind].distance}px;--marketing-${kind}-duration:${marketingMotion[kind].duration}ms;`).join("")}}
 @media(prefers-reduced-motion:reduce){:root{--motion-press:90ms;--motion-hover:0ms;--motion-button-hover:0ms;--motion-micro-enter:90ms;--motion-micro-exit:90ms;--motion-menu-enter:90ms;--motion-menu-exit:90ms;--motion-compact-menu-enter:90ms;--motion-compact-menu-exit:90ms;--motion-panel-enter:90ms;--motion-panel-exit:90ms;--motion-modal-enter:90ms;--motion-modal-exit:90ms;--motion-view-enter:90ms;--motion-view-exit:90ms;--motion-tree:0ms;--motion-reveal:90ms;}}`;
 
 export function revealVariants(reduced: boolean, scale = false): Variants {

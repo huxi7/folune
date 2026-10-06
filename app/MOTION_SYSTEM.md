@@ -1,7 +1,13 @@
 # Folune Motion System
+
+2026-10-06 营销动效：按内置浏览器读取的 Laper 公开源码接入。首屏标题、说明和动作同组，18px/550ms；滚动章节24px/550ms，首次进入收缩80px的视口时播放。博客标题16px/480ms；文章整行24px/420ms，50ms错峰最多250ms。曲线统一cubic-bezier(.2,.7,.2,1)。导航沿普通Router切换，不再拍整页过渡快照；顶栏持续挂载。query和detail清除锚点不重播，减少动态直接显示。参数唯一源为shared/design-system/motion.ts的marketingMotion。
+
+来源：Laper 首页 `assets/index-DLokLNxL.js` 的 `LaperStandardHero` 与 `dr.marketing`；博客 `assets/MarketingPageFrame-B3aW-GyW.js`；滚动 `assets/index-DYv-8XCx.js`。源码通过内置浏览器同源读取。只迁移动效配方，不复制业务实现。
 > 共同基线 `47dc927` · A `ec6d999` · B `3e1d344` · 实施分支 `codex/motion-system`
 
-2026-09-22 营销页面现行补充：公开导航通过 Router 原生 View Transition 接通首页/锚点/博客/文章/动态/登录；MarketingLayout 在 ScrollRestoration 后仅为可视正文分配临时名称，顶栏固定，导轨只淡换。文字上浮 8px、360ms，32ms 错峰最多 128ms，原生快照与滚动 CSS 入场互斥；query 和 detail 清除锚点不重播。减少动态直接呈现，能力缺失则只保留正文 CSS 入场。参考 [Laper](https://laper.ai/) 的内容层入场与 [IBM Carbon](https://carbondesignsystem.com/elements/motion/choreography/) 的共享壳、有限错峰原则；不引入新动画依赖。
+2026-10-07 验证：typecheck、lint、生产构建及 git diff --check 通过。内置浏览器读到首屏18px/550ms、区块24px/550ms、博客标题16px/480ms、13行文章24px/420ms，延迟0–250ms，曲线与参考一致。首页锚点停在约64px处，跨页顶栏保持同一实例；博客→文章→历史返回正常；detail query不触发重播。390px页面无横向溢出；减少动态下无隐藏内容及reveal动画。浏览器临时测量和媒体/尺寸模拟已恢复，预览保留本地首页。静态截图与关键帧验证不替代用户对连续播放手感的验收。本次未部署。
+
+2026-09-22 营销页面历史记录（已由上述2026-10-06方案替换）：公开导航通过 Router 原生 View Transition 接通首页/锚点/博客/文章/动态/登录；MarketingLayout 在 ScrollRestoration 后仅为可视正文分配临时名称，顶栏固定，导轨只淡换。文字上浮 8px、360ms，32ms 错峰最多 128ms，原生快照与滚动 CSS 入场互斥；query 和 detail 清除锚点不重播。减少动态直接呈现，能力缺失则只保留正文 CSS 入场。参考 [Laper](https://laper.ai/) 的内容层入场与 [IBM Carbon](https://carbondesignsystem.com/elements/motion/choreography/) 的共享壳、有限错峰原则；不引入新动画依赖。
 
 本次实现验证（2026-09-22）：真实浏览器已确认首页→博客→文章→返回、首页锚点、动态、登录、连续导航、390px 窄屏、减少动态及缺失 View Transition 时的 CSS 兜底；文章返回原首页位置误差 0px，顶栏实例保持，detail query 更新未启动 reveal，滚动回已读区块未重播。浏览器读取到正文关键帧 8px→0、360ms、错峰 0–128ms。测试浏览器在无动画页面的 requestAnimationFrame 也约每秒一次，截图请求超时，因此上述是交互/关键帧/布局证据，不代表完整播放流畅度和视觉验收。构建、类型检查、现有 Motion 生命周期五项测试通过；lint 只有独立 Hero Lab Controls 的既有标签警告。
 
