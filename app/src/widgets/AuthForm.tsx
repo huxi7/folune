@@ -1,10 +1,13 @@
 /**
- * [INPUT]: 依赖 React 的登录/注册/验证码局部状态与输入框引用、共享 Button/GlowButton/Input/PasswordInput、MarketingLink，以及 shared/supabase 认证服务
- * [OUTPUT]: 桌面协议链接外开； 对外提供登录、双密码注册、六格验证码与 Google OAuth 共用的 AuthForm；发起动作独占加载反馈，状态提示和验证码通过 auth-* 类消费共享排版，协议用 SPA 链接
+ * [INPUT]: 依赖 React 局部状态、Motion/DS authMotion、共享认证控件、MarketingLink 与既有认证服务
+ * [OUTPUT]: 提供登录、双密码注册、六格验证码与 Google OAuth；确认密码展开时保留表单，退出时立即停用校验；主按钮消费参考弹簧，背景不重建
  * [POS]: widgets 的唯一认证表单，由 LoginPage 承载；表单负责认证步骤，页面负责布局和导航，不直接持有 Supabase client
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { MarketingLink } from "./LandingMotion/MarketingLink";
+import { AnimatePresence, motion, useIsPresent } from "motion/react";
+import { authMotion, motionSpring } from "../shared/design-system/motion";
+import { useMotionPreference } from "../shared/design-system/useMotionPreference";
 import {
   ArrowLeftIcon,
   GoogleLogoIcon,
@@ -14,6 +17,8 @@ import {
   useRef,
   useState,
   type ClipboardEvent,
+  type ComponentProps,
+  type CSSProperties,
   type FormEvent,
   type KeyboardEvent,
 } from "react";
@@ -34,6 +39,7 @@ import {
 } from "../shared/design-system/components";
 
 const OTP_LENGTH = 6;
+const AuthSubmitButton = motion.create(GlowButton);
 
 type AuthStep = "credentials" | "verification";
 type AuthMode = "login" | "register";
@@ -47,7 +53,29 @@ function createEmptyOtp() {
   return Array.from({ length: OTP_LENGTH }, () => "");
 }
 
+function ConfirmationField({
+  reducedMotion,
+  ...props
+}: ComponentProps<typeof PasswordInput> & { reducedMotion: boolean }) {
+  const present = useIsPresent();
+  return (
+    <motion.div
+      aria-hidden={!present}
+      className="auth-confirm-field"
+      inert={!present}
+      initial={{ opacity: 0, height: 0 }}
+      animate={{ opacity: 1, height: "auto" }}
+      exit={{ opacity: 0, height: 0 }}
+      transition={reducedMotion ? { duration: 0 } : authMotion.field}
+    >
+      <label className="sr-only" htmlFor="auth-confirm-password">确认密码</label>
+      <PasswordInput {...props} disabled={props.disabled || !present} required={present} />
+    </motion.div>
+  );
+}
+
 export function AuthForm({ onAuthenticated }: AuthFormProps) {
+  const reducedMotion = useMotionPreference();
   const [step, setStep] = useState<AuthStep>("credentials");
   const [mode, setMode] = useState<AuthMode>("login");
   const [email, setEmail] = useState("");
@@ -307,7 +335,7 @@ export function AuthForm({ onAuthenticated }: AuthFormProps) {
             id="auth-email"
             name="username"
             onChange={(event) => setEmail(event.target.value)}
-            placeholder="输入您的电子邮箱"
+            placeholder="输入你的电子邮箱"
             required
             type="email"
             value={email}
@@ -332,28 +360,26 @@ export function AuthForm({ onAuthenticated }: AuthFormProps) {
             visible={showPassword}
           />
 
-          {isRegisterMode ? (
-            <>
-              <label className="sr-only" htmlFor="auth-confirm-password">
-                确认密码
-              </label>
-              <PasswordInput
+          <AnimatePresence initial={false} mode="wait">
+            {isRegisterMode ? (
+              <ConfirmationField
                 autoComplete="new-password"
                 className="auth-input w-full"
                 disabled={busy}
                 id="auth-confirm-password"
+                key="confirmation"
                 minLength={6}
                 name="confirmPassword"
                 onChange={(event) => setConfirmPassword(event.target.value)}
                 onVisibilityChange={setShowConfirmPassword}
                 placeholder="确认密码"
-                required
+                reducedMotion={reducedMotion}
                 value={confirmPassword}
                 visibilityLabel="确认密码"
                 visible={showConfirmPassword}
               />
-            </>
-          ) : null}
+            ) : null}
+          </AnimatePresence>
 
           {!isRegisterMode ? (
             <button className="auth-forgot-password" disabled={busy} type="button">
@@ -361,27 +387,41 @@ export function AuthForm({ onAuthenticated }: AuthFormProps) {
             </button>
           ) : null}
 
-          {errorMessage ? (
-            <p aria-live="polite" className="auth-status-message" data-tone="error">
-              {errorMessage}
-            </p>
-          ) : null}
+          <AnimatePresence initial={false} mode="wait">
+            {errorMessage ? (
+              <motion.p
+                aria-live="polite"
+                className="auth-status-message"
+                data-tone="error"
+                key="credentials-error"
+                initial={{ opacity: 0, y: reducedMotion ? 0 : -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: reducedMotion ? 0 : -4 }}
+                transition={reducedMotion ? { duration: 0 } : authMotion.feedback}
+              >
+                {errorMessage}
+              </motion.p>
+            ) : null}
+          </AnimatePresence>
 
-          <GlowButton
+          <AuthSubmitButton
             className="auth-submit-button w-full"
             disabled={busy}
             loading={pendingAction === "credentials"}
+            style={{ "--auth-pulse-duration": `${authMotion.pulseDuration}s` } as CSSProperties}
+            whileTap={busy || reducedMotion ? undefined : { scale: authMotion.tapScale }}
+            transition={motionSpring.tap}
             type="submit"
           >
             {pendingAction === "credentials" ? "处理中…" : isRegisterMode ? "注册" : "登录"}
-          </GlowButton>
+          </AuthSubmitButton>
 
-          <p className="auth-mode-switch">
-            {isRegisterMode ? "已有账号？" : "还没有账号？"}
-            <button disabled={busy} onClick={handleModeChange} type="button">
-              {isRegisterMode ? "登录" : "注册"}
+          <div className="auth-mode-switch">
+            <button aria-label={isRegisterMode ? "登录" : "注册"} disabled={busy} onClick={handleModeChange} type="button">
+              {isRegisterMode ? "已有账号？" : "还没有账号？"}{" "}
+              <span>{isRegisterMode ? "登录" : "注册"}</span>
             </button>
-          </p>
+          </div>
 
           <p className="auth-terms-copy">
             继续即表示您同意 Folune 的

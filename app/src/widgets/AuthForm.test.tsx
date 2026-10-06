@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 happy-dom、Testing Library、MemoryRouter、真实 AuthForm 与可替换的认证服务调用
- * [OUTPUT]: 验证登录成功/失败、注册校验、验证码与重发流程，并锁定只有发起动作显示加载、其余控件暂禁及失败恢复，不向真实账号或认证服务器发请求
+ * [OUTPUT]: 验证登录/注册/验证码与动作独占加载；退出注册的动画输入立即停用，邮箱保留，密码隐藏；不发送真实认证请求
  * [POS]: widgets 的认证迁移回归门禁；只替换服务边界，真实表单事件与局部状态完整运行
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -130,6 +130,30 @@ describe("AuthForm", () => {
     await view.findByText("两次输入的密码不一致。");
     expect(signUp).not.toHaveBeenCalled();
     expect(view.onAuthenticated).not.toHaveBeenCalled();
+  });
+
+  test("返回登录立即停用退出中的确认密码，并保留邮箱及重置密码显隐", async () => {
+    const signIn = spyOn(auth, "signInWithPassword").mockResolvedValue("authenticated");
+    const view = renderForm();
+    fireEvent.click(view.getByRole("button", { name: "注册" }));
+    fillPassword(view);
+    fireEvent.click(view.getByLabelText("显示密码", { exact: true }));
+    expect((view.getByLabelText("密码", { exact: true }) as HTMLInputElement).type).toBe("text");
+    fireEvent.click(view.getByRole("button", { name: "登录" }));
+
+    const exiting = view.container.querySelector<HTMLInputElement>("#auth-confirm-password");
+    if (exiting) {
+      expect(exiting.disabled).toBe(true);
+      expect(exiting.required).toBe(false);
+      expect(exiting.closest("[inert]")).not.toBeNull();
+    }
+    const password = view.getByLabelText("密码", { exact: true }) as HTMLInputElement;
+    expect(password.type).toBe("password");
+    expect(password.value).toBe("");
+    expect((view.getByLabelText("电子邮箱") as HTMLInputElement).value).toBe("writer@example.com");
+    fillPassword(view);
+    fireEvent.click(view.getByRole("button", { name: "登录" }));
+    await waitFor(() => expect(signIn).toHaveBeenCalledWith("writer@example.com", "sample-password"));
   });
 
   test("注册切换到验证码，粘贴六位验证码后完成认证", async () => {

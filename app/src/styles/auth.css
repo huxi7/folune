@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 Landing 的纸色/标题与 BlueprintFrame、DS 尺寸、app-visual/app-typography 的共享控件语义，以及 LoginPage/AuthForm/AuthCallbackPage 的 auth-* 结构
- * [OUTPUT]: 对外提供认证页面布局、20px 大控件、紧凑验证码与状态提示；表单沿 APP 比例字体、文字角色、中性表面与轻影，交互焦点由共享视觉层统一
- * [POS]: styles 的认证布局与组件适配层；营销后景/3:4 视频保持独立，登录、注册、验证码与 OAuth 回调共用表单语义，不再复制焦点或加载效果
+ * [INPUT]: 依赖 Laper 实测几何、DS 品牌蓝/字体/动效与 AuthForm 的认证结构；后景复用 LoginBackdrop
+ * [OUTPUT]: 提供原白色认证卡片、24px 平滑轮廓、44/48px 控件、双层轻影与品牌焦点；主按钮叠加参考高光和悬停脉冲
+ * [POS]: 认证局部视觉边界；参考状态只覆盖登录控件，不改变 APP 通用控件；注册几何由 Motion 拥有，后景与视频持续挂载
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 @layer components {
@@ -76,9 +76,13 @@
   }
 
   .auth-card {
+    --radius-dialog: 24px;
     --auth-control-radius: var(--radius-dialog);
-    padding: 40px 28px 36px;
-    border: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
+    --auth-border: var(--landing-border-base, #e4e6e8);
+    --auth-focus-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 20%, transparent),
+      0 0 12px color-mix(in srgb, var(--primary) 15%, transparent);
+    padding: 44px 28px 28px;
+    border: 1px solid color-mix(in srgb, var(--auth-border) 60%, transparent);
     border-radius: var(--radius-dialog);
     corner-shape: var(--corner-shape-smooth);
     background: var(--card);
@@ -86,7 +90,7 @@
     font-family: var(--font-sans);
     font-size: var(--type-ui);
     font-weight: var(--weight-body);
-    box-shadow: var(--shadow-sm);
+    box-shadow: 0 2px 4px rgb(0 0 0 / 5%), 0 2px 4px -1px rgb(0 0 0 / 5%);
   }
 
   .auth-artwork {
@@ -169,41 +173,86 @@
   .auth-credentials-form {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
   }
 
-  /* ---- 大控件提升一档曲率；输入边框与流光裁剪沿同一轮廓 ---- */
+  /* ---- 参考 44px 控件与 24px 曲率；字号保持 13px 紧凑比例 ---- */
   .auth-provider-button.ds-button,
   .auth-submit-button.glow-button,
   .auth-input.ds-input {
     min-height: 44px;
+    height: 44px;
     border-radius: var(--auth-control-radius);
     corner-shape: var(--corner-shape-smooth);
+    font-size: var(--type-section);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
   }
 
+  .auth-card .auth-provider-button {
+    padding: 0 24px 0 16px;
+    border: 1px solid var(--auth-border);
+    background: var(--card);
+    box-shadow: 0 2px 4px rgb(0 0 0 / 5%), 0 1px 2px -1px rgb(0 0 0 / 5%);
+    transform: none;
+    transition: background-color var(--motion-button-hover) var(--ease-surface);
+  }
+
+  .auth-card .auth-provider-button:not(:disabled):is(:hover, :active) {
+    background: var(--interactive-hover);
+    border-color: var(--auth-border);
+    box-shadow: 0 2px 4px rgb(0 0 0 / 5%), 0 1px 2px -1px rgb(0 0 0 / 5%);
+    transform: none;
+  }
+
+  .auth-provider-button .ds-button-content { gap: 8px; }
+  .auth-provider-button .ds-button-content > svg { width: 20px; height: 20px; }
+
   .auth-divider {
-    padding-block: 2px;
-    color: var(--muted-foreground);
-    font-size: var(--type-label);
+    color: var(--foreground);
+    font-size: var(--type-reference);
     font-weight: var(--weight-support);
     text-align: center;
+    line-height: 1.333333;
   }
 
   .auth-input.ds-input {
-    padding-inline: var(--space-4);
+    padding-inline: 14px;
+    font-family: var(--font-sans);
+    transition: border-color var(--motion-button-hover) var(--ease-surface), box-shadow var(--motion-button-hover) var(--ease-surface);
   }
+
+  .auth-card .auth-input.ds-input {
+    background: white;
+    border-color: var(--auth-border);
+    box-shadow: none;
+  }
+
+  .auth-card .auth-input.ds-input:where(:not(:disabled)):is(:hover, :focus),
+  .auth-card .ds-password-input:where(:hover, :focus-within) .auth-input.ds-input:where(:not(:disabled)) {
+    border-color: var(--primary);
+    outline: none;
+    box-shadow: var(--auth-focus-shadow);
+  }
+
+  .auth-card .auth-input.ds-input[aria-invalid="true"] { border-color: var(--destructive); }
+  .auth-card .ds-password-input-control.auth-input { padding-right: 40px; }
 
   .auth-input.ds-input::placeholder {
     opacity: 1;
   }
 
   .auth-card .ds-password-toggle {
+    right: 2px;
+    width: 40px;
     border: 0;
     background: transparent;
     box-shadow: none;
     color: var(--muted-foreground);
-    transition: color var(--motion-fast) var(--ease-standard);
+    transition: color var(--motion-hover) var(--ease-surface);
   }
+
+  .auth-card .ds-password-toggle svg { width: 20px; height: 20px; }
 
   .auth-card .ds-password-toggle:not(:disabled):hover {
     background: transparent;
@@ -212,7 +261,7 @@
 
   .auth-forgot-password {
     align-self: flex-end;
-    min-height: 24px;
+    min-height: 0;
     padding: 0;
     border: 0;
     background: transparent;
@@ -221,18 +270,44 @@
     corner-shape: var(--corner-shape-smooth);
     font-size: var(--type-label);
     font-weight: var(--weight-support);
-    line-height: var(--leading-input);
-    transition: color var(--motion-fast) var(--ease-standard);
+    line-height: 1.428571;
+    text-decoration: none;
+    transition: color var(--motion-hover) var(--ease-surface);
   }
 
-  .auth-input.ds-input:-webkit-autofill,
-  .auth-input.ds-input:-webkit-autofill:hover,
-  .auth-input.ds-input:-webkit-autofill:focus {
-    background: transparent;
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: var(--foreground);
-    caret-color: var(--foreground);
+  /* ---- 主按钮的缩放只交给 Motion；CSS 不再重复过渡 transform ---- */
+  .auth-card .auth-submit-button {
+    --glow-sheen-top: rgb(255 255 255 / 18%);
+    --glow-sheen-hairline: rgb(255 255 255 / 34%);
+    box-shadow: 0 0 0 1px rgb(0 0 0 / 15%), 0 2px 4px rgb(0 0 0 / 3%);
+    transition: box-shadow var(--motion-button-hover) var(--ease-surface);
+    letter-spacing: 0;
+  }
+
+  .auth-card .auth-submit-button:not(:disabled):hover {
+    --glow-sheen-top: rgb(255 255 255 / 34%);
+    box-shadow: 0 0 0 1px rgb(0 0 0 / 15%), 0 2px 4px rgb(0 0 0 / 3%);
+  }
+
+  .auth-card .auth-submit-button:not(:disabled):active { transition-duration: var(--motion-button-hover); }
+  .auth-submit-button .glow-button-sheen { background: linear-gradient(to bottom, var(--glow-sheen-top), transparent); }
+
+  .auth-submit-button::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    background: radial-gradient(circle, color-mix(in srgb, var(--primary) 40%, transparent), transparent 70%);
+    opacity: 0;
+  }
+
+  .auth-submit-button:not(:disabled):hover::after { animation: auth-submit-pulse var(--auth-pulse-duration) ease-out infinite; }
+
+  @keyframes auth-submit-pulse {
+    0% { opacity: 0; transform: scale(1); }
+    50% { opacity: 0.2; transform: scale(1.3); }
+    100% { opacity: 0; transform: scale(1.6); }
   }
 
   .auth-mode-switch,
@@ -242,44 +317,48 @@
   }
 
   .auth-mode-switch {
-    padding-block: var(--space-2);
+    margin-top: 4px;
+    min-height: 24px;
     font-size: var(--type-label);
     font-weight: var(--weight-support);
-    line-height: var(--leading-label);
+    line-height: 24px;
   }
 
   .auth-mode-switch button {
-    min-height: var(--space-6);
-    margin-left: var(--space-2);
+    padding: 0;
     border-radius: var(--radius-compact);
     corner-shape: var(--corner-shape-smooth);
-    color: var(--foreground);
-    font-weight: var(--weight-action);
+    color: var(--muted-foreground);
+    font-weight: var(--weight-support);
+    line-height: 1.428571;
+    text-decoration: none;
+    transition: color var(--motion-hover) var(--ease-surface);
   }
 
+  .auth-mode-switch button > span { color: var(--primary); font-weight: var(--font-weight-medium); }
+
   .auth-terms-copy {
-    padding-top: var(--space-2);
-    font-size: var(--type-caption);
+    padding-top: 20px;
+    font-size: var(--type-reference);
     font-weight: var(--weight-support);
-    line-height: var(--leading-caption);
+    line-height: 1.625;
   }
 
   .auth-card .auth-terms-copy a {
     margin-inline: var(--space-1);
-    color: var(--foreground);
+    color: var(--muted-foreground);
     text-decoration: underline;
-    text-decoration-color: color-mix(in srgb, var(--foreground) 38%, transparent);
-    text-underline-offset: 0.18rem;
+    text-decoration-color: currentColor;
+    text-underline-offset: auto;
   }
 
   .auth-card .auth-mode-switch button:not(:disabled):hover,
-  .auth-card .auth-forgot-password:not(:disabled):hover,
-  .auth-card .auth-terms-copy a:hover {
+  .auth-card .auth-forgot-password:not(:disabled):hover {
     color: var(--foreground);
-    text-decoration: underline;
-    text-decoration-color: currentColor;
-    text-underline-offset: 0.18rem;
+    text-decoration: none;
   }
+
+  .auth-card .auth-terms-copy a:hover { color: var(--foreground); }
 
   .auth-mode-switch button:disabled,
   .auth-forgot-password:disabled {
@@ -329,14 +408,16 @@
     .auth-intro { margin-bottom: 16px; }
     .auth-intro h1 { font-size: 36px; }
     .landing-blueprint .auth-intro p { margin-top: 12px; }
-    .auth-card { padding-block: 28px 24px; }
-    .auth-credentials-form { gap: 12px; }
   }
 
   @media (max-width: 959px) {
     .auth-page { padding: 48px 24px 56px; }
     .auth-panel { flex: 0 1 384px; width: 100%; }
     .auth-artwork { display: none; }
+    .auth-card { padding: 36px 24px 24px; }
+    .auth-provider-button.ds-button,
+    .auth-submit-button.glow-button,
+    .auth-input.ds-input { min-height: var(--control-height-large); height: var(--control-height-large); }
   }
 
   @media (max-width: 479px) {
@@ -344,10 +425,10 @@
     .auth-intro { margin-bottom: 24px; }
     .auth-intro h1 { font-size: 36px; line-height: 1.3; }
     .landing-blueprint .auth-intro p { margin-top: 16px; font-size: 13px; }
-    .auth-card { padding: 28px 22px 24px; }
-    .auth-provider-button.ds-button,
-    .auth-submit-button.glow-button,
-    .auth-input.ds-input { min-height: var(--control-height-large); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .auth-submit-button:not(:disabled):hover::after { animation: none; }
   }
 
 }

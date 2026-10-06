@@ -13,7 +13,7 @@ CLAUDE.md: 记录本地组件目录职责与文档协议
 Button.tsx: 图标按钮默认从 aria-label 生成 WarmTooltip，title/tooltip 指定描述、tooltip=false 可关闭；外部 Tooltip 标记避免重复，无额外 DOM； 本地 36px 标准命令组件，使用 14px/18px UI 字体、14px 横向留白与 6px 图文间距，封装 primary、弱边缘 secondary、ghost、实心红色 danger、square 与正交 loading 状态；以统一 16px smooth corner、强调按钮的极轻纵向同色面光和短中性落地阴影形成克制实体层级，不绘制清晰全周内环，hover 固定原位，中性Button连续变色且保留原外影，按下原地收紧且撤回外影（共读 index.css 的 --press-scale，Reduced Motion 归 1），Ghost 始终无实体阴影；非 Danger loading 自动切换为独立蓝灰 Processing 状态面，继续联动原生 disabled/aria-busy，并以 spinner 配合带 16 度倾角的 3.2s 低频窄 shimmer
 ShaderGlow.tsx: 唯一 WebGL2 光线步进原语；从宿主品牌 token 构建渐变，立即绘制非空初始相位并保留静态帧；ResizeObserver 独立负责布局尺寸，离屏/隐藏/减少动态共同控制唯一 RAF，恢复上下文重建资源，所有退出路径释放资源；GPU 不可用时由消费方底色托底
 ShaderGlow.test.tsx: 使用可控 WebGL/Observer/RAF 验证 StrictMode 首帧、暂停续播、静态尺寸重绘、上下文恢复与失败清理；不替代真实 GPU 和视觉验收
-GlowButton.tsx: 与 Button 平级、材质独立的强调型 CTA，仅用于登录/升级一类主动作；以「墨蓝底色对角渐变 + ShaderGlow 流光 + 玻璃高光」三层在同一 overflow 裁剪的 squircle 内叠加合成质感，复用全站 --press-scale 与 ds-button-spinner，视觉数值全部落在 styles/shader-glow.css，不侵入也不改动标准 Button 的四个变体
+GlowButton.tsx: 透传原生 button 属性/ref，认证页可用 Motion 组合按压；墨蓝渐变、ShaderGlow 与玻璃高光共享裁剪，默认消费全站 press 与 spinner，认证局部状态由 auth.css 拥有。
 Skeleton.tsx: 统一低对比占位加载原语，提供 rect/text/circle 形状、单组无模糊掠光 SkeletonGroup 与 180ms 延迟出现/内容就绪立即退出的 useDelayedSkeleton；显式最短展示可选，隐藏时不宣告忙碌；业务只按真实内容结构组合，不自建动画或计时器
 SidebarButton.tsx: title 与 icon 模式可访问名称复用原位 WarmTooltip，保留原生ref并对外层提示去重； 本地 32px compact 侧栏导航原子组件，以 active、default/icon 等高尺寸、default/prominent 层级和 leading/label/trailing 槽位统一 APP 与账户模态框导航；与 36px Button 共享平滑圆角和材质语言但不强制等高，hover 固定原位，选中态和 prominent 态直接复用弱边缘的 Secondary Button 材质
 SegmentedControl.tsx: 紧凑互斥选择，保留 radiogroup/radio、单一 Tab 入口和方向键；只有共享选中底片做 layout 迁移，文字固定原位，减少动态效果取消底片滑动

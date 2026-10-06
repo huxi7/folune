@@ -40,8 +40,8 @@ MarketingHeader.tsx: 品牌、导航与动作在48px内容行内共用垂直中�
 MarketingAnnouncement.tsx: 各营销页共用36px公告，1120px主轨内14%品牌蓝渐变、整栏核心功能链接与13px箭头，正文单行截断；可选ref只供Hero量取高度。
 BlueprintFrame.tsx: Landing 纵向导轨容器；导航、1120px 正文与页脚共用主轨/外轨坐标，fullBleed 增加可选外轨，颜色由当前区块局部覆盖
 BlueprintDivider.tsx: 导出BlueprintPin供目录刊头内轨复用；8px SVG菱形、白色填充与#CBCFD4描边只有这一份实现；提供14px双边分隔带、7px内部分隔带和零高度贴边线，节点与连续竖轨共轴，骨架层级高于区块背景。
-AuthForm.tsx: 桌面条款/隐私使用系统浏览器； LoginPage 的唯一认证表单，复用共享 Input/PasswordInput 承载邮箱、双密码与显隐控制；主提交动作(登录/注册)改用墨蓝流光 GlowButton，登录态增加无提交/导航行为的忘记密码占位，协议提示通过 MarketingLink 接通 /terms 与 /privacy、保留六格 OTP 自动校验与 Google OAuth，请求动作独占加载反馈、其余控件暂禁，验证码与状态提示复用 auth 样式；认证成功通过回调交还页面导航
-AuthForm.test.tsx: MemoryRouter 承载真实协议链接，真实表单事件覆盖登录成功/失败、双密码校验和注册→六格 OTP 粘贴验证，以及登录/Google/重发各自加载、互斥禁用与失败恢复；仅替换认证服务，不发送真实认证请求
+AuthForm.tsx: 登录/注册/六格 OTP 与 Google OAuth 共用表单；四色 Google、200ms 确认密码展开、180ms 错误淡入与原位流光 CTA 消费 DS；退出字段立即停用校验，邮箱与视频实例保留；请求独占加载，成功回调交还页面；忘记密码仍为占位，桌面协议外开。
+AuthForm.test.tsx: 真实表单事件验证登录/注册/OTP 与动作独占加载；注册退出立即停用校验，保留邮箱并重置密码显隐；只替换认证服务，不发送真实请求。
 LandingHero.tsx: 首屏标题/说明/动作合为18px/550ms同拍组，价值条静态；共享公告、60svh 居中 Hero、三列价值条与真实 UI 互动插槽；主 slogan 无句末标点，装配选定 02A HeroBackdrop，并量取 Header/公告/三栏高度为矮屏保留 64px 产品露出；LandingActions 固定下载在左用 Secondary、打开在右并进入 /login，首屏打开用墨蓝流光 GlowButton；末端 CTA 传 startOnly，只显示 ArrowRightIcon 与开始并进入 /login；桌面版说明按最终上线状态展示，边界复用通栏 BlueprintDivider
 LandingFeatureDetails.tsx: 完整章节24px/550ms首次入视口浮现；第 11 区块的四项垂直居中展开说明、对应实景图与底部紧凑四格摘要；标题区和展开正文保留文章入口，底部只含标题和说明；固定展示区内以同源 CSS 时间轴协调行高、标题与正文，正文常驻并在收起时 inert，选中项只保持展开、不显示收起图标，图片不附重复图注；detail query 保留选中项，切换清除已消费的定位锚点，替换历史并保留其他查询/滚动，博客沿 fromBlog 协议返回
 landingDetailData.ts: 逐篇维护三个正文主题标签； 归档线、引用选择、同一份原文、Markdown 导出四项细节与完整指南；实景图与文章数据同源，BlogPost 仅类型依赖，不建立运行时反向导入

@@ -4,7 +4,7 @@
 成员清单
 material-comparison.md: 纸感定稿、白底移除与导轨对比入口；保留此前材质实验、侧纹几何及验证记录。
 header-frame-reference.md: 2026-10-05 内置浏览器实测的 Laper Header/公告/按钮/框线参数，蓝灰映射、中心校正与本地验证边界。
-login-page.md: Laper 登录构图的实际测量、独立 /login 与本地 3:4 视频接入、认证迁移边界和浏览器/工程验证结果
+login-page.md: 登录卡片的参考实测、白色表面与注册/控件状态契约；区分 2026-10-07 复核与历史实现，记录真实认证能力边界。
 compact-sections-review.md: 三张截图反馈后的密度精修，记录关联叙述与原句标记、240px 指南、实际尺寸和验证边界
 compact-connections-1440.png: 2026-09-20 密度精修后关联区桌面局部实景
 compact-guides-1440.png: 2026-09-20 密度精修后三列两行指南桌面局部实景

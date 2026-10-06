@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Motion 的 Transition/Variants 类型与 CSS 自定义属性协议
- * [OUTPUT]: 对外提供借鉴Laper的菜单/模态与紧凑菜单档、保持原侧向淡入的工作区侧栏、Laper确认按钮400/40 tap spring、150ms/200ms中性悬停及同源CSS token和DS目录；营销提供Laper首屏/区块/标题/文章行配方；品牌入口/纸面独立
+ * [OUTPUT]: 对外提供菜单/模态/侧栏与营销配方、同源 CSS token；authMotion 提供 Laper 注册展开、错误淡入与主按钮弹簧/脉冲参数；品牌入口/纸面独立
  * [POS]: Design System 的唯一通用动效语言；组件不复制数字，纸面/绳线的领域几何仍归 pages/widgets
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -63,6 +63,14 @@ export const marketingMotion = {
 } as const;
 
 export const fadeTransition: Transition = { type: "tween", duration: motionDuration.microEnter, ease: motionEase.enter };
+
+// ---- 认证只展开确认密码；不重建整张表单或背景 ----
+export const authMotion = {
+  field: { duration: 0.2 },
+  feedback: { duration: 0.18 },
+  tapScale: 0.98,
+  pulseDuration: 1.2,
+} as const;
 export const microExitTransition: Transition = { type: "tween", duration: motionDuration.microExit, ease: motionEase.exit };
 export const reducedFadeTransition: Transition = { type: "tween", duration: motionDuration.press, ease: motionEase.standard };
 export const panelEnterTransition: Transition = {

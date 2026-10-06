@@ -1,14 +1,14 @@
 /**
- * [INPUT]: 依赖 React 的 ButtonHTMLAttributes/ReactNode、../icons 的 Icon、./ShaderGlow 的流光层与 styles/shader-glow.css 的合成层，复用 button.css 的 ds-button-spinner
- * [OUTPUT]: 对外提供 GlowButton 组件（墨蓝底色 + WebGL 流光 + 玻璃高光合成的强调 CTA）与 GlowButtonProps 类型
+ * [INPUT]: 依赖 React 原生 button 属性/ref、../icons、ShaderGlow 与 shader-glow.css；加载复用 ds-button-spinner
+ * [OUTPUT]: 对外提供透传 ref 的 GlowButton 与 GlowButtonProps；认证页可通过 Motion 组合交互，其他消费方保留默认反馈
  * [POS]: app/src/shared/design-system/components 的强调型命令件，与 Button 平级但材质独立，只用于登录/升级一类主 CTA
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
-import type { ButtonHTMLAttributes, ReactNode } from "react";
+import type { ComponentPropsWithRef, ReactNode } from "react";
 import type { Icon } from "../icons";
 import { ShaderGlow, type ShaderGlowProps } from "./ShaderGlow";
 
-export type GlowButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+export type GlowButtonProps = ComponentPropsWithRef<"button"> & {
   children?: ReactNode;
   icon?: Icon;
   loading?: boolean;
