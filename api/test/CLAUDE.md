@@ -3,7 +3,7 @@
 
 成员清单
 payment-postgres.py: 验证普通汇率新单不复用固定旧单且保留迟到付款；一次性 PostgreSQL 17 验证并发发放/扣减、金额、退款、周期与真实权限；--http 启动受限 authenticator 的 PostgREST 14.1，结束清理独立容器。
-payment-http.ts: 真实 HTTP→router/service/repository→PostgREST→SQL 的支付门禁，覆盖结账、并发回调/扣减、订阅接续、漏通知/创建超时补偿及 RLS；仅 Auth/商户使用替身，外部出站被拒绝。
+payment-http.ts: 真实 HTTP→router/service/repository→PostgREST→SQL 的支付门禁，覆盖结账、并发回调/扣减、订阅接续、漏通知/创建超时补偿及 RLS；仅 Auth/商户使用替身，外部出站被拒绝。代理重建请求并移除原 Host，避免 Bun 复用入站连接。
 payment-scheduler.test.ts: 真实子进程验证本地补查的目标/鉴权、HTTP 失败退出、不跟随重定向与 watch 可终止。
 payment-flow.test.ts: 真实 service/router 的验签→权威查询→事务边界、身份和独立调度回归，单独进程运行。
 CLAUDE.md: 记录 API 内存集成测试职责与文档协议

@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖共享 DesktopDownloadButton/GlowButton、语义图标、BlueprintFrame/Divider、BrandMark 与 MarketingLink 与 Router 导航
- * [OUTPUT]: 对外提供 48px 顶栏、六项内容导航与 70/48px 宽的 28px 下载/打开双动作；手机用原生折叠菜单保留单行顶栏
+ * [OUTPUT]: 对外提供 57px 顶栏、六项 14px 内容导航与自然定宽的 32px 下载/打开双动作；手机用原生折叠菜单保留单行顶栏
  * [POS]: widgets 的共享营销导航，首页、登录页与公开内容页持续复用；打开导航到 /login，认证生命周期由页面持有，下载复用 DesktopDownloadButton 的系统识别与原生链接
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */

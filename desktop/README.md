@@ -56,8 +56,8 @@ API 的 `CORS_ORIGINS`、Chat 的 `ALLOWED_ORIGINS` 需保留 Web 来源并加�
 先将已验证代码提交并推到源码仓库，再执行：
 
 ```sh
-git tag -a v1.1.1 -m "Folune v1.1.1"
-git push origin v1.1.1
+git tag -a v1.2.0 -m "Folune v1.2.0"
+git push origin v1.2.0
 ```
 
 Tag 必须为稳定的 `vX.Y.Z`；CI 将版本写进桌面包，两平台都成功后才创建/补齐草稿 Release，上传全部文件后一次公开。已公开版本不能被重新覆盖，修复须用新 Tag。手动运行 workflow 和 PR 只生成 Actions artifacts，不公开发布。

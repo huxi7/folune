@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 payment-postgres.py 创建的一次性 PostgREST、真实 Hono/仓储/SQL 与受控商户响应
+ * [INPUT]: 依赖一次性 PostgREST、真实 Hono/仓储/SQL 与受控商户响应；代理按目标地址重建请求
  * [OUTPUT]: 验证 HTTP 结账、验签查单、并发发放、漏通知补偿、扣费退款及 JWT/RLS 隔离
  * [POS]: 支付纵向集成门禁；仅替代 Auth 和商户外部服务，禁止访问远端或读取真实商户凭据
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -34,7 +34,16 @@ const supabase = Bun.serve({
     }
     if (databaseUnavailable) return new Response(null, { status: 503 });
     assert.ok(url.pathname.startsWith("/rest/v1/"));
-    return originalFetch(new Request(`${rest}${url.pathname.slice(8)}${url.search}`, request));
+    // Bun 入站 Request 保留原连接信息；转发须重新组装并移除原 Host。
+    const headers = new Headers(request.headers);
+    headers.delete("host");
+    return originalFetch(`${rest}${url.pathname.slice(8)}${url.search}`, {
+      method: request.method,
+      headers,
+      ...(request.method === "GET" || request.method === "HEAD"
+        ? {}
+        : { body: await request.arrayBuffer() }),
+    });
   },
 });
 

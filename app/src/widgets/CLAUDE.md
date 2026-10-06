@@ -36,8 +36,8 @@ useTreeReorder.test.tsx: 可控几何与 WAAPI 时钟回归，覆盖滚动/Panel
 TreeDisclosure.tsx: 文件树与 DS Collapse 的薄适配，声明可打断、成对释放的归档运动租约，让 Overlay 跟随真实高度几何；不读取业务数据
 .gitkeep: 保留业务组合组件层空目录
 CLAUDE.md: 记录业务组合组件层职责与文档协议
-MarketingHeader.tsx: 品牌、导航与动作在48px内容行内共用垂直中心，导航及按钮共用28px高度与20px行高；固定纸感顶栏，不接收材质切换控件； 首页/登录/博客/动态/价格共享48px顶栏；90px品牌槽、六项12px导航与70×28px下载/48×28px打开，复用真实下载与/login过渡；手机原生details折叠导航，双动作保持单行，Escape/跳转关闭。
-MarketingAnnouncement.tsx: 各营销页共用36px公告，1120px主轨内14%品牌蓝渐变、整栏核心功能链接与13px箭头，正文单行截断；可选ref只供Hero量取高度。
+MarketingHeader.tsx: 首页/登录/博客/动态/价格共享57px顶栏。56px内容行居中品牌、14px导航和32px双动作。按钮随文字自然定宽。保留90px品牌槽、六项导航、真实下载和/login过渡。手机原生details折叠导航，双动作保持单行，Escape/跳转关闭。
+MarketingAnnouncement.tsx: 各营销页共用37px公告与14px文字。1120px主轨内保留14%品牌蓝渐变、整栏核心功能链接与14px箭头。正文单行截断；可选ref只供Hero量取高度。
 BlueprintFrame.tsx: Landing 纵向导轨容器；导航、1120px 正文与页脚共用主轨/外轨坐标，fullBleed 增加可选外轨，颜色由当前区块局部覆盖
 BlueprintDivider.tsx: 导出BlueprintPin供目录刊头内轨复用；8px SVG菱形、白色填充与#CBCFD4描边只有这一份实现；提供14px双边分隔带、7px内部分隔带和零高度贴边线，节点与连续竖轨共轴，骨架层级高于区块背景。
 AuthForm.tsx: 登录/注册/六格 OTP 与 Google OAuth 共用表单；四色 Google、200ms 确认密码展开、180ms 错误淡入与原位流光 CTA 消费 DS；退出字段立即停用校验，邮箱与视频实例保留；请求独占加载，成功回调交还页面；忘记密码仍为占位，桌面协议外开。

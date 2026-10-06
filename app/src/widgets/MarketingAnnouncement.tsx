@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 MarketingLink 的锚点过渡、ArrowRightIcon、BlueprintDivider 与 Landing 公告栏样式，接收可选容器 ref 供 Hero 量取高度
- * [OUTPUT]: 对外提供通往首页核心功能的 36px 整栏链接；主轨内采用 14% 品牌蓝渐变，文字单行截断，箭头与共轴节点独立定位
+ * [OUTPUT]: 对外提供通往首页核心功能的 37px 整栏链接，文字统一 14px；主轨内采用 14% 品牌蓝渐变，文字单行截断，箭头与共轴节点独立定位
  * [POS]: widgets 的首页、登录、博客/动态目录与价格页共享公告；文案和形制只有一份，各页面沿自己的导轨装配，Hero 只读取高度
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
