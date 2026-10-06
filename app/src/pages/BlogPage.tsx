@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 Router slug/历史导航、MarketingLink、独立博客/动态集合、BlogTags、PublicArticle/usePublicPageMetadata、共享公告、BlogFrameSection/LandingRailTexture 与 Blueprint 导轨
+ * [INPUT]: 依赖 Router slug/历史导航、MarketingLink、独立博客/动态集合、BlogTags、PublicArticle/usePublicPageMetadata、共享公告、BlogFrameSection/LandingRailTexture 与 Blueprint 导轨/共享 SVG 节点
  * [OUTPUT]: 对外提供 /blog 与 /updates 的共用目录/阅读页；目录按 Laper 实际结构呈现点阵刊头、紧凑文章行、彩色标签与 Truchet 侧纹，标题480ms、整行420ms/50ms错峰；不重复提供返回首页；动态为空时仅保留空框
  * [POS]: pages 的公开文章视图；目录几何与动效由 blog-index.css 隔离，正文阅读和来路返回保持 PublicArticle 契约；顶栏/页脚仍由营销壳持有，pathname 重播装饰、query/锚点不重播
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -7,7 +7,7 @@
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { MarketingLink as Link } from "../widgets/LandingMotion/MarketingLink";
 import { BlueprintFrame } from "../widgets/BlueprintFrame";
-import { BlueprintDivider } from "../widgets/BlueprintDivider";
+import { BlueprintDivider, BlueprintPin } from "../widgets/BlueprintDivider";
 import { LandingRailTexture } from "../widgets/LandingRailTexture";
 import { blogAuthor, blogPosts, relatedBlogPosts } from "../widgets/landingBlogData";
 import { updatePosts } from "../widgets/updatePosts";
@@ -47,7 +47,10 @@ export function BlogPage({ section = "blog" }: { section?: keyof typeof sections
           <div className="blog-index-prelude" aria-hidden="true" />
           <header className="blog-index-heading">
             <BlueprintDivider flush />
-            <div className="blog-index-heading-rails" aria-hidden="true"><span /><span /></div>
+            <div className="blog-index-heading-rails" aria-hidden="true">
+              <span><BlueprintPin edge="start" /><BlueprintPin edge="end" /></span>
+              <span><BlueprintPin edge="start" /><BlueprintPin edge="end" /></span>
+            </div>
             <span className="blog-eyebrow blog-index-eyebrow">{config.eyebrow}</span>
             <h1 tabIndex={-1} data-marketing-reveal="heading">{config.title}</h1>
             <p>{config.description}</p>

@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 BlogPage 目录结构、Blueprint 原始框线色/7px 节点、TruchetPattern 与 Folune 颜色/字体/动态偏好
+ * [INPUT]: 依赖 BlogPage 目录结构、Blueprint 原始框线色/8px 共享 SVG 节点、TruchetPattern 与 Folune 颜色/字体/动态偏好
  * [OUTPUT]: 提供博客与动态目录的点阵刊头、纸面颗粒、紧凑文章行、四色压边标签和 72px 曲线侧纹；可见侧纹共用 1800ms 展开，完整纹样在入场结束后释放
- * [POS]: styles 的公开目录边界；按 Laper 公开 DOM/CSS 对齐几何，正文阅读仍归 blog.css，顶栏与页脚不继承局部覆盖
+ * [POS]: styles 的公开目录边界；页面统一隔离背景，外轨节点覆盖横竖轨；刊头内轨裁切四个半节点并置于横线之下；正文归 blog.css，顶栏与页脚不继承局部覆盖
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 @layer components {
@@ -12,10 +12,11 @@
     --blog-pattern-duration:1800ms;
     --blog-pattern-delay:500ms;
     --blog-pattern-ease:cubic-bezier(.16,1,.3,1);
+    isolation:isolate;
     min-height:0;
   }
   /* ---- 颗粒只在内容背景内；不覆盖文字，也不延伸到营销页脚 ---- */
-  .blog-index-content { position:relative; isolation:isolate; }
+  .blog-index-content { position:relative; }
   .blog-index-content::before {
     content:""; position:absolute; inset-block:0; left:calc(50% - 50vw); width:100vw;
     z-index:-1; pointer-events:none; opacity:.16; mix-blend-mode:multiply;
@@ -26,11 +27,11 @@
   .blog-index-gap { height:40px; }
   /* ---- 刊头：原页 64px 留白、46/1.08 标题、7px 点阵与两条内轨 ---- */
   .blog-index-heading {
-    position:relative; isolation:isolate; padding:64px 48px; text-align:center;
-    background:color-mix(in srgb,var(--landing-bg) 80%,transparent);
+    position:relative; padding:64px 48px; text-align:center;
   }
   .blog-index-heading::before {
     content:""; position:absolute; inset:0; z-index:-1; pointer-events:none;
+    background-color:color-mix(in srgb,var(--landing-bg) 80%,transparent);
     background-image:radial-gradient(ellipse at 18% 38%,color-mix(in srgb,var(--primary) 9%,transparent) 0 13%,transparent 33%),radial-gradient(ellipse at 52% 18%,color-mix(in srgb,var(--primary) 7%,transparent) 0 12%,transparent 34%),radial-gradient(ellipse at 82% 46%,color-mix(in srgb,var(--primary) 8%,transparent) 0 12%,transparent 34%);
   }
   .blog-index-heading::after {
@@ -39,18 +40,17 @@
   }
   .blog-index-heading > .blueprint-divider { position:absolute; inset-inline:0; top:0; }
   .blog-index-heading > .blueprint-divider:last-child { top:100%; }
-  .blog-index-heading-rails { position:absolute; inset:0; pointer-events:none; }
+  /* ---- 内轨沿上下横线中心裁切：顶部露下半角，底部露上半角，横线覆盖切口 ---- */
+  .blog-index-heading-rails { position:absolute; inset:.5px 0 -.5px; z-index:2; overflow:hidden; pointer-events:none; }
   .blog-index-heading-rails > span {
-    position:absolute; inset-block:0; width:1px; opacity:.85;
-    background:linear-gradient(180deg,var(--landing-border) 0 31%,transparent 31% 43%,var(--landing-border) 43% 100%);
+    --blog-heading-rail:color-mix(in srgb,var(--landing-border) 85%,transparent);
+    position:absolute; inset-block:0; width:1px;
+    background:linear-gradient(180deg,var(--blog-heading-rail) 0 31%,transparent 31% 43%,var(--blog-heading-rail) 43% 100%);
   }
   .blog-index-heading-rails > span:first-child { left:48px; }
   .blog-index-heading-rails > span:last-child { right:48px; }
-  .blog-index-heading-rails > span::before,.blog-index-heading-rails > span::after {
-    content:""; position:absolute; left:50%; top:.5px; width:var(--blueprint-pin-size); height:var(--blueprint-pin-size);
-    border:1px solid var(--landing-line); background:var(--landing-bg); transform:translate(-50%,-50%) rotate(45deg);
-  }
-  .blog-index-heading-rails > span::after { top:calc(100% + .5px); }
+  .blog-index-heading-rails .blueprint-pin { left:50%; top:0; }
+  .blog-index-heading-rails .blueprint-pin-end { top:100%; }
   .blog-index-eyebrow { display:inline-block; font:400 13px/20px var(--font-sans); letter-spacing:.18em; padding-left:.18em; }
   .blog-index-heading h1 { margin:12px auto 0; color:var(--primary); font:300 46px/1.08 var(--blog-typewriter); letter-spacing:normal; }
   .blog-index-heading p { max-width:672px; margin:16px auto 0; color:var(--muted-foreground); font:400 16px/28px var(--font-sans); }

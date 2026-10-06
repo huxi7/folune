@@ -25,7 +25,7 @@ usePublicPageMetadata.ts: 博客和法律页共用的标题/摘要生命周期�
 useWorkspaceEntryReady.ts: Paper/Canvas 共用的一次性首屏就绪桥梁；等待导航空闲与两帧提交，错误撤销覆盖层，入口编号阻止旧页面推进新加载
 MarketingLayout.tsx: 统一纸感背景，不保留白底模式或材质开关； 首页、登录、博客、动态和独立法律页持续挂载的公共壳，持有唯一 MarketingHeader 与 Router ScrollRestoration；登录内容使用弹性单屏布局并省去 Footer，其余页面保留 Footer，路径变化聚焦主标题；useMarketingMotion 在滚动恢复后编排内容分组；导航直接切换，首屏/标题/文章行按 Laper 配方入场，query 不重播
 LoginPage.tsx: 桌面复用正文与表单但不挂营销壳，保留原字体/背景； /login 公开认证页，384px 表单与完整 3:4 插画左右并置，共享首页公告和 Header；公告单独包入 fullBleed BlueprintFrame，使主轨/外轨与顶栏及首页同轴；正文铺设终选 01A 极慢散墨，标题去除行末标点以视觉居中，视频静音自动循环；AuthForm 独占认证步骤，成功仍经 /app Profile 守卫准入
-BlogPage.tsx: /blog 与 /updates 共用公开目录与 :slug 阅读路由；目录装配公告、点阵刊头、单链接文章行、四色标签和 Truchet 侧纹，按 Laper DOM/CSS 对齐且移除返回首页，动态空集合只保留空框。目录表现归 blog-index.css，正文继续交给 PublicArticle；pathname 重播装饰、query/锚点保留终态，历史返回、404、同分区推荐与元信息沿既有协议。
+BlogPage.tsx: /blog 与 /updates 共用公开目录与 :slug 阅读路由；刊头内轨复用BlueprintPin，四个节点只露朝向刊头内部的半角，裁切与横线遮挡由blog-index.css持有；目录装配公告、点阵刊头、单链接文章行、四色标签和 Truchet 侧纹，按 Laper DOM/CSS 对齐且移除返回首页，动态空集合只保留空框。目录表现归 blog-index.css，正文继续交给 PublicArticle；pathname 重播装饰、query/锚点保留终态，历史返回、404、同分区推荐与元信息沿既有协议。
 workspacePreload.ts: 正文邻居与 Canvas 代码预热共用的在线/前台/省流/慢网判据，只约束非必要预取，不阻止主动打开
 workspacePreload.test.ts: 验证弱网、省流、后台与离线不预取，以及缺失 Network Information 时的兼容行为
 MotionLabPage.tsx: DEV /motion-lab 无鉴权验收入口，复用生产 MotionSpecimen，所有交互只更新本地 fixture 状态，并链接真实 AppSidebar/归档线验收台

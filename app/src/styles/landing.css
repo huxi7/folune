@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖全局同源 landing-paper/landing-text（保持既有色值）、共享 Button/Blueprint DOM、营销顶栏品牌/导航/双动作分组与 DS compact 尺寸、LandingRailTexture 的一次性显现状态、共享 TruchetPattern 与 Laper 原页 clip-path/描边动画；首屏同拍内容组、HeroBackdrop、六格方法指南、四项真实功能细节、BrandMark 紧边界组合及旧印章可见体量；顶栏品牌沿共享 5:4 图字比置于 90×32px 槽位，参考字体/纹理、独立 Demo iframe 和 ShowcaseBackdrop
  * [OUTPUT]: 对外提供 60svh 颗粒 Hero 的 78% 后景与 65% 中央阅读层、48px 顶栏/36px 公告、28px 双按钮、跨区块背景完整显示的 8px 白填充 SVG 菱形与 #DADDE2 原版共轴导轨、APP 外壳、两处动态展示后景、分类序号横向六格、细节展开、信纸、评价、CTA 暖白双层平滑底座、放大标题与紧凑按钮和页脚；整页噪点位于隔离背景层，不覆盖正文/控件/视频；仅 Landing 禁止纵向越界回弹
- * [POS]: styles 的 Landing 几何层；五章共用48px/28px上下空轨，三种侧纹贯穿整章并止于主轨，72px曲线复用TruchetPattern，22px网格/11px点阵共用半像素中心；统一纸纹归landing-material.css，Header/Footer及正文保留同一套布局
+ * [POS]: styles 的 Landing 几何层；Header 的 48px 内容行统一居中，导航和按钮共用 28px 高度与 20px 行高；五章共用48px/28px上下空轨，三种侧纹贯穿整章并止于主轨，72px曲线复用TruchetPattern，22px网格/11px点阵共用半像素中心；统一纸纹归landing-material.css，Header/Footer及正文保留同一套布局
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 @font-face { font-family: Landing Writer; src: url('/landing-reference/iAWriterQuattroS_Regular.woff2') format('woff2'); font-display: swap; }
@@ -27,7 +27,8 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
 .landing-skip-link:focus { top:8px; }
 /* ---- Laper 实测：48px 顶栏、1120px 容器、24px 内边距、28px 双动作 ---- */
 .marketing-header { position:sticky; top:0; z-index:30; height:48px; background:color-mix(in srgb,var(--marketing-surface) 95%,transparent); backdrop-filter:blur(24px); font-family:var(--font-account); }
-.marketing-nav { width:var(--blueprint-content-width); height:47px; max-width:var(--landing-width); padding:0 24px; display:flex; align-items:center; gap:10px; }
+.marketing-nav { width:var(--blueprint-content-width); height:48px; max-width:var(--landing-width); padding:0 24px; display:flex; align-items:center; gap:10px; }
+.marketing-header > .blueprint-divider { position:absolute; inset-inline:0; bottom:1px; }
 .marketing-header .blueprint-frame { width:100%; }
 .marketing-header .blueprint-rails { width:var(--blueprint-content-width); margin-inline:auto; }
 .marketing-header .blueprint-rail { background:var(--landing-border); }
@@ -35,11 +36,12 @@ html:has(.landing-blueprint),body:has(.landing-blueprint) { overscroll-behavior-
 .marketing-brand { --brand-size:20px; }
 .marketing-brand .ds-brand-wordmark { color:color-mix(in srgb,var(--landing-ink) 88%,var(--landing-bg)); }
 .marketing-desktop-nav { display:flex; align-items:center; gap:2px; margin-right:auto; }
-.marketing-nav-link { display:inline-flex; align-items:center; justify-content:center; flex:none; height:32px; gap:6px; padding:1px 11px; border:1px solid transparent; border-radius:24px; corner-shape:superellipse(2); background:transparent; color:inherit; cursor:pointer; font:400 12px/20px var(--font-account); letter-spacing:-.35px; white-space:nowrap; transition:background-color var(--motion-button-hover) var(--ease-surface); }
+.marketing-nav-link,.landing-blueprint .marketing-nav-actions > :is(.ds-button,.glow-button) { display:inline-flex; align-items:center; justify-content:center; height:28px; font:400 12px/20px var(--font-account); }
+.marketing-nav-link { flex:none; gap:6px; padding:0 11px; border:1px solid transparent; border-radius:24px; corner-shape:superellipse(2); background:transparent; color:inherit; cursor:pointer; letter-spacing:-.35px; white-space:nowrap; transition:background-color var(--motion-button-hover) var(--ease-surface); }
 .landing-blueprint .marketing-nav-link:hover { color:inherit; background:var(--interactive-hover); }
 .marketing-nav-link:focus-visible { outline:2px solid var(--ring); outline-offset:4px; }
 .marketing-nav-actions { display:flex; align-items:center; flex-shrink:0; gap:8px; margin-left:auto; }
-.landing-blueprint .marketing-nav-actions > :is(.ds-button,.glow-button) { --button-height-default:28px; --glow-button-height:28px; --glow-button-padding-inline:12px; --button-content-gap:6px; height:28px; min-height:28px; border-radius:24px; corner-shape:superellipse(2); font:500 12px/17.142857px var(--font-account); letter-spacing:normal; }
+.landing-blueprint .marketing-nav-actions > :is(.ds-button,.glow-button) { --button-height-default:28px; --glow-button-height:28px; --glow-button-padding-inline:12px; --button-content-gap:6px; min-height:28px; border-radius:24px; corner-shape:superellipse(2); font-weight:500; letter-spacing:normal; }
 .marketing-nav-actions > .ds-button { width:70px; padding:0 14px 0 10px; --button-border-rest:var(--landing-border-base); --button-border-hover:var(--landing-border-base); --button-border-active:var(--landing-border-base); --button-face-top-rest:var(--marketing-surface); --button-state-shadow:0 2px 4px rgb(0 0 0 / 5%),0 1px 2px -1px rgb(0 0 0 / 5%); --button-state-shadow-hover:var(--button-state-shadow); }
 .marketing-nav-actions > .ds-button svg { width:14px; height:14px; }
 .marketing-nav-actions > .glow-button { width:48px; --glow-sheen-top:rgb(255 255 255 / 18%); --glow-sheen-hairline:rgb(255 255 255 / 34%); }
