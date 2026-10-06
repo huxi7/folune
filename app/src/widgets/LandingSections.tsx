@@ -1,10 +1,9 @@
 /**
- * [INPUT]: 依赖真实 APP 功能截图、MarketingLink、LandingConnections、LandingGuides、LandingFeatureDetails、LandingBlog、LandingRailTexture、BlueprintDivider、共享 BrandMark 图字组合/独立印章、LandingActions 单个箭头开始 CTA 与 huxi 头像
- * [OUTPUT]: 完整章节按营销配方同拍浮现，外部连续导轨保持原位；对外提供五项图文一一对应的 Folune 功能与整理/画布文章入口，以及真实关联展示、独立功能细节、六篇方法指南、评价占位、创作者信件和博客；评价、产品功能组、指南、精选博客各由一对上下空轨包围，功能网格/关联展示/细节之间另有两条留白分隔框
- * [POS]: widgets 的营销叙事组合；LandingChapter 成对生成上下空轨，并让评价/指南/博客的一层侧纹贯穿空轨与正文，内侧横线仅落在主轨内，外侧仍共用斜纹边界；产品功能、关联展示与功能细节作为完整章节，五项功能区底部、细节区顶部各补一条留白分隔框，后者位于斜纹带下方；创作者信件沿用首稿叙事，与 Laper 参考同构：问候与自我介绍各占一行，再以长短有别的段落分承初衷、打磨、AI 分寸与期待，一段只说一件事，由 huxi 个人署名
+ * [INPUT]: 依赖功能截图、MarketingLink、功能细节、指南与博客组件；复用品牌、CTA、侧纹和 BlueprintDivider
+ * [OUTPUT]: 对外提供五项功能、社会价值、功能细节、指南、创作者信件、博客与 CTA；各区块保留原文案和交互
+ * [POS]: widgets 的首页叙事组合；核心功能先于社会价值，功能细节随后。LandingChapter 为五章成对生成空轨；评价、指南、博客各持有一层贯穿侧纹，相邻章节共用斜纹边界。创作者信件由 huxi 署名，依次叙述初衷、打磨、AI 分寸与期待
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
-import { LandingConnections } from "./LandingConnections";
 import { LandingGuides } from "./LandingGuides";
 import { LandingBlog } from "./LandingBlog";
 import { LandingFeatureDetails } from "./LandingFeatureDetails";
@@ -90,6 +89,30 @@ const quotes = [
 ];
 export function LandingSections(){
  return <>
+  <LandingChapter>
+  <section data-marketing-reveal="section" id="features" aria-label="Folune 产品功能">
+    <LandingSectionHeading title="写下来，理清楚，连起来" body="从一张纸开始，让 AI 帮忙归档，在画布上接着思考。">
+      <Link to="/blog/a-place-for-every-note" state={{ fromBlog: true }}>了解笔记整理 <span aria-hidden="true">→</span></Link>
+      <Link className="ds-button ds-button-secondary ds-button-size-default" to="/blog/think-between-notes" state={{ fromBlog: true }}>
+        <span className="ds-button-content">看看画布用法 <span aria-hidden="true">→</span></span>
+      </Link>
+    </LandingSectionHeading>
+    <div className="landing-feature-grid">
+      {features.map((feature, i) => <article key={feature.image} data-wide={i < 2}>
+        <img src={`/landing-features/${feature.image}.png`} alt={feature.alt} width={feature.width} height={feature.height} loading="lazy" decoding="async" />
+        <h3>{feature.title}</h3><p>{feature.body}</p>
+      </article>)}
+    </div>
+    <div className="landing-small-features">
+      {[
+        ["写作时自动保存", "先专心把话写完。日常编辑自动保存，需要整理时，再点一次「整理笔记」。"],
+        ["卡片连着原文", "画布引用文件库里的笔记。展开阅读、进入原文编辑，不用维护两份内容。"],
+        ["带走 Markdown 原文", "在纸面的更多菜单里复制或导出 Markdown，让写下的内容继续用在别处。"],
+      ].map(([title, body]) => <article key={title}><h3>{title}</h3><p>{body}</p></article>)}
+    </div>
+  </section>
+  </LandingChapter>
+  <BlueprintDivider fullBleed />
   <LandingChapter railVariant="paper">
   <section data-marketing-reveal="section" className="landing-trust" id="community" aria-labelledby="landing-trust-title">
     <h2 id="landing-trust-title">为认真记录的个人与创作团队而做</h2>
@@ -115,36 +138,6 @@ export function LandingSections(){
   </LandingChapter>
   <BlueprintDivider fullBleed />
   <LandingChapter>
-  <section data-marketing-reveal="section" id="features" aria-label="Folune 产品功能">
-    <LandingSectionHeading title="写下来，理清楚，连起来" body="从一张纸开始，让 AI 帮忙归档，在画布上接着思考。">
-      <Link to="/blog/a-place-for-every-note" state={{ fromBlog: true }}>了解笔记整理 <span aria-hidden="true">→</span></Link>
-      <Link className="ds-button ds-button-secondary ds-button-size-default" to="/blog/think-between-notes" state={{ fromBlog: true }}>
-        <span className="ds-button-content">看看画布用法 <span aria-hidden="true">→</span></span>
-      </Link>
-    </LandingSectionHeading>
-    <div className="landing-feature-grid">
-      {features.map((feature, i) => <article key={feature.image} data-wide={i < 2}>
-        <img src={`/landing-features/${feature.image}.png`} alt={feature.alt} width={feature.width} height={feature.height} loading="lazy" decoding="async" />
-        <h3>{feature.title}</h3><p>{feature.body}</p>
-      </article>)}
-    </div>
-    <div className="landing-small-features">
-      {[
-        ["写作时自动保存", "先专心把话写完。日常编辑自动保存，需要整理时，再点一次「整理笔记」。"],
-        ["卡片连着原文", "画布引用文件库里的笔记。展开阅读、进入原文编辑，不用维护两份内容。"],
-        ["带走 Markdown 原文", "在纸面的更多菜单里复制或导出 Markdown，让写下的内容继续用在别处。"],
-      ].map(([title, body]) => <article key={title}><h3>{title}</h3><p>{body}</p></article>)}
-    </div>
-  </section>
-  <div className="landing-chapter-gap" data-edge="start" aria-hidden="true">
-    <BlueprintDivider flush fullBleed />
-  </div>
-  <BlueprintDivider fullBleed />
-  <LandingConnections />
-  <BlueprintDivider fullBleed />
-  <div className="landing-chapter-gap" data-edge="end" aria-hidden="true">
-    <BlueprintDivider flush fullBleed />
-  </div>
   <LandingFeatureDetails />
   </LandingChapter>
   <BlueprintDivider fullBleed />

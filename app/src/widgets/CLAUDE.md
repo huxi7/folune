@@ -21,7 +21,6 @@ BlogFrameSection.tsx: 目录/阅读/价格页的外轨分区容器；静态区�
 PublicArticle.tsx: 博客、动态和法律文档共用的阅读模板；Hero 后复用目录同款 48px/28px 空轨，上沿带节点、下沿平直；BlogFrameSection 将静态主轨/中段横线与花纹局部外框拆开，weave 侧纹只覆盖正文及尾部导航，在两侧局部外框之后显现；内部保持导读与窄栏排版；只接收内容与导航插槽，不拥有内容集合或路由
 updatePosts.ts: 独立动态内容源，复用 BlogPost 类型并由 /updates 的共用列表/阅读页消费；初始为空，后续只需填充文章，不混入首页或博客集合
 LandingRailTexture.tsx: 首页paper为28×49px几何竖纹、weave复用72px Truchet、index为22/11px同轴格点；按参考视口门槛与500ms准备/500ms延迟/1800ms展开，材质切换不重播；目录truchet仍按可见区间展开并保留独立路由生命周期。
-LandingConnections.tsx: 完整章节24px/550ms首次入视口浮现；左侧叙述方法与实践，右侧两张相邻 NotePaper 标出支持关系的原句；短线随纸面布局连接，静态公开材料不装配业务会话
 LandingGuides.tsx: 完整章节24px/550ms首次入视口浮现；六篇方法指南的紧凑三列两行目录，共读分类、标题与摘要，序号列于右上；上下空轨和交织侧纹交由 LandingSections 的章节外框装配，guides 为入口，保留 use-cases/extensions 锚点，返回复用博客协议
 guidePosts.ts: 逐篇维护三个正文主题标签； 六篇完整记录方法文章，独立于首页三篇精选，以 BlogPost 类型加入同一公开目录
 GuideIllustration.tsx: 六种纸张/段落/路径静态 SVG 线稿，由指南卡片与目录封面共同消费，useId 隔离渐隐定义
@@ -38,7 +37,7 @@ TreeDisclosure.tsx: 文件树与 DS Collapse 的薄适配，声明可打断、�
 .gitkeep: 保留业务组合组件层空目录
 CLAUDE.md: 记录业务组合组件层职责与文档协议
 MarketingHeader.tsx: 固定纸感顶栏，不接收材质切换控件； 首页/登录/博客/动态/价格共享48px顶栏；90px品牌槽、六项12px导航与70×28px下载/48×28px打开，复用真实下载与/login过渡；手机原生details折叠导航，双动作保持单行，Escape/跳转关闭。
-MarketingAnnouncement.tsx: 各营销页共用36px公告，1120px主轨内14%品牌蓝渐变、整栏工作流链接与13px箭头，正文单行截断；可选ref只供Hero量取高度。
+MarketingAnnouncement.tsx: 各营销页共用36px公告，1120px主轨内14%品牌蓝渐变、整栏核心功能链接与13px箭头，正文单行截断；可选ref只供Hero量取高度。
 BlueprintFrame.tsx: Landing 纵向导轨容器；导航、1120px 正文与页脚共用主轨/外轨坐标，fullBleed 增加可选外轨，颜色由当前区块局部覆盖
 BlueprintDivider.tsx: Git原版8px SVG菱形，白色填充与#CBCFD4描边；提供14px双边分隔带、7px内部分隔带和零高度贴边线，节点与连续竖轨共轴，骨架层级高于区块背景。
 AuthForm.tsx: 桌面条款/隐私使用系统浏览器； LoginPage 的唯一认证表单，复用共享 Input/PasswordInput 承载邮箱、双密码与显隐控制；主提交动作(登录/注册)改用墨蓝流光 GlowButton，登录态增加无提交/导航行为的忘记密码占位，协议提示通过 MarketingLink 接通 /terms 与 /privacy、保留六格 OTP 自动校验与 Google OAuth，请求动作独占加载反馈、其余控件暂禁，验证码与状态提示复用 auth 样式；认证成功通过回调交还页面导航
@@ -46,7 +45,7 @@ AuthForm.test.tsx: MemoryRouter 承载真实协议链接，真实表单事件覆
 LandingHero.tsx: 首屏标题/说明/动作合为18px/550ms同拍组，价值条静态；共享公告、60svh 居中 Hero、三列价值条与真实 UI 互动插槽；主 slogan 无句末标点，装配选定 02A HeroBackdrop，并量取 Header/公告/三栏高度为矮屏保留 64px 产品露出；LandingActions 固定下载在左用 Secondary、打开在右并进入 /login，首屏打开用墨蓝流光 GlowButton；末端 CTA 传 startOnly，只显示 ArrowRightIcon 与开始并进入 /login；桌面版说明按最终上线状态展示，边界复用通栏 BlueprintDivider
 LandingFeatureDetails.tsx: 完整章节24px/550ms首次入视口浮现；第 11 区块的四项垂直居中展开说明、对应实景图与底部紧凑四格摘要；标题区和展开正文保留文章入口，底部只含标题和说明；固定展示区内以同源 CSS 时间轴协调行高、标题与正文，正文常驻并在收起时 inert，选中项只保持展开、不显示收起图标，图片不附重复图注；detail query 保留选中项，切换清除已消费的定位锚点，替换历史并保留其他查询/滚动，博客沿 fromBlog 协议返回
 landingDetailData.ts: 逐篇维护三个正文主题标签； 归档线、引用选择、同一份原文、Markdown 导出四项细节与完整指南；实景图与文章数据同源，BlogPost 仅类型依赖，不建立运行时反向导入
-LandingSections.tsx: 完整章节24px/550ms首次入视口浮现；保留五项真实功能与文章入口、评价和信件；私有 LandingChapter 成对包围评价、产品功能组、指南和精选博客，共八条外部空轨，五项功能区底部与细节区顶部另各加一条留白分隔框，细节区留白位于斜纹分隔带下方、标题上方；其中三种侧纹各在章节外框装配一次，连续贯穿空轨与正文，内侧横线仅画在主轨内；产品功能→关联展示→功能细节维持一章，内部两条留白框复用共享空轨高度和全宽边线，相邻章节共用斜纹边界，其余区块独立持有展示与交互
+LandingSections.tsx: 核心功能、社会价值、功能细节依次呈现；保留五项功能与文章入口、评价和信件。完整章节按24px/550ms首次入场。LandingChapter 为功能、评价、细节、指南、博客成对生成上下空轨；三种侧纹各自贯穿评价、指南、博客，内侧横线止于主轨。相邻章节共用斜纹边界，子区块独立持有展示与交互
 LandingFooter.tsx: 预留链接的即将开放说明统一 WarmTooltip； 共用 DS 墨蓝的品牌区与产品/资源/关于/连接四组导航；16 项预留入口以 aria-disabled link 语义展示且不跳转，打开网页版进入 /login，关于栏额外公开 /terms 与 /privacy；品牌与入口置顶、作者与版权置底；保留 Folune 淡描边与细纹层序，BlueprintFrame 延续导轨
 LandingMotion/: 营销页克制反馈模块；MarketingLink 保留普通导航；useMarketingMotion 统一首屏整组与章节首次浮现、博客整行错峰，参数复用 DS marketingMotion；HeroBackdrop/ShowcaseBackdrop/LoginBackdrop 承载各自后景，共用散墨算法供登录与 Lab 消费，CountUp 处理数字变化
 NotebookPreview.tsx: 确定性首屏产品预览，DS 统一缩放淡入与显式卡片 lift 分处不同元素，阴影由 CSS 持有，内部布局不参与独立动画

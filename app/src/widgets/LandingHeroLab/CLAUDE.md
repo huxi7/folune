@@ -5,7 +5,7 @@
 
 成员清单
 HeroLab.tsx: 全宽预览与 01A/02A 浮动切换条、面板/加载/暂停状态，不挤占产品布局
-FirstScreen.tsx: 生产首屏投影，Header 同步使用场景入口；量取周围区块控制高度，可选既有 APP 展示
+FirstScreen.tsx: 生产首屏投影，Header 同步使用场景入口，公告指向首页核心功能；量取周围区块控制高度，可选既有 APP 展示
 Controls.tsx: 按算法能力显示材质参数和 B 版边缘柔和度，方案按钮以编号/名称提供明确可访问名称；收藏预览时显示所见参数并锁定编辑
 SavedStudies.tsx: 多组命名收藏列表、对照/载入副本、重命名/删除撤销与整份 JSON 备份 UI
 useSavedStudies.ts: 一条收藏一个 localStorage 键，监听同源跨标签变更；迁移旧单对照，导入先验证后以新 ID 合并，不覆盖其他收藏

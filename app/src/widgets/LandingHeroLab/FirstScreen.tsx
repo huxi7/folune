@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖生产品牌/按钮/导轨/素材/样式，Lab 参数与动画状态，可选 LandingEditor
- * [OUTPUT]: 对外提供与正式页同排版同文案的完整首屏和可选 APP 衔接
+ * [OUTPUT]: 对外提供与正式页同排版同文案的完整首屏和可选 APP 衔接；公告指向首页核心功能
  * [POS]: 独立展示装配；导航仅打开公开入口，不挂载 Router/Auth 或更改共享组件
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -78,7 +78,7 @@ export function FirstScreen({ snapshot, paused, showApp, onStatus, artworkRef, o
   return <div ref={screen} className="landing-blueprint grain-lab-screen" style={style} data-immersive={snapshot.height >= 76}>
     <LabHeader />
     <BlueprintFrame fullBleed><main>
-      <div className="landing-announcement"><span>认识 Folune：</span><a href="/#workflow" target="_blank" rel="noreferrer">让记录自然发生，让想法有序生长 <span>→</span></a><BlueprintDivider flush fullBleed /></div>
+      <div className="landing-announcement"><span>认识 Folune：</span><a href="/#features" target="_blank" rel="noreferrer">让记录自然发生，让想法有序生长 <span>→</span></a><BlueprintDivider flush fullBleed /></div>
       <section ref={ref} className="landing-hero grain-lab-hero" aria-labelledby="grain-lab-title">
         <HeroArtwork ref={artworkRef} snapshot={snapshot} running={running} onStatus={onStatus} />
         <div className="landing-hero-copy"><h1 id="grain-lab-title">随手记下，自然有序。</h1><p>在 Folune，专注记录当下的想法。<br />让 AI 帮你整理、连接，再次发现。</p></div>
