@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 React effect/ref/state，依赖 react-router-dom 导航，依赖 shared/supabase 的 PKCE code 换取会话能力，依赖本地 design-system
- * [OUTPUT]: 提供 OAuth 回调、已验证账号的冲突选择与绑定回执；成功进入工作区，失败显示统一文案
+ * [OUTPUT]: 交换 OAuth 回调；账号选择与确认返回原登录页，绑定成功进入工作区，失败显示统一文案
  * [POS]: app/src/pages 的 Google/GitHub 共用 OAuth 回调边界，视觉共用 auth.css 与 APP 控件语义，交换会话仍沿 shared/supabase
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -17,13 +17,11 @@ import {
   isOAuthAccountConflict,
   verifyGitHubLinkResult,
 } from "../shared/supabase/auth";
-import { GitHubAccountChoice } from "./GitHubAccountChoice";
 
 export function AuthCallbackPage() {
   const navigate = useNavigate();
   const exchangeStartedRef = useRef(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [choice, setChoice] = useState<"login" | "confirm" | null>(null);
 
   useEffect(() => {
     if (exchangeStartedRef.current) {
@@ -38,7 +36,7 @@ export function AuthCallbackPage() {
     if (providerError) {
       clearGitHubLinkIntent();
       if (isOAuthAccountConflict(searchParams)) {
-        setChoice("login");
+        navigate("/login?github=choose", { replace: true });
         return;
       }
       setErrorMessage(getAuthErrorMessage({
@@ -55,7 +53,10 @@ export function AuthCallbackPage() {
     void completeOAuthSignIn(code)
       .then(async () => {
         const intent = getGitHubLinkIntent();
-        if (intent?.phase === "select") { setChoice("confirm"); return; }
+        if (intent?.phase === "select") {
+          navigate("/login?github=confirm", { replace: true });
+          return;
+        }
         if (intent?.phase === "link") await verifyGitHubLinkResult(intent.userId!);
         navigate("/app", { replace: true });
       })
@@ -64,9 +65,6 @@ export function AuthCallbackPage() {
         setErrorMessage(getAuthErrorMessage(error));
       });
   }, [navigate]);
-
-  if (choice) return <GitHubAccountChoice authenticated={choice === "confirm"}
-    onCancel={() => navigate("/login", { replace: true })} />;
 
   return (
     <main className="auth-callback-page">

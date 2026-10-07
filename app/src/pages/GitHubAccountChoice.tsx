@@ -1,12 +1,13 @@
 /**
- * [INPUT]: 依赖 AuthForm 验证既有账号，依赖认证服务验证身份并发起 GitHub 绑定，依赖共享 Button
- * [OUTPUT]: 提供多账号冲突后的登录选择与明确绑定确认；不读取匿名候选列表，不合并业务数据
- * [POS]: pages 的 OAuth 冲突恢复视图，由 AuthCallbackPage 承载；Supabase 裁决真实绑定结果
+ * [INPUT]: 依赖 AuthForm 验证账号、认证服务验证身份并绑定 GitHub、共享品牌图标和认证按钮
+ * [OUTPUT]: 在原登录卡片内提供轻提示、邮箱确认与重新选择，不枚举匿名账号、不合并数据
+ * [POS]: LoginPage 的认证步骤内容；布局始终归登录页，Supabase 裁决绑定结果
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { useEffect, useRef, useState } from "react";
 import { AuthForm } from "../widgets/AuthForm";
-import { Button } from "../shared/design-system/components";
+import { Button, GlowButton } from "../shared/design-system/components";
+import { GitHubLogoIcon } from "../shared/design-system/icons";
 import {
   beginGitHubAccountSelection, clearGitHubLinkIntent, getAuthErrorMessage,
   getGitHubLinkAccount, linkGitHubIdentity,
@@ -18,11 +19,12 @@ export function GitHubAccountChoice({ authenticated = false, onCancel }: {
   const [account, setAccount] = useState<Awaited<ReturnType<typeof getGitHubLinkAccount>> | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [selecting, setSelecting] = useState(!authenticated);
   const linking = useRef(false);
 
   async function loadAccount() {
     setError(null);
-    try { setAccount(await getGitHubLinkAccount()); }
+    try { setAccount(await getGitHubLinkAccount()); setSelecting(false); }
     catch (failure) { setError(getAuthErrorMessage(failure)); }
   }
 
@@ -47,28 +49,32 @@ export function GitHubAccountChoice({ authenticated = false, onCancel }: {
     }
   }
 
-  return <main className="auth-callback-page">
-    <div>
-      <section className="auth-card auth-callback-card" aria-labelledby="github-choice-title">
-        <h1 id="github-choice-title" className="auth-verification-title">
-          {account ? "确认 GitHub 登录账号" : "选择要使用的账号"}
-        </h1>
-        <p className="auth-status-message">
-          {account
-            ? `GitHub 将用于登录 ${account.email}，继续使用这个账号的笔记和权益。`
-            : "GitHub 的邮箱匹配到了多个 Folune 账号。请用邮箱或 Google 登录你要继续使用的账号，再绑定 GitHub。"}
-        </p>
-        <p className="auth-status-message">其他账号、笔记和权益不会合并。</p>
-        {error && <p role="alert" className="auth-status-message" data-tone="error">{error}</p>}
-        {account && <Button loading={busy} disabled={busy} onClick={confirm} variant="primary">
-          绑定 GitHub 并继续
-        </Button>}
-        {authenticated && !account && error && <Button onClick={loadAccount} variant="secondary">重试</Button>}
-        <Button disabled={busy} variant="ghost" onClick={() => {
-          clearGitHubLinkIntent(); onCancel();
-        }}>返回登录</Button>
-      </section>
-      {!account && !authenticated && <AuthForm selectExistingAccount onAuthenticated={() => { void loadAccount(); }} />}
+  function cancel() { clearGitHubLinkIntent(); onCancel(); }
+
+  if (selecting) return <AuthForm selectExistingAccount onCancelSelection={cancel} selectionError={error}
+    onAuthenticated={() => { void loadAccount(); }} />;
+
+  return <section className="auth-card" aria-labelledby="github-choice-title">
+    <h2 id="github-choice-title" className="sr-only">确认 GitHub 登录账号</h2>
+    <div className="auth-credentials-form">
+      <p className="auth-selection-hint" role="status">
+        <span>{account ? "GitHub 将用于登录此账号" : "正在确认账号…"}</span>
+        <button disabled={busy} onClick={cancel} type="button">取消</button>
+      </p>
+      {account && <div className="auth-link-account">
+        <GitHubLogoIcon aria-hidden="true" size={20} />
+        <span>{account.email}</span>
+      </div>}
+      {error && <p role="alert" className="auth-status-message" data-tone="error">{error}</p>}
+      {account && <GlowButton className="auth-submit-button w-full" loading={busy}
+        disabled={busy} onClick={confirm}>确认并继续</GlowButton>}
+      {!account && error && <Button className="auth-provider-button w-full"
+        onClick={loadAccount} variant="secondary">重试</Button>}
+      {account && <div className="auth-mode-switch">
+        <button disabled={busy} type="button" onClick={() => {
+          beginGitHubAccountSelection(); setAccount(null); setError(null); setSelecting(true);
+        }}>换个账号</button>
+      </div>}
     </div>
-  </main>;
+  </section>;
 }

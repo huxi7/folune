@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Laper 实测几何、DS 品牌蓝/字体/动效与 AuthForm 的认证结构；后景复用 LoginBackdrop
- * [OUTPUT]: 提供原白色认证卡片、24px 平滑轮廓、44/48px 控件、双层轻影与品牌焦点；主按钮叠加参考高光和悬停脉冲
+ * [OUTPUT]: 提供同一认证卡片、44/48px 控件与原位主按钮；账号选择仅用无底色小字提示和邮箱行
  * [POS]: 认证局部视觉边界；参考状态只覆盖登录控件，不改变 APP 通用控件；注册几何由 Motion 拥有，后景与视频持续挂载
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -175,6 +175,50 @@
     flex-direction: column;
     gap: 12px;
   }
+
+  /* ---- 账号选择融入原表单；提示不创建新的表面或视觉中心 ---- */
+  .auth-selection-hint {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-3);
+    margin-bottom: var(--space-1);
+    color: var(--muted-foreground);
+    font-size: var(--type-reference);
+    font-weight: var(--weight-support);
+    line-height: 1.625;
+  }
+
+  .auth-selection-hint button {
+    flex-shrink: 0;
+    padding: 0;
+    border-radius: var(--radius-compact);
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    transition: color var(--motion-hover) var(--ease-surface);
+  }
+
+  .auth-selection-hint button:not(:disabled):hover { color: var(--foreground); }
+  .auth-selection-hint button:disabled { cursor: not-allowed; opacity: 0.58; }
+  .auth-selection-hint button:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--ring) 45%, transparent);
+    outline-offset: 0.15rem;
+  }
+
+  .auth-link-account {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-height: 44px;
+    margin-block: var(--space-1) var(--space-3);
+    font-size: var(--type-section);
+    font-weight: var(--weight-body);
+    line-height: 1.5;
+  }
+
+  .auth-link-account > svg { flex-shrink: 0; color: var(--muted-foreground); }
+  .auth-link-account > span { min-width: 0; overflow-wrap: anywhere; }
 
   /* ---- 参考 44px 控件与 24px 曲率；字号保持 13px 紧凑比例 ---- */
   .auth-provider-button.ds-button,

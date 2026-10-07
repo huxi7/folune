@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 React 局部状态、Motion/DS authMotion、共享认证控件、MarketingLink 与既有认证服务
- * [OUTPUT]: 提供登录、注册、验证码与 OAuth；账号选择模式仅允许邮箱或 Google 登录既有账号
+ * [OUTPUT]: 提供登录、注册、验证码与 OAuth；账号选择模式在同一表单内轻提示，仅登录既有账号
  * [POS]: widgets 的唯一认证表单，由 LoginPage 承载；表单负责认证步骤，页面负责布局和导航，不直接持有 Supabase client
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -50,6 +50,8 @@ type PendingAuthAction = "credentials" | "google" | "github" | "verification" | 
 type AuthFormProps = {
   onAuthenticated: () => void;
   selectExistingAccount?: boolean;
+  onCancelSelection?: () => void;
+  selectionError?: string | null;
 };
 
 function createEmptyOtp() {
@@ -77,7 +79,7 @@ function ConfirmationField({
   );
 }
 
-export function AuthForm({ onAuthenticated, selectExistingAccount = false }: AuthFormProps) {
+export function AuthForm({ onAuthenticated, selectExistingAccount = false, onCancelSelection, selectionError }: AuthFormProps) {
   const reducedMotion = useMotionPreference();
   const [step, setStep] = useState<AuthStep>("credentials");
   const [mode, setMode] = useState<AuthMode>("login");
@@ -313,6 +315,10 @@ export function AuthForm({ onAuthenticated, selectExistingAccount = false }: Aut
         </div>
       ) : (
         <form className="auth-credentials-form" onSubmit={handleCredentialsSubmit}>
+          {selectExistingAccount && <p className="auth-selection-hint" role="status">
+            <span>登录你要使用的账号，继续绑定 GitHub</span>
+            <button disabled={busy} onClick={onCancelSelection} type="button">取消</button>
+          </p>}
           <Button
             className="auth-provider-button w-full"
             disabled={busy}
@@ -402,7 +408,7 @@ export function AuthForm({ onAuthenticated, selectExistingAccount = false }: Aut
           ) : null}
 
           <AnimatePresence initial={false} mode="wait">
-            {errorMessage ? (
+            {errorMessage || selectionError ? (
               <motion.p
                 aria-live="polite"
                 className="auth-status-message"
@@ -413,7 +419,7 @@ export function AuthForm({ onAuthenticated, selectExistingAccount = false }: Aut
                 exit={{ opacity: 0, y: reducedMotion ? 0 : -4 }}
                 transition={reducedMotion ? { duration: 0 } : authMotion.feedback}
               >
-                {errorMessage}
+                {errorMessage ?? selectionError}
               </motion.p>
             ) : null}
           </AnimatePresence>
