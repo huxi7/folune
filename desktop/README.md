@@ -51,6 +51,15 @@ Supabase 的 **Additional Redirect URLs** 需保留 Web 原有地址，并增加
 
 API 的 `CORS_ORIGINS`、Chat 的 `ALLOWED_ORIGINS` 需保留 Web 来源并加入 `folune-app://app`。Production 已配置并通过 OPTIONS 验证；若本地 DMG 连接开发服务，本机 `.env` 也需增加此来源并重启服务。
 
+## v1.3.0
+
+画布支持 AI 只读问答与原文引用。
+来源可选全部笔记、指定笔记或当次选中。
+发送前同步画布，按消息冻结来源范围。
+回复可查看引文、阅读原文并定位画布卡片。
+来源弹窗左沿对齐引用胶囊外缘。
+桌面用户需升级安装包以使用新版内置前端。
+
 ## v1.2.1
 
 桌面内置前端与宿主白名单支持 `custom:github`。
@@ -63,8 +72,8 @@ GitHub 仅按已验证主邮箱匹配或建号。
 先将已验证代码提交并推到源码仓库，再执行：
 
 ```sh
-git tag -a v1.2.1 -m "Folune v1.2.1"
-git push origin v1.2.1
+git tag -a v1.3.0 -m "Folune v1.3.0 — 画布 AI 问答"
+git push origin v1.3.0
 ```
 
 Tag 必须为稳定的 `vX.Y.Z`；CI 将版本写进桌面包，两平台都成功后才创建/补齐草稿 Release，上传全部文件后一次公开。已公开版本不能被重新覆盖，修复须用新 Tag。手动运行 workflow 和 PR 只生成 Actions artifacts，不公开发布。
