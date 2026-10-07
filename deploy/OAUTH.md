@@ -46,11 +46,18 @@ Secret 未写入前端、仓库或验收记录。
 Google、SMTP、Site URL 与重定向白名单保持原值。
 选择页与 Google 验证到确认邮箱的流程已实测。
 真实 GitHub 绑定需要用户在页面确认目标账号。
-当前代码尚未发布 production。
+2026-10-07 已发布实现提交 `4694f2f`。
+Pages部署 `f908efa5-8400-4f62-9f1b-f342e179babd` 成功。
+API构建 `8ab5c8ae-42f7-4e36-8fda-e8f81a3fd8f6` 成功。
+Chat构建 `79d87b05-8034-4af4-aba2-6ed86ab2da03` 成功。
+API修订 `folune-api-00015-7rd` 承接全部流量。
+Chat修订 `folune-chat-00013-mx6` 承接全部流量。
+两服务健康检查通过，生产Google再次进入工作区。
+本记录后补至main；不重发仅文档变化的运行镜像。
 
 ## 本轮验证
 
-- 27项认证定向测试、7项桌面测试、类型检查、lint与构建通过。
+- 42项前端定向测试、7项桌面测试、类型检查、lint与构建通过。
 - Production Google再次完成OAuth并进入工作区。
 - 回调页按错误码显示统一文案，不展示提供商诊断。
 - Staging GitHub完成授权；账号关联失败，未交换新会话。
