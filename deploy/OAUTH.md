@@ -20,11 +20,12 @@ Client ID 是公开标识，不是 Secret。
 生产主页为 `https://folune.huxi7.com`。
 Staging 主页为 `http://localhost:10000`。
 
-## 当前状态与阻塞
+## 配置状态
 
 2026-10-07 本人已完成两套 GitHub 验证。
 两套 Secret 已填入各自 Supabase Provider。
-本轮已核实 Production 与 Staging 的 GitHub、Google 均开启。
+Production 与 Staging 均启用 custom:github 和 Google。
+原生 GitHub 与手动绑定入口均已关闭。
 Staging 保存前后核对 242 个字段。
 只有 GitHub Client ID、Secret 与启用开关变化。
 Secret 未写入前端、仓库或验收记录。
@@ -48,10 +49,14 @@ Client Secret 仍只在 Supabase；API 不持有 Secret。
 API 不保存 GitHub token，不访问业务表。
 Google 使用原 Provider 与 PKCE 链路。
 
-当前迁移：先发布 userinfo，再切换前端。
-新链路验证后关闭原生 GitHub 与手动绑定开关。
-两库分别配置，其他 Auth 字段保持原值。
-真实验收与发布版本在完成后补记。
+迁移完成：先发布 userinfo，再切换前端。
+生产代码为 `472e89b`，main 与 production 已推送。
+API、Chat 对应构建均为 SUCCESS。
+生产网页已通过 custom:github 完成登录。
+两库均已关闭原生 GitHub 与手动绑定。
+分别重读配置，只变化以下两个字段：
+`EXTERNAL_GITHUB_ENABLED`、`SECURITY_MANUAL_LINKING_ENABLED`。
+Google、Client ID、Secret 与其他字段保持原值。
 
 ## 本轮验证
 
@@ -62,6 +67,18 @@ Google 使用原 Provider 与 PKCE 链路。
 - Staging GitHub已按主邮箱完成PKCE并关联原Gmail账号。
 - QQ备用邮箱账号保持原ID，身份仍只有email。
 - 本地API watch在切分支时失效，重启后健康，工作区重新进入。
+
+## 2026-10-07 收尾验收
+
+- 生产 GitHub 已直接进入主邮箱对应的原工作区。
+- 会话身份包含 google 与 custom:github。
+- 关闭旧入口后再次发起 GitHub 登录，回到 /app。
+- 登录未出现账号选择或邮箱重输。
+- 7项主邮箱HTTP、13项前端认证、6项桌面测试通过。
+- 前端测试须从 app 执行 bun run test，加载环境预设。
+- 未操作既有备用邮箱账号的身份和业务数据。
+- 无匹配邮箱的新建账号未用第二个真实GitHub账号验收。
+- 桌面安装包真实OAuth仍不属于已完成的浏览器验收。
 
 ## 原代码与已执行验证
 
