@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖本目录 supabase client 的 Auth API，依赖浏览器 origin 或可选桌面 bridge 生成 OAuth 回调，桌面授权在系统浏览器打开
- * [OUTPUT]: 提供邮箱认证、Google/GitHub OAuth、经服务端验证的 GitHub 账号选择与绑定、会话读取和统一错误文案
+ * [OUTPUT]: 提供邮箱认证、Google/GitHub OAuth、GitHub 只按已验证主邮箱匹配、会话读取和统一错误文案
  * [POS]: app/src/shared/supabase 的纯认证服务层，隔离 SDK/会话细节并向统一 API 中枢提供请求期 token，不承载业务资料读写
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -131,7 +131,7 @@ async function getOAuthOptions() {
   return { redirectTo, skipBrowserRedirect: Boolean(desktop) };
 }
 
-async function signInWithOAuth(provider: "google" | "github") {
+async function signInWithOAuth(provider: "google" | "custom:github") {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider,
     options: await getOAuthOptions(),
@@ -143,75 +143,12 @@ async function signInWithOAuth(provider: "google" | "github") {
   if (window.foluneDesktop && data.url) await window.foluneDesktop.openOAuth(data.url);
 }
 
-// ---- 只保存本标签页的短期意图，不保存邮箱、凭据或候选账号 ----
-const GITHUB_LINK_INTENT_KEY = "folune.github-link-intent";
-const GITHUB_LINK_INTENT_TTL = 10 * 60 * 1000;
-type GitHubLinkIntent = { phase: "select" | "link"; expiresAt: number; userId?: string };
-
-export function clearGitHubLinkIntent() {
-  window.sessionStorage.removeItem(GITHUB_LINK_INTENT_KEY);
-}
-
-export function getGitHubLinkIntent(): GitHubLinkIntent | null {
-  try {
-    const raw = window.sessionStorage.getItem(GITHUB_LINK_INTENT_KEY);
-    const intent = raw ? JSON.parse(raw) as GitHubLinkIntent : null;
-    if (intent && (intent.phase === "select" || intent.phase === "link")
-      && Number.isFinite(intent.expiresAt) && intent.expiresAt > Date.now()
-      && (intent.phase !== "link" || typeof intent.userId === "string")) return intent;
-  } catch { /* 损坏的本地意图按过期取消。 */ }
-  clearGitHubLinkIntent();
-  return null;
-}
-
-export function beginGitHubAccountSelection() {
-  window.sessionStorage.setItem(GITHUB_LINK_INTENT_KEY, JSON.stringify({
-    phase: "select", expiresAt: Date.now() + GITHUB_LINK_INTENT_TTL,
-  }));
-}
-
-export function isOAuthAccountConflict(params: URLSearchParams) {
-  return params.get("error") === "server_error"
-    && (params.get("error_description") ?? "").startsWith(
-      "Multiple accounts with the same email address in the same linking domain detected:",
-    );
-}
-
-export async function getGitHubLinkAccount() {
-  const { data, error } = await supabase.auth.getUser();
-  if (error) throw error;
-  if (!data.user?.email) throw new Error("缺少已验证的登录账号。");
-  return { id: data.user.id, email: data.user.email,
-    hasGitHub: data.user.identities?.some(identity => identity.provider === "github") ?? false };
-}
-
-export async function linkGitHubIdentity(expectedUserId: string) {
-  const account = await getGitHubLinkAccount();
-  if (account.id !== expectedUserId) throw new Error("登录账号已切换，请重新选择。");
-  window.sessionStorage.setItem(GITHUB_LINK_INTENT_KEY, JSON.stringify({
-    phase: "link", userId: account.id, expiresAt: Date.now() + GITHUB_LINK_INTENT_TTL,
-  }));
-  try {
-    const { data, error } = await supabase.auth.linkIdentity({
-      provider: "github", options: await getOAuthOptions(),
-    });
-    if (error) throw error;
-    if (window.foluneDesktop && data.url) await window.foluneDesktop.openOAuth(data.url);
-  } catch (error) { clearGitHubLinkIntent(); throw error; }
-}
-
-export async function verifyGitHubLinkResult(expectedUserId: string) {
-  const account = await getGitHubLinkAccount();
-  if (account.id !== expectedUserId || !account.hasGitHub) throw new Error("GitHub 绑定未完成。");
-  clearGitHubLinkIntent();
-}
-
 export function signInWithGoogle() {
   return signInWithOAuth("google");
 }
 
 export function signInWithGitHub() {
-  return signInWithOAuth("github");
+  return signInWithOAuth("custom:github");
 }
 
 export async function completeOAuthSignIn(code: string) {

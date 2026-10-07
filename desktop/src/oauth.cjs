@@ -7,7 +7,7 @@
 const http = require('node:http');
 const { randomBytes } = require('node:crypto');
 const { shell } = require('electron');
-const { isAuthorizationUrl, isGitHubLinkAuthorizationUrl } = require('./policy.cjs');
+const { isAuthorizationUrl } = require('./policy.cjs');
 function createOAuth({ packaged, supabaseUrl, onCallback }) {
   let pending = null;
   let server = null;
@@ -60,7 +60,7 @@ function createOAuth({ packaged, supabaseUrl, onCallback }) {
     prepare, consume, clear,
     open: async (value) => {
       if (!pending || typeof value !== 'string'
-        || !(isAuthorizationUrl(value, supabaseUrl, pending) || isGitHubLinkAuthorizationUrl(value, supabaseUrl))) throw new Error('无效的授权请求');
+        || !isAuthorizationUrl(value, supabaseUrl, pending)) throw new Error('无效的授权请求');
       await shell.openExternal(value);
     },
   };

@@ -32,7 +32,7 @@ AI 是用户的备忘录协作伙伴与智能档案管理员。
 - chat: AI 能力服务，Bun + Mastra 1.57 + `@mastra/ai-sdk` + Vercel AI SDK 6 + zod 4；模型白名单只含 DeepSeek V4 Flash 且拒绝任何切换；对话/审批/整理三个 Agent 分离，模型只见 read_tree/read_memo/edit_memo/edit_node 四个原子笔记工具、明确清单的 edit_nodes 批量工具与 celebration
 - api: 业务接口服务，Bun + Hono 4 + zod 4 + Supabase REST/PostgREST/Storage HTTP API；普通业务以用户 JWT 访问；支付仓储使用无 BYPASSRLS 的专用 folune_billing JWT，仅获支付/用量权限，禁止 service role、连接串与 ORM
 
-认证分流：OAuth 无匹配建号、单账号匹配自动关联。多个账号匹配时，用户先登录目标账号，再确认绑定 GitHub。账号选择不枚举匿名候选，不合并笔记、余额或订阅。Supabase 两库启用官方手动关联能力。
+认证分流：GitHub 只按已验证的 primary 邮箱匹配。备用邮箱不参与匹配或建号；匹配已有账号自动关联，没有匹配自动建号。使用 Custom OAuth2 和 API 只读 userinfo，Supabase 继续签发会话；Google 仍沿原链路，不增加账号选择页。
 
 ## 运行形态
 app 跑在本机 Bun/Vite 固定 10000；api 与 chat 由 folune Compose 项目编排为 folune-api-dev(10001)/folune-chat-dev(10002)，各自持有独立健康探针与被 Git 忽略的私有 `.env`。chat 依赖 api 健康后启动，容器内经 `http://api:10001` 访问业务 API；浏览器只接收 `VITE_` 前缀的公开配置。

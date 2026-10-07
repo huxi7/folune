@@ -24,7 +24,7 @@ privacyContent.tsx: 按真实数据流披露 Google/GitHub 基础身份、Supaba
 usePublicPageMetadata.ts: 博客和法律页共用的标题/摘要生命周期，离场恢复已有元信息
 useWorkspaceEntryReady.ts: Paper/Canvas 共用的一次性首屏就绪桥梁；等待导航空闲与两帧提交，错误撤销覆盖层，入口编号阻止旧页面推进新加载
 MarketingLayout.tsx: 统一纸感背景，不保留白底模式或材质开关； 首页、登录、博客、动态和独立法律页持续挂载的公共壳，持有唯一 MarketingHeader 与 Router ScrollRestoration；登录内容使用弹性单屏布局并省去 Footer，其余页面保留 Footer，路径变化聚焦主标题；useMarketingMotion 在滚动恢复后编排内容分组；导航直接切换，首屏/标题/文章行按 Laper 配方入场，query 不重播
-LoginPage.tsx: query 切换 GitHub 选择/确认的单一卡片内容，标题、散墨和插画持续保留；普通登录清除遗留绑定意图；桌面复用正文与表单但不挂营销壳，保留原字体/背景； /login 公开认证页，384px 表单与完整 3:4 插画左右并置，共享首页公告和 Header；公告单独包入 fullBleed BlueprintFrame，使主轨/外轨与顶栏及首页同轴；正文铺设终选 01A 极慢散墨，标题去除行末标点以视觉居中，视频静音自动循环；AuthForm 独占认证步骤，成功仍经 /app Profile 守卫准入
+LoginPage.tsx: 原登录页的标题、散墨、公告与3:4插画；Google/GitHub 共用同一表单，不装配账号选择。
 BlogPage.tsx: /blog 与 /updates 共用公开目录与 :slug 阅读路由；刊头内轨复用BlueprintPin，四个节点只露朝向刊头内部的半角，裁切与横线遮挡由blog-index.css持有；目录装配公告、点阵刊头、单链接文章行、四色标签和 Truchet 侧纹，按 Laper DOM/CSS 对齐且移除返回首页，动态空集合只保留空框。目录表现归 blog-index.css，正文继续交给 PublicArticle；pathname 重播装饰、query/锚点保留终态，历史返回、404、同分区推荐与元信息沿既有协议。
 workspacePreload.ts: 正文邻居与 Canvas 代码预热共用的在线/前台/省流/慢网判据，只约束非必要预取，不阻止主动打开
 workspacePreload.test.ts: 验证弱网、省流、后台与离线不预取，以及缺失 Network Information 时的兼容行为
@@ -35,9 +35,8 @@ CLAUDE.md: 记录页面层职责与文档协议
 LandingPage.tsx: MarketingLayout 内的公开首页正文，以 1120px 主轨和流式分区组合居中 Hero、大幅编辑器、图文叙事；顶栏与全宽 Footer 由父布局持有；声明中文语言，复用 DS 字体回退、圆角按钮和品牌墨蓝，保留参考布局与背景
 ArchiveCordLabPage.tsx: resizeHandle 复用宿主独立边界插槽； 仅 DEV `/archive-cord-lab` 归档线验收 fixture；复用生产 PaperSurface/ArchiveStatus/AppSidebar/WorkspacePanelLayer/PanelResizeHandle/ArchiveCordOverlay 与真实 organizePresentation 构造器，以三层嵌套 + 上下填充的确定性假树覆盖 fresh/restore/清除、逐层折叠展开、tree 滚动贴边、文件库开关、Panel resize 与 Light/Dark。纸必须由 PaperSurface 包出来——`.app-main-panel` 是单 grid area，7:9 比例基线与 `.paper-content-transition` 叠在同一格里，少了那层顶栏会被放到基线下面那一行、source 直接掉出视口。进入时清掉 fixture 专属的展开偏好键使结论可重跑；假 ID、假内容，不读写 API、数据库、真实用户正文或真实 AI run
 ColorLabPage.tsx: 仅 DEV `/color-lab` 色彩决策实验页，以同一静态 Paper First/Library/AI DOM、共享生产组件与候选选择、Light/Dark 控制公平比较现有蓝、02 灰蓝、04 标准墨蓝与 05 柔和墨蓝 scoped token，不读取鉴权、业务数据或主题持久化
-AuthCallbackPage.test.tsx: 验证共享回调只交换一次、成功导航与授权拒绝/缺码/交换失败恢复；阻止提供商诊断进入页面；验证选择/确认返回原登录布局、单一卡片与换账号
-GitHubAccountChoice.tsx: 原登录卡片内的账号选择与确认；无底色小字引导登录，验证邮箱后原样式主按钮绑定；支持换账号，不枚举匿名账号、不合并数据
-AuthCallbackPage.tsx: /auth/callback 路由页面，交换 Google/GitHub 共用 OAuth PKCE code，普通成功进入 /app；冲突与确认均回到 /login 的原布局；绑定回调核对目标身份；失败显示统一文案；状态卡片复用 auth.css 的中性表面、文字角色与状态提示，会话 Spinner 在 reduced-motion 下静止
+AuthCallbackPage.test.tsx: 验证回调只交换一次、成功直接进入工作区、拒绝/缺码/失败恢复与诊断隔离。
+AuthCallbackPage.tsx: Google/GitHub 共用 PKCE 交换，成功直接进入工作区，不读取邮箱、不装配选择页；失败沿认证统一文案。
 AppDashboard.tsx: 菜单/设置统一先打开退出确认，确认后才调用真实退出；Workspace视觉装配根与用户级BillingProvider；文件库走原常驻宿主，AI走胶囊/短窗/全高宿主，AgentPanel实例跨Paper/Canvas持续；订阅隐藏/inert保留底层会话，积分路由沿原来路返回 助手代码加载复用 AgentConversationSkeleton，与业务冷加载同构。
 CanvasRouteCoordinator.tsx: `/app/notes/:id` 的 Canvas 路由协调器；把入口 Canvas bootstrap 冻结为本次挂载的不可变快照，避免缓存消费后在浏览器拍新帧前撤掉目标纸面身份，也避免下一轮离场 bootstrap 反向注入仍在场的旧 Canvas 并制造重复 transition name；另统一 Canvas→原文→Canvas 返回描述、画布重命名与会话 flush 暴露，不持有图数据、保存队列或跨路由文件库。画布→写作区那一跳由它的 navigate 带 viewTransition 起——路由状态落地是异步的，谁持有 navigate 谁才能在正确的那一刻开始过渡
 DashboardDialogs.tsx: 五栏设置与新建文件夹的纯受控组合，透传真实退出命令和独立订阅入口；外层 presence 等待 Dialog 自身退出，文件夹落点与重名裁决不变

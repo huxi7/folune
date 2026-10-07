@@ -29,41 +29,39 @@ Staging 保存前后核对 242 个字段。
 只有 GitHub Client ID、Secret 与启用开关变化。
 Secret 未写入前端、仓库或验收记录。
 
-## 账号匹配规则
+## GitHub 主邮箱规则
 
-没有匹配账号时，由 Supabase 创建账号。
-匹配一个账号时，由 Supabase 自动关联。
-匹配多个账号时，回调返回原登录页。
-选择与确认通过 `/login?github=choose|confirm` 装配。
-标题、散墨、插画与单一卡片沿原布局。
-提示只有卡片内一行小字；确认支持换账号。
-用户用邮箱密码或 Google 登录目标账号。
-页面显示服务端验证的邮箱并要求确认。
-确认后调用 SDK `linkIdentity` 再授权 GitHub。
-回调核对目标 user ID 与 GitHub 身份后进入工作区。
-不枚举匿名候选，不合并笔记、余额或订阅。
-本标签页意图十分钟过期；普通登录清除遗留意图。
+GitHub 使用 `custom:github` OAuth2 Provider。
+授权与换码仍直连 GitHub，并由 Supabase 编排。
+UserInfo 指向正式 API 的 `/auth/github/userinfo`。
+API 向 GitHub 验证 token、用户 ID 与邮箱列表。
+只返回 `primary=true` 且 `verified=true` 的邮箱。
+备用邮箱和 GitHub 公开 profile 邮箱不作回退。
+主邮箱在后续页时继续分页查找。
+缺少或未验证主邮箱时拒绝认证。
 
-两库已启用 `SECURITY_MANUAL_LINKING_ENABLED`。
-各库保存前后核对，只有该字段变化。
-Google、SMTP、Site URL 与重定向白名单保持原值。
-选择页与 Google 验证到确认邮箱的流程已实测。
-真实 GitHub 绑定需要用户在页面确认目标账号。
-2026-10-07 已发布实现提交 `4694f2f`。
-Pages部署 `f908efa5-8400-4f62-9f1b-f342e179babd` 成功。
-API构建 `8ab5c8ae-42f7-4e36-8fda-e8f81a3fd8f6` 成功。
-Chat构建 `79d87b05-8034-4af4-aba2-6ed86ab2da03` 成功。
-API修订 `folune-api-00015-7rd` 承接全部流量。
-Chat修订 `folune-chat-00013-mx6` 承接全部流量。
-两服务健康检查通过，生产Google再次进入工作区。
-本记录后补至main；不重发仅文档变化的运行镜像。
+Supabase 根据单一主邮箱自动匹配或创建账号。
+已绑定的 GitHub 身份继续使用稳定 provider ID。
+前端取消账号选择、邮箱重输和手动绑定意图。
+不修改既有 Gmail/QQ 账号、笔记、余额或订阅。
+Client Secret 仍只在 Supabase；API 不持有 Secret。
+API 不保存 GitHub token，不访问业务表。
+Google 使用原 Provider 与 PKCE 链路。
+
+当前迁移：先发布 userinfo，再切换前端。
+新链路验证后关闭原生 GitHub 与手动绑定开关。
+两库分别配置，其他 Auth 字段保持原值。
+真实验收与发布版本在完成后补记。
 
 ## 本轮验证
 
-- 42项前端定向测试、7项桌面测试、类型检查、lint与构建通过。
+- 7项主邮箱HTTP测试、22项前端认证测试、6项桌面测试通过。
+- API/前端类型检查、改动文件lint与前端构建通过。
 - Production Google再次完成OAuth并进入工作区。
 - 回调页按错误码显示统一文案，不展示提供商诊断。
-- Staging GitHub完成授权；账号关联失败，未交换新会话。
+- Staging GitHub已按主邮箱完成PKCE并关联原Gmail账号。
+- QQ备用邮箱账号保持原ID，身份仍只有email。
+- 本地API watch在切分支时失效，重启后健康，工作区重新进入。
 
 ## 原代码与已执行验证
 
