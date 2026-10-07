@@ -2,6 +2,7 @@
 > L2 | 父级: ../../CLAUDE.md
 
 成员清单
+github-auth.service.ts: 把已验证主邮箱转换为 Supabase OAuth2 userinfo；会话与账号匹配仍由 Supabase 裁决。
 payment.service.ts: 旧固定汇率 Invoice 不再作为新结账返回，统一结账、签名通知二次查单与重复入金拦截、用户/管理权限和持久对账；过期只认供应商，继续补查迟到款。
 CLAUDE.md: 记录业务服务层职责与文档协议
 auth.service.ts: 将 router 提取的用户 access token 转换为经 Supabase Auth 校验的可信 AuthUser；在途按原始 token 合并同一校验，已完成身份按 SHA-256(token) 键入 45 秒 TTL/1024 项上限缓存，访问时清理过期前缀、满额淘汰最早身份，避免 token 轮换导致常驻内存增长；原始 token 不越过请求生命周期，只缓存成功身份，401/502 永不入缓存，撤销延迟窗口上限等于 TTL

@@ -2,6 +2,7 @@
 > L2 | 父级: ../../CLAUDE.md
 
 成员清单
+github.ts: 请求期读取 GitHub 身份与分页主邮箱，拒绝备用/未验证邮箱，不保存 token。
 payment-amount.ts: 精确十进制/整数美分转换，拒绝精度损失与超界。
 supabase-http.ts: Auth/PostgREST/Storage 共享的完整 HTTP 响应生命周期；GET/HEAD 每次 6 秒且最多两次，写请求 12 秒且不重放；重试使用新连接，读取 body 后才结束期限，定时器随完成释放
 CLAUDE.md: 记录基础库适配层职责与文档协议
