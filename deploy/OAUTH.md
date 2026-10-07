@@ -20,27 +20,43 @@ Client ID 是公开标识，不是 Secret。
 生产主页为 `https://folune.huxi7.com`。
 Staging 主页为 `http://localhost:10000`。
 
-## 当前阻塞
+## 当前状态与阻塞
 
-生成生产 Client Secret 时，GitHub 要求 sudo mode 两步验证码。
-该验证须由账号所有者完成；本次没有生成或保存 Secret。
-没有修改任何 Supabase Auth 配置。
-两库 `/auth/v1/settings` 实测均为 Google 开启、GitHub 关闭。
-GitHub 真实登录尚未验证；此状态不代表已接通。
-代码只提交至 main，未发布 production。
+2026-10-07 本人已完成两套 GitHub 验证。
+两套 Secret 已填入各自 Supabase Provider。
+本轮已核实 Production 与 Staging 的 GitHub、Google 均开启。
+Staging 保存前后核对 242 个字段。
+只有 GitHub Client ID、Secret 与启用开关变化。
+Secret 未写入前端、仓库或验收记录。
+
+Staging 已完成 GitHub 授权并返回回调。
+Supabase 自动关联返回 `Multiple accounts` 错误。
+GitHub 返回的主邮箱与备用邮箱各对应一个既有账号。
+两库均存在此结构，不能自动决定 GitHub 归属。
+两个账号与各自业务数据保持原样。
+当前等待所有者选择 GitHub 要关联的账号。
+选定后通过 Supabase 官方身份关联流程执行。
+不通过直接修改 auth 表绕过身份验证。
+
+代码已推送 main，production 尚未发布。
+GitHub PKCE 交换与进入工作区尚未通过。
 
 ## 恢复执行边界
 
-本人完成 GitHub 验证后，继续生成两套 Secret。
-通过受信任通道直接填入各自 Supabase GitHub Provider。
-提交前重读 Auth 配置，排除浏览器密码自动填充。
-只修改 `external_github_enabled`、`external_github_client_id`、`external_github_secret`。
-保留 Google、SMTP、Site URL 和现有重定向白名单。
-保存后核对两库 GitHub 状态和其他字段不变。
-分别完成 GitHub 授权、PKCE 交换、工作区进入和退出后重登。
-重新验证 Google 登录，再发布 production 并核对部署提交号。
+所有者确定 GitHub 归属后，验证目标账号会话。
+仅为官方关联流程修改必要 Auth 配置。
+保留 Google、SMTP、Site URL 和重定向白名单。
+关联完成后验证普通 GitHub 登录与退出重登。
+重新验证 Google，再发布并核对三项部署提交号。
 
-## 代码与已执行验证
+## 本轮验证
+
+- 22项认证定向测试、类型检查、改动文件lint与构建通过。
+- Production Google再次完成OAuth并进入工作区。
+- 回调页按错误码显示统一文案，不展示提供商诊断。
+- Staging GitHub完成授权；账号关联失败，未交换新会话。
+
+## 原代码与已执行验证
 
 - `AuthForm` 保留原登录卡片、邮箱注册和 OTP。
 - Google/GitHub 只调用 `shared/supabase/auth.ts`。

@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 happy-dom、Testing Library、Router 与可替换的认证交换服务
- * [OUTPUT]: 验证共享 OAuth 回调的单次交换、成功导航及失败恢复
+ * [OUTPUT]: 验证共享 OAuth 回调的单次交换、成功导航、失败恢复与提供商诊断隔离
  * [POS]: pages 的认证路由回归；不调用真实 Supabase
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -39,7 +39,9 @@ test("StrictMode 下授权码只交换一次，成功后进入工作区", async 
 
 test.each([
   ["", "OAuth 回调缺少授权码，请重新登录。"],
-  ["?error=access_denied&error_description=Authorization+cancelled", "Authorization cancelled"],
+  ["?error=access_denied&error_description=Authorization+cancelled", "授权未完成，请重新登录或选择其他方式。"],
+  ["?error=server_error&error_code=unexpected_failure&error_description=Internal+account+diagnostic", "认证服务暂时不可用，请稍后再试。"],
+  ["?error=access_denied", "授权未完成，请重新登录或选择其他方式。"],
 ])("授权拒绝或缺码时不交换，可返回登录：%s", async (query, message) => {
   const exchange = spyOn(auth, "completeOAuthSignIn");
   const view = renderCallback(query);

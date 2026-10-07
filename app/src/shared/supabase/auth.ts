@@ -14,6 +14,7 @@ const authErrorMessages: Record<string, string> = {
   email_exists: "该邮箱已注册，请直接登录。",
   email_not_confirmed: "请先完成邮箱验证。",
   invalid_credentials: "邮箱或密码不正确。",
+  access_denied: "授权未完成，请重新登录或选择其他方式。",
   oauth_provider_not_supported: "此登录方式暂未启用，请选择其他方式。",
   otp_disabled: "邮箱验证码登录尚未在 Supabase 后台启用。",
   otp_expired: "验证码无效或已过期，请重新获取。",

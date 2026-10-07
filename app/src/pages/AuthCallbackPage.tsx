@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 React effect/ref/state，依赖 react-router-dom 导航，依赖 shared/supabase 的 PKCE code 换取会话能力，依赖本地 design-system
- * [OUTPUT]: 对外提供 /auth/callback OAuth 回调页面，成功进入 /app、失败返回 /login；状态卡片复用认证页文字/中性表面与共享图标，会话图标在减少动态时静止
+ * [OUTPUT]: 对外提供 /auth/callback OAuth 回调页面，成功进入 /app、失败返回 /login；提供商错误经统一认证文案转换，不展示服务端诊断
  * [POS]: app/src/pages 的 Google/GitHub 共用 OAuth 回调边界，视觉共用 auth.css 与 APP 控件语义，交换会话仍沿 shared/supabase
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -26,11 +26,13 @@ export function AuthCallbackPage() {
 
     exchangeStartedRef.current = true;
     const searchParams = new URLSearchParams(window.location.search);
-    const providerError = searchParams.get("error_description");
+    const providerError = searchParams.get("error");
     const code = searchParams.get("code");
 
     if (providerError) {
-      setErrorMessage(providerError);
+      setErrorMessage(getAuthErrorMessage({
+        code: searchParams.get("error_code") ?? providerError,
+      }));
       return;
     }
 
