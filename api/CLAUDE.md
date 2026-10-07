@@ -39,3 +39,15 @@ lib/: Supabase 访问只允许 Auth/PostgREST/Storage HTTP API，禁止数据库
 supabase/: SQL 必须与远端实际 schema、RLS、policy、grants 保持一致
 
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+
+## Canvas 只读问答
+
+同一 Folune AI 支持当前画布与 @画布。
+问答范围可选整图或精确笔记清单。
+画布选中仅在显式命令时复制为来源。
+发送前同步画布，API 冻结范围与图版本。
+Chat 只注入分页读取和引文核对工具。
+正文按段读取，引用须匹配本轮已读原文。
+引用证据随回复 parts 保存，底部浮层查看。
+Canvas 问答不执行笔记或画布写命令。
+普通历史写操作仍保留原有撤销。

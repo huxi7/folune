@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖桌面可选退出保存注册表， 依赖跨空间助手尺寸/可见性、首次入口就绪桥梁、React Router Profile/token、Canvas bootstrap、轻量 tree/正文/Workspace Store、删除编排、惰性 AI、持久左右工具宿主、按当前树重算的归档 presentation、useOverlayPanels 响应式判据与 Paper/Canvas Workspace
- * [OUTPUT]: 确认后的退出复用笔记/Canvas保存门禁，认证成功才清理工作区；对外提供 useAppDashboardController 状态与命令投影；订阅通过受限来路保留原笔记身份，深链不触发恢复/创建笔记；普通笔记树高亮即时响应，正文导航按帧合并且可中断，Canvas 离场等待保存且仅最新选择继续，另协调文件库、正文预取、账户与归档
+ * [OUTPUT]: 画布问答发送必须等待服务器同步，离场策略继续独立； 确认后的退出复用笔记/Canvas保存门禁，认证成功才清理工作区；对外提供 useAppDashboardController 状态与命令投影；订阅通过受限来路保留原笔记身份，深链不触发恢复/创建笔记；普通笔记树高亮即时响应，正文导航按帧合并且可中断，Canvas 离场等待保存且仅最新选择继续，另协调文件库、正文预取、账户与归档
  * [POS]: app/src/pages 的 /app 状态协调 Hook，由 AppDashboard 单次持有；跨 Paper/Canvas 的数据与视觉交接只在此建立一次，深链刷新先确认节点类型，普通业务状态仍留在各自 Store/Workspace，文件库作为共享 Chrome 留在两种内容壳之外。它是「现在是不是覆盖式布局」的唯一持有者并下传给 Paper 壳与归档 Overlay：同一个断点算两遍就会出现两个都自称正确的布局；归档只交出 canonical memo，屏幕上由谁代表它归 AppSidebar
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -468,6 +468,13 @@ export function useAppDashboardController() {
     setRefreshing: setAccountProfileRefreshing,
     toast,
   });
+  const prepareCanvasChat = useCallback(async (id: string) => {
+    const state = useCanvasWorkspaceStore.getState();
+    if (state.canvasId !== id) return;
+    if (!canvasControlsRef.current) throw new Error("画布还在恢复，请稍后发送。");
+    const result = await canvasControlsRef.current.flush();
+    if (!result.synced) throw new Error("画布尚未同步，请重试后发送。问题已保留。");
+  }, []);
   const leaveCanvasSafely = useCallback(async (): Promise<boolean> => {
     const controls = canvasControlsRef.current;
     if (controls === null) return true;
@@ -783,6 +790,7 @@ export function useAppDashboardController() {
     toggleLibrary,
     workspaceStyle,
     handleCanvasSessionReady,
+    prepareCanvasChat,
     activeLibraryOpen,
     activeAssistantOpen,
     accountDialog,

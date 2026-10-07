@@ -1,18 +1,19 @@
 /**
  * [INPUT]: 依赖 locale 界面文案、PresenceSurface 向上入退场、memo tree、查询/选择和搜索纯函数
- * [OUTPUT]: 对外提供只显示文件图标与文件名的 @笔记搜索列表、搜索纯函数与 mouse down 选择交互
+ * [OUTPUT]: 菜单识别画布图标；普通 memo 搜索函数继续仅返回笔记； 对外提供只显示文件图标与文件名的 @笔记搜索列表、搜索纯函数与 mouse down 选择交互
  * [POS]: Prompt Bar 的无状态原生 @笔记命令菜单；结果保持内容宽度，键盘、IME 与选择生命周期归 AgentConversation 统一控制
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
 import { PresenceSurface } from "../../shared/design-system/components/PresenceSurface";
-import { FileTextIcon } from "../../shared/design-system/icons";
+import { FileTextIcon, CanvasIcon } from "../../shared/design-system/icons";
 import type { MemoTreeNode } from "../../shared/api/memo";
 import { findNode } from "../../shared/store/memoTree";
 import { searchMemoTree } from "../memoLibrary";
 import { useLocale } from "../../shared/locale";
 
 export type MentionResult = {
+  kind?: "memo" | "canvas";
   id: string;
   path: string;
   revision: number;
@@ -82,7 +83,7 @@ export function MentionMenu({ activeIndex, onSelect, results, open }: MentionMen
           type="button"
         >
           <span className="agent-mention-option-icon">
-            <FileTextIcon aria-hidden="true" size={14} />
+            {memo.kind === "canvas" ? <CanvasIcon aria-hidden="true" size={14} /> : <FileTextIcon aria-hidden="true" size={14} />}
           </span>
           <strong>{memo.title}</strong>
         </button>

@@ -29,7 +29,7 @@ BlogPage.tsx: /blog 与 /updates 共用公开目录与 :slug 阅读路由；刊�
 workspacePreload.ts: 正文邻居与 Canvas 代码预热共用的在线/前台/省流/慢网判据，只约束非必要预取，不阻止主动打开
 workspacePreload.test.ts: 验证弱网、省流、后台与离线不预取，以及缺失 Network Information 时的兼容行为
 MotionLabPage.tsx: DEV /motion-lab 无鉴权验收入口，复用生产 MotionSpecimen，所有交互只更新本地 fixture 状态，并链接真实 AppSidebar/归档线验收台
-useAppDashboardController.ts: 退出先flush笔记并通过Canvas保存门禁，认证成功后才取消选择/清树/导航；投影助手唯一可见性并在场景边界恢复笔记尺寸/解析画布短窗或明确返回尺寸； 从 subscriptionNavigation 解析订阅背后的原笔记身份，订阅深链不触发恢复/创建笔记且暂停 Command+E 编辑快捷键；桌面退出/重启注册现有笔记 flush 与 Canvas 持久化门禁； 首次准入等待入口解析与正文就绪后报告完成，新账号初始化失败释放加载层；普通笔记选择交给 useMemoSelection，树高亮即时响应、正文导航按帧合并且保持可中断，不强制同步挂载编辑器；仅 Canvas 离场等待保存且最后一次选择生效，新选择清理旧定位； Dashboard 单次持有的状态/命令协调 Hook，保持 Profile/正文订阅、乐观事务、flush/导航、工具预载、唯一响应式判据与归档 canonical 目标；普通本地辅助视图走 transitionContent，跨路由快照交给 Router 当前节点查询按 tree/路由 ID 缓存，相邻正文预取等当前正文就绪；文件夹创建和改名成功静默，失败保持原有 Toast。
+useAppDashboardController.ts: 画布问答发送必须等待服务器同步，离场策略继续独立；退出先flush笔记并通过Canvas保存门禁，认证成功后才取消选择/清树/导航；投影助手唯一可见性并在场景边界恢复笔记尺寸/解析画布短窗或明确返回尺寸； 从 subscriptionNavigation 解析订阅背后的原笔记身份，订阅深链不触发恢复/创建笔记且暂停 Command+E 编辑快捷键；桌面退出/重启注册现有笔记 flush 与 Canvas 持久化门禁； 首次准入等待入口解析与正文就绪后报告完成，新账号初始化失败释放加载层；普通笔记选择交给 useMemoSelection，树高亮即时响应、正文导航按帧合并且保持可中断，不强制同步挂载编辑器；仅 Canvas 离场等待保存且最后一次选择生效，新选择清理旧定位； Dashboard 单次持有的状态/命令协调 Hook，保持 Profile/正文订阅、乐观事务、flush/导航、工具预载、唯一响应式判据与归档 canonical 目标；普通本地辅助视图走 transitionContent，跨路由快照交给 Router 当前节点查询按 tree/路由 ID 缓存，相邻正文预取等当前正文就绪；文件夹创建和改名成功静默，失败保持原有 Toast。
 .gitkeep: 保留页面层空目录
 CLAUDE.md: 记录页面层职责与文档协议
 LandingPage.tsx: MarketingLayout 内的公开首页正文，以 1120px 主轨和流式分区组合居中 Hero、大幅编辑器、图文叙事；顶栏与全宽 Footer 由父布局持有；声明中文语言，复用 DS 字体回退、圆角按钮和品牌墨蓝，保留参考布局与背景
@@ -37,7 +37,7 @@ ArchiveCordLabPage.tsx: resizeHandle 复用宿主独立边界插槽； 仅 DEV `
 ColorLabPage.tsx: 仅 DEV `/color-lab` 色彩决策实验页，以同一静态 Paper First/Library/AI DOM、共享生产组件与候选选择、Light/Dark 控制公平比较现有蓝、02 灰蓝、04 标准墨蓝与 05 柔和墨蓝 scoped token，不读取鉴权、业务数据或主题持久化
 AuthCallbackPage.test.tsx: 验证回调只交换一次、成功直接进入工作区、拒绝/缺码/失败恢复与诊断隔离。
 AuthCallbackPage.tsx: Google/GitHub 共用 PKCE 交换，成功直接进入工作区，不读取邮箱、不装配选择页；失败沿认证统一文案。
-AppDashboard.tsx: 菜单/设置统一先打开退出确认，确认后才调用真实退出；Workspace视觉装配根与用户级BillingProvider；文件库走原常驻宿主，AI走胶囊/短窗/全高宿主，AgentPanel实例跨Paper/Canvas持续；订阅隐藏/inert保留底层会话，积分路由沿原来路返回 助手代码加载复用 AgentConversationSkeleton，与业务冷加载同构。
+AppDashboard.tsx: 向现有助手传递当前画布和发送前同步门禁；菜单/设置统一先打开退出确认，确认后才调用真实退出；Workspace视觉装配根与用户级BillingProvider；文件库走原常驻宿主，AI走胶囊/短窗/全高宿主，AgentPanel实例跨Paper/Canvas持续；订阅隐藏/inert保留底层会话，积分路由沿原来路返回 助手代码加载复用 AgentConversationSkeleton，与业务冷加载同构。
 CanvasRouteCoordinator.tsx: `/app/notes/:id` 的 Canvas 路由协调器；把入口 Canvas bootstrap 冻结为本次挂载的不可变快照，避免缓存消费后在浏览器拍新帧前撤掉目标纸面身份，也避免下一轮离场 bootstrap 反向注入仍在场的旧 Canvas 并制造重复 transition name；另统一 Canvas→原文→Canvas 返回描述、画布重命名与会话 flush 暴露，不持有图数据、保存队列或跨路由文件库。画布→写作区那一跳由它的 navigate 带 viewTransition 起——路由状态落地是异步的，谁持有 navigate 谁才能在正确的那一刻开始过渡
 DashboardDialogs.tsx: 五栏设置与新建文件夹的纯受控组合，透传真实退出命令和独立订阅入口；外层 presence 等待 Dialog 自身退出，文件夹落点与重名裁决不变
 appDashboardTypes.ts: Dashboard 私有状态类型边界，集中定义含首屏 tree bootstrap 与入口编号的 loader、账户/文件夹弹窗、标题草稿与树加载状态，不承载运行时逻辑

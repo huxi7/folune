@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 authMiddleware、Business API、冻结 memo context、独立审批协调器、客户端工具、Mastra 流桥与 chat-stream 的终态/静默超时协调
- * [OUTPUT]: 对外提供消息级上下文冻结、一次性 turn prepare、三档写审批、同轮 assistant 续写、胖工具流转、明确的模型余额错误与增量 parts 持久化的 POST /v1/chat
+ * [OUTPUT]: 依据 API 快照注入只读服务端工具，验证引用并随消息流保存； 对外提供消息级上下文冻结、一次性 turn prepare、三档写审批、同轮 assistant 续写、胖工具流转、明确的模型余额错误与增量 parts 持久化的 POST /v1/chat
  * [POS]: routes 层 AI Native V2 HTTP 协调边界；审批/工具续跑复用同一回复 ID，先完成审批再让浏览器 Worker 规划，最终安全仍由 api command 决定 onUsage 返回可等待的记账 Promise，不脱离请求生命周期。
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -16,6 +16,8 @@ import {
 } from "ai";
 import { z } from "zod";
 
+import { canvasChatScopeSchema } from "../lib/canvas-chat-contracts";
+import { CanvasPromptContext, createCanvasChatSession, canvasModelMessages, withCanvasEvidence } from "../lib/canvas-chat-session";
 import { batchModelMessages } from "./batch-model-messages";
 import { modelErrorMessage } from "@/lib/model-error";
 import { env } from "@/config/env";
@@ -93,6 +95,7 @@ const uiMessageSchema = z
   .passthrough();
 
 const chatParamsSchema = z.object({
+  canvas: canvasChatScopeSchema.optional(),
   thread_id: z.uuid(),
   active_memo_id: z.uuid().nullable().optional().default(null),
   reference_memo_ids: z.array(z.uuid()).max(5).optional().default([]),
@@ -205,15 +208,20 @@ export const chatRoute = registerApiRoute("/v1/chat", {
     const requestMessages = parsed.data.messages ?? [parsed.data.message!];
     const assistantContinuation = parsed.data.trigger !== "regenerate-message"
       && isAssistantContinuation(requestMessages);
-    const frozenTurnContext = readFrozenTurnContext(
+    let frozenTurnContext;
+    try { frozenTurnContext = readFrozenTurnContext(
       requestMessages,
       parsed.data.active_memo_id,
       {
+        canvas: parsed.data.canvas,
         active_memo_id: parsed.data.active_memo_id,
         reference_memo_ids: parsed.data.reference_memo_ids,
         revisions: parsed.data.expected_revisions,
       },
     );
+    } catch {
+      return context.json({ error: { code: "INVALID_CHAT_REQUEST", message: "画布来源格式无效，请重新选择。" } }, 400);
+    }
     let resolvedContext;
     let permissionMode: "ask" | "auto_approve" | "full_access";
     let inputMessages: UIMessage[] = [];
@@ -225,6 +233,7 @@ export const chatRoute = registerApiRoute("/v1/chat", {
 
     try {
       const prepared = await businessApi.prepareChatTurn({
+        canvas: frozenTurnContext.canvas,
         activeMemoId: frozenTurnContext.active_memo_id,
         expectedRevisions: assistantContinuation ? {} : frozenTurnContext.revisions,
         message: parsed.data.message as UIMessage | undefined,
@@ -241,13 +250,16 @@ export const chatRoute = registerApiRoute("/v1/chat", {
       return context.json(failure.body, failure.status);
     }
 
+    const canvas = resolvedContext.canvas;
+    const canvasSession = canvas ? createCanvasChatSession(canvas, id => businessApi.getMemo(id, accessToken), resolvedContext.references) : null;
     const params = {
-      messages: batchModelMessages(inputMessages),
+      messages: canvas ? canvasModelMessages(inputMessages) : batchModelMessages(inputMessages),
       trigger: parsed.data.trigger,
       resumeData: parsed.data.resumeData,
     } as unknown as ChatParams;
     const requestContext = context.get("requestContext");
     requestContext.set("memoAgentContext", new MemoAgentContext(resolvedContext));
+    if (canvasSession && canvas) requestContext.set("canvasChatPrompt", new CanvasPromptContext({ title: canvas.title, mode: canvas.mode, total_nodes: canvas.nodes.length, total_edges: canvas.edges.length, ...canvasSession.initial, extra_memos: canvasSession.extraMemos }));
     const lastUserMessage = [...inputMessages]
       .reverse()
       .find((message) => message.role === "user");
@@ -292,7 +304,8 @@ export const chatRoute = registerApiRoute("/v1/chat", {
       messages: inputMessages,
       messageId: assistantMessageId,
       signal: context.req.raw.signal,
-      createStream: (signal) => handleChatStream<UIMessage>({
+      createStream: async (signal) => {
+        const upstream = await handleChatStream<UIMessage>({
         mastra: context.get("mastra"),
         agentId: "memo-agent",
         version: "v6",
@@ -302,11 +315,11 @@ export const chatRoute = registerApiRoute("/v1/chat", {
         messageMetadata: ({ part }) => {
           if (part.type !== "finish") return undefined;
           const usage = (part as { totalUsage?: { totalTokens?: number } }).totalUsage;
-          return { folune_total_tokens: usage?.totalTokens ?? 0 };
+          return { folune_total_tokens: usage?.totalTokens ?? 0, ...(canvas ? { canvas_read_only: true } : {}) };
         },
         params: {
           ...params,
-          clientTools,
+          ...(canvasSession ? { toolsets: { canvas: canvasSession.tools } } : { clientTools }),
           requestContext,
           abortSignal: signal,
           maxSteps: env.MAX_STEPS,
@@ -314,8 +327,11 @@ export const chatRoute = registerApiRoute("/v1/chat", {
             maxOutputTokens: env.MAX_OUTPUT_TOKENS,
           },
         },
-      }),
+        });
+        return canvasSession && canvas ? withCanvasEvidence(upstream, canvasSession, canvas) : upstream;
+      },
       approveTool: async (chunk) => {
+        if (canvas) return null;
         const toolName = resolveMemoWriteToolName(chunk.toolName);
         if (toolName === null) return null;
         const input = chunk.input !== null && typeof chunk.input === "object" && !Array.isArray(chunk.input)

@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 消费 APP app-typography.css 文字角色，变量回退保持非 APP 原排版； 依赖设计系统的半径/曲线配对规则与 index.css 的 Quiet Editorial 语义 Color/Type/Spacing/Radius/Elevation/Motion、统一中性 interactive-hover 与 Tailwind v4 layer
- * [OUTPUT]: 菜单、密码显隐与身份入口共用150ms中性变色；统一菜单材质、平面Input/Select/Card与BrandMark；Dialog的panel/bare默认85%页面底色遮罩，dim确认改用单层40%黑色遮罩，普通模态父层与背景/面板同拍淡入，纸面模式随root过渡；提供中性细槽Skeleton/单组无模糊掠光、Thinking/loading状态
+ * [OUTPUT]: 菜单、密码显隐与身份入口共用150ms中性变色；统一菜单及聊天来源/引用浮层材质、平面Input/Select/Card与BrandMark；Dialog的panel/bare默认85%页面底色遮罩，dim确认改用单层40%黑色遮罩，普通模态父层与背景/面板同拍淡入，纸面模式随root过渡；提供中性细槽Skeleton/单组无模糊掠光、Thinking/loading状态
  * [POS]: app/src/styles 的组件视觉层，被 index.css 统一导入
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -11,6 +11,7 @@
   .note-more-menu,
   .agent-permission-menu,
   .agent-mention-menu,
+  .agent-context-popover,
   .ds-select-menu,
   .ds-user-menu-popover {
     border: 1px solid var(--border);

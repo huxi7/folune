@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖有序过程 parts、locale 读屏状态、工具展示适配、执行事实订阅与明确批量快照
- * [OUTPUT]: 原始推理和普通工具原序展示，只有明确批量请求可折叠；转圈数量完全来自真实执行状态
+ * [OUTPUT]: 服务端画布只读工具按真实输入和输出展示执行状态； 原始推理和普通工具原序展示，只有明确批量请求可折叠；转圈数量完全来自真实执行状态
  * [POS]: AgentPanel 过程展示边界；不做摘要、工具同名猜测或全局数量裁剪
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -20,7 +20,8 @@ function ToolProgress({ part, presentation, live, checkpoint }: { part: ToolPart
   if (normalizeAgentToolName(getToolName(part)) === "edit_nodes" && batch) return <BatchToolProgress batch={batch} live={live} />;
   const sdkState = getAgentToolState(part);
   const terminal = sdkState.startsWith("output-");
-  const state = terminal ? sdkState : execution?.state === "running" ? "running"
+  const serverTool = ["list_sources", "read_relations", "read_text", "read_source", "cite_sources"].includes(normalizeAgentToolName(getToolName(part)));
+  const state = terminal ? sdkState : serverTool && sdkState === "input-available" ? "running" : execution?.state === "running" ? "running"
     : execution?.state === "succeeded" ? "output-available" : execution?.state === "failed" ? "output-error"
     : execution?.state === "cancelled" ? "output-denied" : sdkState === "input-available" ? "queued" : sdkState;
   return <div className="agent-tool-stack"><ToolCallBubble {...presentation} labels={locale === "en" ? englishToolStateLabels : undefined} live={live} state={state} /></div>;

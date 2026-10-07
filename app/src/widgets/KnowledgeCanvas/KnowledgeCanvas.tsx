@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 useLocale 的界面文案，用户笔记/关系文本与命令协议不翻译；依赖 @xyflow/react v12、同步首帧 Canvas bootstrap、纸面视图过渡、Canvas Chat/Coordinator/Store、瞬时 motion receipt、空间文字、增量布局与拖拽载荷；撤销回执时长由共享 Toast 默认策略拥有
- * [OUTPUT]: 对外提供始终挂载真实 React Flow 的 Canvas（删除只由产品确认流拥有、浮层键盘不穿透）：首帧过渡落点、稳定受控图、尺寸变化时不随节点拖动重建 observer 的响应式视口校准、拖/点等效直接连接、单一 Stage loading、Preview 纸面形变、删除退场与可靠保存
+ * [OUTPUT]: Shift 与 Cmd/Ctrl 共用多选，引用定位只调整视口且不进入持久化； 对外提供始终挂载真实 React Flow 的 Canvas（删除只由产品确认流拥有、浮层键盘不穿透）：首帧过渡落点、稳定受控图、尺寸变化时不随节点拖动重建 observer 的响应式视口校准、拖/点等效直接连接、单一 Stage loading、Preview 纸面形变、删除退场与可靠保存
  * [POS]: KnowledgeCanvas 的会话内容根；图投影只随文档变化并由首帧/更新共用，避免拖拽和选择重算全图；连接手势只经 useCanvasConnectionSession 写意图，几何/选择/WAL 仍由原系统负责，hydration/rebase/save/rerender 不得重播 UI receipt
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -23,6 +23,7 @@ import {
   useState,
   type MouseEvent as ReactMouseEvent,
 } from "react";
+import { useCanvasCitationFocus } from "./useCanvasCitationFocus";
 import { flushSync } from "react-dom";
 
 import "@xyflow/react/dist/style.css";
@@ -427,6 +428,7 @@ export function KnowledgeCanvas({
     initialFlow.edges,
   );
   const instanceRef = useRef<ReactFlowInstance<CanvasFlowNode, CanvasFlowEdge> | null>(null);
+  useCanvasCitationFocus(canvasId, instanceRef);
   const flowRef = useRef<HTMLDivElement>(null);
   const initialViewportAppliedRef = useRef(false);
   const entryFocusAppliedRef = useRef(false);
@@ -1459,6 +1461,7 @@ export function KnowledgeCanvas({
           panOnDrag={panOnDrag}
           proOptions={proOptions}
           selectionOnDrag
+          multiSelectionKeyCode={["Shift", "Meta", "Control"]}
           zoomOnDoubleClick={false}
         >
           <Background gap={26} size={1} variant={BackgroundVariant.Dots} />

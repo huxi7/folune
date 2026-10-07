@@ -789,7 +789,7 @@ describe("AI threads and messages", () => {
       "msg_user-first",
     ]);
     expect(first.messages.at(-1)?.status).toBe("in_progress");
-    expect(mock.requests.filter((request) => request.path === "/rest/v1/ai_messages").map((request) => request.method)).toEqual(["POST"]);
+    expect(mock.requests.filter((request) => request.path === "/rest/v1/ai_messages").map((request) => request.method)).toEqual(["GET", "POST"]);
 
     mock.requests.length = 0;
     const continued = await data<{

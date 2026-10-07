@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 useLocale 的界面文案（用户内容保留原文）；依赖共享 PresenceSurface/KeyboardShortcut/语义图标、工具栏锚点与开合状态
- * [OUTPUT]: 提供工具栏上方的画布操作速查，以动作/手势两列说明真实快捷键与连接路径
+ * [OUTPUT]: 补充 Shift 点击增减单篇选择的可发现说明； 提供工具栏上方的画布操作速查，以动作/手势两列说明真实快捷键与连接路径
  * [POS]: CanvasControls 的非模态说明层；Portal 越过 React Flow 层叠边界，锚点只从工具栏真实坐标读取，外部点击/Escape 由工具栏统一消散
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -66,6 +66,7 @@ export function CanvasHelpPopover({ id, open, onClose, anchorRef, panelRef }: Ca
         <section className="canvas-help-section" aria-label={t("在画布上", "On the canvas")}>
           <h3>{t("在画布上", "On the canvas")}</h3>
           <dl>
+            <HelpRow action={t("增选 / 取消一篇", "Add / remove selection")}><span>Shift + {t("点击", "click")}</span></HelpRow>
             <HelpRow action={t("查找笔记", "Find notes")}><KeyboardShortcut keys={["mod", "K"]} /></HelpRow>
             <HelpRow action={t("加入画布", "Add to canvas")}><span className="canvas-help-context">{t("搜索结果中", "In search results")}</span><KeyboardShortcut keys={["mod", "Enter"]} /></HelpRow>
             <HelpRow action={t("添加 / 编辑文字", "Add / edit text")}>{t("双击空白 / 文字", "Double-click space / text")}</HelpRow>

@@ -1,10 +1,11 @@
 /**
  * [INPUT]: 依赖 shared/api/client 统一 Bearer 请求、AI SDK UIMessage 与 memo DTO mapper
- * [OUTPUT]: 对外提供 AI_TOOL_REQUEST_TIMEOUT_MS、FoluneUIMessage、首开 bootstrap、单会话 content、增量 assistant message PATCH、无归档状态的 AI thread/message/reference/settings/command CRUD、Run apply/reject/undo/get 类型与响应归一化、今日额度 getAiDailyUsage/AiDailyUsage
+ * [OUTPUT]: 消息 metadata 恢复画布范围与只读身份，引用证据保存于 parts； 对外提供 AI_TOOL_REQUEST_TIMEOUT_MS、FoluneUIMessage、首开 bootstrap、单会话 content、增量 assistant message PATCH、无归档状态的 AI thread/message/reference/settings/command CRUD、Run apply/reject/undo/get 类型与响应归一化、今日额度 getAiDailyUsage/AiDailyUsage
  * [POS]: app/src/shared/api 的 AI Native V2 HTTP 与消息契约边界；首开和会话切换分别使用聚合读取，工具权限读取、命令与单条结果落库以 45 秒响应期限退出，写请求不重放；真实写入只经 api/chat
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
+import type { CanvasChatScope, CanvasChatSnapshot } from "./canvasChat";
 import type { UIMessage } from "ai";
 
 import { apiRequest } from "./client";
@@ -21,12 +22,16 @@ export type AiContextMemoSnapshot = {
 };
 
 export type AiMessageContextSnapshot = {
+  canvas?: CanvasChatSnapshot;
   primary: AiContextMemoSnapshot | null;
   references: AiContextMemoSnapshot[];
 };
 
 export type FoluneUIMessageMetadata = {
+  canvas_read_only?: boolean;
+  canvas_title?: string;
   context?: {
+    canvas?: CanvasChatScope;
     active_memo_id: string | null;
     reference_memo_ids: string[];
     revisions: Record<string, number>;
@@ -241,6 +246,7 @@ const mapAiMessages = (messages: AiMessage[]): AiMessage[] =>
     ...message,
     metadata: {
       ...message.metadata,
+      ...(message.context_snapshot?.canvas ? { canvas_read_only: true } : {}),
       ...(message.context_snapshot === null
         ? {}
         : { context_snapshot: message.context_snapshot }),

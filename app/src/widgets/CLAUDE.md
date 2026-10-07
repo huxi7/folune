@@ -113,7 +113,7 @@ TrashWorkspaceView.tsx: 回收站数据纯视图，以 locale 同步中英文案
 TrashWorkspace.test.tsx: 回收站纯视图回归测试，覆盖状态页、Folder 根不展开、永久删除/清空确认文案与防重复提交 服务端首帧验证隐藏骨架，不要求延迟结束前播报。
 AccountDialog.tsx: 关闭入口无重复提示；简中/英文个人资料/通用/账单/用量/账户五栏设置装配，标签随共享 locale 即时更新；文字侧栏、独立标题/关闭和嵌套卡片复用 account-center.css，PersistentView 保留表单实例；后台 Profile 刷新不清草稿，注册时间仅从 Auth 读取，订阅入口关闭模态后进入独立地址
 AccountProfilePanel.tsx: 头像上传格式提示统一 WarmTooltip； 双语设置个人资料栏，以基本信息/头像/简介嵌套卡片组织真实 Profile；后台刷新仅按 bio/username 合并未改草稿，停止输入 800ms 后串行 PATCH（无常驻自动保存提示），28px无图标白净按钮即时上传头像；成功保留可访问反馈，异常进入 Toast
-AccountSettingsPanel.tsx: 通用设置卡片，语言与外观各自分组，复用 Select 切换简中/English、无图标 SegmentedControl 切换跟随系统/白天/黑暗；主题与语言分别归共享状态边界所有
+AccountSettingsPanel.tsx: 主题切换复用共享compact滑块； 通用设置卡片，语言与外观各自分组，复用 Select 切换简中/English、无图标 SegmentedControl 切换跟随系统/白天/黑暗；主题与语言分别归共享状态边界所有
 AccountBillingPanel.tsx: 双语设置账单栏，以 locale 格式化账期，读取共享订阅事实展示方案/状态/周期/到期信息及真实空账单；支持刷新重试和28px「订阅」入口，不伪造支付记录
 AccountSecurityPanel.tsx: 双语账户生命周期栏，日期和加入天数随 locale 格式化，显示 Auth 真实注册时间（缺失则回退邮箱）并调用既有退出命令；带 pending/失败反馈，不添加未实现的注销按钮
 AccountUsagePanel.tsx: 双语文案、数字与日期同步消费 locale，只读消费共享 BillingProvider 的当前方案和真实已记账日用量，以大数字、进度条、当前周期、剩余积分及本地化重置时刻呈现；10,000 token 折为 1 积分，门禁只认后端 exceeded，刷新保留旧值并允许重试，升级使用28px流光入口进入独立订阅页

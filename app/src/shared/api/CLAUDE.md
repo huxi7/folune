@@ -2,13 +2,14 @@
 > L2 | 父级: ../CLAUDE.md
 
 成员清单
+canvasChat.ts: 提供只读画布问答的范围、快照与证据契约
 payments.ts: 当前付款的权威查询与旧报价标识；统一校验供应商 HTTPS 链接，Web 同页导航避免弹窗拦截，桌面沿宿主打开系统浏览器。
 payments.test.ts: 验证 Web 同页导航、桌面系统浏览器交接，以及协议/主机/凭据/端口非法链接拒绝。
 CLAUDE.md: 定义浏览器业务 API 边界、依赖方向与文档回环协议
 access-token.ts: 无环境副作用的长会话鉴权决策层，优先当前认证会话，只在无会话时回退显式 access token 快照
 client.ts: 匿名只读 publicApiRequest 与鉴权 apiRequest 共用传输/信封/错误/取消边界；唯一后端 HTTP 中枢，以 access-token 策略请求期读取可自动刷新的当前认证会话，统一注入 Bearer、透传 AbortSignal、区分 JSON/FormData、解析信封并收敛错误
 client.test.ts: 长会话鉴权回归门禁，锁定刷新后的 session token 覆盖路由旧快照且显式 token 只作无会话兜底
-ai.ts: 工具权限、命令与单条消息同步 45 秒响应期限，超时不重放写请求；AI Native V2 HTTP/消息边界，定义 FoluneUIMessage 冻结 context metadata，并集中暴露首开 bootstrap、单会话 content 聚合读取、增量 assistant message PATCH、无归档 Thread/Message/Reference、账号权限、Command 与 Run 命令、今日额度 getAiDailyUsage(GET /ai-usage，返回 token 口径的已用/上限/剩余/exceeded，折算成用户「额度」的职责归 UI 层)
+ai.ts: 消息 metadata 恢复画布范围与只读身份，引用证据保存于 parts；工具权限、命令与单条消息同步 45 秒响应期限，超时不重放写请求；AI Native V2 HTTP/消息边界，定义 FoluneUIMessage 冻结 context metadata，并集中暴露首开 bootstrap、单会话 content 聚合读取、增量 assistant message PATCH、无归档 Thread/Message/Reference、账号权限、Command 与 Run 命令、今日额度 getAiDailyUsage(GET /ai-usage，返回 token 口径的已用/上限/剩余/exceeded，折算成用户「额度」的职责归 UI 层)
 ai-messages.test.ts: AI 消息读取/写入 HTTP 契约测试，锁定首开 bootstrap、切换 content 均为单请求且恢复冻结 context，并保留 approval-responded 兼容写回
 ai-command-request.test.ts: 命令请求携带期限/幂等键、取消失联请求且禁止自动重放的 HTTP 门禁
 ai-settings.test.ts: 审批设置 HTTP 契约测试，锁定 GET/PATCH 路径、Bearer、body、后端确认模式与失败拒绝语义

@@ -16,7 +16,7 @@ ShaderGlow.test.tsx: 使用可控 WebGL/Observer/RAF 验证 StrictMode 首帧、
 GlowButton.tsx: 透传原生 button 属性/ref，认证页可用 Motion 组合按压；墨蓝渐变、ShaderGlow 与玻璃高光共享裁剪，默认消费全站 press 与 spinner，认证局部状态由 auth.css 拥有。
 Skeleton.tsx: 统一低对比占位加载原语，提供 rect/text/circle 形状、单组无模糊掠光 SkeletonGroup 与 180ms 延迟出现/内容就绪立即退出的 useDelayedSkeleton；显式最短展示可选，隐藏时不宣告忙碌；业务只按真实内容结构组合，不自建动画或计时器
 SidebarButton.tsx: title 与 icon 模式可访问名称复用原位 WarmTooltip，保留原生ref并对外层提示去重； 本地 32px compact 侧栏导航原子组件，以 active、default/icon 等高尺寸、default/prominent 层级和 leading/label/trailing 槽位统一 APP 与账户模态框导航；与 36px Button 共享平滑圆角和材质语言但不强制等高，hover 固定原位，选中态和 prominent 态直接复用弱边缘的 Secondary Button 材质
-SegmentedControl.tsx: 紧凑互斥选择，保留 radiogroup/radio、单一 Tab 入口和方向键；只有共享选中底片做 layout 迁移，文字固定原位，减少动态效果取消底片滑动
+SegmentedControl.tsx: compact 尺寸统一主题与来源的32px白亮滑块； 紧凑互斥选择，保留 radiogroup/radio、单一 Tab 入口和方向键；只有共享选中底片做 layout 迁移，文字固定原位，减少动态效果取消底片滑动
 Input.tsx: 本地 36px 默认 Input 组件，使用 14px/20px 表单文字，封装 V1 语义边框、内凹背景、placeholder、focus 与原生 ref 能力
 MentionInput.tsx: 原生 contenteditable 多行输入件，以受控纯文本和不可编辑 token 同构承载 AI Composer；普通正文使用 foreground，已选 @笔记使用 primary，原生粘贴只接收纯文本
 MentionInput.test.ts: MentionInput 纯文本分段回归测试，锁定中文标题、最长标题优先和特殊字符标题的内联 token 边界

@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖可信 AuthUser、请求期 JWT、AI settings/command DTO、HttpError 与 aiRepository
- * [OUTPUT]: 对外提供默认完全访问、并发初始化不覆盖选择的账号权限读写，以及命令查询、创建、人工批准、拒绝和冲突安全撤销
+ * [OUTPUT]: 执行前依据持久消息拒绝画布问答写命令，历史普通命令仍可撤销； 对外提供默认完全访问、并发初始化不覆盖选择的账号权限读写，以及命令查询、创建、人工批准、拒绝和冲突安全撤销
  * [POS]: service 层 AI Native V2 可信执行入口，将 Postgres 状态机结果映射成稳定 HTTP 领域错误，不执行模型审批
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -89,6 +89,17 @@ export const aiCommandService = {
     accessToken: string,
     input: CreateAiCommandInput,
   ) {
+    if (input.thread_id) {
+      const messages = await aiRepository.listMessages(authUser.id, input.thread_id, accessToken);
+      const owner = messages.find(message => message.role === "assistant" && message.parts.some(part => {
+        if (!part || typeof part !== "object") return false;
+        const id = (part as { toolCallId?: unknown }).toolCallId;
+        return typeof id === "string" && (input.tool_call_id === id || input.tool_call_id?.startsWith(`${id}:`));
+      }));
+      if ((owner ?? messages.at(-1))?.context_snapshot?.canvas) {
+        throw new HttpError(403, "AI_CANVAS_READ_ONLY", "画布问答不能修改笔记。");
+      }
+    }
     return resolveCommandResult(
       await aiRepository.createCommand(authUser.id, input, accessToken),
     );

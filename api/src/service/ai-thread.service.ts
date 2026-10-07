@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖可信 AuthUser、请求期 JWT、AI thread/message/reference DTO、AI repository 与 HttpError
- * [OUTPUT]: 对外提供并发读取详情/完整会话内容的无归档会话 CRUD、历史/thread/settings/context 同步收口失败的聊天 turn 准备、增量消息同步/自动标题和会话级引用原子替换用例
+ * [OUTPUT]: 消息准备恢复可信画布范围与只读身份，冻结图版本并保留在同轮回复； 对外提供并发读取详情/完整会话内容的无归档会话 CRUD、历史/thread/settings/context 同步收口失败的聊天 turn 准备、增量消息同步/自动标题和会话级引用原子替换用例
  * [POS]: service 层 AI 会话业务边界；切换读取把 thread/ref/messages 并发收口为一次 HTTP 响应，保证默认标题一次性生成、parts 保真与最多五篇去重引用
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -21,6 +21,7 @@ import type {
   ResolvedAiContext,
 } from "../model/ai.model.ts";
 import { aiSettingsService } from "./ai-command.service.ts";
+import { resolveCanvasChat } from "./canvas-chat.service.ts";
 import { aiContextService } from "./ai-context.service.ts";
 import { aiRepository } from "../repository/ai.repository.ts";
 
@@ -60,6 +61,7 @@ const readMessageSnapshot = (
 const contextSnapshot = (
   context: ResolvedAiContext,
 ): NonNullable<MessageContextSnapshot> => ({
+  ...(context.canvas ? { canvas: context.canvas } : {}),
   primary: context.primary === null
     ? null
     : {
@@ -403,22 +405,38 @@ const prepareChatTurn = async (
     input.thread_id,
     accessToken,
   );
-  const historyPromise = input.messages === undefined
-    ? aiRepository.listMessages(authUser.id, input.thread_id, accessToken)
-    : Promise.resolve<AiMessage[]>([]);
+  const continuing = (input.message ?? input.messages?.at(-1))?.role === "assistant";
+  // 续写和重新生成读取已保存范围，客户端不能剥掉本轮只读身份。
+  const historyPromise = aiRepository.listMessages(authUser.id, input.thread_id, accessToken);
   // 权限与 thread 校验彼此独立；先与 context/history 一起启动，关键路径只汇合一次。
   const settingsPromise = aiSettingsService.get(authUser, accessToken);
-  const contextPromise = aiContextService.resolveForThread(
-    authUser,
-    accessToken,
-    {
-      thread_id: input.thread_id,
-      active_memo_id: input.active_memo_id,
-      reference_memo_ids: input.reference_memo_ids,
-      expected_revisions: input.expected_revisions,
-      include_thread_references: input.include_thread_references,
-    },
-  );
+  const contextPromise = (async () => {
+    const history = await historyPromise;
+    const requestedUser = input.message?.role === "user" ? input.message : input.messages?.findLast(m => m.role === "user");
+    const savedUser = continuing ? history.findLast(m => m.role === "user") : history.find(m => m.id === requestedUser?.id && m.role === "user");
+    const saved = savedUser?.context_snapshot;
+    const scope = saved?.canvas ?? input.canvas;
+    const [result, freshCanvas] = await Promise.all([
+      aiContextService.resolveForThread(authUser, accessToken, {
+        thread_id: input.thread_id,
+        active_memo_id: input.active_memo_id,
+        reference_memo_ids: input.reference_memo_ids,
+        expected_revisions: input.expected_revisions,
+        include_thread_references: scope ? false : input.include_thread_references,
+        ...(scope && saved ? {
+          active_memo_id: saved.primary?.memo_id ?? null,
+          reference_memo_ids: saved.references.map(m => m.memo_id),
+          expected_revisions: Object.fromEntries([...saved.references, ...(saved.primary ? [saved.primary] : [])].map(m => [m.memo_id, m.revision])),
+        } : {}),
+      }),
+      scope ? resolveCanvasChat(authUser, accessToken, scope) : Promise.resolve(undefined),
+    ]);
+    if (scope) {
+      // 已冻结图保留原关系；仍重新检查用户可访问这张画布。
+      result.canvas = saved?.canvas ?? freshCanvas;
+    }
+    return result;
+  })();
 
   const [thread, settings, resolvedContext, existingHistory] = await Promise.all([
     threadPromise,
@@ -440,10 +458,9 @@ const prepareChatTurn = async (
       ? { ...message, context_snapshot: snapshot }
       : message,
   );
-  const preparedMessages = prepareResponseMessages(
-    withSnapshot,
-    input.response_message_id,
-  );
+  const preparedMessages = prepareResponseMessages(withSnapshot, input.response_message_id).map(message =>
+    message.id === input.response_message_id && snapshot.canvas ? { ...message, context_snapshot: snapshot } : message);
+
 
   if (input.message !== undefined) {
     await persistPreparedDelta(

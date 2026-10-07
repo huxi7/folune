@@ -71,3 +71,7 @@ describe("readFrozenTurnContext", () => {
     expect(isAssistantContinuation([{ role: "user" }, { role: "assistant" }])).toBe(true);
   });
 });
+
+test("损坏的画布范围不能降级为普通可写请求", () => {
+  expect(() => readFrozenTurnContext([{ role: "user", metadata: { context: { active_memo_id: null, reference_memo_ids: [], canvas: { canvas_id: "invalid" } } } }], null)).toThrow("Invalid frozen canvas context");
+});

@@ -1,10 +1,18 @@
 /**
  * [INPUT]: 依赖设计系统的半径/曲线配对规则与 index.css 的 Button 高度、smooth corner、表面、文字、focus 与 motion 语义 token
- * [OUTPUT]: 对外提供无内凹阴影、无凸起位移、确定性中性灰轨道与纯白选中片段的 SegmentedControl
+ * [OUTPUT]: 对外提供无内凹阴影、无凸起位移、确定性中性灰轨道；compact 复用主题白亮底片与32px几何的 SegmentedControl
  * [POS]: app/src/styles 的互斥选择原子样式，只塑造 SegmentedControl，不复制 Button 或 Select 材质
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 @layer components {
+  .ds-segmented-control[data-size="compact"] { --ds-radius-segmented-compact: 24px; --segmented-indicator-surface: var(--popover); height: 32px; padding: 1px 2px; gap: 0; border-radius: var(--ds-radius-segmented-compact); corner-shape: var(--corner-shape-smooth); background: var(--app-theme-track, var(--surface-neutral)); }
+  .ds-segmented-control[data-size="compact"] .ds-segmented-control-option { flex: 1; min-width: 0; height: 28px; min-height: 28px; padding: 0 12px; font-size: 12px; font-weight: 500; line-height: 17.1429px; border-radius: var(--ds-radius-segmented-compact); corner-shape: var(--corner-shape-smooth); }
+
+  .ds-segmented-control[data-size="compact"] .ds-segmented-control-indicator {
+    border-radius: var(--ds-radius-segmented-compact); corner-shape: var(--corner-shape-smooth); background: var(--popover);
+    box-shadow: 0 1px 3px color-mix(in srgb, var(--shadow-color) 8%, transparent), 0 1px 2px color-mix(in srgb, var(--shadow-color) 4%, transparent);
+  }
+
   .ds-segmented-control {
     display: inline-grid;
     height: var(--button-height-default);

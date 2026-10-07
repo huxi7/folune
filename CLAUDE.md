@@ -6,7 +6,7 @@ Folune 是面向需要长期积累备忘录的用户的 AI Native 备忘录软�
 ## 本质
 Folune 的本质不是普通文本收纳，而是把“随手写”转化为“自动有序沉淀”。
 
-用户只负责记录。系统在消息级冻结当前笔记、@引用与 revision，账号权限默认完全访问并保留用户后续明确选择；智能审批模式才调用无工具无记忆的独立审批 Agent。发送须等当前账号权限确认，初始化不得覆盖已保存选择；所有写操作仍经可撤销命令台账维护文件 tree。模型只在用户显式发送消息或触发整理时运行，autosave 不唤醒模型。
+用户只负责记录。系统在消息级冻结当前笔记、@引用与 revision，账号权限默认完全访问并保留用户后续明确选择；智能审批模式才调用无工具无记忆的独立审批 Agent。普通会话发送须等当前账号权限确认，画布只读问答不依赖写审批选择，初始化不得覆盖已保存选择；所有写操作仍经可撤销命令台账维护文件 tree。模型只在用户显式发送消息或触发整理时运行，autosave 不唤醒模型。
 
 ## 商业模式
 订阅与积分直购并存。
@@ -29,7 +29,7 @@ AI 是用户的备忘录协作伙伴与智能档案管理员。
 全栈 TypeScript，三个云端/Web 业务模块与独立 Electron 桌面宿主组成。
 
 - app: 用户端，Bun + Vite 8 + React 19 + React Router 7 + Zustand 5 + Motion for React 12 + @xyflow/react 12 + CodeMirror 6/Lezer Markdown + react-markdown/remark/rehype-sanitize + Vercel AI SDK 6 (`@ai-sdk/react`) + `@mastra/client-js` + zod 4 + canvas-confetti + Kumo UI 2 + Tailwind CSS v4 + 本地 design system（含同源 Motion token 与完整入退场原语）+ Lucide React + Supabase Auth SDK
-- chat: AI 能力服务，Bun + Mastra 1.57 + `@mastra/ai-sdk` + Vercel AI SDK 6 + zod 4；模型白名单只含 DeepSeek V4 Flash 且拒绝任何切换；对话/审批/整理三个 Agent 分离，模型只见 read_tree/read_memo/edit_memo/edit_node 四个原子笔记工具、明确清单的 edit_nodes 批量工具与 celebration
+- chat: AI 能力服务，Bun + Mastra 1.57 + `@mastra/ai-sdk` + Vercel AI SDK 6 + zod 4；模型白名单只含 DeepSeek V4 Flash 且拒绝任何切换；对话/审批/整理三个 Agent 分离，普通模式模型只见 read_tree/read_memo/edit_memo/edit_node、edit_nodes 与 celebration；画布问答仅见分页只读与引用核对工具
 - api: 业务接口服务，Bun + Hono 4 + zod 4 + Supabase REST/PostgREST/Storage HTTP API；普通业务以用户 JWT 访问；支付仓储使用无 BYPASSRLS 的专用 folune_billing JWT，仅获支付/用量权限，禁止 service role、连接串与 ORM
 
 认证分流：GitHub 只按已验证的 primary 邮箱匹配。备用邮箱不参与匹配或建号；匹配已有账号自动关联，没有匹配自动建号。使用 Custom OAuth2 和 API 只读 userinfo，Supabase 继续签发会话；Google 仍沿原链路，不增加账号选择页。
@@ -69,3 +69,15 @@ Canvas V2 是一级持久知识 Workspace：memo 默认 Canvas 与 standalone Ca
 | .gitignore | 根级本地环境、构建缓存、系统文件与未接入路由的图标研究页忽略规则 |
 | .mcp.json | 团队共享的 Supabase MCP 接入声明。八个 feature 组全开（account/branching/database/debugging/development/docs/functions/storage）；**无 `project_ref`** 故 account 组可用、作用域为账号下全部项目；**无 `read_only`** 故具备完整写能力。`[决策: 所有者 · 2026-08-23]` —— 「api 是唯一持久化边界」对**运行时代码**依然绝对有效，MCP 写能力仅是部署与运维动作的通道，不构成绕过 api 读写业务数据的许可。文件不含密钥，OAuth 凭据留在本地 keychain |
 | docker-compose.dev.yml | 固定 Compose 项目名、容器名、镜像网络和依赖卷前缀为 folune；从各模块私有 `.env` 注入凭据并编排 Folune API/Chat 双服务与独立健康探针；集中维护整理自动应用置信阈值，chat 启动前清理容器 PID 复用导致的陈旧 Mastra 开发锁，并直启 CLI 接收停止信号 |
+
+## Canvas 只读问答
+
+同一 Folune AI 支持当前画布与 @画布。
+问答范围可选整图或精确笔记清单。
+画布选中仅在显式命令时复制为来源。
+发送前同步画布，API 冻结范围与图版本。
+Chat 只注入分页读取和引文核对工具。
+正文按段读取，引用须匹配本轮已读原文。
+引用证据随回复 parts 保存，底部浮层查看。
+Canvas 问答不执行笔记或画布写命令。
+普通历史写操作仍保留原有撤销。

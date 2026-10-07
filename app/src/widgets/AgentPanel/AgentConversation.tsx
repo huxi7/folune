@@ -1,10 +1,16 @@
 /**
- * [INPUT]: 依赖 WarmTooltip 原位功能提示；依赖 locale、账号权限确认、useConversationScroll、DS 原语、useAiThreads、useChat/审批及既有工具执行边界
- * [OUTPUT]: 对外提供常驻 AgentConversation 与真实处理/审批/完成状态；只读工具参数到齐即并发执行，写工具经过流末审批门禁后最多八项并发，停止取消排队、保存本批结果并阻断自动续写；整轮活动跨客户端工具/审批/续写持续，消息定点同步并以本地快照快速回显
+ * [INPUT]: 依赖 ComposerSourceChip 同构引用与 WarmTooltip 原位功能提示；依赖 locale、账号权限确认、useConversationScroll、DS 原语、useAiThreads、useChat/审批及既有工具执行边界
+ * [OUTPUT]: 画布来源跨追问保持，只有明确操作复制选择；只读轮拒绝客户端工具与恢复执行； 对外提供常驻 AgentConversation 与真实处理/审批/完成状态；只读工具参数到齐即并发执行，写工具经过流末审批门禁后最多八项并发，停止取消排队、保存本批结果并阻断自动续写；整轮活动跨客户端工具/审批/续写持续，消息定点同步并以本地快照快速回显
  * [POS]: AgentPanel 的单会话执行与输入边界；新对话立即进入本地草稿，首发创建期间保持同一 useChat 与消息实例；历史只负责导航，目标会话加载/失败在内容窗承接；api command 是唯一写事实源，Store 只做幂等投影与回滚
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
+import type { CanvasCitation } from "../../shared/api/canvasChat";
+import { CanvasCitations } from "./CanvasCitations";
+import { ComposerSourceChip } from "./ComposerSourceChip";
+import { CanvasSourcePicker } from "./CanvasSourcePicker";
+import { useCanvasChatSource } from "./useCanvasChatSource";
+import { canvasMentionResults, canvasTurnIsReadOnly } from "./canvasChatSources";
 import WarmTooltip from "../../shared/design-system/components/WarmTooltip";
 import { useConversationScroll } from "./useConversationScroll";
 import { useMotionPreference } from "../../shared/design-system/useMotionPreference";
@@ -17,7 +23,6 @@ import {
   PushPinIcon,
   StopIcon,
   WarningCircleIcon,
-  XIcon,
 } from "../../shared/design-system/icons";
 import {
   type FormEvent,
@@ -65,7 +70,6 @@ import {
 import {
   addComposerSource,
   buildFrozenComposerContext,
-  MAX_COMPOSER_SOURCES,
   reconcileComposerSources,
   settleComposerSourcesAfterSend,
   syncManualComposerSources,
@@ -101,6 +105,8 @@ import { normalizeAgentToolName } from "./toolPresentation";
 import { useMemoSearch } from "../useMemoSearch";
 import { useLocale } from "../../shared/locale";
 type ConversationProps = {
+  currentCanvas?: { id: string; title: string } | null;
+  onPrepareCanvas?: (id: string) => Promise<void>;
   onPresenceChange?: (presence: AgentPresence) => void;
   accessToken: string;
   currentMemo: MemoTreeNode | null;
@@ -121,6 +127,7 @@ type ConversationProps = {
   userId: string;
 };
 export function AgentConversation({
+  currentCanvas, onPrepareCanvas,
   onPresenceChange,
   accessToken,
   currentMemo,
@@ -142,6 +149,9 @@ export function AgentConversation({
 }: ConversationProps) {
   const { t, locale } = useLocale();
   const [inputValue, setInputValue] = useState("");
+  const canvasSource = useCanvasChatSource({ accessToken, currentCanvas, initialMessages, hasDraft: inputValue.trim().length > 0, prepare: onPrepareCanvas });
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const submitting = useRef(false);
   const reduceMotion = Boolean(useMotionPreference());
   const present = useIsPresent();
   const [sources, setSources] = useState<ComposerSource[]>([]);
@@ -182,18 +192,13 @@ export function AgentConversation({
   const clientTools = useMemo(() => createAgentClientTools(), []);
   const reconcileAiCommand = useMemoTreeStore((state) => state.reconcileAiCommand);
   const rollbackAiToolCall = useMemoTreeStore((state) => state.rollbackAiToolCall);
-  const currentMemoSourceId = currentMemo?.node_type === "memo"
+  const currentMemoSourceId = !canvasSource.source && currentMemo?.node_type === "memo"
     ? currentMemo.id
     : null;
   const { bodyHitIds: mentionBodyHitIds } =
     useMemoSearch(accessToken, memoTree, mentionQuery, 20);
   const mentionResults = useMemo(
-    () => getMentionResults(
-      memoTree,
-      mentionQuery,
-      sources.map((source) => source.id),
-      mentionBodyHitIds,
-    ),
+    () => [...getMentionResults(memoTree, mentionQuery, sources.map(source => source.id), mentionBodyHitIds), ...canvasMentionResults(memoTree, mentionQuery)],
     [memoTree, mentionBodyHitIds, mentionQuery, sources],
   );
   const inlineMentions = useMemo(
@@ -234,11 +239,11 @@ export function AgentConversation({
     messages: initialMessages,
     transport,
     experimental_throttle: 32,
-    sendAutomaticallyWhen: (options) => !turnStopped.current && lastAssistantMessageIsCompleteWithToolCalls(options),
+    sendAutomaticallyWhen: (options) => !turnStopped.current && !canvasTurnIsReadOnly(options.messages) && lastAssistantMessageIsCompleteWithToolCalls(options),
     onToolCall: ({ toolCall }) => {
       // 只读 I/O 与剩余模型流、审批和落账重叠；不 await 阻塞 SDK 消费下一个调用。
       // 结果仍由 onFinish 统一发布，停止/失败时不把迟到结果写进下一条消息。
-      if (toolCall.toolName === "read_tree" || toolCall.toolName === "read_memo") {
+      if (!canvasTurnIsReadOnly(messagesRef.current) && (toolCall.toolName === "read_tree" || toolCall.toolName === "read_memo")) {
         void getClientToolExecution({
           type: "dynamic-tool", toolName: toolCall.toolName,
           toolCallId: toolCall.toolCallId, input: toolCall.input, state: "input-available",
@@ -298,6 +303,7 @@ export function AgentConversation({
     const existing = memoToolExecutions.current.get(part.toolCallId);
     if (existing !== undefined) return existing;
     const toolName = getToolName(part);
+    if (canvasTurnIsReadOnly(messagesRef.current)) return Promise.reject(new Error("画布问答不执行客户端操作。"));
     executionStore.set(part.toolCallId, { state: "queued" });
     const execution = (async () => {
       if (toolName === "edit_nodes") {
@@ -401,7 +407,7 @@ export function AgentConversation({
   }
   const streamBusy = status === "submitted" || status === "streaming";
   const busy = streamBusy || respondingApprovalId !== null || clientToolsRunning;
-  const composerBusy = useAgentPanelStore((state) => !isPermissionReady(state, userId)) || busy;
+  const composerBusy = useAgentPanelStore((state) => !canvasSource.source && !isPermissionReady(state, userId)) || busy || canvasSource.preparing || Boolean(canvasSource.source && (!canvasSource.detail || (canvasSource.source.mode === "selected" && !canvasSource.source.memoIds.length)));
   const lastMessage = messages.at(-1);
   const activity = deriveAssistantActivity(
     status,
@@ -505,6 +511,7 @@ export function AgentConversation({
   // oxlint-disable react-hooks/exhaustive-deps -- recoveredToolCalls 已按 toolCallId 保证幂等
   useEffect(() => {
     if (turnStopped.current) return;
+    if (canvasTurnIsReadOnly(messages)) return;
     const recoverable = findRecoverableTools(messages);
     for (const part of recoverable) {
       if (!isAgentClientToolName(clientTools, getToolName(part))
@@ -520,6 +527,8 @@ export function AgentConversation({
     }
   }, [clientTools, messages]);
   // oxlint-enable react-hooks/exhaustive-deps
+
+  const renderCitations = useCallback((citations: CanvasCitation[]) => <CanvasCitations citations={citations} accessToken={accessToken} />, [accessToken]);
 
   const undoAssistantTurn = useCallback(async (commands: readonly AiCommand[]) => {
     for (const command of reverseCommandsForUndo(commands)) {
@@ -577,7 +586,8 @@ export function AgentConversation({
       if ((event.key === "Enter" || event.key === "Tab") && mentionResults[mentionIndex]) {
         event.preventDefault();
         const selected = mentionResults[mentionIndex];
-        setSources((current) => addComposerSource(current, selected));
+        if (selected.kind === "canvas") canvasSource.select(selected.id, selected.title);
+        else setSources((current) => addComposerSource(current, selected));
         setInputValue((current) => mentionStart === null ? current : current.slice(0, mentionStart));
         setMentionOpen(false);
         setMentionStart(null);
@@ -603,13 +613,13 @@ export function AgentConversation({
     })) return;
     event.preventDefault();
     if (canSubmitComposer(inputValue, composerBusy)) event.currentTarget.closest("form")?.requestSubmit();
-  }, [composerBusy, inputValue, mentionIndex, mentionOpen, mentionResults, mentionStart]);
+  }, [canvasSource, composerBusy, inputValue, mentionIndex, mentionOpen, mentionResults, mentionStart]);
 
   const handleInputChange = useCallback((value: string) => {
     setInputValue(value);
     setSources((current) => syncManualComposerSources(current, value));
     const match = value.match(/(?:^|\s)@([^\s@]*)$/u);
-    if (match === null || sources.length >= MAX_COMPOSER_SOURCES) {
+    if (match === null) {
       setMentionOpen(false);
       setMentionStart(null);
       setMentionQuery("");
@@ -620,30 +630,36 @@ export function AgentConversation({
     setMentionQuery(match[1] ?? "");
     setMentionIndex(0);
     setMentionOpen(true);
-  }, [sources.length]);
+  }, []);
 
   const selectMention = useCallback((mention: MentionResult) => {
-    setSources((current) => addComposerSource(current, mention));
+    if (mention.kind === "canvas") canvasSource.select(mention.id, mention.title);
+    else setSources((current) => addComposerSource(current, mention));
     setInputValue((current) => {
       if (mentionStart === null) return current;
       const mentionEnd = mentionStart + mentionQuery.length + 1;
       const suffix = current.slice(mentionEnd).replace(/^\s+/u, "");
-      return `${current.slice(0, mentionStart)}@${mention.title} ${suffix}`;
+      return mention.kind === "canvas" ? `${current.slice(0, mentionStart)}${suffix}` : `${current.slice(0, mentionStart)}@${mention.title} ${suffix}`;
     });
     setMentionOpen(false);
     setMentionStart(null);
     setMentionQuery("");
     composerRef.current?.focus();
-  }, [mentionQuery.length, mentionStart]);
+  }, [canvasSource, mentionQuery.length, mentionStart]);
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const text = inputValue.trim();
-    if (!canSubmitComposer(inputValue, busy) || !isPermissionReady(useAgentPanelStore.getState(), userId)) return;
-    clearError();
+    if (submitting.current || !canSubmitComposer(inputValue, composerBusy) || (!canvasSource.source && !isPermissionReady(useAgentPanelStore.getState(), userId))) return;
+    submitting.current = true;
+    clearError(); setSubmitError(null);
+    let canvas;
     try {
       await onPrepareMutation();
-      if (!isPermissionReady(useAgentPanelStore.getState(), userId)) return;
-    } catch {
+      canvas = await canvasSource.freeze();
+      if (!canvasSource.source && !isPermissionReady(useAgentPanelStore.getState(), userId)) { submitting.current = false; return; }
+    } catch (e) {
+      submitting.current = false;
+      setSubmitError(e instanceof Error ? e.message : t("来源准备失败，请重试。", "Unable to prepare sources. Please retry."));
       return;
     }
     turnStopped.current = false;
@@ -661,23 +677,25 @@ export function AgentConversation({
       await sendMessage({
         text,
         metadata: {
-          context: frozen.context,
+          ...(canvas ? { canvas_title: canvasSource.source?.title, canvas_read_only: true } : {}),
+          context: { ...frozen.context, ...(canvas ? { canvas } : {}) },
           context_display: frozen.display,
         },
       });
     } catch {
-      // useChat 维护 error；下一次请求或后台校准会把服务端状态重新对齐。
-    }
+      setInputValue(text);
+      // useChat 维护请求错误，保留问题供再次发送。
+    } finally { submitting.current = false; }
   }
   return (
     <div className="agent-panel-body">
       <ToolExecutionContext.Provider value={executionStore}>
       <div aria-busy={busy} aria-live="polite" className="agent-message-list" ref={messageListRef} role="log">
         {displayMessages.map((message, index) => index === displayLiveAssistantIndex ? null : (
-          <ChatMessage activity="none" key={message.id} message={message} onProgress={scrollToLatestAuto} onUndo={undoAssistantTurn} />
+          <ChatMessage renderCitations={renderCitations} activity="none" key={message.id} message={message} onProgress={scrollToLatestAuto} onUndo={undoAssistantTurn} />
         ))}
         {busy || liveAssistantMessage ? (
-          <LiveAssistantTurn activity={activity} key="live-assistant" message={displayLiveAssistantIndex >= 0 ? displayMessages[displayLiveAssistantIndex] : undefined} onProgress={scrollToLatestAuto} onUndo={undoAssistantTurn} />
+          <LiveAssistantTurn renderCitations={renderCitations} activity={activity} key="live-assistant" message={displayLiveAssistantIndex >= 0 ? displayMessages[displayLiveAssistantIndex] : undefined} onProgress={scrollToLatestAuto} onUndo={undoAssistantTurn} />
         ) : null}
       </div>
       </ToolExecutionContext.Provider>
@@ -701,9 +719,18 @@ export function AgentConversation({
         animate="visible"
         variants={contentEntranceVariants(reduceMotion)}
       >
+        {submitError ? <p className="agent-source-error" role="alert">{submitError}</p> : null}
         <MentionMenu open={mentionOpen} activeIndex={mentionIndex} onSelect={selectMention} results={mentionResults} />
-        {visibleContextSources.length > 0 ? <div className="agent-composer-sources">{visibleContextSources.map((source) => {
-          return <span key={source.id}>
+        {canvasSource.source || visibleContextSources.length > 0 ? <div className="agent-composer-sources">
+          <CanvasSourcePicker state={canvasSource} currentCanvas={currentCanvas} disabled={busy || canvasSource.preparing} />
+          {visibleContextSources.map((source) => {
+          return <ComposerSourceChip key={source.id}
+            removeLabel={`${t("移除引用", "Remove reference")} ${source.title}`}
+            onRemove={() => void (async () => {
+              if (source.pinned) await onReferencesChange(pinnedIds.filter((id) => id !== source.id));
+              if (source.current) setSuppressedCurrentMemoId(source.id);
+              setSources((current) => current.filter((item) => item.id !== source.id));
+            })()}>
             <AtIcon size={14} /><strong>{source.title}</strong>
             <WarmTooltip asChild content={source.pinned ? t("取消置顶", "Unpin reference") : t("置顶引用", "Pin reference")}>
               <button aria-label={`${source.pinned ? t("取消置顶", "Unpin reference") : t("置顶引用", "Pin reference")} ${source.title}`}
@@ -711,18 +738,11 @@ export function AgentConversation({
                 <PushPinIcon fill={source.pinned ? "currentColor" : "none"} size={14} />
               </button>
             </WarmTooltip>
-            <WarmTooltip asChild content={t("移除引用", "Remove reference")}>
-              <button aria-label={`${t("移除引用", "Remove reference")} ${source.title}`} onClick={() => void (async () => {
-                if (source.pinned) await onReferencesChange(pinnedIds.filter((id) => id !== source.id));
-                if (source.current) setSuppressedCurrentMemoId(source.id);
-                setSources((current) => current.filter((item) => item.id !== source.id));
-              })()} type="button"><XIcon size={14} /></button>
-            </WarmTooltip>
-          </span>;
+          </ComposerSourceChip>;
         })}</div> : null}
         <MentionInput aria-label={t("输入消息", "Message")} className="agent-chat-input" mentions={inlineMentions} onKeyDown={handleComposerKeyDown} onValueChange={handleInputChange} placeholder={t("输入消息，@ 引用笔记…", "Write a message, @ to reference notes…")} ref={composerRef} value={inputValue} />
         <div className="agent-composer-footer">
-          <PermissionModeControl accessToken={accessToken} busy={busy} compact userId={userId} />
+          {canvasSource.source ? <span className="agent-source-hint">{t("画布问答 · 只读", "Canvas chat · Read only")}</span> : <PermissionModeControl accessToken={accessToken} busy={busy} compact userId={userId} />}
           {streamBusy || clientToolsRunning ? (
             <Button aria-label={t("停止生成", "Stop generating")} className="agent-composer-action" icon={StopIcon} onClick={handleStop} size="square" type="button" variant="primary" />
           ) : (

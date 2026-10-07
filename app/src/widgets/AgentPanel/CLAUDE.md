@@ -2,17 +2,28 @@
 > L2 | 父级: ../CLAUDE.md
 
 成员清单
-AgentConversation.tsx: 引用置顶/移除原位显示 WarmTooltip，发送/停止由 Button 同源提供； 单会话Composer/流/审批/八并发工具执行与恢复边界；权限确认后发送，草稿首发保持实例，停止取消排队，后台同步真实消息/命令；完成提示仅来自本次实际处理结束
+ComposerSourceChip.tsx: 笔记和画布共用引用外壳与内部移除按钮；透传外壳 ref 供浮层对齐，状态由调用方持有
+useCanvasChatSource.ts: 提供当前画布默认引用、来源切换及发送前同步冻结
+canvasEvidence.ts: 提供去重后的引用清单，拒绝损坏消息数据
+canvasCitationFocus.ts: 提供引用定位事件名与发送函数
+canvasChatSources.ts: 提供问答来源选择、恢复与画布 @候选纯函数
+canvasChatSources.test.ts: 验证精确范围冻结、历史恢复与引用不随当前选择漂移
+canvasChat.css: 引用按钮与来源清单布局；来源浮层固定首尾，仅笔记清单滚动；浮层材质归共享设计系统
+CanvasSourcePicker.tsx: 浮层左沿对齐引用外壳，焦点归还内部按钮；复用笔记引用外壳与主题同款compact白色底片；顶部三段滑块切换全部/指定/选中，说明下方放搜索与清单；选中仅复制当次范围
+CanvasSourcePicker.test.tsx: 验证离屏来源选择、搜索保留、显式选择复制和浮层 Escape
+CanvasCitations.tsx: 底部按唯一笔记计数，关系与自由文字单列画布依据；打开时重验访问权，原文预览不提供编辑； 提供回复底部引用入口、短引文、原文预览和卡片定位
+AgentPopover.tsx: 提供来源选择与引用共用的原位非模态浮层；可选外壳决定水平对齐，触发按钮保留纵向定位与焦点
+AgentConversation.tsx: 画布来源跨追问保持，只有明确操作复制选择；只读轮拒绝客户端工具与恢复执行；引用置顶/移除原位显示 WarmTooltip，发送/停止由 Button 同源提供； 单会话Composer/流/审批/八并发工具执行与恢复边界；权限确认后发送，草稿首发保持实例，停止取消排队，后台同步真实消息/命令；完成提示仅来自本次实际处理结束
 chatErrorCopy.test.ts: SSE 余额错误显示专门标题，登录和通用错误分类保持
 batchCheckpoint.test.ts: 并行批次检查点串行合并不丢记录、末轮恢复与终态不重跑门禁
 batchRecovery.ts: 末条 assistant 的审批/检查点恢复候选纯判定，终态和旧轮次不重跑
 toolExecutionState.tsx: 会话隔离的 Zustand 执行事实上下文；按 toolCallId 订阅等待/执行/终态及批量快照，不从 SDK 参数状态猜测是否运行
-chatErrorCopy.ts: 中英错误分类只翻译界面，不改变服务端事实；HTTP/SSE 错误到用户可读标题与说明的纯适配，模型余额不足单独显示且不误导为网络失败，供会话组合根消费
+chatErrorCopy.ts: 画布范围失效明确提示重新选择，不误报普通网络错误；中英错误分类只翻译界面，不改变服务端事实；HTTP/SSE 错误到用户可读标题与说明的纯适配，模型余额不足单独显示且不误导为网络失败，供会话组合根消费
 batchCheckpoint.ts: 串行检查点写入，保存时从最新消息合并目标批次，不把进度当最终工具结果
 batchToolExecution.test.ts: 慢保存合并、失败检查点在途补取与双端 schema 同构、100项八并发与补位、失败/停止、初始落库门禁、幂等恢复和批量撤销验证
 batchToolExecution.ts: 批量预检与八槽共享调度；稳定子命令幂等键、整批初始检查点、每八项触发合并检查点，只保留在途及最新快照、失败取消本批排队及刷新恢复
 BatchToolProgress.tsx: 截断目标与失败原因使用 WarmTooltip 展示； 中英批量状态与读屏标签由locale驱动，目标标题保真；明确批次展示：不足十项直接展示；大量任务显示真实运行项、待执行数量和失败计数，新结果短暂显示勾叉但不占执行槽，完成记录一次展开，以固定行高虚拟列表控制 DOM
-AgentToolProgress.tsx: 工具读屏状态按locale投影，推理/正文不翻译；过程展示边界，原始推理与普通工具按顺序显示；转圈只来自实际运行状态，只有明确 edit_nodes 批次交由 BatchToolProgress 聚合
+AgentToolProgress.tsx: 服务端画布只读工具按真实输入和输出展示执行状态；工具读屏状态按locale投影，推理/正文不翻译；过程展示边界，原始推理与普通工具按顺序显示；转圈只来自实际运行状态，只有明确 edit_nodes 批次交由 BatchToolProgress 聚合
 clientToolQueue.ts: 共享工具队列最多八项并发，完成一项立即补位；停止取消排队而保留已提交结果
 clientToolQueue.test.ts: 98 项任务并发上限、单项失败释放执行槽、停止取消排队与后续队列复用门禁
 CLAUDE.md: 记录 AgentPanel 子域成员、依赖方向与 GEB 回环协议
@@ -20,7 +31,7 @@ AgentPanelHeader.tsx: 收起入口仅保留无障碍名称，历史/新建/窗�
 useConversationScroll.test.tsx: 验证首次非平滑定位与退出冻结、迟到内容回调不追尾
 useConversationScroll.ts: 消息滚动唯一边界，首次绘制前定位、退出取消平滑滚动并冻结位置，隐藏历史拒绝追尾
 AgentPanel.draft.test.tsx: 覆盖首开权限与保存期间按钮/Enter/直接提交不发送；子进程隔离、真实组件/Hook/SDK/transport，验证零写草稿、首发创建/引用/持续消息实例、失败重试、删除与迟到请求隔离
-AgentPanel.tsx: 历史/新对话导航与单会话装配；冷启动与切历史共用延迟消息/输入槽位，数据就绪即接管；接收外壳尺寸/放大收起动作，将聊天与整理的真实状态上报胶囊；AgentConversation身份不因场景/尺寸变化而重建
+AgentPanel.tsx: 同一会话接收画布来源和同步回调，不重建聊天窗口；历史/新对话导航与单会话装配；冷启动与切历史共用延迟消息/输入槽位，数据就绪即接管；接收外壳尺寸/放大收起动作，将聊天与整理的真实状态上报胶囊；AgentConversation身份不因场景/尺寸变化而重建
 AgentConversationSkeleton.tsx: 冷启动、目标会话与代码加载共用的纯加载构图；180ms 后显示消息文字、浅用户容器与输入/工具行，Composer 保留边框壳，不把输入区涂成整块；不持有请求或会话，真实内容就绪立即卸载
 AgentPanel.streaming.test.tsx: 余额不足退出思考、明确提示且不自动重发； 新增流内错误立即停止思考、不执行未确认写工具/自动续写门禁； 子进程隔离 mock，使用真实 useChat/AgentPanel、可控直通流与延迟工具结果，验证连续两轮工具/自动续写稳定、正文首分块在 text-end/finish-step 前已显示且只折叠一次，独立读写工具并发、98 项独立工具顺序展示、100项明确批量八并发与完成列表 DOM 有界，以及停止后不再启动待执行工具或自动续写
 AgentPanelNavigation.test.tsx: 会话切换交互回归门禁，以未完成内容请求锁定历史列表立即退出、目标标题与加载壳同步接管
@@ -29,7 +40,7 @@ approvalState.ts: 审批状态机纯领域层，只检查末条 assistant；统�
 approvalState.test.ts: 审批状态机回归测试，锁定同一 approval 只响应一次、拒绝不恢复、批准刷新可恢复及结果落地后退出恢复队列
 composerSources.ts: Prompt Bar 唯一上下文领域层；当前 memo 与置顶来源保持结构化上下文，手动 @笔记与正文 token 同步删除，全部来源去重、限五篇并生成同一冻结 metadata
 composerSources.test.ts: 覆盖当前 memo 默认来源、删除抑制、切换更新、手动/置顶去重、内联 mention 删除同步、发送冻结及发送后草稿来源收束
-MentionMenu.tsx: 中英菜单/空态标签独立于真实笔记名；Prompt Bar 与 Canvas Picker 共用的 memo 搜索纯函数及无状态 @列表；列表向上用 PresenceSurface 开合，查询、IME、选择生命周期由 Composer 持有
+MentionMenu.tsx: 菜单识别画布图标；普通 memo 搜索函数继续仅返回笔记；中英菜单/空态标签独立于真实笔记名；Prompt Bar 与 Canvas Picker 共用的 memo 搜索纯函数及无状态 @列表；列表向上用 PresenceSurface 开合，查询、IME、选择生命周期由 Composer 持有
 MentionMenu.test.ts: 覆盖空 @候选、搜索排除、revision、Canvas 节点隔离及轻量渲染结构
 PermissionModeControl.tsx: locale切换仅改视图，不重发或重置权限请求；当前账号三档权限视图，默认完全访问；API 确认后更新勾选，失败不冒充询问模式且同值可重试；保存独立于卸载/凭据刷新，菜单复用 PresenceSurface
 PermissionModeControl.test.tsx: 真实控件生命周期门禁，覆盖默认显示、刷新保留选择、保存中凭据刷新/重挂、旧账号结果隔离与同值重试
@@ -48,7 +59,7 @@ aiThreadCache.ts: 按用户隔离的 30 秒面板快照允许 selectedThread=nul
 aiThreadCache.test.ts: 锁定面板/逐会话快照的用户隔离、TTL、局部更新、目标删除与有界淘汰
 useAiThreads.ts: 会话与本地草稿控制器；新对话、空列表及删完最后一条都不写库，首次发送合并同一创建请求并保存草稿置顶引用，失败可复用已创建 ID；conversationKey 在落库时保持以延续 useChat，bootstrap/内容迟到不覆盖新选择；列表预热、逐会话缓存与流完成本地提交仍收口于此
 AgentProcessDisclosure.tsx: 中英处理状态保持同一披露生命周期；单条回复只自动收起一次：处理期展开，正文首分块同帧交接，130ms micro Collapse 与正文同时进行；只有跟随流式正文的自动收起才联动滚动，用户手动展开/收起一律留在原地不甩到底部；后续工具不能自动重开，用户回看独立，工具详情按需挂载
-ChatMessage.tsx: locale投影状态/工具动作/撤销，不触碰用户和AI正文；消息语义适配；原始推理即时显示，普通工具按序、明确批量按组，正文首次到达自动收起且允许手动回看；整轮终止后统一撤销成功命令
+ChatMessage.tsx: 引用渲染由正式会话注入，保持官网 Demo 无业务依赖； 回复底部共用操作行展示已验证引用，历史真实写命令仍独立撤销；locale投影状态/工具动作/撤销，不触碰用户和AI正文；消息语义适配；原始推理即时显示，普通工具按序、明确批量按组，正文首次到达自动收起且允许手动回看；整轮终止后统一撤销成功命令
 ChatMessage.interaction.test.tsx: 锁定整轮结束才显示撤销； 生产消息 DOM 生命周期回归，覆盖工具/审批间隙持续展开、正文即折叠、迟到活动不重开、手动回看、新消息重置及停止/失败
 ChatMessage.test.tsx: 首 token 前失败移除空思考占位；完整回复 DOM 契约测试，锁定单一过程区、审批条非模态且与消息解耦、单一整轮撤销、最终正文边界、冻结来源不污染消息与敏感 ID 屏蔽
 composerBehavior.ts: Composer 的纯交互判定，统一非空闲/空白提交保护，并把普通 Enter 与 Shift/修饰键/IME 组合输入严格分流
@@ -64,12 +75,12 @@ memoToolSchemas.ts: 与 Chat 同构的五工具输入契约；edit_nodes 只接�
 memoToolExecution.ts: 主线程可信协调器，把 Planner plan 映射到现有 ai_commands；read_memo 按可信 nodeId 单篇取正文，网络响应限期 45 秒且写请求不自动重放，超时明确结果未确认；写操作合并同凭据在途权限读取，分别协调 Tree/Document Store 的乐观投影、提交、对账与失败回滚
 messagePresentation.ts: 有序消息分区与单调正文发布；按调用去重，读取普通/批量结果及检查点收集成功命令，批次检查点不作为思考文字
 messagePresentation.test.ts: 回复分区纯函数测试，覆盖历史连续 assistant 归并、step/工具/过渡文字穿插、处理中正文不争抢、重复 toolCall 去重、成功 commands 整轮反向撤销、reasoning 归属和普通回复零过程区
-toolPresentation.ts: locale参数统一工具名称、状态与安全详情，原目标标题保持；单次扫描本轮读取/命令快照，为执行中与失败动作保留目标名，无额外 API 请求； SDK 回包与业务成功分离，failed/stale/rejected/undone 不显示成功勾；工具 Message UI 的唯一展示适配器，先归一化 namespaced 工具名，再基于真实操作、标题和状态生成人话动作及安全详情
+toolPresentation.ts: 画布来源、关系、正文读取与引用核对使用人话名称；locale参数统一工具名称、状态与安全详情，原目标标题保持；单次扫描本轮读取/命令快照，为执行中与失败动作保留目标名，无额外 API 请求； SDK 回包与业务成功分离，failed/stale/rejected/undone 不显示成功勾；工具 Message UI 的唯一展示适配器，先归一化 namespaced 工具名，再基于真实操作、标题和状态生成人话动作及安全详情
 toolPresentation.test.ts: 锁定并发删除执行中/失败/历史回看仍显示笔记名； 工具展示契约测试，锁定具体动作命名、namespaced 归一、安全详情与未知协议名不外露
 activityState.ts: AI Activity与胶囊AgentPresence类型边界；以整轮continuation补齐SDK ready期间的工具/审批/续写间隙，当前step未完成工具优先
 activityState.test.ts: Activity 状态回归测试，覆盖当前 step、ready 工具间隙、审批/拒绝、空分块、正文开始与终态卸载
 chatFetch.ts: 可独立测试的 HTTP 策略层，每次调用 token provider 后注入 Bearer，并把非 2xx 扁平/嵌套信封归一为带 code 的 ChatRequestError
-chatTransport.ts: DefaultChatTransport 在 SDK submitted 阶段异步解析草稿的真实 thread ID，后续发送/工具续写复用同一 ID；增量消息、冻结 metadata、稳定 assistant ID 与统一鉴权端点保持
+chatTransport.ts: 增量请求从本轮快照恢复画布身份、范围及版本；DefaultChatTransport 在 SDK submitted 阶段异步解析草稿的真实 thread ID，后续发送/工具续写复用同一 ID；增量消息、冻结 metadata、稳定 assistant ID 与统一鉴权端点保持
 chatTransport.test.ts: transport/chatFetch 回归测试，覆盖增量消息裁剪、稳定 assistant id、最新 Bearer 注入、无会话短路及扁平/嵌套错误信封 code 归一
 index.ts: AgentPanel 模块稳定出口，隔离 AppDashboard 与内部文件布局，只额外暴露无 UI 副作用的会话数据预热入口
 

@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 ThemeProvider/LocaleProvider 的受控偏好与 DS Select/SegmentedControl
+ * [INPUT]: 依赖 ThemeProvider/LocaleProvider 的受控偏好与 DS Select/compact SegmentedControl
  * [OUTPUT]: 对外提供语言在前、外观在后的独立设置分组，保持双语即时切换
  * [POS]: widgets 的通用设置栏；语言使用下拉、主题使用无图标分段，尺寸由 account-center.css 按参考实测统一
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -49,7 +49,7 @@ export function AccountSettingsPanel() {
               <p className="account-dialog-label">{t("主题", "Theme")}</p>
               <p className="account-dialog-section-description">{t("仅影响当前设备。", "Only applies to this device.")}</p>
             </div>
-            <SegmentedControl ariaLabel={t("界面主题", "Theme")} className="appearance-theme-control" onValueChange={setTheme} options={themeOptions} value={theme} />
+            <SegmentedControl size="compact" ariaLabel={t("界面主题", "Theme")} className="appearance-theme-control" onValueChange={setTheme} options={themeOptions} value={theme} />
           </div>
         </div>
       </section>

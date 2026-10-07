@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 AI SDK DefaultChatTransport、FoluneUIMessage、shared/supabase/auth token 与 chatFetch
- * [OUTPUT]: 对外提供 createMemoChatTransport，以及 organize/canvas-expand 的统一鉴权 URL/Fetch 边界；普通发送只传增量消息
+ * [OUTPUT]: 增量请求从本轮快照恢复画布身份、范围及版本； 对外提供 createMemoChatTransport，以及 organize/canvas-expand 的统一鉴权 URL/Fetch 边界；普通发送只传增量消息
  * [POS]: AgentPanel 的 AI SDK 会话传输工厂；在 SDK submitted 阶段解析首发草稿的真实 thread ID，后续复用同一会话，当前页面 memo 不再作为动态请求状态进入工具续写
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -60,6 +60,7 @@ export const prepareMemoChatRequest = ({
     ?? (persistedSnapshot === undefined || persistedSnapshot === null
       ? undefined
       : {
+          ...(persistedSnapshot.canvas ? { canvas: persistedSnapshot.canvas } : {}),
           active_memo_id: persistedSnapshot.primary?.memo_id ?? null,
           reference_memo_ids: persistedSnapshot.references.map(
             (reference) => reference.memo_id,
@@ -83,6 +84,7 @@ export const prepareMemoChatRequest = ({
   const contextBody = frozen === undefined
     ? {}
     : {
+        ...(frozen.canvas ? { canvas: frozen.canvas } : {}),
         active_memo_id: frozen.active_memo_id,
         expected_revisions: frozen.revisions,
         reference_memo_ids: frozen.reference_memo_ids,

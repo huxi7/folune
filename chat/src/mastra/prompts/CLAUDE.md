@@ -2,6 +2,7 @@
 > L2 | 父级: ../CLAUDE.md
 
 成员清单
+canvas-chat.ts: 提供画布问答指令；区分用户材料、关系说明与结论
 index.ts: prompts 子域稳定出口，只转出 memoAgentPrompt，不承载提示词正文
 memo-agent.ts: 备忘录助手行为边界；同任务同操作多篇 memo 优先 edit_nodes 一次提交，其他独立调用每轮最多十二项；真实依赖顺序执行，原始推理不抄标识清单
 memo-agent.test.ts: 提示词结构回归测试，锁定协作优先双模式、直接执行与依赖调度原则、多篇删除同轮批发不退化为逐条串行、旧过度限制不得回归及禁止出现 schema/SQL 实现细节

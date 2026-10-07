@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Motion 共享底片与 DS 时长、 React ref/键盘事件、共享 Lucide Icon 类型与 segmented-control.css 的语义 token 样式
- * [OUTPUT]: 对外提供受控 SegmentedControl、SegmentedControlOption 与方向键/Home/End 单选交互
+ * [OUTPUT]: 对外提供受控 SegmentedControl（含主题与来源共用的 compact 尺寸）、SegmentedControlOption 与方向键/Home/End 单选交互
  * [POS]: app/src/shared/design-system/components 的紧凑互斥选择原子件，用于少量稳定选项，不替代 Select 或普通 Button
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -23,6 +23,7 @@ export type SegmentedControlOption<Value extends string = string> = {
 type SegmentedControlProps<Value extends string> = {
   ariaLabel: string;
   className?: string;
+  size?: "default" | "compact";
   onValueChange: (value: Value) => void;
   options: ReadonlyArray<SegmentedControlOption<Value>>;
   value: Value;
@@ -40,6 +41,7 @@ const NAVIGATION_KEYS = [
 export function SegmentedControl<Value extends string>({
   ariaLabel,
   className = "",
+  size = "default",
   onValueChange,
   options,
   value,
@@ -93,6 +95,7 @@ export function SegmentedControl<Value extends string>({
     <div
       aria-label={ariaLabel}
       className={["ds-segmented-control", className].filter(Boolean).join(" ")}
+      data-size={size}
       role="radiogroup"
     >
       {options.map((option, index) => {

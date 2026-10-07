@@ -1,10 +1,11 @@
 /**
  * [INPUT]: 依赖 config/env、当前 Bearer JWT、upstream-http 的完整响应期限与 zod
- * [OUTPUT]: 对外提供 thread/消息/冻结 context、一次性 Chat turn prepare、轻量 tree、单篇正文、Canvas expansion 可信上下文、账号权限、命令与 Run 的 authenticated Business API client
+ * [OUTPUT]: prepare-chat 传递画布范围并解析可信冻结图； 对外提供 thread/消息/冻结 context、一次性 Chat turn prepare、轻量 tree、单篇正文、Canvas expansion 可信上下文、账号权限、命令与 Run 的 authenticated Business API client
  * [POS]: lib 层 chat→api 唯一业务边界，每次请求临时转发用户 JWT，统一解析信封且绝不记录或持久化凭据；canvas 可穿过资源校验，再由各模型投影显式过滤 新账本记账使用稳定 UUID 和服务密钥，失败仅以同一收据重试一次。
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
+import { canvasChatSnapshotSchema, type CanvasChatScope } from "./canvas-chat-contracts";
 import type { UIMessage } from "ai";
 import { z } from "zod";
 
@@ -32,6 +33,7 @@ const resolvedMemoSchema = z.object({
 });
 
 export const resolvedContextSchema = z.object({
+  canvas: canvasChatSnapshotSchema.optional(),
   primary: resolvedMemoSchema.nullable(),
   references: z.array(resolvedMemoSchema),
   missing_reference_ids: z.array(z.uuid()),
@@ -331,6 +333,7 @@ export const businessApi = {
 
   prepareChatTurn(
     input: {
+      canvas?: CanvasChatScope;
       threadId: string;
       activeMemoId: string | null;
       referenceMemoIds: readonly string[];
@@ -342,6 +345,7 @@ export const businessApi = {
     accessToken: string,
   ) {
     const body = {
+      ...(input.canvas ? { canvas: input.canvas } : {}),
       thread_id: input.threadId,
       active_memo_id: input.activeMemoId,
       reference_memo_ids: input.referenceMemoIds,

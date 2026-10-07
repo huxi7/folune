@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 useAiThreads、常驻 AgentConversation、共用延迟加载构图 AgentConversationSkeleton、AgentPanelHeader、DS 历史视图与调用方外壳尺寸/状态回调
- * [OUTPUT]: 对外提供 AgentPanel，协调历史与新对话导航，将真实会话/整理状态交给胶囊外壳
+ * [OUTPUT]: 同一会话接收画布来源和同步回调，不重建聊天窗口； 对外提供 AgentPanel，协调历史与新对话导航，将真实会话/整理状态交给胶囊外壳
  * [POS]: AgentPanel 的轻量组合根；会话执行归 AgentConversation，窗口形变归 Dashboard 宿主，切换尺寸与空间不重建会话
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -17,6 +17,8 @@ import type { AgentPresence } from "./activityState";
 import { ThreadHistory } from "./ThreadHistory";
 import { useAiThreads } from "./useAiThreads";
 type AgentPanelProps = {
+  currentCanvas?: { id: string; title: string } | null;
+  onPrepareCanvas?: (id: string) => Promise<void>;
   onPresenceChange?: (presence: AgentPresence) => void;
   assistantSize?: AssistantSize;
   onToggleSize?: () => void;
@@ -100,7 +102,7 @@ export function AgentPanel(props: AgentPanelProps) {
           <Button onClick={() => { if (thread) void selectConversation(thread.id); }} variant="ghost">{t("重试", "Try again")}</Button>
         </div>
       ) : (
-        <AgentConversation onPresenceChange={setChatPresence} accessToken={props.accessToken} currentMemo={props.currentMemo} initialMessages={threads.messages} key={threads.conversationKey} conversationKey={threads.conversationKey} onEnsureThread={threads.ensureThread} pinnedIds={threads.pinnedMemoIds} memoTree={props.memoTree} onApplyOrganize={props.onApplyOrganize} onBusyChange={setChatBusy} onPrepareMutation={props.onPrepareMutation} onReferencesChange={threads.replaceReferences} onRejectOrganize={props.onRejectOrganize} onThreadUpdated={(localMessages) => localMessages === undefined ? threads.refreshSelected() : threads.commitLocalMessages(localMessages)} organizeReviewBusy={actionBusy} organizeRun={visibleOrganizeRun} thread={thread} userId={props.userId} />
+        <AgentConversation currentCanvas={props.currentCanvas} onPrepareCanvas={props.onPrepareCanvas} onPresenceChange={setChatPresence} accessToken={props.accessToken} currentMemo={props.currentMemo} initialMessages={threads.messages} key={threads.conversationKey} conversationKey={threads.conversationKey} onEnsureThread={threads.ensureThread} pinnedIds={threads.pinnedMemoIds} memoTree={props.memoTree} onApplyOrganize={props.onApplyOrganize} onBusyChange={setChatBusy} onPrepareMutation={props.onPrepareMutation} onReferencesChange={threads.replaceReferences} onRejectOrganize={props.onRejectOrganize} onThreadUpdated={(localMessages) => localMessages === undefined ? threads.refreshSelected() : threads.commitLocalMessages(localMessages)} organizeReviewBusy={actionBusy} organizeRun={visibleOrganizeRun} thread={thread} userId={props.userId} />
       )}
       </PersistentView>
       </div>

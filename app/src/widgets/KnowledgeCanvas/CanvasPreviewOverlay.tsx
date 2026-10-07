@@ -1,13 +1,14 @@
 /**
  * [INPUT]: 依赖 WarmTooltip 原位功能提示；依赖 useLocale 的界面文案（用户内容保留原文）；依赖 design-system motion=none Dialog/延迟文字Skeleton、纸面视图过渡身份、NotePaper reader、卡片摘录快照、正文缓存与 MarkdownReadingView
- * [OUTPUT]: 预览关闭入口不重复提示，编辑命令保留功能提示；对外提供不卸载 Canvas、只有纸拥有过渡身份而遮罩随 root 一起换、正文未到时以卡片摘录保持同一段字的小开本 Preview
+ * [OUTPUT]: 引用预览接受已核验正文，隐藏编辑入口并提示版本变化、定位引文段落； 预览关闭入口不重复提示，编辑命令保留功能提示；对外提供不卸载 Canvas、只有纸拥有过渡身份而遮罩随 root 一起换、正文未到时以卡片摘录保持同一段字的小开本 Preview
  * [POS]: KnowledgeCanvas 的正文阅读边界；Canvas API 永不携带 content_mdx，只有用户明确预览时才按目标 memo ID 加载正文；纸内只有正文，动作一律在纸外，因此正文长度不影响任何入口的可达性；Esc/遮罩/焦点归还统一复用 Dialog 的模态行为，不另造第二套弹窗
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
 import WarmTooltip from "../../shared/design-system/components/WarmTooltip";
 import { useLocale } from "../../shared/locale";
-import { useEffect } from "react";
+import type { MemoDetailNode } from "../../shared/api/memo";
+import { useEffect, useRef } from "react";
 
 import {
   Dialog,
@@ -24,7 +25,10 @@ type CanvasPreviewOverlayProps = {
   accessToken: string;
   memoId: string;
   onClose: () => void;
-  onEditOriginal: () => Promise<void>;
+  onEditOriginal?: () => Promise<void>;
+  expectedRevision?: number;
+  sourceDocument?: MemoDetailNode;
+  citationQuote?: string;
   /** 卡片上的摘录快照：正文在路上时纸里先放它，放大的始终是同一段字 */
   pendingExcerpt?: string | null;
   title: string;
@@ -35,12 +39,17 @@ export function CanvasPreviewOverlay({
   memoId,
   onClose,
   onEditOriginal,
+  expectedRevision,
+  sourceDocument, citationQuote,
   pendingExcerpt = null,
   title,
 }: CanvasPreviewOverlayProps) {
   const { t } = useLocale();
-  const document = useMemoDocumentStore((state) => state.documents[memoId]);
-  const status = useMemoDocumentStore((state) => state.statuses[memoId] ?? "idle");
+  const cachedDocument = useMemoDocumentStore((state) => state.documents[memoId]);
+  const document = sourceDocument ?? cachedDocument;
+  const quoteContainer = useRef<HTMLDivElement>(null);
+  const cachedStatus = useMemoDocumentStore((state) => state.statuses[memoId] ?? "idle");
+  const status = sourceDocument ? "ready" : cachedStatus;
   const error = useMemoDocumentStore((state) => state.errors[memoId]);
   const skeletonVisible = useDelayedSkeleton(document === undefined && status !== "error" && !pendingExcerpt?.trim());
   const loadMemo = useMemoDocumentStore((state) => state.loadMemo);
@@ -55,6 +64,16 @@ export function CanvasPreviewOverlay({
   }, [accessToken, document, loadMemo, memoId]);
   // oxlint-enable react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    if (!document || !citationQuote || (expectedRevision !== undefined && document.revision !== expectedRevision)) return;
+    const root = quoteContainer.current;
+    const normalize = (value: string) => value.replace(/\s+/gu, "").replace(/[*_`#]/gu, "");
+    const target = [...(root?.querySelectorAll("p,li,pre,h1,h2,h3,blockquote") ?? [])].find(element => normalize(element.textContent ?? "").includes(normalize(citationQuote)));
+    if (!target) return;
+    target.setAttribute("data-citation-highlight", "true");
+    target.scrollIntoView?.({ block: "center", behavior: "instant" });
+    return () => target.removeAttribute("data-citation-highlight");
+  }, [citationQuote, document, expectedRevision]);
   return (
     <Dialog
       description={t("预览不会改变画布位置或尺寸。", "Preview keeps your canvas position and size.")}
@@ -90,10 +109,10 @@ export function CanvasPreviewOverlay({
           ) : status === "error" ? (
             <p className="canvas-preview-error">{error ?? t("原文读取失败。", "Could not load the note.")}</p>
           ) : (
-            <MarkdownReadingView
+            <div ref={quoteContainer}>{expectedRevision !== undefined && document?.revision !== expectedRevision ? <p className="agent-source-hint">{t("原文已更新，当前显示最新版本。", "The source changed. This is the latest version.")}</p> : null}<MarkdownReadingView
               content={document?.memo.content_mdx ?? ""}
               preserveSoftBreaks
-            />
+            /></div>
           )}
         </NotePaper>
         {/*
@@ -109,7 +128,7 @@ export function CanvasPreviewOverlay({
           >
             <XIcon size={16} />
           </button>
-          <WarmTooltip asChild content={t("编辑原文", "Edit original")} disabled={document === undefined}>
+          {onEditOriginal ? <WarmTooltip asChild content={t("编辑原文", "Edit original")} disabled={document === undefined}>
           <button
             aria-label={t("编辑原文", "Edit original")}
             className="canvas-preview-tool"
@@ -119,7 +138,7 @@ export function CanvasPreviewOverlay({
           >
             <PencilSimpleIcon size={16} />
           </button>
-          </WarmTooltip>
+          </WarmTooltip> : null}
         </div>
       </div>
     </Dialog>

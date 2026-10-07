@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 AgentPanel 工具协议、AI SDK 状态、locale 类型与共享 Lucide 图标
- * [OUTPUT]: 对外提供基于本轮读取快照与真实 input/output 的人话动作名称、安全轻量详情、区分 SDK 回包与业务终态的 getAgentToolState 及未知工具中性回退
+ * [OUTPUT]: 画布来源、关系、正文读取与引用核对使用人话名称； 对外提供基于本轮读取快照与真实 input/output 的人话动作名称、安全轻量详情、区分 SDK 回包与业务终态的 getAgentToolState 及未知工具中性回退
  * [POS]: AgentPanel 工具展示适配层，隔离协议载荷与 Message UI，禁止 UUID、正文、Token 和原始 JSON 进入界面
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -170,6 +170,15 @@ export function getAgentToolPresentation(
   const toolLabel = (name: keyof typeof agentClientToolPresentation) => t(agentClientToolPresentation[name].name, englishToolNames[name]);
   if (part.state === "output-available") part = { ...part, state: getAgentToolState(part) };
   toolName = normalizeAgentToolName(toolName);
+  if (["list_sources", "read_relations", "read_text", "read_source", "cite_sources"].includes(toolName)) {
+    const title = readTitle(part.output);
+    const label = toolName === "list_sources" ? t("查看问答来源", "Read chat sources")
+      : toolName === "read_relations" ? t("查看笔记关系", "Read connections")
+      : toolName === "read_text" ? t("阅读画布文字", "Read canvas text")
+      : toolName === "cite_sources" ? t("核对引用", "Verify citations")
+      : title ? t(`阅读「${title}」`, `Read “${title}”`) : t("阅读笔记原文", "Read source note");
+    return { icon: FileTextIcon, name: label, details: resultDetails(part, t("读取与核对已完成。", "Reading and verification completed."), t) };
+  }
   if (toolName === "celebration") {
     const reason = readField(part.input, "reason");
     return {

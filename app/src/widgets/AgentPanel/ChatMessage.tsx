@@ -1,12 +1,14 @@
 /**
- * [INPUT]: 依赖 locale 界面状态、FoluneUIMessage 有序 parts、整轮 activity、工具命名/过程分区与 design-system 消息组件
- * [OUTPUT]: 对外提供用户/assistant 回复、按真实 activity 退出的空回复占位、原始推理与有界工具交错展示的过程区及整轮结束后的撤销入口
+ * [INPUT]: 引用查看由正式会话注入，纯消息组件不导入业务 API； 依赖 locale 界面状态、FoluneUIMessage 有序 parts、整轮 activity、工具命名/过程分区与 design-system 消息组件
+ * [OUTPUT]: 回复底部共用操作行展示已验证引用，历史真实写命令仍独立撤销； 对外提供用户/assistant 回复、按真实 activity 退出的空回复占位、原始推理与有界工具交错展示的过程区及整轮结束后的撤销入口
  * [POS]: AgentPanel 消息语义适配层，只负责对话与过程；人工审批由 AgentConversation 固定在 Composer 上方，冻结上下文不进入对话视觉层
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
+import type { CanvasCitation } from "../../shared/api/canvasChat";
+import { readCanvasCitations } from "./canvasEvidence";
 import { ArrowUUpLeftIcon } from "../../shared/design-system/icons";
-import { memo, useMemo, useState } from "react";
+import { memo, useMemo, useState, type ReactNode } from "react";
 import { isToolUIPart } from "ai";
 
 import type {
@@ -28,6 +30,7 @@ import { getAgentToolPresentations } from "./toolPresentation";
 import { useLocale } from "../../shared/locale";
 
 type ChatMessageProps = {
+  renderCitations?: (citations: CanvasCitation[]) => ReactNode;
   activity: AssistantActivity;
   message: FoluneUIMessage;
   onProgress?: () => void;
@@ -35,6 +38,7 @@ type ChatMessageProps = {
 };
 
 type AssistantMessageContentProps = {
+  renderCitations?: (citations: CanvasCitation[]) => ReactNode;
   activity: AssistantActivity;
   message: FoluneUIMessage;
   onProgress?: () => void;
@@ -42,6 +46,7 @@ type AssistantMessageContentProps = {
 };
 
 type LiveAssistantTurnProps = {
+  renderCitations?: (citations: CanvasCitation[]) => ReactNode;
   activity: AssistantActivity;
   message?: FoluneUIMessage;
   onProgress?: () => void;
@@ -56,6 +61,7 @@ function getMessageText(message: FoluneUIMessage) {
 }
 
 function AssistantMessageContent({
+  renderCitations,
   activity,
   message,
   onProgress,
@@ -75,6 +81,7 @@ function AssistantMessageContent({
   }
   const toolPresentations = useMemo(() => getAgentToolPresentations(message.parts, locale), [message.parts, locale]);
   const hasProcess = processParts.length > 0;
+  const citations = useMemo(() => readCanvasCitations(message), [message]);
 
   return (
     <>
@@ -99,9 +106,10 @@ function AssistantMessageContent({
       )}
       streaming={activity === "streaming"}
       />
-      {undoCommands.length > 0 && !responseActive ? (
+      {(undoCommands.length > 0 || citations.length > 0) && !responseActive ? (
         <div aria-label={t("回复操作", "Response actions")} className="agent-response-actions">
-          <Button
+          {citations.length > 0 ? renderCitations?.(citations) : null}
+          {undoCommands.length > 0 ? <Button
             className="agent-response-action"
             disabled={undoState !== "idle"}
             icon={ArrowUUpLeftIcon}
@@ -114,7 +122,7 @@ function AssistantMessageContent({
             variant="ghost"
           >
             {undoState === "running" ? t("正在撤销…", "Undoing…") : undoState === "done" ? t("已撤销", "Undone") : t("撤销", "Undo")}
-          </Button>
+          </Button> : null}
         </div>
       ) : null}
     </>
@@ -131,6 +139,7 @@ function hasAssistantContent(message: FoluneUIMessage) {
 // 拦截必须发生在这一层 —— 配合 AgentPanel 侧稳定化的 onProgress/onUndo
 // 引用才生效 (根因 6)。
 export const ChatMessage = memo(function ChatMessage({
+  renderCitations,
   activity,
   message,
   onProgress,
@@ -163,6 +172,7 @@ export const ChatMessage = memo(function ChatMessage({
   return (
     <article className="agent-chat-turn">
       <AssistantMessageContent
+        renderCitations={renderCitations}
         key={message.id}
         activity={activity}
         message={message}
@@ -174,6 +184,7 @@ export const ChatMessage = memo(function ChatMessage({
 });
 
 export function LiveAssistantTurn({
+  renderCitations,
   activity,
   message,
   onProgress,
@@ -185,6 +196,7 @@ export function LiveAssistantTurn({
     <article className="agent-chat-turn">
       {message && hasAssistantContent(message) ? (
         <AssistantMessageContent
+        renderCitations={renderCitations}
           key={message?.id}
           activity={activity}
           message={message}
