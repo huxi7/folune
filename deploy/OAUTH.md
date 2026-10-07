@@ -29,29 +29,28 @@ Staging 保存前后核对 242 个字段。
 只有 GitHub Client ID、Secret 与启用开关变化。
 Secret 未写入前端、仓库或验收记录。
 
-Staging 已完成 GitHub 授权并返回回调。
-Supabase 自动关联返回 `Multiple accounts` 错误。
-GitHub 返回的主邮箱与备用邮箱各对应一个既有账号。
-两库均存在此结构，不能自动决定 GitHub 归属。
-两个账号与各自业务数据保持原样。
-当前等待所有者选择 GitHub 要关联的账号。
-选定后通过 Supabase 官方身份关联流程执行。
-不通过直接修改 auth 表绕过身份验证。
+## 账号匹配规则
 
-代码已推送 main，production 尚未发布。
-GitHub PKCE 交换与进入工作区尚未通过。
+没有匹配账号时，由 Supabase 创建账号。
+匹配一个账号时，由 Supabase 自动关联。
+匹配多个账号时，回调进入账号选择视图。
+用户用邮箱密码或 Google 登录目标账号。
+页面显示服务端验证的邮箱并要求确认。
+确认后调用 SDK `linkIdentity` 再授权 GitHub。
+回调核对目标 user ID 与 GitHub 身份后进入工作区。
+不枚举匿名候选，不合并笔记、余额或订阅。
+本标签页意图十分钟过期；普通登录清除遗留意图。
 
-## 恢复执行边界
-
-所有者确定 GitHub 归属后，验证目标账号会话。
-仅为官方关联流程修改必要 Auth 配置。
-保留 Google、SMTP、Site URL 和重定向白名单。
-关联完成后验证普通 GitHub 登录与退出重登。
-重新验证 Google，再发布并核对三项部署提交号。
+两库已启用 `SECURITY_MANUAL_LINKING_ENABLED`。
+各库保存前后核对，只有该字段变化。
+Google、SMTP、Site URL 与重定向白名单保持原值。
+选择页与 Google 验证到确认邮箱的流程已实测。
+真实 GitHub 绑定需要用户在页面确认目标账号。
+当前代码尚未发布 production。
 
 ## 本轮验证
 
-- 22项认证定向测试、类型检查、改动文件lint与构建通过。
+- 27项认证定向测试、7项桌面测试、类型检查、lint与构建通过。
 - Production Google再次完成OAuth并进入工作区。
 - 回调页按错误码显示统一文案，不展示提供商诊断。
 - Staging GitHub完成授权；账号关联失败，未交换新会话。

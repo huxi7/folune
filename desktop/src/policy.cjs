@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Node URL/path 与 semver 的版本比较
- * [OUTPUT]: 对外提供固定发布地址、导航/资源路径校验、Google/GitHub PKCE 授权白名单与稳定版本判断
+ * [OUTPUT]: 提供导航/资源边界、PKCE 登录与 GitHub 绑定授权白名单、稳定版本判断
  * [POS]: 桌面主进程的纯安全策略；所有不可信 URL 在进入原生能力前经过此边界
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -46,4 +46,17 @@ function isAuthorizationUrl(value, supabaseUrl, redirectTo) {
       && Boolean(url.searchParams.get('code_challenge'));
   } catch { return false; }
 }
-module.exports = { RELEASE_REPO, RELEASE_BASE, APP_ORIGIN, isAppUrl, isExternalUrl, assetPath, isNewRelease, isAuthorizationUrl };
+function isGitHubLinkAuthorizationUrl(value, supabaseUrl) {
+  try {
+    const url = new URL(value);
+    const callback = new URL('/auth/v1/callback', supabaseUrl);
+    const scopes = (url.searchParams.get('scope') || '').split(/[ ,]+/).filter(Boolean);
+    return !url.username && !url.password && url.origin === 'https://github.com'
+      && url.pathname === '/login/oauth/authorize'
+      && url.searchParams.get('redirect_uri') === callback.href
+      && Boolean(url.searchParams.get('client_id'))
+      && /^[a-f0-9-]{36}$/i.test(url.searchParams.get('state') || '')
+      && scopes.every(scope => ['user:email', 'read:user'].includes(scope));
+  } catch { return false; }
+}
+module.exports = { RELEASE_REPO, RELEASE_BASE, APP_ORIGIN, isAppUrl, isExternalUrl, assetPath, isNewRelease, isAuthorizationUrl, isGitHubLinkAuthorizationUrl };

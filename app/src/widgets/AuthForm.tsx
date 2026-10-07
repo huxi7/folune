@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 React 局部状态、Motion/DS authMotion、共享认证控件、MarketingLink 与既有认证服务
- * [OUTPUT]: 提供登录、双密码注册、六格验证码与 Google/GitHub OAuth；确认密码展开时保留表单，退出时立即停用校验；主按钮消费参考弹簧，背景不重建
+ * [OUTPUT]: 提供登录、注册、验证码与 OAuth；账号选择模式仅允许邮箱或 Google 登录既有账号
  * [POS]: widgets 的唯一认证表单，由 LoginPage 承载；表单负责认证步骤，页面负责布局和导航，不直接持有 Supabase client
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -49,6 +49,7 @@ type PendingAuthAction = "credentials" | "google" | "github" | "verification" | 
 
 type AuthFormProps = {
   onAuthenticated: () => void;
+  selectExistingAccount?: boolean;
 };
 
 function createEmptyOtp() {
@@ -76,7 +77,7 @@ function ConfirmationField({
   );
 }
 
-export function AuthForm({ onAuthenticated }: AuthFormProps) {
+export function AuthForm({ onAuthenticated, selectExistingAccount = false }: AuthFormProps) {
   const reducedMotion = useMotionPreference();
   const [step, setStep] = useState<AuthStep>("credentials");
   const [mode, setMode] = useState<AuthMode>("login");
@@ -323,7 +324,7 @@ export function AuthForm({ onAuthenticated }: AuthFormProps) {
             使用 Google 账号继续
           </Button>
 
-          <Button
+          {!selectExistingAccount && <Button
             className="auth-provider-button w-full"
             disabled={busy}
             icon={GitHubLogoIcon}
@@ -332,7 +333,7 @@ export function AuthForm({ onAuthenticated }: AuthFormProps) {
             variant="secondary"
           >
             使用 GitHub 账号继续
-          </Button>
+          </Button>}
 
           <div className="auth-divider" aria-hidden="true">
             或
@@ -429,12 +430,12 @@ export function AuthForm({ onAuthenticated }: AuthFormProps) {
             {pendingAction === "credentials" ? "处理中…" : isRegisterMode ? "注册" : "登录"}
           </AuthSubmitButton>
 
-          <div className="auth-mode-switch">
+          {!selectExistingAccount && <div className="auth-mode-switch">
             <button aria-label={isRegisterMode ? "登录" : "注册"} disabled={busy} onClick={handleModeChange} type="button">
               {isRegisterMode ? "已有账号？" : "还没有账号？"}{" "}
               <span>{isRegisterMode ? "登录" : "注册"}</span>
             </button>
-          </div>
+          </div>}
 
           <p className="auth-terms-copy">
             继续即表示您同意 Folune 的

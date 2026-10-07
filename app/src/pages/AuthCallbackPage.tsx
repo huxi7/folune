@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 React effect/ref/state，依赖 react-router-dom 导航，依赖 shared/supabase 的 PKCE code 换取会话能力，依赖本地 design-system
- * [OUTPUT]: 对外提供 /auth/callback OAuth 回调页面，成功进入 /app、失败返回 /login；提供商错误经统一认证文案转换，不展示服务端诊断
+ * [OUTPUT]: 提供 OAuth 回调、已验证账号的冲突选择与绑定回执；成功进入工作区，失败显示统一文案
  * [POS]: app/src/pages 的 Google/GitHub 共用 OAuth 回调边界，视觉共用 auth.css 与 APP 控件语义，交换会话仍沿 shared/supabase
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -12,12 +12,18 @@ import { Button } from "../shared/design-system/components";
 import {
   completeOAuthSignIn,
   getAuthErrorMessage,
+  clearGitHubLinkIntent,
+  getGitHubLinkIntent,
+  isOAuthAccountConflict,
+  verifyGitHubLinkResult,
 } from "../shared/supabase/auth";
+import { GitHubAccountChoice } from "./GitHubAccountChoice";
 
 export function AuthCallbackPage() {
   const navigate = useNavigate();
   const exchangeStartedRef = useRef(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [choice, setChoice] = useState<"login" | "confirm" | null>(null);
 
   useEffect(() => {
     if (exchangeStartedRef.current) {
@@ -30,6 +36,11 @@ export function AuthCallbackPage() {
     const code = searchParams.get("code");
 
     if (providerError) {
+      clearGitHubLinkIntent();
+      if (isOAuthAccountConflict(searchParams)) {
+        setChoice("login");
+        return;
+      }
       setErrorMessage(getAuthErrorMessage({
         code: searchParams.get("error_code") ?? providerError,
       }));
@@ -42,9 +53,20 @@ export function AuthCallbackPage() {
     }
 
     void completeOAuthSignIn(code)
-      .then(() => navigate("/app", { replace: true }))
-      .catch((error: unknown) => setErrorMessage(getAuthErrorMessage(error)));
+      .then(async () => {
+        const intent = getGitHubLinkIntent();
+        if (intent?.phase === "select") { setChoice("confirm"); return; }
+        if (intent?.phase === "link") await verifyGitHubLinkResult(intent.userId!);
+        navigate("/app", { replace: true });
+      })
+      .catch((error: unknown) => {
+        clearGitHubLinkIntent();
+        setErrorMessage(getAuthErrorMessage(error));
+      });
   }, [navigate]);
+
+  if (choice) return <GitHubAccountChoice authenticated={choice === "confirm"}
+    onCancel={() => navigate("/login", { replace: true })} />;
 
   return (
     <main className="auth-callback-page">

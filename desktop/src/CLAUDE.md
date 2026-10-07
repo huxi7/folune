@@ -4,10 +4,10 @@
 成员清单
 main.cjs: 隔离窗口、静态协议、安全 IPC 与保存退出握手
 preload.cjs: sandbox 最小能力桥与可卸载事件订阅
-policy.cjs: 不可信 URL、资源路径与版本策略；只允许 Google/GitHub 同源 PKCE 授权
+policy.cjs: 不可信 URL、资源路径与版本策略；允许 Google/GitHub 同源 PKCE 登录；GitHub 绑定限制固定提供商、项目回调与基础身份权限
 policy.test.cjs: 两种 OAuth 白名单、跨源/回调/S256 安全边界与降级/预发布版本测试
 oauth.test.cjs: 授权事务替换、状态校验与一次性回调验证
-oauth.cjs: 短时 PKCE 回调事务与系统浏览器授权
+oauth.cjs: 短时 PKCE 回调事务、错误分类转发与系统浏览器登录/绑定授权
 updater.cjs: Windows 原生更新与 Mac 手动 DMG 状态源
 
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md

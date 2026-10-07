@@ -1,13 +1,13 @@
 /**
  * [INPUT]: 依赖 Node HTTP/crypto、Electron shell 与授权 URL 白名单策略
- * [OUTPUT]: 提供短时 OAuth 事务、开发 loopback 回调和安装版 folune:// 深链消费
- * [POS]: 系统浏览器授权适配；仅传 PKCE code 给原 Web 回调页，令牌不进入主进程
+ * [OUTPUT]: 提供短时 OAuth 事务与两种宿主回调；转发授权码及错误分类，不转发令牌
+ * [POS]: 系统浏览器授权适配；仅传 PKCE code 与错误分类给 Web 回调页，令牌不进入主进程
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 const http = require('node:http');
 const { randomBytes } = require('node:crypto');
 const { shell } = require('electron');
-const { isAuthorizationUrl } = require('./policy.cjs');
+const { isAuthorizationUrl, isGitHubLinkAuthorizationUrl } = require('./policy.cjs');
 function createOAuth({ packaged, supabaseUrl, onCallback }) {
   let pending = null;
   let server = null;
@@ -26,7 +26,7 @@ function createOAuth({ packaged, supabaseUrl, onCallback }) {
     if (url.protocol !== expected.protocol || url.host !== expected.host || url.pathname !== expected.pathname
       || url.searchParams.get('state') !== expected.searchParams.get('state')) return false;
     const query = new URLSearchParams();
-    for (const name of ['code', 'error_description']) {
+    for (const name of ['code', 'error', 'error_code', 'error_description']) {
       const value = url.searchParams.get(name);
       if (value && value.length < 4096) query.set(name, value);
     }
@@ -59,7 +59,8 @@ function createOAuth({ packaged, supabaseUrl, onCallback }) {
   return {
     prepare, consume, clear,
     open: async (value) => {
-      if (!pending || typeof value !== 'string' || !isAuthorizationUrl(value, supabaseUrl, pending)) throw new Error('无效的授权请求');
+      if (!pending || typeof value !== 'string'
+        || !(isAuthorizationUrl(value, supabaseUrl, pending) || isGitHubLinkAuthorizationUrl(value, supabaseUrl))) throw new Error('无效的授权请求');
       await shell.openExternal(value);
     },
   };
