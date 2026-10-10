@@ -130,4 +130,4 @@ AgentPanel/: Paper 与 Canvas 共用的右侧思考空间；界面/权限/审批
 
 2026-09-04 顶栏底边线删除：`::before` 去掉 `border-bottom`，凝结铺开的只是同一个 `--paper-surface`。Paper 与 Panel 是三层而不是并列（Stage → Paper → 压在 Paper 上的 Panel），所以 Paper 不参照 Panel 的顶部边界；纸在滚动中继续往窗口上方延伸，顶栏上方本来就是纸，而那条线一存在，眼睛就把「窗口上边 → 线」读成一个 64px 的物体，顶栏于是随滚动"变宽变笨"。边界交给下缘软边独自表达，软边参数（16px / 6px）与单一进度一个字不动。
 
-助手生命周期：Dashboard常驻同一AgentPanel，WorkspaceAssistantLayer只改变右下外壳；笔记恢复用户短/全高选择，普通进入画布用短窗，明确原文返回可恢复当次全高；胶囊可见性跨空间共享。文件库继续使用原WorkspacePanelLayer。
+助手生命周期：Dashboard常驻同一AgentPanel，WorkspaceAssistantLayer只改变右下外壳；笔记恢复用户短/全高选择，显式还原短窗清除当前场景自由尺寸，胶囊开合保留自由尺寸；普通进入画布用短窗，明确原文返回可恢复当次全高；胶囊可见性跨空间共享。文件库继续使用原WorkspacePanelLayer。

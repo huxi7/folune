@@ -7,8 +7,8 @@ workspaceEntryStore.test.ts: 真实节点乱序、首屏 100% 门禁、重复通
 CLAUDE.md: 记录客户端状态层的职责边界、成员地图与 GEB 回环协议
 agentPanelStore.ts: 当前账号的权限薄状态，首屏默认完全访问；同账号重读保留显示、切账号隔离，isPermissionReady 只在当前账号 API 确认后允许发送；可见性归 WorkspaceChromeState
 agentPanelStore.test.ts: 锁定默认完全访问、加载/保存门禁、账号隔离、保存失败保留显示与成功确认
-workspaceChromeStore.ts: 按账号持久化笔记自定义浮窗高度/位置（宽度沿工作台共享偏好）、Paper文件库、跨空间助手可见性与笔记尺寸；普通画布进入短窗，全高只保持当次主动选择或明确返回快照，关闭后跨场景保持胶囊
-workspaceChromeStore.test.ts: 自定义窗口收起/全高还原/刷新与画布隔离； 账号/旧偏好恢复及助手跨场景短窗、全高、主动关闭、明确返回与持久化隔离门禁
+workspaceChromeStore.ts: 显式还原短窗清除当前场景自定义高度/位置，胶囊开合仍保留自由尺寸；按账号持久化笔记自定义浮窗高度/位置（宽度沿工作台共享偏好）、Paper文件库、跨空间助手可见性与笔记尺寸；普通画布进入短窗，全高只保持当次主动选择或明确返回快照，关闭后跨场景保持胶囊
+workspaceChromeStore.test.ts: 旧全高偏好还原短窗、刷新不复发与画布/笔记尺寸隔离；自定义窗口收起/刷新保留； 账号/旧偏好恢复及助手跨场景短窗、全高、主动关闭、明确返回与持久化隔离门禁
 canvasChromePolicy.ts: Canvas文件库四种进入意图与窄屏钳制纯策略；助手可见性/尺寸由workspaceChromeStore裁决，画布快照不覆盖它
 canvasChromePolicy.test.ts: 文件库继承、新建关闭、直达恢复与窄屏钳制；不再制造画布助手的第二真相
 canvasChromeStore.ts: Canvas文件库一次性进入意图、只读预览与幂等解析，按账号保存每画布最近文件库开关；读取旧快照时丢弃助手字段，避免全高被恢复成画布常态

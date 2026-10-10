@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Zustand 与浏览器 localStorage，兼容旧 AgentPanel 单开关偏好
- * [OUTPUT]: 对外提供按用户 hydrate 的文件库偏好与跨空间助手可见性、笔记尺寸/自定义浮窗偏好和当前场景尺寸命令
+ * [OUTPUT]: 对外提供按用户 hydrate 的文件库偏好与跨空间助手可见性、笔记尺寸/自定义浮窗偏好和当前场景尺寸命令；显式还原短窗清除当前场景的自定义高度/位置
  * [POS]: shared/store 的工作台外壳 UI 状态源；助手跨空间连续，画布全高只在当次场景或明确原文返回时恢复；不复制树、编辑器或会话数据
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -209,7 +209,12 @@ export const useWorkspaceChromeStore = create<WorkspaceChromeStore>((set) => ({
     }),
   setAssistantSize: (size) => updateVisibility(set, (state) => ({
     assistantSize: size,
-    ...(state.assistantCanvasId === null ? { paperAssistantSize: size } : {}),
+    // 预设短窗必须退出自由尺寸，否则旧全高会覆盖短窗几何。
+    ...(size === "compact" ? { assistantFrame: null } : {}),
+    ...(state.assistantCanvasId === null ? {
+      paperAssistantSize: size,
+      ...(size === "compact" ? { paperAssistantFrame: null } : {}),
+    } : {}),
   })),
   setAssistantFrame: (frame) => updateVisibility(set, (state) => ({
     assistantSize: "compact",

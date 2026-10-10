@@ -1,11 +1,12 @@
 /**
- * [INPUT]: 依赖 Bun test 与 workspaceChromeStore 的纯解析/迁移边界
- * [OUTPUT]: 覆盖偏好隔离/迁移与助手跨场景尺寸、主动关闭、返回恢复、持久化降级
+ * [INPUT]: 依赖 Bun test、workspaceChromeStore 状态命令与 assistantGeometry 纯几何
+ * [OUTPUT]: 覆盖偏好隔离/迁移、短窗重置旧全高偏好、跨场景尺寸、主动关闭、返回恢复与持久化降级
  * [POS]: shared/store 的 Paper First 外壳状态回归测试，不访问 DOM、网络或真实 localStorage
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { resolveAssistantGeometry } from "../../widgets/assistantGeometry";
 
 import {
   migrateWorkspaceChrome,
@@ -116,12 +117,10 @@ describe("跨空间助手状态", () => {
     state().openAssistant();
     expect(state().assistantOpen).toBe(true);
   });
-  test("自定义窗口收起/全高还原与刷新都保留，普通画布进入不照抄笔记高度", () => {
+  test("自定义窗口收起与刷新都保留，普通画布进入不照抄笔记高度", () => {
     const frame = { height: 610, right: 40, bottom: 32 };
     state().setAssistantFrame(frame);
     state().openAssistant();
-    state().setAssistantSize("expanded");
-    state().setAssistantSize("compact");
     expect(state().assistantFrame).toEqual(frame);
     state().closeAssistant();
     state().openAssistant();
@@ -133,5 +132,38 @@ describe("跨空间助手状态", () => {
     expect(state().assistantFrame).toEqual(frame);
     state().hydrate("user-a");
     expect(state().assistantFrame).toEqual(frame);
+  });
+  test("恢复旧全高浮窗后，显式还原短窗清除高度并持久化，往返画布不复发", () => {
+    storage.set(workspaceChromeStorageKey("user-a"), JSON.stringify({
+      version: 1, libraryOpen: false, assistantOpen: true,
+      paperAssistantSize: "expanded",
+      paperAssistantFrame: { height: 868, right: 24, bottom: 16 },
+    }));
+    state().hydrate("user-a");
+    state().setAssistantSize("compact");
+    const geometry = () => resolveAssistantGeometry({
+      viewportWidth: 1440, viewportHeight: 900, panelWidth: 440,
+      size: state().assistantSize, frame: state().assistantFrame,
+    });
+    expect(geometry().height).toBe(520);
+    expect(state().assistantFrame).toBeNull();
+    expect(state().paperAssistantFrame).toBeNull();
+    state().enterAssistantScene("canvas-a");
+    state().enterAssistantScene(null);
+    expect(geometry().height).toBe(520);
+    state().hydrate("user-a");
+    expect(geometry().height).toBe(520);
+  });
+  test("画布还原短窗只清除当前浮窗，不覆盖笔记自定义尺寸", () => {
+    const paperFrame = { height: 610, right: 40, bottom: 32 };
+    state().setAssistantFrame(paperFrame);
+    state().enterAssistantScene("canvas-a");
+    state().setAssistantFrame({ height: 868, right: 16, bottom: 16 });
+    state().setAssistantSize("expanded");
+    state().setAssistantSize("compact");
+    expect(state().assistantFrame).toBeNull();
+    expect(state().paperAssistantFrame).toEqual(paperFrame);
+    state().enterAssistantScene(null);
+    expect(state().assistantFrame).toEqual(paperFrame);
   });
 });
