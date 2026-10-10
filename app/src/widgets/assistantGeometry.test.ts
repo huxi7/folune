@@ -1,21 +1,22 @@
 /**
  * [INPUT]: 依赖 Bun test 与助手纯几何策略
- * [OUTPUT]: 锁定默认短窗即最小尺寸、八方向对边固定/临时浮窗边界，以及屏幕变化和键盘出现时的完整可达性；Demo面板宽度不受真实窗口下限影响
+ * [OUTPUT]: 锁定5:8默认阅读窗与独立拖动下限、八方向对边固定/临时浮窗边界，以及屏幕变化和键盘出现时的完整可达性；Demo面板宽度不受真实窗口下限影响
  * [POS]: widgets 的助手空间约束门禁；浏览器动效观感另由真实页面验证
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { expect, test } from "bun:test";
-import { constrainAssistantRect, resizeAssistantRect, resolveAssistantGeometry, type AssistantResizeEdge } from "./assistantGeometry";
+import { ASSISTANT_DEFAULT_WIDTH, constrainAssistantRect, resizeAssistantRect, resolveAssistantGeometry, type AssistantResizeEdge } from "./assistantGeometry";
 
-test("短/全高同宽同底边，全高对齐Panel，短窗不超过2/3", () => {
-  const input = { viewportWidth: 1440, viewportHeight: 900, panelWidth: 360 };
+test("400×640默认短窗为5:8，全高同宽同底边并对齐Panel", () => {
+  const input = { viewportWidth: 1440, viewportHeight: 900, panelWidth: ASSISTANT_DEFAULT_WIDTH };
   const compact = resolveAssistantGeometry({ ...input, size: "compact" });
   const expanded = resolveAssistantGeometry({ ...input, size: "expanded" });
   expect(compact.width).toBe(expanded.width);
   expect(compact.bottom).toBe(expanded.bottom);
   expect(expanded.height + expanded.bottom).toBe(884);
-  expect(compact.height).toBe(520);
-  expect(compact.height).toBeLessThanOrEqual(expanded.height * 2 / 3 + 1);
+  expect(compact.width).toBe(400);
+  expect(compact.height).toBe(640);
+  expect(compact.width / compact.height).toBe(5 / 8);
 });
 
 test("四边四角调整保留对边，边角同时改变宽高", () => {
@@ -50,9 +51,9 @@ test("每个方向都不能穿过视口或压扁输入区，屏幕变小时自�
   expect(restored.bottom).toBe(12);
 });
 
-test("过小临时浮窗收敛到默认短窗，八方向缩小时停在同一尺寸", () => {
+test("默认阅读尺寸不妨碍主动缩小，过小临时浮窗与八方向调整共用下限", () => {
   const input = { viewportWidth: 1440, viewportHeight: 900, panelWidth: 264 };
-  const minimum = resolveAssistantGeometry({ ...input, size: "compact" });
+  const minimum = resolveAssistantGeometry({ ...input, size: "compact", frame: { width: 360, height: 520, right: 16, bottom: 16 } });
   expect(minimum.width).toBe(360);
   expect(minimum.height).toBe(520);
   const restored = resolveAssistantGeometry({ ...input, size: "compact", frame: { width: 264, height: 280, right: 16, bottom: 16 } });
@@ -87,5 +88,20 @@ test("演示面板严格使用预留栏宽，正式窗口仍保留360px下限", 
     const paperRight = viewportWidth - panelWidth - 30;
     expect(viewportWidth - panel.right - panel.width).toBeGreaterThan(paperRight);
     expect(panel.height + panel.bottom).toBe(736 - inset);
+  }
+});
+
+
+test("常见屏幕自动收敛高度，窄屏与软键盘不裁切窗口", () => {
+  for (const [viewportWidth, viewportHeight, expectedWidth, expectedHeight] of [
+    [1920, 1080, 400, 640], [1440, 900, 400, 640],
+    [1366, 768, 400, 552], [1280, 720, 400, 516], [390, 844, 366, 615],
+  ] as const) {
+    const geometry = resolveAssistantGeometry({ viewportWidth, viewportHeight, panelWidth: ASSISTANT_DEFAULT_WIDTH, size: "compact" });
+    expect(geometry.width).toBe(expectedWidth);
+    expect(geometry.height).toBe(expectedHeight);
+    expect(geometry.width + geometry.right + geometry.inset).toBeLessThanOrEqual(viewportWidth);
+    expect(geometry.height + geometry.bottom + geometry.inset).toBeLessThanOrEqual(viewportHeight);
+    expect(geometry.height).toBeLessThanOrEqual((viewportHeight - geometry.inset * 2) * .75 + 1);
   }
 });

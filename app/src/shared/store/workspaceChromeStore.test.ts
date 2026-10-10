@@ -6,7 +6,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { resolveAssistantGeometry } from "../../widgets/assistantGeometry";
+import { ASSISTANT_DEFAULT_WIDTH, resolveAssistantGeometry } from "../../widgets/assistantGeometry";
 
 import {
   migrateWorkspaceChrome,
@@ -67,7 +67,7 @@ describe("跨空间助手状态", () => {
   const state = () => useWorkspaceChromeStore.getState();
 
   const geometry = () => resolveAssistantGeometry({
-    viewportWidth: 1440, viewportHeight: 900, panelWidth: 360,
+    viewportWidth: 1440, viewportHeight: 900, panelWidth: ASSISTANT_DEFAULT_WIDTH,
     size: state().assistantSize, frame: state().assistantFrame,
   });
   const customFrame = { width: 600, height: 650, right: 40, bottom: 32 };
@@ -78,11 +78,11 @@ describe("跨空间助手状态", () => {
     expect(state().assistantSize).toBe("expanded");
     expect(geometry()).toMatchObject(customFrame);
     state().setAssistantSize("compact");
-    expect(geometry()).toMatchObject({ width: 360, height: 520, right: 16, bottom: 16 });
+    expect(geometry()).toMatchObject({ width: 400, height: 640, right: 16, bottom: 16 });
     state().setAssistantFrame(customFrame);
     expect(state().assistantSize).toBe("compact");
     state().setAssistantSize("expanded");
-    expect(geometry()).toMatchObject({ width: 360, height: 868, right: 16, bottom: 16 });
+    expect(geometry()).toMatchObject({ width: 400, height: 868, right: 16, bottom: 16 });
   });
   test("笔记胶囊重开默认全高，画布胶囊重开默认短窗", () => {
     for (const canvasId of [null, "canvas-a"]) {
@@ -93,12 +93,12 @@ describe("跨空间助手状态", () => {
       state().closeAssistant();
       expect(state().assistantFrame).toBeNull();
       state().openAssistant();
-      expect(geometry()).toMatchObject({ width: 360, height: canvasId === null ? 868 : 520, right: 16, bottom: 16 });
+      expect(geometry()).toMatchObject({ width: 400, height: canvasId === null ? 868 : 640, right: 16, bottom: 16 });
       state().setAssistantFrame(customFrame);
       state().toggleAssistant();
       expect(state().assistantOpen).toBe(false);
       state().toggleAssistant();
-      expect(geometry()).toMatchObject({ width: 360, height: canvasId === null ? 868 : 520, right: 16, bottom: 16 });
+      expect(geometry()).toMatchObject({ width: 400, height: canvasId === null ? 868 : 640, right: 16, bottom: 16 });
     }
   });
   test("重复打开和同场景渲染保留临时尺寸，切换场景采用默认且不自动打开", () => {
@@ -128,7 +128,7 @@ describe("跨空间助手状态", () => {
       paperAssistantSize: "compact", paperAssistantFrame: customFrame,
     }));
     state().hydrate("user-a");
-    expect(geometry()).toMatchObject({ width: 360, height: 868, right: 16, bottom: 16 });
+    expect(geometry()).toMatchObject({ width: 400, height: 868, right: 16, bottom: 16 });
     state().setAssistantSize("compact");
     state().setAssistantFrame(customFrame);
     state().hydrate("user-a");

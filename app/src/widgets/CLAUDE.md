@@ -9,10 +9,10 @@ SignOutConfirmationDialog.tsx: Laper原组件字号/几何与dim黑色遮罩，�
 CheckoutTransition.tsx: 订阅和积分共用的无确认结账过渡与原位错误反馈；复用 DS spinner/按钮，业务状态由页面提供，既不展示订单也不发起购买。
 WorkspaceAssistantLayer.test.tsx: 正式助手自定义宽高切换默认布局、胶囊重开时保留输入实例/草稿；演示87.5%投影、无中间帧硬切与面板栏宽门禁
 AssistantWindowResize.tsx: 助手专属四边四角命中区；对边固定、拖拽不更新业务状态、松手一次提交；取消/Escape/捕获丢失清理与键盘尺寸调整
-AssistantWindowResize.test.tsx: 八方向入口、边角同时改变宽高、只松手提交、取消恢复、第二指针隔离、指针/键盘不可缩到短窗以下与全局光标清理门禁
+AssistantWindowResize.test.tsx: 八方向入口、边角同时改变宽高、只松手提交、取消恢复、第二指针隔离、指针/键盘不可缩到可用下限以下与全局光标清理门禁
 WorkspaceAssistantLayer.tsx: widthMode区分真实窗口与演示面板，后者匹配预留栏宽；胶囊入口原位显示 WarmTooltip，展开状态禁用提示且保留动画 ref； 常驻三态与自由尺寸助手外壳；局部MotionValue驱动拖拽，四边四角调整、展示当前展开期间的临时完整几何，Demo按根字号缩放并硬切、可禁用调整；默认右下锚点、自定义保留调整位置，仅外壳尺寸/裁切变化、正文不缩放，关闭inert与焦点归还；复用品牌流光并显示真实工作/审批/完成/异常状态
-assistantGeometry.test.ts: 临时完整宽高与默认几何、八方向调整、可视区域钳制；短窗最小尺寸、同宽同底边、2/3高度限制、手机键盘与演示栏宽隔离
-assistantGeometry.ts: 助手默认/临时完整几何与八方向调整纯策略；标准宽360px，短窗最高520px且不超过可用高度2/3，全高对齐Panel，胶囊130×44；临时浮窗沿两种目标模式钳制，窄屏收敛到可视区域，panel模式只消费演示栏宽
+assistantGeometry.test.ts: 400×640的5:8默认阅读窗、常见桌面/手机尺寸、75%高度上限与键盘避让；独立360×520拖动下限、八方向调整、同宽同底边与演示栏宽隔离
+assistantGeometry.ts: 助手默认/临时完整几何与八方向调整纯策略；标准宽400px，短窗640px且不超过可用高度75%，全高对齐Panel，胶囊130×44；360×520拖动下限独立于默认阅读尺寸；临时浮窗沿两种目标模式钳制，窄屏收敛到可视区域，panel模式只消费演示栏宽
 MenuComparison/: 独立本地菜单对照入口与1c1fe55历史快照；复用生产菜单/侧栏表面、保持数据一致并默认展开，只为对比尺寸和定位，不装配业务状态
 CreditsPurchaseDialog.tsx: 关闭入口保留轻通透材质与可访问名称，无重复提示；用户选定的同源蓝色生成图横幅、实测超椭圆曲率与六档积分选购的受控展示层，640px/24px圆角弹窗内呈现服务端报价、原生单选、当前积分余额、无确认结账过渡/升级入口与规则；复用 Dialog 模态和 locale，网络与生命周期交给 CreditsPage 导出 CreditPacksSkeleton，沿六张 2:1 卡壳占位；初读延迟、内容就绪立即可选，刷新保留旧目录。 销售状态只在目录返回后显示，等待期不误报尚未开售。
 DesktopDownloadButton.tsx: Header/Hero共用原生下载；可选icon允许Header展示语义下载图标，系统识别和未知架构的Mac arm64/Windows x64选择只维护一份。

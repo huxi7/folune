@@ -70,7 +70,7 @@ test("丢失捕获只结算一次，方向键可单轴调整边角", () => {
   expect(v.onCommit).toHaveBeenLastCalledWith({ left: 600, top: 168, width: 360, height: 552 });
 });
 
-test("鼠标和键盘都不能把窗口缩到默认短窗以下", () => {
+test("鼠标和键盘都不能把窗口缩到独立可用下限以下", () => {
   const v = setup();
   fireEvent.pointerDown(v.handle, v.pointer);
   fireEvent.pointerMove(v.handle, { ...v.pointer, clientX: 1400, clientY: 800 });

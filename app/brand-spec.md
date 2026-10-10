@@ -144,6 +144,19 @@ Moving the 36px Button family to `999px` was evaluated and rejected. The Compose
 - The Library search trigger only opens the single global Command Palette. The `[搜索] [新建 │⌄]` row remains mounted, keeps its geometry and never transforms into a local input, hides the create control or jumps layout while search is open. File-library code must not introduce a second search owner or local result tree.
 - Panel entry/exit uses restrained x/opacity Tween motion. Controls do not fly across the panel through shared layout identity, and panel contents are never compressed with scaleX.
 
+### AI 窗口默认尺寸（2026-10-10）
+
+- 小窗默认400×640 CSS px，宽高比5:8。宽度支持中文回复与引用，纵向空间优先分给对话。
+- 全高窗口默认宽400px，高度等于可视区域减上下内缩。大小切换不改变正文行宽。
+- 桌面右边、底边保持16px内缩；全高顶部与其他Panel对齐。窄屏沿工作台使用12px。
+- 小窗高度最多占可用高度75%，保留上方工作区。可用高度≤420px时使用全部可见高度；宽度不得越过视口内缩。
+- 1440×900及1920×1080视口采用400×640；1366×768视口采用400×552；1280×720视口采用400×516。屏幕不足时优先保证可达性，不强制比例或缩小文字。
+- 拖动下限继续为360×520，并按可见区域收敛。默认阅读尺寸与手动调整下限各司其职。
+- 收起/重开和大小切换恢复默认几何。尺寸不持久化；对话与草稿继续留在同一实例。
+- 参考实测：用户标注的Laper页面在1672×988视口下，小窗为371×659，接近9:16；右/下留白24px，对话区478.125px，占窗口约73%。该数值是当前页面状态，不宣称所有设备都使用相同默认值。
+- Folune采用稍宽的5:8纵向阅读窗，以适应笔记引用。全高态沿用Folune的Panel顶部内缩，不复制参考应用为顶部工具栏保留的空隙。
+- 外部依据：[IBM Carbon AI Chat 布局](https://chat.carbondesignsystem.com/version/v1.19.0-rc.1/docs/documents/UI_customization.Layout.html)提供380px浮窗宽度与640px高度上限；[Fluent Drawer](https://fluent2.microsoft.design/components/web/react/core/drawer/usage)强调尺寸服务于内容并谨慎遮挡主视图。5:8是Folune结合用户参考的选择，不是行业统一比例。
+
 ## Paper toolbar
 
 - The Paper toolbar is sticky **inside** the Paper, not a floating layer above it. It **never** carries a bottom rule, a background of its own or a shadow — at rest or condensed: the controls simply sit in the Paper's top padding and read as part of the sheet.
