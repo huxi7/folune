@@ -7,8 +7,9 @@
 import { afterEach, expect, test } from "bun:test";
 import { Window } from "happy-dom";
 const browserWindow = new Window();
-Object.assign(globalThis, { window: browserWindow, document: browserWindow.document, HTMLElement: browserWindow.HTMLElement, Node: browserWindow.Node, SVGElement: browserWindow.SVGElement });
+Object.assign(globalThis, { window: browserWindow, document: browserWindow.document, HTMLElement: browserWindow.HTMLElement, Node: browserWindow.Node, SVGElement: browserWindow.SVGElement, requestAnimationFrame: browserWindow.requestAnimationFrame.bind(browserWindow), cancelAnimationFrame: browserWindow.cancelAnimationFrame.bind(browserWindow) });
 const { render, cleanup } = await import("@testing-library/react/pure");
+const { ASSISTANT_DEFAULT_WIDTH } = await import("./assistantGeometry");
 const { WorkspaceAssistantLayer } = await import("./WorkspaceAssistantLayer");
 afterEach(cleanup);
 
@@ -42,7 +43,7 @@ test("自定义宽高切换标准布局和胶囊重开时保留输入实例与�
   const state = () => useWorkspaceChromeStore.getState();
   state().hydrate("assistant-test");
   state().openAssistant();
-  const scene = () => <WorkspaceAssistantLayer open={state().assistantOpen} size={state().assistantSize} frame={state().assistantFrame} panelWidth={360} animateGeometry={false} resizable={false} onOpen={state().openAssistant}><textarea aria-label="临时输入" defaultValue="草稿" /></WorkspaceAssistantLayer>;
+  const scene = () => <WorkspaceAssistantLayer open={state().assistantOpen} size={state().assistantSize} frame={state().assistantFrame} panelWidth={ASSISTANT_DEFAULT_WIDTH} animateGeometry={false} resizable={false} onOpen={state().openAssistant}><textarea aria-label="临时输入" defaultValue="草稿" /></WorkspaceAssistantLayer>;
   const view = render(scene());
   const input = view.getByRole("textbox") as HTMLTextAreaElement;
   input.value = "尚未发送的内容";
@@ -53,15 +54,32 @@ test("自定义宽高切换标准布局和胶囊重开时保留输入实例与�
   expect(shell.style.height).toBe("650px");
   state().setAssistantSize("compact");
   view.rerender(scene());
-  expect(shell.style.width).toBe("360px");
-  expect(shell.style.height).toBe("520px");
+  expect(shell.style.width).toBe("400px");
+  expect(shell.style.height).toBe("640px");
   state().closeAssistant();
   view.rerender(scene());
   expect(shell.style.height).toBe("44px");
   state().openAssistant();
   view.rerender(scene());
-  expect(shell.style.width).toBe("360px");
+  expect(shell.style.width).toBe("400px");
   expect(shell.style.height).toBe("868px");
   expect(view.getByRole("textbox")).toBe(input);
   expect(input.value).toBe("尚未发送的内容");
+});
+
+test("外壳可见性是状态而非动画：展开即呈现内容，丢帧不会留下白屏", () => {
+  Object.assign(window, { innerWidth: 1440, innerHeight: 900 });
+  const scene = (open: boolean) => <WorkspaceAssistantLayer open={open} size="expanded" panelWidth={400} onOpen={() => {}}><textarea aria-label="正文" /></WorkspaceAssistantLayer>;
+  const view = render(scene(true));
+  const body = view.container.querySelector<HTMLElement>(".workspace-assistant-body")!;
+  const material = view.container.querySelector<HTMLElement>(".workspace-assistant-material")!;
+  const launcher = view.container.querySelector<HTMLElement>(".workspace-assistant-launcher")!;
+  // 透明度直接来自状态，不经过任何动画
+  expect(body.style.opacity).toBe("1");
+  expect(material.style.opacity).toBe("0");
+  expect(launcher.style.opacity).toBe("0");
+  view.rerender(scene(false));
+  expect(body.style.opacity).toBe("0");
+  expect(material.style.opacity).toBe("1");
+  expect(launcher.style.opacity).toBe("1");
 });

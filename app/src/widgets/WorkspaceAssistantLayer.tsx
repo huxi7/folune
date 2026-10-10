@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 WarmTooltip 原位功能提示；依赖跨空间助手开关/目标布局、默认宽度与临时完整浮窗、八方向调整器、真实活动状态、DS 材质/动态偏好与 MotionValue
- * [OUTPUT]: 对外提供常驻三态与自由尺寸宿主；胶囊固定右下，四边四角拖拽逐帧只更新局部几何，松手提交当前展开期间的临时几何；可供Demo按uiScale投影胶囊并用panel宽度模式匹配预留栏宽，关闭几何/透明度过渡与调整能力
- * [POS]: widgets 的助手专属外壳；Dashboard持有会话，纯策略裁决边界，MotionValue持有动画/手势同一几何，避免正文缩放、会话重挂或逐帧重渲染工作区
+ * [INPUT]: 依赖 WarmTooltip 原位功能提示；依赖跨空间助手开关/目标布局、默认宽度与临时完整浮窗、八方向调整器、真实活动状态、DS 材质/动态偏好与 MotionValue；依赖 DS 时长/曲线 CSS token 表达可见性过渡
+ * [OUTPUT]: 对外提供常驻三态与自由尺寸宿主；胶囊固定右下，四边四角拖拽逐帧只更新局部几何，松手提交当前展开期间的临时几何；可见性透明度直接写入 DOM 状态并由 CSS 插值，不依赖动画落定；可供Demo按uiScale投影胶囊并用panel宽度模式匹配预留栏宽，关闭几何/透明度过渡与调整能力
+ * [POS]: widgets 的助手专属外壳；Dashboard持有会话，纯策略裁决边界，MotionValue只持有动画/手势同一几何，可见性是状态而不是动画，因此后台/冻结页丢帧也不会留下白屏，避免正文缩放、会话重挂或逐帧重渲染工作区
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import WarmTooltip from "../shared/design-system/components/WarmTooltip";
@@ -16,6 +16,9 @@ import type { AssistantFrame, AssistantSize } from "../shared/store/workspaceChr
 import type { AgentPresence } from "./AgentPanel/activityState";
 import { ASSISTANT_CAPSULE, resolveAssistantGeometry, type AssistantRect, type AssistantWidthMode } from "./assistantGeometry";
 import { AssistantWindowResize } from "./AssistantWindowResize";
+
+// ---- 展开/收起时正文与胶囊的错峰 ----
+const SHELL_STAGGER = { body: 0.08, launcher: 0.15 } as const;
 
 type WorkspaceAssistantLayerProps = {
   children: ReactNode;
@@ -117,7 +120,14 @@ export function WorkspaceAssistantLayer({ children, open, size, panelWidth, pres
     bodyWidth.set(rect.width); bodyHeight.set(rect.height);
   };
 
-  const fade = { duration: reduced ? motionDuration.press : motionDuration.microExit };
+  // ---- 可见性是状态：透明度由 React 直接写入，CSS 只负责插值，丢帧也不停在半途 ----
+  const visibilityStyle = (visible: boolean, delay: number): CSSProperties => ({
+    opacity: visible ? 1 : 0,
+    transitionProperty: "opacity",
+    transitionDuration: animateGeometry ? "var(--motion-micro-exit)" : "0ms",
+    transitionTimingFunction: "var(--ease-standard)",
+    transitionDelay: reduced || !animateGeometry ? "0s" : `${delay}s`,
+  });
   const scaleStyle = { "--assistant-ui-scale": uiScale } as CSSProperties;
   return <motion.div
     className="workspace-assistant-layer"
@@ -129,7 +139,7 @@ export function WorkspaceAssistantLayer({ children, open, size, panelWidth, pres
     style={{ ...scaleStyle, width: animateGeometry ? width : open ? geometry.width : capsuleWidth, height: animateGeometry ? height : open ? geometry.height : capsuleHeight, right: animateGeometry ? right : open ? geometry.right : fullGeometry.right, bottom: animateGeometry ? bottom : open ? geometry.bottom : fullGeometry.bottom, borderRadius: animateGeometry ? radius : open ? geometry.radius : capsuleRadius }}
   >
     <div className="workspace-assistant-clip">
-      <motion.div aria-hidden="true" className="workspace-assistant-material" initial={false} animate={animateGeometry ? { opacity: open ? 0 : 1 } : undefined} style={animateGeometry ? undefined : { opacity: open ? 0 : 1 }} transition={fade}>
+      <motion.div aria-hidden="true" className="workspace-assistant-material" initial={false} style={visibilityStyle(!open, 0)}>
         <span className="glow-button-base" />
         <span className="glow-button-flow">{!open ? <ShaderGlow className="glow-button-canvas" speed={0.25} intensity={10} /> : null}</span>
         <span className="glow-button-sheen" />
@@ -141,9 +151,7 @@ export function WorkspaceAssistantLayer({ children, open, size, panelWidth, pres
         aria-hidden={!open}
         inert={!open}
         initial={false}
-        animate={animateGeometry ? { opacity: open ? 1 : 0 } : undefined}
-        transition={{ ...fade, delay: open && !reduced ? 0.08 : 0 }}
-        style={{ width: animateGeometry ? bodyWidth : geometry.width, height: animateGeometry ? bodyHeight : geometry.height, opacity: animateGeometry ? undefined : open ? 1 : 0, pointerEvents: open ? "auto" : "none" }}
+        style={{ width: animateGeometry ? bodyWidth : geometry.width, height: animateGeometry ? bodyHeight : geometry.height, pointerEvents: open ? "auto" : "none", ...visibilityStyle(open, open ? SHELL_STAGGER.body : 0) }}
       >{children}</motion.div>
       <WarmTooltip asChild content={`${t("打开 AI 助手", "Open AI assistant")}${presence === "idle" ? "" : ` · ${label}`}`} disabled={open}>
       <motion.button
@@ -158,9 +166,7 @@ export function WorkspaceAssistantLayer({ children, open, size, panelWidth, pres
         type="button"
         onClick={onOpen}
         initial={false}
-        animate={animateGeometry ? { opacity: open ? 0 : 1 } : undefined}
-        transition={{ ...fade, delay: open || reduced ? 0 : 0.15 }}
-        style={{ opacity: animateGeometry ? undefined : open ? 0 : 1, pointerEvents: open ? "none" : "auto" }}
+        style={{ pointerEvents: open ? "none" : "auto", ...visibilityStyle(!open, open ? 0 : SHELL_STAGGER.launcher) }}
       >
         {presence === "complete" ? <CheckIcon size={16} /> : presence === "approval" || presence === "error" ? <WarningCircleIcon size={16} /> : <ArrowUpIcon className="workspace-assistant-arrow" size={16} />}
         <span>{label}</span>
