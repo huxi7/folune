@@ -3,7 +3,8 @@
 
 成员清单
 ComposerSourceChip.tsx: 笔记和画布共用引用外壳与内部移除按钮；透传外壳 ref 供浮层对齐，状态由调用方持有
-useCanvasChatSource.ts: 提供当前画布默认引用、来源切换及发送前同步冻结
+useCanvasChatSource.ts: 页面身份驱动默认画布引用；显式 @独立保留；移除只抑制当前页面；同画布保留精确范围，发送前同步冻结
+useCanvasChatSource.test.tsx: 验证笔记/画布切换、移除后恢复、历史优先级、手动引用及迟到读取和发送快照隔离
 canvasEvidence.ts: 提供去重后的引用清单，拒绝损坏消息数据
 canvasCitationFocus.ts: 提供引用定位事件名与发送函数
 canvasChatSources.ts: 提供问答来源选择、恢复与画布 @候选纯函数
@@ -13,7 +14,7 @@ CanvasSourcePicker.tsx: 浮层左沿对齐引用外壳，焦点归还内部按�
 CanvasSourcePicker.test.tsx: 验证离屏来源选择、搜索保留、显式选择复制和浮层 Escape
 CanvasCitations.tsx: 底部按唯一笔记计数，关系与自由文字单列画布依据；打开时重验访问权，原文预览不提供编辑； 提供回复底部引用入口、短引文、原文预览和卡片定位
 AgentPopover.tsx: 提供来源选择与引用共用的原位非模态浮层；可选外壳决定水平对齐，触发按钮保留纵向定位与焦点
-AgentConversation.tsx: 画布来源跨追问保持，只有明确操作复制选择；只读轮拒绝客户端工具与恢复执行；引用置顶/移除原位显示 WarmTooltip，发送/停止由 Button 同源提供； 单会话Composer/流/审批/八并发工具执行与恢复边界；权限确认后发送，草稿首发保持实例，停止取消排队，后台同步真实消息/命令；完成提示仅来自本次实际处理结束
+AgentConversation.tsx: 默认来源随笔记/画布切换；显式引用与草稿独立保留；同画布跨追问保持范围；只读轮拒绝客户端工具与恢复执行；引用置顶/移除原位显示 WarmTooltip，发送/停止由 Button 同源提供； 单会话Composer/流/审批/八并发工具执行与恢复边界；权限确认后发送，草稿首发保持实例，停止取消排队，后台同步真实消息/命令；完成提示仅来自本次实际处理结束
 chatErrorCopy.test.ts: SSE 余额错误显示专门标题，登录和通用错误分类保持
 batchCheckpoint.test.ts: 并行批次检查点串行合并不丢记录、末轮恢复与终态不重跑门禁
 batchRecovery.ts: 末条 assistant 的审批/检查点恢复候选纯判定，终态和旧轮次不重跑
@@ -30,7 +31,7 @@ CLAUDE.md: 记录 AgentPanel 子域成员、依赖方向与 GEB 回环协议
 AgentPanelHeader.tsx: 大小按钮明确指向展开为全高/切换为小窗；收起入口仅保留无障碍名称，历史/新建/窗口尺寸仍有功能提示；功能图标复用 Button 默认提示并朝下展开； 无状态同源Header；历史/返回、即时新对话、可选短窗/全高切换与向下收起，复用DS Ghost Button，尺寸模式归外壳
 useConversationScroll.test.tsx: 验证首次非平滑定位与退出冻结、迟到内容回调不追尾
 useConversationScroll.ts: 消息滚动唯一边界，首次绘制前定位、退出取消平滑滚动并冻结位置，隐藏历史拒绝追尾
-AgentPanel.draft.test.tsx: 覆盖首开权限与保存期间按钮/Enter/直接提交不发送；子进程隔离、真实组件/Hook/SDK/transport，验证零写草稿、首发创建/引用/持续消息实例、失败重试、删除与迟到请求隔离
+AgentPanel.draft.test.tsx: 验证带草稿切换笔记/画布后胶囊与请求一致，保留输入实例及置顶引用；覆盖权限未就绪不得发送、零写草稿、首发创建、失败重试、删除与迟到请求隔离
 AgentPanel.tsx: 同一会话接收画布来源和同步回调，不重建聊天窗口；历史/新对话导航与单会话装配；冷启动与切历史共用延迟消息/输入槽位，数据就绪即接管；接收外壳尺寸/放大收起动作，将聊天与整理的真实状态上报胶囊；AgentConversation身份不因场景/尺寸变化而重建
 AgentConversationSkeleton.tsx: 冷启动、目标会话与代码加载共用的纯加载构图；180ms 后显示消息文字、浅用户容器与输入/工具行，Composer 保留边框壳，不把输入区涂成整块；不持有请求或会话，真实内容就绪立即卸载
 AgentPanel.streaming.test.tsx: 余额不足退出思考、明确提示且不自动重发； 新增流内错误立即停止思考、不执行未确认写工具/自动续写门禁； 子进程隔离 mock，使用真实 useChat/AgentPanel、可控直通流与延迟工具结果，验证连续两轮工具/自动续写稳定、正文首分块在 text-end/finish-step 前已显示且只折叠一次，独立读写工具并发、98 项独立工具顺序展示、100项明确批量八并发与完成列表 DOM 有界，以及停止后不再启动待执行工具或自动续写

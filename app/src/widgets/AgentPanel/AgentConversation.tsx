@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 ComposerSourceChip 同构引用与 WarmTooltip 原位功能提示；依赖 locale、账号权限确认、useConversationScroll、DS 原语、useAiThreads、useChat/审批及既有工具执行边界
- * [OUTPUT]: 画布来源跨追问保持，只有明确操作复制选择；只读轮拒绝客户端工具与恢复执行； 对外提供常驻 AgentConversation 与真实处理/审批/完成状态；只读工具参数到齐即并发执行，写工具经过流末审批门禁后最多八项并发，停止取消排队、保存本批结果并阻断自动续写；整轮活动跨客户端工具/审批/续写持续，消息定点同步并以本地快照快速回显
+ * [OUTPUT]: 默认来源随笔记/画布切换，显式引用与草稿独立保留；同画布跨追问保持范围；只读轮拒绝客户端工具与恢复执行； 对外提供常驻 AgentConversation 与真实处理/审批/完成状态；只读工具参数到齐即并发执行，写工具经过流末审批门禁后最多八项并发，停止取消排队、保存本批结果并阻断自动续写；整轮活动跨客户端工具/审批/续写持续，消息定点同步并以本地快照快速回显
  * [POS]: AgentPanel 的单会话执行与输入边界；新对话立即进入本地草稿，首发创建期间保持同一 useChat 与消息实例；历史只负责导航，目标会话加载/失败在内容窗承接；api command 是唯一写事实源，Store 只做幂等投影与回滚
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -149,7 +149,7 @@ export function AgentConversation({
 }: ConversationProps) {
   const { t, locale } = useLocale();
   const [inputValue, setInputValue] = useState("");
-  const canvasSource = useCanvasChatSource({ accessToken, currentCanvas, initialMessages, hasDraft: inputValue.trim().length > 0, prepare: onPrepareCanvas });
+  const canvasSource = useCanvasChatSource({ accessToken, currentCanvas, currentMemoId: currentMemo?.id, initialMessages, prepare: onPrepareCanvas });
   const [submitError, setSubmitError] = useState<string | null>(null);
   const submitting = useRef(false);
   const reduceMotion = Boolean(useMotionPreference());

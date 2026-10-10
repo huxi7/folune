@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖真实 AgentPanel/useAiThreads/useChat/transport、happy-dom 与可控 API/SSE 边界
- * [OUTPUT]: 验证草稿零写入、首发单次创建/引用冻结/消息不重挂、失败重试、异步选择隔离与权限未确认不得发送
+ * [OUTPUT]: 验证笔记/画布胶囊切换与草稿保留、首发引用冻结、失败重试、异步选择隔离与权限门禁
  * [POS]: 草稿到持久会话的集成门禁；隔离子进程防止 module mock 污染其余用例
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -8,6 +8,7 @@ import { afterEach, expect, mock, test } from "bun:test";
 import { Window } from "happy-dom";
 import type { AiThreadBootstrap, AiThreadDetail } from "../../shared/api/ai";
 import type { MemoTreeNode } from "../../shared/api/memo";
+import type { CanvasDetail } from "../../shared/api/canvas";
 
 if (process.env.FOLUNE_DRAFT_TEST_CHILD !== "1") {
   test("隔离运行草稿与首次发送的真实生命周期", async () => {
@@ -51,6 +52,11 @@ mock.module("../../shared/api/ai", () => ({
 }));
 const auth = await import("../../shared/supabase/auth");
 mock.module("../../shared/supabase/auth", () => ({ ...auth, getAuthenticatedAccessToken: async () => "test" }));
+const canvasApi = await import("../../shared/api/canvas");
+mock.module("../../shared/api/canvas", () => ({
+  ...canvasApi,
+  getCanvas: async (_token: string, id: string) => ({ canvas: { node_id: id, version: 4 }, nodes: [], edges: [] }) as unknown as CanvasDetail,
+}));
 const settings = await import("./aiSettingsCache");
 let readPermission = async () => ({ permission_mode: "ask" });
 let savePermission = async () => ({ permission_mode: "full_access" });
@@ -86,12 +92,15 @@ afterEach(() => {
   readPermission = async () => ({ permission_mode: "ask" });
   savePermission = async () => ({ permission_mode: "full_access" });
 });
-async function panel(currentMemo: MemoTreeNode | null = null) {
-  const view = render(<ToastProvider><AgentPanel {...input} currentMemo={currentMemo} memoTree={currentMemo ? [currentMemo] : []}
+function panelElement(currentMemo: MemoTreeNode | null, currentCanvas: { id: string; title: string } | null = null, tree = currentMemo ? [currentMemo] : []) {
+  return <ToastProvider><AgentPanel {...input} currentMemo={currentMemo} currentCanvas={currentCanvas} memoTree={tree}
     onApplyOrganize={async () => undefined} onRejectOrganize={async () => undefined}
     onPrepareMutation={async () => undefined} onClose={() => undefined}
     onSelectedThreadChange={() => undefined} organizeBusy={false} organizeRun={null}
-  /></ToastProvider>);
+  /></ToastProvider>;
+}
+async function panel(currentMemo: MemoTreeNode | null = null) {
+  const view = render(panelElement(currentMemo));
   await waitFor(() => expect(view.queryByRole("textbox", { name: "输入消息" })).not.toBeNull());
   return view;
 }
@@ -105,6 +114,47 @@ function deferred<T>() {
   const promise = new Promise<T>((r) => { resolve = r; });
   return { promise, resolve };
 }
+
+test.each(["note", "canvas"] as const)("草稿中连续切换笔记和画布，胶囊与发送的 %s 来源一致且输入实例不重建", async (destination) => {
+  const otherMemo = { ...memo, id: "memo-two", title: "另一篇笔记" };
+  const tree = [memo, otherMemo];
+  const firstCanvas = { id: "canvas-one", title: "第一个画布" };
+  const secondCanvas = { id: "canvas-two", title: "第二个画布" };
+  useMemoTreeStore.setState({ nodes: tree });
+  const view = await panel(memo);
+  const composer = view.getByRole("textbox", { name: "输入消息" });
+  composer.textContent = "保留这段草稿"; fireEvent.input(composer);
+  view.rerender(panelElement(otherMemo, null, tree));
+  expect(view.queryByRole("button", { name: "移除引用 引用笔记" })).toBeNull();
+  expect(view.getByRole("button", { name: "移除引用 另一篇笔记" })).toBeTruthy();
+  fireEvent.click(view.getByRole("button", { name: "置顶引用 另一篇笔记" }));
+  await act(async () => {});
+
+  view.rerender(panelElement(null, firstCanvas, tree));
+  await waitFor(() => expect(view.getByRole("button", { name: "发送消息" }).hasAttribute("disabled")).toBe(false));
+  expect(view.getByRole("button", { name: firstCanvas.title })).toBeTruthy();
+  expect(view.getByRole("button", { name: "取消置顶 另一篇笔记" })).toBeTruthy();
+  view.rerender(panelElement(null, secondCanvas, tree));
+  await waitFor(() => expect(view.getByRole("button", { name: "发送消息" }).hasAttribute("disabled")).toBe(false));
+  expect(view.queryByRole("button", { name: firstCanvas.title })).toBeNull();
+  expect(view.getByRole("button", { name: secondCanvas.title })).toBeTruthy();
+
+  if (destination === "note") {
+    view.rerender(panelElement(memo, null, tree));
+    expect(view.queryByRole("button", { name: "移除画布引用" })).toBeNull();
+    expect(view.queryByText("画布问答 · 只读")).toBeNull();
+    expect(view.getByRole("button", { name: "移除引用 引用笔记" })).toBeTruthy();
+  }
+  expect(view.getByRole("textbox", { name: "输入消息" })).toBe(composer);
+  expect(composer.textContent).toBe("保留这段草稿");
+  await waitFor(() => expect(view.getByRole("button", { name: "发送消息" }).hasAttribute("disabled")).toBe(false));
+  fireEvent.click(view.getByRole("button", { name: "发送消息" }));
+  await waitFor(() => expect(chatBodies).toHaveLength(1));
+  expect(chatBodies[0]?.reference_memo_ids).toEqual(destination === "note" ? [memo.id, otherMemo.id] : [otherMemo.id]);
+  if (destination === "note") expect(chatBodies[0]?.canvas).toBeUndefined();
+  else expect(chatBodies[0]?.canvas).toEqual({ canvas_id: secondCanvas.id, mode: "all", memo_ids: [], version: 4 });
+  await waitFor(() => expect(view.getByText("收到首条消息。")).toBeTruthy());
+});
 
 test("首开权限未确认和切换保存期间，点击发送、Enter 与直接提交都不能走旧模式", async () => {
   const loading = deferred<{ permission_mode: string }>();
