@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖桌面可选退出保存注册表， 依赖跨空间助手尺寸/可见性、首次入口就绪桥梁、React Router Profile/token、Canvas bootstrap、轻量 tree/正文/Workspace Store、删除编排、惰性 AI、持久左右工具宿主、按当前树重算的归档 presentation、useOverlayPanels 响应式判据与 Paper/Canvas Workspace
+ * [INPUT]: 依赖桌面可选退出保存注册表， 依赖跨空间助手可见性与临时完整几何、首次入口就绪桥梁、React Router Profile/token、Canvas bootstrap、轻量 tree/正文/Workspace Store、删除编排、惰性 AI、持久左右工具宿主、按当前树重算的归档 presentation、useOverlayPanels 响应式判据与 Paper/Canvas Workspace
  * [OUTPUT]: 画布问答发送必须等待服务器同步，离场策略继续独立； 确认后的退出复用笔记/Canvas保存门禁，认证成功才清理工作区；对外提供 useAppDashboardController 状态与命令投影；订阅通过受限来路保留原笔记身份，深链不触发恢复/创建笔记；普通笔记树高亮即时响应，正文导航按帧合并且可中断，Canvas 离场等待保存且仅最新选择继续，另协调文件库、正文预取、账户与归档
  * [POS]: app/src/pages 的 /app 状态协调 Hook，由 AppDashboard 单次持有；跨 Paper/Canvas 的数据与视觉交接只在此建立一次，深链刷新先确认节点类型，普通业务状态仍留在各自 Store/Workspace，文件库作为共享 Chrome 留在两种内容壳之外。它是「现在是不是覆盖式布局」的唯一持有者并下传给 Paper 壳与归档 Overlay：同一个断点算两遍就会出现两个都自称正确的布局；归档只交出 canonical memo，屏幕上由谁代表它归 AppSidebar
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -28,7 +28,7 @@ import { isMemoTitleConflictError } from "../shared/store/memoTitleRules";
 import { findNode } from "../shared/store/memoTree";
 import { useMemoTreeStore } from "../shared/store/memoTreeStore";
 import { useRecentNodesStore } from "../shared/store/recentNodesStore";
-import { useWorkspaceChromeStore } from "../shared/store/workspaceChromeStore";
+import { defaultAssistantSize, useWorkspaceChromeStore } from "../shared/store/workspaceChromeStore";
 import { signOutAuthenticatedUser } from "../shared/supabase/auth";
 import type { AccountSection } from "../widgets/AccountDialog";
 import { type SidebarView } from "../widgets/AppSidebar";
@@ -60,8 +60,6 @@ import { useMemoSelection } from "./useMemoSelection";
 import { useOptimisticMemoCreation } from "./useOptimisticMemoCreation";
 import { useStandaloneCanvasCreation } from "./useStandaloneCanvasCreation";
 import {
-  AGENT_MIN_WIDTH,
-  AGENT_WIDTH_KEY,
   DEFAULT_AGENT_WIDTH,
   DEFAULT_SIDEBAR_WIDTH,
   SIDEBAR_MAX_WIDTH,
@@ -118,9 +116,8 @@ export function useAppDashboardController() {
   const openAssistant = useWorkspaceChromeStore((state) => state.openAssistant);
   const assistantScene = useWorkspaceChromeStore((state) => state.assistantCanvasId);
   const sceneSize = useWorkspaceChromeStore((state) => state.assistantSize);
-  const paperAssistantSize = useWorkspaceChromeStore((state) => state.paperAssistantSize);
   const setAssistantSize = useWorkspaceChromeStore((state) => state.setAssistantSize);
-  const assistantFrame = useWorkspaceChromeStore((state) => state.assistantFrame);
+  const sceneFrame = useWorkspaceChromeStore((state) => state.assistantFrame);
   const setAssistantFrame = useWorkspaceChromeStore((state) => state.setAssistantFrame);
   const toggleLibrary = useWorkspaceChromeStore((state) => state.toggleLibrary);
   const memoTree = useMemoTreeStore((state) => state.nodes);
@@ -182,12 +179,6 @@ export function useAppDashboardController() {
     SIDEBAR_MIN_WIDTH,
     SIDEBAR_MAX_WIDTH,
   );
-  const [agentWidth, setAgentWidth] = usePersistedPanelWidth(
-    AGENT_WIDTH_KEY,
-    DEFAULT_AGENT_WIDTH,
-    AGENT_MIN_WIDTH,
-    Number.POSITIVE_INFINITY,
-  );
   const resolvedRouteMemoId = routeMemoId === null ? null : resolveMemoId(routeMemoId);
   const selectedMemo = useMemo(() => resolvedRouteMemoId === null
     ? null
@@ -197,10 +188,6 @@ export function useAppDashboardController() {
     selectedMemoId === null ? null : state.documents[selectedMemoId] ?? null);
   const selectedMemoDocumentStatus = useMemoDocumentStore((state) =>
     selectedMemoId === null ? "idle" : state.statuses[selectedMemoId] ?? "idle");
-  const workspaceStyle: WorkspaceStyle = {
-    "--workspace-agent-track": `${agentWidth}px`,
-    "--workspace-sidebar-track": `${sidebarWidth}px`,
-  };
   const treeSkeletonVisible = useDelayedSkeleton(treeStatus === "loading");
   const documentLoading = selectedMemoId !== null
     && (selectedMemoDocumentStatus === "idle" || selectedMemoDocumentStatus === "loading");
@@ -239,12 +226,16 @@ export function useAppDashboardController() {
           typeof window === "undefined" ? 0 : window.innerWidth,
         ).libraryOpen;
   const activeAssistantOpen = assistantOpen;
-  const restoredAssistantSize = canvasReturn?.canvasId === canvasNodeId ? canvasReturn.assistantSize : undefined;
-  const assistantSize = assistantScene === canvasNodeId ? sceneSize
-    : canvasNodeId === null ? paperAssistantSize : restoredAssistantSize ?? "compact";
+  const assistantSize = assistantScene === canvasNodeId ? sceneSize : defaultAssistantSize(canvasNodeId);
+  const assistantFrame = assistantScene === canvasNodeId ? sceneFrame : null;
+  const agentWidth = assistantFrame?.width ?? DEFAULT_AGENT_WIDTH;
+  const workspaceStyle: WorkspaceStyle = {
+    "--workspace-agent-track": `${agentWidth}px`,
+    "--workspace-sidebar-track": `${sidebarWidth}px`,
+  };
   useLayoutEffect(() => {
-    useWorkspaceChromeStore.getState().enterAssistantScene(canvasNodeId, restoredAssistantSize, canvasReturn?.canvasId === canvasNodeId ? canvasReturn.assistantFrame : null);
-  }, [assistantScene, canvasNodeId, restoredAssistantSize, canvasReturn]);
+    useWorkspaceChromeStore.getState().enterAssistantScene(canvasNodeId);
+  }, [assistantScene, canvasNodeId]);
   const memoCanvasEntry = useMemoCanvasEntry({
     accessToken,
     mergeServerNode,
@@ -773,7 +764,6 @@ export function useAppDashboardController() {
     documentLoading,
     handleRestoreTrashNode,
     trashRevision,
-    setAgentWidth,
     agentWidth,
     closeActiveAssistant,
     canvasNodeId,

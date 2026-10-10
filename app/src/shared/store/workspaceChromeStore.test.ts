@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun test、workspaceChromeStore 状态命令与 assistantGeometry 纯几何
- * [OUTPUT]: 覆盖偏好隔离/迁移、短窗重置旧全高偏好、跨场景尺寸、主动关闭、返回恢复与持久化降级
+ * [OUTPUT]: 覆盖完整默认几何、胶囊重开、旧尺寸偏好淘汰、场景切换与文件库互斥；重复打开不重置临时尺寸
  * [POS]: shared/store 的 Paper First 外壳状态回归测试，不访问 DOM、网络或真实 localStorage
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -66,104 +66,105 @@ describe("跨空间助手状态", () => {
   });
   const state = () => useWorkspaceChromeStore.getState();
 
-  test("笔记展开进入画布收短，回来恢复笔记尺寸；同场景重渲染不覆盖主动放大", () => {
-    state().openAssistant();
-    state().enterAssistantScene("canvas-a");
-    expect(state().assistantOpen).toBe(true);
-    expect(state().assistantSize).toBe("compact");
-    state().setAssistantSize("expanded");
-    state().enterAssistantScene("canvas-a");
-    expect(state().assistantSize).toBe("expanded");
-    state().enterAssistantScene(null);
-    expect(state().assistantSize).toBe("expanded");
-    state().enterAssistantScene("canvas-a");
-    expect(state().assistantSize).toBe("compact");
+  const geometry = () => resolveAssistantGeometry({
+    viewportWidth: 1440, viewportHeight: 900, panelWidth: 360,
+    size: state().assistantSize, frame: state().assistantFrame,
   });
-  test("主动关闭跨场景保持胶囊，画布点击重新打开默认短窗", () => {
+  const customFrame = { width: 600, height: 650, right: 40, bottom: 32 };
+
+  test("拖动后两种大小切换都恢复完整默认几何", () => {
     state().openAssistant();
-    state().enterAssistantScene("canvas-a");
-    state().setAssistantSize("expanded");
-    state().closeAssistant();
-    state().enterAssistantScene(null);
-    expect(state().assistantOpen).toBe(false);
-    state().enterAssistantScene("canvas-a");
-    state().openAssistant();
-    expect(state().assistantSize).toBe("compact");
-  });
-  test("明确原文返回可恢复全高；画布尺寸不污染笔记偏好，账号切换隔离", () => {
+    state().setAssistantFrame(customFrame);
+    expect(state().assistantSize).toBe("expanded");
+    expect(geometry()).toMatchObject(customFrame);
     state().setAssistantSize("compact");
-    state().openAssistant();
-    state().enterAssistantScene("canvas-a");
-    state().setAssistantSize("expanded");
-    state().enterAssistantScene(null);
+    expect(geometry()).toMatchObject({ width: 360, height: 520, right: 16, bottom: 16 });
+    state().setAssistantFrame(customFrame);
     expect(state().assistantSize).toBe("compact");
-    state().enterAssistantScene("canvas-a", "expanded");
-    expect(state().assistantSize).toBe("expanded");
-    state().hydrate("user-b");
-    expect(state().assistantOpen).toBe(false);
-    expect(state().paperAssistantSize).toBe("expanded");
-    state().hydrate("user-a");
-    expect(state().assistantOpen).toBe(true);
-    expect(state().paperAssistantSize).toBe("compact");
+    state().setAssistantSize("expanded");
+    expect(geometry()).toMatchObject({ width: 360, height: 868, right: 16, bottom: 16 });
   });
-  test("窄屏与文件库沿用互斥，持久化失败不阻止内存开合", () => {
-    Object.assign(window, { innerWidth: 800 });
-    state().openLibrary();
-    state().openAssistant();
-    expect(state().libraryOpen).toBe(false);
-    state().openLibrary();
-    expect(state().assistantOpen).toBe(false);
-    Object.defineProperty(window, "localStorage", { get: () => { throw new Error("blocked"); } });
-    state().openAssistant();
-    expect(state().assistantOpen).toBe(true);
+  test("笔记胶囊重开默认全高，画布胶囊重开默认短窗", () => {
+    for (const canvasId of [null, "canvas-a"]) {
+      state().enterAssistantScene(canvasId);
+      state().openAssistant();
+      state().setAssistantSize(canvasId === null ? "compact" : "expanded");
+      state().setAssistantFrame(customFrame);
+      state().closeAssistant();
+      expect(state().assistantFrame).toBeNull();
+      state().openAssistant();
+      expect(geometry()).toMatchObject({ width: 360, height: canvasId === null ? 868 : 520, right: 16, bottom: 16 });
+      state().setAssistantFrame(customFrame);
+      state().toggleAssistant();
+      expect(state().assistantOpen).toBe(false);
+      state().toggleAssistant();
+      expect(geometry()).toMatchObject({ width: 360, height: canvasId === null ? 868 : 520, right: 16, bottom: 16 });
+    }
   });
-  test("自定义窗口收起与刷新都保留，普通画布进入不照抄笔记高度", () => {
-    const frame = { height: 610, right: 40, bottom: 32 };
-    state().setAssistantFrame(frame);
+  test("重复打开和同场景渲染保留临时尺寸，切换场景采用默认且不自动打开", () => {
     state().openAssistant();
-    expect(state().assistantFrame).toEqual(frame);
-    state().closeAssistant();
+    state().setAssistantFrame(customFrame);
     state().openAssistant();
-    expect(state().assistantFrame).toEqual(frame);
-    state().enterAssistantScene("canvas-a");
-    expect(state().assistantFrame).toBeNull();
-    state().setAssistantFrame({ height: 500, right: 16, bottom: 16 });
     state().enterAssistantScene(null);
-    expect(state().assistantFrame).toEqual(frame);
-    state().hydrate("user-a");
-    expect(state().assistantFrame).toEqual(frame);
+    expect(state().assistantFrame).toEqual(customFrame);
+    state().enterAssistantScene("canvas-a");
+    expect(state().assistantSize).toBe("compact");
+    expect(state().assistantFrame).toBeNull();
+    state().setAssistantSize("expanded");
+    state().setAssistantFrame(customFrame);
+    state().enterAssistantScene("canvas-a");
+    expect(state().assistantFrame).toEqual(customFrame);
+    expect(state().assistantSize).toBe("expanded");
+    state().enterAssistantScene(null);
+    expect(state().assistantSize).toBe("expanded");
+    expect(state().assistantFrame).toBeNull();
+    state().closeAssistant();
+    state().enterAssistantScene("canvas-b");
+    expect(state().assistantOpen).toBe(false);
   });
-  test("恢复旧全高浮窗后，显式还原短窗清除高度并持久化，往返画布不复发", () => {
+  test("旧尺寸偏好被忽略，刷新与账号切换只恢复开关", () => {
     storage.set(workspaceChromeStorageKey("user-a"), JSON.stringify({
       version: 1, libraryOpen: false, assistantOpen: true,
-      paperAssistantSize: "expanded",
-      paperAssistantFrame: { height: 868, right: 24, bottom: 16 },
+      paperAssistantSize: "compact", paperAssistantFrame: customFrame,
     }));
     state().hydrate("user-a");
+    expect(geometry()).toMatchObject({ width: 360, height: 868, right: 16, bottom: 16 });
     state().setAssistantSize("compact");
-    const geometry = () => resolveAssistantGeometry({
-      viewportWidth: 1440, viewportHeight: 900, panelWidth: 440,
-      size: state().assistantSize, frame: state().assistantFrame,
-    });
-    expect(geometry().height).toBe(520);
-    expect(state().assistantFrame).toBeNull();
-    expect(state().paperAssistantFrame).toBeNull();
-    state().enterAssistantScene("canvas-a");
-    state().enterAssistantScene(null);
-    expect(geometry().height).toBe(520);
+    state().setAssistantFrame(customFrame);
     state().hydrate("user-a");
-    expect(geometry().height).toBe(520);
-  });
-  test("画布还原短窗只清除当前浮窗，不覆盖笔记自定义尺寸", () => {
-    const paperFrame = { height: 610, right: 40, bottom: 32 };
-    state().setAssistantFrame(paperFrame);
-    state().enterAssistantScene("canvas-a");
-    state().setAssistantFrame({ height: 868, right: 16, bottom: 16 });
-    state().setAssistantSize("expanded");
-    state().setAssistantSize("compact");
+    expect(state().assistantSize).toBe("expanded");
     expect(state().assistantFrame).toBeNull();
-    expect(state().paperAssistantFrame).toEqual(paperFrame);
-    state().enterAssistantScene(null);
-    expect(state().assistantFrame).toEqual(paperFrame);
+    expect(JSON.parse(storage.get(workspaceChromeStorageKey("user-a"))!)).toEqual({
+      version: 1, libraryOpen: false, assistantOpen: true,
+    });
+    state().hydrate("user-b");
+    expect(state().assistantOpen).toBe(false);
+    state().hydrate("user-a");
+    expect(state().assistantOpen).toBe(true);
+    expect(state().assistantFrame).toBeNull();
+  });
+  test("窄屏文件库挤掉助手等同收起，重开恢复默认窗口", () => {
+    Object.assign(window, { innerWidth: 800 });
+    for (const openLibrary of [() => state().openLibrary(), () => state().toggleLibrary()]) {
+      state().openAssistant();
+      state().setAssistantSize("compact");
+      state().setAssistantFrame(customFrame);
+      openLibrary();
+      expect(state().assistantOpen).toBe(false);
+      expect(state().assistantFrame).toBeNull();
+      state().openAssistant();
+      expect(state().libraryOpen).toBe(false);
+      expect(state().assistantSize).toBe("expanded");
+      expect(state().assistantFrame).toBeNull();
+    }
+  });
+  test("持久化不可用仍能打开、调整和恢复默认", () => {
+    Object.defineProperty(window, "localStorage", { get: () => { throw new Error("blocked"); } });
+    state().openAssistant();
+    state().setAssistantFrame(customFrame);
+    state().closeAssistant();
+    state().openAssistant();
+    expect(state().assistantOpen).toBe(true);
+    expect(state().assistantFrame).toBeNull();
   });
 });

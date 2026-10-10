@@ -1,25 +1,31 @@
 /**
  * [INPUT]: 依赖 Zustand 与浏览器 localStorage，兼容旧 AgentPanel 单开关偏好
- * [OUTPUT]: 对外提供按用户 hydrate 的文件库偏好与跨空间助手可见性、笔记尺寸/自定义浮窗偏好和当前场景尺寸命令；显式还原短窗清除当前场景的自定义高度/位置
- * [POS]: shared/store 的工作台外壳 UI 状态源；助手跨空间连续，画布全高只在当次场景或明确原文返回时恢复；不复制树、编辑器或会话数据
+ * [OUTPUT]: 对外提供文件库/助手开关偏好、场景默认尺寸与当前展开期间的临时宽高/位置；大小切换和重开恢复默认几何
+ * [POS]: shared/store 的工作台外壳 UI 状态源；助手跨空间连续，笔记默认全高、画布默认短窗；尺寸不写入持久偏好；不复制树、编辑器或会话数据
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
 import { create } from "zustand";
 
 export type AssistantSize = "compact" | "expanded";
-/** 宽度由工作台原有共享偏好持有；此处只保存自由浮窗的高度与边缘位置。 */
-export type AssistantFrame = { height: number; right: number; bottom: number };
+/** 临时浮窗完整几何只活在当前展开期间。 */
+export type AssistantFrame = { width: number; height: number; right: number; bottom: number };
+
+export const defaultAssistantSize = (canvasId: string | null): AssistantSize =>
+  canvasId === null ? "expanded" : "compact";
+
+const defaultAssistantGeometry = (canvasId: string | null) => ({
+  assistantSize: defaultAssistantSize(canvasId),
+  assistantFrame: null,
+});
 
 export type WorkspaceChromeState = {
   libraryOpen: boolean;
   assistantOpen: boolean;
   hydratedUserId: string | null;
   assistantSize: AssistantSize;
-  paperAssistantSize: AssistantSize;
   assistantCanvasId: string | null;
   assistantFrame: AssistantFrame | null;
-  paperAssistantFrame: AssistantFrame | null;
 };
 
 type WorkspaceChromeStore = WorkspaceChromeState & {
@@ -30,7 +36,7 @@ type WorkspaceChromeStore = WorkspaceChromeState & {
   openLibrary(): void;
   toggleAssistant(): void;
   toggleLibrary(): void;
-  enterAssistantScene(canvasId: string | null, restoredSize?: AssistantSize, restoredFrame?: AssistantFrame | null): void;
+  enterAssistantScene(canvasId: string | null): void;
   setAssistantSize(size: AssistantSize): void;
   setAssistantFrame(frame: AssistantFrame): void;
 };
@@ -40,8 +46,6 @@ type StoredWorkspaceChrome = Pick<
   "assistantOpen" | "libraryOpen"
 > & {
   version: 1;
-  paperAssistantSize?: AssistantSize;
-  paperAssistantFrame?: AssistantFrame | null;
 };
 
 const WORKSPACE_CHROME_KEY_PREFIX = "folune:workspace-chrome:v1:";
@@ -49,14 +53,6 @@ const LEGACY_AGENT_PANEL_KEY_PREFIX = "folune:agent-panel-open:";
 
 export const workspaceChromeStorageKey = (userId: string): string =>
   `${WORKSPACE_CHROME_KEY_PREFIX}${userId}`;
-
-const parseAssistantFrame = (value: unknown): AssistantFrame | null => {
-  if (value === null || typeof value !== "object") return null;
-  const frame = value as Partial<AssistantFrame>;
-  return [frame.height, frame.right, frame.bottom].every((n) => typeof n === "number" && Number.isFinite(n) && n >= 0)
-    && Number(frame.height) > 0
-    ? { height: frame.height!, right: frame.right!, bottom: frame.bottom! } : null;
-};
 
 export function parseWorkspaceChrome(
   stored: string | null,
@@ -110,8 +106,6 @@ const persist = (state: WorkspaceChromeState): void => {
     assistantOpen: state.assistantOpen,
     libraryOpen: state.libraryOpen,
     version: 1,
-    paperAssistantSize: state.paperAssistantSize,
-    paperAssistantFrame: state.paperAssistantFrame,
   };
 
   try {
@@ -154,11 +148,9 @@ export const useWorkspaceChromeStore = create<WorkspaceChromeStore>((set) => ({
   hydratedUserId: null,
   libraryOpen: false,
   assistantSize: "expanded",
-  paperAssistantSize: "expanded",
   assistantCanvasId: null,
   assistantFrame: null,
-  paperAssistantFrame: null,
-  closeAssistant: () => updateVisibility(set, () => ({ assistantOpen: false })),
+  closeAssistant: () => updateVisibility(set, (state) => ({ assistantOpen: false, ...defaultAssistantGeometry(state.assistantCanvasId) })),
   closeLibrary: () => updateVisibility(set, () => ({ libraryOpen: false })),
   hydrate: (userId) => {
     const storedPreference = readStoredValue(workspaceChromeStorageKey(userId));
@@ -171,54 +163,36 @@ export const useWorkspaceChromeStore = create<WorkspaceChromeStore>((set) => ({
     const resolved = preference.assistantOpen && preference.libraryOpen && isOverlayViewport()
       ? { assistantOpen: preference.assistantOpen, libraryOpen: false }
       : preference;
-    let paperAssistantSize: AssistantSize = "expanded";
-    let paperAssistantFrame: AssistantFrame | null = null;
-    try {
-      const stored = JSON.parse(storedPreference ?? "null");
-      if (stored?.version === 1 && stored.paperAssistantSize === "compact") paperAssistantSize = "compact";
-      if (stored?.version === 1) paperAssistantFrame = parseAssistantFrame(stored.paperAssistantFrame);
-    } catch { /* 损坏偏好沿用笔记全高。 */ }
-    const nextState = { ...resolved, hydratedUserId: userId, paperAssistantSize, assistantSize: paperAssistantSize, assistantCanvasId: null, paperAssistantFrame, assistantFrame: paperAssistantFrame };
+    // 旧快照的尺寸字段停止读取；刷新只恢复开关和场景默认窗口。
+    const nextState = { ...resolved, hydratedUserId: userId, assistantCanvasId: null, ...defaultAssistantGeometry(null) };
 
     set(() => nextState);
     persist(nextState);
   },
   openAssistant: () => updateVisibility(set, (state) => ({
     assistantOpen: true,
-    assistantSize: state.assistantCanvasId === null ? state.paperAssistantSize : "compact",
+    ...(!state.assistantOpen ? defaultAssistantGeometry(state.assistantCanvasId) : {}),
     ...(isOverlayViewport() ? { libraryOpen: false } : {}),
   })),
-  openLibrary: () => updateVisibility(set, () => ({
-    ...(isOverlayViewport() ? { assistantOpen: false } : {}),
+  openLibrary: () => updateVisibility(set, (state) => ({
+    ...(isOverlayViewport() ? { assistantOpen: false, ...defaultAssistantGeometry(state.assistantCanvasId) } : {}),
     libraryOpen: true,
   })),
   toggleAssistant: () => updateVisibility(set, (state) => ({
     assistantOpen: !state.assistantOpen,
-    assistantSize: state.assistantCanvasId === null ? state.paperAssistantSize : "compact",
+    ...defaultAssistantGeometry(state.assistantCanvasId),
     ...(!state.assistantOpen && isOverlayViewport() ? { libraryOpen: false } : {}),
   })),
   toggleLibrary: () => updateVisibility(set, (state) => ({
-    ...(!state.libraryOpen && isOverlayViewport() ? { assistantOpen: false } : {}),
+    ...(!state.libraryOpen && isOverlayViewport() ? { assistantOpen: false, ...defaultAssistantGeometry(state.assistantCanvasId) } : {}),
     libraryOpen: !state.libraryOpen,
   })),
-  enterAssistantScene: (canvasId, restoredSize, restoredFrame) => set((state) =>
+  enterAssistantScene: (canvasId) => set((state) =>
     state.assistantCanvasId === canvasId ? state : {
       assistantCanvasId: canvasId,
-      assistantSize: canvasId === null ? state.paperAssistantSize : restoredSize ?? "compact",
-      assistantFrame: canvasId === null ? state.paperAssistantFrame : restoredFrame ?? null,
+      ...defaultAssistantGeometry(canvasId),
     }),
-  setAssistantSize: (size) => updateVisibility(set, (state) => ({
-    assistantSize: size,
-    // 预设短窗必须退出自由尺寸，否则旧全高会覆盖短窗几何。
-    ...(size === "compact" ? { assistantFrame: null } : {}),
-    ...(state.assistantCanvasId === null ? {
-      paperAssistantSize: size,
-      ...(size === "compact" ? { paperAssistantFrame: null } : {}),
-    } : {}),
-  })),
-  setAssistantFrame: (frame) => updateVisibility(set, (state) => ({
-    assistantSize: "compact",
-    assistantFrame: frame,
-    ...(state.assistantCanvasId === null ? { paperAssistantSize: "compact", paperAssistantFrame: frame } : {}),
-  })),
+  setAssistantSize: (size) => set({ assistantSize: size, assistantFrame: null }),
+  // 拖动不改变大小按钮的目标模式；只覆盖当前窗口几何。
+  setAssistantFrame: (frame) => set({ assistantFrame: frame }),
 }));

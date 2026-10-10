@@ -7,8 +7,8 @@ workspaceEntryStore.test.ts: 真实节点乱序、首屏 100% 门禁、重复通
 CLAUDE.md: 记录客户端状态层的职责边界、成员地图与 GEB 回环协议
 agentPanelStore.ts: 当前账号的权限薄状态，首屏默认完全访问；同账号重读保留显示、切账号隔离，isPermissionReady 只在当前账号 API 确认后允许发送；可见性归 WorkspaceChromeState
 agentPanelStore.test.ts: 锁定默认完全访问、加载/保存门禁、账号隔离、保存失败保留显示与成功确认
-workspaceChromeStore.ts: 显式还原短窗清除当前场景自定义高度/位置，胶囊开合仍保留自由尺寸；按账号持久化笔记自定义浮窗高度/位置（宽度沿工作台共享偏好）、Paper文件库、跨空间助手可见性与笔记尺寸；普通画布进入短窗，全高只保持当次主动选择或明确返回快照，关闭后跨场景保持胶囊
-workspaceChromeStore.test.ts: 旧全高偏好还原短窗、刷新不复发与画布/笔记尺寸隔离；自定义窗口收起/刷新保留； 账号/旧偏好恢复及助手跨场景短窗、全高、主动关闭、明确返回与持久化隔离门禁
+workspaceChromeStore.ts: 按账号持久化文件库/助手开关；笔记默认全高、画布默认短窗；临时完整宽高/位置只在当前展开期间有效，大小切换、胶囊重开和场景切换恢复默认，同场景重复打开保持临时尺寸
+workspaceChromeStore.test.ts: 完整默认几何、胶囊重开、旧尺寸偏好淘汰与账号隔离；锁定同场景临时尺寸、窄屏文件库互斥和持久化降级
 canvasChromePolicy.ts: Canvas文件库四种进入意图与窄屏钳制纯策略；助手可见性/尺寸由workspaceChromeStore裁决，画布快照不覆盖它
 canvasChromePolicy.test.ts: 文件库继承、新建关闭、直达恢复与窄屏钳制；不再制造画布助手的第二真相
 canvasChromeStore.ts: Canvas文件库一次性进入意图、只读预览与幂等解析，按账号保存每画布最近文件库开关；读取旧快照时丢弃助手字段，避免全高被恢复成画布常态
@@ -34,7 +34,7 @@ CanvasSaveCoordinator.ts: 单 Canvas 单标签页保存协调器；恢复读取�
 CanvasSaveCoordinator.test.ts: 锁定恢复期间新手势不丢、离场后恢复/保存/WAL/退避/两类冲突不影响新画布、旧 mutation 同 ID 重放；同时覆盖空恢复、WAL 失败不伪成功、整组手势原子入账、文字幂等、响应丢失重试、409 远端保真、pagehide 有界与 AI 过期丢弃
 commandPaletteStore.ts: 全局 Command Palette 唯一状态所有者，只保存开合与 Canvas 会话登记的「加入当前画布」适配器；Sidebar/Paper/Canvas 都只是同一个面板的入口
 recentNodesStore.ts: 按用户持久化的最近打开顺序，只保存节点 id；Palette 用它列空查询最近项并为排序提供最近打开档位
-canvasReturnStore.ts: 标签页内 Canvas→原文→Canvas 返回描述，只保存路由/视口/选择/临时 Panel，不持久化业务图或 WAL；它是唯一优先于进入策略的语境，因此往返回来看到的是离开前那一刻的样子
+canvasReturnStore.ts: 标签页内 Canvas→原文→Canvas 返回描述，保存路由/视口/选择/文件库；助手进入时使用场景默认窗口，不恢复尺寸快照；不持久化业务图或 WAL
 
 职责: 隔离业务 API 与 React 组件之间的客户端领域状态；Canvas 文档、交互、WAL 和传输职责分离，组件只产生 intent 与订阅事实，不维护第二棵树，也不在写成功后重拉整树。
 

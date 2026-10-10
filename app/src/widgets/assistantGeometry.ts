@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖视口/可视视口尺寸、用户共享窗口宽度与助手尺寸/窗口或面板宽度语义
+ * [INPUT]: 依赖视口/可视视口尺寸、默认窗口宽度、临时完整浮窗与助手尺寸/窗口或面板宽度语义
  * [OUTPUT]: 对外提供胶囊/默认短窗尺寸、矩形/方向/边界及宽度模式类型、默认或自定义窗口解析、八方向调整与视口钳制
- * [POS]: widgets 的助手几何纯边界；默认短窗是拖拽与旧偏好恢复的统一下限，小屏按可见空间收敛；默认右下锚定，自定义窗口保留对边，正文不通过scale变形
+ * [POS]: widgets 的助手几何纯边界；默认短窗是拖拽与临时浮窗的统一下限，小屏按可见空间收敛；默认右下锚定，自定义窗口保留对边，正文不通过scale变形
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import type { AssistantFrame, AssistantSize } from "../shared/store/workspaceChromeStore";
@@ -60,10 +60,10 @@ export function resolveAssistantGeometry(input: {
   const uiScale = input.uiScale ?? 1;
   const fullHeight = Math.max(ASSISTANT_CAPSULE.height * uiScale, availableHeight - inset * 2);
   // 面板演示必须匹配预留栏宽；360px下限只属于可调整的真实窗口。
-  const requestedWidth = input.widthMode === "panel" ? input.panelWidth : Math.max(ASSISTANT_MIN_WIDTH * uiScale, input.panelWidth);
+  const frame = input.frame;
+  const requestedWidth = input.widthMode === "panel" ? input.panelWidth : Math.max(ASSISTANT_MIN_WIDTH * uiScale, frame?.width ?? input.panelWidth);
   const width = Math.min(requestedWidth, input.viewportWidth - inset * 2);
   const bottomInset = Math.max(inset, input.viewportHeight - availableHeight - (input.offsetTop ?? 0) + inset);
-  const frame = input.size === "compact" ? input.frame : null;
   const minimumHeight = compactHeight(fullHeight, uiScale);
   const height = frame
     ? clamp(frame.height, minimumHeight, fullHeight)

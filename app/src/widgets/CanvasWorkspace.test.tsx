@@ -18,9 +18,8 @@ describe("CanvasWorkspace", () => {
       canvasId: "canvas-1",
       onNavigateMemo: () => undefined,
       onRename: async () => undefined,
-      // 返回描述是唯一不依赖视口断点的进入语境, 因此结构测试用它打开两侧 Panel
+      // 返回描述提供画布进入语境；助手尺寸由外层工作区裁决。
       restore: {
-        assistantSize: "expanded",
         canvasId: "canvas-1",
         libraryOpen: true,
         selectedNodeId: null,

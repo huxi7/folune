@@ -7,12 +7,12 @@ PricingRailPattern.tsx: 价格正文的静态 Truchet 宿主，复用 TruchetPat
 SignOutConfirmationDialog.test.tsx: 真实菜单/设置入口确认、取消/焦点、异步防重与失败重试、中英文门禁；不调用真实认证
 SignOutConfirmationDialog.tsx: Laper原组件字号/几何与dim黑色遮罩，取消仅变色、主题Primary参考400/40弹簧；菜单/设置共用的受控退出确认，右对齐取消/主动作、同步防连点与失败重试；不直接操作认证或业务存储
 CheckoutTransition.tsx: 订阅和积分共用的无确认结账过渡与原位错误反馈；复用 DS spinner/按钮，业务状态由页面提供，既不展示订单也不发起购买。
-WorkspaceAssistantLayer.test.tsx: 面板宽度不被生产下限撑大；演示87.5%尺寸投影与无中间帧硬切回归，往返保持同一输入实例与草稿
+WorkspaceAssistantLayer.test.tsx: 正式助手自定义宽高切换默认布局、胶囊重开时保留输入实例/草稿；演示87.5%投影、无中间帧硬切与面板栏宽门禁
 AssistantWindowResize.tsx: 助手专属四边四角命中区；对边固定、拖拽不更新业务状态、松手一次提交；取消/Escape/捕获丢失清理与键盘尺寸调整
 AssistantWindowResize.test.tsx: 八方向入口、边角同时改变宽高、只松手提交、取消恢复、第二指针隔离、指针/键盘不可缩到短窗以下与全局光标清理门禁
-WorkspaceAssistantLayer.tsx: widthMode区分真实窗口与演示面板，后者匹配预留栏宽；胶囊入口原位显示 WarmTooltip，展开状态禁用提示且保留动画 ref； 常驻三态与自由尺寸助手外壳；局部MotionValue驱动拖拽，四边四角调整、恢复自定义窗口，Demo按根字号缩放并硬切、可禁用调整；默认右下锚点、自定义保留调整位置，仅外壳尺寸/裁切变化、正文不缩放，关闭inert与焦点归还；复用品牌流光并显示真实工作/审批/完成/异常状态
-assistantGeometry.test.ts: 覆盖演示多视口栏宽/纸面留白与生产360px下限隔离；锁定默认短窗最小宽高、八方向缩小与旧偏好恢复、同宽同底边、Panel顶部对齐、短窗2/3限制与手机键盘/低矮视口可用边界
-assistantGeometry.ts: 导出AssistantWidthMode，panel模式不消费真实窗口最小宽度；助手尺寸/八方向调整纯策略；自定义窗口完整钳制在可视区域，默认短窗同时是最小尺寸（常规桌面360×520，低矮/窄屏按可见空间收敛），拖拽/键盘/旧偏好恢复共用此边界，默认130×44胶囊，短窗最高520且不超过可用高度2/3，全高对齐Panel；共用窗口宽度，键盘/窄屏限制在可视区域
+WorkspaceAssistantLayer.tsx: widthMode区分真实窗口与演示面板，后者匹配预留栏宽；胶囊入口原位显示 WarmTooltip，展开状态禁用提示且保留动画 ref； 常驻三态与自由尺寸助手外壳；局部MotionValue驱动拖拽，四边四角调整、展示当前展开期间的临时完整几何，Demo按根字号缩放并硬切、可禁用调整；默认右下锚点、自定义保留调整位置，仅外壳尺寸/裁切变化、正文不缩放，关闭inert与焦点归还；复用品牌流光并显示真实工作/审批/完成/异常状态
+assistantGeometry.test.ts: 临时完整宽高与默认几何、八方向调整、可视区域钳制；短窗最小尺寸、同宽同底边、2/3高度限制、手机键盘与演示栏宽隔离
+assistantGeometry.ts: 助手默认/临时完整几何与八方向调整纯策略；标准宽360px，短窗最高520px且不超过可用高度2/3，全高对齐Panel，胶囊130×44；临时浮窗沿两种目标模式钳制，窄屏收敛到可视区域，panel模式只消费演示栏宽
 MenuComparison/: 独立本地菜单对照入口与1c1fe55历史快照；复用生产菜单/侧栏表面、保持数据一致并默认展开，只为对比尺寸和定位，不装配业务状态
 CreditsPurchaseDialog.tsx: 关闭入口保留轻通透材质与可访问名称，无重复提示；用户选定的同源蓝色生成图横幅、实测超椭圆曲率与六档积分选购的受控展示层，640px/24px圆角弹窗内呈现服务端报价、原生单选、当前积分余额、无确认结账过渡/升级入口与规则；复用 Dialog 模态和 locale，网络与生命周期交给 CreditsPage 导出 CreditPacksSkeleton，沿六张 2:1 卡壳占位；初读延迟、内容就绪立即可选，刷新保留旧目录。 销售状态只在目录返回后显示，等待期不误报尚未开售。
 DesktopDownloadButton.tsx: Header/Hero共用原生下载；可选icon允许Header展示语义下载图标，系统识别和未知架构的Mac arm64/Windows x64选择只维护一份。
@@ -130,4 +130,4 @@ AgentPanel/: Paper 与 Canvas 共用的右侧思考空间；界面/权限/审批
 
 2026-09-04 顶栏底边线删除：`::before` 去掉 `border-bottom`，凝结铺开的只是同一个 `--paper-surface`。Paper 与 Panel 是三层而不是并列（Stage → Paper → 压在 Paper 上的 Panel），所以 Paper 不参照 Panel 的顶部边界；纸在滚动中继续往窗口上方延伸，顶栏上方本来就是纸，而那条线一存在，眼睛就把「窗口上边 → 线」读成一个 64px 的物体，顶栏于是随滚动"变宽变笨"。边界交给下缘软边独自表达，软边参数（16px / 6px）与单一进度一个字不动。
 
-助手生命周期：Dashboard常驻同一AgentPanel，WorkspaceAssistantLayer只改变右下外壳；笔记恢复用户短/全高选择，显式还原短窗清除当前场景自由尺寸，胶囊开合保留自由尺寸；普通进入画布用短窗，明确原文返回可恢复当次全高；胶囊可见性跨空间共享。文件库继续使用原WorkspacePanelLayer。
+助手生命周期：Dashboard常驻同一AgentPanel，WorkspaceAssistantLayer只改变右下外壳。笔记默认全高，画布默认短窗。大小切换、胶囊重开和场景切换恢复默认宽高/位置。临时拖动尺寸不持久化；同场景重渲染和重复打开不重置。胶囊可见性跨空间共享，对话/草稿保留。文件库继续使用原WorkspacePanelLayer。

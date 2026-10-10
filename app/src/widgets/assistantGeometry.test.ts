@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Bun test 与助手纯几何策略
- * [OUTPUT]: 锁定默认短窗即最小尺寸、八方向对边固定/旧偏好恢复边界，以及屏幕变化和键盘出现时的完整可达性；Demo面板宽度不受真实窗口下限影响
+ * [OUTPUT]: 锁定默认短窗即最小尺寸、八方向对边固定/临时浮窗边界，以及屏幕变化和键盘出现时的完整可达性；Demo面板宽度不受真实窗口下限影响
  * [POS]: widgets 的助手空间约束门禁；浏览器动效观感另由真实页面验证
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -44,18 +44,18 @@ test("每个方向都不能穿过视口或压扁输入区，屏幕变小时自�
   const small = constrainAssistantRect(rect, { left: 12, top: 12, right: 228, bottom: 240 });
   expect(small).toEqual({ left: 12, top: 12, width: 216, height: 228 });
   expect(resizeAssistantRect(rect, "se", 500, 500, { left: 12, top: 12, right: 228, bottom: 240 })).toEqual(small);
-  const restored = resolveAssistantGeometry({ viewportWidth: 800, viewportHeight: 700, panelWidth: 500, size: "compact", frame: { height: 1000, right: 1000, bottom: 1000 } });
+  const restored = resolveAssistantGeometry({ viewportWidth: 800, viewportHeight: 700, panelWidth: 500, size: "compact", frame: { width: 500, height: 1000, right: 1000, bottom: 1000 } });
   expect(restored.height).toBe(676);
   expect(restored.right + restored.width).toBeLessThanOrEqual(788);
   expect(restored.bottom).toBe(12);
 });
 
-test("旧的过小偏好恢复到默认短窗，八方向缩小时停在同一尺寸", () => {
+test("过小临时浮窗收敛到默认短窗，八方向缩小时停在同一尺寸", () => {
   const input = { viewportWidth: 1440, viewportHeight: 900, panelWidth: 264 };
   const minimum = resolveAssistantGeometry({ ...input, size: "compact" });
   expect(minimum.width).toBe(360);
   expect(minimum.height).toBe(520);
-  const restored = resolveAssistantGeometry({ ...input, size: "compact", frame: { height: 280, right: 16, bottom: 16 } });
+  const restored = resolveAssistantGeometry({ ...input, size: "compact", frame: { width: 264, height: 280, right: 16, bottom: 16 } });
   expect(restored).toEqual(minimum);
   const bounds = { left: 16, top: 16, right: 1424, bottom: 884 };
   const start = { left: 400, top: 100, width: 700, height: 700 };
