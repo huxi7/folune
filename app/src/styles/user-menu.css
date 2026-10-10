@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 消费共享 Popover 淡灰边框/短柔影、APP文字角色与中性hover；子菜单1px间距/36px行来自实测，国旗为同源SVG
- * [OUTPUT]: 提供固定256px主菜单（仅窄视口缩宽）/12px曲率外壳、34px/8px 行、40px 圆头像与 28px 独立流光 CTA、头部/菜单/积分入口共用 Laper 150ms 浅灰 hover，右侧子菜单和24px 外/12px 内两层账户底卡；积分摘要与身份卡间距8px
+ * [OUTPUT]: 提供固定256px主菜单（仅窄视口缩宽）/12px曲率外壳、34px/8px 行、40px 圆头像与 28px 独立流光 CTA、头部/菜单/积分入口共用 Laper 150ms 浅灰 hover，右侧子菜单和24px 外/12px 内两层账户底卡；积分摘要与身份卡间距8px；底卡列宽随侧栏收缩，长名称在身份卡内省略
  * [POS]: 账户区唯一视觉层；Portal 定位/避让归 UserMenu，所有图案和色彩由现有 DS token 派生，不改变全局控件圆角
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -44,7 +44,7 @@
   .ds-user-menu-submenu-option { min-height: 36px; justify-content: flex-start; gap: 8px; padding: 8px; }
   .ds-user-menu-submenu-option[aria-checked="true"] { color: color-mix(in srgb, var(--foreground) 46%, var(--popover)); font-weight: var(--weight-section, 600); }
   .ds-user-menu-language-flag { display: block; width: 20px; height: 20px; flex: 0 0 auto; object-fit: contain; }
-  .ds-user-account-card { position: relative; isolation: isolate; display: grid; gap: var(--space-2); border: 1px solid var(--border); border-radius: 24px; corner-shape: superellipse(2); padding: 12px 12px 8px; background: linear-gradient(140deg, color-mix(in srgb, var(--primary) 16%, var(--sidebar)), color-mix(in srgb, var(--primary) 6%, var(--card)) 60%, color-mix(in srgb, var(--primary) 19%, var(--sidebar))); }
+  .ds-user-account-card { position: relative; isolation: isolate; display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-2); border: 1px solid var(--border); border-radius: 24px; corner-shape: superellipse(2); padding: 12px 12px 8px; background: linear-gradient(140deg, color-mix(in srgb, var(--primary) 16%, var(--sidebar)), color-mix(in srgb, var(--primary) 6%, var(--card)) 60%, color-mix(in srgb, var(--primary) 19%, var(--sidebar))); }
   .ds-user-account-card::before { content: ""; position: absolute; z-index: -1; inset: 0; border-radius: inherit; corner-shape: inherit; background-image: radial-gradient(color-mix(in srgb, var(--primary) 18%, transparent) 0.65px, transparent 0.75px); background-size: 0.3125rem 0.3125rem; mask-image: linear-gradient(115deg, black, transparent 74%); pointer-events: none; }
   .ds-user-account-summary { display: flex; min-width: 0; align-items: center; justify-content: space-between; gap: var(--space-2); padding-inline: var(--space-1); }
   .ds-user-account-credits { display: inline-flex; min-width: 0; align-items: baseline; gap: var(--space-1); border-radius: var(--radius-compact); corner-shape: var(--corner-shape-smooth); color: var(--foreground); font-size: 0.6875rem; line-height: 1.125rem; transition: background-color var(--motion-hover) var(--ease-surface); }
