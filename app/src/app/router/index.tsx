@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 React lazy/Suspense、react-router-dom loader/redirect、theme/visualContext 场景同步、真实入口进度 Store、Supabase Auth token 读取与后端 Profile API
- * [OUTPUT]: 桌面保留登录/OAuth/工作区及独立订阅地址；Web 另提供共享营销壳、/pricing 公开价格、/login、法律页、博客/动态、旧 auth query 重定向和 DEV 加载/动效实验页；/app/subscription 与笔记共用父级守卫和 Dashboard，已提交路由同步视觉作用域
+ * [OUTPUT]: 桌面保留登录/OAuth/工作区及独立订阅地址；Web 另提供共享营销壳、/pricing 公开价格、/login、法律页、博客/动态、旧 auth query 重定向和 DEV 加载/动效实验页；/app/subscription 与笔记共用父级守卫和 Dashboard，已提交路由同步视觉作用域；Web DEV 的 /design-system 独立懒加载，不装配身份守卫与业务 loader
  * [POS]: app/src/app/router 的路由装配文件；静态身份、Profile 与轻量 tree loader 并行装配，Dashboard 直接消费 bootstrap；/app 首次进入统一由根级品牌过渡覆盖，内容就绪才揭幕；左右工具偏好在 Dashboard 获得用户后恢复
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -48,6 +48,10 @@ const MotionLabPage = import.meta.env.DEV && !desktop
 
 const LoadingLabPage = import.meta.env.DEV && !desktop
   ? lazy(() => import("../../pages/LoadingLabPage").then(module => ({ default: module.LoadingLabPage })))
+  : null;
+
+const DesignSystemWorkspace = import.meta.env.DEV && !desktop
+  ? lazy(() => import("../../widgets/DesignSystemWorkspace").then(module => ({ default: module.DesignSystemWorkspace })))
   : null;
 
 function RouteSuspense({
@@ -164,6 +168,10 @@ export const router = createBrowserRouter([
   ...(LoadingLabPage === null ? [] : [{
     path: "/loading-lab",
     element: <RouteSuspense><LoadingLabPage /></RouteSuspense>,
+  }]),
+  ...(DesignSystemWorkspace === null ? [] : [{
+    path: "/design-system",
+    element: <RouteSuspense><DesignSystemWorkspace /></RouteSuspense>,
   }]),
   ...(MotionLabPage === null ? [] : [{
     path: "/motion-lab",

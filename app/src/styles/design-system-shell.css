@@ -1,0 +1,115 @@
+/**
+ * [INPUT]: 消费设计系统的颜色、字族、曲率与间距
+ * [OUTPUT]: 提供紧凑目录、连续样板网格与响应式布局
+ * [POS]: DEV DesignSystemWorkspace 页面外壳；仅定义陈列几何
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+@layer components {
+  .ds-reference { min-height: 100svh; background: var(--background); color: var(--foreground); }
+  .ds-reference-topbar { position: sticky; z-index: 40; top: 0; display: flex; min-height: 64px; align-items: center; gap: var(--space-5); border-bottom: 1px solid var(--border); background: var(--card); padding: var(--space-3) clamp(20px, 3vw, 48px); }
+  .ds-reference-brand { flex: 0 0 auto; }
+  .ds-reference-brand .ds-brand { --brand-size: 26px; }
+  .ds-reference-topbar-title { border-left: 1px solid var(--border); padding-left: var(--space-5); font-size: 14px; font-weight: 500; white-space: nowrap; }
+  .ds-reference-topbar-actions { display: flex; flex: 1; align-items: center; justify-content: flex-end; gap: var(--space-5); }
+  .ds-reference-return { display: inline-flex; align-items: center; gap: var(--space-2); color: var(--muted-foreground); font-size: 12px; white-space: nowrap; }
+  .ds-reference-return:hover { color: var(--foreground); }
+  .ds-reference-layout { display: grid; max-width: 1480px; grid-template-columns: 160px minmax(0, 1fr); gap: clamp(32px, 4vw, 56px); margin-inline: auto; padding: 0 clamp(20px, 3vw, 48px); }
+  .ds-reference-rail { position: sticky; top: 64px; align-self: start; padding-block: var(--space-8); }
+  .ds-reference-search { position: relative; display: block; margin-bottom: var(--space-4); }
+  .ds-reference-search > svg { position: absolute; z-index: 1; top: 10px; left: 10px; color: var(--muted-foreground); pointer-events: none; }
+  .ds-reference-search .ds-input { width: 100%; padding-left: 32px; font-size: 12px; }
+  .ds-reference-rail nav { display: grid; gap: var(--space-1); }
+  .ds-reference-rail nav a { display: flex; min-height: 36px; align-items: center; border-radius: var(--radius-compact); padding: var(--space-2) var(--space-3); color: var(--muted-foreground); font-size: 13px; }
+  .ds-reference-rail nav a:hover { background: var(--interactive-hover); color: var(--foreground); }
+  .ds-reference-rail nav a[aria-current] { background: var(--app-selected-surface); color: var(--app-selected-foreground); font-weight: 600; }
+  .ds-reference-main { min-width: 0; container: design-system / inline-size; padding-bottom: var(--space-6); }
+  .ds-reference-section { min-width: 0; padding-top: var(--space-8); scroll-margin-top: 76px; }
+  .ds-reference-section + .ds-reference-section { margin-top: var(--space-8); border-top: 1px solid var(--border); }
+  .ds-reference-section-heading { margin-bottom: var(--space-5); }
+  .ds-reference-section-heading h2 { font-size: 22px; font-weight: 600; letter-spacing: -.025em; }
+  .ds-reference .design-system-matrix { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; gap: var(--space-6); padding-top: 0; }
+  .ds-reference .ds-gallery-card { gap: var(--space-3); min-height: 0; padding: 0; border: 0; border-radius: 0; background: transparent; }
+  .ds-reference .ds-gallery-card-header { gap: 0; }
+  .ds-reference .ds-gallery-card-header h3 { font-family: var(--font-sans); font-size: 15px; font-weight: 600; }
+  .ds-reference .design-system-preview { grid-template-columns: minmax(0, 1fr); align-content: center; min-height: 164px; border-color: transparent; background: var(--workspace-stage); padding: var(--space-5); }
+  .ds-reference [data-component="BrandMark"], .ds-reference [data-component="Motion"] { grid-column: 1 / -1; }
+  .ds-reference [data-component="BrandMark"] .ds-gallery-card-header { display: none; }
+  .ds-reference [data-component="BrandMark"] .design-system-preview { min-height: 152px; }
+  .ds-reference .ds-brand-preview { flex-direction: row; gap: var(--space-12); }
+  .ds-reference .ds-brand-preview .ds-brand { --brand-size: 60px; }
+  .ds-reference .ds-brand-preview .ds-brand[data-icon-only] { --brand-size: 40px; }
+  .ds-reference [data-component="Motion"] .design-system-preview { display: block; overflow: hidden; }
+  .ds-reference .ds-material-library { margin-top: var(--space-6); }
+  .ds-reference [data-component="Color"] .design-system-preview,
+  .ds-reference [data-component="Typography"] .design-system-preview,
+  .ds-reference [data-component="Iconography"] .design-system-preview,
+  .ds-reference [data-component="SpatialRhythm"] .design-system-preview,
+  .ds-reference [data-component="RadiusElevationMotion"] .design-system-preview { min-height: 0; border: 0; background: transparent; padding: var(--space-2) 0; }
+  .ds-live-token-value { font: inherit; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+  .ds-type-weight-scale { display: flex; flex-wrap: wrap; gap: var(--space-4); color: var(--muted-foreground); font-size: 12px; }
+  .ds-reference .ds-color-preview { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: var(--space-4) var(--space-3); }
+  .ds-reference .ds-color-preview i { height: 40px; border-radius: var(--radius-compact); }
+  .ds-reference .ds-color-preview code { font-size: 10px; }
+  .ds-reference .ds-color-preview > span > .ds-live-token-value { font-family: var(--font-mono); font-size: 11px; }
+  .ds-reference .ds-color-system-note { padding-bottom: 0; border: 0; }
+  .ds-reference .ds-type-family-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .ds-reference .ds-type-family { min-width: 0; border: 0; border-radius: var(--radius-compact); padding: var(--space-3); gap: var(--space-2); }
+  .ds-reference .ds-type-family > div { flex-wrap: wrap; gap: var(--space-1); }
+  .ds-reference .ds-type-family small { overflow-wrap: anywhere; font-size: 11px; }
+  .ds-reference .ds-type-scale-header, .ds-reference .ds-type-scale-row { min-width: 640px; grid-template-columns: 6.5rem minmax(10rem, 1.5fr) 6.5rem 2.5rem minmax(8rem, 1fr); gap: var(--space-3); padding: var(--space-3); }
+  .ds-reference .ds-type-scale-row { min-height: 52px; }
+  .ds-reference .ds-type-control-pairing { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .ds-reference .ds-type-control-pairing > article { min-width: 0; border: 0; padding: var(--space-3); gap: var(--space-3); }
+  .ds-reference .ds-type-pairing-demo { flex-wrap: wrap; }
+  .ds-reference .ds-iconography-preview { gap: var(--space-4); }
+  .ds-reference .ds-iconography-intro { border: 0; padding: 0; }
+  .ds-reference .ds-icon-size-scale > span { width: 52px; height: 52px; border: 0; background: var(--workspace-stage); }
+  .ds-reference .ds-iconography-grid { grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: var(--space-3); border: 0; }
+  .ds-reference .ds-iconography-item { min-height: 44px; border: 0; padding: 0; grid-template-columns: 32px minmax(0, 1fr); }
+  .ds-reference .ds-iconography-item > span { width: 32px; height: 32px; border-radius: var(--radius-compact); }
+  .ds-reference .ds-preview-form { width: 100%; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ds-reference .ds-space-scale li { grid-template-columns: 4.5rem minmax(0, 1fr) 3.5rem; }
+  .ds-reference .design-system-preview > * { min-width: 0; max-width: 100%; }
+  .ds-tooltip-preview, .ds-shortcut-preview { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--space-4); }
+  .ds-shortcut-preview > div { display: flex; align-items: center; gap: var(--space-3); }
+  .ds-reference-empty { padding-block: var(--space-12); color: var(--muted-foreground); font-size: 13px; }
+  .ds-reference-results { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); margin-top: var(--space-5); font-size: 12px; color: var(--muted-foreground); }
+  .ds-reference-footer { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); border-top: 1px solid var(--border); margin-top: var(--space-12); padding-block: var(--space-5); color: var(--muted-foreground); font-size: 11px; }
+  .ds-reference a:focus-visible { border-radius: var(--radius-compact); outline: 2px solid var(--ring); outline-offset: 3px; }
+  .ds-reference-skip { position: fixed; z-index: 2000; top: -100px; left: 16px; border: 1px solid var(--border); border-radius: var(--radius-control); padding: var(--space-3); background: var(--card); }
+  .ds-reference-skip:focus { top: 12px; }
+
+  @media (max-width: 1000px) {
+    .ds-reference-layout { grid-template-columns: 144px minmax(0, 1fr); gap: var(--space-6); }
+    .ds-reference .ds-color-preview { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .ds-reference .ds-type-family-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 760px) {
+    .ds-reference-topbar { position: relative; flex-wrap: wrap; gap: var(--space-3); }
+    .ds-reference-topbar-title { padding-left: var(--space-3); }
+    .ds-reference-topbar-actions { gap: var(--space-3); }
+    .ds-reference-return span { display: none; }
+    .ds-reference-layout { display: block; }
+    .ds-reference-rail { position: relative; top: auto; padding-block: var(--space-4) 0; }
+    .ds-reference-search { max-width: 24rem; margin-bottom: var(--space-2); }
+    .ds-reference-rail nav { display: flex; gap: var(--space-1); overflow-x: auto; padding-block: var(--space-1); }
+    .ds-reference-rail nav a { flex: 0 0 auto; min-height: 36px; }
+    .ds-reference-section { scroll-margin-top: 20px; }
+    .ds-reference .ds-type-control-pairing { grid-template-columns: minmax(0, 1fr); }
+  }
+  @media (max-width: 560px) {
+    .ds-reference-topbar-actions { flex-basis: 100%; justify-content: space-between; }
+    .ds-reference-return span { display: inline; }
+    .ds-reference .design-system-matrix { grid-template-columns: minmax(0, 1fr); }
+    .ds-reference .ds-preview-form { grid-template-columns: minmax(0, 1fr); }
+    .ds-reference .design-system-preview { padding: var(--space-4); }
+    .ds-reference .ds-color-preview { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .ds-reference .ds-type-family-grid { grid-template-columns: minmax(0, 1fr); }
+    .ds-reference .ds-brand-preview { gap: var(--space-6); }
+    .ds-reference .ds-brand-preview .ds-brand { --brand-size: 48px; }
+    .ds-reference .ds-brand-preview .ds-brand[data-icon-only] { --brand-size: 32px; }
+    .ds-reference .ds-archive-cord-preview { flex-direction: column; gap: var(--space-8); padding: var(--space-3); }
+    .ds-reference .ds-archive-cord-paper { width: min(100%, 12rem); align-self: flex-start; }
+    .ds-reference .ds-archive-cord-target { align-self: flex-end; min-width: 0; max-width: 100%; }
+  }
+}

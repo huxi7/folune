@@ -1,0 +1,54 @@
+/**
+ * [INPUT]: 消费共享字体、颜色、曲率、品牌组合与营销背景样式
+ * [OUTPUT]: Design System 的紧凑资产网格、媒体预览与有界材质宿主
+ * [POS]: DEV Design System 的陈列样式；只改变预览宿主几何，不覆盖材质参数
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+@layer components {
+  .ds-asset-library { display: grid; gap: var(--space-8); }
+  .ds-asset-lockups { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-12); padding-block: var(--space-4); }
+  .ds-asset-lockups > div { display: grid; min-width: 0; gap: var(--space-3); justify-items: start; }
+  .ds-asset-lockups small { color: var(--muted-foreground); font-size: var(--type-caption); }
+  .ds-asset-wordmark > svg { width: 7rem; height: auto; }
+  .ds-asset-group { display: grid; gap: var(--space-4); scroll-margin-top: var(--space-24); }
+  .ds-asset-group > header { display: flex; gap: var(--space-3); align-items: baseline; }
+  .ds-asset-group > header h3 { margin: 0; color: var(--foreground); font-size: var(--type-heading); font-weight: var(--weight-section); }
+  .ds-asset-group > header > span { color: var(--muted-foreground); font: var(--type-caption)/1.5 var(--font-mono); }
+  .ds-asset-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr)); gap: var(--space-6) var(--space-4); }
+  .ds-asset-card { min-width: 0; }
+  .ds-asset-preview { display: flex; height: 10rem; align-items: center; justify-content: center; overflow: hidden; border-radius: var(--radius-control); corner-shape: var(--corner-shape-smooth); background: var(--workspace-stage); padding: var(--space-4); }
+  .ds-asset-preview img { display: block; width: auto; max-width: 100%; height: auto; max-height: 100%; object-fit: contain; }
+  .ds-asset-card[data-kind="video"] .ds-asset-preview { padding: 0; background: var(--foreground); }
+  .ds-asset-preview video { display: block; width: 100%; height: 100%; object-fit: contain; }
+  .ds-asset-copy { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: var(--space-1) var(--space-2); padding-top: var(--space-3); }
+  .ds-asset-copy h4 { margin: 0; font-size: var(--type-ui); font-weight: var(--weight-section); }
+  .ds-asset-copy p { grid-column: 1 / -1; margin: 0; color: var(--muted-foreground); font-size: var(--type-caption); line-height: 1.5; font-variant-numeric: tabular-nums; }
+  .ds-asset-copy a { color: var(--muted-foreground); font-size: var(--type-caption); white-space: nowrap; text-decoration: none; }
+  .ds-asset-copy a:hover { color: var(--foreground); text-decoration: underline; text-underline-offset: 3px; }
+  .ds-asset-font { display: grid; gap: var(--space-3); text-align: center; }
+  .ds-asset-font > span { font-size: 3rem; line-height: 1; }
+  .ds-asset-font small { font-size: var(--type-caption); }
+  .ds-asset-downloads { display: flex; flex-wrap: wrap; gap: var(--space-3) var(--space-6); color: var(--muted-foreground); font-size: var(--type-caption); }
+  .ds-asset-downloads a:hover { color: var(--foreground); text-decoration: underline; text-underline-offset: 3px; }
+  .ds-material-library { min-width: 0; }
+  .ds-material-intro { margin: 0; color: var(--muted-foreground); font-size: var(--type-ui); line-height: 1.7; }
+  .ds-material-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr)); gap: var(--space-6) var(--space-4); }
+  .ds-material-card { min-width: 0; margin: 0; }
+  .ds-material-stage.landing-blueprint { --primary: var(--blueprint-primary); position: relative; isolation: isolate; display: block; min-height: 0; height: 11rem; overflow: hidden; border-radius: var(--radius-control); corner-shape: var(--corner-shape-smooth); padding: 0; }
+  .ds-material-stage .landing-hero-backdrop { inset: 0; }
+  .ds-material-card figcaption { padding-top: var(--space-3); }
+  .ds-material-card figcaption h4 { margin: 0; font-size: var(--type-ui); font-weight: var(--weight-section); }
+  .ds-material-paper-label { position: absolute; inset: 0; display: grid; place-content: center; color: var(--landing-ink); font: 1.25rem/1.5 var(--landing-heading); }
+  .ds-material-stage.ds-material-rails { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .ds-material-rail { position: relative; min-width: 0; }
+  .ds-material-rail + .ds-material-rail { border-left: 1px solid var(--landing-border); }
+  .ds-material-rail .landing-rail-texture { display: block; --rail-space: 100%; }
+  .ds-material-rail .landing-rail-texture-side[data-side="start"] { right: 0; }
+  .ds-material-rail .landing-rail-texture-side[data-side="end"] { display: none; }
+  .ds-material-rail > small { position: absolute; inset-inline: 0; bottom: var(--space-3); width: max-content; margin-inline: auto; background: var(--landing-bg); padding: var(--space-1) var(--space-2); color: var(--landing-ink); font-size: var(--type-caption); }
+
+  @media (max-width: 640px) {
+    .ds-asset-library { gap: var(--space-6); }
+    .ds-asset-lockups { gap: var(--space-6); }
+  }
+}

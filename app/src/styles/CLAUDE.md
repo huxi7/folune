@@ -23,6 +23,9 @@ Hero 背景定稿（2026-09-19）：正式页采用 02A GrainGradient wave，60s
 登录背景：auth.css 在正文独立层叠上下文内承载 01A 散墨，32% 浓淡、上下边缘淡出；背景不占文档流且不截获指针，卡片与视频保持原布局。
 
 成员清单
+design-system-shell.css: DEV 设计系统的紧凑目录、搜索、主题与连续样板网格；只定义陈列几何
+design-system-assets.css: DEV 现用资产网格、原图与许可下载入口、品牌背景的有界宿主
+design-system-product.css: DEV Canvas 与助手组合样板的有界宿主；组件材质由生产样式拥有
 loading-lab.css: DEV 加载验收页的响应式三栏、卡片与交接样板；只提供预览宿主排版，生产骨架视觉沿正式样式
 landing-material.css: MarketingLayout 的统一纸感背景；Header、公告与页底共用原纸纹。白底模式及开发切换已移除。
 blog-index.css: 页面隔离背景，刊头与内容不隔离骨架层级；内外轨共用8px白填充SVG节点；外轨节点覆盖横竖轨，刊头内轨在上下横线中心裁切四个半节点，顶部露下半角、底部露上半角，横线覆盖切口。仅博客/动态目录的原页几何：64px/40px前空轨、46px/32px标题、64px/48px刊头留白、28px/20px行内留白、7px点阵、四色5px压边标签和72px Truchet侧纹；保留参考1800ms/500ms/cubic-bezier(.16,1,.3,1)，展开范围由入场时可见区间决定，避免长博客首屏过快扫完；品牌蓝与暖纸色来自DS，描边/揭示尊重减少动态，背景不扩散到页脚。
@@ -65,7 +68,7 @@ user-menu.css: 身份、菜单与积分入口共用150ms浅灰hover；浮层仅�
 codemirror.css: 未分层的 CodeMirror 6 适配层；写作 Paper 覆盖 height/overflow 让编辑器按正文自然增长并把唯一纵向滚动交还 paper-stage-scroll，其他宿主仍使用 100% 高度。继续维护 light/dark、14px source/15px live、Editorial 标题/引用与 GFM 显示，pre-wrap 保真空白
 cord.css: Cord Signature 表现层，按语境把 --cord-color 映射到既有 --archive-cord/--primary，承载 pathLength 归一化的出场自绘、虚实区分与自中点向两端流动的双层白光；外发光用更宽更淡的第二条描边而非 feGaussianBlur，reduced-motion 直接静态
 knowledge-canvas.css: 工具栏与卡片动作共用150ms浅灰hover；连接候选与预连接目标框线消费中性 canvas-interaction-ink； 工具栏保持中性 hover/open；帮助内容样式独立由 KnowledgeCanvas/CanvasHelpPopover.css 拥有；静态选择/边框消费根级 canvas-interaction-ink，非 APP 场景回退 primary；按住/拖动波纹、同色柔光与连接手势（临时线/抓手/有效目标）独立复用 primary，静态选中与框选保留中性细边；紧贴单张笔记的原生/补画选框共用 Panel 平滑圆角，多对象范围框与自由文字保留矩形；按住期 React Bits ElectricBorder 的 2.75px/70% 不透明度的淡色纸边及 3px/8px 同色柔光临时替代外框、松手立即恢复，Reduced Motion 停相位、forced-colors 回退系统轮廓；关系说明以独立 translate 保持居中，标签层高于节点且不抬升关系线； Canvas 表现层，同时是全站纸面视图过渡节奏的唯一落点。Grip 是底栏元信息行最右端的流内格子（`position: relative` 只为继续压住 z-index 4 的 whole-card target，"拖到别人的抓手上等于取消"依赖这个次序），不再骑在卡片圆角外，拖拽即隐藏；whole-card target 静止零命中、连接会话才开放；目标反馈分两档且都只动那条 1px Soft Ink 细边——候选（primary 46%）说"这些都能接"，指针正下方那一张（primary 78%，判据取 React Flow 自己的 connectingto/valid）说"松手就是它"；三股临时绳沉到 `z-index: 0`（与已成立的关系线同一档、DOM 在其后所以仍压在它之上），因此拖线钻到卡片底下而不覆盖正文——这条必须写在未分层边界，React Flow 的 style.css 不在 cascade layer 里；三股透明度由深到淡 0.88/0.5/0.26，与几何层的 strandSpeeds 同序（越淡跑得越快）；末端珠子是实心 primary + 一圈画布色描边并靠 `paint-order: stroke` 把描边整圈留在外面，于是它压住从底下绕过的三股。临时绳/珠子都不拦指针，Reduced Motion 静止。底部 Panel 仍是透明定位壳，图标化内容动作与视口动作共用中性 Ghost surface、以 8px 留白表达分组并在窄屏让出保存状态。纸面300/240ms规则只写一次，四个方向只在 html[data-paper-transition] 上声明 --paper-morph/--paper-world；正文零过冲、永不缩放、交接互补、世界先落定的既有五律不变，正式关系线仍由 CanvasCordEdge/cord.css 独立拥有
-design-system-workspace.css: 图标命令与归档按压共用不透明secondary；工具栏、菜单、历史与引用入口共用150ms浅灰hover；AI 历史与对话共享一条顶栏，列表无需重复标题留白； DEV Design System 五层生产矩阵与响应式样式；直接可视化 Foundations、16px Control 与 12px inner 同心样板、Lucide 精选生产图标与整理/拓展语义对比、真实主题切换、CodeMirror/Reading/Quote/Code 及 Paper Surface/Edge Dock/Archive Cord，所有演示只消费生产 Token；与 color-lab.css/archive-cord-lab.css 同一条隔离规则，不由 index.css 全局引入，只随 widgets/DesignSystemWorkspace/index.tsx 在 DEV 懒加载
+design-system-workspace.css: DEV 组件样板几何；文字、颜色、曲率和阴影读取生产 token，Paper/归档线直接复用生产组件
 archive-cord-lab.css: DEV `/archive-cord-lab` 验收台的隔离样式，只提供说明正文与坐在纸外的验收控制条；刻意不含任何归档线、代表行或 source 规则——那些必须由 workspace.css 提供，否则 fixture 验的就不是线上那条线
 color-lab.css: DEV `/color-lab` 蓝色终选决策画布，以同构静态 Library/Paper/AI 工作区、候选选择与 Light/Dark 响应式控制消费 index.css 隔离的现有蓝/灰蓝/标准墨蓝/柔和墨蓝 token；不定义颜色值、不读取业务状态、不改生产主题
 

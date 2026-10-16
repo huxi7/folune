@@ -1,70 +1,10 @@
 /**
  * [INPUT]: Typography 样本使用 app-typography.css 角色，不再在陈列层复制字号与字重； 依赖 index.css 的 Quiet Editorial Foundations 与 Design System/Signature Components 真实类
- * [OUTPUT]: 对外提供真实主题切换、五层展示页、Lucide 精选图标示例/语义对比、Control 内外同心样板、Editorial 样板及 Paper Surface/Edge Dock/Archive Cord 生产同源预览
- * [POS]: app/src/styles 的开发陈列专用视觉层，只可视化生产 token，不定义第二套颜色、曲率、阴影或 Motion；与 color-lab.css/archive-cord-lab.css 同一条隔离规则，不进 index.css 全局入口，只由 widgets/DesignSystemWorkspace/index.tsx 随 DEV 懒加载独占引入
+ * [OUTPUT]: 提供组件样板、文字角色、图标、几何与 Paper/Archive Cord 的陈列几何
+ * [POS]: DEV DesignSystemWorkspace 的样板布局；生产 token 独占视觉值，页面外壳由 design-system-shell.css 拥有
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 @layer components {
-  .ds-workspace-page {
-    background: var(--background);
-  }
-
-  .ds-workspace-inner {
-    container-name: design-system;
-    container-type: inline-size;
-    max-width: 88rem;
-    padding-bottom: calc(var(--spacing) * 18);
-  }
-
-  .design-system-header {
-    display: grid;
-    gap: calc(var(--spacing) * 5);
-    align-items: end;
-    padding-block: calc(var(--spacing) * 7);
-    border-bottom: 1px solid var(--border);
-  }
-
-  .design-system-kicker {
-    color: var(--muted-foreground);
-    font-family: var(--font-mono);
-    font-size: 0.6875rem;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-  }
-
-  .design-system-title {
-    margin-top: calc(var(--spacing) * 2);
-    color: var(--foreground);
-    font-family: var(--font-serif);
-    font-size: var(--type-display);
-    font-weight: var(--weight-title);
-    letter-spacing: -0.035em;
-    line-height: 0.96;
-  }
-
-  .design-system-intro {
-    display: grid;
-    max-width: 42rem;
-    gap: var(--space-3);
-    color: var(--muted-foreground);
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    line-height: 1.7;
-  }
-
-  .design-system-intro code {
-    color: var(--foreground);
-    font-family: inherit;
-  }
-
-  .design-system-intro small {
-    color: var(--muted-foreground);
-    font-family: var(--font-mono);
-    font-size: 0.625rem;
-  }
-
-  .design-system-intro .ds-segmented-control { justify-self: start; }
-
   .ds-thinking-mark-preview {
     display: grid;
     justify-items: center;
@@ -103,11 +43,6 @@
     align-items: start;
     padding-top: var(--space-4);
   }
-
-  .design-system-section { padding-top: var(--space-16); }
-  .design-system-section-header { display: flex; align-items: baseline; gap: var(--space-3); border-bottom: 1px solid var(--border); padding-bottom: var(--space-3); }
-  .design-system-section-header span { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--type-caption); }
-  .design-system-section-header h2 { color: var(--foreground); font-family: var(--font-serif); font-size: 1.5rem; font-weight: var(--weight-title); letter-spacing: -0.02em; }
 
   .ds-gallery-card {
     display: flex;
@@ -190,24 +125,10 @@
   .ds-iconography-intro { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: var(--space-3); border-bottom: 1px solid var(--border); padding-bottom: var(--space-3); }
   .ds-iconography-intro > div { display: grid; gap: var(--space-1); }
   .ds-iconography-intro strong { color: var(--foreground); font-size: var(--type-heading); font-weight: var(--weight-section); }
-  .ds-iconography-intro span,
-  .ds-iconography-intro p,
-  .ds-iconography-rule { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--type-caption); line-height: var(--leading-caption); }
+  .ds-iconography-intro p { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--type-caption); line-height: var(--leading-caption); }
   .ds-icon-size-scale { display: flex; flex-wrap: wrap; gap: var(--space-3); }
   .ds-icon-size-scale > span { display: grid; width: var(--space-16); height: var(--space-16); place-items: center; border: 1px solid var(--border); border-radius: var(--radius-control); color: var(--foreground); }
   .ds-icon-size-scale code { color: var(--muted-foreground); font-family: var(--font-mono); font-size: 0.5625rem; }
-  .ds-iconography-rule { max-width: 64rem; }
-  .ds-semantic-icon-comparison { display: grid; grid-template-columns: minmax(10rem, 0.8fr) repeat(2, minmax(12rem, 1fr)); gap: var(--space-3); align-items: stretch; }
-  .ds-semantic-icon-comparison > header,
-  .ds-semantic-icon-comparison > article { display: grid; gap: var(--space-2); border: 1px solid var(--border); border-radius: var(--radius-control); background: var(--card); padding: var(--space-3); }
-  .ds-semantic-icon-comparison > header { align-content: center; }
-  .ds-semantic-icon-comparison > header strong { color: var(--foreground); font-size: var(--type-label); }
-  .ds-semantic-icon-comparison > header span,
-  .ds-semantic-icon-comparison small { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--type-caption); }
-  .ds-semantic-icon-comparison article > div { display: flex; gap: var(--space-2); align-items: center; }
-  .ds-semantic-icon-comparison article span { display: grid; width: var(--control-height-compact); height: var(--control-height-compact); place-items: center; border: 1px solid var(--border); border-radius: var(--radius-control); corner-shape: var(--corner-shape-smooth); }
-  .ds-semantic-icon-comparison [data-tone="primary"] { border-color: color-mix(in srgb, var(--primary) 76%, var(--border)); background: var(--primary); color: var(--primary-foreground); }
-  .ds-semantic-icon-comparison [data-tone="secondary"] { background: var(--card); color: var(--foreground); box-shadow: var(--shadow-xs); }
   .ds-iconography-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); border-top: 1px solid var(--border); border-left: 1px solid var(--border); }
   .ds-iconography-item { display: grid; min-width: 0; grid-template-columns: var(--space-10) minmax(0, 1fr); align-items: center; gap: var(--space-2); min-height: 5rem; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: var(--space-3); }
   .ds-iconography-item > span { display: grid; width: var(--space-10); height: var(--space-10); place-items: center; border-radius: var(--radius-control); background: var(--surface-neutral); color: var(--foreground); }
@@ -216,16 +137,6 @@
   .ds-iconography-item code,
   .ds-iconography-item small { overflow: hidden; color: var(--muted-foreground); font-family: var(--font-mono); font-size: 0.5625rem; line-height: 1.45; text-overflow: ellipsis; white-space: nowrap; }
 
-  .ds-radius-inner-preview { display: grid; grid-template-columns: repeat(4, minmax(8rem, 1fr)); gap: var(--space-3); }
-  .ds-radius-inner-preview > span { display: grid; gap: var(--space-2); }
-  .ds-radius-inner-preview i { display: grid; height: var(--control-height-default); place-items: center; border: 1px solid var(--border); border-radius: var(--radius-control); corner-shape: var(--corner-shape-smooth); background: var(--card); padding: 0.1875rem; }
-  .ds-radius-inner-preview i > b { display: block; width: 100%; height: 100%; border: 1px solid color-mix(in srgb, var(--primary) 18%, var(--border)); border-radius: var(--radius-inner-control); corner-shape: var(--corner-shape-smooth); background: color-mix(in srgb, var(--card) 94%, var(--primary)); }
-  .ds-radius-inner-preview [data-surface="button"] i { border-color: color-mix(in srgb, var(--primary) 76%, var(--border)); background: var(--primary); }
-  .ds-radius-inner-preview [data-surface="button"] i > b { border-color: color-mix(in srgb, var(--primary-foreground) 42%, transparent); background: color-mix(in srgb, var(--primary) 94%, white); }
-  .ds-radius-inner-preview [data-surface="select"] i > b { background: linear-gradient(90deg, color-mix(in srgb, var(--card) 94%, var(--primary)) 82%, var(--surface-neutral) 82%); }
-  .ds-radius-inner-preview [data-surface="composite"] i > b { display: grid; width: 58%; place-items: center; }
-  .ds-radius-inner-preview [data-surface="composite"] i > b::after { content: ""; width: 70%; height: 45%; border-radius: var(--radius-inner-control); background: var(--surface-neutral); }
-  .ds-radius-inner-preview small { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--type-caption); }
 
   .ds-type-system-preview { display: grid; width: 100%; gap: var(--space-6); }
   .ds-type-family-grid { display: grid; gap: var(--space-3); }
@@ -260,7 +171,7 @@
   .ds-type-pairing-demo [data-type="body"] { min-width: 0; color: var(--foreground); font-size: var(--type-body); line-height: var(--leading-body); }
 
   .ds-foundation-material-preview { display: grid; width: 100%; gap: var(--space-6); }
-  .ds-radius-preview, .ds-elevation-preview, .ds-motion-preview { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; }
+  .ds-radius-preview, .ds-elevation-preview { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; }
   .ds-radius-preview span { display: grid; width: 5.5rem; height: 4.5rem; place-content: center; gap: var(--space-1); border: 1px solid var(--border); text-align: center; }
   .ds-radius-preview strong { color: var(--foreground); font-family: var(--font-mono); font-size: var(--type-ui); font-weight: var(--weight-section); }
   .ds-radius-preview small { color: var(--muted-foreground); font-family: var(--font-mono); font-size: 0.5625rem; }
@@ -271,15 +182,8 @@
   .ds-radius-preview [data-radius="dialog"] { border-radius: var(--radius-dialog); }
   .ds-elevation-preview span { display: grid; width: 8rem; height: 5rem; place-items: center; border: 1px solid var(--border); border-radius: var(--radius-panel); background: var(--paper-surface); color: var(--muted-foreground); font-size: var(--type-caption); }
   .ds-elevation-preview [data-elevation="paper"] { box-shadow: var(--paper-shadow); }
-  .ds-elevation-preview [data-elevation="panel"] { box-shadow: var(--shadow-lg); }
+  .ds-elevation-preview [data-elevation="panel"] { box-shadow: var(--shadow-2xs); }
   .ds-elevation-preview [data-elevation="popover"] { box-shadow: var(--shadow-sm); }
-  .ds-motion-preview > span { display: grid; gap: var(--space-1); }
-  .ds-motion-preview i { display: block; width: 5rem; height: 0.2rem; border-radius: var(--radius-pill); background: var(--primary); transform-origin: left; animation: ds-motion-specimen var(--motion-quiet) var(--ease-standard) infinite alternate; }
-  .ds-motion-preview small { color: var(--muted-foreground); font-family: var(--font-mono); font-size: 0.5625rem; }
-  .ds-motion-preview [data-motion="fast"] { animation-duration: var(--motion-fast); }
-  .ds-motion-preview [data-motion="normal"] { animation-duration: var(--motion-normal); }
-  .ds-motion-preview [data-motion="spatial"] { animation-duration: var(--motion-spatial); }
-  .ds-motion-preview [data-motion="quiet"] { animation-duration: var(--motion-quiet); }
 
   .ds-gallery-card[data-component="SpatialRhythm"] .design-system-preview {
     min-height: 0;
@@ -583,9 +487,6 @@
   .ds-edge-dock-preview { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: var(--space-4); padding-block: var(--space-8); }
   .ds-edge-dock-preview .edge-dock { position: static; }
 
-  .ds-cord-preview { position: relative; width: 100%; aspect-ratio: 448 / 190; min-height: 12rem; overflow: hidden; }
-  .ds-cord-preview-paper { position: absolute; z-index: 2; display: grid; place-items: center; border: 1px solid var(--paper-edge); border-radius: var(--radius-paper); corner-shape: var(--corner-shape-smooth); background: var(--paper-surface); box-shadow: var(--paper-shadow); font-family: var(--font-serif); }
-  .ds-cord-preview-card { position: absolute; z-index: 1; display: grid; place-items: center; border: 1px solid var(--border); border-radius: var(--radius-panel); corner-shape: var(--corner-shape-smooth); background: var(--card); color: var(--muted-foreground); font-size: var(--type-caption); }
 
   .ds-archive-cord-preview { position: relative; display: flex; width: 100%; min-height: 13rem; align-items: center; justify-content: space-between; gap: 8rem; padding: var(--space-8); }
   .ds-archive-cord-paper { position: relative; display: grid; width: 12rem; height: 8rem; place-items: center; border: 1px solid var(--paper-edge); border-radius: var(--radius-paper); background: var(--paper-surface); box-shadow: var(--paper-shadow); }
@@ -614,25 +515,6 @@
     padding: calc(var(--spacing) * 2);
   }
 
-  .ds-preview-card {
-    width: min(100%, 20rem);
-    padding: calc(var(--spacing) * 4);
-  }
-
-  .ds-preview-card p {
-    color: inherit;
-    font-size: 0.75rem;
-    font-weight: var(--weight-section);
-  }
-
-  .ds-preview-card > span {
-    display: block;
-    margin-top: calc(var(--spacing) * 2);
-    color: var(--muted-foreground);
-    font-family: var(--font-mono);
-    font-size: 0.6875rem;
-  }
-
   .ds-dialog-preview-copy {
     display: grid;
     place-items: center;
@@ -652,10 +534,6 @@
   }
 
   @container design-system (min-width: 34rem) {
-    .design-system-header {
-      grid-template-columns: minmax(0, 1fr) minmax(18rem, 1.1fr);
-    }
-
     .design-system-matrix {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
@@ -669,38 +547,6 @@
   @container design-system (min-width: 44rem) {
     .ds-spatial-rhythm-preview {
       grid-template-columns: minmax(16rem, 0.8fr) minmax(22rem, 1.2fr);
-    }
-  }
-
-  @container design-system (min-width: 52rem) {
-    .design-system-matrix {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-  }
-
-  @container design-system (min-width: 72rem) {
-    .design-system-matrix {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-    }
-  }
-
-  @media (max-width: 35rem) {
-    .ds-workspace-inner {
-      padding-inline: calc(var(--spacing) * 4);
-    }
-
-    .design-system-header {
-      padding-block: calc(var(--spacing) * 6);
-    }
-
-    .ds-gallery-card {
-      min-height: 0;
-      padding: calc(var(--spacing) * 4);
-    }
-
-    .design-system-preview {
-      min-height: 12rem;
-      padding: calc(var(--spacing) * 3);
     }
   }
 
@@ -724,13 +570,4 @@
     }
   }
 
-  @keyframes ds-motion-specimen {
-    to { transform: scaleX(0.25); opacity: 0.45; }
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  @layer components {
-    .ds-motion-preview i { animation: none; }
-  }
 }

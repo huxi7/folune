@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖 React、生产 Design System/Lucide 图标边界、FoundationSpecimens/读取实际计算值的 TypographyPreview、真实 MarkdownEditor/MarkdownReadingView 与 PaperSurface/EdgeDock/ArchiveCord/Cord Signature Components
- * [OUTPUT]: 对外提供 Color/Type/Iconography、Control 内外同心曲率、Primitives、Editorial、倒计时撤销与 AI 状态样板；自定义 Input 家族由包裹 label 提供可见名称
+ * [INPUT]: 依赖生产 Design System、FoundationSpecimens、TypographyPreview、MotionSpecimen 与 Paper/Canvas/AI Signature Components
+ * [OUTPUT]: 真实组件、Tooltip/键帽、独立 Motion、Editorial、倒计时撤销与 AI 状态样板；表单提供可见名称
  * [POS]: app/src/widgets/DesignSystemWorkspace 的预览层；所有样板只读取生产 Token/API，不建立展示专用视觉系统
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -11,14 +11,11 @@ import { MotionSpecimen } from "./MotionSpecimen";
 import {
   ICON_SIZES,
   ArrowUpIcon,
-  DesktopIcon,
   FileTextIcon,
   GearSixIcon,
-  MoonStarsIcon,
   NotePencilIcon,
   ShieldCheckIcon,
   SidebarSimpleIcon,
-  SunIcon,
   TreeStructureIcon,
 } from "../../shared/design-system/icons";
 import { memo, useEffect, useState } from "react";
@@ -27,10 +24,10 @@ import {
   AssistantMessage,
   BrandMark,
   Button,
-  Card,
   Dialog,
   GlowButton,
   Input,
+  KeyboardShortcut,
   MentionInput,
   PasswordInput,
   SegmentedControl,
@@ -43,12 +40,13 @@ import {
   ToolCallBubble,
   UserMenu,
   UserMessageBubble,
+  WarmTooltip,
+  WarmTooltipGroup,
   useToast,
   type SegmentedControlOption,
 } from "../../shared/design-system/components";
 import { MentionMenu, type MentionResult } from "../AgentPanel/MentionMenu";
 import { ArchiveCordOverlay } from "../ArchiveCord";
-import { Cord, CordLayer } from "../Cord";
 import { EdgeDock } from "../EdgeDock";
 import { MarkdownEditor } from "../MarkdownEditor";
 import { MarkdownReadingView } from "../MarkdownReadingView";
@@ -56,7 +54,7 @@ import { PaperSurface } from "../PaperSurface";
 import { useTheme } from "../../shared/theme/ThemeProvider";
 import type { DesignSystemSampleId } from "./componentCatalog";
 import { iconographyCatalog } from "./iconCatalog";
-import { ControlRadiusInnerPreview, SemanticIconComparison } from "./FoundationSpecimens";
+import { ColorPreview, ShapeMaterialPreview, SpatialRhythmPreview } from "./FoundationSpecimens";
 
 type ComponentPreviewProps = {
   sampleId: DesignSystemSampleId;
@@ -65,55 +63,10 @@ type ComponentPreviewProps = {
 type PreviewTheme = "system" | "light" | "dark";
 
 const segmentedControlPreviewOptions: SegmentedControlOption<PreviewTheme>[] = [
-  { icon: DesktopIcon, label: "系统", value: "system" },
-  { icon: SunIcon, label: "白天", value: "light" },
-  { icon: MoonStarsIcon, label: "黑夜", value: "dark" },
+  { label: "系统", value: "system" },
+  { label: "白天", value: "light" },
+  { label: "黑暗", value: "dark" },
 ];
-
-const spatialSteps = [
-  { step: "1", token: "space-1", value: "4px" },
-  { step: "2", token: "space-2", value: "8px" },
-  { step: "3", token: "space-3", value: "12px" },
-  { step: "4", token: "space-4", value: "16px" },
-  { step: "6", token: "space-6", value: "24px" },
-  { step: "8", token: "space-8", value: "32px" },
-] as const;
-
-
-
-function ColorPreview() {
-  return (
-    <div className="ds-color-system-preview">
-      <div className="ds-color-system-note">
-        <strong>Soft Ink · 柔和墨蓝</strong>
-        <span>Light #395875 · Dark #91ABC4 · Saving 使用同色相的低饱和 Processing 状态</span>
-      </div>
-      <div className="ds-color-preview">
-        {[
-          ["Stage", "workspace-stage"],
-          ["Paper", "paper-surface"],
-          ["Ink", "foreground"],
-          ["Muted", "muted-foreground"],
-          ["Hairline", "border"],
-          ["Primary", "primary"],
-          ["Hover", "primary-hover"],
-          ["Pressed", "primary-active"],
-          ["Primary Soft", "accent"],
-          ["Saving", "processing-surface"],
-          ["Focus", "ring"],
-          ["Danger", "destructive"],
-        ].map(([label, token]) => (
-          <span data-color={token} key={token}>
-            <i />
-            <small>{label}</small>
-            <code>--{token}</code>
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 
 function IconographyPreview() {
   return (
@@ -121,7 +74,6 @@ function IconographyPreview() {
       <header className="ds-iconography-intro">
         <div>
           <strong>Lucide React</strong>
-          <span>生产图标统一从 shared/design-system/icons.tsx 取语义别名</span>
         </div>
         <p>24×24 Grid · 2px Stroke · Round cap/join · currentColor</p>
       </header>
@@ -133,10 +85,6 @@ function IconographyPreview() {
           </span>
         ))}
       </div>
-      <p className="ds-iconography-rule">
-        这里只列最常用的生产例子；完整导出不在此重复铺开。默认使用描边图标，Primary、选中态与状态色只改变 currentColor；BrandMark、ThinkingMark 与 Archive Cord 属于 Signature 例外。
-      </p>
-      <SemanticIconComparison />
       <div className="ds-iconography-grid" aria-label="生产图标示例">
         {iconographyCatalog.map((item) => {
           const IconComponent = item.icon;
@@ -146,81 +94,11 @@ function IconographyPreview() {
               <span aria-hidden="true"><IconComponent size={16} /></span>
               <div>
                 <strong>{item.label}</strong>
-                <code>{item.exportName}</code>
-                <small>{item.usage}</small>
               </div>
             </div>
           );
         })}
       </div>
-    </div>
-  );
-}
-
-function RadiusElevationMotionPreview() {
-  return (
-    <div className="ds-foundation-material-preview">
-      <div className="ds-radius-preview">
-        <span data-radius="compact"><strong>8</strong><small>Compact</small></span>
-        <span data-radius="control"><strong>16</strong><small>Control</small></span>
-        <span data-radius="paper"><strong>12</strong><small>Paper · Menu</small></span>
-        <span data-radius="panel"><strong>16</strong><small>Panel</small></span>
-        <span data-radius="dialog"><strong>20</strong><small>Dialog</small></span>
-      </div>
-      <ControlRadiusInnerPreview />
-      <div className="ds-elevation-preview">
-        <span data-elevation="paper">Paper</span>
-        <span data-elevation="panel">Panel</span>
-        <span data-elevation="popover">Popover</span>
-      </div>
-      <MotionSpecimen />
-    </div>
-  );
-}
-
-function SpatialRhythmPreview() {
-  return (
-    <div className="ds-spatial-rhythm-preview">
-      <section aria-label="4px 空间标尺" className="ds-space-scale">
-        <div className="ds-spatial-section-heading">
-          <p>Spacing scale</p>
-          <span>4px baseline</span>
-        </div>
-        <ul>
-          {spatialSteps.map(({ step, token, value }) => (
-            <li data-space={step} key={token}>
-              <code>{token}</code>
-              <span aria-hidden="true" className="ds-space-measure">
-                <i />
-              </span>
-              <small>{value}</small>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <section aria-label="界面尺寸阶梯" className="ds-size-system">
-        <div className="ds-spatial-section-heading">
-          <p>Interface sizes</p>
-          <span>32 / 40 / 48</span>
-        </div>
-        <div aria-label="48px Panel Header 内含 32px 控件和 16px 图标" className="ds-panel-header-specimen" role="img">
-          <div className="ds-panel-header-specimen-copy">
-            <strong>Panel Header</strong>
-            <span>48px · 12px inline</span>
-          </div>
-          <span className="ds-panel-header-specimen-control">
-            <NotePencilIcon aria-hidden="true" size={16} />
-          </span>
-        </div>
-        <div className="ds-control-size-row">
-          <span data-control-size="compact"><i />Tree row <code>32</code></span>
-          <span data-control-size="button"><i />Button <code>36</code></span>
-          <span data-control-size="default"><i />Input <code>36</code></span>
-          <span data-control-size="header"><i />Header <code>48</code></span>
-        </div>
-        <p className="ds-spatial-rule">文件树、SidebarButton 与 Header 命令保持 32px compact 节奏；标准 Button 使用 36px 与 14/18px 文字，树节点使用 32px 与 12/16px 文字，统一来自同一条 4px 尺寸阶梯。</p>
-      </section>
     </div>
   );
 }
@@ -250,7 +128,6 @@ function GlowButtonPreview() {
         <GlowButton>登录</GlowButton>
         <GlowButton icon={ArrowUpIcon}>立即开始</GlowButton>
       </div>
-      <p>WebGL2 光线步进 · 半分辨率 blur 流光 · 顶部玻璃高光；光色取品牌 --primary，press 原地收紧，减少动态呈静态一帧</p>
     </div>
   );
 }
@@ -430,7 +307,6 @@ function CodePreview() {
 function ThinkingIndicatorPreview() {
   return (
     <div className="ds-thinking-preview">
-      <p>等待首个正文 token 时的唯一主要活动态</p>
       <ThinkingIndicator label="ThinkingIndicator 动效预览" />
     </div>
   );
@@ -501,6 +377,7 @@ function SegmentedControlPreview() {
   return (
     <SegmentedControl
       ariaLabel="预览界面主题"
+      size="compact"
       onValueChange={setTheme}
       options={segmentedControlPreviewOptions}
       value={theme}
@@ -542,11 +419,11 @@ function SelectPreview() {
   return (
     <div className="ds-select-preview">
       <Select
-        ariaLabel="选择归档策略"
-        defaultValue="reuse"
+        ariaLabel="界面语言"
+        defaultValue="zh-CN"
         options={[
-          { label: "优先复用已有目录", value: "reuse" },
-          { label: "必要时创建新目录", value: "create" },
+          { label: "简体中文", value: "zh-CN" },
+          { label: "English", value: "en" },
         ]}
       />
     </div>
@@ -572,7 +449,6 @@ function EdgeDockPreview() {
   return (
     <div className="ds-edge-dock-preview">
       <EdgeDock icon={<SidebarSimpleIcon size={16} />} label="文件库" onClick={() => undefined} side="left" />
-      <EdgeDock icon={<ThinkingMark aria-hidden="true" size={16} />} label="AI" onClick={() => undefined} side="right" />
     </div>
   );
 }
@@ -604,53 +480,20 @@ function ArchiveCordPreview() {
   );
 }
 
-function CordPreview() {
-  const paper = { height: 96, width: 132, x: 24, y: 52 };
-  const near = { height: 44, width: 132, x: 292, y: 18 };
-  const far = { height: 44, width: 132, x: 292, y: 130 };
-
-  return (
-    <div className="ds-cord-preview">
-      <CordLayer preserveAspectRatio="none" viewBox="0 0 448 190">
-        <Cord draw from={paper} mode="radial" to={near} tone="explore" variant="dashed" />
-        <Cord draw from={paper} mode="radial" to={far} tone="relation" variant="solid" />
-      </CordLayer>
-      <div className="ds-cord-preview-paper" style={{ height: "50.5%", left: "5.4%", top: "27.4%", width: "29.5%" }}>
-        <strong>Paper</strong>
-      </div>
-      <div className="ds-cord-preview-card" style={{ height: "23.2%", left: "65.2%", top: "9.5%", width: "29.5%" }}>
-        虚线 · AI 临时推荐
-      </div>
-      <div className="ds-cord-preview-card" style={{ height: "23.2%", left: "65.2%", top: "68.4%", width: "29.5%" }}>
-        实线 · 已确认关联
-      </div>
-    </div>
-  );
-}
-
-function CardPreview() {
-  return (
-    <Card className="ds-preview-card" tone="accent">
-      <p>Routing result</p>
-      <span>工作 / 产品 / Pricing</span>
-    </Card>
-  );
-}
-
 function DialogPreview() {
   const [dialogOpen, setDialogOpen] = useState(false);
 
   return (
     <div className="ds-dialog-preview-copy">
-      <Button onClick={() => setDialogOpen(true)} variant="primary">Open Dialog</Button>
+      <Button onClick={() => setDialogOpen(true)} variant="primary">打开对话框</Button>
       <Dialog
-        description="使用真实 Dialog API 验证焦点、关闭与主题继承。"
+        description="按 Escape 或点击外部关闭。"
         onOpenChange={setDialogOpen}
         open={dialogOpen}
-        title="Design System Dialog"
+        title="对话框"
       >
         <p className="mt-4 text-sm leading-6 text-muted-foreground">
-          Dialog 只承载需要用户集中处理的决定。
+          在这里完成需要专注的操作。
         </p>
       </Dialog>
     </div>
@@ -672,6 +515,48 @@ function ToastPreview() {
           action: { label: "撤销", onClick: () => dismissToast(id) },
         });
       }}>撤销倒计时</Button>
+    </div>
+  );
+}
+
+function TooltipPreview() {
+  const [warm, setWarm] = useState(false);
+  return (
+    <div className="ds-tooltip-preview">
+      <WarmTooltipGroup onWarmChange={setWarm}>
+        <div className="ds-preview-actions">
+          <WarmTooltip asChild content="打开文件库">
+            <Button icon={SidebarSimpleIcon}>文件库</Button>
+          </WarmTooltip>
+          <WarmTooltip asChild content="整理当前笔记，让内容自然归入文件树。" side="bottom">
+            <Button icon={NotePencilIcon} variant="ghost">整理笔记</Button>
+          </WarmTooltip>
+        </div>
+      </WarmTooltipGroup>
+      <p data-text-role="caption">{warm ? "移到相邻按钮，提示连续出现。" : "悬停或 Tab 查看，Escape 收起。"}</p>
+    </div>
+  );
+}
+
+const shortcutOptions = [
+  { label: "组合键", value: "command" },
+  { label: "确认", value: "confirm" },
+  { label: "导航", value: "navigation" },
+] as const;
+const shortcutExamples = {
+  command: [["mod", "K"], ["mod", "E"]],
+  confirm: [["Enter"], ["Escape"]],
+  navigation: [["Space"], ["Backspace"], ["Escape"]],
+} as const;
+
+function KeyboardShortcutPreview() {
+  const [example, setExample] = useState<keyof typeof shortcutExamples>("command");
+  return (
+    <div className="ds-shortcut-preview">
+      <SegmentedControl ariaLabel="快捷键样本" onValueChange={setExample} options={shortcutOptions} value={example} />
+      <div className="ds-preview-actions">
+        {shortcutExamples[example].map(keys => <KeyboardShortcut keys={keys} key={keys.join("+")} />)}
+      </div>
     </div>
   );
 }
@@ -708,7 +593,8 @@ export const ComponentPreview = memo(function ComponentPreview({
     case "Typography": return <TypographyPreview />;
     case "Iconography": return <IconographyPreview />;
     case "SpatialRhythm": return <SpatialRhythmPreview />;
-    case "RadiusElevationMotion": return <RadiusElevationMotionPreview />;
+    case "RadiusElevationMotion": return <ShapeMaterialPreview />;
+    case "Motion": return <MotionSpecimen />;
     case "Button": return <ButtonPreview />;
     case "GlowButton": return <GlowButtonPreview />;
     case "Skeleton": return <SkeletonPreview />;
@@ -721,9 +607,10 @@ export const ComponentPreview = memo(function ComponentPreview({
     case "SegmentedControl": return <SegmentedControlPreview />;
     case "Input": return <InputPreview />;
     case "Select": return <SelectPreview />;
-    case "Card": return <CardPreview />;
     case "Dialog": return <DialogPreview />;
     case "Toast": return <ToastPreview />;
+    case "Tooltip": return <TooltipPreview />;
+    case "KeyboardShortcut": return <KeyboardShortcutPreview />;
     case "BrandMark": return <BrandMarkPreview />;
     case "UserMenu": return <UserMenuPreview />;
     case "PaperSurface": return <PaperSurfacePreview />;
@@ -733,6 +620,5 @@ export const ComponentPreview = memo(function ComponentPreview({
     case "Code": return <CodePreview />;
     case "EdgeDock": return <EdgeDockPreview />;
     case "ArchiveCord": return <ArchiveCordPreview />;
-    case "Cord": return <CordPreview />;
   }
 });

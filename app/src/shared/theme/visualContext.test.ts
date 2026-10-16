@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 applyVisualContext、HTML 首绘脚本、node:vm 与 Bun test
- * [OUTPUT]: 验证首绘/运行期作用域一致、路由往返恢复营销样式、存储失效仍隔离 APP、Demo 独立启用新视觉
+ * [OUTPUT]: 验证工作区/独立 Design System 的首绘与运行期一致，往返恢复主题、存储失效隔离 APP、Demo 独立启用新视觉
  * [POS]: theme 的场景回归门禁；保护路由切换及根级 Portal 继承边界，不把业务路由挂载到测试中
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -26,7 +26,20 @@ function rootFixture() {
 }
 
 describe("APP 文档根视觉作用域", () => {
-  for (const pathname of ["/app", "/app/", "/app/notes/123", "/", "/login", "/blog/a", "/updates", "/application"]) {
+  const paths = [
+    { pathname: "/app", app: true },
+    { pathname: "/app/", app: true },
+    { pathname: "/app/notes/123", app: true },
+    { pathname: "/design-system", app: true },
+    { pathname: "/design-system/", app: true },
+    { pathname: "/", app: false },
+    { pathname: "/login", app: false },
+    { pathname: "/blog/a", app: false },
+    { pathname: "/updates", app: false },
+    { pathname: "/application", app: false },
+    { pathname: "/design-system-preview", app: false },
+  ];
+  for (const { pathname, app } of paths) {
     test(`${pathname} 首绘与运行期保持一致`, () => {
       const initial = rootFixture();
       runInNewContext(bootstrap!, {
@@ -37,19 +50,44 @@ describe("APP 文档根视觉作用域", () => {
       runtime.dataset.resolvedTheme = "dark";
       applyVisualContext(pathname, runtime as unknown as HTMLElement);
       expect(runtime.classList.contains("dark")).toBe(initial.classList.contains("dark"));
-      expect(runtime.classList.contains("dark")).toBe(pathname === "/app" || pathname.startsWith("/app/"));
+      expect(runtime.classList.contains("dark")).toBe(app);
       expect(runtime.dataset.visualContext).toBe(initial.dataset.visualContext);
-      expect(runtime.dataset.visualContext).toBe(/^\/app(?:\/|$)/.test(pathname) ? "app" : "marketing");
+      expect(runtime.dataset.visualContext).toBe(app ? "app" : "marketing");
     });
   }
+
+  test("Design System 首绘遵循主题偏好，Portal 共用文档根场景", () => {
+    for (const { storedTheme, prefersDark, dark } of [
+      { storedTheme: "light", prefersDark: true, dark: false },
+      { storedTheme: "dark", prefersDark: false, dark: true },
+      { storedTheme: "system", prefersDark: true, dark: true },
+      { storedTheme: "system", prefersDark: false, dark: false },
+    ]) {
+      const root = rootFixture();
+      runInNewContext(bootstrap!, {
+        document: { documentElement: root },
+        window: {
+          location: { pathname: "/design-system" },
+          localStorage: { getItem: () => storedTheme },
+          matchMedia: () => ({ matches: prefersDark }),
+        },
+      });
+      expect(root.dataset.visualContext).toBe("app");
+      expect(root.dataset.resolvedTheme).toBe(dark ? "dark" : "light");
+      expect(root.classList.contains("dark")).toBe(dark);
+      applyVisualContext("/design-system", root as unknown as HTMLElement);
+      expect(root.classList.contains("dark")).toBe(dark);
+    }
+  });
 
   test("路由往返切换根标记，不改变主题偏好解析结果", () => {
     const root = rootFixture();
     root.dataset.resolvedTheme = "dark";
-    for (const pathname of ["/app/notes/a", "/blog", "/app", "/login"]) {
+    for (const pathname of ["/app/notes/a", "/blog", "/design-system", "/app", "/login"]) {
       applyVisualContext(pathname, root as unknown as HTMLElement);
-      expect(root.dataset.visualContext).toBe(pathname.startsWith("/app") ? "app" : "marketing");
-      expect(root.classList.contains("dark")).toBe(pathname.startsWith("/app"));
+      const app = pathname.startsWith("/app") || pathname === "/design-system";
+      expect(root.dataset.visualContext).toBe(app ? "app" : "marketing");
+      expect(root.classList.contains("dark")).toBe(app);
       expect(root.dataset.resolvedTheme).toBe("dark");
     }
   });

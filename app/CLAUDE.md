@@ -16,7 +16,7 @@ demo.html: 根级禁用全部Tooltip，助手面板严格使用演示栏宽而�
 demo-compare.html: 本地三档视觉对比入口：原版/此前灰白/纸白定稿，默认纸白；同一 demo.html iframe 保留笔记、对话与视图，灰白参照仅局部覆盖 workspace-stage 为 #F1F2F2，纸白沿正式 APP 默认值；不进入生产构建或 Landing
 demo-noise.html: 本地 1:1 字号/默认面板宽度的噪点对照；单一 Demo iframe 固定纸白底，切换无噪点/1.5%/3% 静态颗粒，只覆盖工作区空白背景，保留内容与视图；不进入生产构建或改变正式背景
 hero-lab.html: 独立首屏实验入口，01A/02A 可调材质/高度，否决 B 版退出主选择；多组本地收藏及备份、旧配置兼容、可选既有 APP 衔接，不进入正式路由或构建清单
-index.html: 首绘按 pathname 声明 APP/marketing 文档根场景；Vite HTML 宿主页面，声明 V1 Classic Blueprint 默认画布、同步解析中英语言与 App 的 system/light/dark、Landing 浅色画布 pre-paint bootstrap、提供 root 挂载点并引用品牌母图等比缩放的 PNG Favicon
+index.html: 首绘按 pathname 声明 APP/marketing 文档根场景；工作区与独立 /design-system 共用 APP 场景、中英语言及 system/light/dark 解析；营销首绘固定浅色；Vite HTML 宿主提供 root 挂载点与品牌 PNG Favicon
 .env.example: app 浏览器环境变量模板，声明业务 API、chat 服务 base URL 与 Supabase 公开连接配置
 AUTH_SETUP.md: Supabase 邮箱确认模板、URL allow list、自定义 SMTP 限制与 Google OAuth 后台配置；列明正式首页/隐私政策/服务条款 URL、Google 品牌验证和真实部署核查步骤；记录尚未启用的 Turnstile 前后端接入要求及忘记密码占位边界
 brand-spec.md: Folune 品牌真相源，记录已选 Soft Ink Light/Dark 轴、Saving Processing 状态、8/10/12/16/20px 同心曲率、Button 微雾材质及历史候选
@@ -28,7 +28,7 @@ src/index.css: 普通悬停与选中底色分离，150/200ms变色由motion.ts�
 src/styles/: app-typography.css 统一 APP 400/500/600 文字角色与组件消费，app-visual.css 独立拥有场景颜色，并将同一组中性控件边界、阴影及文字角色共享给认证页面与营销标准按钮（含 Hero、顶栏、页尾与文章返回）；UI 样式实现层，以 global-base.css 收口文档根与 reduced-motion、landing.css 与 blog.css 隔离营销首页和公开博客、workspace.css 隔离 Paper/Panel/共享业务布局、account-center.css 收口五栏设置的嵌套卡片与用量、subscription.css 收口独立订阅页，user-menu.css 只拥有账户菜单内容几何、note-paper.css 收口 Canvas 卡片缩略纸与全尺寸阅读纸共用的唯一纸面、knowledge-canvas.css 隔离 Canvas V2 Workspace 并收敛 React Flow 默认视觉，其余模块分别维护 design system、AI 消息、连线、认证、菜单与 CodeMirror；普通表面颜色插值统一使用sRGB，退出确认强调面光按参考局部使用OKLCH
 src/app/: 桌面生命周期和仅登录/工作区的路由装配， 应用装配层，承载 OAuth 回调、Profile/access token 登录守卫、`/app` 与独立 `/app/subscription`（含 `/app/subscription/credits` 积分购买弹窗） 共享 Dashboard 生命周期及仅 DEV 的无状态 Color Lab / Archive Cord Lab 入口
 src/pages/: 菜单/设置的退出共用确认表面，确认后沿笔记/Canvas保存与认证边界执行；页面层，以 useAppDashboardController 与 AppDashboard 分离状态协调/空间装配，承载共享营销顶栏的 Landing、公开博客与动态目录/阅读页、共享阅读模板的独立 /terms 和 /privacy、OAuth Callback、独立订阅比较与一次点击结账，无订单管理入口或二次确认，付款返回由共享流程核对、Paper/Canvas 路由协调与仅 DEV 的配色决策页、归档线验收台；编排 flush、删除、整理、默认/空白 Canvas 入口、增量布局和返回恢复
-src/widgets/: 业务组合组件层，承载 Landing、PaperWorkspaceShell/CanvasWorkspace、共享文件库/AI Panel、memo 编辑会话、五栏账户设置、纯订阅展示与回收站、全局对象命令与 Canvas V2 React Flow 交互
+src/widgets/: Web DEV /design-system 独立陈列组件、实时规范、材质与资产；业务组合组件层，承载 Landing、PaperWorkspaceShell/CanvasWorkspace、共享文件库/AI Panel、memo 编辑会话、五栏账户设置、纯订阅展示与回收站、全局对象命令与 Canvas V2 React Flow 交互
 src/shared/: 前端共享层，承载 memo/AI/Canvas/billing API、Dashboard 用户级 BillingProvider 快照、轻量 tree、按 ID 正文、Canvas document/WAL/Workspace Store/保存协调器、Paper 与 Canvas 各自独立的 Chrome 状态、design system、纯 Supabase Auth、主题与中英语言状态；前端禁止直连业务表或 Storage
 docs/: UI 验收与决策证据目录，保存 Design System 语义说明、computed Token 快照、Paper First V1.1 当前前后对比/验收截图及 Color Lab v0 同构配色快照
 package.json: Bun 包元数据、Vite dev/build/typecheck、逐文件隔离的 Bun test 与 oxlint scripts 及用户端依赖清单；Paper Shaders 由正式 Hero 的选定颗粒波面及两处产品展示背景（APP 展示区与功能细节）按需加载
@@ -51,7 +51,7 @@ APP 当前视觉（2026-09-24）：styles/app-visual.css 在 data-visual-context
 
 交互组件约束: 侧栏导航必须复用 SidebarButton；文件库 Header 左侧保留紧凑 BrandMark，右侧只放 32px Ghost 收起图标；根级新建与搜索固定同排且整行 32px：搜索是中性 SidebarButton 占据弹性槽，只负责打开全局 Command Palette，文件库内不得再拥有本地输入框或独立搜索结果树；新建是右侧约 96px 的 Primary split 控件，64px 主区带图标与「新建」文字直接新建备忘录，32px 下拉区显式选择备忘录/Canvas/文件夹，两区共享同一 10px 平滑外轮廓并以 1px 低对比线分隔。这一行在搜索打开后不消失、不换成输入框、不发生布局跳动，也禁止扩张为整行实心长条。Design System 与回收站位于文件树之外的同一底部导航列表，各占一行、规格一致且不显示额外分组标题；二者复用 12px/16px Label 角色与 600 字重，只靠位置、16px 图标和状态色建立安静层级，禁止额外插入 13px 字号。标准 APP/设置动作与 Input/Select 使用 36px 高度，侧栏导航、文件树与 Header 命令使用 32px compact 高度，二者共享 smooth-corner、16px 图标和交互材质而不强制等高；递归文件树的 folder/memo 行通过 12px/16px 文字、字重、颜色与逐级缩进承载高频浏览密度，不绘制永久父子导轨。文件夹开合只允许 Folder/FolderOpen 单一状态图标，不额外添加 Caret；同层文件夹与文件共享固定图标槽，标题必须严格对齐。树行单击只负责导航或开合，双击任意 folder/memo、右键重命名或聚焦后 F2 均进入同一原地 input；Enter/blur 提交，Escape 取消。文件树节点是固定位置的扁平列表项，hover/press 不得产生位移或抬升。原生拖拽预览按节点身份分型：folder 必须显示纯文件夹图标与单行截断名称，memo 只显示纯 SVG 图标；二者都禁止胶囊、方框、按钮背景或实体阴影，仅允许图标/文字底层的极淡虚化光晕。拖拽源保留原位并弱化到 40%。拖拽命中区不得改变行高、层间距或整体高度；before/after/root-end 使用 8px 起始圆点+2px 插入线，folder 中段只显示原位放入态，实际位置变化统一用约 210ms Web Animations FLIP。除文件树的扁平交互例外外，其他 SidebarButton 的选中态和 prominent 态必须直接复用无明显描边 Secondary Button 的自然表面与内外阴影，不得维护第二套材质；Button、SidebarButton、UserButton 与 Select 的 hover/open 状态必须固定原位和静止深度，仅允许通过颜色或边框反馈，Button/SidebarButton 只有 press 可保留 1px 下压。UserButton、Select 动作和侧栏工具按钮同样消费统一平滑圆角，不得使用局部曲率。账户入口统一打开 AccountDialog 五栏设置：个人资料、通用、账单、用量、账户；左侧设置标题与文字导航、右侧标题/关闭入口和嵌套卡片构成同一模态，尺寸与窄屏重排由 account-center.css 唯一维护。每次打开只后台刷新一次真实 Profile，并继续展示 loader 或本地更新维护的旧资料；返回时仅合并未被用户修改的字段，禁止清空为 Skeleton，栏目切换不得重复请求。账户 username/bio 在停止输入 800ms 后静默自动保存，仅异常通过 Toast 提示，不显示独立保存区或大按钮；设置保持模态；订阅比较使用独立 `/app/subscription`（含 `/app/subscription/credits` 积分购买弹窗） 全屏地址，不再住在 Paper 内。Dashboard 按 profile.id 持有 BillingProvider，菜单/设置/订阅共享套餐与真实已记账日用量，刷新保留旧值，退出销毁；订阅打开时保留原笔记路径和底层工作区实例，并隔离隐藏工作区键盘事件；直接打开不额外创建笔记。服务端 USD 美分与 token 仅在展示层换算，未接支付明确不可结账，点击方案不更新会员身份。瞬时业务反馈必须经根级 ToastProvider 发出，不在页面重复实现通知浮层。
 
-图标系统约束: 通用图标统一从 `src/shared/design-system/icons.tsx` 取稳定语义别名，业务文件禁止直接引入第三方图标包。底层采用 Lucide React 的 24×24 网格、2px 描边、圆形端点与圆角连接，产品尺寸限制为 14/16/20/24px；Primary、选中态与状态反馈只改变 `currentColor` 或所在表面，不通过另一套 fill/duotone 图形制造视觉分裂。BrandMark、ThinkingMark、Archive Cord 与 Google 品牌标记属于明确的 Signature/品牌例外。DEV Design System 必须展示全部生产语义图标、导出名、真实用途和尺寸阶梯。
+图标系统约束: 通用图标统一从 `src/shared/design-system/icons.tsx` 取稳定语义别名，业务文件禁止直接引入第三方图标包。底层采用 Lucide React 的 24×24 网格、2px 描边、圆形端点与圆角连接，产品尺寸限制为 14/16/20/24px；Primary、选中态与状态反馈只改变 `currentColor` 或所在表面，不通过另一套 fill/duotone 图形制造视觉分裂。BrandMark、ThinkingMark、Archive Cord 与 Google 品牌标记属于明确的 Signature/品牌例外。DEV Design System 展示现用语义图标、名称和尺寸阶梯；完整导出归 icons.tsx。
 
 空间与尺寸约束: APP 以 4px 为唯一空间基线，并在 `src/index.css` 集中维护 32/36/48px 尺寸阶梯。三处 Panel Header 统一为 48px 高、12px 水平内边距；Header 图标命令、Sidebar 新建、纸上 Canvas/阅读/更多与助手开关及关闭入口统一为 32px 容器和 16px 图标，因此上下自然各保留 8px 呼吸区，相邻命令间距统一为 4px。AI Header 只保留历史菜单、单行会话名、独立新对话、短窗/全高切换和向下收起；生产关闭态由右下Folune AI胶囊承载，不再提供Stage右上开关。标准 Button、Input 与 Select 使用 36px 外部高度；Button 采用 14px/18px UI 字体、14px 水平留白与 6px 图文间距，表单采用 14px/20px。SidebarButton 与递归文件树行使用 32px compact 外部高度和 16px 图标，文件树和底部辅助导航均使用 12px/16px。认证表单可独立使用 48px 大点击规格。Agent Composer 使用 16px Panel 曲率和内层同心曲率，底栏只保留左侧权限与右侧发送/停止两个 32/16 Button；发送与停止共享 32px 几何圆形 Primary 轮廓，并以 `corner-shape: round` 显式覆盖通用 Button squircle，状态切换不得改变几何。原生 MentionInput 最多增长到 6 行后内部滚动，@候选是可滚动菜单内按内容宽度收束的 28px 文件图标+文件名单行，不得拉伸成整行 Button。首屏 Skeleton 必须使用相同尺寸 token，禁止加载跳变；DEV Design System 必须直接呈现这套空间标尺与 Header/Composer 样板，且不得复制另一套展示专用值。
 
@@ -142,6 +142,15 @@ Landing 演示样式入口：demo.html 在组件脚本前依次预载 index.css�
 Landing APP 展示助手：面板严格匹配演示预留栏宽，不消费真实窗口的360px下限；根级禁用全部Tooltip。胶囊轮廓/文字/图标/间距/柔影按演示根字号同比缩小（默认87.5%，113.75×38.5），位置跟随Demo内缩；助手在纸面过渡截图前同步硬切目标形态，禁止几何/透明度/阴影过渡，中央纸面保留原过渡。笔记场景固定全高，尺寸/收起按钮保持静态；画布场景固定右下胶囊，点击不展开且不装配调整手柄。卡片坐标与间距沿原示例，右侧不再保留整栏安全区。
 
 认证参考更新（2026-10-07）：登录使用原白色卡片、24px 平滑轮廓、44/48px 控件和品牌输入焦点；Google 保留四色，GitHub 使用官方 Octicons；两者共用20px图标和认证按钮，云端启用进度见 ../deploy/OAUTH.md。注册仅展开确认密码，主按钮悬停不放大、不上浮。卡片外的原页面颜色、纹理、01A 散墨与视频保持原样，认证服务边界不变。实测与历史区分见 docs/landing-refactor/login-page.md。
+
+## Design System 展示边界
+
+独立 DEV 页面直接展示现用设计。
+目录、名称、交互样板和必要参数构成版面。
+共享设计原语定义产品与样板的视觉规则。
+页面不展示源码路径、来源说明或历史参考。
+未挂载组件与假想产品状态不得入册。
+品牌原图与许可保留紧凑下载入口。
 
 ## Canvas 只读问答
 

@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖共享AgentConversationSkeleton加载构图、统一SignOutConfirmationDialog、双语 locale、useAppDashboardController、Paper/Canvas 内容壳、恢复场景默认窗口的三态助手宿主、持久文件库与统一 Dialog、独立 SubscriptionPage，积分购买弹窗，以及菜单打开时刷新的用户级 BillingProvider 快照
- * [OUTPUT]: 向现有助手传递当前画布和发送前同步门禁； 对外提供菜单/设置共用的退出确认、/app稳定空间装配与/app/subscription独立页，文件树消费即时选择、正文消费已提交路由；订阅打开时隐藏并保留工作区/左右工具实例，积分弹窗按来路保留工作区或订阅背景，键盘边界阻止常驻工作区快捷键
+ * [OUTPUT]: 向现有助手传递当前画布和发送前同步门禁； 对外提供菜单/设置共用的退出确认、/app稳定空间装配与/app/subscription独立页，文件树消费即时选择、正文消费已提交路由；订阅打开时隐藏并保留工作区/左右工具实例，积分弹窗按来路保留工作区或订阅背景，键盘边界阻止常驻工作区快捷键；DEV Design System 在新标签打开 /design-system，原标签保留笔记草稿及画布会话
  * [POS]: pages 的 Workspace 视觉组合根；按 profile.id 持有唯一计费快照，菜单/设置/订阅同源，路由返回由受限来路解析；业务/flush 归 controller，动画不重挂载根
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -164,7 +164,7 @@ function DashboardContent() {
         onCreateCanvas={canvasCreation.createCanvas}
         onClose={closeActiveLibrary}
         onMoveNode={handleMoveNode}
-        onOpenDesignSystem={() => handleSelectAuxView("design-system")}
+        onOpenDesignSystem={() => window.open("/design-system", "_blank", "noopener,noreferrer")}
         onPrefetchMemo={(memoId) => {
           void preloadMemo(accessToken, memoId).catch(() => undefined);
         }}

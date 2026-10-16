@@ -49,7 +49,7 @@ LandingSections.tsx: 核心功能、社会价值、功能细节依次呈现；�
 LandingFooter.tsx: 预留链接的即将开放说明统一 WarmTooltip； 共用 DS 墨蓝的品牌区与产品/资源/关于/连接四组导航；16 项预留入口以 aria-disabled link 语义展示且不跳转，打开网页版进入 /login，关于栏额外公开 /terms 与 /privacy；品牌与入口置顶、作者与版权置底；保留 Folune 淡描边与细纹层序，BlueprintFrame 延续导轨
 LandingMotion/: 营销页克制反馈模块；MarketingLink 保留普通导航；useMarketingMotion 统一首屏整组与章节首次浮现、博客整行错峰，参数复用 DS marketingMotion；HeroBackdrop/ShowcaseBackdrop/LoginBackdrop 承载各自后景，共用散墨算法供登录与 Lab 消费，CountUp 处理数字变化
 NotebookPreview.tsx: 确定性首屏产品预览，DS 统一缩放淡入与显式卡片 lift 分处不同元素，阴影由 CSS 持有，内部布局不参与独立动画
-AppSidebar.tsx: 收起与已有文字的底部导航不重复提示；搜索与新建复用页面级提示组，与工具栏/AI共享连续提示，搜索显示真实 mod+K 平台键帽；从 ThemeProvider/LocaleProvider 读取偏好并透传 Dashboard 的方案名、剩余额度、菜单打开刷新与资料/用量/账单/订阅/购买积分命令给纯展示 UserMenu，不在树内请求计费；右键菜单通过 Portal 锚定视口，避免 Panel transform 改写 fixed 坐标；文件库内容与展开偏好的唯一所有者，负责创建/搜索、树/重命名/拖放意图、底部导航和唯一有效归档代表；新建复用上一终态布局与在途位移，不额外扫描整树；拖放保留手势前快照，定位只由目标本身变化触发（换目标/reveal/新一次整理、目标被搬进别的文件夹、树首次就绪），别处增删改不重放展开与滚动；最新选择已可见时不滚动，离屏才沿原平滑定位，祖先已展开不重复写状态，重排交给 useTreeReorder，结构键按不可变树引用复用以跳过标题/摘要更新时的整树 FLIP 判据，子级尺寸交给 TreeDisclosure，业务事务仍由 Dashboard 持有
+AppSidebar.tsx: 收起与已有文字的底部导航不重复提示；搜索与新建复用页面级提示组，与工具栏/AI共享连续提示，搜索显示真实 mod+K 平台键帽；从 ThemeProvider/LocaleProvider 读取偏好并透传 Dashboard 的方案名、剩余额度、菜单打开刷新与资料/用量/账单/订阅/购买积分命令给纯展示 UserMenu，不在树内请求计费；右键菜单通过 Portal 锚定视口，避免 Panel transform 改写 fixed 坐标；文件库内容与展开偏好的唯一所有者，负责创建/搜索、树/重命名/拖放意图、底部导航和唯一有效归档代表；新建复用上一终态布局与在途位移，不额外扫描整树；拖放保留手势前快照，定位只由目标本身变化触发（换目标/reveal/新一次整理、目标被搬进别的文件夹、树首次就绪），别处增删改不重放展开与滚动；最新选择已可见时不滚动，离屏才沿原平滑定位，祖先已展开不重复写状态，重排交给 useTreeReorder，结构键按不可变树引用复用以跳过标题/摘要更新时的整树 FLIP 判据，子级尺寸交给 TreeDisclosure，业务事务仍由 Dashboard 持有；Design System 入口仅在 Web DEV 显示，由 Dashboard 在新标签打开
 AppSidebar.creation.test.tsx: 真实 ThemeProvider/侧栏 DOM 回归，覆盖主按钮/右键连续新建、乱序 ID 确认与失败撤回；已有行和目录实例、展开/折叠偏好与选中身份保持稳定；删除别处节点不撑回用户收起的目录，目标被搬进收起目录才跟随展开
 WorkspacePanelLayer.tsx: 常驻文件库与设计系统侧栏样板宿主；保留DS Tween与归档租约，resizeHandle独立于裁切内容，不参与生产助手的尺寸形变
 SidebarCreateMenu.tsx: 48/32 split 创建入口，两半复用 WarmTooltip 下方提示，菜单展开或禁用时收起；locale 同步新建/New 短标签、提示与两项菜单，保持双区几何；PresenceSurface紧凑菜单120/100ms入退场，关闭即 inert，键盘循环、Escape 与触发器焦点归还保留
@@ -89,7 +89,7 @@ CanvasStageLoading.test.tsx: 锁定隐藏时卸载、显示时保留加载语义
 CanvasWorkspace.tsx: Canvas 内容壳、文件库进入/记忆、窄屏与Escape；助手可见性读取跨空间唯一Store，右下三态外壳由Dashboard持有，面板不改变React Flow几何
 CanvasWorkspace.test.tsx: Canvas 会话壳回归测试，锁定中央 Canvas、共享 Panel、Paper 互斥关系，以及伪返回按钮/Canvas 文字标识/厚重标题卡片确已消失
 KnowledgeCanvas/: Canvas V2 交互内容根，以受控 React Flow 承载持久视口、memo/native 节点、右下抓手的拖/点等效连接与纯 UI 临时编织绳、带撤销回执/来源确认的移除、拖拽/缩放、Picker、Preview、显式 AI expansion、WAL 恢复与保存状态
-DesignSystemWorkspace/: 开发态 Quiet Editorial Design System 工作区，按 Foundations/Primitives/Navigation & Overlays/Editorial/AI & Organize 五层直接陈列生产 Token、Lucide 精选图标示例、Markdown/Reading/Quote/Code 与四种 Signature Components；组件状态由真实预览交互表达，不再铺设重复状态轨；通过 lazy import 只在 import.meta.env.DEV 下暴露
+DesignSystemWorkspace/: Web DEV /design-system 独立设计系统；以名称、交互样板与参数陈列现用设计，不展示源码来源或历史参考；仅本地状态，不装配业务 loader
 NotePaper.tsx: 共享纸面原语，以 thumbnail/reader/showcase 三个 variant 承载缩略纸、阅读浮纸与营销自然高度纸面。transitionIdentity 一个入参同时命名纸壳与纸内正文（paper-/paper-body-），规矩因此住在纸里而不是每个调用方——漏一处就是一次字被当图片拉伸的过渡；不再交出真实 DOM，几何归浏览器，没人再测量这张纸。纸张曲率、纸边、墨色与 thumbnail 渐隐仍只实现一次，reader 纸面静止且正文在纸内滚动
 NotePaper.test.tsx: 固定 16px 缩略排版基准及渐隐范围不随 Demo 根字号缩小；纸面骨架与视觉契约回归测试，锁定两个 variant 的 DOM 同构、thumbnail 五段透明度且模糊层不填纸色、空摘录占位、children 覆盖摘录与 overlay 不进入正文流，以及一个 transitionIdentity 必须同时命名纸壳与正文、不给身份则一个名字都不留
 MarkdownEditor.tsx: Markdown 存储协议与 CodeMirror 显示协议之间的唯一 adapter；handle 只暴露 focus 与只读 readSelection（剥掉零宽标记后返回选中文字，不触碰选区/撤销/自动保存），GFM language 常驻，live/source 只通过 Compartment 重配显示扩展以共享 EditorState/选区/撤销历史，零宽空行标记和纯文本粘贴继续保证 content_mdx 无损往返
@@ -103,7 +103,7 @@ NotesWorkspace.tsx: 单篇笔记编辑会话边界，保持 memoClientKey 与原
 PaperWorkspaceShell.tsx: Paper内容壳、文件库入口与窄屏遮罩/Escape；生产与Landing Demo助手入口/尺寸均由外层独立宿主承载
 useMemoAutosave.ts: 单 memo 本地草稿状态机；递归 required flush 使用具名 callback，session 只以 memoId 建立/销毁，逐键输入不写全局 Store，晚到初值由独立门禁接纳
 useMemoAutosave.test.ts: 覆盖迟到服务端正文接纳门禁、插入/删除/等长替换字符计数、三次有界指数退避，以及驱动真实 Hook 证明标题冲突只挂起 title 而正文照常落库
-WorkspaceAuxViews.tsx: 纸内辅助视图挂载点，仅装配回收站与 DEV Design System；订阅由独立 SubscriptionPage 持有，Canvas 继续由 CanvasWorkspace 承载，均不进入 Paper 分支
+WorkspaceAuxViews.tsx: 纸内辅助视图挂载点，仅装配回收站；订阅归 SubscriptionPage、画布归 CanvasWorkspace，DEV Design System 由顶级 /design-system 独立装配
 WorkspaceCommandPalette.tsx: 结果动作统一原位 WarmTooltip 与真实平台键帽，保留键盘与鼠标焦点策略； locale 中英全局对象命令面板，提示/状态/结果计数同语言；始终保留 Dialog 宿主以完成关闭动画；搜索/键盘/Canvas 连续加入沿原状态机，关闭后的内容立即退出交互 关闭时不扫描全树生成不可见结果。
 WorkspaceCommandPalette.test.tsx: 键盘状态机门禁，使用最小 Bun test 依赖覆盖开合、焦点、方向键/Enter/Tab/Esc、IME、Canvas 连续加入、正文补入稳定与提示条状态 验证树变化过滤正文命中但不重发相同查询。
 commandResults.ts: 全局搜索唯一排序纯函数，调用方可传本地化根路径标签而不触碰用户路径；六档命中顺序与同档内确定性 tie-break，两种画布都独立成行且画布行携带来源笔记标题，同档同名时按「本体先于派生物」让笔记恒排在它的画布之前

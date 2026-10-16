@@ -1,0 +1,28 @@
+/**
+ * [INPUT]: 依赖生产 Canvas/助手/文字/空间 token 与 ProductSpecimens 的有界样板宿主
+ * [OUTPUT]: 提供产品样板的说明、工具行与舞台边界；生产组件继续拥有全部视觉参数
+ * [POS]: Design System 的局部布局层；contain 将 fixed 助手留在样板内，不复制其几何与材质
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+@layer components {
+  .ds-product-specimens { display: grid; gap: var(--space-8); margin-top: var(--space-8); }
+  .ds-product-card { display: grid; min-width: 0; gap: var(--space-4); scroll-margin-top: 100px; }
+  .ds-product-card > header { display: grid; min-width: 0; gap: var(--space-2); }
+  .ds-product-card > header h3 { color: var(--foreground); font-size: var(--type-heading); font-weight: var(--weight-section); }
+  .ds-product-card > header p, .ds-product-note { color: var(--muted-foreground); font-size: var(--type-label); line-height: var(--leading-body); }
+  .ds-product-card > header code { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--type-caption); overflow-wrap: anywhere; }
+  .ds-product-toolbar { display: flex; min-width: 0; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+  .ds-product-toolbar > span { color: var(--muted-foreground); font-size: var(--type-label); }
+  .ds-product-toolbar > .ds-select-shell { width: min(100%, 12rem); flex: 0 1 12rem; }
+  .ds-product-canvas-stage.app-workspace.canvas-workspace { position: relative; z-index: 0; inset: auto; display: block; height: 38rem; min-height: 26rem; border: 1px solid var(--border); border-radius: var(--radius-panel); corner-shape: var(--corner-shape-smooth); overflow: hidden; }
+  .ds-product-assistant-stage.app-workspace { position: relative; display: block; height: calc(var(--ds-assistant-reading-height) + var(--space-8)); min-height: 26rem; padding: var(--workspace-panel-inset); border: 1px solid var(--border); border-radius: var(--radius-panel); corner-shape: var(--corner-shape-smooth); contain: layout paint; }
+  .ds-product-stage-caption { max-width: min(22rem, 42%); padding: var(--space-4); }
+  .ds-product-stage-caption strong { color: var(--foreground); font-family: var(--font-serif); font-size: var(--type-title); font-weight: var(--weight-title); line-height: var(--leading-title); }
+  .ds-product-stage-caption p { margin-top: var(--space-3); color: var(--muted-foreground); font-size: var(--type-label); line-height: var(--leading-body); }
+  @media (max-width: 767px) {
+    .ds-product-canvas-stage.app-workspace.canvas-workspace { height: 32rem; }
+    .ds-product-stage-caption { max-width: 100%; padding: var(--space-2); }
+    .ds-product-stage-caption strong { font-size: var(--type-heading); }
+    .ds-product-stage-caption p { max-width: 18rem; }
+  }
+}

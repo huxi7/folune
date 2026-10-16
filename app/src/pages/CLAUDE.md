@@ -37,7 +37,7 @@ ArchiveCordLabPage.tsx: resizeHandle 复用宿主独立边界插槽； 仅 DEV `
 ColorLabPage.tsx: 仅 DEV `/color-lab` 色彩决策实验页，以同一静态 Paper First/Library/AI DOM、共享生产组件与候选选择、Light/Dark 控制公平比较现有蓝、02 灰蓝、04 标准墨蓝与 05 柔和墨蓝 scoped token，不读取鉴权、业务数据或主题持久化
 AuthCallbackPage.test.tsx: 验证回调只交换一次、成功直接进入工作区、拒绝/缺码/失败恢复与诊断隔离。
 AuthCallbackPage.tsx: Google/GitHub 共用 PKCE 交换，成功直接进入工作区，不读取邮箱、不装配选择页；失败沿认证统一文案。
-AppDashboard.tsx: 助手边缘调整只提交临时完整宽高/位置；向现有助手传递当前画布和发送前同步门禁；菜单/设置统一先打开退出确认，确认后才调用真实退出；Workspace视觉装配根与用户级BillingProvider；文件库走原常驻宿主，AI走胶囊/短窗/全高宿主，AgentPanel实例跨Paper/Canvas持续；订阅隐藏/inert保留底层会话，积分路由沿原来路返回 助手代码加载复用 AgentConversationSkeleton，与业务冷加载同构。
+AppDashboard.tsx: 助手边缘调整只提交临时完整宽高/位置；向现有助手传递当前画布和发送前同步门禁；菜单/设置统一先打开退出确认，确认后才调用真实退出；Workspace视觉装配根与用户级BillingProvider；文件库走原常驻宿主，AI走胶囊/短窗/全高宿主，AgentPanel实例跨Paper/Canvas持续；订阅隐藏/inert保留底层会话，积分路由沿原来路返回；DEV Design System 在新标签打开 /design-system，原标签保留工作区；助手代码加载复用 AgentConversationSkeleton。
 CanvasRouteCoordinator.tsx: `/app/notes/:id` 的 Canvas 路由协调器；把入口 Canvas bootstrap 冻结为本次挂载的不可变快照，避免缓存消费后在浏览器拍新帧前撤掉目标纸面身份，也避免下一轮离场 bootstrap 反向注入仍在场的旧 Canvas 并制造重复 transition name；另统一 Canvas→原文→Canvas 返回描述、画布重命名与会话 flush 暴露，不持有图数据、保存队列或跨路由文件库。画布→写作区那一跳由它的 navigate 带 viewTransition 起——路由状态落地是异步的，谁持有 navigate 谁才能在正确的那一刻开始过渡
 DashboardDialogs.tsx: 五栏设置与新建文件夹的纯受控组合，透传真实退出命令和独立订阅入口；外层 presence 等待 Dialog 自身退出，文件夹落点与重名裁决不变
 appDashboardTypes.ts: Dashboard 私有状态类型边界，集中定义含首屏 tree bootstrap 与入口编号的 loader、账户/文件夹弹窗、标题草稿与树加载状态，不承载运行时逻辑
