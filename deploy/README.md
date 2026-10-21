@@ -14,7 +14,7 @@
 | Chat | https://folune-chat-711201740376.asia-southeast1.run.app |
 | Production Supabase | https://ialqliixbdwwmxackjpr.supabase.co |
 | 镜像仓库 | asia-southeast1-docker.pkg.dev/folune7/folune |
-| GitHub / 发布分支 | solink7/folune / production |
+| GitHub / 发布分支 | huxi7/folune / production |
 
 Pages 以 app 为根目录，执行 `bun install --frozen-lockfile && bun run build`，发布 dist；BUN_VERSION=1.3.14，Preview 自动部署关闭。`folune-api-production` 与 `folune-chat-production` 两个 Cloud Build 触发器均只匹配 `^production$`，分别构建 api/chat 并更新 folune-api/folune-chat。
 

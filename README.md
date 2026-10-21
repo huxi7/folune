@@ -16,7 +16,7 @@ AI 在发送消息或主动触发整理、拓展时运行，自动保存不会�
 
 支持 macOS Apple Silicon 与 Windows x64，使用时需要联网。
 
-[下载 macOS 版](https://github.com/solink7/folune/releases/latest/download/folune-macos-arm64.dmg) · [下载 Windows 版](https://github.com/solink7/folune/releases/latest/download/folune-windows-x64.exe) · [全部版本](https://github.com/solink7/folune/releases)
+[下载 macOS 版](https://github.com/huxi7/folune/releases/latest/download/folune-macos-arm64.dmg) · [下载 Windows 版](https://github.com/huxi7/folune/releases/latest/download/folune-windows-x64.exe) · [全部版本](https://github.com/huxi7/folune/releases)
 
 ## 本地开发
 
@@ -25,7 +25,7 @@ AI 在发送消息或主动触发整理、拓展时运行，自动保存不会�
 克隆仓库，在根目录创建本地配置：
 
 ```sh
-git clone https://github.com/solink7/folune.git
+git clone https://github.com/huxi7/folune.git
 cd folune
 cp app/.env.example app/.env.local
 cp api/.env.example api/.env

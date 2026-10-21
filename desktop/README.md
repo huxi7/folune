@@ -31,7 +31,7 @@ Mac 产物在 `desktop/release/folune-macos-arm64.dmg`，应用在 `desktop/out/
 
 ## 发布前的一次性配置
 
-公开仓库 `solink7/folune` 同时保存源码、Git Tag、版本说明与正式安装包。
+公开仓库 `huxi7/folune` 同时保存源码、Git Tag、版本说明与正式安装包。
 
 在源码仓库 Actions Variables 设置以下四项公开连接信息：
 
@@ -90,8 +90,8 @@ CI 将版本写进桌面包；先创建草稿 Release，再由两个平台直接
 
 官网长期使用：
 
-- https://github.com/solink7/folune/releases/latest/download/folune-macos-arm64.dmg
-- https://github.com/solink7/folune/releases/latest/download/folune-windows-x64.exe
+- https://github.com/huxi7/folune/releases/latest/download/folune-macos-arm64.dmg
+- https://github.com/huxi7/folune/releases/latest/download/folune-windows-x64.exe
 
 网页下载按钮可靠判断系统/架构后直接下载，无法可靠判断时显示版本选择。历史版本原样迁移，说明保留原始发布时间；GitHub 的新 Release 发布时间和下载次数不会继承。删除旧发布仓库后，旧客户端的更新入口失效，须手动安装新版。
 
