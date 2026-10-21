@@ -51,6 +51,12 @@ Supabase 的 **Additional Redirect URLs** 需保留 Web 原有地址，并增加
 
 API 的 `CORS_ORIGINS`、Chat 的 `ALLOWED_ORIGINS` 需保留 Web 来源并加入 `folune-app://app`。Production 已配置并通过 OPTIONS 验证；若本地 DMG 连接开发服务，本机 `.env` 也需增加此来源并重启服务。
 
+## v1.3.2
+
+GitHub 账号改名后，官网安装包链接、客户端更新仓库和 Windows 安装器图标改用 `huxi7/folune`。
+本版将新地址写入安装包，减少对旧用户名重定向的依赖。
+功能与更新方式保持不变；旧版安装包保留原样。
+
 ## v1.3.1
 
 修复助手阅读窗缩放、切换和重开时的几何错位与白板闪烁。
@@ -80,8 +86,8 @@ GitHub 仅按已验证主邮箱匹配或建号。
 先将已验证代码提交并推到源码仓库，再执行：
 
 ```sh
-git tag -a v1.3.1
-git push origin v1.3.1
+git tag -a v1.3.2
+git push origin v1.3.2
 ```
 
 首条命令会打开编辑器，请填写完整更新说明。Tag 必须为未使用的稳定 `vX.Y.Z` 附注 Tag，示例版本须随下次发布递增。也可用 `git tag -a vX.Y.Z -F release-notes.md` 从已审阅文件创建。CI 直接从 GitHub 读取远端附注并写入 Release，不依赖浅检出的本地 Tag；轻量 Tag 或空说明会使准备任务失败，草稿重跑会刷新说明。
