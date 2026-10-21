@@ -44,11 +44,12 @@ app 跑在本机 Bun/Vite 固定 10000；api 与 chat 由 folune Compose 项目�
 2026-09-02 app 形制投影：Paper 归档线由 fixed `ArchiveCordOverlay` 承载，不再依赖 react-archer；Canvas 连接临时绳与 Paper 归档 Overlay 都是 UI 层，正式持久化仍只经既有 app WAL/Coordinator/API 边界。
 
 ## Canvas V2
-Canvas V2 是一级持久知识 Workspace：memo 默认 Canvas 与 standalone Canvas 使用同一身份和唯一原子 mutation 内核，浏览器先写 IndexedDB WAL，再串行提交并在冲突时重放。产品定律见 [CANVAS_CONSTITUTION.md](CANVAS_CONSTITUTION.md)；旧阶段规划只保留历史，不构成当前需求来源。
+Canvas V2 是一级持久知识 Workspace：memo 默认 Canvas 与 standalone Canvas 使用同一身份和唯一原子 mutation 内核，浏览器先写 IndexedDB WAL，再串行提交并在冲突时重放。产品定律见 [Canvas 产品宪法](docs/product/CANVAS_CONSTITUTION.md)；旧阶段规划只保留历史，不构成当前需求来源。
 
 ## 模块地图
 | 模块 | 职责 | 文档 |
 | --- | --- | --- |
+| docs | 跨模块产品约束与历史归档；索引连接模块文档，个人草稿仅存本地 | [docs/CLAUDE.md](docs/CLAUDE.md) |
 | desktop | Electron + Forge 桌面宿主，复用 app；macOS arm64 DMG 与 Windows x64 Squirrel，源码与安装包同仓库发布 | [desktop/CLAUDE.md](desktop/CLAUDE.md) |
 | .github | 桌面 Tag 双平台构建与当前仓库 Release 发布，Web/后端沿原 production 分支发布 | [.github/CLAUDE.md](.github/CLAUDE.md) |
 | app | 用户端，五栏设置与独立订阅页共用用户级计费快照；以 Paper First 舞台承载写作与共享左右工具；Canvas 路由切换到始终挂载同一 React Flow 实例的独立 Workspace，支持 memo Picker、预览/返回、自由文字、连接/删除/框选/整组移动/缩放、显式 AI 增量拓展与可靠自动保存；服务端文档、交互会话、WAL/传输状态分别收口，选择只有 React Flow 一个所有者，正文只按 memo ID 读取 | [app/CLAUDE.md](app/CLAUDE.md) |
@@ -60,13 +61,12 @@ Canvas V2 是一级持久知识 Workspace：memo 默认 Canvas 与 standalone Ca
 ## 根配置
 | 文件 | 职责 |
 | --- | --- |
-| CANVAS_CONSTITUTION.md | Canvas 产品宪法与常驻门禁，回答「为什么不能」而不是「现在是什么」；冻结一级持久 Workspace、同构画布、显式 AI、增量图、添加/连接/自由文字、自动保存与产品边界，并以第 14 节十一条验收问题约束后续任何改动。它与 CLAUDE.md 职责相反：CLAUDE.md 必须跟随代码，本文件绝不跟随代码，因此只有它能指出实现走偏了。不含进度、不含实施计划 |
-| CANVAS_V2_PHASE2_BACKLOG.md | 历史阶段清单，仅用于追溯当时取舍；已完成项与主动放弃项都不得被后续 Agent 自动还原成需求 |
-| PAPER_CONSTITUTION.md | Paper 产品宪法与常驻门禁，与 CANVAS_CONSTITUTION.md 并列且同样绝不跟随代码。冻结 Stage/Paper/Panel 的三层关系（Panel 压在 Paper 上，因此 Paper 不参照 Panel 的顶部边界）、写作纸的开本比例与「短内容与 Panel 同构、长文只向下生长」、与纸同表面且不画底边线的 sticky 顶栏、整理作为唯一核心 AI 动作、只用文字标签表达层级并共享中性 Ghost 反馈、状态与动作分离，以及归档线「真实 memo → 结构可见代表 → viewport 边缘投影」的生命周期与渲染边界，并以第 8 节验收问题约束后续改动。视觉数值归 app/brand-spec.md，产品定律归本文件 |
+| README.md | 项目介绍与开发、桌面和文档阅读入口 |
+| CLAUDE.md | 项目架构与各模块入口；产品约束见 docs/product，历史阶段清单见 docs/archive |
 | package.json | 桌面依赖安装、开发、打包与测试的根命令入口 |
 | .dockerignore | 收窄后端镜像的仓库根构建上下文，允许生产源码，排除缓存、密钥与无关模块 |
 | .env.example | app/api/chat 无密钥变量总览与根 Compose 可选覆盖模板；服务默认使用各自本地环境文件 |
-| .gitignore | 根级本地环境、构建缓存、系统文件与未接入路由的图标研究页忽略规则 |
+| .gitignore | 根级本地环境、构建缓存、系统文件、docs/local 个人文档与未接入路由的图标研究页忽略规则 |
 | .mcp.json | 团队共享的 Supabase MCP 接入声明。八个 feature 组全开（account/branching/database/debugging/development/docs/functions/storage）；**无 `project_ref`** 故 account 组可用、作用域为账号下全部项目；**无 `read_only`** 故具备完整写能力。`[决策: 所有者 · 2026-08-23]` —— 「api 是唯一持久化边界」对**运行时代码**依然绝对有效，MCP 写能力仅是部署与运维动作的通道，不构成绕过 api 读写业务数据的许可。文件不含密钥，OAuth 凭据留在本地 keychain |
 | docker-compose.dev.yml | 固定 Compose 项目名、容器名、镜像网络和依赖卷前缀为 folune；从各模块私有 `.env` 注入凭据并编排 Folune API/Chat 双服务与独立健康探针；集中维护整理自动应用置信阈值，chat 启动前清理容器 PID 复用导致的陈旧 Mastra 开发锁，并直启 CLI 接收停止信号 |
 

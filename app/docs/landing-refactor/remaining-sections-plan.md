@@ -31,7 +31,7 @@
 
 | 事项 | 当前依据 | 展示规则 |
 | --- | --- | --- |
-| AI 拓展由用户主动发起 | `CANVAS_CONSTITUTION.md` 第 8 节；`KnowledgeCanvas.tsx` 的 `expandFromNode` 与节点动作 | 明示「进入画布，选中笔记，点击 AI 拓展」；写作、保存、归档均不是自动触发点 |
+| AI 拓展由用户主动发起 | [Canvas 产品宪法](../../../docs/product/CANVAS_CONSTITUTION.md) 第 8 节；`KnowledgeCanvas.tsx` 的 `expandFromNode` 与节点动作 | 明示「进入画布，选中笔记，点击 AI 拓展」；写作、保存、归档均不是自动触发点 |
 | 候选带有相关摘录与理由 | `canvasExpandClient.ts` 的候选协议；`explore-contracts.ts` 对摘录进行正文匹配 | 可展示一次真实结果的相关摘录和理由；不保证每次都有结果或固定数量 |
 | 摘录如何显示仍需实测 | `canvasPresentation.ts` 优先用 `target.excerpt`，再回退 `snapshot_excerpt` | 不能仅凭响应字段推断画面始终展示 AI 选中的段落，需检查运行画面与重开后的内容 |
 | 可以查看 AI 关联理由 | `CanvasCordEdge.tsx` 有「AI 关联理由」及对应说明入口 | 用真实理由展开画面；手工关系不能冒充 AI 关系 |

@@ -1,8 +1,9 @@
 # Canvas V2 Phase 2 / Polish Backlog
 
-> 状态：已确认方向 · 非实施 Plan
-> 前置门禁：已通过——Canvas MVP 已落地并逐段真人验收
-> 产品约束：全部条目服从 [CANVAS_CONSTITUTION.md](CANVAS_CONSTITUTION.md)
+> 状态：历史归档，不作为当前需求或实施入口。
+> 下文保留当时的方向、判断与验收记录，不代表当前实现。
+> 已完成项与主动放弃项不得自动恢复；重新立项须核对当前实现并确认范围。
+> 产品约束：全部条目服从 [Canvas 产品宪法](../product/CANVAS_CONSTITUTION.md)。
 
 ## 1. 这份文件不是什么
 
