@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 Forge、桌面图标与可选 CI 签名环境变量
+ * [INPUT]: 依赖 Forge、本地图标、源码仓库 Release 图标与可选 CI 签名环境变量
  * [OUTPUT]: 仅 macOS arm64 DMG / Windows x64 Squirrel 安装产物；无真实证书时经 postPackage 钩子对 .app 做 deep ad-hoc 签名
  * [POS]: 桌面打包契约；只包含静态前端和宿主运行文件，不包含后端、环境文件或测试
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -35,7 +35,7 @@ module.exports = {
     { name: '@electron-forge/maker-dmg', platforms: ['darwin'], config: { name: 'folune-macos-arm64', format: 'ULFO', icon: path.join(__dirname, 'assets/icon.icns') } },
     { name: '@electron-forge/maker-squirrel', platforms: ['win32'], config: {
       name: 'Folune', setupExe: 'folune-windows-x64.exe', setupIcon: path.join(__dirname, 'assets/icon.ico'),
-      iconUrl: 'https://raw.githubusercontent.com/solink7/folune-releases/main/icon.ico',
+      iconUrl: 'https://github.com/solink7/folune/releases/latest/download/icon.ico',
       ...(process.env.WINDOWS_CERTIFICATE_FILE ? { certificateFile: process.env.WINDOWS_CERTIFICATE_FILE, certificatePassword: process.env.WINDOWS_CERTIFICATE_PASSWORD } : {}),
     } },
   ],

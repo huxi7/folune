@@ -49,8 +49,8 @@ Canvas V2 是一级持久知识 Workspace：memo 默认 Canvas 与 standalone Ca
 ## 模块地图
 | 模块 | 职责 | 文档 |
 | --- | --- | --- |
-| desktop | Electron + Forge 桌面宿主，复用 app；macOS arm64 DMG 与 Windows x64 Squirrel，私有源码构建、公开二进制发布 | [desktop/CLAUDE.md](desktop/CLAUDE.md) |
-| .github | 桌面 Tag 构建与跨仓库 Release 发布，Web/后端仍沿原 production 分支发布 | [.github/CLAUDE.md](.github/CLAUDE.md) |
+| desktop | Electron + Forge 桌面宿主，复用 app；macOS arm64 DMG 与 Windows x64 Squirrel，源码与安装包同仓库发布 | [desktop/CLAUDE.md](desktop/CLAUDE.md) |
+| .github | 桌面 Tag 双平台构建与当前仓库 Release 发布，Web/后端沿原 production 分支发布 | [.github/CLAUDE.md](.github/CLAUDE.md) |
 | app | 用户端，五栏设置与独立订阅页共用用户级计费快照；以 Paper First 舞台承载写作与共享左右工具；Canvas 路由切换到始终挂载同一 React Flow 实例的独立 Workspace，支持 memo Picker、预览/返回、自由文字、连接/删除/框选/整组移动/缩放、显式 AI 增量拓展与可靠自动保存；服务端文档、交互会话、WAL/传输状态分别收口，选择只有 React Flow 一个所有者，正文只按 memo ID 读取 | [app/CLAUDE.md](app/CLAUDE.md) |
 | chat | AI 能力服务，冻结消息上下文；聊天流原样透传推理，APP 直接以纯文本将原始推理与真实工具进度交错展示，不添加摘要模型调用，明确批量请求由共享八并发队列执行且可停止，转圈与实际运行同构，完成记录一次展开，正文首分块触发前端一次性收起过程，不等待步骤结束；对话、审批、整理与逐篇关联判断职责分离；Canvas expansion 只从 api 重取可信 context/正文/语料版本，复用 Explore 判断和逐字引文复核后返回候选，最终写入仍由浏览器经 api 统一 mutation 提交 | [chat/CLAUDE.md](chat/CLAUDE.md) |
 | api | 业务接口服务，承载 profile、服务端套餐目录、统一支付订单/账本/周期/审计与共享 AI 额度、memo、回收站、AI 状态机与 Canvas V2 默认/空白入口、无正文图读取、expansion context、人工/AI 共用 mutation；owner-only RLS、行锁、version、稳定 intent digest、receipt、原子 checkpoint 与同父同类型标题唯一索引共同构成唯一持久化边界，重名由数据库裁决；两种 Canvas 共用一条命名规则，标题不跟随任何东西 | [api/CLAUDE.md](api/CLAUDE.md) |

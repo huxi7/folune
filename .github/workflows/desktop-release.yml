@@ -1,6 +1,6 @@
-# [INPUT]: 私有源码、Git Tag、Production VITE 公开变量与跨仓库 Release Token
-# [OUTPUT]: macOS arm64 DMG、Windows x64 EXE/RELEASES/nupkg
-# [POS]: 桌面双平台构建与公开二进制发布；普通 push 不发布，手动触发只构建
+# [INPUT]: 当前公开仓库、Git Tag、Production VITE 公开变量与内置 GITHUB_TOKEN
+# [OUTPUT]: 当前仓库 Release 的 macOS DMG、Windows EXE/RELEASES/nupkg 与 ICO
+# [POS]: 双平台构建通过后在源码仓库发布完整版本；普通 push 不发布，手动触发只构建
 # [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 name: Desktop release
 on:
@@ -15,7 +15,30 @@ concurrency:
   group: desktop-${{ github.ref }}
   cancel-in-progress: false
 jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      RELEASE_TAG: ${{ github.ref_name }}
+    steps:
+      - name: Prepare draft release
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$RELEASE_TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]
+          if gh release view "$RELEASE_TAG" --json isDraft > existing.json 2>/dev/null; then
+            test "$(jq -r .isDraft existing.json)" = true
+          else
+            gh release create "$RELEASE_TAG" --verify-tag --draft --title "Folune $RELEASE_TAG" --notes-from-tag
+          fi
   build:
+    needs: prepare
+    permissions:
+      contents: write
     strategy:
       fail-fast: false
       matrix:
@@ -26,6 +49,8 @@ jobs:
             target: windows-x64
     runs-on: ${{ matrix.os }}
     env:
+      GH_REPO: ${{ github.repository }}
+      RELEASE_TAG: ${{ github.ref_name }}
       VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
       VITE_CHAT_BASE_URL: ${{ vars.VITE_CHAT_BASE_URL }}
       VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
@@ -60,37 +85,41 @@ jobs:
       - name: Build installers
         run: npm run electron:make
       - uses: actions/upload-artifact@v4
+        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
         with:
           name: desktop-${{ matrix.target }}
           path: desktop/release/*
           if-no-files-found: error
+          retention-days: 1
+      - name: Upload installers to draft release
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test "$(gh release view "$RELEASE_TAG" --json isDraft --jq .isDraft)" = true
+          gh release upload "$RELEASE_TAG" desktop/release/* --clobber
   publish:
     if: startsWith(github.ref, 'refs/tags/')
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     env:
-      GH_TOKEN: ${{ secrets.FOLUNE_RELEASE_TOKEN }}
-      GH_REPO: solink7/folune-releases
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
       RELEASE_TAG: ${{ github.ref_name }}
     steps:
-      - uses: actions/download-artifact@v4
-        with:
-          pattern: desktop-*
-          merge-multiple: true
-          path: release
       - name: Publish complete release
         shell: bash
         run: |
           set -euo pipefail
-          test -n "$GH_TOKEN"
-          test -f release/folune-macos-arm64.dmg
-          test -f release/folune-windows-x64.exe
-          test -f release/RELEASES
-          test -n "$(find release -name '*-full.nupkg' -print -quit)"
-          if gh release view "$RELEASE_TAG" --json isDraft > existing.json 2>/dev/null; then
-            test "$(jq -r .isDraft existing.json)" = true
-          else
-            gh release create "$RELEASE_TAG" --draft --title "Folune $RELEASE_TAG" --notes 'Folune desktop for Apple Silicon Mac and Windows x64.'
-          fi
-          gh release upload "$RELEASE_TAG" release/* --clobber
+          gh api "repos/$GH_REPO/releases/tags/$RELEASE_TAG" > release.json
+          jq -e --arg package "Folune-${RELEASE_TAG#v}-full.nupkg" '
+            .draft and
+            ((.assets | map(.name) | sort) ==
+              (["folune-macos-arm64.dmg", "folune-windows-x64.exe", "RELEASES", "icon.ico", $package] | sort)) and
+            all(.assets[]; .state == "uploaded" and .size > 0)
+          ' release.json
           gh release edit "$RELEASE_TAG" --draft=false --latest

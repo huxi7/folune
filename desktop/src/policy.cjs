@@ -1,12 +1,12 @@
 /**
  * [INPUT]: 依赖 Node URL/path 与 semver 的版本比较
- * [OUTPUT]: 提供导航/资源边界、Google/GitHub 主邮箱 Provider 的 PKCE 授权白名单、稳定版本判断
+ * [OUTPUT]: 提供源码仓库更新地址、导航/资源边界、PKCE 授权白名单与稳定版本判断
  * [POS]: 桌面主进程的纯安全策略；所有不可信 URL 在进入原生能力前经过此边界
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 const path = require('node:path');
 const semver = require('semver');
-const RELEASE_REPO = 'solink7/folune-releases';
+const RELEASE_REPO = 'solink7/folune';
 const RELEASE_BASE = `https://github.com/${RELEASE_REPO}/releases/latest/download`;
 const APP_ORIGIN = 'folune-app://app';
 function isAppUrl(value, origin) {

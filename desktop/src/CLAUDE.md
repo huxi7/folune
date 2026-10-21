@@ -4,7 +4,7 @@
 成员清单
 main.cjs: 隔离窗口、静态协议、安全 IPC 与保存退出握手
 preload.cjs: sandbox 最小能力桥与可卸载事件订阅
-policy.cjs: 不可信 URL、资源路径与版本策略；只允许 Google/custom:github 的同源 PKCE 登录
+policy.cjs: 源码仓库 Release 更新地址、不可信 URL 与版本策略；只允许 Google/custom:github 的同源 PKCE 登录
 policy.test.cjs: 两种 OAuth 白名单、跨源/回调/S256 安全边界与降级/预发布版本测试
 oauth.test.cjs: 授权事务替换、状态校验与一次性回调验证
 oauth.cjs: 短时 PKCE 回调事务、错误分类转发与系统浏览器登录授权

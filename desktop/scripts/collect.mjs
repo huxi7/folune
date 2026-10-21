@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖 Forge make 的平台安装包和 Squirrel 更新元数据
- * [OUTPUT]: 收集固定名称安装包及原名 RELEASES/nupkg 到 release/
+ * [INPUT]: 依赖 Forge 平台安装包、Squirrel 更新元数据与生成的 Windows 图标
+ * [OUTPUT]: 收集固定名称安装包、原名 RELEASES/nupkg 与 icon.ico 到 release/
  * [POS]: CI 与本地打包共享的产物边界；版本化更新包名称不得改写
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -22,3 +22,4 @@ async function visit(directory) {
   }
 }
 await visit(root);
+if (process.platform === 'win32') await copyFile(new URL('../assets/icon.ico', import.meta.url), path.join(output, 'icon.ico'));

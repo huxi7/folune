@@ -2,6 +2,6 @@
 > L2 | 父级: ../CLAUDE.md
 
 成员清单
-desktop-release.yml: v* Tag 双平台构建，两个任务都成功后向安装包仓库原子发布草稿 Release；手动执行只验证构建
+desktop-release.yml: v* Tag 先建同仓草稿，双平台直传产物后校验并公开；不占 Actions 产物配额，手动与 PR 产物保留一天
 
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md

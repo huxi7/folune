@@ -1,13 +1,13 @@
 /**
  * [INPUT]: 依赖 Navigator 的现代平台提示与兼容 userAgent
- * [OUTPUT]: 返回受支持系统或需要人工选择的空值，并提供固定安装包 URL
+ * [OUTPUT]: 返回受支持系统或需要人工选择的空值，并提供源码仓库的固定安装包 URL
  * [POS]: 官网下载纯策略，区分移动设备/不支持架构，浏览器未披露架构时由用户选择
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 export type DesktopPlatform = "macos" | "windows";
 export const desktopDownloadUrls = {
-  macos: "https://github.com/solink7/folune-releases/releases/latest/download/folune-macos-arm64.dmg",
-  windows: "https://github.com/solink7/folune-releases/releases/latest/download/folune-windows-x64.exe",
+  macos: "https://github.com/solink7/folune/releases/latest/download/folune-macos-arm64.dmg",
+  windows: "https://github.com/solink7/folune/releases/latest/download/folune-windows-x64.exe",
 } as const;
 type PlatformHints = { platform?: string; architecture?: string; bitness?: string; mobile?: boolean };
 export function platformFromHints(hints: PlatformHints, userAgent: string): DesktopPlatform | null {

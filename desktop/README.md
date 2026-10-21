@@ -31,16 +31,16 @@ Mac 产物在 `desktop/release/folune-macos-arm64.dmg`，应用在 `desktop/out/
 
 ## 发布前的一次性配置
 
-源码仓库 `solink7/folune` 保持私有；公开的 `solink7/folune-releases` 只接收二进制与更新元数据。
+公开仓库 `solink7/folune` 同时保存源码、Git Tag、版本说明与正式安装包。
 
-在私有源码仓库 Actions Variables 设置以下四项公开连接信息：
+在源码仓库 Actions Variables 设置以下四项公开连接信息：
 
 - `VITE_API_BASE_URL`
 - `VITE_CHAT_BASE_URL`
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_PUBLISHABLE_KEY`
 
-这些变量已按当前 Cloud Run Production 配置写入。跨仓库发布另外需要 `FOLUNE_RELEASE_TOKEN` Actions Secret：建议使用仅能写入 `folune-releases` 的 fine-grained token，授予 Contents read/write。默认 `GITHUB_TOKEN` 不能写另一个仓库。不要将 token 填入 Vite 变量或提交文件。
+这些变量已按当前 Cloud Run Production 配置写入。正式发布使用 Actions 内置 `GITHUB_TOKEN`，发布任务显式授予 `contents: write`，不需要个人发布 Token。
 
 Supabase 的 **Additional Redirect URLs** 需保留 Web 原有地址，并增加：
 
@@ -50,6 +50,14 @@ Supabase 的 **Additional Redirect URLs** 需保留 Web 原有地址，并增加
 尾部通配符只允许该回调路径后的随机事务参数，应用自身仍校验完整路径和随机 state。当前插件没有 Auth config 读写工具，此白名单尚未配置/验证，不能把 Google 登录视为已完成。邮箱密码/验证码继续复用现有流程。
 
 API 的 `CORS_ORIGINS`、Chat 的 `ALLOWED_ORIGINS` 需保留 Web 来源并加入 `folune-app://app`。Production 已配置并通过 OPTIONS 验证；若本地 DMG 连接开发服务，本机 `.env` 也需增加此来源并重启服务。
+
+## v1.3.1
+
+修复助手阅读窗缩放、切换和重开时的几何错位与白板闪烁。
+画布问答自动跟随当前笔记，窄侧栏账户卡保持完整布局。
+源码、安装包和更新元数据统一发布到同一个公开仓库。
+正式构建直传草稿 Release，不占 Actions 产物配额。
+旧客户端必须手动下载本版，以切换到新更新地址。
 
 ## v1.3.0
 
@@ -72,18 +80,18 @@ GitHub 仅按已验证主邮箱匹配或建号。
 先将已验证代码提交并推到源码仓库，再执行：
 
 ```sh
-git tag -a v1.3.0 -m "Folune v1.3.0 — 画布 AI 问答"
-git push origin v1.3.0
+git tag -a v1.3.1 -m "Folune v1.3.1"
+git push origin v1.3.1
 ```
 
-Tag 必须为稳定的 `vX.Y.Z`；CI 将版本写进桌面包，两平台都成功后才创建/补齐草稿 Release，上传全部文件后一次公开。已公开版本不能被重新覆盖，修复须用新 Tag。手动运行 workflow 和 PR 只生成 Actions artifacts，不公开发布。
+Tag 必须为未使用的稳定 `vX.Y.Z`，示例版本须随下次发布递增。CI 将版本写进桌面包；先创建草稿 Release，再由两个平台直接上传产物。发布任务确认 DMG、EXE、RELEASES、版本化 nupkg 与 icon.ico 完整后一次公开。正式发布不使用 Actions artifacts，避免中转存储配额阻断发布。已公开 Release 不能覆盖，修复须用新 Tag；失败的草稿允许重跑。手动运行 workflow 和 PR 只生成保留一天的 Actions artifacts，不公开发布。
 
 官网长期使用：
 
-- https://github.com/solink7/folune-releases/releases/latest/download/folune-macos-arm64.dmg
-- https://github.com/solink7/folune-releases/releases/latest/download/folune-windows-x64.exe
+- https://github.com/solink7/folune/releases/latest/download/folune-macos-arm64.dmg
+- https://github.com/solink7/folune/releases/latest/download/folune-windows-x64.exe
 
-首个正式 Release 发布前，这两个链接会返回 404；创建仓库或生成本机 DMG 不等于下载已上线。网页下载按钮可靠判断系统/架构后直接下载，无法可靠判断时显示版本选择。
+网页下载按钮可靠判断系统/架构后直接下载，无法可靠判断时显示版本选择。历史版本原样迁移，说明保留原始发布时间；GitHub 的新 Release 发布时间和下载次数不会继承。删除旧发布仓库后，旧客户端的更新入口失效，须手动安装新版。
 
 ## 更新与安全边界
 
