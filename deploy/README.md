@@ -21,7 +21,8 @@ Pages 以 app 为根目录，执行 `bun install --frozen-lockfile && bun run bu
 触发器连接 `huxi7/folune`，`github.owner` 为 `huxi7`。
 GitHub 账号改名后，先在同一区域连接新仓库地址。
 再更新两个现有触发器，保留分支、身份与替换参数。
-用一次 `production` 推送验证自动构建与 Cloud Run 更新。
+用 `production` 推送后产生的构建记录验收。
+手动构建不代表自动触发已经恢复。
 
 ## 本地开发
 
