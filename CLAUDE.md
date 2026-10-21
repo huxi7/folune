@@ -61,7 +61,8 @@ Canvas V2 是一级持久知识 Workspace：memo 默认 Canvas 与 standalone Ca
 ## 根配置
 | 文件 | 职责 |
 | --- | --- |
-| README.md | 项目介绍与开发、桌面和文档阅读入口 |
+| README.md | 项目定位、功能、桌面下载与本地开发入口；连接部署、数据库、认证文档与 AGPL-3.0 授权 |
+| LICENSE | GNU AGPL-3.0 完整文本；项目授权与源码提供义务见 README.md |
 | CLAUDE.md | 项目架构与各模块入口；产品约束见 docs/product，历史阶段清单见 docs/archive |
 | package.json | 桌面依赖安装、开发、打包与测试的根命令入口 |
 | .dockerignore | 收窄后端镜像的仓库根构建上下文，允许生产源码，排除缓存、密钥与无关模块 |
