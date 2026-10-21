@@ -18,6 +18,11 @@
 
 Pages 以 app 为根目录，执行 `bun install --frozen-lockfile && bun run build`，发布 dist；BUN_VERSION=1.3.14，Preview 自动部署关闭。`folune-api-production` 与 `folune-chat-production` 两个 Cloud Build 触发器均只匹配 `^production$`，分别构建 api/chat 并更新 folune-api/folune-chat。
 
+触发器连接 `huxi7/folune`，`github.owner` 为 `huxi7`。
+GitHub 账号改名后，先在同一区域连接新仓库地址。
+再更新两个现有触发器，保留分支、身份与替换参数。
+用一次 `production` 推送验证自动构建与 Cloud Run 更新。
+
 ## 本地开发
 
 根目录执行 `docker compose -f docker-compose.dev.yml up -d --build`。Compose 显式选择两个 Dockerfile 的 dev 阶段，挂载源码与独立依赖卷，分别读取 api/.env、chat/.env。前端读取 app/.env.local，三者继续连接 Staging。
