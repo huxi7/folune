@@ -6,8 +6,8 @@
  */
 export type DesktopPlatform = "macos" | "windows";
 export const desktopDownloadUrls = {
-  macos: "https://github.com/solink7/folune/releases/latest/download/folune-macos-arm64.dmg",
-  windows: "https://github.com/solink7/folune/releases/latest/download/folune-windows-x64.exe",
+  macos: "https://github.com/huxi7/folune/releases/latest/download/folune-macos-arm64.dmg",
+  windows: "https://github.com/huxi7/folune/releases/latest/download/folune-windows-x64.exe",
 } as const;
 type PlatformHints = { platform?: string; architecture?: string; bitness?: string; mobile?: boolean };
 export function platformFromHints(hints: PlatformHints, userAgent: string): DesktopPlatform | null {

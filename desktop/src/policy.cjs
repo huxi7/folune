@@ -6,7 +6,7 @@
  */
 const path = require('node:path');
 const semver = require('semver');
-const RELEASE_REPO = 'solink7/folune';
+const RELEASE_REPO = 'huxi7/folune';
 const RELEASE_BASE = `https://github.com/${RELEASE_REPO}/releases/latest/download`;
 const APP_ORIGIN = 'folune-app://app';
 function isAppUrl(value, origin) {
