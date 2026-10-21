@@ -80,11 +80,13 @@ GitHub 仅按已验证主邮箱匹配或建号。
 先将已验证代码提交并推到源码仓库，再执行：
 
 ```sh
-git tag -a v1.3.1 -m "Folune v1.3.1"
+git tag -a v1.3.1
 git push origin v1.3.1
 ```
 
-Tag 必须为未使用的稳定 `vX.Y.Z`，示例版本须随下次发布递增。CI 将版本写进桌面包；先创建草稿 Release，再由两个平台直接上传产物。发布任务确认 DMG、EXE、RELEASES、版本化 nupkg 与 icon.ico 完整后一次公开。正式发布不使用 Actions artifacts，避免中转存储配额阻断发布。已公开 Release 不能覆盖，修复须用新 Tag；失败的草稿允许重跑。手动运行 workflow 和 PR 只生成保留一天的 Actions artifacts，不公开发布。
+首条命令会打开编辑器，请填写完整更新说明。Tag 必须为未使用的稳定 `vX.Y.Z` 附注 Tag，示例版本须随下次发布递增。也可用 `git tag -a vX.Y.Z -F release-notes.md` 从已审阅文件创建。CI 直接从 GitHub 读取远端附注并写入 Release，不依赖浅检出的本地 Tag；轻量 Tag 或空说明会使准备任务失败，草稿重跑会刷新说明。
+
+CI 将版本写进桌面包；先创建草稿 Release，再由两个平台直接上传产物。发布任务确认 DMG、EXE、RELEASES、版本化 nupkg 与 icon.ico 完整后一次公开。正式发布不使用 Actions artifacts，避免中转存储配额阻断发布。已公开安装包不能覆盖，构建修复须用新 Tag；说明文字可单独更正，失败的草稿允许重跑。手动运行 workflow 和 PR 只生成保留一天的 Actions artifacts，不公开发布。
 
 官网长期使用：
 

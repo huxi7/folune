@@ -1,5 +1,5 @@
-# [INPUT]: 当前公开仓库、Git Tag、Production VITE 公开变量与内置 GITHUB_TOKEN
-# [OUTPUT]: 当前仓库 Release 的 macOS DMG、Windows EXE/RELEASES/nupkg 与 ICO
+# [INPUT]: 当前公开仓库、远端附注 Tag、Production VITE 公开变量与内置 GITHUB_TOKEN
+# [OUTPUT]: 当前仓库 Release 的完整 Tag 附注、macOS DMG、Windows EXE/RELEASES/nupkg 与 ICO
 # [POS]: 双平台构建通过后在源码仓库发布完整版本；普通 push 不发布，手动触发只构建
 # [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 name: Desktop release
@@ -24,18 +24,25 @@ jobs:
       GH_REPO: ${{ github.repository }}
       RELEASE_TAG: ${{ github.ref_name }}
     steps:
-      - uses: actions/checkout@v4
-        if: startsWith(github.ref, 'refs/tags/')
       - name: Prepare draft release
         if: startsWith(github.ref, 'refs/tags/')
         shell: bash
         run: |
           set -euo pipefail
           [[ "$RELEASE_TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]
+          # 直接读取远端附注，避免浅检出把版本说明降为提交信息。
+          tag_sha=$(gh api "repos/$GH_REPO/git/ref/tags/$RELEASE_TAG" --jq '.object | select(.type == "tag") | .sha')
+          if test -z "$tag_sha"; then
+            printf '%s\n' "Release requires an annotated tag: $RELEASE_TAG" >&2
+            exit 1
+          fi
+          gh api "repos/$GH_REPO/git/tags/$tag_sha" --jq .message > release-notes.md
+          grep -q '[^[:space:]]' release-notes.md
           if gh release view "$RELEASE_TAG" --json isDraft > existing.json 2>/dev/null; then
             test "$(jq -r .isDraft existing.json)" = true
+            gh release edit "$RELEASE_TAG" --notes-file release-notes.md
           else
-            gh release create "$RELEASE_TAG" --verify-tag --draft --title "Folune $RELEASE_TAG" --notes-from-tag
+            gh release create "$RELEASE_TAG" --verify-tag --draft --title "Folune $RELEASE_TAG" --notes-file release-notes.md
           fi
   build:
     needs: prepare
