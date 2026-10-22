@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖共享 DesktopDownloadButton/GlowButton、ArrowRightIcon、MarketingAnnouncement、BlueprintDivider、HeroBackdrop 与 LandingEditor；/login 走 Router 导航，首屏整组交给 MarketingLayout 同拍浮现
- * [OUTPUT]: 对外提供渐变公告、60svh 居中 Hero、定稿三列价值条与真实 UI 展示；量取顶栏/公告/三栏为矮屏保留产品露出空间
+ * [OUTPUT]: 对外提供渐变公告、60svh 居中 Hero、三列价值条与真实 UI 展示；Hero 动作区仅保留双按钮；量取周边高度为矮屏保留产品露出
  * [POS]: widgets 的中文首页首屏；02A 背景独立加载，LandingActions 统一下载在左、打开在右，打开引导进入 /login，首屏打开用墨蓝流光；末端 CTA 用 startOnly 模式只显示箭头与开始
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -52,7 +52,7 @@ export function LandingHero() {
       <HeroBackdrop />
       <div className="landing-hero-content" data-marketing-reveal="hero">
         <div className="landing-hero-copy"><h1 id="landing-title" tabIndex={-1}>随手记下，自然有序</h1><p>在 Folune，专注记录当下的想法。<br />让 AI 帮你整理、连接，再次发现。</p></div>
-        <div><LandingActions /><p className="landing-action-note">网页版无需安装 · 桌面版随时下载</p></div>
+        <LandingActions />
       </div>
     </section>
     <BlueprintDivider flush fullBleed />
